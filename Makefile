@@ -9,11 +9,7 @@ PROGRAMS = \
   cfcomp checksum chop decomp genmod mkcycl mkdotl mkgraph mkhom mkhom_old\
   mkinc mksub mktree orbrep precond pseudochop pwkond rad soc symnew tcond tuc \
   zad zbl zcf zcl zcp zct zcv zef zev zfr ziv zkd zmo zmu zmw znu zor zpo zpr \
-<<<<<<< HEAD
-  zpt zqt zro zsc zsi zsp zsy ztc zte ztr zts zuk zvp
-=======
   zpt zqt zro zsc zsi zsp zsy ztc zte ztm ztr zts zuk zvp
->>>>>>> 4a68ae339f0300470810ab3c90387657ccf21f0c
 
 all build: $(PROGRAMS:%=bin/%)
 
@@ -165,27 +161,15 @@ tmp/config.h: tmp/mk.dir Makefile Makefile.conf src/genconfig.c
 
 docDir = doc/${MTX_VERSION}
 docDocs = src/changelog.doc src/meataxe.doc src/sections.doc
-<<<<<<< HEAD
-docProducts = ${MTX_VERSION}/index.html ${MTX_VERSION}/pages.html ${MTX_VERSION}/classes.html
-=======
 docProducts = ${docDir}/index.html ${docDir}/pages.html ${docDir}/classes.html
->>>>>>> 4a68ae339f0300470810ab3c90387657ccf21f0c
 
 doc: ${docProducts}
 
 ${docProducts}: \
-<<<<<<< HEAD
    etc/Doxyfile $(PROGRAMS:%=src/%.c) $(LIB_OBJS:%=src/%.c) src/meataxe.h  \
    ${docDocs} src/meataxe.doc src/changelog.doc
-	mkdir -p doc/${MTX_VERSION}
+	mkdir -p ${docDir}
 	doxygen etc/Doxyfile
-=======
-   etc/Doxyfile etc/layout.xml \
-   $(PROGRAMS:%=src/%.c) $(LIB_OBJS:%=src/%.c) src/meataxe.h  \
-   ${docDocs} src/meataxe.doc src/changelog.doc
-	mkdir -p doc/${MTX_VERSION}
-	doxygen etc/Doxyfile >/dev/null
->>>>>>> 4a68ae339f0300470810ab3c90387657ccf21f0c
 
 
 # ------------------------------------------------------------------------------
