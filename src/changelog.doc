@@ -1,0 +1,92 @@
+# vim:fileencoding=utf8
+
+/**
+
+@page changelog Release Notes
+
+<<<<<<< HEAD
+@section Release 2.4.X
+@par 21-May-2012
+Bugfix: pwkond can now print words in GAP format if there are more than
+9 generators.
+=======
+@section r2_4_x Release 2.4.X
+@par Aug-2012
+The documentation was updated ad extended (but is still far from complete).
+
+@par 21-May-2012
+Bugfix: pwkond can now print words in GAP format if there are more than 9 generators.
+>>>>>>> 4a68ae339f0300470810ab3c90387657ccf21f0c
+
+@par 31-Jul-2011
+- Improved GAP support in PWKOND. Output now includes peak words and associated polynomials.
+  Note that the output format has changed and is not compatible with previous releases.
+- Added functions for handling of dynamic strings.
+- Documentation enhancements.
+
+<<<<<<< HEAD
+@section Release 2.4.13
+=======
+@section r2_4_13 Release 2.4.13
+>>>>>>> 4a68ae339f0300470810ab3c90387657ccf21f0c
+@par 11-May-2009 
+- Makefile reorganization and SVN integration. As a consequence of the latter, the third
+  component of the version number is now the subversion revision.
+@par 23-Apr-2009 
+- genmod: fixed broken bit string reading code.
+- pseudochop: integrated changes by Klaus Lux to get it working under 2.4.8.
+  Now using simpler integer mat functions.
+
+<<<<<<< HEAD
+@section Release 2.4.8
+=======
+@section r2_4_8 Release 2.4.8
+>>>>>>> 4a68ae339f0300470810ab3c90387657ccf21f0c
+@par 21-Apr-2009 
+- Minor corrections.
+- ZSC: accept spin-up scripts starting with a seed vector differnent from 1.
+
+<<<<<<< HEAD
+@section Release 2.4.7
+=======
+@section r2_4_7 Release 2.4.7
+>>>>>>> 4a68ae339f0300470810ab3c90387657ccf21f0c
+@par 09-Sep-2007
+- More bugfixes for 64-bit platforms.
+@par 03-Sep-2007
+- New: pseudochop
+@par 02-Sep-2007
+- Various corrections for 64-bit platforms
+@par 15-Jul-2007
+- Initialize all Makefile variables
+@par 29-Apr-2007
+- Fixed a bug in ZNU, leading to wrong output if the input is not a square matrix and
+  the null-space is not requested (i.e., when using the "znu matrix" syntax,
+  "znu matrix nsp" was working correctly).
+@par 19-Feb-2007
+- Fixed various compiler errors and warnings with newer GCC versions.
+@par 12-Jul-2005
+- Bugfix in zsp (option handling).  Working on documention.
+
+@par 01-Jun-2004
+- Bugfix in @c FfAlloc() for large allocations > 4GB.
+
+@par 14-Apr-2004
+- Documentation
+
+@par 10-Apr-2004
+- Added -n option to ZTS
+- Started to convert documentation do doxygen.
+
+@par ?
+- Various changes for 64-bit systems
+- Bit String file format is now machine independent
+
+@par 09-Dec-2003
+- Renamed restruct to @c ffrestrict to avoid name collision on HP machines
+- mkhom: Updated online help.
+- mkhom updated test scripts
+- Test scripts modified to work with Bourne shell (Solaris)
+- Automatic platform detection (config.h)
+
+**/
