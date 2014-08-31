@@ -1,0 +1,27 @@
+var modules =
+[
+    [ "Application Framework", "group__app.html", "group__app" ],
+    [ "Bit-String Handling", "group__bs.html", "group__bs" ],
+    [ "Module Structure", "group__cfinfo.html", "group__cfinfo" ],
+    [ "Characteristic and Minimal Polynomials", "group__charpol.html", "group__charpol" ],
+    [ "Miscellaneous", "group__misc.html", "group__misc" ],
+    [ "Greased Matrices", "group__grmat.html", "group__grmat" ],
+    [ "Integer Matrices", "group__imat.html", "group__imat" ],
+    [ "Finite Fields", "group__ff.html", "group__ff" ],
+    [ "Other Kernel Functions", "group__ff2.html", "group__ff2" ],
+    [ "Row Operations", "group__ffrow.html", "group__ffrow" ],
+    [ "Matrices over Finite Fields", "group__mat.html", "group__mat" ],
+    [ "File I/O", "group__mf.html", "group__mf" ],
+    [ "Endomorphisms", "group__endo.html", "group__endo" ],
+    [ "Matrix Representations", "group__mrep.html", "group__mrep" ],
+    [ "Matrix Sets", "group__matset.html", "group__matset" ],
+    [ "Tensor Products", "group__tp.html", "group__tp" ],
+    [ "Operating System Interface", "group__os.html", "group__os" ],
+    [ "Permutations", "group__perm.html", "group__perm" ],
+    [ "Polynomials", "group__poly.html", "group__poly" ],
+    [ "Sets of Integers.", "group__intset.html", "group__intset" ],
+    [ "Spin-up and Split", "group__spinup.html", "group__spinup" ],
+    [ "Text File Handling", "group__stf.html", "group__stf" ],
+    [ "Dynamic Strings", "group__str.html", "group__str" ],
+    [ "The Word Generator", "group__wgen.html", "group__wgen" ]
+];
