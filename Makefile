@@ -166,7 +166,7 @@ docProducts = ${docDir}/index.html ${docDir}/pages.html ${docDir}/classes.html
 doc: ${docProducts}
 
 ${docProducts}: \
-   etc/Doxyfile $(PROGRAMS:%=src/%.c) $(LIB_OBJS:%=src/%.c) src/meataxe.h  \
+   etc/Doxyfile etc/layout.xml $(PROGRAMS:%=src/%.c) $(LIB_OBJS:%=src/%.c) src/meataxe.h  \
    ${docDocs} src/meataxe.doc src/changelog.doc
 	mkdir -p ${docDir}
 	doxygen etc/Doxyfile

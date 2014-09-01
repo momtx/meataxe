@@ -27,7 +27,7 @@ MTX_DEFINE_FILE_INFO
  ** However, in the textual representation produced by PermPrint() or by the 
  ** @ref prog_zpr "zpr" program, the points are numbered from 1...n.
  **
- ** Only permutations of equal degree can be multiplied. This could cause confusion
+ ** Only permutations of equal degree can be multiplied. This can be confusing
  ** because the textual representation produced by PermPrint() does not include the
  ** degree, and fixed points are always suppressed. For example "(3 4)(5 6 7)" could
  ** be interpreted as a permutation of degree 8 or any higher degree. All these permutations
@@ -49,14 +49,15 @@ MTX_DEFINE_FILE_INFO
  **/
 
 
-/**
- ** Check a permutation.
- ** This function checks if the argument, is a pointer to a valid
- ** permutation. If the permutation is o.k., the function return 1. 
- ** Otherwise, an error is signalled and, if the error handler does not 
- ** terminate the program, the function returns 0.
- ** @return 1 if @em p is valid permutation, 0 otherwise.
- **/
+////////////////////////////////////////////////////////////////////////////////////////////////////
+///
+/// Check a permutation.
+/// This function checks if the argument is a pointer to a valid permutation.
+/// If the permutation is o.k., the function returns 1. 
+/// Otherwise, an error is signalled and, if the error handler does not 
+/// terminate the program, the function returns 0.
+/// @return 1 if @a p is a valid permutation, 0 otherwise.
+///
 
 int PermIsValid(const Perm_t *p)
 {

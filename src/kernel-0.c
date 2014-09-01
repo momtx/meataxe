@@ -162,9 +162,12 @@ static int LPR = 0;		/* Long ints per row */
 
 /**
  ** @defgroup ffrow Row Operations
+ ** The fuctions below perform operations on row vectors.
  ** All row operations at kernel level use a global row size which can be
  ** set with FfSetNoc(). The current row size is available in the global
  ** variable FfNoc.
+ **
+ ** @par Internal data format
  **
  ** A (row) vector is stored in memory as an array of bytes. The actual
  ** size of a row depends on the number of marks in the row and on the

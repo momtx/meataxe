@@ -67,22 +67,16 @@ their own programs.
 Users interested in programming with the MeatAxe and MeatAxe internals
 in general will find the second part, @ref pg_programming.
 
-<<<<<<< HEAD
-=======
 - @subpage changelog
 - @subpage pg_userguide
 - @subpage pg_programming
->>>>>>> 4a68ae339f0300470810ab3c90387657ccf21f0c
 **/
 
 /**
 @page pg_userguide User's Guide
 Sections:
 
-<<<<<<< HEAD
 - @subpage changelog
-=======
->>>>>>> 4a68ae339f0300470810ab3c90387657ccf21f0c
 - @subpage pg_start
 - @subpage pg_using
 - @subpage prog_stdopts
@@ -346,12 +340,9 @@ files are used by a specific program, look up the program description in
 section @ref pg_progs_index. You can also run any MeatAxe program
 with the "--help" option to get an on-line help.
 
-<<<<<<< HEAD
-=======
 A detailed description of the MeatAxe file formats can be found in @ref pg_file_formats.
 
 
->>>>>>> 4a68ae339f0300470810ab3c90387657ccf21f0c
 @section sec_libdir The library directory
 When given a file name, all programs look for the file in the current
 directory first. If the file is not found there, some programs try to
@@ -554,7 +545,7 @@ For this reason, most data files contain only a single object.
 
 @subsection Matrices
 Matrices are stored as a sequence of rows in the internal format
-(see @ref UNDEFINED:kernel.ff), but the rows are truncated to their
+(see @ref ff_intrep and @ref ffrow_intrep), but the rows are truncated to their
 actual length. 
 For example, a row with 17 entries over GF(125) on a machine with
 sizeof(long)=4 would occupy 20 bytes in memory but only 17 bytes in
