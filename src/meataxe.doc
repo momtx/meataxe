@@ -369,9 +369,9 @@ MeatAxe are the result of users' reports, requests, and experiments.
 This documentation is intended to provide the information you need to write your own MeatAxe
 programs or to modify existing ones. Since the software is changing continuously the documentation
 is necessarily incomplete and not everywhere correct. So, even with this manual, you should be
-prepared to look in the source code, which is always the ultimate reference. Starting with release
-2.3 I have tried to merge documentation and source code, which should help to keep the
-documentation more up-to-date.
+prepared to look in the source code, which is always the ultimate reference.
+Starting with release 2.3 I have tried to merge documentation and source code,
+which should help to keep the documentation more up-to-date.
 
 Internally, the MeatAxe is built in several layers where each layer uses
 services provided by the lower layers.
@@ -388,6 +388,7 @@ completetely check their arguments.
 Most kernel services are simple,
 but there are some more complex functions like Gaussian elimination,
 which have been implemented in the kernel for performance reasons.
+
 
 - @ref os
 - @ref ff
@@ -513,7 +514,6 @@ meaning is always the same.
 @par -G
   Generate output in GAP format.
 **/
-
 
 /**
 @page pg_file_formats File Formats

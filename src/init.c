@@ -65,7 +65,6 @@ int MtxOpt_UseOldWordGenerator = 0;
  **/
 
 int MtxInitLibrary()
-
 {
     int long_size = sizeof(long);
     long test = 1;
@@ -91,7 +90,6 @@ int MtxInitLibrary()
  **/
 
 void MtxCleanupLibrary()
-
 {
 }
 

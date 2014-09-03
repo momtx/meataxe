@@ -464,9 +464,9 @@ int StfGetVector(StfData *f, int *bufsize, int *buf);
    MeatAxe files
    ------------------------------------------------------------------ */
 
-/** MeatAxe data file object.
-The MtxFile_t structure represents a MeatAxe data file.
-***/
+/// MeatAxe data file object.
+/// The MtxFile_t structure represents a MeatAxe data file.
+
 typedef struct
 {
     unsigned long Magic;	/**< Used internally. */

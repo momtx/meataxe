@@ -71,9 +71,8 @@ static int LPR = 0;		/* Long ints per row */
  ** The kernel also defines two constants:
  ** FF_ZERO is the zero element of the current field, and
  ** FF_ONE is unit element of the current field.
- ** Depending on which kernel you are using, FF_ZERO and FF_ONE need
- ** not be constants.
- ** They may be defined as variables or even function calls.
+ ** Depending on which kernel you are using, FF_ZERO and FF_ONE may be constants,
+ ** or they may be defined as variables or function calls.
  ** 
  ** @section ff_intrep Internal data representation
  ** @par 'Small' Kernel (q≤256)

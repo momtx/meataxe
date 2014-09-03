@@ -102,7 +102,6 @@ static void MatToVec(Matrix_t *mat, PTR vec)
 
 
 static int ReadMatrices()
-
 {
     /* Read matrices and check compatibility.
        -------------------------------------- */
@@ -128,16 +127,13 @@ static int ReadMatrices()
 	MTX_ERROR3("%s and %s: %E",AName,BName,MTX_ERR_INCOMPAT);
 	return -1;
     }
-    MESSAGE(1,("%s: %ldx%ld matrix over GF(%ld)\n",
-	AName,mat1->Nor,mat1->Noc,mat1->Field));
-    MESSAGE(1,("%s: %ldx%ld matrix over GF(%ld)\n",
-	BName,mat2->Nor,mat2->Noc,mat2->Field));
+    MESSAGE(1,("%s: %dx%d matrix over GF(%d)\n", AName,mat1->Nor,mat1->Noc,mat1->Field));
+    MESSAGE(1,("%s: %dx%d matrix over GF(%d)\n", BName,mat2->Nor,mat2->Noc,mat2->Field));
     return 0;
 }
 
 
 static int OpenVectorFiles()
-
 {
     /* Open the <Vectors> file and check the header.
        --------------------------------------------- */
@@ -150,8 +146,7 @@ static int OpenVectorFiles()
 	MTX_ERROR4("%s and %s/%s: %E",VName,AName,BName,MTX_ERR_INCOMPAT);
 	return -1;
     }
-    MESSAGE(1,("%s: %ldx%ld matrix over GF(%ld)\n",VName,vecfile->Nor,
-	vecfile->Noc,vecfile->Field));
+    MESSAGE(1,("%s: %dx%d matrix over GF(%d)\n",VName,vecfile->Nor,vecfile->Noc,vecfile->Field));
     
     /* Create output file.
        ------------------- */
@@ -275,11 +270,7 @@ int main(int argc, const char **argv)
 /**
 @page prog_ztm ztm - Tensor Multiply
 
-<<<<<<< HEAD
-@section syntax Command Line
-=======
 @section ztm_syntax Command Line
->>>>>>> 4a68ae339f0300470810ab3c90387657ccf21f0c
 <pre>
 ztm [@em Options] @em A @em B @em Vectors @em Result
 </pre>
@@ -297,11 +288,7 @@ ztm [@em Options] @em A @em B @em Vectors @em Result
 @par @em Result
     Output file: Vectors.
 
-<<<<<<< HEAD
-@section inp Input Files
-=======
 @section ztm_inp Input Files
->>>>>>> 4a68ae339f0300470810ab3c90387657ccf21f0c
 @par @em A
     Left factor, m×m matrix.
 @par @em B
@@ -309,31 +296,19 @@ ztm [@em Options] @em A @em B @em Vectors @em Result
 @par @em Vectors
     Vectors to be multiplied, a r×(mn) matrix.
 
-<<<<<<< HEAD
-@section out Output Files
-=======
 @section ztm_out Output Files
->>>>>>> 4a68ae339f0300470810ab3c90387657ccf21f0c
 @par @em Result
     Vectors.
 
 
-<<<<<<< HEAD
-@section desc Description
-=======
 @section ztm_desc Description
->>>>>>> 4a68ae339f0300470810ab3c90387657ccf21f0c
 This program reads two matrices from A and B, a list of vectors,
 and calculates the image of the vectors under A⊗B.
 @em A and @em B must be square matrices of dimension m and n, respetively
 This calculation could be done with the @ref prog_zte "zte" and @ref prog_zmu "zmu"
 programs, but using @b ztm avoids the memory-consuming calculation of A⊗B.
 
-<<<<<<< HEAD
-@subsection impl Implementation Details
-=======
 @subsection ztm_impl Implementation Details
->>>>>>> 4a68ae339f0300470810ab3c90387657ccf21f0c
 Let m, n be the dimensions of A and B, respectively. For each
 input vector v∊F<sup>1×mn</sup>, the program computes the m×n matrix \f$\hat{v}\f$ with
 @f[
