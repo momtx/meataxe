@@ -102,10 +102,10 @@ typedef unsigned short *PTR;
 /* Kernel variables and functions
    ------------------------------ */
 
-extern int FfOrder;		/**< Current field order */
-extern int FfChar;		/**< Current characteristic */
-extern FEL FfGen;		/**< Generator */
-extern int FfNoc;		/**< Number of columns for row ops */
+extern int FfOrder;
+extern int FfChar;
+extern FEL FfGen;
+extern int FfNoc;
 extern size_t FfCurrentRowSize;
 
 

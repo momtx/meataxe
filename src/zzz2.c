@@ -15,8 +15,7 @@
 
 MTX_DEFINE_FILE_INFO
 
-/// @addtogroup ff
-/// @{
+/// @addtogroup ff @{
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -25,14 +24,14 @@ MTX_DEFINE_FILE_INFO
 
 int FfChar = 0;
 
-/// Field order.
-/// %FfOrder may be used in expressiond but must never modified directly. To change the
-/// current field, use FfSetField().
+/// The current field order.
+/// May be used in expressions but must never modified directly. To change the field,
+/// use FfSetField().
 
 int FfOrder = -1;
 
 /// Field generator.
-/// This variable contains a genrator for the multiplicative group of the current field.
+/// This variable contains a generator for the multiplicative group of the current field.
 
 FEL FfGen = 0;
 

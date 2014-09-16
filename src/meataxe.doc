@@ -89,6 +89,13 @@ Sections:
 /**
 @page pg_bib Bibliography
 
+
+@anchor HEBA05
+@par [HEBA05]
+   D.F. Holt; B. Eick; E.A. O'Brien:
+   Handbook of computational group theory, Discrete mathematics and its applications 24 (2005).
+   CRC Press, ISBN 978-1-58488-372-2
+
 @anchor HR94
 @par [HR94]
     D. F. Holt, S. Rees:
@@ -392,7 +399,6 @@ which have been implemented in the kernel for performance reasons.
 
 - @ref os
 - @ref ff
-- @ref ff2
 
 \par Layer 2 - Objects
 This layer encapsulates low-level functionality in "objects" 
@@ -545,8 +551,7 @@ For this reason, most data files contain only a single object.
 
 @subsection Matrices
 Matrices are stored as a sequence of rows in the internal format
-(see @ref ff_intrep and @ref ffrow_intrep), but the rows are truncated to their
-actual length. 
+(see @ref ff), but the rows are truncated to their actual length. 
 For example, a row with 17 entries over GF(125) on a machine with
 sizeof(long)=4 would occupy 20 bytes in memory but only 17 bytes in
 a data file.

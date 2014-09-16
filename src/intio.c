@@ -14,7 +14,7 @@
 MTX_DEFINE_FILE_INFO
 
 /**
- ** @addtogroup ff2
+ ** @addtogroup os
  ** @{
  **/
 

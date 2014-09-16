@@ -12,7 +12,7 @@
 
 
 /**
- ** @addtogroup ff2
+ ** @addtogroup ff
  **/
 
 /**
