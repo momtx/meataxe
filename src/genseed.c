@@ -10,18 +10,13 @@
 #include <limits.h>
 #include <stdlib.h>
 
-
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 /// Local data
 
 MTX_DEFINE_FILE_INFO
 
-
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-/// @defgroup algo Algorithms
-/// @addtogroup algo
-/// @{
-/// @defgroup algo_pseed The seed vector generator
+/// @defgroup pseed The seed vector generator
 ///
 /// The seed vector generator is used to walk through the one-dimensional subspaces of a given
 /// vector space V, the @em "seed space". For each one-dimensional subspace U≤V the generator
@@ -32,11 +27,9 @@ MTX_DEFINE_FILE_INFO
 /// number by mapping coefficients to natural numbers in the usual way (see FfToInt() for details)
 /// and calculating λ<sub>1</sub>q<sup>0</sup>+...λ<sub>n</sub>q<sup>n-1</sup>.
 /// Seed vectors are those vectors where the leading coefficient is 1.
-/// @}
-
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-/// @ingroup algo_pseed
+/// @ingroup pseed
 /// Generates the next seed vector.
 /// @a lastno is the number of the previous seed vector and can be zero to calculate the first seed
 /// vector.
@@ -101,4 +94,3 @@ long MakeSeedVector(const Matrix_t *basis, long lastno, PTR vec)
 
    return nextno;
 }
-
