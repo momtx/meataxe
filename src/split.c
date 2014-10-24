@@ -1,30 +1,20 @@
-/* ============================= C MeatAxe ==================================
-   File:        $Id: split.c,v 1.1.1.1 2007/09/02 11:06:17 mringe Exp $
-   Comment:     Split a representation.
-   --------------------------------------------------------------------------
-   (C) Copyright 1999 Michael Ringe, Lehrstuhl D fuer Mathematik,
-   RWTH Aachen, Germany  <mringe@math.rwth-aachen.de>
-   This program is free software; see the file COPYING for details.
-   ========================================================================== */
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// C MeatAxe - Split a representation
+//
+// (C) Copyright 1998-2014 Michael Ringe, Lehrstuhl D fuer Mathematik, RWTH Aachen
+//
+// This program is free software; see the file COPYING for details.
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 #include "meataxe.h"
 #include <stdlib.h>
 
 MTX_DEFINE_FILE_INFO 
 
+/// @addtogroup spinup
+/// @{
 
-
-/**
- ** @addtogroup spinup
- ** @{
- ** @details
- ** @par Splitting a Representation
- ** If a proper invariant subspace U<V has been found for a matrix representation 
- ** M, the restriction of M to U as well as the representation on V/U can
- ** be calculated. This is called splitting the representation. Note that the
- ** representation on V/U depends on a randomly chosen basis.
- **/
-
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 static int CheckArguments(Matrix_t *subspace, const MatRep_t *rep)
 {
@@ -46,58 +36,55 @@ static int CheckArguments(Matrix_t *subspace, const MatRep_t *rep)
     return 0;
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
-
-
-/**
- ** Split a Representation.
- ** Given a matrix representation of an algebra A and an A-invariant 
- ** subspace U, this function calculates two new matrix representations 
- ** corrsponding to the subspace and quotient, respectively.
- **
-** @a subspace is a basis for the invariant subspace. This matrix must be in
-** echelon form. @a rep is the representation to be split. @a sub and @a quot
-** are pointers to variables, where the representation on subspace and 
-** quotient, respectively, will be stored. Both @a sub and @a quot can be 0
-** if the corresponding representation is not needed. If @a sub is
-** not 0, <tt>*sub</tt> must be 0 or a pointer to a valid matrix 
- ** representation, which will be destroyed before the result is stored 
- ** in @a *sub|. The same remark applies to @a quot.
- **
- ** The function checks that the subspace is indeed invariant under the
- ** given representation. However, this check is carried out only when
- ** the subspace is calculated, i.e., if @a sub is not 0. The function
- ** also check if subspace and representation are compatible. If any of 
- ** these checks fails, the return value is -1.
- **
- ** Internally, Split() uses SAction() and QAction() to calculate
- ** the action of the generators on the subspace and quotient.
- **
- ** The following examples shows how to use SpinUp() to find an invariant
- ** subspace. If a proper subspace is found, the representation is split
- ** using Split():
- ** @code
- ** MatRep_t *Rep;
- ** Matrix_t *seed;
- ** Matrix_t *subspace;
- ** ...
- ** subspace = SpinUp(seed,Rep,SF_FIRST|SF_SUB);
- ** if (subspace->Nor > 0 && subspace->Nor < subspace->Noc)
- ** {
- **     MatRep_t *Sub = NULL, *Quot = NULL;
- **     printf("Split!\n");
- **     Split(subspace,Rep,&Sub,&Quot);
- ** }
- ** @endcode
- **
- ** @see SpinUp QAction SAction
- ** @param subspace Pointer to an invariant subspace.
- ** @param rep Matrix representation to split.
- ** @param sub Matrix representation on the subspace.
- ** @param quot Matrix representation on the quotient.
- ** @return 0 on success, -1 on error.
-
- **/
+///
+/// Split a Representation.
+/// Given a matrix representation of an algebra A and an A-invariant 
+/// subspace U, this function calculates two new matrix representations 
+/// corrsponding to the subspace and quotient, respectively.
+///
+/// @a subspace is a basis for the invariant subspace. This matrix must be in
+/// echelon form. @a rep is the representation to be split. @a sub and @a quot
+/// are pointers to variables, where the representation on subspace and 
+/// quotient, respectively, will be stored. Both @a sub and @a quot can be 0
+/// if the corresponding representation is not needed. If @a sub is
+/// not 0, <tt>*sub</tt> must be 0 or a pointer to a valid matrix 
+/// representation, which will be destroyed before the result is stored 
+/// in @a *sub|. The same remark applies to @a quot.
+///
+/// The function checks that the subspace is indeed invariant under the
+/// given representation. However, this check is carried out only when
+/// the subspace is calculated, i.e., if @a sub is not 0. The function
+/// also check if subspace and representation are compatible. If any of 
+/// these checks fails, the return value is -1.
+///
+/// Internally, Split() uses SAction() and QAction() to calculate
+/// the action of the generators on the subspace and quotient.
+///
+/// The following examples shows how to use SpinUp() to find an invariant
+/// subspace. If a proper subspace is found, the representation is split
+/// using Split():
+/// @code
+/// MatRep_t *Rep;
+/// Matrix_t *seed;
+/// Matrix_t *subspace;
+/// ...
+/// subspace = SpinUp(seed,Rep,SF_FIRST|SF_SUB);
+/// if (subspace->Nor > 0 && subspace->Nor < subspace->Noc)
+/// {
+///     MatRep_t *Sub = NULL, *Quot = NULL;
+///     printf("Split!\n");
+///     Split(subspace,Rep,&Sub,&Quot);
+/// }
+/// @endcode
+///
+/// @see SpinUp QAction SAction
+/// @param subspace Pointer to an invariant subspace.
+/// @param rep Matrix representation to split.
+/// @param sub Matrix representation on the subspace.
+/// @param quot Matrix representation on the quotient.
+/// @return 0 on success, -1 on error.
 
 int Split(Matrix_t *subspace, const MatRep_t *rep, 
 	  MatRep_t **sub, MatRep_t **quot)
@@ -148,7 +135,5 @@ int Split(Matrix_t *subspace, const MatRep_t *rep,
     return 0;
 }
 
-/**
- ** @}
- **/
+/// @}
 

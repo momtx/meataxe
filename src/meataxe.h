@@ -489,15 +489,16 @@ int MfWriteRows(MtxFile_t *f, PTR buf, int nrows);
 
 /* ---------------------------------------------------------------------------------------------- */
 
+/// A matrix over a finite field.
 typedef struct
 {
-    unsigned long Magic;/**< Used internally. */
-    int Field;		/**< Field order. */
-    int Nor;		/**< Number of rows. */
-    int Noc;		/**< Number of columns. */
-    PTR Data;		/**< Data, organized as array of rows. */
-    size_t RowSize;	/**< Size (in bytes) of one row. */
-    int *PivotTable;	/**< Pivot table (if matrix is in echelon form) . */
+    unsigned long Magic; ///< Used internally.
+    int Field;		 ///< Field order. 
+    int Nor;		 ///< Number of rows. 
+    int Noc;		 ///< Number of columns. 
+    PTR Data;		 ///< Data, organized as array of rows. 
+    size_t RowSize;	 ///< Size (in bytes) of one row. 
+    int *PivotTable;	 ///< Pivot table (if matrix is in echelon form).
 } Matrix_t;
 
 Matrix_t *MatAdd(Matrix_t *dest, const Matrix_t *src);
