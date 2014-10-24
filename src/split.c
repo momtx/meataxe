@@ -37,7 +37,6 @@ static int CheckArguments(Matrix_t *subspace, const MatRep_t *rep)
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-
 ///
 /// Split a Representation.
 /// Given a matrix representation of an algebra A and an A-invariant 
@@ -62,9 +61,8 @@ static int CheckArguments(Matrix_t *subspace, const MatRep_t *rep)
 /// Internally, Split() uses SAction() and QAction() to calculate
 /// the action of the generators on the subspace and quotient.
 ///
-/// The following examples shows how to use SpinUp() to find an invariant
-/// subspace. If a proper subspace is found, the representation is split
-/// using Split():
+/// The following example shows how to use SpinUp() to find an invariant subspace.
+/// If a proper subspace is found, the representation is split.
 /// @code
 /// MatRep_t *Rep;
 /// Matrix_t *seed;

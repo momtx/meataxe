@@ -539,6 +539,7 @@ T   | Type of object   | R             |  C
 > 1 | Matrix over GF(T)| no. of rows   | no. of columns
 -1  | Permutation      | no. of points | no. of permutations
 -2  | Polynomial       | field         | degree
+-3  | Bit string       | size          | 0
 -8  | Integer matrix   | no. of rows   | no. of columns
 @endverbatim
 
@@ -549,7 +550,7 @@ for example, for the set of generators that is used by programs like
 For this reason, most data files contain only a single object.
 
 
-@subsection Matrices
+@subsection sec_fileformats_binary_mat Matrices
 Matrices are stored as a sequence of rows in the internal format
 (see @ref ff), but the rows are truncated to their actual length. 
 For example, a row with 17 entries over GF(125) on a machine with
@@ -558,7 +559,7 @@ a data file.
 As specified in @ref UNDEFINED:kernel.ff, unused bits in the last byte
 of each row are always filled with zeroes.
 
-@subsection Permutations
+@subsection sec_fileformats_binary_perm Permutations
 A permutation of degree N is stored as N 32-bit integers in little-endian
 format, the i-th number being the image of i (for i = 0...N-1).
 
@@ -579,12 +580,29 @@ Offset  Content
 For compatibility with older MeatAxe versions, the program can also read
 a different format where the points are numbered from 1 to N.
 
-@subsection polynomials
-@todo integer matrices
-@todo bit strings
+@subsection sec_fileformats_binary_poly Polynomials
+A polynomial of degree n,
+p(x)=a<sub>n</sub>x<sup>n</sup>+...+a<sub>1</sub>x+a<sub>0</sub>,
+over GF(q) is stored with the header (-2,n,q). 
+The header is followd by one row of size n+1 containing the coefficients
+in ascendig order: (a<sub>0</sub>,a<sub>0</sub>,...a<sub>n</sub>).
+
+@subsection sec_fileformats_binary_imat Integer matrices
+An r-by-c matrix is stored with the header (-8,r,c), followed by the marks
+in theit "natural" order, i.e., starting with a<sub>11</sub> and ending
+with a<sub>rc<</sub>. The marks are stored in 32-bit little-endian format.
+
+@subsection sec_fileformats_binary_bs Bit strings
+A bit string of length n is stored with the header (-3,n,0), followed by
+k 32-bit little-endian numbers, where k is chosen such that
+32k ≤ n < 32k+1. The least significant bit of the first number is the
+first bit of the string.
+
+
+**/
+
 
 @section sec_fileformats_text Text Files
 @todo old format
 @todo new format
 
-**/

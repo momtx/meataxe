@@ -56,7 +56,6 @@ static void mktmp(long fl, long deg)
  **/
 
 int PolWrite(const Poly_t *p, FILE *f)
-
 {
     long hdr[3];
 
