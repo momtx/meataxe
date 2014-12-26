@@ -1,30 +1,28 @@
-/* ============================= C MeatAxe ==================================
-   File:        $Id: mrtranspose.c,v 1.1.1.1 2007/09/02 11:06:17 mringe Exp $
-   Comment:     Change basis.
-   --------------------------------------------------------------------------
-   (C) Copyright 1997 Michael Ringe, Lehrstuhl D fuer Mathematik,
-   RWTH Aachen, Germany  <mringe@math.rwth-aachen.de>
-   This program is free software; see the file COPYING for details.
-   ========================================================================== */
-
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// C MeatAxe - Matrix representations, transpose
+//
+// (C) Copyright 1998-2015 Michael Ringe, Lehrstuhl D fuer Mathematik, RWTH Aachen
+//
+// This program is free software; see the file COPYING for details.
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 #include "meataxe.h"
+#include <string.h>
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+///   Local data
 
 MTX_DEFINE_FILE_INFO
 
-/**
- ** @addtogroup mrep
- ** @{
- **/
+/// @addtogroup mrep
+/// @{
 
-
-/**
- ** Transpose a Representation.
- ** This function transposes a matrix representation. A new representation
- ** is created, and the original representation is not changed.
- ** @param rep Matrix representation.
- ** @return Pointer to the transposed representation, or 0 on error.
- **/
+////////////////////////////////////////////////////////////////////////////////////////////////////
+/// Transpose a Representation.
+/// This function transposes a matrix representation. A new representation
+/// is created, and the original representation is not changed.
+/// @param rep Matrix representation.
+/// @return Pointer to the transposed representation, or 0 on error.
 
 MatRep_t *MrTransposed(const MatRep_t *rep)
 {
@@ -76,7 +74,5 @@ MatRep_t *MrTransposed(const MatRep_t *rep)
     return tr_rep;
 }
 
-/**
- ** @}
- **/
+/// @}
 

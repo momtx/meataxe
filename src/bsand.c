@@ -1,33 +1,27 @@
-/* ============================= C MeatAxe ==================================
-   File:        $Id: bsand.c,v 1.1.1.1 2007/09/02 11:06:16 mringe Exp $
-   Comment:     Bit string AND operation.
-   --------------------------------------------------------------------------
-   (C) Copyright 1998 Michael Ringe, Lehrstuhl D fuer Mathematik,
-   RWTH Aachen, Germany  <mringe@math.rwth-aachen.de>
-   This program is free software; see the file COPYING for details.
-   ========================================================================== */
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// C MeatAxe - Bit Strings, "and" operation
+//
+// (C) Copyright 1998-2014 Michael Ringe, Lehrstuhl D fuer Mathematik, RWTH Aachen
+//
+// This program is free software; see the file COPYING for details.
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 #include "meataxe.h"
 
-   
-/* --------------------------------------------------------------------------
-   Local data
-   -------------------------------------------------------------------------- */
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// Local data
 
 MTX_DEFINE_FILE_INFO
 
 
-/**
- ** @addtogroup bs
- ** @{
- **/
+/// @addtogroup bs
+/// @{
 
-/**
- ** Intersection of two bit strings.
- ** This function performs a bitwise "and" operation on the operands and stores
- ** the result in @em dest. Both bit strings must have the same size.
- ** @return 0 on success, -1 on error.
- **/
+////////////////////////////////////////////////////////////////////////////////////////////////////
+/// Intersection of two bit strings.
+/// This function performs a bitwise "and" operation on the operands and stores
+/// the result in @em dest. Both bit strings must have the same size.
+/// @return 0 on success, -1 on error.
 
 int BsAnd(BitString_t *dest, const BitString_t *src)
 {
@@ -65,6 +59,4 @@ int BsAnd(BitString_t *dest, const BitString_t *src)
     return 0;
 }
 
-/**
- ** @}
- **/
+/// @}

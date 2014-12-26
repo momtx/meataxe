@@ -1,41 +1,38 @@
-/* ============================= C MeatAxe ==================================
-   File:        $Id: mrread.c,v 1.1.1.1 2007/09/02 11:06:17 mringe Exp $
-   Comment:     Load a matrix representation.
-   --------------------------------------------------------------------------
-   (C) Copyright 1998 Michael Ringe, Lehrstuhl D fuer Mathematik,
-   RWTH Aachen, Germany  <mringe@math.rwth-aachen.de>
-   This program is free software; see the file COPYING for details.
-   ========================================================================== */
-
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// C MeatAxe - Matrix representations, file i/o
+//
+// (C) Copyright 1998-2015 Michael Ringe, Lehrstuhl D fuer Mathematik, RWTH Aachen
+//
+// This program is free software; see the file COPYING for details.
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 #include "meataxe.h"
 #include <string.h>
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
+///   Local data
+   
 MTX_DEFINE_FILE_INFO
 
-/**
- ** @addtogroup mrep
- ** @{
- **/
+/// @addtogroup mrep
+/// @{
 
-
-/**
- ** Load a Matrix Representation.
- ** This function creates a new matrix representation and reads the generators
- ** from files. Each generator ist expected in a different file. The file name
- ** is constructed by appending ".1", ".2" etc. to @a basename or, if @a basename
- ** contains a "%d" placeholder, by replacing the "%d" with "1", "2", etc.
- ** For example, the following lines 
- ** @code
- ** m11 = MrLoad("m11",2);
- ** m11 = MrLoad("m11.%d",2);
- ** @endcode
- ** are equivalent. In both cases, two matrices are read from "m11.2" and "m11.2",
- ** repectively.
- ** @param basename Base file name for generators.
- ** @param ngen Number of generators.
- ** @return Pointer to the representation, or 0 on error.
- **/
+////////////////////////////////////////////////////////////////////////////////////////////////////
+/// Load a Matrix Representation.
+/// This function creates a new matrix representation and reads the generators
+/// from files. Each generator ist expected in a different file. The file name
+/// is constructed by appending ".1", ".2" etc. to @a basename or, if @a basename
+/// contains a "%d" placeholder, by replacing the "%d" with "1", "2", etc.
+/// For example, the following lines 
+/// @code
+/// m11 = MrLoad("m11",2);
+/// m11 = MrLoad("m11.%d",2);
+/// @endcode
+/// are equivalent. In both cases, two matrices are read from "m11.2" and "m11.2",
+/// repectively.
+/// @param basename Base file name for generators.
+/// @param ngen Number of generators.
+/// @return Pointer to the representation, or 0 on error.
 
 MatRep_t *MrLoad(const char *basename, int ngen)
 {
@@ -86,7 +83,5 @@ MatRep_t *MrLoad(const char *basename, int ngen)
     return mr;
 }
 
-/**
- ** @}
- **/
+/// @}
 

@@ -1,34 +1,28 @@
-/* ============================= C MeatAxe ==================================
-   File:        $Id: bsor.c,v 1.1.1.1 2007/09/02 11:06:16 mringe Exp $
-   Comment:     Bit string OR operation.
-   --------------------------------------------------------------------------
-   (C) Copyright 1998 Michael Ringe, Lehrstuhl D fuer Mathematik,
-   RWTH Aachen, Germany  <mringe@math.rwth-aachen.de>
-   This program is free software; see the file COPYING for details.
-   ========================================================================== */
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// C MeatAxe - Bit Strings, "or" operation
+//
+// (C) Copyright 1998-2014 Michael Ringe, Lehrstuhl D fuer Mathematik, RWTH Aachen
+//
+// This program is free software; see the file COPYING for details.
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 #include "meataxe.h"
 
-   
-/* --------------------------------------------------------------------------
-   Local data
-   -------------------------------------------------------------------------- */
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// Local data
 
 MTX_DEFINE_FILE_INFO
 
 
-/**
- ** @addtogroup bs
- ** @{
- **/
+/// @addtogroup bs
+/// @{
 
-/**
- ** Union of two bit strings.
- ** This function computes the union of two bit strings, i.e., the bitwise logical "or".
- ** The result is stored in @em dest and overwrites the previous value. Both bit
- ** strings must have the same size.
- ** @return 0 on success, -1 on error.
- **/
+////////////////////////////////////////////////////////////////////////////////////////////////////
+/// Union of two bit strings.
+/// This function computes the union of two bit strings, i.e., the bitwise logical "or".
+/// The result is stored in @em dest and overwrites the previous value. Both bit
+/// strings must have the same size.
+/// @return 0 on success, -1 on error.
 
 int BsOr(BitString_t *dest, const BitString_t *src)
 {
@@ -64,6 +58,4 @@ int BsOr(BitString_t *dest, const BitString_t *src)
     return 0;
 }
 
-/**
- ** @}
- **/
+/// @}

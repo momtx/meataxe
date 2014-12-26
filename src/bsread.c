@@ -1,32 +1,27 @@
-/* ============================= C MeatAxe ==================================
-   File:        $Id: bsread.c,v 1.1.1.1 2007/09/02 11:06:16 mringe Exp $
-   Comment:     Read a bit string from a file.
-   --------------------------------------------------------------------------
-   (C) Copyright 1998 Michael Ringe, Lehrstuhl D fuer Mathematik,
-   RWTH Aachen, Germany  <mringe@math.rwth-aachen.de>
-   This program is free software; see the file COPYING for details.
-   ========================================================================== */
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// C MeatAxe - Bit Strings, file input
+//
+// (C) Copyright 1998-2014 Michael Ringe, Lehrstuhl D fuer Mathematik, RWTH Aachen
+//
+// This program is free software; see the file COPYING for details.
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 #include "meataxe.h"
 
    
-/* --------------------------------------------------------------------------
-   Local data
-   -------------------------------------------------------------------------- */
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// Local data
 
 MTX_DEFINE_FILE_INFO
 
 
-/**
- ** @addtogroup bs
- ** @{
- **/
+/// @addtogroup bs
+/// @{
 
-/**
- ** Read a bit string from a file.
- ** @param f File to read from. Must be open for reading.
- ** @return The bit string, 0 on error.
- **/
+////////////////////////////////////////////////////////////////////////////////////////////////////
+/// Read a bit string from a file.
+/// @param f File to read from. Must be open for reading.
+/// @return The bit string, 0 on error.
 
 BitString_t *BsRead(FILE *f)
 {
@@ -67,6 +62,4 @@ BitString_t *BsRead(FILE *f)
 }
 
 
-/**
- ** @}
- **/
+/// @}

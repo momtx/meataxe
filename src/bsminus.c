@@ -1,35 +1,30 @@
-/* ============================= C MeatAxe ==================================
-   File:        $Id: bsminus.c,v 1.1.1.1 2007/09/02 11:06:16 mringe Exp $
-   Comment:     Bit string subtraction.
-   --------------------------------------------------------------------------
-   (C) Copyright 1998 Michael Ringe, Lehrstuhl D fuer Mathematik,
-   RWTH Aachen, Germany  <mringe@math.rwth-aachen.de>
-   This program is free software; see the file COPYING for details.
-   ========================================================================== */
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// C MeatAxe - Bit Strings, difference
+//
+// (C) Copyright 1998-2014 Michael Ringe, Lehrstuhl D fuer Mathematik, RWTH Aachen
+//
+// This program is free software; see the file COPYING for details.
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
 
 #include "meataxe.h"
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// Local data
    
-/* --------------------------------------------------------------------------
-   Local data
-   -------------------------------------------------------------------------- */
-
 MTX_DEFINE_FILE_INFO
 
 
-/**
- ** @addtogroup bs
- ** @{
- **/
+/// @addtogroup bs
+/// @{
 
-/**
- ** Difference of two bit strings.
- ** This function computes the (set theoretical) difference of two bit strings, i.e., a bit
- ** in the result is set if and only if it is set in @em dest but not in @em src.
- ** The result is stored in @em dest and overwrites the previous value.
- ** The arguments must be bit strings of the same size.
- ** @return 0 on success, -1 on error.
- **/
+////////////////////////////////////////////////////////////////////////////////////////////////////
+/// Difference of two bit strings.
+/// This function computes the (set theoretical) difference of two bit strings, i.e., a bit
+/// in the result is set if and only if it is set in @em dest but not in @em src.
+/// The result is stored in @em dest and overwrites the previous value.
+/// The arguments must be bit strings of the same size.
+/// @return 0 on success, -1 on error.
 
 int BsMinus(BitString_t *dest, const BitString_t *src)
 {
@@ -66,6 +61,4 @@ int BsMinus(BitString_t *dest, const BitString_t *src)
 }
 
 
-/**
- ** @}
- **/
+/// @}

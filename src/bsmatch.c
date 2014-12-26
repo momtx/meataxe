@@ -1,21 +1,17 @@
-/* ============================= C MeatAxe ==================================
-   File:        $Id: bsmatch.c,v 1.1.1.1 2007/09/02 11:06:16 mringe Exp $
-   Comment:     Count matching bits.
-   --------------------------------------------------------------------------
-   (C) Copyright 1998 Michael Ringe, Lehrstuhl D fuer Mathematik,
-   RWTH Aachen, Germany  <mringe@math.rwth-aachen.de>
-   This program is free software; see the file COPYING for details.
-   ========================================================================== */
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// C MeatAxe - Bit Strings, count matching bits
+//
+// (C) Copyright 1998-2014 Michael Ringe, Lehrstuhl D fuer Mathematik, RWTH Aachen
+//
+// This program is free software; see the file COPYING for details.
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 #include "meataxe.h"
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// Local data
    
-/* --------------------------------------------------------------------------
-   Local data
-   -------------------------------------------------------------------------- */
-
 MTX_DEFINE_FILE_INFO
-
 
 static int BitCount[256] =  /* Number of '1' bits in binary representation */
 {
@@ -38,18 +34,15 @@ static int BitCount[256] =  /* Number of '1' bits in binary representation */
 };
 
 
-/**
- ** @addtogroup bs
- ** @{
- **/
+/// @addtogroup bs
+/// @{
 
-/**
- ** Intersection count.
- ** This function calculates the cardinality of the intersection of two bit strings, i.e.,
- ** the number of bits that are set in both @em a and @em b. The arguments must be bit
- ** strings of the same size.
- ** @return Number of bits in the intersection of @em a and @em b, or -1 on error.
- **/
+////////////////////////////////////////////////////////////////////////////////////////////////////
+/// Intersection count.
+/// This function calculates the cardinality of the intersection of two bit strings, i.e.,
+/// the number of bits that are set in both @em a and @em b. The arguments must be bit
+/// strings of the same size.
+/// @return Number of bits in the intersection of @em a and @em b, or -1 on error.
 
 int BsIntersectionCount(const BitString_t *a, const BitString_t *b)
 {
@@ -81,6 +74,4 @@ int BsIntersectionCount(const BitString_t *a, const BitString_t *b)
 }
     
   
-/**
- ** @}
- **/
+/// @}

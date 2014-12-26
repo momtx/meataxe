@@ -92,7 +92,6 @@ int MatIsValid(const Matrix_t *mat)
 
 }
 
-
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 /// Create a new matrix.
 /// This function creates a new matrix with given dimensions over a given field.
@@ -102,7 +101,7 @@ int MatIsValid(const Matrix_t *mat)
 /// @param nor Number of rows.
 /// @param noc Number of columns.
 /// @return Pointer to the new matrix or 0 on error.
-////
+
 Matrix_t *MatAlloc(int field, int nor, int noc)
 {
     Matrix_t *m;

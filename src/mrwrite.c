@@ -1,35 +1,32 @@
-/* ============================= C MeatAxe ==================================
-   File:        $Id: mrwrite.c,v 1.1.1.1 2007/09/02 11:06:17 mringe Exp $
-   Comment:     Write a matrix representation.
-   --------------------------------------------------------------------------
-   (C) Copyright 1999 Michael Ringe, Lehrstuhl D fuer Mathematik,
-   RWTH Aachen, Germany  <mringe@math.rwth-aachen.de>
-   This program is free software; see the file COPYING for details.
-   ========================================================================== */
-
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// C MeatAxe - Matrix representations, file i/o
+//
+// (C) Copyright 1998-2015 Michael Ringe, Lehrstuhl D fuer Mathematik, RWTH Aachen
+//
+// This program is free software; see the file COPYING for details.
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 #include "meataxe.h"
 #include <string.h>
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
+///   Local data
+   
 MTX_DEFINE_FILE_INFO
 
-/**
- ** @addtogroup mrep
- ** @{
- **/
+/// @addtogroup mrep
+/// @{
 
-
-/**
- ** Save a Matrix Representation.
- ** This function saves all generators of a matrix representation.
- ** Each generator ist written to different file. The file name
- ** is constructed by appending ".1", ".2" etc. to @a basename or, if 
- ** @a basename contains a "%d" placeholder, by replacing the "%d" 
- ** with "1", "2", etc.
- ** @param rep Pointer to the matrix representation.
- ** @param basename Base file name for generators.
- ** @return 0 on success, -1 on error.
- **/
+////////////////////////////////////////////////////////////////////////////////////////////////////
+/// Save a Matrix Representation.
+/// This function saves all generators of a matrix representation.
+/// Each generator ist written to different file. The file name
+/// is constructed by appending ".1", ".2" etc. to @a basename or, if 
+/// @a basename contains a "%d" placeholder, by replacing the "%d" 
+/// with "1", "2", etc.
+/// @param rep Pointer to the matrix representation.
+/// @param basename Base file name for generators.
+/// @return 0 on success, -1 on error.
 
 int MrSave(const MatRep_t *rep, const char *basename)
 {
@@ -68,7 +65,5 @@ int MrSave(const MatRep_t *rep, const char *basename)
     return i >= rep->NGen ? 0 : -1;
 }
 
-/**
- ** @}
- **/
+/// @}
 

@@ -1,31 +1,25 @@
-/* ============================= C MeatAxe ==================================
-   File:        $Id: bsdup.c,v 1.1.1.1 2007/09/02 11:06:16 mringe Exp $
-   Comment:     Duplicate a bit string.
-   --------------------------------------------------------------------------
-   (C) Copyright 1998 Michael Ringe, Lehrstuhl D fuer Mathematik,
-   RWTH Aachen, Germany  <mringe@math.rwth-aachen.de>
-   This program is free software; see the file COPYING for details.
-   ========================================================================== */
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// C MeatAxe - Bit Strings, duplicate
+//
+// (C) Copyright 1998-2014 Michael Ringe, Lehrstuhl D fuer Mathematik, RWTH Aachen
+//
+// This program is free software; see the file COPYING for details.
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 #include "meataxe.h"
 #include <string.h>
 
-   
-/* --------------------------------------------------------------------------
-   Local data
-   -------------------------------------------------------------------------- */
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// Local data
 
 MTX_DEFINE_FILE_INFO
 
-/**
- ** @addtogroup bs
- ** @{
- **/
+/// @addtogroup bs
+/// @{
 
-/**
- ** Duplicate a bit string.
- ** Returns an independent copy of the argument, or 0 on error.
- **/
+////////////////////////////////////////////////////////////////////////////////////////////////////
+/// Duplicate a bit string.
+/// Returns an independent copy of the argument, or 0 on error.
 
 BitString_t *BsDup(const BitString_t *src)
 {
@@ -43,6 +37,4 @@ BitString_t *BsDup(const BitString_t *src)
     return n;
 }
 
-/**
- ** @}
- **/
+/// @}

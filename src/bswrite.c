@@ -1,33 +1,27 @@
-/* ============================= C MeatAxe ==================================
-   File:        $Id: bswrite.c,v 1.1.1.1 2007/09/02 11:06:16 mringe Exp $
-   Comment:     Write a bit string to a file.
-   --------------------------------------------------------------------------
-   (C) Copyright 1998 Michael Ringe, Lehrstuhl D fuer Mathematik,
-   RWTH Aachen, Germany  <mringe@math.rwth-aachen.de>
-   This program is free software; see the file COPYING for details.
-   ========================================================================== */
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// C MeatAxe - Bit Strings, file output
+//
+// (C) Copyright 1998-2014 Michael Ringe, Lehrstuhl D fuer Mathematik, RWTH Aachen
+//
+// This program is free software; see the file COPYING for details.
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 #include "meataxe.h"
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// Local data
    
-/* --------------------------------------------------------------------------
-   Local data
-   -------------------------------------------------------------------------- */
-
 MTX_DEFINE_FILE_INFO
 
 
-/**
- ** @addtogroup bs
- ** @{
- **/
+/// @addtogroup bs
+/// @{
 
-/**
- ** Write a bit string to a file.
- ** @param bs The bit string.
- ** @param f File to write to. Must be open for writing.
- ** @return 0 on success, -1 on error.
- **/
+////////////////////////////////////////////////////////////////////////////////////////////////////
+/// Write a bit string to a file.
+/// @param bs The bit string.
+/// @param f File to write to. Must be open for writing.
+/// @return 0 on success, -1 on error.
 
 int BsWrite(BitString_t *bs, FILE *f)	
 {
@@ -68,6 +62,4 @@ int BsWrite(BitString_t *bs, FILE *f)
     return 0;
 }
 
-/**
- ** @}
- **/
+/// @}
