@@ -16,21 +16,17 @@
 
 MTX_DEFINE_FILE_INFO 
 
-/**
- ** @addtogroup stf
- ** @{
- **/
+/// @addtogroup stf
+/// @{
 
-/**
- ** Read Next Line.
- ** This function reads a single text line into the STF object's internal 
- ** line buffer and prepares the text for parsing with StfGetXXX() functions.
- ** StfReadLine() strips comments and assembles multi-line texts into a 
- ** single line. Thus, the application need not handle comments and multi-line
- ** texts.
- ** @param f Pointer to a structured text file (STF) object.
- ** @return 0 on success, -1 on end-of-file or error.
- **/
+/// Read Next Line.
+/// This function reads a single text line into the STF object's internal 
+/// line buffer and prepares the text for parsing with StfGetXXX() functions.
+/// StfReadLine() strips comments and assembles multi-line texts into a 
+/// single line. Thus, the application need not handle comments and multi-line
+/// texts.
+/// @param f Pointer to a structured text file (STF) object.
+/// @return 0 on success, -1 on end-of-file or error.
 
 int StfReadLine(StfData *f)
 {
@@ -77,18 +73,16 @@ int StfReadLine(StfData *f)
 
 
 
-/**
- ** Get Entry Name.
- ** This function extracts the name part of internal line buffer and prepares 
- ** the buffer for further parsing with StfGetXXX() functions.
- ** On return,  <tt>f->GetPtr</tt> points to the first non-space character after
- ** the ":=".
- ** %StfGetName() can be called only after a line was successfully read with
- ** StfReadLine(). It must be called before any of the StfGetXXX()
- ** functions. See StfGetInt() for an example.
- ** @param f Pointer to a structured text file (STF) object.
- ** @return Name found in text line or |NULL| on error.
- **/
+/// Get Entry Name.
+/// This function extracts the name part of internal line buffer and prepares 
+/// the buffer for further parsing with StfGetXXX() functions.
+/// On return,  <tt>f->GetPtr</tt> points to the first non-space character after
+/// the ":=".
+/// %StfGetName() can be called only after a line was successfully read with
+/// StfReadLine(). It must be called before any of the StfGetXXX()
+/// functions. See StfGetInt() for an example.
+/// @param f Pointer to a structured text file (STF) object.
+/// @return Name found in text line or |NULL| on error.
 
 const char *StfGetName(StfData *f)
 {
@@ -121,36 +115,34 @@ const char *StfGetName(StfData *f)
 
 
 
-/**
- ** Read an Integer.
- ** This function gets one integer from the current line and increments the
- ** read pointer accordingly. Before this function is called, a line must 
- ** have been read with StfReadLine() and prepared with StfGetName().
- **
- ** Reading starts at the current position. Any leading blanks are skipped.
- ** On return, the new current position is the character following the last 
- ** digit. If there is no integer to read, the current position is not 
- ** changed, and the function returns -1.
- **
- ** Here is an example:
- ** @code
- ** StfFile *f = StfOpen("test","r");
- ** int dim, degree, result = 0;
- ** while (result == 0 && StfReadLine(f) == 0)
- ** {
- **     char *name = StfGetName(f);
- **     if (!strcmp(name,"Dimension"))
- **         result = StfGetInt(f,&dim);
- **     else if (!strcmp(name,"Degree"))
- **         result = StfGetInt(f,&degree);
- ** }
- ** @endcode
- ** This code fragment opens a text file and reads two parameters, "Degree" and 
- ** "Dimension", into the variables @c degree and @c dim, respectively.
- ** @param f Pointer to a structured text file (STF) object.
- ** @param buf Pointer to a buffer receiving the value.
- ** @return 0 on success, -1 on error.
- **/
+/// Read an Integer.
+/// This function gets one integer from the current line and increments the
+/// read pointer accordingly. Before this function is called, a line must 
+/// have been read with StfReadLine() and prepared with StfGetName().
+///
+/// Reading starts at the current position. Any leading blanks are skipped.
+/// On return, the new current position is the character following the last 
+/// digit. If there is no integer to read, the current position is not 
+/// changed, and the function returns -1.
+///
+/// Here is an example:
+/// @code
+/// StfFile *f = StfOpen("test","r");
+/// int dim, degree, result = 0;
+/// while (result == 0 && StfReadLine(f) == 0)
+/// {
+///     char *name = StfGetName(f);
+///     if (!strcmp(name,"Dimension"))
+///         result = StfGetInt(f,&dim);
+///     else if (!strcmp(name,"Degree"))
+///         result = StfGetInt(f,&degree);
+/// }
+/// @endcode
+/// This code fragment opens a text file and reads two parameters, "Degree" and 
+/// "Dimension", into the variables @c degree and @c dim, respectively.
+/// @param f Pointer to a structured text file (STF) object.
+/// @param buf Pointer to a buffer receiving the value.
+/// @return 0 on success, -1 on error.
 
 int StfGetInt(StfData *f, int *buf)
 {
@@ -192,18 +184,16 @@ int StfGetInt(StfData *f, int *buf)
 
 
 
-/**
- ** Read a string.
- ** This function gets a string from the current line and increments the
- ** read pointer accordingly. Before this function is called, a line must 
- ** have been read with StfReadLine() and prepared with StfGetName().
- ** The string is expected at the current position of the test file and must
- ** be in C syntax, i.e., enclosed in double quotation marks.
- ** @param f Pointer to a structured text file (STF) object.
- ** @param buf Pointer to a buffer receiving the value.
- ** @param bufsize Buffer size in bytes.
- ** @return 0 on success, -1 on error.
- **/
+/// Read a string.
+/// This function gets a string from the current line and increments the
+/// read pointer accordingly. Before this function is called, a line must 
+/// have been read with StfReadLine() and prepared with StfGetName().
+/// The string is expected at the current position of the test file and must
+/// be in C syntax, i.e., enclosed in double quotation marks.
+/// @param f Pointer to a structured text file (STF) object.
+/// @param buf Pointer to a buffer receiving the value.
+/// @param bufsize Buffer size in bytes.
+/// @return 0 on success, -1 on error.
 
 int StfGetString(StfData *f, char *buf, size_t bufsize)
 {
@@ -269,24 +259,22 @@ int StfGetString(StfData *f, char *buf, size_t bufsize)
 }
 
 
-/**
- ** Skip text.
- ** This function reads (and skips) the text given by @a pattern.
- ** Before using this function, a line must have been read with StfReadLine()
- ** and prepared with StfGetname(). Reading starts at the current position, 
- ** i.e., at the first non-space character after the ":=", or at the first
- ** character that was not read by the previous StfGetXXX() or StfMatch().
- ** A space in @a pattern matches any number (including 0) of spaces or tabs. 
- ** Any other characters in @a pattern are matched one-to-one against the input 
- ** line. 
- ** If @a pattern is matched completely, the current position is updated 
- ** to the character after the last matched character. Otherwise, the current 
- ** position is not changed and the function returns -1.
- ** @param f Pointer to a structured text file (STF) object.
- ** @param pattern The text to be skipped.
- ** @return 0, if the complete text in @a pattern has beed
- ** skipped. -1 otherwise.
- **/
+/// Skip text.
+/// This function reads (and skips) the text given by @a pattern.
+/// Before using this function, a line must have been read with StfReadLine()
+/// and prepared with StfGetname(). Reading starts at the current position, 
+/// i.e., at the first non-space character after the ":=", or at the first
+/// character that was not read by the previous StfGetXXX() or StfMatch().
+/// A space in @a pattern matches any number (including 0) of spaces or tabs. 
+/// Any other characters in @a pattern are matched one-to-one against the input 
+/// line. 
+/// If @a pattern is matched completely, the current position is updated 
+/// to the character after the last matched character. Otherwise, the current 
+/// position is not changed and the function returns -1.
+/// @param f Pointer to a structured text file (STF) object.
+/// @param pattern The text to be skipped.
+/// @return 0, if the complete text in @a pattern has beed
+/// skipped. -1 otherwise.
 
 int StfMatch(StfData *f, const char *pattern)
 {
@@ -321,42 +309,40 @@ int StfMatch(StfData *f, const char *pattern)
 
 
 
-/**
- ** Read a vector.
- ** This function reads a sequence of integers. The sequence must have been
- ** written with StfWriteVector() or at least in the same format.
- **
- ** Before using this function, a line must have been read with StfReadLine()
- ** and prepared with StfGetname(). Reading starts at the current position, 
- ** i.e., at the first non-space character after the ":=", or at the first
- ** character that was not read by the previous StfGetXXX() or StfMatch().
- **
- ** The caller must supply two buffers, the data buffer (@a buf) and an 
- ** integer buffer (@a bufsize). When %StfGetVector() is called, the variable
- ** pointed to by @a bufsize must contain the maximal number of integers
- ** that can be stored in @a buf. On successful return, the variable contains 
- ** the number of integers that were actually stored, which may be smaller than
- ** the original value.
- ** If the vector is to long to fit into the user-supplied buffer, the
- ** function reads as many entries as possible and returns -1.
- **
- ** Here is an example:
- ** @code
- ** char *name = StfGetName(f);
- ** if (!strcmp(name,"Vector"))
- ** {
- **     int vec[10];
- **     int vecsize = 10;
- **     StfGetVector(f,&vecsize,vec);
- **     printf("%d elements read\n",*vecsize);
- ** }
- ** @endcode
- ** @param f Pointer to a structured text file (STF) object.
- ** @param bufsize Pointer to a variable containing the buffer size. On return, the variable
- **      contains the number of elements actually read.
- ** @param buf Pointer to a buffer receiving the data.
- ** @return The function returns $0$ on success and $-1$ on error.
- **/
+/// Read a vector.
+/// This function reads a sequence of integers. The sequence must have been
+/// written with StfWriteVector() or at least in the same format.
+///
+/// Before using this function, a line must have been read with StfReadLine()
+/// and prepared with StfGetname(). Reading starts at the current position, 
+/// i.e., at the first non-space character after the ":=", or at the first
+/// character that was not read by the previous StfGetXXX() or StfMatch().
+///
+/// The caller must supply two buffers, the data buffer (@a buf) and an 
+/// integer buffer (@a bufsize). When %StfGetVector() is called, the variable
+/// pointed to by @a bufsize must contain the maximal number of integers
+/// that can be stored in @a buf. On successful return, the variable contains 
+/// the number of integers that were actually stored, which may be smaller than
+/// the original value.
+/// If the vector is to long to fit into the user-supplied buffer, the
+/// function reads as many entries as possible and returns -1.
+///
+/// Here is an example:
+/// @code
+/// char *name = StfGetName(f);
+/// if (!strcmp(name,"Vector"))
+/// {
+///     int vec[10];
+///     int vecsize = 10;
+///     StfGetVector(f,&vecsize,vec);
+///     printf("%d elements read\n",*vecsize);
+/// }
+/// @endcode
+/// @param f Pointer to a structured text file (STF) object.
+/// @param bufsize Pointer to a variable containing the buffer size. On return, the variable
+///      contains the number of elements actually read.
+/// @param buf Pointer to a buffer receiving the data.
+/// @return The function returns $0$ on success and $-1$ on error.
 
 int StfGetVector(StfData *f, int *bufsize, int *buf)
 {
@@ -384,6 +370,4 @@ int StfGetVector(StfData *f, int *bufsize, int *buf)
 
 
 
-/**
- ** @}
- **/
+/// @}

@@ -14,18 +14,14 @@
 MTX_DEFINE_FILE_INFO
 
 
-/**
- ** @addtogroup imat
- ** @{
- **/
+/// @addtogroup imat
+/// @{
 
-/**
- ** Write an integer matrix to a file.
- ** @see ImatSave
- ** @param mat Pointer to the matrix.
- ** @param f Pointer to the file.
- ** @return 0 on success, -1 on error.
- **/
+/// Write an integer matrix to a file.
+/// @see ImatSave
+/// @param mat Pointer to the matrix.
+/// @param f Pointer to the file.
+/// @return 0 on success, -1 on error.
 
 int ImatWrite(const IntMatrix_t *mat, FILE *f)
 {
@@ -49,15 +45,13 @@ int ImatWrite(const IntMatrix_t *mat, FILE *f)
 
 
 
-/**
- ** Write an Integer Matrix to a File.
- ** This function writes an integer matrix to a named file. If the file
- ** exists, it is destroyed.
- ** @see ImatWrite()
- ** @param mat Pointer to the matrix.
- ** @param file_name File name.
- ** @return 0 on success, -1 on error.
- **/
+/// Write an Integer Matrix to a File.
+/// This function writes an integer matrix to a named file. If the file
+/// exists, it is destroyed.
+/// @see ImatWrite()
+/// @param mat Pointer to the matrix.
+/// @param file_name File name.
+/// @return 0 on success, -1 on error.
 
 int ImatSave(const IntMatrix_t *mat, const char *file_name)
 {
@@ -74,6 +68,4 @@ int ImatSave(const IntMatrix_t *mat, const char *file_name)
     return rc;
 }
 
-/**
- ** @}
- **/
+/// @}

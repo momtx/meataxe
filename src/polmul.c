@@ -17,20 +17,16 @@
 MTX_DEFINE_FILE_INFO
 
 
-/** 
- ** @addtogroup poly
- ** @{
- **/
+/// @addtogroup poly
+/// @{
 
 
-/**
- ** Multiply Polynomials.
- ** This function multiplies @em dest by @em src and returns @em dest.
- ** The polynomials must be over the same field.
- ** @param dest Pointer to the first polynomial.
- ** @param src Pointer to the second polynomial.
- ** @return @em dest, or 0 on error.
- **/
+/// Multiply Polynomials.
+/// This function multiplies @em dest by @em src and returns @em dest.
+/// The polynomials must be over the same field.
+/// @param dest Pointer to the first polynomial.
+/// @param src Pointer to the second polynomial.
+/// @return @em dest, or 0 on error.
 
 Poly_t *PolMul(Poly_t *dest, const Poly_t *src)
 {
@@ -90,6 +86,4 @@ Poly_t *PolMul(Poly_t *dest, const Poly_t *src)
     return dest;
 }
 
-/** 
- ** @}
- **/
+/// @}

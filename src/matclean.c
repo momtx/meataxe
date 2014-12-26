@@ -17,20 +17,16 @@
 
 MTX_DEFINE_FILE_INFO 
 
-/**
- ** @addtogroup mat
- ** @{
- **/
+/// @addtogroup mat
+/// @{
 
-/**
- ** Clean a matrix.
- ** This function "cleans" a matrix with a space, i.e., it adds suitable linear combinations
- ** of the rows in @em sub to the rows of @em mat such that all pivot columns in @em mat are
- ** zero. Both matrices must be over the same field and have the same number of colums.
- ** The second matrix, @em sub, must be in echelon form. The cleaned matrix is reduced to
- ** echelon form.
- ** @return Rank of the cleaned matrix, or -1 on error.
- **/
+/// Clean a matrix.
+/// This function "cleans" a matrix with a space, i.e., it adds suitable linear combinations
+/// of the rows in @em sub to the rows of @em mat such that all pivot columns in @em mat are
+/// zero. Both matrices must be over the same field and have the same number of colums.
+/// The second matrix, @em sub, must be in echelon form. The cleaned matrix is reduced to
+/// echelon form.
+/// @return Rank of the cleaned matrix, or -1 on error.
 
 int MatClean(Matrix_t *mat, const Matrix_t *sub)
 {
@@ -68,6 +64,4 @@ int MatClean(Matrix_t *mat, const Matrix_t *sub)
 }
 
 
-/**
- ** @}
- **/
+/// @}

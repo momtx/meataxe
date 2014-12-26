@@ -41,19 +41,15 @@ static void mktmp(long fl, long deg)
 }
 
 
-/** 
- ** @addtogroup poly
- ** @{
- **/
+/// @addtogroup poly
+/// @{
 
 
-/**
- ** Write a polynomial to a file.
- ** @see PolSave()
- ** @param p Pointer to the polynomial.
- ** @param f File to write to.
- ** @return 0 on success, -1 on error.
- **/
+/// Write a polynomial to a file.
+/// @see PolSave()
+/// @param p Pointer to the polynomial.
+/// @param f File to write to.
+/// @return 0 on success, -1 on error.
 
 int PolWrite(const Poly_t *p, FILE *f)
 {
@@ -87,16 +83,14 @@ int PolWrite(const Poly_t *p, FILE *f)
 
 
 
-/**
- ** Write a Polynomial to a File.
- ** This function creates a file, writes a single polynomial to the file and
- ** closes the file. If a f ile with the specified name already exists, it's
- ** contents are destroyed.
- ** @see PolWrite
- ** @param pol Polynomial to write.
- ** @param fn File name.
- ** @return 0 on success, -1 on error.
- **/
+/// Write a Polynomial to a File.
+/// This function creates a file, writes a single polynomial to the file and
+/// closes the file. If a f ile with the specified name already exists, it's
+/// contents are destroyed.
+/// @see PolWrite
+/// @param pol Polynomial to write.
+/// @param fn File name.
+/// @return 0 on success, -1 on error.
 
 int PolSave(const Poly_t *pol, const char *fn)
 
@@ -123,6 +117,4 @@ int PolSave(const Poly_t *pol, const char *fn)
 
 
 
-/** 
- ** @}
- **/
+/// @}

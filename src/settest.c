@@ -16,17 +16,13 @@
 
 MTX_DEFINE_FILE_INFO
 
-/**
- ** @addtogroup intset
- ** @{
- **/
+/// @addtogroup intset
+/// @{
 
-/**
- ** Check if a number is in a set.
- ** @param set Pointer to the set.
- ** @param elem Number to check.
- ** @return 1 if the set contains @a elem, 0 if not.
- **/
+/// Check if a number is in a set.
+/// @param set Pointer to the set.
+/// @param elem Number to check.
+/// @return 1 if the set contains @a elem, 0 if not.
 
 int SetContains(const Set_t *set, long elem)
 
@@ -43,6 +39,4 @@ int SetContains(const Set_t *set, long elem)
     for (i = set->Size; i > 0 && *l < elem; --i, ++l);
     return (i > 0 && *l == elem);
 }
-/**
- ** @}
- **/
+/// @}

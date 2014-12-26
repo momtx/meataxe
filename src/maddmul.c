@@ -18,24 +18,19 @@
 MTX_DEFINE_FILE_INFO 
 
 
-/**
-!section obj.mat
- ** Add a multiple of a matrix.
- ** @param dest
-    Matrix to add to.
- ** @param src
-    Matrix to add.
- ** @param coeff
-    Coefficient.
- ** @return
-    The function returns |dest|, or |NULL| on error.
-!description
-    This function adds a multiple of a matrix to another matrix. The 
-    matrices must be compatible for addition.
-    |MatAddMul()| handles special cases (|coeff| equals 0 or 1) in an
-    intelligent way, so there is no need for the caller to do this.
- ** @see MatAdd MatMul MatMulScalar
- **/
+/// @addtogroup mat
+/// @{
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+/// Add a multiple of a matrix.
+/// This function adds a multiple of a matrix to another matrix. The 
+/// matrices must be compatible for addition.
+/// |MatAddMul()| handles special cases (|coeff| equals 0 or 1) in an
+/// intelligent way, so there is no need for the caller to do this.
+/// @param dest Matrix to add to.
+/// @param src Matrix to add.
+/// @param coeff Coefficient.
+/// @return The function returns |dest|, or |NULL| on error.
 
 Matrix_t *MatAddMul(Matrix_t *dest, const Matrix_t *src, FEL coeff)
 {
@@ -70,3 +65,5 @@ Matrix_t *MatAddMul(Matrix_t *dest, const Matrix_t *src, FEL coeff)
     }
     return dest;
 }
+
+/// @}

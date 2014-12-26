@@ -16,9 +16,8 @@
 
 MTX_DEFINE_FILE_INFO
 
-/** @addtogroup grmat
- ** @{
- **/
+/// @addtogroup grmat
+/// @{
 
 
 
@@ -154,16 +153,14 @@ static GrExtractionTable_t *BuildExtractionTable(int fl,int grrows)
 }
 
 
-/**
- ** Calculate extraction table for grease.
- ** This function calculates the extraction table for greased matrix
- ** operations for a particular combination of field order and grease level.
- ** The grease level must be in the range 1...16.
- ** To avoid frequent table recalculations, tables are stored in a cache.
- ** @param fl Field order.
- ** @param grrows Grease level, number of rows per block.
- ** @return Pointer to the extraction table, or NULL on error.
- **/
+/// Calculate extraction table for grease.
+/// This function calculates the extraction table for greased matrix
+/// operations for a particular combination of field order and grease level.
+/// The grease level must be in the range 1...16.
+/// To avoid frequent table recalculations, tables are stored in a cache.
+/// @param fl Field order.
+/// @param grrows Grease level, number of rows per block.
+/// @return Pointer to the extraction table, or NULL on error.
 
 const GrExtractionTable_t *GrGetExtractionTable(int fl,int grrows)
 {
@@ -187,6 +184,4 @@ const GrExtractionTable_t *GrGetExtractionTable(int fl,int grrows)
 }
 
 
-/**
- ** @}
- **/
+/// @}

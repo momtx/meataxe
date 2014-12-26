@@ -19,15 +19,11 @@
 
 MTX_DEFINE_FILE_INFO 
 
-/**
- ** @addtogroup stf
- ** @{
- **/
+/// @addtogroup stf
+/// @{
 
 
-/**
- ** Write a Raw Value.
- **/
+/// Write a Raw Value.
 
 int StfPut(StfData *f, const char *text)
 {
@@ -52,9 +48,7 @@ int StfPut(StfData *f, const char *text)
 }
 
 
-/**
- ** Write an Integer.
- **/
+/// Write an Integer.
 
 int StfPutInt(StfData *f, int value)
 {
@@ -64,9 +58,7 @@ int StfPutInt(StfData *f, int value)
 }
 
 
-/**
- ** Write a String.
- **/
+/// Write a String.
 
 int StfPutString(StfData *f, const char *text)
 {
@@ -100,9 +92,7 @@ int StfPutString(StfData *f, const char *text)
 }
 
 
-/**
- ** Write a Vector.
- **/
+/// Write a Vector.
 
 int StfPutVector(StfData *f, int size, const int *value)
 {
@@ -126,34 +116,32 @@ int StfPutVector(StfData *f, int size, const int *value)
 
 
 
-/**
- ** Start a New Entry.
- ** This function begins a new entry. Be sure to terminate any incomplete 
- ** entries with StfEndEntry() before you start a new entry. If you don't, 
- ** the incomplete entry may be lost, and the data file may become corrupted.
- **
- ** Before you use %StfBeginEntry(), check if you can do the job with one of
- ** the StfWriteXXX() functions. In particular, there are functions to write
- ** integers and sequences of integers. If you have more complicated data to write,
- ** you may need to construct the output manually.
- ** Here is an example:
- ** @code
- ** StfBeginEntry(f,"Param");
- ** StfPut(f,"(");
- ** StfPutInt(f,11);
- ** StfPut(f,":");
- ** StfPutInt(f,22);
- ** StfPut(f,")");
- ** StfEndEntry(f);
- ** @endcode
- ** This code produces the following line in the output file:
- ** <pre>
- ** Param := (11:22);
- ** </pre>
- ** @param f Pointer to a structured text file (STF) object.
- ** @param name Name of the entry.
- ** @return 0 on success, -1 on error.
- **/
+/// Start a New Entry.
+/// This function begins a new entry. Be sure to terminate any incomplete 
+/// entries with StfEndEntry() before you start a new entry. If you don't, 
+/// the incomplete entry may be lost, and the data file may become corrupted.
+///
+/// Before you use %StfBeginEntry(), check if you can do the job with one of
+/// the StfWriteXXX() functions. In particular, there are functions to write
+/// integers and sequences of integers. If you have more complicated data to write,
+/// you may need to construct the output manually.
+/// Here is an example:
+/// @code
+/// StfBeginEntry(f,"Param");
+/// StfPut(f,"(");
+/// StfPutInt(f,11);
+/// StfPut(f,":");
+/// StfPutInt(f,22);
+/// StfPut(f,")");
+/// StfEndEntry(f);
+/// @endcode
+/// This code produces the following line in the output file:
+/// <pre>
+/// Param := (11:22);
+/// </pre>
+/// @param f Pointer to a structured text file (STF) object.
+/// @param name Name of the entry.
+/// @return 0 on success, -1 on error.
 
 int StfBeginEntry(StfData *f, const char *name)
 {
@@ -169,13 +157,11 @@ int StfBeginEntry(StfData *f, const char *name)
 
 
 
-/**
- ** End Entry.
- ** This function terminates the current entry and flushes the STF's line
- ** buffer. See StfBeginEntry() for an example.
- ** @param f Pointer to a structured text file (STF) object.
- ** @return 0 on success, -1 on error.
- **/
+/// End Entry.
+/// This function terminates the current entry and flushes the STF's line
+/// buffer. See StfBeginEntry() for an example.
+/// @param f Pointer to a structured text file (STF) object.
+/// @return 0 on success, -1 on error.
 
 int StfEndEntry(StfData *f)
 {
@@ -185,23 +171,21 @@ int StfEndEntry(StfData *f)
 }
 
 
-/**
- ** Write a String.
- ** This function writes an arbitrary text to a structured text file. 
- ** For example, the statement
- ** @code
- ** StfWriteValue(f,"Note","This is a note");
- ** @endcode
- ** produces the following output line:
- ** <pre>
- ** Note := This is a note;
- ** </pre>
- ** Note that any leading spaces in the value will be stripped off when reading the file.
- ** @param f Pointer to a structured text file (STF) object.
- ** @param name Name of the entry.
- ** @param value Value of the entry.
- ** @return 0 on success, -1 on error.
- **/
+/// Write a String.
+/// This function writes an arbitrary text to a structured text file. 
+/// For example, the statement
+/// @code
+/// StfWriteValue(f,"Note","This is a note");
+/// @endcode
+/// produces the following output line:
+/// <pre>
+/// Note := This is a note;
+/// </pre>
+/// Note that any leading spaces in the value will be stripped off when reading the file.
+/// @param f Pointer to a structured text file (STF) object.
+/// @param name Name of the entry.
+/// @param value Value of the entry.
+/// @return 0 on success, -1 on error.
 
 int StfWriteValue(StfData *f, const char *name, const char *value)
 {
@@ -218,23 +202,21 @@ int StfWriteValue(StfData *f, const char *name, const char *value)
 
 
 
-/**
- ** Write a String.
- ** @param f Pointer to a structured text file (STF) object.
- ** @param name Name of the entry.
- ** @param value String to write.
- ** @return 0 on success, -1 on error.
- ** This function writes an arbitrary string to a structured text file. 
- ** For example, the statement
- ** @code
- ** StfWriteValue(f,"Title","This is a test ");
- ** @endcode
- ** produces the following output line:
- ** <pre>
- ** Title := "This is a test ";
- ** </pre>
- ** Unlike StrWriteValue() this function preserves leading and trailing spaces.
- **/
+/// Write a String.
+/// @param f Pointer to a structured text file (STF) object.
+/// @param name Name of the entry.
+/// @param value String to write.
+/// @return 0 on success, -1 on error.
+/// This function writes an arbitrary string to a structured text file. 
+/// For example, the statement
+/// @code
+/// StfWriteValue(f,"Title","This is a test ");
+/// @endcode
+/// produces the following output line:
+/// <pre>
+/// Title := "This is a test ";
+/// </pre>
+/// Unlike StrWriteValue() this function preserves leading and trailing spaces.
 
 int StfWriteString(StfData *f, const char *name, const char *value)
 {
@@ -256,22 +238,20 @@ int StfWriteString(StfData *f, const char *name, const char *value)
 }
 
 
-/**
- ** Write an Integer.
- ** This function writes an integer to a structured text file. For example, 
- ** the statement
- ** @code
- ** StfWriteInt(f,"Dimension",42);
- ** @endcode
- ** produces the following output line:
- ** <pre>
- ** Dimension := 42;
- ** </pre>
- ** @param f Pointer to a structured text file (STF) object.
- ** @param name Name of the entry.
- ** @param value Value of the entry.
- ** @return 0 on success, -1 on error.
- **/
+/// Write an Integer.
+/// This function writes an integer to a structured text file. For example, 
+/// the statement
+/// @code
+/// StfWriteInt(f,"Dimension",42);
+/// @endcode
+/// produces the following output line:
+/// <pre>
+/// Dimension := 42;
+/// </pre>
+/// @param f Pointer to a structured text file (STF) object.
+/// @param name Name of the entry.
+/// @param value Value of the entry.
+/// @return 0 on success, -1 on error.
 
 int StfWriteInt(StfData *f, const char *name, int value)
 {
@@ -292,24 +272,22 @@ int StfWriteInt(StfData *f, const char *name, int value)
 
 
 
-/**
- ** Write a Vector.
- ** This function writes a sequence of integers to a structured text file.
- ** For example, the statement
- ** @code
- ** int dims[5] = {11,22,33,44,55};
- ** StfWriteVector(f,"Dimensions",dims,5);
- ** @endcode
- ** produces the following output line:
- ** <pre>
- ** Dimensions := [11,22,33,44,55];
- ** </pre>
- ** @param f Pointer to a structured text file (STF) object.
- ** @param name Name of the entry.
- ** @param size Size of the vector (number of entries, not bytes).
- ** @param value Pointer to the vector.
- ** @return The function returns $0$ on success and $-1$ on error.
- **/
+/// Write a Vector.
+/// This function writes a sequence of integers to a structured text file.
+/// For example, the statement
+/// @code
+/// int dims[5] = {11,22,33,44,55};
+/// StfWriteVector(f,"Dimensions",dims,5);
+/// @endcode
+/// produces the following output line:
+/// <pre>
+/// Dimensions := [11,22,33,44,55];
+/// </pre>
+/// @param f Pointer to a structured text file (STF) object.
+/// @param name Name of the entry.
+/// @param size Size of the vector (number of entries, not bytes).
+/// @param value Pointer to the vector.
+/// @return The function returns $0$ on success and $-1$ on error.
 
 int StfWriteVector(StfData *f, const char *name, int size, const int *value)
 {
@@ -324,6 +302,4 @@ int StfWriteVector(StfData *f, const char *name, int size, const int *value)
     return 0;
 }
 
-/**
- ** @}
- **/
+/// @}

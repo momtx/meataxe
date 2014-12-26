@@ -13,83 +13,49 @@
 MTX_DEFINE_FILE_INFO
 
 
-/**
-!definesection algo.ldiag
-The lattice drawing functions can be used to draw a modular lattice. The 
-algorithm calculates x and y coordinates for each node of the lattice 
-specifying the point where the node should be drawn. Note: this algorithm
-is far from perfect. It tries in some way to minimize the number of crossings
-between incidence lines, but the result should always be understood as a first
-approximation to a `beautiful' diagram. Also note that the drawing of nodes and
-lines is left to the application.
- **/
+/// @definesection ldiag Lattice drawing
+/// @{
+/// @details
+/// The lattice drawing functions can be used to draw a modular lattice. The 
+/// algorithm calculates x and y coordinates for each node of the lattice 
+/// specifying the point where the node should be drawn. Note: this algorithm
+/// is far from perfect. It tries in some way to minimize the number of crossings
+/// between incidence lines, but the result should always be understood as a first
+/// approximation to a `beautiful' diagram. Also note that the drawing of nodes and
+/// lines is left to the application.
 
 
 
-/**
-!section algo.ldiag
-!structure LdNode_t "Lattice drawing node data"
-!synopsis 
-    typedef struct
-    {
-	double PosX, PosY;
-	unsigned long UserData;
-	int Layer;	
-	double Score;
-	int ScoreCount;
-    } LdNode_t;
-!description
-    The |LdNode_t| holds all per-node data used internally by the lattice 
-    drawing algorithms. Each node has a single number (unsigned long) of 
-    user-defined data. 
-    This field may be used by the application to attach additional 
-    information to the nodes. It is not used by the drawing algorithm. 
-    |PosX| and |PosY| contain the x and y position of the node an may be
-    read by the application. All other fields are for internal use only.
- **/
+/// @class LdNode_t
+/// Lattice drawing node data
+/// The LdNode_t holds all per-node data used internally by the lattice 
+/// drawing algorithms. Each node has a single number (unsigned long) of 
+/// user-defined data. 
+/// This field may be used by the application to attach additional 
+/// information to the nodes. It is not used by the drawing algorithm. 
+/// PosX and PosY contain the x and y position of the node an may be
+/// read by the application. All other fields are for internal use only.
 
+/// @class LdLattice_t
+/// Lattice drawing data structure
+/// The |LdLattice| holds all data used internally by the lattice drawing
+/// algorithms. |Node| is a list of the nodes. The nodes may appear in any 
+/// order, they need not be sorted, and node 0 need not be the bottom node.
 
-/**
-!structure LdLattice_t "Lattice drawing data structure"
-!synopsis 
-    typedef struct
-    {
-	int NNodes;
-	LdNode_t *Nodes;
-	int *IsSub;
-	int *LayerNo;
-	int NLayers;
-    } LdLattice_t;
-!description
-    The |LdLattice| holds all data used internally by the lattice drawing
-    algorithms. |Node| is a list of the nodes. The nodes may appear in any 
-    order, they need not be sorted, and node 0 need not be the bottom node.
- **/
-
-
-
-/**
- ** Create a lattice drawing structure.
-!synopsis 
-    LdLattice_t *LdAlloc(int num_nodes);
- ** @param num_nodes
-    Number of nodes in the lattice.
- ** @return
-    Lattice data structure or |NULL| on error.
-!description
-    This function allocates and initializes a new |LdLattice| structure 
-    with a given number of nodes. The number of nodes of an existing 
-    |LdLattice| structure cannot be changed. When it is no longer needed, 
-    the data structure must be freed with |LdFree()|. 
-
-    Initially the lattice has no incidences. Before node positions are
-    calculated with |LdSetPositions()|, all incidences must be entered
-    using |LdAddIncidence()|.
- ** @see LdFree LdAddIncidence LdSetPositions
- **/
+////////////////////////////////////////////////////////////////////////////////////////////////////
+/// Create a lattice drawing structure.
+/// This function allocates and initializes a new LdLattice structure 
+/// with a given number of nodes. The number of nodes of an existing 
+/// LdLattice structure cannot be changed. When it is no longer needed, 
+/// the data structure must be freed with LdFree(). 
+///
+/// Initially the lattice has no incidences. Before node positions are
+/// calculated with LdSetPositions(), all incidences must be entered
+/// using LdAddIncidence().
+/// @param num_nodes Number of nodes in the lattice.
+/// @return Lattice data structure or NULL on error.
 
 LdLattice_t *LdAlloc(int num_nodes)
-
 {
     LdLattice_t *x;
 
@@ -128,20 +94,14 @@ LdLattice_t *LdAlloc(int num_nodes)
 
 
 
-/**
- ** Free a lattice drawing structure.
- ** @param l
-    Pointer to the data structure.
- ** @return
-    $0$ on success, $-1$ on error.
-!description
-    This function frees an |LdLattice| structure including any internally
-    allocated memory.
- ** @see LdAlloc
- **/
+////////////////////////////////////////////////////////////////////////////////////////////////////
+/// Free a lattice drawing structure.
+/// @param l Pointer to the data structure.
+/// @return $0$ on success, $-1$ on error.
+/// This function frees an |LdLattice| structure including any internally
+/// allocated memory.
 
 int LdFree(LdLattice_t *l)
-
 {
     if (l->Nodes != NULL)
     {
@@ -158,28 +118,18 @@ int LdFree(LdLattice_t *l)
     return 0;
 }
 
-
-
-/**
- ** Add an incidence relation.
- ** @param lat
-    Pointer to the lattice data structure.
- ** @param sub
-    Number of the `lower' node (contained in |sup|).
- ** @param sup
-    Number of the `upper' node (containing in |sub|).
- ** @return
-    $0$ on success, $-1$ on error.
-!description
-    This function adds an incidence relation between two nodes to a given 
-    lattice. Both |sub| and |sup| must be valid node numbers, i.e. greater 
-    or equal to zero and less than the number of nodes. Apart from this 
-    range check, no further plausibility tests are performed.
- ** @see 
- **/
+////////////////////////////////////////////////////////////////////////////////////////////////////
+/// Add an incidence relation.
+/// This function adds an incidence relation between two nodes to a given 
+/// lattice. Both @a sub and @a sup must be valid node numbers, i.e. greater 
+/// or equal to zero and less than the number of nodes. Apart from this 
+/// range check, no further plausibility tests are performed.
+/// @param lat Pointer to the lattice data structure.
+/// @param sub Number of the `lower' node (contained in @a sup).
+/// @param sup Number of the `upper' node (containing @a sub).
+/// @return 0 on success, -1 on error.
 
 int LdAddIncidence(LdLattice_t *lat, int sub, int sup)
-
 {
     if (sub < 0 || sub >= lat->NNodes)
     {
@@ -195,18 +145,16 @@ int LdAddIncidence(LdLattice_t *lat, int sub, int sup)
     return 0;
 }
 
-
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 LdLattice_t *LdFactor(LdLattice_t *l, int min, int max)
-
 {
     min = max = 0;
     return l;
 }
 
-
-
-/* Find the bottom node */
+////////////////////////////////////////////////////////////////////////////////////////////////////
+/// Find the bottom node
    
 static int FindBottom(LdLattice_t *l)
 
@@ -229,13 +177,10 @@ static int FindBottom(LdLattice_t *l)
     return i;
 }
 
-
-
-
-/* Set Layer numbers */
+////////////////////////////////////////////////////////////////////////////////////////////////////
+/// Set Layer numbers 
 
 static int FindLayers(LdLattice_t *l)
-
 {
     int i;
     int finished;
@@ -285,8 +230,7 @@ static int FindLayers(LdLattice_t *l)
     return 0;
 }
 
-
-
+////////////////////////////////////////////////////////////////////////////////////////////////////
 /* Set all y positions */
 
 static int SetYPositions(LdLattice_t *l)
@@ -316,14 +260,10 @@ static int SetYPositions(LdLattice_t *l)
     return 0;
 }
 
-
-
-
-/* Set all x positions initially. Places nodes of one layer at
-   equidistant x positons. */
+////////////////////////////////////////////////////////////////////////////////////////////////////
+/// Set all x positions initially. Places nodes of one layer at equidistant x positons.
 
 static int SetInitialXPositions(LdLattice_t *l)
-
 {
     int layer;
 
@@ -356,11 +296,10 @@ static int SetInitialXPositions(LdLattice_t *l)
 }
 
 
-
-/* Calculate scores for x optimization */
+////////////////////////////////////////////////////////////////////////////////////////////////////
+/// Calculate scores for x optimization
 
 static void CalcScores(LdLattice_t *l)
-
 {
     int i;
 
@@ -406,17 +345,15 @@ static void CalcScores(LdLattice_t *l)
 }
 
 
-/* --------------------------------------------------------------------------
-   ReOrder() - Optimize X positions based on current scores
-
-   This function orders all nodes within each layer by their score, as found
-   in the <Score> field of the <LdNode_t> structure.
-
-   The return value is the number of changes made.
-   -------------------------------------------------------------------------- */
+////////////////////////////////////////////////////////////////////////////////////////////////////
+/// Optimize X positions based on current scores
+///
+/// This function orders all nodes within each layer by their score, as found
+/// in the Score field of the LdNode_t structure.
+///
+/// The return value is the number of changes made.
 
 static int ReOrder(LdLattice_t *l)
-
 {
     int i;
     int num_changes = 0;
@@ -493,25 +430,18 @@ printf("Round %d: %d changes\n",count,num_changes);
 }
 
 
-
-/**
- ** Calculate node positions.
- ** @param l
-    Pointer to the lattice data structure.
- ** @return
-    $0$ on success, $-1$ on error.
-!description
-    This function calculates the x and y coordinates for a lattice drawing.
-    |l| is a pointer to a lattice drawing data structure. All incidences of
-    the lattice must have been defined using |LdAddIncidence()|. On successful
-    return (return value $0$) the node positions are stored in the |PosX| and
-    |PosY| fields of the |LdNode_t| structures contained in |l|.
-    Both x and y coordinates are normalized to the interval $[0,1]$.
- ** @see LdNode_t LdLattice_t
- **/
+////////////////////////////////////////////////////////////////////////////////////////////////////
+/// Calculate node positions.
+/// This function calculates the x and y coordinates for a lattice drawing.
+/// |l| is a pointer to a lattice drawing data structure. All incidences of
+/// the lattice must have been defined using |LdAddIncidence()|. On successful
+/// return (return value $0$) the node positions are stored in the |PosX| and
+/// |PosY| fields of the |LdNode_t| structures contained in |l|.
+/// Both x and y coordinates are normalized to the interval $[0,1]$.
+/// @param l Pointer to the lattice data structure.
+/// @return $0$ on success, $-1$ on error.
 
 int LdSetPositions(LdLattice_t *l)
-
 {
     if (FindLayers(l) != 0)
     {

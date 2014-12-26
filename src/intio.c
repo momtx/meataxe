@@ -13,33 +13,29 @@
 
 MTX_DEFINE_FILE_INFO
 
-/**
- ** @addtogroup os
- ** @{
- **/
+/// @addtogroup os
+/// @{
 
 
-/**
- ** Read long integers.
- ** This function reads @ n long integers from the file @a f into the array 
- ** @a buf. @a buf must point to a memory area of at least n*sizeof(long) 
- ** bytes and the file must be open for reading. The return value indicates how
- ** many integers have actually been read. This number may be less than
- ** @a n because the end of file was encountered while reading. A negative
- ** return value indicates a file i/o error.
- ** 
- ** %SysReadLong32() expects that the numbers in the file are 4-byte integers 
- ** in little-endian format, i.e. the least significant byte first.
- ** Using a machine-independent data format makes MeatAxe data files 
- ** more portable, but there are also some disadvantages:
- ** - The conversion to and from machine-independent format involves several
- **   arithmetic operations for each number read/written.
- ** - The highest number which can be read/written is 2<sup>32</sup>-1.
- ** @param f File to read from.
- ** @param buf Pointer to buffer.
- ** @param n Number of integers to read.
- ** @return Number of integers that were actually read, or $/1$ on error.
- **/
+/// Read long integers.
+/// This function reads @ n long integers from the file @a f into the array 
+/// @a buf. @a buf must point to a memory area of at least n*sizeof(long) 
+/// bytes and the file must be open for reading. The return value indicates how
+/// many integers have actually been read. This number may be less than
+/// @a n because the end of file was encountered while reading. A negative
+/// return value indicates a file i/o error.
+/// 
+/// %SysReadLong32() expects that the numbers in the file are 4-byte integers 
+/// in little-endian format, i.e. the least significant byte first.
+/// Using a machine-independent data format makes MeatAxe data files 
+/// more portable, but there are also some disadvantages:
+/// - The conversion to and from machine-independent format involves several
+///   arithmetic operations for each number read/written.
+/// - The highest number which can be read/written is 2<sup>32</sup>-1.
+/// @param f File to read from.
+/// @param buf Pointer to buffer.
+/// @param n Number of integers to read.
+/// @return Number of integers that were actually read, or $/1$ on error.
 
 int SysReadLong32(FILE *f, long *buf, int n)
 {
@@ -87,17 +83,15 @@ int SysReadLong32(FILE *f, long *buf, int n)
 
 
 
-/**
- ** Write long integers.
- ** This function writes @a n long integers from the the array @a buf to the 
- ** file @a f. @a buf must point to a memory area of at least n*sizeof(long) 
- ** bytes and @a f must be open for writing. The numbers are written in a 
- ** machine-independent format which can be read by SysReadLong().
- ** @param f File to write to.
- ** @param buf Pointer to buffer.
- ** @param n Number of integers to write.
- ** @return Number of integers that were written, or $-1$ on error.
- **/
+/// Write long integers.
+/// This function writes @a n long integers from the the array @a buf to the 
+/// file @a f. @a buf must point to a memory area of at least n*sizeof(long) 
+/// bytes and @a f must be open for writing. The numbers are written in a 
+/// machine-independent format which can be read by SysReadLong().
+/// @param f File to write to.
+/// @param buf Pointer to buffer.
+/// @param n Number of integers to write.
+/// @return Number of integers that were written, or $-1$ on error.
 
 int SysWriteLong32(FILE *f, const long *buf, int n)
 {
@@ -198,7 +192,5 @@ int SysWriteLongX(FILE *f, const long *buf, int n_bytes)
 
 
 
-/**
- ** @}
- **/
+/// @}
 

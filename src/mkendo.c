@@ -11,10 +11,8 @@
 
 MTX_DEFINE_FILE_INFO
 
-/**
- ** @defgroup endo Endomorphisms
- ** @{
- **/
+/// @defgroup endo Endomorphisms
+/// @{
 
 static Matrix_t *MakeEndo(const MatRep_t *rep, const Matrix_t *sb1, 
     const Matrix_t *vec)
@@ -40,29 +38,27 @@ static Matrix_t *MakeEndo(const MatRep_t *rep, const Matrix_t *sb1,
 
 
 
-/**
- ** Calculate the endomorphism ring.
- ** This function calculates a basis for the endomorphism ring E of an
- ** irreducible module. The dimension of E is equal to the degree [F':F]
- ** of the splitting field extension for the module.
- **
- ** The function takes three input arguments: @a ngen is the number of generators
- ** of the algebra, and @a gen points to an array of @a ngen matrices containing
- ** the representations of the generators. @a nsp is the kernel of an 
- ** identifying word for the module, i.e., an algebra element a with
- ** dim(ker(a_V))=[F':F].
- **
- ** On success, basis of E (a set of matrices) is stored into @a endo.
- ** If the function fails, no matrices are stored in @a endo. 
- ** @param rep
- **   Pointer to a matrix representation.
- ** @param nsp
- **   Idword kernel (see below).
- ** @param endo
- **   Pointer to result buffer.
- ** @return
- **   0 on success, -1 on error.
- **/
+/// Calculate the endomorphism ring.
+/// This function calculates a basis for the endomorphism ring E of an
+/// irreducible module. The dimension of E is equal to the degree [F':F]
+/// of the splitting field extension for the module.
+///
+/// The function takes three input arguments: @a ngen is the number of generators
+/// of the algebra, and @a gen points to an array of @a ngen matrices containing
+/// the representations of the generators. @a nsp is the kernel of an 
+/// identifying word for the module, i.e., an algebra element a with
+/// dim(ker(a_V))=[F':F].
+///
+/// On success, basis of E (a set of matrices) is stored into @a endo.
+/// If the function fails, no matrices are stored in @a endo. 
+/// @param rep
+///   Pointer to a matrix representation.
+/// @param nsp
+///   Idword kernel (see below).
+/// @param endo
+///   Pointer to result buffer.
+/// @return
+///   0 on success, -1 on error.
 
 int MakeEndomorphisms(const MatRep_t *rep, const Matrix_t *nsp,	
 	Matrix_t *endo[])
@@ -111,6 +107,4 @@ int MakeEndomorphisms(const MatRep_t *rep, const Matrix_t *nsp,
     return nendo == nsp->Nor ? 0 : -1;
 }
 
-/**
- ** @}
- **/
+/// @}

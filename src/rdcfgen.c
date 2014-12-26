@@ -11,28 +11,24 @@
 
 MTX_DEFINE_FILE_INFO
 
-/**
- ** @addtogroup cfinfo
- ** @{
- **/
+/// @addtogroup cfinfo
+/// @{
 
-/**
- ** Load a Constituent.
- ** This function reads the generators of one constituent of a module and optionally performs
- ** some basic operations (invert, transpose) on the generators.
- ** @a flags may be any combination of the following values:
- ** - @c LAT_RG_STD: Read generators in standard basis (file XY.std.N). These files are
- **   created by pwkond. Default is to read the generators in "random" basis as they are
- **   produced by @ref prog_chop "chop".
- ** - @c LAT_RG_INVERT: Invert the generators.
- ** - @c LAT_RG_TRANSPOSE: Transpose the generators.
- **
- ** @param info Pointer to the lattice information structure.
- ** @param cf Number of constituent to load.
- ** @param flags Optional flags (see below).
- ** @return Pointer to a matrix representation of the specified constituent,
-    or 0 on error.
- **/
+/// Load a Constituent.
+/// This function reads the generators of one constituent of a module and optionally performs
+/// some basic operations (invert, transpose) on the generators.
+/// @a flags may be any combination of the following values:
+/// - @c LAT_RG_STD: Read generators in standard basis (file XY.std.N). These files are
+///   created by pwkond. Default is to read the generators in "random" basis as they are
+///   produced by @ref prog_chop "chop".
+/// - @c LAT_RG_INVERT: Invert the generators.
+/// - @c LAT_RG_TRANSPOSE: Transpose the generators.
+///
+/// @param info Pointer to the lattice information structure.
+/// @param cf Number of constituent to load.
+/// @param flags Optional flags (see below).
+/// @return Pointer to a matrix representation of the specified constituent,
+/// or 0 on error.
 
 MatRep_t *Lat_ReadCfGens(Lat_Info *info, int cf, int flags)
 {
@@ -98,6 +94,4 @@ MatRep_t *Lat_ReadCfGens(Lat_Info *info, int cf, int flags)
     return rep;
 }
 
-/**
- ** @}
- **/
+/// @}

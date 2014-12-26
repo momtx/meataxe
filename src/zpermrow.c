@@ -16,20 +16,16 @@ MTX_DEFINE_FILE_INFO
 
 
 
-/**
- ** @addtogroup ff
- ** @{
- **/
+/// @addtogroup ff
+/// @{
  
-/**
- ** Multiply a Vector by a Permutation.
- ** This function multiplies the vector @a row from the right with the permutation @a perm
- ** and stores the result in @a result. Multiplication of vectors by permutations is defined
- ** as follows: if the permutation maps i to k, then the i-ith mark of the vector is stored
- ** in the k-th position of the result. 
- **
- ** Note: @a result and @a row must not overlap. Otherwise the result is undefined.
- **/
+/// Multiply a Vector by a Permutation.
+/// This function multiplies the vector @a row from the right with the permutation @a perm
+/// and stores the result in @a result. Multiplication of vectors by permutations is defined
+/// as follows: if the permutation maps i to k, then the i-ith mark of the vector is stored
+/// in the k-th position of the result. 
+///
+/// Note: @a result and @a row must not overlap. Otherwise the result is undefined.
 
 void FfPermRow(PTR row, const long *perm, PTR result)
 {
@@ -53,6 +49,4 @@ void FfPermRow(PTR row, const long *perm, PTR result)
     }
 }
 
-/**
- ** @}
- **/
+/// @}

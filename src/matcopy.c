@@ -19,31 +19,27 @@
 MTX_DEFINE_FILE_INFO
 
 
-/**
- ** @addtogroup mat
- ** @{
- **/
+/// @addtogroup mat
+/// @{
 
-/**
- ** Copy a rectangular region of a matrix
- ** This function copies a rectangular region of @em src tp @em dest. The source region
- ** is defined by its upper left corner and dimensions, the destination region is specified
- ** by its upper left corner and has the same dimensions.
- ** Both @em nrows and @em ncols can be given as -1. In this case the region extends up to
- ** the last row or last column, respectively.
- ** The two matrices must be over the same field. Both source and destination region must
- ** not exceed the matrices' dimensions. In particular, it is not possible to extend the
- ** destination matrix by using %MatCopyRegion().
- ** @param dest Pointer to the destination matrix.
- ** @param destrow Destination row.
- ** @param destcol Destination column.
- ** @param src Pointer to the source matrix.
- ** @param row1 First row in region.
- ** @param col1 First column in region.
- ** @param nrows Number of rows to copy. -1 means as many rows as possible.
- ** @param ncols Number of columns to copy. -1 means as many columns as possible.
- ** @return 0 on success, -1 on error.
- **/
+/// Copy a rectangular region of a matrix
+/// This function copies a rectangular region of @em src tp @em dest. The source region
+/// is defined by its upper left corner and dimensions, the destination region is specified
+/// by its upper left corner and has the same dimensions.
+/// Both @em nrows and @em ncols can be given as -1. In this case the region extends up to
+/// the last row or last column, respectively.
+/// The two matrices must be over the same field. Both source and destination region must
+/// not exceed the matrices' dimensions. In particular, it is not possible to extend the
+/// destination matrix by using %MatCopyRegion().
+/// @param dest Pointer to the destination matrix.
+/// @param destrow Destination row.
+/// @param destcol Destination column.
+/// @param src Pointer to the source matrix.
+/// @param row1 First row in region.
+/// @param col1 First column in region.
+/// @param nrows Number of rows to copy. -1 means as many rows as possible.
+/// @param ncols Number of columns to copy. -1 means as many columns as possible.
+/// @return 0 on success, -1 on error.
 
 int MatCopyRegion(Matrix_t *dest, int destrow, int destcol, 
     const Matrix_t *src, int row1, int col1, int nrows, int ncols)
@@ -121,6 +117,4 @@ int MatCopyRegion(Matrix_t *dest, int destrow, int destcol,
     return 0;
 }
 
-/**
- ** @}
- **/
+/// @}

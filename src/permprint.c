@@ -21,25 +21,21 @@ MTX_DEFINE_FILE_INFO
 	(i)<99999?6 : (i)>999999?7 : (i)<9999999?8 : 9)
 
 
-/**
- ** @addtogroup perm
- ** @{
- **/
+/// @addtogroup perm
+/// @{
 
-/**
- ** Print a permutation
- ** This function prints a permutation on the standard output using
- ** cycle notation. If @em name is not 0, the name followed by an
- ** equal sign is printed before the permutation. For example, the
- ** statement <tt>PermPrint("Perm",P);</tt> could produce the following output:
- ** <pre>
- ** Perm=(1 9)(2 3 6)(4 5 7)
- ** </pre>
- ** Fixed points are always suppressed in the output.
- ** @param name Name to print before the permutation or 0.
- ** @param perm Pointer to the permutation.
- ** @return The function returns 0 on success and -1 on error.
- **/
+/// Print a permutation
+/// This function prints a permutation on the standard output using
+/// cycle notation. If @em name is not 0, the name followed by an
+/// equal sign is printed before the permutation. For example, the
+/// statement <tt>PermPrint("Perm",P);</tt> could produce the following output:
+/// <pre>
+/// Perm=(1 9)(2 3 6)(4 5 7)
+/// </pre>
+/// Fixed points are always suppressed in the output.
+/// @param name Name to print before the permutation or 0.
+/// @param perm Pointer to the permutation.
+/// @return The function returns 0 on success and -1 on error.
 
 void PermPrint(const char *name, const Perm_t *perm)
 {
@@ -120,6 +116,4 @@ void PermPrint(const char *name, const Perm_t *perm)
 }
 
 
-/**
- ** @}
- **/
+/// @}

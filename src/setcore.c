@@ -23,29 +23,24 @@ static const unsigned long SetMagic = 0xEF452338;
 
 
 
-/**
- ** @defgroup intset Sets of Integers.
- ** @{
- **/
+/// @defgroup intset Sets of Integers.
+/// @{
 
-/** @class Set_t
- ** @brief
- ** A Set of Integers.
- ** The Set_t structure represents a set of (long) integers. Internally, the set is stored
- ** as a sorted list. Insert operations are relatively expensive, especially for large sets.
- ** So, if you expect a lot of inserts, the BitString_t data type may be a better choice.
- **/
+/// @class Set_t
+/// @brief
+/// A Set of Integers.
+/// The Set_t structure represents a set of (long) integers. Internally, the set is stored
+/// as a sorted list. Insert operations are relatively expensive, especially for large sets.
+/// So, if you expect a lot of inserts, the BitString_t data type may be a better choice.
 
 
-/**
- ** Check a set.
- ** This function checks if the argument is a valid set. If the set is o.k.,
- ** the function returns 1. 
- ** Otherwise, an error is signaled and, if the error handler does not 
- ** terminate the program, the function returns 0.
- ** @param s Pointer to the set.
- ** @return 1 if @a s is a valid set, 0 otherwise.
- **/
+/// Check a set.
+/// This function checks if the argument is a valid set. If the set is o.k.,
+/// the function returns 1. 
+/// Otherwise, an error is signaled and, if the error handler does not 
+/// terminate the program, the function returns 0.
+/// @param s Pointer to the set.
+/// @return 1 if @a s is a valid set, 0 otherwise.
 
 int SetIsValid(const Set_t *s)
 {
@@ -71,12 +66,10 @@ int SetIsValid(const Set_t *s)
 
 
 
-/**
- ** Create a new set.
- ** This function creates a new, empty set. To destroy a set, 
- ** use SetFree(), @em not SysFree().
- ** @return Pointer to the new set or 0 on error.
- **/
+/// Create a new set.
+/// This function creates a new, empty set. To destroy a set, 
+/// use SetFree(), @em not SysFree().
+/// @return Pointer to the new set or 0 on error.
 
 Set_t *SetAlloc()
 {
@@ -104,13 +97,11 @@ Set_t *SetAlloc()
 
 
 
-/**
- ** Destroy a set.
- ** This function frees an integer set. The argument must be a Set_t 
- ** structure which has previously been allocated with SetAlloc(). 
- ** @param x Pointer to the set.
- ** @return 0 on success, -1 on error.
- **/
+/// Destroy a set.
+/// This function frees an integer set. The argument must be a Set_t 
+/// structure which has previously been allocated with SetAlloc(). 
+/// @param x Pointer to the set.
+/// @return 0 on success, -1 on error.
 
 int SetFree(Set_t *x)
 {
@@ -125,11 +116,9 @@ int SetFree(Set_t *x)
 
 
 
-/**
- ** Duplicate a set.
- ** @param s Pointer to the set.
- ** @return Pointer to a copy of the set, or 0 on error.
- **/
+/// Duplicate a set.
+/// @param s Pointer to the set.
+/// @return Pointer to a copy of the set, or 0 on error.
 
 Set_t *SetDup(const Set_t *s)
 {
@@ -159,6 +148,4 @@ Set_t *SetDup(const Set_t *s)
 }
 
 
-/**
- ** @}
- **/
+/// @}

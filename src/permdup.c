@@ -17,17 +17,13 @@
 
 MTX_DEFINE_FILE_INFO
 
-/**
- ** @addtogroup perm
- ** @{
- **/
+/// @addtogroup perm
+/// @{
 
-/**
- ** Duplicate a permutation.
- ** This function creates a copy of an existing permutation. 
- ** @param src Pointer to the permutation.
- ** @return Pointer to a copy of @em src or 0 on error.
- **/
+/// Duplicate a permutation.
+/// This function creates a copy of an existing permutation. 
+/// @param src Pointer to the permutation.
+/// @return Pointer to a copy of @em src or 0 on error.
 
 Perm_t *PermDup(const Perm_t *src)
 {
@@ -49,6 +45,4 @@ Perm_t *PermDup(const Perm_t *src)
 }
 
 
-/**
- ** @}
- **/
+/// @}

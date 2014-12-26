@@ -17,17 +17,13 @@
 
 MTX_DEFINE_FILE_INFO
 
-/**
- ** @addtogroup perm
- ** @{
- **/
+/// @addtogroup perm
+/// @{
 
 
-/**
- ** Order of a permutation.
- ** @param perm Pointer to the permutation.
- ** @return The order of 0, or -1 on error.
- **/
+/// Order of a permutation.
+/// @param perm Pointer to the permutation.
+/// @return The order of 0, or -1 on error.
 
 int PermOrder(const Perm_t *perm)
 {
@@ -95,6 +91,4 @@ int PermOrder(const Perm_t *perm)
 
 
 
-/**
- ** @}
- **/
+/// @}

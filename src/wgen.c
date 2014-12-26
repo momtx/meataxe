@@ -10,57 +10,53 @@
 #include "meataxe.h"
 #include <string.h>
 
-/**
-@defgroup wgen The Word Generator
-@{
+/// @defgroup wgen The Word Generator
+/// @{
+/// 
+/// @details
+/// Given a finitely generated matrix algebra A, the word generator produces
+/// a sequence of "random" elements of A, i.e., words in the generators.
+/// Words are numbered starting with 1.
+/// Here is an example demonstrating the usage of the word generator:
+/// @code
+/// MatRep_t *rep;
+/// ...
+/// WgData_t *wg = WgAlloc(rep);
+/// Matrix_t *word = WgMakeWord(wg,1833);
+/// long nul = MatNullity__(word);
+/// printf("Word 1833 has nullity %ld\n",nul);
+/// WgFree(wg);
+/// @endcode
+/// 
+/// The generator produces words in blocks of 238, i.e.,
+/// words 1 to 238 belong to block 1, words 239 to 476 to block 2 and so on.
+/// For each block, 8 monomials a,b,...,h in the generators are chosen by
+/// calculating "random" products of the generators. Then, all possible
+/// sums of 2 up to 6 of the monomials are calculated, yielding 238 words.
+/// The order in which these sums are taken is fixed: 
+/// a+b+c, a+b+c+f, a+d+e+g+h, a+b+d+e+g+h, ..., c+d+e+f+g+h.
+/// See the @c BitTab[] array in wgen.c for the complete list.
+/// 
+/// Remark: since the generators are often invertible and the word generator is
+/// typically used to find words with a small but nontrival kernel,
+/// it is a good idea to take at least two summands. There seems to be no
+/// reason, however, why sums of 7 or 8 monomials are not used.
+/// 
+/// The calculation of a...h involves a simple pseudorandom number generator
+/// which is seeded with the block number, and some magic including the use
+/// of fixed recipes for the first two blocks (words 1 to 476).
+/// The number of factors in any monomial is limited to 5 for
+/// the first 200 blocks, to 6 for blocks 200 to 1999, and to 7 for
+/// blocks 2000 to 19999. For example, assuming two generators x and y,
+/// the summand xyxyxyx has 7 factors and thus cannot appear before
+/// block 2000, which means not before word 476000.
 
-@details
-Given a finitely generated matrix algebra A, the word generator produces
-a sequence of "random" elements of A, i.e., words in the generators.
-Words are numbered starting with 1.
-Here is an example demonstrating the usage of the word generator:
-@code
-MatRep_t *rep;
-...
-WgData_t *wg = WgAlloc(rep);
-Matrix_t *word = WgMakeWord(wg,1833);
-long nul = MatNullity__(word);
-printf("Word 1833 has nullity %ld\n",nul);
-WgFree(wg);
-@endcode
-
-The generator produces words in blocks of 238, i.e.,
-words 1 to 238 belong to block 1, words 239 to 476 to block 2 and so on.
-For each block, 8 monomials a,b,...,h in the generators are chosen by
-calculating "random" products of the generators. Then, all possible
-sums of 2 up to 6 of the monomials are calculated, yielding 238 words.
-The order in which these sums are taken is fixed: 
-a+b+c, a+b+c+f, a+d+e+g+h, a+b+d+e+g+h, ..., c+d+e+f+g+h.
-See the @c BitTab[] array in wgen.c for the complete list.
-
-Remark: since the generators are often invertible and the word generator is
-typically used to find words with a small but nontrival kernel,
-it is a good idea to take at least two summands. There seems to be no
-reason, however, why sums of 7 or 8 monomials are not used.
-
-The calculation of a...h involves a simple pseudorandom number generator
-which is seeded with the block number, and some magic including the use
-of fixed recipes for the first two blocks (words 1 to 476).
-The number of factors in any monomial is limited to 5 for
-the first 200 blocks, to 6 for blocks 200 to 1999, and to 7 for
-blocks 2000 to 19999. For example, assuming two generators x and y,
-the summand xyxyxyx has 7 factors and thus cannot appear before
-block 2000, which means not before word 476000.
-**/
-
-
-
-/** @class WgData_t
- ** @brief
- ** Word Generator Data.
- ** This structure is used by the word generator to store the generators and
- ** internal data.
- **/
+////////////////////////////////////////////////////////////////////////////////////////////////////
+/// @class WgData_t
+/// @brief
+/// Word Generator Data.
+/// This structure is used by the word generator to store the generators and
+/// internal data.
 
 /* ------------------------------------------------------------------
    Local data
@@ -117,12 +113,11 @@ static int CalcLen(int n2)
     return MAXLEN;
 }
 
-
-/** Determines the recipe for blocks 2 and higher.
- ** @param n2 Block number
- ** @param[out] buf The recipe (entries must still be reduced modulo N,
- **    the number of generators, see MakeBuf()!).
- **/
+////////////////////////////////////////////////////////////////////////////////////////////////////
+/// Determines the recipe for blocks 2 and higher.
+/// @param n2 Block number
+/// @param[out] buf The recipe (entries must still be reduced modulo N,
+///    the number of generators, see MakeBuf()!).
 
 static void MakeBufX2(int n2, int buf[8][MAXLEN+1])
 {
@@ -168,14 +163,13 @@ static void MakeBufX2(int n2, int buf[8][MAXLEN+1])
     }
 }
 
-
-/** Determines the 8 monomials for a given block of words.
- ** @param n2 Block number
- ** @param ngen Number of generators
- ** @param[out] buf The recipe. buf[i] contains the list of generators
- **     that must be multiplied to calculate the i-th monomial. The list
- **     is terminated by -1.
- **/
+////////////////////////////////////////////////////////////////////////////////////////////////////
+/// Determines the 8 monomials for a given block of words.
+/// @param n2 Block number
+/// @param ngen Number of generators
+/// @param[out] buf The recipe. buf[i] contains the list of generators
+///     that must be multiplied to calculate the i-th monomial. The list
+///     is terminated by -1.
 
 static void MakeBuf(int n2, int ngen, int buf[8][MAXLEN+1])
 {
@@ -195,14 +189,13 @@ static void MakeBuf(int n2, int ngen, int buf[8][MAXLEN+1])
     }
 }
 
-
-/** Determines one of the 8 monomials for a given block of words.
- ** @param n2 Block number
- ** @param pos Monomial to calculate (0..7).
- ** @param ngen Number of generators.
- ** @return Description of the monomial, a list of generator numbers terminated by -1.
- **    To calcuate the monomial, multiply these generators in the given order.
- **/
+////////////////////////////////////////////////////////////////////////////////////////////////////
+/// Determines one of the 8 monomials for a given block of words.
+/// @param n2 Block number
+/// @param pos Monomial to calculate (0..7).
+/// @param ngen Number of generators.
+/// @return Description of the monomial, a list of generator numbers terminated by -1.
+///    To calcuate the monomial, multiply these generators in the given order.
 
 static const int *B(int n2, int pos, int ngen)
 {
@@ -219,6 +212,7 @@ static const int *B(int n2, int pos, int ngen)
 }
 
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 static void GenBasis(WgData_t *b, int n2, int pos)
 {
@@ -240,19 +234,15 @@ static void GenBasis(WgData_t *b, int n2, int pos)
     b->N2[pos] = n2;
 }
 
-
-
-
-/**
- ** Symbolic name of a word.
- ** This function returns a symbolic representation of the word @a n as
- ** a polynomial in the generators. The generators are named a, b, c...
- ** The return value is a pointer to a static buffer which is overwritten on 
- ** each call.
- ** @param b Pointer to word generator data.
- ** @param n Word number.
- ** @return Symbolic name of the word.
- **/
+////////////////////////////////////////////////////////////////////////////////////////////////////
+/// Symbolic name of a word.
+/// This function returns a symbolic representation of the word @a n as
+/// a polynomial in the generators. The generators are named a, b, c...
+/// The return value is a pointer to a static buffer which is overwritten on 
+/// each call.
+/// @param b Pointer to word generator data.
+/// @param n Word number.
+/// @return Symbolic name of the word.
 
 const char *WgSymbolicName(WgData_t *b, long n)
 {
@@ -277,6 +267,7 @@ const char *WgSymbolicName(WgData_t *b, long n)
     return name;
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 static void AppendDescription(WgData_t *b, int *pos, int x)
 {
@@ -293,13 +284,11 @@ static void AppendDescription(WgData_t *b, int *pos, int x)
     ++*pos;
 }
 
-
-/**
- ** @param b Word generator.
- ** @param pos Length of the description.
- ** @param n2 Block number
- ** @param i Monomial number (0..7)
- **/
+////////////////////////////////////////////////////////////////////////////////////////////////////
+/// @param b Word generator.
+/// @param pos Length of the description.
+/// @param n2 Block number
+/// @param i Monomial number (0..7)
 
 static void DescribeMonomial(WgData_t *b, int *pos, long n2, int i)
 {
@@ -312,24 +301,22 @@ static void DescribeMonomial(WgData_t *b, int *pos, long n2, int i)
     AppendDescription(b,pos,-1);        /* End of monomial */
 }
 
-
-/**
- ** Creates a symbolic description of a word. 
- ** Stores the description of the given word in «b->Description». The
- ** description is a sequence of monomials terminated by -1. Each monomial
- ** itself is a sequence of integers, again terminated by -1, specifying the
- ** generators that must be multiplied to obtain the monomial. The word is
- ** the sum of the monomials.
- **
- ** For example a+b+baa would be represented as 0,-1,1,-1,1,0,0,-1,-1.
- **
- ** «b->Description» is overwritten each time this function is called and
- ** should treated as read-only. In particular, do not attempt to free or
- ** reallocate the buffer!
- **
- ** @param b Word generator.
- ** @param n Wird number.
- **/
+////////////////////////////////////////////////////////////////////////////////////////////////////
+/// Creates a symbolic description of a word. 
+/// Stores the description of the given word in «b->Description». The
+/// description is a sequence of monomials terminated by -1. Each monomial
+/// itself is a sequence of integers, again terminated by -1, specifying the
+/// generators that must be multiplied to obtain the monomial. The word is
+/// the sum of the monomials.
+///
+/// For example a+b+baa would be represented as 0,-1,1,-1,1,0,0,-1,-1.
+///
+/// «b->Description» is overwritten each time this function is called and
+/// should treated as read-only. In particular, do not attempt to free or
+/// reallocate the buffer!
+///
+/// @param b Word generator.
+/// @param n Wird number.
 
 int *WgDescribeWord(WgData_t *b, long n)
 {
@@ -351,17 +338,14 @@ int *WgDescribeWord(WgData_t *b, long n)
     return b->Description;
 }
 
-
-
-/**
- ** Calculates a Word.
- ** This function calculates an element in a matrix algebra, given its number.
- ** Generators for the algebra are specified when the WgData_t structure is
- ** allocated with WgAlloc().
- ** @param b Pointer to word generator data.
- ** @param n Word number.
- ** @return Matrix representation of the word or 0 on error.
- **/
+////////////////////////////////////////////////////////////////////////////////////////////////////
+/// Calculates a word.
+/// This function calculates an element in a matrix algebra, given its number.
+/// Generators for the algebra are specified when the WgData_t structure is
+/// allocated with WgAlloc().
+/// @param b Pointer to word generator data.
+/// @param n Word number.
+/// @return Matrix representation of the word or 0 on error.
 
 Matrix_t *WgMakeWord(WgData_t *b, long n)
 {
@@ -387,8 +371,7 @@ Matrix_t *WgMakeWord(WgData_t *b, long n)
     return w;
 }
 
-
-
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 static int CheckArgs(const MatRep_t *rep)
 {
@@ -405,23 +388,20 @@ static int CheckArgs(const MatRep_t *rep)
     return 0;
 }
 
-
-
-/**
- ** Initialize the word generator.
- ** This function initializes the word generator for a given matrix
- ** representation @a rep. There must be at least one generator.
- ** On success, WgAlloc() returns a pointer to an internal data
- ** structure which can be used in subsequent calls to WgMakeWord()
- ** and WgFree(). If an error occurs, the return value is 0.
- **
- ** Note that the word generator does not create internal copies of the
- ** generators. The caller must assure that the generators are not deleted
- ** or modified as long as the word generator is in use.
- **
- ** @param rep Pointer to the matrix representation.
- ** @return Pointer to a new word generator data structure or 0 on error.
- **/
+////////////////////////////////////////////////////////////////////////////////////////////////////
+/// Initialize the word generator.
+/// This function initializes the word generator for a given matrix
+/// representation @a rep. There must be at least one generator.
+/// On success, WgAlloc() returns a pointer to an internal data
+/// structure which can be used in subsequent calls to WgMakeWord()
+/// and WgFree(). If an error occurs, the return value is 0.
+///
+/// Note that the word generator does not create internal copies of the
+/// generators. The caller must assure that the generators are not deleted
+/// or modified as long as the word generator is in use.
+///
+/// @param rep Pointer to the matrix representation.
+/// @return Pointer to a new word generator data structure or 0 on error.
 
 WgData_t *WgAlloc(const MatRep_t *rep)
 {
@@ -454,15 +434,12 @@ WgData_t *WgAlloc(const MatRep_t *rep)
     return b;
 }
 
-
-
-/**
- ** Terminate the word generator.
- ** @param b Pointer to word generator data.
- ** @return 0 on success, -1 on error.
- ** This function terminates the word generator and cleans up internal data structures.
- ** Note that the generators that were passed to WgAlloc() are not freed.
- **/
+////////////////////////////////////////////////////////////////////////////////////////////////////
+/// Terminate the word generator.
+/// @param b Pointer to word generator data.
+/// @return 0 on success, -1 on error.
+/// This function terminates the word generator and cleans up internal data structures.
+/// Note that the generators that were passed to WgAlloc() are not freed.
 
 int WgFree(WgData_t *b)
 {
@@ -491,17 +468,12 @@ int WgFree(WgData_t *b)
     return 0;
 }
 
-
-
-
-
-/**
- ** Calculate finger print.
- ** This function calculates the "finger print" of a module, i.e. the nullities
- ** of the first 6 words.
- ** @param b Word generator data.
- ** @param fp Buffer for the finger print (6 numbers).
- **/
+////////////////////////////////////////////////////////////////////////////////////////////////////
+/// Calculate finger print.
+/// This function calculates the "finger print" of a module, i.e. the nullities
+/// of the first 6 words.
+/// @param b Word generator data.
+/// @param fp Buffer for the finger print (6 numbers).
 
 void WgMakeFingerPrint(WgData_t *b, int fp[6])
 {	
@@ -511,7 +483,5 @@ void WgMakeFingerPrint(WgData_t *b, int fp[6])
 }
 
 
-/**
- ** @}
- **/
+/// @}
 

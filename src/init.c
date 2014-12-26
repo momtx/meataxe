@@ -11,58 +11,42 @@
 #include <string.h>
 #include <stdlib.h>
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
+/// @addtosection app
+/// @{
 
-/**
-!section general.init
-!variable Mtx_IsInitialized  "Library initialization state"
-!description
-    This variable indicates if the MeatAxe library has been successfully
-    initialized (value 1) or not (value 0).
- ** @see MtxInitLibrary
- **/
+////////////////////////////////////////////////////////////////////////////////////////////////////
+/// This variable indicates if the MeatAxe library has been successfully
+/// initialized (value 1) or not (value 0).
 
 int Mtx_IsInitialized = 0;
 
-
-
-/**
-!variable Mtx_IsX86 "Internal data format flag"
-!synopsis
-    extern int Mtx_IsX86;
-!description
-    This variable indicates if the internal representation of integers 
-    corresponds to the MeatAxe file format, i.e., 32-bit, little-endian.
-    It is set to 1 or 0 by |MtxInitLibrary()|. Some file i/o functions
-    like |SysReadLong()| can operate more effectively if this flag is set.
-
-    |Mtx_IsX86| is intended for internal purposes only. Applications 
-    should not use this variable.
- ** @see MtxInitLibrary
- **/
+////////////////////////////////////////////////////////////////////////////////////////////////////
+/// Internal data format flag
+/// This variable indicates if the internal representation of integers 
+/// corresponds to the MeatAxe file format, i.e., 32-bit, little-endian.
+/// It is set to 1 or 0 by MtxInitLibrary(). Some file i/o functions
+/// like SysReadLong() can operate more effectively if this flag is set.
+/// Mtx_IsX86 is intended for internal purposes only. Applications 
+/// should not use this variable.
 
 int Mtx_IsX86 = 0;
 
-
-
-
 int MtxOpt_UseOldWordGenerator = 0;
 
-
-/**
- ** Initialize the library.
- ** @return
-    MeatAxe version number, or -1 on error.
-!description
-    This function initializes the MeatAxe library including finite field
-    arithmetic and file i/o functions. It must be called before any other 
-    MeatAxe library function. \verb"MtxInitLibrary()" returns a version 
-    number which is different for each implementation of the arithmetic. 
-
-    It is legal to call |MtxInitLibrary()| multiple times. Only the first
-    call will actually do anything. An application that uses 
-    |MtxInitApplication()| need not call this function.
- ** @see MtxCleanupLibrary AppAlloc
- **/
+////////////////////////////////////////////////////////////////////////////////////////////////////
+/// Initialize the library.
+///
+/// This function initializes the MeatAxe library including finite field
+/// arithmetic and file i/o functions. It must be called before any other 
+/// MeatAxe library function. \verb"MtxInitLibrary()" returns a version 
+/// number which is different for each implementation of the arithmetic. 
+///
+/// It is legal to call MtxInitLibrary() multiple times. Only the first
+/// call will actually do anything. An application that uses 
+/// MtxInitApplication() need not call this function.
+///
+/// @return MeatAxe version number, or -1 on error.
 
 int MtxInitLibrary()
 {
@@ -79,26 +63,14 @@ int MtxInitLibrary()
     return (ZZZVERSION);
 }
 
-
-
-/**
- ** Terminate the library.
-!description
-    This function terminates the MeatAxe library. An application that uses
-    |AppFree()| need not call this function.
- ** @see MtxInitLibrary
- **/
+////////////////////////////////////////////////////////////////////////////////////////////////////
+/// Terminate the library.
+/// This function terminates the MeatAxe library. An application that uses
+/// AppFree() need not call this function.
 
 void MtxCleanupLibrary()
 {
 }
 
 
-
-
-/**
-!definesection general.init
-The MeatAxe library must be initialized before being used. To initialize
-the Library, an application should call either |MtxInitApplication()| or 
-|MtxInitLibrary()| immediately after program start.
- **/
+/// @}

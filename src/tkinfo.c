@@ -17,10 +17,8 @@
 #include <string.h>
 #include <errno.h>
 
-/**
- ** @addtogroup tp
- ** @{
- **/
+/// @addtogroup tp
+/// @{
 
 MTX_DEFINE_FILE_INFO
 
@@ -113,15 +111,13 @@ static int ParseTKInfoFile(StfData *f, TkData_t *tki)
 
 
 
-/**
- ** Read a .tki file.
- ** This function reads the contents of a .tki file and puts the data into a
- ** TkData_t structure.
- ** @param tki Pointer to a TkData_t structure where the data is stored.
- ** @param name File name without ".tki" extension (which is appended 
- **    automatically).
- ** @return 0 on success, -1 on error.
- **/
+/// Read a .tki file.
+/// This function reads the contents of a .tki file and puts the data into a
+/// TkData_t structure.
+/// @param tki Pointer to a TkData_t structure where the data is stored.
+/// @param name File name without ".tki" extension (which is appended 
+///    automatically).
+/// @return 0 on success, -1 on error.
 
 int TK_ReadInfo(TkData_t *tki, const char *name)
 {
@@ -152,13 +148,11 @@ int TK_ReadInfo(TkData_t *tki, const char *name)
 
 
 
-/**
- ** Write a .tki file.
- ** This function writes the contents of a TkData_t structure into a file.
- ** @param tki Pointer to a TkData_t structure.
- ** @param name File name without ".tki" extension (which is appended automatically).
- ** @return 0 o success, -1 on error.
- **/
+/// Write a .tki file.
+/// This function writes the contents of a TkData_t structure into a file.
+/// @param tki Pointer to a TkData_t structure.
+/// @param name File name without ".tki" extension (which is appended automatically).
+/// @return 0 o success, -1 on error.
 
 int TK_WriteInfo(TkData_t *tki, const char *name)
 {
@@ -185,6 +179,4 @@ int TK_WriteInfo(TkData_t *tki, const char *name)
     return result;
 }
 
-/**
- ** @}
- **/
+/// @}

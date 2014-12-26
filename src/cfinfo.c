@@ -1,11 +1,10 @@
-/* ============================= C MeatAxe ==================================
-   File:        $Id: cfinfo.c,v 1.1.1.1 2007/09/02 11:06:17 mringe Exp $
-   Comment:     Functions for reading and writing the .cfinfo file.
-   --------------------------------------------------------------------------
-   (C) Copyright 1998 Michael Ringe, Lehrstuhl D fuer Mathematik,
-   RWTH Aachen, Germany  <mringe@math.rwth-aachen.de>
-   This program is free software; see the file COPYING for details.
-   ========================================================================== */
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// C MeatAxe - Functions for reading and writing the .cfinfo file
+//
+// (C) Copyright 1998-2014 Michael Ringe, Lehrstuhl D fuer Mathematik, RWTH Aachen
+//
+// This program is free software; see the file COPYING for details.
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 #include "meataxe.h"
 
@@ -13,36 +12,32 @@
 #include <stdlib.h>
 #include <ctype.h>
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
+/// Local data
 
 MTX_DEFINE_FILE_INFO
 
 
-/**
- ** @defgroup cfinfo Module Structure
- ** @{
- **/
+/// @defgroup cfinfo Module Structure
+/// @{
 
 
-/**
- ** @class CfInfo
- ** Constituent data structure.
- ** The CFInfo data structure contains all information about one 
- ** irreducible constituent of a module. Most of this information is
- ** useful only in the context of a Lat_Info structure.
- **
- ** @c dim is the dimension of the constituent, and @c num enumerates
- ** constituents of same dimension. @c mult ist the multiplicity of this
- ** constituent in the module.
- ** @c idword and @c idpol specify the identifying word for this module.
- ** The identifying word is used by the CHOP program.
- **/
+/// @class CfInfo
+/// Constituent data structure.
+/// The CFInfo data structure contains all information about one 
+/// irreducible constituent of a module. Most of this information is
+/// useful only in the context of a Lat_Info structure.
+///
+/// @c dim is the dimension of the constituent, and @c num enumerates
+/// constituents of same dimension. @c mult ist the multiplicity of this
+/// constituent in the module.
+/// @c idword and @c idpol specify the identifying word for this module.
+/// The identifying word is used by the CHOP program.
 
-/**
- ** @class Lat_Info
- ** Module Structure Information.
- ** This data structure contains all information about a module which is
- ** gathered during the submodule lattice calculation.
- **/
+/// @class Lat_Info
+/// Module Structure Information.
+/// This data structure contains all information about a module which is
+/// gathered during the submodule lattice calculation.
 
 /* ------------------------------------------------------------------
    writeword(), readword() - Write and read words
@@ -141,13 +136,11 @@ static int ReadWord(StfData *f, long *w, Poly_t **p, char *fn)
 	    { MTX_ERROR("Error in cfinfo file: Missing ']'"); return -1; }\
 	}
 
-/**
- ** Read a Lattice Information File.
- ** This funktion reads a .cfinfo file and stores the data into a Lat_Info structure.
- ** @param li Pointer to the data structure.
- ** @param basename Base name (without the trailing ".cfinfo").
- ** @return 0 on success, -1 on error.
- **/
+/// Read a Lattice Information File.
+/// This funktion reads a .cfinfo file and stores the data into a Lat_Info structure.
+/// @param li Pointer to the data structure.
+/// @param basename Base name (without the trailing ".cfinfo").
+/// @return 0 on success, -1 on error.
 
 int Lat_ReadInfo(Lat_Info *li, const char *basename)
 {
@@ -301,13 +294,12 @@ int Lat_ReadInfo(Lat_Info *li, const char *basename)
 
 
 
-/** Write a Lattice Information File.
- ** This funktion writes the contents of a Lat_Info structure into a file.
- ** The file name is constructed from the @c BaseName field of the structure
- ** by appending ".cfinfo".
- ** @param li Pointer to the data structure.
- ** @return 0 on success, -1 on error.
- **/
+/// Write a Lattice Information File.
+/// This funktion writes the contents of a Lat_Info structure into a file.
+/// The file name is constructed from the @c BaseName field of the structure
+/// by appending ".cfinfo".
+/// @param li Pointer to the data structure.
+/// @return 0 on success, -1 on error.
 
 int Lat_WriteInfo(const Lat_Info *li)
 {
@@ -408,22 +400,20 @@ int Lat_WriteInfo(const Lat_Info *li)
 
 
 
-/**
- ** Make Constituent Name.
- ** This function returns the name of the @a cf-th constituent of a module.
- ** The constituent name consists of the dimension and an appendix which is
- ** built from the @c num field in the constituent's data structure. Usually
- ** the appendix is a single letter ('a', 'b', ...). If there are more than 
- ** 26 constituents with the same dimension, a two-letter appendix (`aa', 
- ** `ab', etc.) is used. 
- **
- ** Note: The return value points to a static buffer which is overwritten 
- ** at each call. The constituent data inside @a li must have been set up 
- ** properly, i.e., the module must have been chopped.
- ** @param li Constituent info structure.
- ** @param cf Index of the constituent.
- ** @return Pointer to the constituent name (without base name).
- **/
+/// Make Constituent Name.
+/// This function returns the name of the @a cf-th constituent of a module.
+/// The constituent name consists of the dimension and an appendix which is
+/// built from the @c num field in the constituent's data structure. Usually
+/// the appendix is a single letter ('a', 'b', ...). If there are more than 
+/// 26 constituents with the same dimension, a two-letter appendix (`aa', 
+/// `ab', etc.) is used. 
+///
+/// Note: The return value points to a static buffer which is overwritten 
+/// at each call. The constituent data inside @a li must have been set up 
+/// properly, i.e., the module must have been chopped.
+/// @param li Constituent info structure.
+/// @param cf Index of the constituent.
+/// @return Pointer to the constituent name (without base name).
 
 const char *Lat_CfName(const Lat_Info *li, int cf)
 {
@@ -453,8 +443,7 @@ const char *Lat_CfName(const Lat_Info *li, int cf)
 }
 
 
-/** Add a Layer to the Socle Series.
- **/
+/// Add a Layer to the Socle Series.
 
 int Lat_AddSocle(Lat_Info *li, int *mult)
 {
@@ -470,8 +459,7 @@ int Lat_AddSocle(Lat_Info *li, int *mult)
 }
 
 
-/** Add a Layer to the Radical Series.
- **/
+/// Add a Layer to the Radical Series.
 
 int Lat_AddHead(Lat_Info *li, int *mult)
 {
@@ -486,6 +474,4 @@ int Lat_AddHead(Lat_Info *li, int *mult)
     return li->NHeads;
 }
 
-/**
- ** @}
- **/
+/// @}

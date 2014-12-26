@@ -14,18 +14,14 @@
 MTX_DEFINE_FILE_INFO
 
 
-/**
- ** @addtogroup mat
- ** @{
- **/
+/// @addtogroup mat
+/// @{
 
-/**
- ** Write a matrix to a file.
- ** @see MatSave
- ** @param mat Pointer to the matrix.
- ** @param f Pointer to the file.
- ** @return 0 on success, -1 on error.
- **/
+/// Write a matrix to a file.
+/// @see MatSave
+/// @param mat Pointer to the matrix.
+/// @param f Pointer to the file.
+/// @return 0 on success, -1 on error.
 
 int MatWrite(const Matrix_t *mat, FILE *f)
 {
@@ -49,16 +45,14 @@ int MatWrite(const Matrix_t *mat, FILE *f)
 }
 
 
-/**
- ** Write a matrix to a file.
- ** This function opens a file, writes a matrix to the file, and closes the
- ** file. If a file with the specified name already exists, the old contents
- ** of the file are destroyd.
- ** To write more than one matrix to a file, use MatWrite().
- ** @param mat Pointer to the matrix.
- ** @param fn File name.
- ** @return 0 on success, -1 on error.
- **/
+/// Write a matrix to a file.
+/// This function opens a file, writes a matrix to the file, and closes the
+/// file. If a file with the specified name already exists, the old contents
+/// of the file are destroyd.
+/// To write more than one matrix to a file, use MatWrite().
+/// @param mat Pointer to the matrix.
+/// @param fn File name.
+/// @return 0 on success, -1 on error.
 
 int MatSave(const Matrix_t *mat, const char *fn)
 {
@@ -80,6 +74,4 @@ int MatSave(const Matrix_t *mat, const char *fn)
 }
 
 
-/**
- ** @}
- **/
+/// @}

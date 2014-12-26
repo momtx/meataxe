@@ -20,24 +20,20 @@ MTX_DEFINE_FILE_INFO
 #define MF_MAGIC 0x229AE77B
 
    
-/**
- ** @defgroup mf File I/O
- ** @{
- **/
+/// @defgroup mf File I/O
+/// @{
    
+////////////////////////////////////////////////////////////////////////////////////////////////////
+/// @class MtxFile_t
+/// @brief
+/// A MeatAxe binary file.
+/// This structure serves as a handle for MeatAxe binary files with header and data part.
 
-/** @class MtxFile_t
- ** @brief
- ** A MeatAxe binary file.
- ** This structure serves as a handle for MeatAxe binary files with header and data part.
- **/
-
-/**
- ** Check a File Object.
- ** This function checks if the argument points to a valid MtxFile_t structure.
- ** @param file Pointer to the file.
- ** @return 1 if @a file points to a valid file object, 0 otherwise.
- **/
+////////////////////////////////////////////////////////////////////////////////////////////////////
+/// Check a File Object.
+/// This function checks if the argument points to a valid MtxFile_t structure.
+/// @param file Pointer to the file.
+/// @return 1 if @a file points to a valid file object, 0 otherwise.
 
 int MfIsValid(const MtxFile_t *file)
 {
@@ -83,9 +79,7 @@ static void Mf_Free(MtxFile_t *f)
 }
 
 
-/**
- ** Open a File for Reading.
- **/
+/// Open a File for Reading.
 
 MtxFile_t *MfOpen(const char *name)
 {
@@ -126,11 +120,9 @@ MtxFile_t *MfOpen(const char *name)
 }
 
 
-/**
- ** Open a File for Writing.
- ** This functions creates a new file or truncates an existing file. The file is opened
- ** for writing, and a MeatAxe file header is written to the file.
- **/
+/// Open a File for Writing.
+/// This functions creates a new file or truncates an existing file. The file is opened
+/// for writing, and a MeatAxe file header is written to the file.
 
 MtxFile_t *MfCreate(const char *name, int field, int nor, int noc)
 {
@@ -163,9 +155,7 @@ MtxFile_t *MfCreate(const char *name, int field, int nor, int noc)
 
 
 
-/**
- ** Close a File.
- **/
+/// Close a File.
 
 int MfClose(MtxFile_t *file)
 {
@@ -175,6 +165,4 @@ int MfClose(MtxFile_t *file)
     return 0;
 }
 
-/**
- ** @}
- **/
+/// @}

@@ -9,25 +9,16 @@
    This program is free software; see the file COPYING for details.
    ========================================================================== */
 
-
-
 #include "meataxe.h"
 
 
 MTX_DEFINE_FILE_INFO
 
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
+/// Makes the standard basis for each basis vector of the peak word kernel.
 
-
-
-
-/* 
-   Makes the standard basis for each basis vector of the peak word kernel.
-*/
-
-static Matrix_t **MkStdBasis(Matrix_t *NPW, MatRep_t *M, 
-    const IntMatrix_t *op)
-
+static Matrix_t **MkStdBasis(Matrix_t *NPW, MatRep_t *M, const IntMatrix_t *op)
 {
     Matrix_t **V;
     int num_seed = NPW->Nor;
@@ -50,28 +41,20 @@ static Matrix_t **MkStdBasis(Matrix_t *NPW, MatRep_t *M,
 }
     
     
+/// @addtosection algo
+/// @{
 
-/**
-!section algo.etc
- ** Homogeneous part of a module.
- ** @param m
-    The module, $M$.
- ** @param s
-    An irreducible constituent of $M$.
- ** @param npw
-    Null-space of the peak word.
- ** @param op
-    Spin-up script for the standard basis of $S$.
- ** @param dimends
-    Dimension of the endomorphism ring of $S$.
- ** @return
-    A basis of the $S$-homogeneous part of $M$, or |NULL| on error.
-!description
-!seealso
- **/
+////////////////////////////////////////////////////////////////////////////////////////////////////
+/// Homogeneous part of a module.
+/// @param m The module, M.
+/// @param s An irreducible constituent of M.
+/// @param npw Null-space of the peak word.
+/// @param op Spin-up script for the standard basis of S.
+/// @param dimends Dimension of the endomorphism ring of S.
+/// @return A basis of the S-homogeneous part of $M$, or NULL on error.
 
 Matrix_t *HomogeneousPart(MatRep_t *m, MatRep_t *s, Matrix_t *npw, 
-    const IntMatrix_t *op, int dimends)
+                          const IntMatrix_t *op, int dimends)
 
 {
    Matrix_t
@@ -215,3 +198,4 @@ Matrix_t *HomogeneousPart(MatRep_t *m, MatRep_t *s, Matrix_t *npw,
 }
 
 
+/// @}

@@ -18,17 +18,13 @@ MTX_DEFINE_FILE_INFO
 
 const int BlockSize = 5;    /* Allocation unit */
 
-/**
- ** @addtogroup intset
- ** @{
- **/
+/// @addtogroup intset
+/// @{
 
-/**
- ** Insert an element into a set.
- ** @param set Pointer to the set.
- ** @param elem Number to insert.
- ** @return 0 on success, -1 on error.
- **/
+/// Insert an element into a set.
+/// @param set Pointer to the set.
+/// @param elem Number to insert.
+/// @return 0 on success, -1 on error.
 
 int SetInsert(Set_t *set, long elem)
 {
@@ -76,6 +72,4 @@ int SetInsert(Set_t *set, long elem)
     return 0;
 }
 
-/**
- ** @}
- **/
+/// @}

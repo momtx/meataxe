@@ -18,26 +18,19 @@
 MTX_DEFINE_FILE_INFO
 
 
+/// @addtogroup mf
+/// @{
 
-
-/**
-!section obj.file
- ** Write row vectors to a file.
- ** @param f
-    Pointer to the file.
- ** @param buf
-    Data buffer.
- ** @param nrows
-    Number of rows to write.
- ** @return
-    Number of rows that were actually written. Any value other than |count|
-    indicates an error.
-!description
-    This function writes |nrows| rows from a data file into a buffer. 
-    Unlike |FfWriteRows()|, this function changes the current row size to
-    the appropriate value, which is stored in the |MtxFile_t| object.
- ** @see FfWriteRows MfReadRows
- **/
+////////////////////////////////////////////////////////////////////////////////////////////////////
+/// Write row vectors to a file.
+/// This function writes |nrows| rows from a data file into a buffer. 
+/// Unlike |FfWriteRows()|, this function changes the current row size to
+/// the appropriate value, which is stored in the |MtxFile_t| object.
+/// @param f Pointer to the file.
+/// @param buf Data buffer.
+/// @param nrows Number of rows to write.
+/// @return Number of rows that were actually written. Any value other than count
+///    indicates an error.
 
 int MfWriteRows(MtxFile_t *f, PTR buf, int nrows)
 {
@@ -66,3 +59,5 @@ int MfWriteRows(MtxFile_t *f, PTR buf, int nrows)
 	MTX_ERROR1("%s: Write failed: %S",f->Name);
     return i;
 }
+
+/// @}

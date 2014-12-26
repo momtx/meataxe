@@ -15,31 +15,27 @@ MTX_DEFINE_FILE_INFO
 
 
 
-/**
- ** @addtogroup mat
- ** @{
- **/
+/// @addtogroup mat
+/// @{
 
-/**
- ** Compare two matrices
- ** If the matrices are equal, the return value is 0. Otherwise the return value is positive,
- ** if @em a is "greater" than @em b and negative, if @em a is "less" than @em b. The ordering
- ** matrices is defined as follows:
- **
- ** - If the matrices are over different fields, the matrix over the smaller field is smaller.
- ** - Otherwise, if the matrices have different number of columns, the matrix with the smaller
- **   number of columns is smaller.
- ** - Otherwise, if the matrices have different number of rows, the matrix with the smaller
- **   number of rows is smaller.
- ** - Otherwise, the relation is determined by the return value of FfCmpRow() on the first row
- **   that is not equal in both matrices.
- **
- ** In case an error occurs, the return value is -1. But note that a return value of -1 does
- ** not necessarily mean that an error has occured.
- ** @param a First matrix.
- ** @param b Second matrix.
- ** @return 0 if the matrices are equal, nonzero otherwise (see description).
- **/
+/// Compare two matrices
+/// If the matrices are equal, the return value is 0. Otherwise the return value is positive,
+/// if @em a is "greater" than @em b and negative, if @em a is "less" than @em b. The ordering
+/// matrices is defined as follows:
+///
+/// - If the matrices are over different fields, the matrix over the smaller field is smaller.
+/// - Otherwise, if the matrices have different number of columns, the matrix with the smaller
+///   number of columns is smaller.
+/// - Otherwise, if the matrices have different number of rows, the matrix with the smaller
+///   number of rows is smaller.
+/// - Otherwise, the relation is determined by the return value of FfCmpRow() on the first row
+///   that is not equal in both matrices.
+///
+/// In case an error occurs, the return value is -1. But note that a return value of -1 does
+/// not necessarily mean that an error has occured.
+/// @param a First matrix.
+/// @param b Second matrix.
+/// @return 0 if the matrices are equal, nonzero otherwise (see description).
 
 int MatCompare(const Matrix_t *a, const Matrix_t *b)
 {
@@ -81,6 +77,4 @@ int MatCompare(const Matrix_t *a, const Matrix_t *b)
     return 0;
 }
 
-/**
- ** @}
- **/
+/// @}

@@ -13,37 +13,33 @@
 
 MTX_DEFINE_FILE_INFO
 
-/**
- ** @addtogroup ff
- ** @{
- **/
+/// @addtogroup ff
+/// @{
 
 
-/**
- ** Sum and Intersection of Two Vector Spaces.
- ** Given two vector spaces V,W∊F<sup>n</sup>, this function calculates the sum and the
- ** intersection of the spaces, using the Zassenhaus algorithm. Each of the two spaces
- ** is given by a set of generating vectors, which need not be linearly independent.
- ** Before calling %SumAndIntersection() the caller must allocate and initialize two
- ** workspaces and a pivot table:
- ** - Both workspaces must have n₁+n₂ rows, where n₁ and n₂ are the number of generating
- **   vectos for the two subspaces.
- ** - Workspace 1 must contain the concatenation of the generating sets for the two
- **   subspaces. Work space 2 need not be initialized.
- ** - The pivot table, must be large enough for at least n₁+n₂ entries. It need not be initialized.
- **
- ** The variables pointed to by @a nor1 and @a nor2 must contain the numbers n₁ and n₂,
- ** respectively. On return, *@a nor1 contains the dimension of V+W, and *@a nor2 contains
- ** the dimension of V∩W. The first dim(V+W) rows of @a wrk1 contain a basis of V+W,
- ** and a basis of V∩W can be found in @a wrk2 starting at position dim(V+W).
- ** Both bases are in echelon form, and @a piv contains the pivot table for the bases.
- ** @param wrk1 Workspace 1.
- ** @param nor1 Input: number of generators for V, output: dim(V+W).
- ** @param nor2 Input: number of generators for W, output: dim(V∩W).
- ** @param wrk2 Workspace 2.
- ** @param piv Pivot table.
- ** @return 0 on success, -1 on error.
- **/
+/// Sum and Intersection of Two Vector Spaces.
+/// Given two vector spaces V,W∊F<sup>n</sup>, this function calculates the sum and the
+/// intersection of the spaces, using the Zassenhaus algorithm. Each of the two spaces
+/// is given by a set of generating vectors, which need not be linearly independent.
+/// Before calling %SumAndIntersection() the caller must allocate and initialize two
+/// workspaces and a pivot table:
+/// - Both workspaces must have n₁+n₂ rows, where n₁ and n₂ are the number of generating
+///   vectos for the two subspaces.
+/// - Workspace 1 must contain the concatenation of the generating sets for the two
+///   subspaces. Work space 2 need not be initialized.
+/// - The pivot table, must be large enough for at least n₁+n₂ entries. It need not be initialized.
+///
+/// The variables pointed to by @a nor1 and @a nor2 must contain the numbers n₁ and n₂,
+/// respectively. On return, *@a nor1 contains the dimension of V+W, and *@a nor2 contains
+/// the dimension of V∩W. The first dim(V+W) rows of @a wrk1 contain a basis of V+W,
+/// and a basis of V∩W can be found in @a wrk2 starting at position dim(V+W).
+/// Both bases are in echelon form, and @a piv contains the pivot table for the bases.
+/// @param wrk1 Workspace 1.
+/// @param nor1 Input: number of generators for V, output: dim(V+W).
+/// @param nor2 Input: number of generators for W, output: dim(V∩W).
+/// @param wrk2 Workspace 2.
+/// @param piv Pivot table.
+/// @return 0 on success, -1 on error.
 
 int FfSumAndIntersection(PTR wrk1, int *nor1, int *nor2, PTR wrk2, int *piv)
 {
@@ -113,6 +109,4 @@ int FfSumAndIntersection(PTR wrk1, int *nor1, int *nor2, PTR wrk2, int *piv)
     return 0;
 }
 
-/**
- ** @}
- **/
+/// @}

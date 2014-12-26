@@ -11,18 +11,14 @@
 #include "meataxe.h"
 
 
-/**
- ** @addtogroup ff
- **/
+/// @addtogroup ff
 
-/**
- ** Convert to GAP format.
- ** This function takes a field element and returns the GAP
- ** representation of this element. The return value is a pointer
- ** to a static buffer which is overwritten on each call.
- ** @param f Field element.
- ** @return Pointer to the GAP representtion of @a f.
- **/
+/// Convert to GAP format.
+/// This function takes a field element and returns the GAP
+/// representation of this element. The return value is a pointer
+/// to a static buffer which is overwritten on each call.
+/// @param f Field element.
+/// @return Pointer to the GAP representtion of @a f.
 
 const char *FfToGap(FEL f)
 {
@@ -58,6 +54,4 @@ const char *FfToGap(FEL f)
     return buffer;
 }
 
-/**
- ** @}
- **/
+/// @}

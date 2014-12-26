@@ -17,19 +17,15 @@
 MTX_DEFINE_FILE_INFO
 
 
-/** 
- ** @addtogroup poly
- ** @{
- **/
+/// @addtogroup poly
+/// @{
 
-/**
- ** Multiply Factored Polynomials.
- ** Multiplies @em dest by @em src. The previous content of @em dest is lost.
- ** @see FpMulP()
- ** @param dest Factored polynomial to modify.
- ** @param src Factored polynomial.
- ** @return The function returns |dest| or |NULL| on error.
- **/
+/// Multiply Factored Polynomials.
+/// Multiplies @em dest by @em src. The previous content of @em dest is lost.
+/// @see FpMulP()
+/// @param dest Factored polynomial to modify.
+/// @param src Factored polynomial.
+/// @return The function returns |dest| or |NULL| on error.
 
 FPoly_t *FpMul(FPoly_t *dest, const FPoly_t *src)
 {
@@ -52,7 +48,5 @@ FPoly_t *FpMul(FPoly_t *dest, const FPoly_t *src)
 }
 
 
-/** 
- ** @}
- **/
+/// @}
 

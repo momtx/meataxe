@@ -7,7 +7,7 @@ MTX_DEFINE_FILE_INFO
 #define MAX_DEGREE 5
 #define MAX_NPERMS 10
 
-/** @todo **/
+/// @todo **/
 
 typedef struct
 {
@@ -15,7 +15,7 @@ typedef struct
     int Perm[MAX_DEGREE];
 } FPerm_t;
 
-/** @todo **/
+/// @todo **/
 
 typedef struct
 {
@@ -94,9 +94,9 @@ static int TupleToNum(const int *base)
 }
 /*-----------------------------------------------------------*/
 
-/** @todo **/
+/// @todo **/
 typedef struct entry { int Num; FEL Coeff; } SvEntry_t;
-/** @todo **/
+/// @todo **/
 typedef struct {
     int Size;
     int MaxSize;

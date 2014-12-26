@@ -14,32 +14,24 @@
 #include <string.h>
 #include <errno.h>
 
-/**
- ** @addtogroup app
- ** @{
- **/
+/// @addtogroup app
+/// @{
 
 
 /* ------------------------------------------------------------------
    Global data
    ------------------------------------------------------------------ */
 
-/**
- ** Message level.
- ** This value determines which messages generated  by MSG0()...MSG4() are actually
- ** output and which are suppressed.
- **/
+/// Message level.
+/// This value determines which messages generated  by MSG0()...MSG4() are actually
+/// output and which are suppressed.
 int MtxMessageLevel = 0;
 
-/**
- ** Last error code.
- **/
+/// Last error code.
 int MtxErrNo = 0;
 
 
-/**
- ** Internal data structure.
- **/
+/// Internal data structure.
 static struct msg_struct { int ErrNo; char *smsg; } msgs[] =
 {
     { MTX_ERR_NOMEM, "Not enough memory" },
@@ -125,25 +117,23 @@ static void FormatLong(char **buf, int *count, int bufsize, long int val)
 
 
 
-/**
- ** Format a message.
- ** This function formats a message using a |printf|-like syntax.
- ** Only the follwing four format codes may be used within |msg|:
- ** - @c @%d prints a signed decimal integer. The corresponding argument
- **   must be of type @c int.
- ** - @c @%s prints a string. The corresponding argument must be a pointer
- **   to a null-terminated string.
- ** - @c @%E takes an @c int argument, which must be one the MeatAxe error
- **   codes (@c MTX_ERR_xxxx) defined in "meataxe.h". It prints a 
- **   description of the error.
- ** - @c @%S prints the system error name corresponding to the current
- **   value of @c errno.
- **
- ** @param buf Buffer for the message.
- ** @param bufsize Size of buffer.
- ** @param msg The message text.
- ** @param al Optional arguments for the message (see description).
- **/
+/// Format a message.
+/// This function formats a message using a |printf|-like syntax.
+/// Only the follwing four format codes may be used within |msg|:
+/// - @c @%d prints a signed decimal integer. The corresponding argument
+///   must be of type @c int.
+/// - @c @%s prints a string. The corresponding argument must be a pointer
+///   to a null-terminated string.
+/// - @c @%E takes an @c int argument, which must be one the MeatAxe error
+///   codes (@c MTX_ERR_xxxx) defined in "meataxe.h". It prints a 
+///   description of the error.
+/// - @c @%S prints the system error name corresponding to the current
+///   value of @c errno.
+///
+/// @param buf Buffer for the message.
+/// @param bufsize Size of buffer.
+/// @param msg The message text.
+/// @param al Optional arguments for the message (see description).
 
 int MtxFormatMessage(char *buf, int bufsize, const char *msg, va_list al)
 {
@@ -190,14 +180,12 @@ int MtxFormatMessage(char *buf, int bufsize, const char *msg, va_list al)
 
 
 
-/**
- ** Print a message.
- ** This function writes a message to a file using a @c printf()-like syntax.
- ** See MtxFormatMessage() for details.
- ** @param f File to write to.
- ** @param fmt Message to write
- ** @param ...  Optional arguments for the message.
- **/
+/// Print a message.
+/// This function writes a message to a file using a @c printf()-like syntax.
+/// See MtxFormatMessage() for details.
+/// @param f File to write to.
+/// @param fmt Message to write
+/// @param ...  Optional arguments for the message.
 
 int MtxPrintMessage(FILE *f, const char *fmt, ...)
 {
@@ -211,6 +199,4 @@ int MtxPrintMessage(FILE *f, const char *fmt, ...)
     return 0;
 }
 
-/**
- ** @}
- **/
+/// @}

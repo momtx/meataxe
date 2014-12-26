@@ -18,17 +18,13 @@
 MTX_DEFINE_FILE_INFO
 
 
-/**
- ** @addtogroup perm
- ** @{
- **/
+/// @addtogroup perm
+/// @{
 
-/**
- ** Inverse of a permutation
- ** This function calulates the inverse of a permutation.
- ** @param src Pointer to the permutation.
- ** @return The inverse of @em src, or 0 on error.
- **/
+/// Inverse of a permutation
+/// This function calulates the inverse of a permutation.
+/// @param src Pointer to the permutation.
+/// @return The inverse of @em src, or 0 on error.
 
 Perm_t *PermInverse(const Perm_t *src)
 {
@@ -60,6 +56,4 @@ Perm_t *PermInverse(const Perm_t *src)
     return inv;
 }
 
-/**
- ** @}
- **/
+/// @}

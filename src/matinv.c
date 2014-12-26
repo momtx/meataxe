@@ -81,19 +81,15 @@ static int zmatinv(PTR mat, PTR result)
 
 
 
-/**
- ** @addtogroup mat
- ** @{
- **/
+/// @addtogroup mat
+/// @{
 
-/**
- ** Inverse of a matrix
- ** This function calculates the inverse of a matrix. @em mat must be a 
- ** non-singular square matrix. The inverse matrix is returned in a newly
- ** allocated Matrix_t structure, and the original matrix remains unchanged.
- ** @param mat Pointer to the matrix.
- ** @return Inverse matrix or 0 on error.
- **/
+/// Inverse of a matrix
+/// This function calculates the inverse of a matrix. @em mat must be a 
+/// non-singular square matrix. The inverse matrix is returned in a newly
+/// allocated Matrix_t structure, and the original matrix remains unchanged.
+/// @param mat Pointer to the matrix.
+/// @return Inverse matrix or 0 on error.
 
 Matrix_t *MatInverse(const Matrix_t *mat)
 {
@@ -126,6 +122,4 @@ Matrix_t *MatInverse(const Matrix_t *mat)
     return dest;
 }
 
-/**
- ** @}
- **/
+/// @}

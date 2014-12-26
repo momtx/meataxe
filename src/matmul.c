@@ -19,24 +19,20 @@ MTX_DEFINE_FILE_INFO
 
 
 
-/**
- ** @addtogroup mat
- ** @{
- **/
+/// @addtogroup mat
+/// @{
 
-/**
- ** Multiply matrices
- ** This function multiplies @em dest from the right by @em src.
- ** The matrices must be compatible for multiplication, i.e. they must be over
- ** the same field, and the number of columns of @em dest must be equal to the 
- ** number of rows of @em src.
- ** The result of the multiplication is stored in @em dest, overwriting the
- ** original contents.
- ** @see MatPower()
- ** @param dest Left factor and result.
- ** @param src Right factor.
- ** @return The function returns @em dest, or 0 on error.
- **/
+/// Multiply matrices
+/// This function multiplies @em dest from the right by @em src.
+/// The matrices must be compatible for multiplication, i.e. they must be over
+/// the same field, and the number of columns of @em dest must be equal to the 
+/// number of rows of @em src.
+/// The result of the multiplication is stored in @em dest, overwriting the
+/// original contents.
+/// @see MatPower()
+/// @param dest Left factor and result.
+/// @param src Right factor.
+/// @return The function returns @em dest, or 0 on error.
 
 Matrix_t *MatMul(Matrix_t *dest, const Matrix_t *src)
 
@@ -90,6 +86,4 @@ Matrix_t *MatMul(Matrix_t *dest, const Matrix_t *src)
 }
 
 
-/**
- ** @}
- **/
+/// @}

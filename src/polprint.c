@@ -17,23 +17,19 @@
 MTX_DEFINE_FILE_INFO
 
 
-/** 
- ** @addtogroup poly
- ** @{
- **/
+/// @addtogroup poly
+/// @{
 
-/**
- ** Print a Polynomial
- ** This function prints a polynomial on the standard output in a human-readable
- ** form. If @em name is not 0, the name followed by an equal sign is printed 
- ** before the polynomial. For example, the statement <tt>PolPrint("P",P)</tt> could
- ** produce the following output:
- ** <pre>
- ** P=3x^2+x+1</pre>
- ** @param name Name to print before the polynomial or 0.
- ** @param p Pointer to the polynomial.
- ** @return 0 on success, -1 on error.
- **/
+/// Print a Polynomial
+/// This function prints a polynomial on the standard output in a human-readable
+/// form. If @em name is not 0, the name followed by an equal sign is printed 
+/// before the polynomial. For example, the statement <tt>PolPrint("P",P)</tt> could
+/// produce the following output:
+/// <pre>
+/// P=3x^2+x+1</pre>
+/// @param name Name to print before the polynomial or 0.
+/// @param p Pointer to the polynomial.
+/// @return 0 on success, -1 on error.
 
 void PolPrint(char *name, const Poly_t *p)
 {
@@ -73,6 +69,4 @@ void PolPrint(char *name, const Poly_t *p)
 
 
 
-/** 
- ** @}
- **/
+/// @}

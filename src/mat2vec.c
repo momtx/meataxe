@@ -17,25 +17,21 @@
 
 MTX_DEFINE_FILE_INFO 
 
-/**
- ** @addtogroup tp
- ** @{
- **/
+/// @addtogroup tp
+/// @{
 
-/**
- ** Convert matrix to vector.
- ** This function converts a matrix into a row vector by concatenating
- ** the rows of the matrix. If @a mat is a r by c matrix, the resulting
- ** vector has rc entries. Instead of allocating a new buffer for the
- ** result, %MatToVec() expects a pointer to a matrix, @a vecs, and puts 
- ** the vector into the @a n-th row of this matrix. Of course, @a vecs must
- ** be over the smae field as @a mat, have rc columns and at least n+1 rows.
- ** @see VectorToMatrix
- ** @param mat Matrix to convert.
- ** @param vecs Destination of the vector.
- ** @param n Row number where the vector is stored.
- ** @return 0 on success, -1 on error.
- **/
+/// Convert matrix to vector.
+/// This function converts a matrix into a row vector by concatenating
+/// the rows of the matrix. If @a mat is a r by c matrix, the resulting
+/// vector has rc entries. Instead of allocating a new buffer for the
+/// result, %MatToVec() expects a pointer to a matrix, @a vecs, and puts 
+/// the vector into the @a n-th row of this matrix. Of course, @a vecs must
+/// be over the smae field as @a mat, have rc columns and at least n+1 rows.
+/// @see VectorToMatrix
+/// @param mat Matrix to convert.
+/// @param vecs Destination of the vector.
+/// @param n Row number where the vector is stored.
+/// @return 0 on success, -1 on error.
 
 int MatrixToVector(const Matrix_t *mat, Matrix_t *vecs, int n)
 {
@@ -80,6 +76,4 @@ int MatrixToVector(const Matrix_t *mat, Matrix_t *vecs, int n)
 }
 
 
-/**
- ** @}
- **/
+/// @}

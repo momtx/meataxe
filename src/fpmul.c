@@ -17,21 +17,17 @@
 MTX_DEFINE_FILE_INFO
 
 
-/** 
- ** @addtogroup poly
- ** @{
- **/
+/// @addtogroup poly
+/// @{
 
-/**
- ** Multiply With an Irreducible Polynomial.
- ** This function multiplies a factored polynomial with the power of an
- ** an irreducible factor. It is not checked that @em src is irreducible.
- ** @see FpMul()
- ** @param dest Factored polynomial to modify.
- ** @param src Irreducible polynomial.
- ** @param pwr Power of the irreducible polynomial.
- ** @return The function returns @em dest or 0 on error.
- **/
+/// Multiply With an Irreducible Polynomial.
+/// This function multiplies a factored polynomial with the power of an
+/// an irreducible factor. It is not checked that @em src is irreducible.
+/// @see FpMul()
+/// @param dest Factored polynomial to modify.
+/// @param src Irreducible polynomial.
+/// @param pwr Power of the irreducible polynomial.
+/// @return The function returns @em dest or 0 on error.
 
 FPoly_t *FpMulP(FPoly_t *dest, const Poly_t *src, int pwr)
 {
@@ -99,7 +95,5 @@ FPoly_t *FpMulP(FPoly_t *dest, const Poly_t *src, int pwr)
     return dest;
 }
 
-/** 
- ** @}
- **/
+/// @}
 

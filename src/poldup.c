@@ -17,18 +17,14 @@
 
 MTX_DEFINE_FILE_INFO
 
-/** 
- ** @addtogroup poly
- ** @{
- **/
+/// @addtogroup poly
+/// @{
 
-/**
- ** Duplicate a Polynomial.
- ** This function creates a copy of an existing polynomial.
- ** @param p Pointer to the polynomial.
- ** @return A copy of @em p or 0 on error.
- ** @see PolAlloc
- **/
+/// Duplicate a Polynomial.
+/// This function creates a copy of an existing polynomial.
+/// @param p Pointer to the polynomial.
+/// @return A copy of @em p or 0 on error.
+/// @see PolAlloc
 
 Poly_t *PolDup(const Poly_t *p)
 {
@@ -46,6 +42,4 @@ Poly_t *PolDup(const Poly_t *p)
     return y;
 }
 
-/** 
- ** @}
- **/
+/// @}

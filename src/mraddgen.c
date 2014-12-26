@@ -12,27 +12,23 @@
 
 MTX_DEFINE_FILE_INFO
 
-/**
- ** @addtogroup mrep
- ** @{
- **/
+/// @addtogroup mrep
+/// @{
 
-/**
- ** Add a Matrix to a Representation.
- ** This function adds a generator, i.e., a matrix, to a matrix representation. 
- ** The matrix must be square. If there are already generators in the 
- ** represenatation, the new matrix must be over the same field and have 
- ** the same number of rows. @a flags may be zero or the special value 
- ** MR_COPY_GENERATORS. In the latter case, a local copy of the generator 
- ** is made, and @a gen can be safely destroyed. Otherwise, only a reference to 
- ** the matrix is stored in the MatRep_t structure. Consequently, the application
- ** must not modify or destroy the matrix after calling %MrAddGenerator(). 
- ** It will be destroyed by MrFree() together with the representation.
- ** @param rep Matrix representation.
- ** @param gen Matrix to add.
- ** @param flags Optional flags (see below).
- ** @return 0 on success, -1 on error.
- **/
+/// Add a Matrix to a Representation.
+/// This function adds a generator, i.e., a matrix, to a matrix representation. 
+/// The matrix must be square. If there are already generators in the 
+/// represenatation, the new matrix must be over the same field and have 
+/// the same number of rows. @a flags may be zero or the special value 
+/// MR_COPY_GENERATORS. In the latter case, a local copy of the generator 
+/// is made, and @a gen can be safely destroyed. Otherwise, only a reference to 
+/// the matrix is stored in the MatRep_t structure. Consequently, the application
+/// must not modify or destroy the matrix after calling %MrAddGenerator(). 
+/// It will be destroyed by MrFree() together with the representation.
+/// @param rep Matrix representation.
+/// @param gen Matrix to add.
+/// @param flags Optional flags (see below).
+/// @return 0 on success, -1 on error.
 
 int MrAddGenerator(MatRep_t *rep, Matrix_t *gen, int flags)
 {
@@ -88,7 +84,5 @@ int MrAddGenerator(MatRep_t *rep, Matrix_t *gen, int flags)
 }
 
 
-/**
- ** @}
- **/
+/// @}
 

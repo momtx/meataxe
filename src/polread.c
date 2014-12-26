@@ -41,21 +41,17 @@ static void mktmp(long fl, long deg)
 }
 
 
-/** 
- ** @addtogroup poly
- ** @{
- **/
+/// @addtogroup poly
+/// @{
 
 
-/**
- ** Read a Polynomial from a File.
- ** This function reads a polynomial from a file. If successful, the return 
- ** value is a pointer to a new Poly_t object. The caller is responsible
- ** for deleting this polynomial with PolFree() when it is no longer needed.
- ** @see PolLoad()
- ** @param f File to read from.
- ** @return Pointer to the polynomial, or 0 on error.
- **/
+/// Read a Polynomial from a File.
+/// This function reads a polynomial from a file. If successful, the return 
+/// value is a pointer to a new Poly_t object. The caller is responsible
+/// for deleting this polynomial with PolFree() when it is no longer needed.
+/// @see PolLoad()
+/// @param f File to read from.
+/// @return Pointer to the polynomial, or 0 on error.
 
 Poly_t *PolRead(FILE *f)
 {
@@ -97,20 +93,18 @@ Poly_t *PolRead(FILE *f)
 
 
 
-/**
- ** Read a Polynomial from a File.
- ** This function opens a file, reads a single polynomial, and closes the 
- ** file. The return value is a pointer to the polynomial or NULL on 
- ** error. If the file contains more than one polynomial, only the first one 
- ** is read.
- **
- ** If a polynomial was successfully read, the function returns a pointer to 
- ** a newly created Poly_t object. The caller is responsible for deleting 
- ** this object as soon as it no longer needed.
- ** @see PolRead()
- ** @param fn File name.
- ** @return Pointer to the polynomial read from the file, or 0 on error.
- **/
+/// Read a Polynomial from a File.
+/// This function opens a file, reads a single polynomial, and closes the 
+/// file. The return value is a pointer to the polynomial or NULL on 
+/// error. If the file contains more than one polynomial, only the first one 
+/// is read.
+///
+/// If a polynomial was successfully read, the function returns a pointer to 
+/// a newly created Poly_t object. The caller is responsible for deleting 
+/// this object as soon as it no longer needed.
+/// @see PolRead()
+/// @param fn File name.
+/// @return Pointer to the polynomial read from the file, or 0 on error.
 
 Poly_t *PolLoad(const char *fn)
 {
@@ -132,6 +126,4 @@ Poly_t *PolLoad(const char *fn)
     return p;
 }
 
-/** 
- ** @}
- **/
+/// @}

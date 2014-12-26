@@ -18,24 +18,20 @@
 MTX_DEFINE_FILE_INFO 
 
 
-/**
- ** @addtogroup tp
- ** @{
- **/
+/// @addtogroup tp
+/// @{
 
 
-/**
- ** Map Under Tensor Product.
- ** This function applies the tensor product of two matrices to one or more 
- ** vectors. The same calculation could be done with MatMul() and
- ** MatTensor(), but this function is usually faster and uses less memory,
- ** because it does not calculate the full tensor product of a⊗b.
- ** @see VectorToMatrix() MatrixToVector()
- ** @param vec Vectors to map.
- ** @param a Left matrix.
- ** @param b Right matrix.
- ** @return Image of @a vec under @a a⊗@a b, or 0 on error.
- **/
+/// Map Under Tensor Product.
+/// This function applies the tensor product of two matrices to one or more 
+/// vectors. The same calculation could be done with MatMul() and
+/// MatTensor(), but this function is usually faster and uses less memory,
+/// because it does not calculate the full tensor product of a⊗b.
+/// @see VectorToMatrix() MatrixToVector()
+/// @param vec Vectors to map.
+/// @param a Left matrix.
+/// @param b Right matrix.
+/// @return Image of @a vec under @a a⊗@a b, or 0 on error.
 
 Matrix_t *TensorMap(Matrix_t *vec, const Matrix_t *a, const Matrix_t *b)
 {
@@ -91,6 +87,4 @@ Matrix_t *TensorMap(Matrix_t *vec, const Matrix_t *a, const Matrix_t *b)
 }
 
 
-/**
- ** @}
- **/
+/// @}

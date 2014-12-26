@@ -16,10 +16,8 @@
 
 MTX_DEFINE_FILE_INFO
 
-/**
- ** @addtogroup matset
- ** @{
- **/
+/// @addtogroup matset
+/// @{
 
 
 int MatFindPivot(const Matrix_t *mat, int *row, int *col, FEL *f)
@@ -45,15 +43,13 @@ int MatFindPivot(const Matrix_t *mat, int *row, int *col, FEL *f)
 
 
 
-/**
- ** Clean a Matrix with a Matrix Set.
- ** This function cleans a matrix with a matrix set by adding suitable
- ** multiples of the members of the set to the matrix. When the function
- ** returns, all pivot positions of @a mat, as defined by @a set, are zero.
- ** @param set Pointer to the matrix set.
- ** @param mat Matrix to be cleaned.
- ** @return 0 on success, -1 on error.
- **/
+/// Clean a Matrix with a Matrix Set.
+/// This function cleans a matrix with a matrix set by adding suitable
+/// multiples of the members of the set to the matrix. When the function
+/// returns, all pivot positions of @a mat, as defined by @a set, are zero.
+/// @param set Pointer to the matrix set.
+/// @param mat Matrix to be cleaned.
+/// @return 0 on success, -1 on error.
 
 int MsClean(const MatrixSet_t *set, Matrix_t *mat)
 {
@@ -89,22 +85,20 @@ int MsClean(const MatrixSet_t *set, Matrix_t *mat)
 
 
 
-/**
- ** Extend a Matrix Set.
- ** This function cleans a matrix with a matrix by calling MsClean().
- ** If the resulting matrix is nonzero, it is added to the matrix set,
- ** and the function returns 0. Otherwise the return value is 1,
- ** indicating that the matrix is now zero.
- ** 
- ** @attention Once a matrix has been added to a matrix set, i.e., after
- ** MsCleanAndAppend() returns zero, the application is no longer allowed to
- ** modify or free the matrix. The matrix will be freed, when the matrix set
- ** is destroyed.
- ** @param set Pointer to the matrix set.
- ** @param mat Matrix to be added.
- ** @return 0 if the matrix was added, 1 if the matrix was already in
- ** the span of @a set, -1 on error.
- **/
+/// Extend a Matrix Set.
+/// This function cleans a matrix with a matrix by calling MsClean().
+/// If the resulting matrix is nonzero, it is added to the matrix set,
+/// and the function returns 0. Otherwise the return value is 1,
+/// indicating that the matrix is now zero.
+/// 
+/// @attention Once a matrix has been added to a matrix set, i.e., after
+/// MsCleanAndAppend() returns zero, the application is no longer allowed to
+/// modify or free the matrix. The matrix will be freed, when the matrix set
+/// is destroyed.
+/// @param set Pointer to the matrix set.
+/// @param mat Matrix to be added.
+/// @return 0 if the matrix was added, 1 if the matrix was already in
+/// the span of @a set, -1 on error.
 
 int MsCleanAndAppend(MatrixSet_t *set, Matrix_t *mat)
 
@@ -144,6 +138,4 @@ int MsCleanAndAppend(MatrixSet_t *set, Matrix_t *mat)
 
 
 
-/**
- ** @}
- **/
+/// @}

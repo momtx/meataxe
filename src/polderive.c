@@ -18,27 +18,23 @@
 MTX_DEFINE_FILE_INFO
 
 
-/** 
- ** @addtogroup poly
- ** @{
- **/
+/// @addtogroup poly
+/// @{
 
 
-/**
- ** Derive a Polynomial.
- ** This function derives a polynomial. Note that the derived polynomial is
- ** stored in @em pol, replacing the original polynomial. The following piece of
- ** code shows how to keep the original polynomial intact while calculating
- ** the derivative:
- ** @code
- ** Poly_t *pol, *der;
- ** ...
- ** der = PolDerive(PolDup(pol));
- ** @endcode
- ** @param pol Pointer to the polynomial.
- ** @return @em pol.
+/// Derive a Polynomial.
+/// This function derives a polynomial. Note that the derived polynomial is
+/// stored in @em pol, replacing the original polynomial. The following piece of
+/// code shows how to keep the original polynomial intact while calculating
+/// the derivative:
+/// @code
+/// Poly_t *pol, *der;
+/// ...
+/// der = PolDerive(PolDup(pol));
+/// @endcode
+/// @param pol Pointer to the polynomial.
+/// @return @em pol.
 
- **/
 
 Poly_t *PolDerive(Poly_t *pol)
 
@@ -69,6 +65,4 @@ Poly_t *PolDerive(Poly_t *pol)
 }
       
 
-/** 
- ** @}
- **/
+/// @}

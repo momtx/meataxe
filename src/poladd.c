@@ -51,14 +51,12 @@ static int resize(Poly_t *p, int newdeg)
 
 
 
-/**
- ** Add Polynomials.
- ** Thus function adds @em src to @em dest.
- ** The polynomials must be over the same field.
- ** @param dest Pointer to the first polynomial.
- ** @param src Pointer to the second polynomial.
- ** @return @em dest, or 0 on error.
- **/
+/// Add Polynomials.
+/// Thus function adds @em src to @em dest.
+/// The polynomials must be over the same field.
+/// @param dest Pointer to the first polynomial.
+/// @param src Pointer to the second polynomial.
+/// @return @em dest, or 0 on error.
 
 Poly_t *PolAdd(Poly_t *dest, const Poly_t *src)
 {
@@ -92,6 +90,4 @@ Poly_t *PolAdd(Poly_t *dest, const Poly_t *src)
     return dest;
 }
 
-/** 
- ** @}
- **/
+/// @}

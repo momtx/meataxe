@@ -70,22 +70,18 @@ static int zmkechelon(PTR matrix, int nor, int noc, int *piv, int *ispiv)
 }
 
 
-/**
- ** @addtogroup mat
- ** @{
- **/
+/// @addtogroup mat
+/// @{
 
 
-/**
- ** Reduce to echelon form
- ** This function performs a Gaussian elimination on the matrix |mat|. On
- ** return, |mat| is in semi echelon form and a pivot table has been 
- ** attatched to the matrix. If the rank of |mat| was smaller than the number 
- ** of rows, some rows are removed during the process. This function can also 
- ** be used to rebuild the pivot table after the matrix has been modified.
- ** @param mat Pointer to the matrix.
- ** @return Rank of @em mat, or -1 on error.
- **/
+/// Reduce to echelon form
+/// This function performs a Gaussian elimination on the matrix |mat|. On
+/// return, |mat| is in semi echelon form and a pivot table has been 
+/// attatched to the matrix. If the rank of |mat| was smaller than the number 
+/// of rows, some rows are removed during the process. This function can also 
+/// be used to rebuild the pivot table after the matrix has been modified.
+/// @param mat Pointer to the matrix.
+/// @return Rank of @em mat, or -1 on error.
 
 int MatEchelonize(Matrix_t *mat)
 {
@@ -143,13 +139,11 @@ int MatEchelonize(Matrix_t *mat)
 
 
 
-/**
- ** Nullity of a matrix.
- ** This function calculates the dimension of the null-space of a matrix.
- ** Unlike MatNullity__() this function does not modify the matrix.
- ** @param mat Pointer to the matrix.
- ** @return Nullity of the matrix, or -1 on error.
- **/
+/// Nullity of a matrix.
+/// This function calculates the dimension of the null-space of a matrix.
+/// Unlike MatNullity__() this function does not modify the matrix.
+/// @param mat Pointer to the matrix.
+/// @return Nullity of the matrix, or -1 on error.
 
 long MatNullity(const Matrix_t *mat)
 {
@@ -158,13 +152,11 @@ long MatNullity(const Matrix_t *mat)
 
 
 
-/**
- ** Nullity of a matrix.
- ** This function calculates the dimension of the null-space of a matrix
- ** and deletes the matrix.
- ** @param mat Pointer to the matrix.
- ** @return Nullity of @em mat, or -$ on error.
- **/
+/// Nullity of a matrix.
+/// This function calculates the dimension of the null-space of a matrix
+/// and deletes the matrix.
+/// @param mat Pointer to the matrix.
+/// @return Nullity of @em mat, or -$ on error.
 
 long MatNullity__(Matrix_t *mat)
 {
@@ -176,6 +168,4 @@ long MatNullity__(Matrix_t *mat)
 }
 
 
-/**
- ** @}
- **/
+/// @}

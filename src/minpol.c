@@ -181,32 +181,29 @@ static void spinup_cyclic()
 }
 
 
-/** @addtogroup charpol
- ** @{
- **/
+/// @addtogroup charpol
+/// @{
 
-/**
- ** Minimal Polynomial.
- ** This function returns one factor of the minimal polynomial of
- ** a given matrix. Further calls with a 0 argument return
- ** more factors or 0, if there are no more factors. 
- ** Note that the factors obtained in this way are in general not irreducible.
- **
- ** If @a mat is different from 0, %MinPolFactor() initializes its 
- ** internal data and starts computing one cyclic subspace. Then, the polynomial 
- ** of the matrix restricted to that cyclic subspace is constructed and returned 
- ** to the caller.
- **
- ** If @a mat is 0 on the next call, %MinPolFactor() resumes at 
- ** the point where it returned the last time, calculates the next cyclic 
- ** subspace and so on, until the complete space is exhausted.
- **
- ** @attention Since the function stores information across multiple calls in
- ** static buffers, your program must not use
- ** %MinPolFactor() on more than one matrix at the same time.
- ** @param mat Pointer to the matrix, or 0.
- ** @return One factor of the minmal polynomial or 0 if there are no more factors.
- **/
+/// Minimal Polynomial.
+/// This function returns one factor of the minimal polynomial of
+/// a given matrix. Further calls with a 0 argument return
+/// more factors or 0, if there are no more factors. 
+/// Note that the factors obtained in this way are in general not irreducible.
+///
+/// If @a mat is different from 0, %MinPolFactor() initializes its 
+/// internal data and starts computing one cyclic subspace. Then, the polynomial 
+/// of the matrix restricted to that cyclic subspace is constructed and returned 
+/// to the caller.
+///
+/// If @a mat is 0 on the next call, %MinPolFactor() resumes at 
+/// the point where it returned the last time, calculates the next cyclic 
+/// subspace and so on, until the complete space is exhausted.
+///
+/// @attention Since the function stores information across multiple calls in
+/// static buffers, your program must not use
+/// %MinPolFactor() on more than one matrix at the same time.
+/// @param mat Pointer to the matrix, or 0.
+/// @return One factor of the minmal polynomial or 0 if there are no more factors.
 
 Poly_t *MinPolFactor(Matrix_t *mat)
 {
@@ -254,14 +251,12 @@ Poly_t *MinPolFactor(Matrix_t *mat)
 }
 
 
-/**
- ** Minimal polynomial.
- ** This function calculates the minimal polynomial of a matrix in
- ** factored form. The return value is a pointer to a FPoly_t structure
- ** containing the irreducible factors of the minimal polynomial.
- ** @param mat Pointer to the matrix.
- ** @return Minimal polynomial of @a mat, or 0 on error.
- **/
+/// Minimal polynomial.
+/// This function calculates the minimal polynomial of a matrix in
+/// factored form. The return value is a pointer to a FPoly_t structure
+/// containing the irreducible factors of the minimal polynomial.
+/// @param mat Pointer to the matrix.
+/// @return Minimal polynomial of @a mat, or 0 on error.
 
 FPoly_t *MinPol(Matrix_t *mat)
 
@@ -288,6 +283,4 @@ FPoly_t *MinPol(Matrix_t *mat)
 }
 
 
-/**
- ** @}
- **/
+/// @}

@@ -20,21 +20,19 @@ MTX_DEFINE_FILE_INFO
 
 
 
-/**
- ** Compare Two Plynomials.
- ** This function compares two polynomials and returns 0 if the polynomials are equal,
- ** -1 if a<b, or 1 if a>b.  The ordering of polynomials is defined as follows.
- ** - If a and b are over different fields, the polynomials over 
- **   the larger field is greater. 
- ** - Otherwise, if they have different degrees, the polynomial
- **   with the higher degree is greater. 
- ** - If both field and degree are equal, the result of the comparison is 0
- **   if the polynomials are equal. Otherwise it is unspecified if the return value
- **   is +1 or -1.
- ** @param a First polynomial.
- ** @param b Second polynomial.
- ** @return 1 if a>b, -1 if a<b, 0 if a=b, or -2 on error.
- **/
+/// Compare Two Plynomials.
+/// This function compares two polynomials and returns 0 if the polynomials are equal,
+/// -1 if a<b, or 1 if a>b.  The ordering of polynomials is defined as follows.
+/// - If a and b are over different fields, the polynomials over 
+///   the larger field is greater. 
+/// - Otherwise, if they have different degrees, the polynomial
+///   with the higher degree is greater. 
+/// - If both field and degree are equal, the result of the comparison is 0
+///   if the polynomials are equal. Otherwise it is unspecified if the return value
+///   is +1 or -1.
+/// @param a First polynomial.
+/// @param b Second polynomial.
+/// @return 1 if a>b, -1 if a<b, 0 if a=b, or -2 on error.
 
 int PolCompare(const Poly_t *a, const Poly_t *b)
 
@@ -78,6 +76,4 @@ int PolCompare(const Poly_t *a, const Poly_t *b)
     return 0;
 }
 
-/** 
- ** @}
- **/
+/// @}

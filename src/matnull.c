@@ -14,21 +14,22 @@
 MTX_DEFINE_FILE_INFO
 
 
-/**
-!description
-    This function calculates the null-space of a matrix. The matrix is passed 
-    as first argument, |nor| is the number of rows, |piv| must be a pointer 
-    to an array of at least $|nor|+1$ integers, and |nsp| must be a pointer to 
-    a square matrix of size |nor|.
+/// @addtogroup mat
+/// @{
 
-    If the function is successfull (non-negative return value),
-    - |matrix| is reduced to echelon form,
-    - |nsp| contains the null-space in echelon form, and
-    - |piv| contains a pivot table for the null space.
-    If |flags| is nonzero, the null-space is not reduced to echelon form,
-    and the contents of |piv| are undefined.
- ** @see 
- **/
+////////////////////////////////////////////////////////////////////////////////////////////////////
+/// Null space.
+/// This function calculates the null-space of a matrix. The matrix is passed 
+/// as first argument, |nor| is the number of rows, |piv| must be a pointer 
+/// to an array of at least $|nor|+1$ integers, and |nsp| must be a pointer to 
+/// a square matrix of size |nor|.
+///
+/// If the function is successfull (non-negative return value),
+/// - |matrix| is reduced to echelon form,
+/// - |nsp| contains the null-space in echelon form, and
+/// - |piv| contains a pivot table for the null space.
+/// If |flags| is nonzero, the null-space is not reduced to echelon form,
+/// and the contents of |piv| are undefined.
 
 static long znullsp(PTR matrix, long nor, int *piv, PTR nsp, int flags)
 {
@@ -118,22 +119,14 @@ static long znullsp(PTR matrix, long nor, int *piv, PTR nsp, int flags)
     return dim;
 }
 
-
-
-/**
- ** @addtogroup mat
- ** @{
- **/
-
-/**
- ** Null-space of a matrix
- ** This function calculates the null-space of a matrix. Unlike MatNullSpace(), this function
- ** modifies the orginal matrix, but uses less memory since no temporary workspace is allocated.
- ** The result is in echelon form.
- ** @param mat Pointer to the matrix.
- ** @param flags If nonzero, the null-space is not reduced to echelon form.
- ** @return Pointer to the null-space of |mat|, or |NULL| on error.
- **/
+////////////////////////////////////////////////////////////////////////////////////////////////////
+/// Null-space of a matrix
+/// This function calculates the null-space of a matrix. Unlike MatNullSpace(), this function
+/// modifies the orginal matrix, but uses less memory since no temporary workspace is allocated.
+/// The result is in echelon form.
+/// @param mat Pointer to the matrix.
+/// @param flags If nonzero, the null-space is not reduced to echelon form.
+/// @return Pointer to the null-space of |mat|, or |NULL| on error.
 
 Matrix_t *MatNullSpace_(Matrix_t *mat, int flags)
 {
@@ -171,15 +164,13 @@ Matrix_t *MatNullSpace_(Matrix_t *mat, int flags)
 }
 
 
-
-/**
- ** Null-space of a matrix
- ** This function calculates the null-space of a matrix. Unlike MatNullSpace_() and
- ** MatNullSpace__(), this function does not change the original matrix, but it allocates
- ** a temporary copy of the matrix and thus needs more memory.
- ** @param mat Pointer to the matrix.
- ** @return Pointer to the null-space, or 0 on error.
- **/
+////////////////////////////////////////////////////////////////////////////////////////////////////
+/// Null-space of a matrix
+/// This function calculates the null-space of a matrix. Unlike MatNullSpace_() and
+/// MatNullSpace__(), this function does not change the original matrix, but it allocates
+/// a temporary copy of the matrix and thus needs more memory.
+/// @param mat Pointer to the matrix.
+/// @return Pointer to the null-space, or 0 on error.
 
 Matrix_t *MatNullSpace(const Matrix_t *mat)
 {
@@ -201,14 +192,12 @@ Matrix_t *MatNullSpace(const Matrix_t *mat)
     return nsp;
 }
 
-
-/**
- ** Null-space of a matrix
- ** This function calculates the null-space of a matrix and deletes the original matrix.
- ** @see MatNullSpace_(), MatNullSpace()
- ** @param mat Pointer to the matrix.
- ** @return Pointer to the null-space, or 0 on error.
- **/
+////////////////////////////////////////////////////////////////////////////////////////////////////
+/// Null-space of a matrix
+/// This function calculates the null-space of a matrix and deletes the original matrix.
+/// @see MatNullSpace_(), MatNullSpace()
+/// @param mat Pointer to the matrix.
+/// @return Pointer to the null-space, or 0 on error.
 
 Matrix_t *MatNullSpace__(Matrix_t *mat)
 {
@@ -218,8 +207,4 @@ Matrix_t *MatNullSpace__(Matrix_t *mat)
     return nsp;
 }
 
-
-
-/**
- ** @}
- **/
+/// @}

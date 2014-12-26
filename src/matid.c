@@ -17,19 +17,15 @@
 
 MTX_DEFINE_FILE_INFO 
 
-/**
- ** @addtogroup mat
- ** @{
- **/
+/// @addtogroup mat
+/// @{
 
-/**
- ** Identity matrix
- ** This function creates an identity matrix with @em nor nows over GF(@em fl).
- ** @param fl Field order.
- ** @param nor Number of rows.
- ** @return Pointer to the matrix, or 0 on error.
- ** @see MatAlloc
- **/
+/// Identity matrix
+/// This function creates an identity matrix with @em nor nows over GF(@em fl).
+/// @param fl Field order.
+/// @param nor Number of rows.
+/// @return Pointer to the matrix, or 0 on error.
+/// @see MatAlloc
 
 Matrix_t *MatId(int fl, int nor)
 
@@ -60,6 +56,4 @@ Matrix_t *MatId(int fl, int nor)
     return m;
 }
 
-/**
- ** @}
- **/
+/// @}

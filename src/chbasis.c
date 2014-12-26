@@ -13,28 +13,19 @@
 MTX_DEFINE_FILE_INFO
 
 
-/**
-!section obj.matrep
- ** Change basis.
- ** @param rep
-    Matrix representation.
- ** @param trans   
-    Basis transformation matrix.
- ** @return
-    $0$ on success, $-1$ on error.
-!description
-    This function performs a change of basis on a matrix representation.
-    |trans| is the transformation matrix $T$. The rows of |trans| must 
-    contain the new basis vectors, expressed in the old basis. Then, the 
-    transformed generators are given by
-    \[
-	g_i' = T g_i T^{-1}
-    \]
- ** @see 
- **/
+/// @addtogroup mrep 
+/// @{
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+/// Change basis.
+/// This function performs a change of basis on a matrix representation.
+/// The transformed generators are given by g'<sub>i</sub> = T g<sub>i</sub> T<sup>-1</sup>.
+/// @param rep Matrix representation.
+/// @param trans Transformation matrix mapping the old basis to the new basis. In other words,
+///    the rows of the matrix are the new basis vectors
+/// @return 0 on success, -1 on error.
 
 int MrChangeBasis(MatRep_t *rep, const Matrix_t *trans)
-
 {
     Matrix_t *bi;
     int i;
@@ -111,4 +102,5 @@ int ChangeBasisOLD(const Matrix_t *M, int ngen, const Matrix_t *gen[],
     return 0;
 }
 
+/// @}
 

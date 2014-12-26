@@ -17,30 +17,20 @@
 
 MTX_DEFINE_FILE_INFO
 
+/// @addtogroup mf
+/// @{
 
-
-
-/**
-!section obj.file
- ** Read row vectors from a file.
- ** @param f
-    Pointer to the file.
- ** @param buf
-    Data buffer.
- ** @param nrows
-    Number of rows to read.
- ** @return
-    Number of rows that were actually read. Any value other than |count|
-    indicates an error.
-!description
-    This function reads |nrows| rows from a data file into a buffer. 
-    Unlike |FfReadRows()|, this function changes the current row size to
-    the appropriate value, which is stored in the |MtxFile_t| object.
- ** @see FfReadRows MfWriteRows
- **/
+////////////////////////////////////////////////////////////////////////////////////////////////////
+/// Read row vectors from a file.
+/// This function reads @a nrows rows from a data file into a buffer. 
+/// Unlike FfReadRows(), this function changes the current row size to
+/// the appropriate value, which is stored in the MtxFile_t object.
+/// @param f Pointer to the file.
+/// @param buf Data buffer.
+/// @param nrows Number of rows to read.
+/// @return Number of rows that were actually read. Any value other than count indicates an error.
 
 int MfReadRows(MtxFile_t *f, PTR buf, int nrows)
-
 {
     int i;
     register char *b = (char *) buf;
@@ -65,7 +55,7 @@ int MfReadRows(MtxFile_t *f, PTR buf, int nrows)
     if (ferror(f->File)) 
 	MTX_ERROR1("%s: Read failed: %S",f->Name);
     return i;
-
 }
 
+/// @}
 

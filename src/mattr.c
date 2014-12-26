@@ -13,16 +13,12 @@
 
 MTX_DEFINE_FILE_INFO
 
-/**
- ** @addtogroup mat
- ** @{
- **/
+/// @addtogroup mat
+/// @{
 
-/**
- ** Transpose a matrix.
- ** @param src Pointer to the matrix.
- ** @return Pointer to the transposed matrix or 0 on error.
- **/
+/// Transpose a matrix.
+/// @param src Pointer to the matrix.
+/// @return Pointer to the transposed matrix or 0 on error.
 
 Matrix_t *MatTransposed(const Matrix_t *src)
 {
@@ -68,6 +64,4 @@ Matrix_t *MatTransposed(const Matrix_t *src)
     return dest;
 }
 
-/**
- ** @}
- **/
+/// @}

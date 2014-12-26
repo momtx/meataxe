@@ -33,24 +33,20 @@ static void normalize(Poly_t *p, FEL f)
 }
 
 
-/** 
- ** @addtogroup poly
- ** @{
- **/
+/// @addtogroup poly
+/// @{
 
 
-/**
- ** Greatest Common Divisor of two Polynomials.
- ** This function calculates the gratest common divisor of two poynomials.
- ** The polynomials must be over the same field, and at least one of
- ** them must be different from zero.
- ** Unlike most polynomial functions, PolGcd() normalizes the result, 
- ** i.e., the leading coefficient of the g.c.d., is always one.
- ** @see PolGcdEx()
- ** @param a First polynomial.
- ** @param b Second polynomial.
- ** @return Greatest common divisor of @em a and @em b, 0 on error.
- **/
+/// Greatest Common Divisor of two Polynomials.
+/// This function calculates the gratest common divisor of two poynomials.
+/// The polynomials must be over the same field, and at least one of
+/// them must be different from zero.
+/// Unlike most polynomial functions, PolGcd() normalizes the result, 
+/// i.e., the leading coefficient of the g.c.d., is always one.
+/// @see PolGcdEx()
+/// @param a First polynomial.
+/// @param b Second polynomial.
+/// @return Greatest common divisor of @em a and @em b, 0 on error.
 
 Poly_t *PolGcd(const Poly_t *a, const Poly_t *b)
 {
@@ -115,25 +111,23 @@ Poly_t *PolGcd(const Poly_t *a, const Poly_t *b)
 
 
 
-/**
- ** Greatest Common Divisor of two Polynomials.
- ** Given two polynomials a and b, this function calculates the
- ** greatest common divisor g=gcd(a,b) and two polynomials p, q
- ** such that g=pa+qb. Both @em a and @em b must be nonzero. The leading
- ** coefficient of g is always one.
- **
- ** @em result must be a pointer to an array of three <tt>Poly_t *</tt> elements.
- ** If the function is successful, pointers to g, p, and q have been stored in
- ** result[0], result[1], and result[2], respectively. The caller is
- ** responsible for destroying these polynomials when they are no longer
- ** needed. In particular, you must not use the same |result| buffer again
- ** with %PolGcdEx() before the contents have been freed.
- ** @see PolGcd()
- ** @param a First polynomial.
- ** @param b Second polynomial.
- ** @param result Result buffer for the g.c.d. and coefficients (see below).
- ** @return 0 on sucess, -1 on error.
- **/
+/// Greatest Common Divisor of two Polynomials.
+/// Given two polynomials a and b, this function calculates the
+/// greatest common divisor g=gcd(a,b) and two polynomials p, q
+/// such that g=pa+qb. Both @em a and @em b must be nonzero. The leading
+/// coefficient of g is always one.
+///
+/// @em result must be a pointer to an array of three <tt>Poly_t *</tt> elements.
+/// If the function is successful, pointers to g, p, and q have been stored in
+/// result[0], result[1], and result[2], respectively. The caller is
+/// responsible for destroying these polynomials when they are no longer
+/// needed. In particular, you must not use the same |result| buffer again
+/// with %PolGcdEx() before the contents have been freed.
+/// @see PolGcd()
+/// @param a First polynomial.
+/// @param b Second polynomial.
+/// @param result Result buffer for the g.c.d. and coefficients (see below).
+/// @return 0 on sucess, -1 on error.
 
 int PolGcdEx(const Poly_t *a, const Poly_t *b, Poly_t **result)
 {
@@ -208,6 +202,4 @@ int PolGcdEx(const Poly_t *a, const Poly_t *b, Poly_t **result)
 
 
 
-/** 
- ** @}
- **/
+/// @}

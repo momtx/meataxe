@@ -17,17 +17,13 @@
 MTX_DEFINE_FILE_INFO
 
 
-/** 
- ** @addtogroup poly
- ** @{
- **/
+/// @addtogroup poly
+/// @{
 
-/**
- ** Duplicate a Factored Polynomial.
- ** This function creates a copy of a factored polynomial.
- ** @param src Pointer to a factored polynomial.
- ** @return A pointer to a copy of @em src, or 0 on error.
- **/
+/// Duplicate a Factored Polynomial.
+/// This function creates a copy of a factored polynomial.
+/// @param src Pointer to a factored polynomial.
+/// @return A pointer to a copy of @em src, or 0 on error.
 
 FPoly_t *FpDup(const FPoly_t *src)
 {
@@ -90,6 +86,4 @@ FPoly_t *FpDup(const FPoly_t *src)
 }
 
 
-/** 
- ** @}
- **/
+/// @}

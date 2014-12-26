@@ -13,18 +13,14 @@
 
 MTX_DEFINE_FILE_INFO
 
-/**
- ** @addtogroup mat
- ** @{
- **/
+/// @addtogroup mat
+/// @{
 
 
-
-/**
- ** Read a matrix from a file.
- ** @param f File to read from.
- ** @return Pointer to the matrix, or 0 on error.
- **/
+////////////////////////////////////////////////////////////////////////////////////////////////////
+/// Read a matrix from a file.
+/// @param f File to read from.
+/// @return Pointer to the matrix, or 0 on error.
 
 Matrix_t *MatRead(FILE *f)
 {
@@ -53,24 +49,14 @@ Matrix_t *MatRead(FILE *f)
 }
 
 
-
-/**
- ** Read a matrix from a file.
-!synopsis 
-    Matrix_t *MatLoad(const char *fn);
- ** @param fn
-    File name.
- ** @return
-    Pointer to the matrix, or |NULL| on error.
-!description
-    This function opens a file, reads a single matrix, and closes the file.
-
-    To read more than one matrix from a file, use |MatRead()|.
- ** @see MatRead
- **/
+////////////////////////////////////////////////////////////////////////////////////////////////////
+/// Read a matrix from a file.
+/// This function opens a file, reads a single matrix, and closes the file.
+/// To read more than one matrix from a file, use |MatRead()|.
+/// @param fn File name.
+/// @return Pointer to the matrix, or |NULL| on error.
 
 Matrix_t *MatLoad(const char *fn)
-
 {
     FILE *f;
     Matrix_t *m;
@@ -83,6 +69,4 @@ Matrix_t *MatLoad(const char *fn)
 }
 
 
-/**
- ** @}
- **/
+/// @}

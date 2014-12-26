@@ -18,19 +18,15 @@
 MTX_DEFINE_FILE_INFO
 
 
-/**
- ** @addtogroup perm
- ** @{
- **/
+/// @addtogroup perm
+/// @{
 
-/**
- ** Multiply permutations.
- ** This function multiplies @em dest from the right by @em src. Both 
- ** permutations must have the same degree.
- ** @param dest Pointer to the first permutation.
- ** @param src Pointer to the second permutation.
- ** @return @em dest, or 0 on error.
- **/
+/// Multiply permutations.
+/// This function multiplies @em dest from the right by @em src. Both 
+/// permutations must have the same degree.
+/// @param dest Pointer to the first permutation.
+/// @param src Pointer to the second permutation.
+/// @return @em dest, or 0 on error.
 
 Perm_t *PermMul(Perm_t *dest, const Perm_t *src)
 {
@@ -62,6 +58,4 @@ Perm_t *PermMul(Perm_t *dest, const Perm_t *src)
 
 
 
-/**
- ** @}
- **/
+/// @}

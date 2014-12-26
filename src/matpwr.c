@@ -13,10 +13,8 @@
 
 MTX_DEFINE_FILE_INFO
 
-/**
- ** @addtogroup mat
- ** @{
- **/
+/// @addtogroup mat
+/// @{
 
 
 
@@ -68,33 +66,23 @@ static void matpwr_(long n, PTR inp, PTR out, PTR tmp2)
 
 
 
-/**
-!section obj.mat
- ** Power of a matrix.
-!synopsis 
-    Matrix_t *MatPower(const Matrix_t *mat, long n);
- ** @param mat
-    Pointer to the matrix.
- ** @param n
-    Exponent.
- ** @return
-    |n|-th power of |mat|, or |NULL| on error.
-!description
-    This function calculates the $n$-th power of a matrix, using the binary
-    method. This method is generally faster than multiplying the matrix $n$
-    times by itself. On the other hand, a third matrix is temporarily created 
-    in addition to the original matrix and the result matrix.
-    The cases $n=0$ and $n=1$ are handled separately, avoiding unnecessary
-    memory allocation and calculation. 
-
-    Negative exponents are not allowed. To calculate a negative power, you 
-    must first invert the matrix with |MatInverse()| and then call |MatPower()|
-    with the inverted matrix and a positive exponent.
- ** @see MatMul MatInverse
- **/
+////////////////////////////////////////////////////////////////////////////////////////////////////
+/// Power of a matrix.
+/// This function calculates the n-th power of a matrix, using the binary
+/// method. This method is generally faster than multiplying the matrix $n$
+/// times by itself. On the other hand, a third matrix is temporarily created 
+/// in addition to the original matrix and the result matrix.
+/// The cases n=0 and n=1 are handled separately, avoiding unnecessary
+/// memory allocation and calculation. 
+///
+/// Negative exponents are not allowed. To calculate a negative power, you 
+/// must first invert the matrix with MatInverse() and then call MatPower()
+/// with the inverted matrix and a positive exponent.
+/// @param mat Pointer to the matrix.
+/// @param n Exponent.
+/// @return n-th power of mat, or NULL on error.
 
 Matrix_t *MatPower(const Matrix_t *mat, long n)
-
 {
     Matrix_t *result;
     PTR tmp, tmp2;
@@ -131,6 +119,4 @@ Matrix_t *MatPower(const Matrix_t *mat, long n)
 
 
 
-/**
- ** @}
- **/
+/// @}

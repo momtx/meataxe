@@ -16,22 +16,18 @@
 
 MTX_DEFINE_FILE_INFO 
 
-/**
- ** @defgroup tp Tensor Products
- ** @{
- ** @details
- ** These function are used for calculations with tensor products.
- **/
+/// @defgroup tp Tensor Products
+/// @{
+/// @details
+/// These function are used for calculations with tensor products.
 
   
-/**
- ** Tensor Product.
- ** This function calculates the (Kronecker) tensor product m1⊗m2.
- ** Both matrices must be over the same field.
- ** @param m1 Pointer to the first matrix.
- ** @param m2 Pointer to the second matrix.
- ** @return The tensor product of @a m1 and @a m2, or 0 on error.
- **/
+/// Tensor Product.
+/// This function calculates the (Kronecker) tensor product m1⊗m2.
+/// Both matrices must be over the same field.
+/// @param m1 Pointer to the first matrix.
+/// @param m2 Pointer to the second matrix.
+/// @return The tensor product of @a m1 and @a m2, or 0 on error.
 
 Matrix_t *MatTensor(const Matrix_t *m1, const Matrix_t *m2)
 
@@ -143,6 +139,4 @@ Matrix_t *MatTensor(const Matrix_t *m1, const Matrix_t *m2)
 }
 
 
-/**
- ** @}
- **/
+/// @}

@@ -17,17 +17,13 @@
 MTX_DEFINE_FILE_INFO 
 
 
-/**
- ** @addtogroup mat
- ** @{
- **/
+/// @addtogroup mat
+/// @{
 
-/**
- ** Sum of two matrices.
- ** This function adds @em src to @em dest, overwriteing the previos value in @em dest.
- ** The matrices must be over the same field and have the  same dimensions.
- ** @return @em dest on success, 0 on error.
- **/
+/// Sum of two matrices.
+/// This function adds @em src to @em dest, overwriteing the previos value in @em dest.
+/// The matrices must be over the same field and have the  same dimensions.
+/// @return @em dest on success, 0 on error.
 
 Matrix_t *MatAdd(Matrix_t *dest, const Matrix_t *src)
 {
@@ -64,6 +60,4 @@ Matrix_t *MatAdd(Matrix_t *dest, const Matrix_t *src)
     return dest;
 }
 
-/**
- ** @}
- **/
+/// @}

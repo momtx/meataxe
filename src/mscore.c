@@ -19,47 +19,41 @@ MTX_DEFINE_FILE_INFO
 #define MS_MAGIC 0x6263659B
    
 
-/**
- ** @defgroup matset Matrix Sets
- ** @{
- **/
+/// @defgroup matset Matrix Sets
+/// @{
 
-/**
- ** @class MatrixSet_t
- ** @brief A Set of Matrices.
- ** The MatrixSet_t structure represents a sequence of linearly independent
- ** matrices over a finite field. All matrices in the set have the same number
- ** of rows and columns. To assure that the matrices are linearly independent,
- ** the sequence is kept in echelon form. This means, each matrix in the set
- ** has a nonzero mark, and all matrices after this matrix have a zero at the
- ** corresponding position.
- ** Note that the individual matrices within the set are not in echelon form.
- **
- ** There is only one way to create a matrix set: the application first
- ** allocates a MatrixSet_t structure, and then adds matrices to the 
- ** set with MsCleanAndAppend(). The latter function guarantees that
- ** the matrix set remains linearly independent --- it will not add a 
- ** matrix which is already in the span of the set.
- ** A second function, MsClean(), can be used to determine if a
- ** matrix is in the span of a matrix set without modifying the set.
- **
- ** Once a matrix has been added to a matrix set, the set takes the
- ** ownership of that matrix. The application must not modify of free 
- ** a matrix after it has een added to a matrix set. When the matrix 
- ** set is freed with MsFree(), all matrices in  the set are freed, 
- ** too.
- **/
+/// @class MatrixSet_t
+/// @brief A Set of Matrices.
+/// The MatrixSet_t structure represents a sequence of linearly independent
+/// matrices over a finite field. All matrices in the set have the same number
+/// of rows and columns. To assure that the matrices are linearly independent,
+/// the sequence is kept in echelon form. This means, each matrix in the set
+/// has a nonzero mark, and all matrices after this matrix have a zero at the
+/// corresponding position.
+/// Note that the individual matrices within the set are not in echelon form.
+///
+/// There is only one way to create a matrix set: the application first
+/// allocates a MatrixSet_t structure, and then adds matrices to the 
+/// set with MsCleanAndAppend(). The latter function guarantees that
+/// the matrix set remains linearly independent --- it will not add a 
+/// matrix which is already in the span of the set.
+/// A second function, MsClean(), can be used to determine if a
+/// matrix is in the span of a matrix set without modifying the set.
+///
+/// Once a matrix has been added to a matrix set, the set takes the
+/// ownership of that matrix. The application must not modify of free 
+/// a matrix after it has een added to a matrix set. When the matrix 
+/// set is freed with MsFree(), all matrices in  the set are freed, 
+/// too.
 
 
-/**
- ** Check a Matrix Set.
- ** This function checks if the argument |set| is a pointer to a valid
- ** matrix. If the matrix set is valid, the function returns 1. Otherwise, 
- ** an error is signalled and, if the error handler does not terminate the 
- ** program, the function returns 0.
- ** @param set Pointer to the matrix set.
- ** @return 1 if @a set points to a valid matrix set, 0 otherwise.
- **/
+/// Check a Matrix Set.
+/// This function checks if the argument |set| is a pointer to a valid
+/// matrix. If the matrix set is valid, the function returns 1. Otherwise, 
+/// an error is signalled and, if the error handler does not terminate the 
+/// program, the function returns 0.
+/// @param set Pointer to the matrix set.
+/// @return 1 if @a set points to a valid matrix set, 0 otherwise.
 
 int MsIsValid(const MatrixSet_t *set)
 {
@@ -124,12 +118,10 @@ int MsIsValid(const MatrixSet_t *set)
 
 
 
-/**
- ** Allocate a Matrix Set.
- ** This function allocates a new matrix set. The set is initially empty.
- ** When the set is no longer needed, if must be freed with MsFree().
- ** @return Pointer to the new matrix set, or 0 on error.
- **/
+/// Allocate a Matrix Set.
+/// This function allocates a new matrix set. The set is initially empty.
+/// When the set is no longer needed, if must be freed with MsFree().
+/// @return Pointer to the new matrix set, or 0 on error.
 
 MatrixSet_t *MsAlloc()
 {
@@ -149,12 +141,10 @@ MatrixSet_t *MsAlloc()
 
 
 
-/**
- ** Free a Matrix Set.
- ** This function frees a matrix set. All matrices in the set are freed, too.
- ** @param set Pointer to the matrix set.
- ** @return 0 on success, -1 on error.
- **/
+/// Free a Matrix Set.
+/// This function frees a matrix set. All matrices in the set are freed, too.
+/// @param set Pointer to the matrix set.
+/// @return 0 on success, -1 on error.
 
 int MsFree(MatrixSet_t *set)
 {
@@ -169,7 +159,5 @@ int MsFree(MatrixSet_t *set)
 }
 
 
-/**
- ** @}
- **/
+/// @}
 

@@ -11,16 +11,15 @@
 #include <string.h>
 #include <stdarg.h>
 
-/** @defgroup str Dynamic Strings
- ** @{
- ** These functions are used to work with dynamically allocated strings.
- ** A dynamic string contains a normal «char*» pointing to a NUL terminated
- ** text.
- ** Note however, that dynamic strings use their own memory management
- ** which cannot be mixed with the standard C library memory functions.
- ** Unused strings must be freed with StrFree(), and you must never use
- ** free() or realloc() on a dynamic string.
- **/
+/// @defgroup str Dynamic Strings
+/// @{
+/// These functions are used to work with dynamically allocated strings.
+/// A dynamic string contains a normal «char*» pointing to a NUL terminated
+/// text.
+/// Note however, that dynamic strings use their own memory management
+/// which cannot be mixed with the standard C library memory functions.
+/// Unused strings must be freed with StrFree(), and you must never use
+/// free() or realloc() on a dynamic string.
 
 
 #define REP(s) ((size_t *)(s) - 3)
@@ -108,13 +107,11 @@ static void reserve(char **s, size_t min_avail)
 
 
 
-/**
- ** Create a string.
- ** This function creates an empty string.
- ** @see StrFree()
- ** @param initial_capacity Number of bytes to reserve on allocation.
- ** @return The new string.
- **/
+/// Create a string.
+/// This function creates an empty string.
+/// @see StrFree()
+/// @param initial_capacity Number of bytes to reserve on allocation.
+/// @return The new string.
 
 String StrAlloc(size_t initial_capacity)
 {
@@ -124,11 +121,9 @@ String StrAlloc(size_t initial_capacity)
 }
 
 
-/**
- ** Free a string.
- ** This function frees a dynamic string.
- ** @see StrAlloc()
- **/
+/// Free a string.
+/// This function frees a dynamic string.
+/// @see StrAlloc()
 
 void StrFree(String *s)
 {
@@ -157,11 +152,9 @@ static void append(String *s, const char *src, size_t len)
 }
 
 
-/**
- ** Appends text to the end of a string.
- ** @param s The string to be modified.
- ** @param text Text to append.
- **/
+/// Appends text to the end of a string.
+/// @param s The string to be modified.
+/// @param text Text to append.
 
 void StrAppend(String *s, const char *text)
 {
@@ -170,14 +163,12 @@ void StrAppend(String *s, const char *text)
 
 
 
-/**
- ** vsnprintf() replacement.
- ** Formats a string with vsnprintf() and appends the resulting
- ** text to «s».
- ** @param s The string to be modified.
- ** @param fmt Format
- ** @param args Arguments for the % placeholders in fmt.
- **/
+/// vsnprintf() replacement.
+/// Formats a string with vsnprintf() and appends the resulting
+/// text to «s».
+/// @param s The string to be modified.
+/// @param fmt Format
+/// @param args Arguments for the % placeholders in fmt.
 
 void StrVAppendF(String *s, const char *fmt, va_list args)
 {
@@ -198,10 +189,8 @@ void StrVAppendF(String *s, const char *fmt, va_list args)
 }
 
 
-/**
- ** snprintf() replacement.
- ** Works like StrVAppendF() but expects a variable argument list.
- **/
+/// snprintf() replacement.
+/// Works like StrVAppendF() but expects a variable argument list.
 
 void StrAppendF(String *s, const char *fmt, ...)
 {
@@ -215,13 +204,11 @@ void StrAppendF(String *s, const char *fmt, ...)
 
 
 
-/**
- ** vsnprintf() replacement.
- ** Works like StrVAppendF() but overwrites the string with the formatted text.
- ** @param s The string to be modified.
- ** @param fmt Format
- ** @param args Arguments for the % placeholders in fmt.
- **/
+/// vsnprintf() replacement.
+/// Works like StrVAppendF() but overwrites the string with the formatted text.
+/// @param s The string to be modified.
+/// @param fmt Format
+/// @param args Arguments for the % placeholders in fmt.
 
 void StrVPrintF(String *s, const char *fmt, va_list args)
 {
@@ -240,10 +227,8 @@ void StrVPrintF(String *s, const char *fmt, va_list args)
 }
 
 
-/**
- ** snprintf() replacement.
- ** Works like StrVPrintF() but expects a variable argument list.
- **/
+/// snprintf() replacement.
+/// Works like StrVPrintF() but expects a variable argument list.
 
 void StrPrintF(String *s, const char *fmt, ...)
 {
@@ -257,8 +242,7 @@ void StrPrintF(String *s, const char *fmt, ...)
 
 
 
-/** @}
- **/
+/// @}
 
 
 

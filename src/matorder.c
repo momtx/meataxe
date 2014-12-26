@@ -19,21 +19,17 @@ MTX_DEFINE_FILE_INFO
 
 
 
-/**
- ** @addtogroup mat
- ** @{
- **/
+/// @addtogroup mat
+/// @{
 
-/**
- ** Order of a matrix.
- ** This function calculates the order of a matrix. @em mat must be a 
- ** non-singular, square matrix. 
- ** Even if @em mat is non-singular, the function may fail. This happens if
- ** the order is greater than 1000000, or if the order on any cyclic
- ** subspace is greater than 1000.
- ** @param mat Pointer to the matrix.
- ** @return The order of @em mat, or 1 on error.
- **/
+/// Order of a matrix.
+/// This function calculates the order of a matrix. @em mat must be a 
+/// non-singular, square matrix. 
+/// Even if @em mat is non-singular, the function may fail. This happens if
+/// the order is greater than 1000000, or if the order on any cyclic
+/// subspace is greater than 1000.
+/// @param mat Pointer to the matrix.
+/// @return The order of @em mat, or 1 on error.
 
 int MatOrder(const Matrix_t *mat)
 {
@@ -135,6 +131,4 @@ int MatOrder(const Matrix_t *mat)
 }
 
 
-/**
- ** @}
- **/
+/// @}

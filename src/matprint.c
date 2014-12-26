@@ -19,18 +19,14 @@
 MTX_DEFINE_FILE_INFO 
 */
 
-/**
- ** @addtogroup mat
- ** @{
- **/
+/// @addtogroup mat
+/// @{
 
-/**
- ** Print a Matrix on stdout.
- ** This function prints a matrix on the standard output in readable form.
- ** If @a name is not 0, the name followed by an equal sign is printed before the matrix.
- ** @param name Name to print before the matrix, or 0.
- ** @param m Pointer to the matrix.
- **/
+/// Print a Matrix on stdout.
+/// This function prints a matrix on the standard output in readable form.
+/// If @a name is not 0, the name followed by an equal sign is printed before the matrix.
+/// @param name Name to print before the matrix, or 0.
+/// @param m Pointer to the matrix.
 
 void MatPrint(const char *name, const Matrix_t *m)
 {
@@ -53,6 +49,4 @@ void MatPrint(const char *name, const Matrix_t *m)
 }
 
 
-/**
- ** @}
- **/
+/// @}

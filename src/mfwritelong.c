@@ -18,35 +18,31 @@
 MTX_DEFINE_FILE_INFO
 
 
+/// @addtogroup mf
+/// @{
 
-
-/**
-!section obj.file
- ** Write long integers to a file.
- ** @param f
-    Pointer to the file.
- ** @param buf
-    Data buffer.
- ** @param count
-    Number of integers to write.
- ** @return
-    Number of integers that were actually written. Any value other than |count|
-    indicates an error.
-!description
-    This function writes |count| long integers from buffer into a data file.
-    If necessary, the data is converted from machine independent format into
-    the format needed by the platform. See |SysWriteLong()| for details.
- ** @see SysWriteLong MfReadLong
- **/
+////////////////////////////////////////////////////////////////////////////////////////////////////
+/// Write long integers to a file.
+/// This function writes |count| long integers from buffer into a data file.
+/// If necessary, the data is converted from machine independent format into
+/// the format needed by the platform. See |SysWriteLong()| for details.
+/// @param f Pointer to the file.
+/// @param buf Data buffer.
+/// @param count Number of integers to write.
+/// @return Number of integers that were actually written. Any value other than count
+///    indicates an error.
 
 int MfWriteLong(MtxFile_t *f, const long *buf, int count)
-
 {
     int rc;
-    if (!MfIsValid(f))
+    if (!MfIsValid(f)) {
 	return -1;
+    }
     rc = SysWriteLong(f->File,buf,count);
-    if (rc != count)
+    if (rc != count) {
 	MTX_ERROR1("%s: write failed",f->Name);
+    }
     return rc;
 }
+
+/// @}

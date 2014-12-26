@@ -16,10 +16,8 @@
 MTX_DEFINE_FILE_INFO
 
 
-/**
- ** @addtogroup perm
- ** @{
- **/
+/// @addtogroup perm
+/// @{
 
 void Perm_ConvertOld(long *data, int len)
 {
@@ -45,17 +43,15 @@ void Perm_ConvertOld(long *data, int len)
 
 
 
-/**
- ** Read a Permutation from a File.
- ** This function reads a permutation from a file. @em f must be a pointer to an
- ** open file with read permission. 
- ** If a permutation was successfully read, the function returns a pointer to 
- ** a newly created Perm_t object. The caller is responsible for deleting 
- ** this object as soon as the permutation is no longer needed.
- ** @see PermLoad()
- ** @param f File to read from.
- ** @return Pointer to the permutation, or 0 on error.
- **/
+/// Read a Permutation from a File.
+/// This function reads a permutation from a file. @em f must be a pointer to an
+/// open file with read permission. 
+/// If a permutation was successfully read, the function returns a pointer to 
+/// a newly created Perm_t object. The caller is responsible for deleting 
+/// this object as soon as the permutation is no longer needed.
+/// @see PermLoad()
+/// @param f File to read from.
+/// @return Pointer to the permutation, or 0 on error.
 
 Perm_t *PermRead(FILE *f)
 {
@@ -88,19 +84,17 @@ Perm_t *PermRead(FILE *f)
 }
 
 
-/**
- ** Read a permutation.
- ** This function opens a file, reads a single permutation, and closes the 
- ** file. The return value is a pointer to the permutation or 0 on 
- ** error. If the file contains more than one permutation, only the first one 
- ** is read.
- ** If a permutation was successfully read, the function returns a pointer to 
- ** a newly created Perm_t object. The caller is responsible for deleting 
- ** this object as soon as the permutation is no longer needed.
- ** @see PermRead()
- ** @param fn File name.
- ** @return Pointer to the permutation read from the file, or 0 on error.
- **/
+/// Read a permutation.
+/// This function opens a file, reads a single permutation, and closes the 
+/// file. The return value is a pointer to the permutation or 0 on 
+/// error. If the file contains more than one permutation, only the first one 
+/// is read.
+/// If a permutation was successfully read, the function returns a pointer to 
+/// a newly created Perm_t object. The caller is responsible for deleting 
+/// this object as soon as the permutation is no longer needed.
+/// @see PermRead()
+/// @param fn File name.
+/// @return Pointer to the permutation read from the file, or 0 on error.
 
 Perm_t *PermLoad(const char *fn)
 {
@@ -124,6 +118,4 @@ Perm_t *PermLoad(const char *fn)
 
 
 
-/**
- ** @}
- **/
+/// @}

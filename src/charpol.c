@@ -18,21 +18,17 @@ MTX_DEFINE_FILE_INFO
    Global data
    -------------------------------------------------------------------------- */
 
-/**
- ** @defgroup charpol Characteristic and Minimal Polynomials
- ** @{
- **/
+/// @defgroup charpol Characteristic and Minimal Polynomials
+/// @{
 
 
-/**
- ** Seed for Characteristic Polynomial.
- ** This variable is used by CharPolFactor() to select the first
- ** seed vector. By default, CharPolSeed has the value 0, i.e., the
- ** first seed vector is (1,0,...,0). Assigning the value 1 selects
- ** the start vector (0,1,...,0) in all subsequent calls to
- ** CharPolFactor().
- ** If CharPolSeed is out of bounds, CharPolFactor() will reset it to 0.
- **/
+/// Seed for Characteristic Polynomial.
+/// This variable is used by CharPolFactor() to select the first
+/// seed vector. By default, CharPolSeed has the value 0, i.e., the
+/// first seed vector is (1,0,...,0). Assigning the value 1 selects
+/// the start vector (0,1,...,0) in all subsequent calls to
+/// CharPolFactor().
+/// If CharPolSeed is out of bounds, CharPolFactor() will reset it to 0.
 
 long CharPolSeed = 0;		/* Seed */
 
@@ -190,31 +186,29 @@ static void spinup_cyclic()
 
 
 
-/**
- ** Characteristic Polynomial.
- ** This function returns one factor of the characteristic polynomial of
- ** a given matrix. Further calls with a 0 argument return
- ** more factors or 0, if there are no more factors. 
- ** Note that the factors obtained in this way are in general not irreducible.
- **
- ** Here is how %CharPolFactor() works: If @a mat is different from 0,
- ** %CharPolFactor() initializes its internal data and starts
- ** computing one cyclic subspace. The choice of starting vector for this
- ** first subspace depends on the global variable CharPolSeed.
- ** Usually, this variable has a value of 0, corresponding to the vector
- ** (1,0,...,0). Then, the polynomial of the matrix restricted to 
- ** that cyclic subspace is constructed and returned to the caller.
- **
- ** If @a mat is 0 on the next call, %CharPolFactor() resumes at 
- ** the point where it returned the last time, calculates the next cyclic 
- ** subspace and so on, until the complete space is exhausted.
+/// Characteristic Polynomial.
+/// This function returns one factor of the characteristic polynomial of
+/// a given matrix. Further calls with a 0 argument return
+/// more factors or 0, if there are no more factors. 
+/// Note that the factors obtained in this way are in general not irreducible.
+///
+/// Here is how %CharPolFactor() works: If @a mat is different from 0,
+/// %CharPolFactor() initializes its internal data and starts
+/// computing one cyclic subspace. The choice of starting vector for this
+/// first subspace depends on the global variable CharPolSeed.
+/// Usually, this variable has a value of 0, corresponding to the vector
+/// (1,0,...,0). Then, the polynomial of the matrix restricted to 
+/// that cyclic subspace is constructed and returned to the caller.
+///
+/// If @a mat is 0 on the next call, %CharPolFactor() resumes at 
+/// the point where it returned the last time, calculates the next cyclic 
+/// subspace and so on, until the complete space is exhausted.
 
- ** @attention Since the function uses static variables to store
- ** information across multiple calls, your program must not use
- ** %CharPolFactor() on more than one matrix at the same time.
- ** @param mat Pointer to the matrix.
- ** @return A factor of the characteristic polynomial, or 0 if there are no more factors.
- **/
+/// @attention Since the function uses static variables to store
+/// information across multiple calls, your program must not use
+/// %CharPolFactor() on more than one matrix at the same time.
+/// @param mat Pointer to the matrix.
+/// @return A factor of the characteristic polynomial, or 0 if there are no more factors.
 
 Poly_t *CharPolFactor(const Matrix_t *mat)
 {
@@ -262,14 +256,12 @@ Poly_t *CharPolFactor(const Matrix_t *mat)
 
 
 
-/**
- ** Characteristic Polynomial.
- ** This function calculates the characteristic polynomial of a matrix in
- ** factored form. The return value is a pointer to a FPoly_t structure
- ** containing the irreducible factors of the characteristic polynomial.
- ** @param mat Pointer to the matrix.
- ** @return The characteristic polynomial of @a mat or 0 on error.
- **/
+/// Characteristic Polynomial.
+/// This function calculates the characteristic polynomial of a matrix in
+/// factored form. The return value is a pointer to a FPoly_t structure
+/// containing the irreducible factors of the characteristic polynomial.
+/// @param mat Pointer to the matrix.
+/// @return The characteristic polynomial of @a mat or 0 on error.
 
 FPoly_t *CharPol(const Matrix_t *mat)
 {
@@ -298,6 +290,4 @@ FPoly_t *CharPol(const Matrix_t *mat)
 }
 
 
-/**
- ** @}
- **/
+/// @}

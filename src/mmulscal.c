@@ -12,17 +12,13 @@
 
 
 
-/**
- ** @addtogroup mat
- ** @{
- **/
+/// @addtogroup mat
+/// @{
 
-/**
- ** Multiply a Matrix by a Constant.
- ** @param dest Pointer to the matrix.
- ** @param coeff Value to multiply with.
- ** @return The function returns @a dest.
- **/
+/// Multiply a Matrix by a Constant.
+/// @param dest Pointer to the matrix.
+/// @param coeff Value to multiply with.
+/// @return The function returns @a dest.
 
 Matrix_t *MatMulScalar(Matrix_t *dest, FEL coeff)
 {
@@ -50,6 +46,4 @@ Matrix_t *MatMulScalar(Matrix_t *dest, FEL coeff)
     return dest;
 }
 
-/**
- ** @}
- **/
+/// @}

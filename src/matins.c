@@ -13,20 +13,16 @@
 MTX_DEFINE_FILE_INFO
 
 
-/**
- ** @addtogroup mat
- ** @{
- **/
+/// @addtogroup mat
+/// @{
 
-/**
- ** Insert a matrix into a polynomial
- ** Given a square matrix A and a polynomial p over the same field, this functions
- ** calculates p(A). Unlike MatInsert() this function is destructive. The result
- ** is stored in the original matrix and the old value is lost.
- ** @param mat Pointer to the matrix.
- ** @param pol Pointer to the polynomial.
- ** @return The function returns @em mat, or 0 on error.
- **/
+/// Insert a matrix into a polynomial
+/// Given a square matrix A and a polynomial p over the same field, this functions
+/// calculates p(A). Unlike MatInsert() this function is destructive. The result
+/// is stored in the original matrix and the old value is lost.
+/// @param mat Pointer to the matrix.
+/// @param pol Pointer to the polynomial.
+/// @return The function returns @em mat, or 0 on error.
 
 Matrix_t *MatInsert_(Matrix_t *mat, const Poly_t *pol)
 {
@@ -103,15 +99,13 @@ Matrix_t *MatInsert_(Matrix_t *mat, const Poly_t *pol)
 
 
 
-/**
- ** Insert a matrix into a polynomial
- ** Given a square matrix A and a polynomial p over the same field, this functions
- ** calculates p(A). Unlike MatInsert_() this function returns a new matrix and does
- ** not modify the original matrix.
- ** @param mat Pointer to the matrix.
- ** @param pol Pointer to the polynomial.
- ** @return @em pol(@em mat), or 0 on error.
- **/
+/// Insert a matrix into a polynomial
+/// Given a square matrix A and a polynomial p over the same field, this functions
+/// calculates p(A). Unlike MatInsert_() this function returns a new matrix and does
+/// not modify the original matrix.
+/// @param mat Pointer to the matrix.
+/// @param pol Pointer to the polynomial.
+/// @return @em pol(@em mat), or 0 on error.
 
 Matrix_t *MatInsert(const Matrix_t *mat, const Poly_t *pol)
 {
@@ -173,6 +167,4 @@ Matrix_t *MatInsert(const Matrix_t *mat, const Poly_t *pol)
     return x;
 }
 
-/**
- ** @}
- **/
+/// @}

@@ -20,10 +20,8 @@
 MTX_DEFINE_FILE_INFO
 
 
-/**
- ** @addtogroup grmat
- ** @{
- **/
+/// @addtogroup grmat
+/// @{
 
 
 
@@ -116,17 +114,15 @@ static void CleverMapRow(PTR v,GreasedMatrix_t *M,PTR w)
 
 
 
-/**
- ** Multiply a vector by a greased matrix.
- ** This function calculates the matrix product of the vector @a v with
- ** the matrix @a M and write the result to @a w. The length of @a v must
- ** coincide with the number of rows of @a M. The result @a w is as long
- ** as the length of a row of @a M.
- ** Unlike FfMapRow(), this function sets field and row length correctly!
- ** @param v The vector.
- ** @param M Pointer to the matrix.
- ** @param w The result, vM.
- **/
+/// Multiply a vector by a greased matrix.
+/// This function calculates the matrix product of the vector @a v with
+/// the matrix @a M and write the result to @a w. The length of @a v must
+/// coincide with the number of rows of @a M. The result @a w is as long
+/// as the length of a row of @a M.
+/// Unlike FfMapRow(), this function sets field and row length correctly!
+/// @param v The vector.
+/// @param M Pointer to the matrix.
+/// @param w The result, vM.
 
 void GrMapRow(PTR v,GreasedMatrix_t *M, PTR w)
 {
@@ -223,6 +219,4 @@ void GrMapRow(PTR v,GreasedMatrix_t *M, PTR w)
     }
 }
 
-/**
- ** @}
- **/
+/// @}

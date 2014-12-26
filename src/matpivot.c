@@ -17,10 +17,8 @@
 
 MTX_DEFINE_FILE_INFO
 
-/**
- ** @addtogroup mat
- ** @{
- **/
+/// @addtogroup mat
+/// @{
 
 
 static int zmkpivot(PTR matrix, int nor, int noc, int *piv, int *ispiv)
@@ -61,13 +59,11 @@ static int zmkpivot(PTR matrix, int nor, int noc, int *piv, int *ispiv)
 
 
 
-/**
- ** Reduce to echelon form.
- ** This function builds the pivot table of a matrix. Unlike MatEchelonize()
- ** this function assumes that @a mat is already in echelon form.
- ** @param mat Pointer to the matrix.
- ** @return 0 on success, -1 on error.
- **/
+/// Reduce to echelon form.
+/// This function builds the pivot table of a matrix. Unlike MatEchelonize()
+/// this function assumes that @a mat is already in echelon form.
+/// @param mat Pointer to the matrix.
+/// @return 0 on success, -1 on error.
 
 int MatPivotize(Matrix_t *mat)
 {
@@ -111,6 +107,4 @@ int MatPivotize(Matrix_t *mat)
     return rc;
 }
 
-/**
- ** @}
- **/
+/// @}

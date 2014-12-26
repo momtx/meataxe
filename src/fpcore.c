@@ -20,23 +20,18 @@ MTX_DEFINE_FILE_INFO
 #define FP_MAGIC 0x17B69244
 
 
-/** 
- ** @addtogroup poly
- ** @{
- **/
+/// @addtogroup poly
+/// @{
 
-/** @class FPoly_t
- ** A Factored Polynomial.
- ** This structure contains a polynomial which is split into factors. The factors
- ** need not be irreducible.
- **/
+/// @class FPoly_t
+/// A Factored Polynomial.
+/// This structure contains a polynomial which is split into factors. The factors
+/// need not be irreducible.
    
 
-/**
- ** Check a Factored Polynomial.
- ** @param p The polynomial.
- ** @return 1 if @em p is a valid factores polynomial, 0 otherwise.
- **/
+/// Check a Factored Polynomial.
+/// @param p The polynomial.
+/// @return 1 if @em p is a valid factores polynomial, 0 otherwise.
 
 int FpIsValid(const FPoly_t *p)
 {
@@ -82,12 +77,10 @@ int FpIsValid(const FPoly_t *p)
 
 
 
-/**
- ** Allocate a Factored Polynomial.
- ** This function creates a new Fpoly_t structure.
- ** The new polynomial is empty, i.e., it has no factors.
- ** @return Pointer to the new FPoly_t structure or 0 on error.
- **/
+/// Allocate a Factored Polynomial.
+/// This function creates a new Fpoly_t structure.
+/// The new polynomial is empty, i.e., it has no factors.
+/// @return Pointer to the new FPoly_t structure or 0 on error.
 
 FPoly_t *FpAlloc()
 
@@ -124,11 +117,9 @@ FPoly_t *FpAlloc()
 
 
 
-/**
- ** Free a Factored Polynomial.
- ** @return 0 on success, -1 on error.
- ** @see FPoly_t FpAlloc
- **/
+/// Free a Factored Polynomial.
+/// @return 0 on success, -1 on error.
+/// @see FPoly_t FpAlloc
 
 int FpFree(FPoly_t *x)
 {
@@ -154,6 +145,4 @@ int FpFree(FPoly_t *x)
 }
 
 
-/** 
- ** @}
- **/
+/// @}

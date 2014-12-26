@@ -14,9 +14,13 @@
 MTX_DEFINE_FILE_INFO
 
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
+/// @addtosection algo
+/// @{
 
-static int CheckArgs(int ngen, Matrix_t  **gen1, const CfInfo *info1,
-    Matrix_t **gen2, int use_pw)
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+static int CheckArgs(int ngen, Matrix_t  **gen1, const CfInfo *info1, Matrix_t **gen2, int use_pw)
 
 {
     int j;
@@ -69,48 +73,34 @@ static int CheckArgs(int ngen, Matrix_t  **gen1, const CfInfo *info1,
 }
 
 
-
-/**
-!section algo.etc
- ** Compare representations.
- ** @param rep1
-    The first representation.
- ** @param info1
-    Pointer to an |CfInfo| structure for the first representation.
- ** @param rep2
-    The second representation.
- ** @param trans
-    Buffer for basis transformation matrix, or |NULL|.
- ** @param use_pw
-    If different from zero, use peak word instead of the identifying word 
-    (see below).
- ** @return
-    1 if the representations are isomorphic, 0 if they are not isomorphic, and
-    $-1$ on error.
-!description
-    This function decides if two irreducible representations are isomorphic.
-    |rep1| and |rep2| must be two matrix representations over the same field,
-    and with the same number of generators. Furthermore,
-    to compare the representations, the function needs an identifying word
-    for the first representation, i.e., the fields |info1->idword|, 
-    |info1->idpol| and |info1->spl| must be set, and the generators in 
-    |rep1| must be in standard basis with respect to the identifying word.
-    If |use_pw| is nonzero, the peak word is used instead of the idword.
-    In this case, |rep1| must of course be in standard basis with respect 
-    to the peak word.
-
-    If the representations are isomorphic, and |trans| is not |NULL|, the
-    basis transformation which makes the second representation identical
-    to the first is stored into |*trans|. To be more precise, if $g_i$ is 
-    the representation of the i-th generator in representation |rep1|,
-    $h_i$ in representation |rep2|, and $T$ the 
-    matrix returned in |trans|, then $Th_i T^{-1}=g_i$.
- ** @see 
- **/
+////////////////////////////////////////////////////////////////////////////////////////////////////
+/// Compare representations.
+/// This function decides if two irreducible representations are isomorphic.
+/// |rep1| and |rep2| must be two matrix representations over the same field,
+/// and with the same number of generators. Furthermore,
+/// to compare the representations, the function needs an identifying word
+/// for the first representation, i.e., the fields |info1->idword|, 
+/// |info1->idpol| and |info1->spl| must be set, and the generators in 
+/// |rep1| must be in standard basis with respect to the identifying word.
+/// If |use_pw| is nonzero, the peak word is used instead of the idword.
+/// In this case, |rep1| must of course be in standard basis with respect 
+/// to the peak word.
+///
+/// If the representations are isomorphic, and |trans| is not |NULL|, the
+/// basis transformation which makes the second representation identical
+/// to the first is stored into |*trans|. To be more precise, if $g_i$ is 
+/// the representation of the i-th generator in representation |rep1|,
+/// h<sub>i</sub> in representation @a rep2, and T the 
+/// matrix returned in @a trans, then $T h<sub>i</sub> T<sup>-1</sup>=g<sub>i</sub>.
+/// @param rep1 The first representation.
+/// @param info1 Pointer to an CfInfo_t structure for the first representation.
+/// @param rep2 The second representation.
+/// @param trans Buffer for basis transformation matrix, or NULL.
+/// @param use_pw If different from zero, use peak word instead of the identifying word.
+/// @return 1 if the representations are isomorphic, 0 otherwise, -1 on error.
 
 int IsIsomorphic(const MatRep_t *rep1, const CfInfo *info1,
-    const MatRep_t *rep2, Matrix_t  **trans, int use_pw)
-
+    		 const MatRep_t *rep2, Matrix_t  **trans, int use_pw)
 {
     int j;
     WgData_t *wg;
@@ -172,3 +162,5 @@ int IsIsomorphic(const MatRep_t *rep1, const CfInfo *info1,
 
     return (result == 0);
 }
+
+/// @}

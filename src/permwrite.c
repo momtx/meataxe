@@ -16,20 +16,16 @@
 
 MTX_DEFINE_FILE_INFO
 
-/**
- ** @addtogroup perm
- ** @{
- **/
+/// @addtogroup perm
+/// @{
 
-/**
- ** Write a Permutation to a File.
- ** This function writes a permutation to a file. The file must be open 
- ** for writing.
- ** @see PermSave
- ** @param perm Permutation to write.
- ** @param f File to write to.
- ** @return The function returns 0 on success and -1 on error.
- **/
+/// Write a Permutation to a File.
+/// This function writes a permutation to a file. The file must be open 
+/// for writing.
+/// @see PermSave
+/// @param perm Permutation to write.
+/// @param f File to write to.
+/// @return The function returns 0 on success and -1 on error.
 
 int PermWrite(const Perm_t *perm, FILE *f)
 
@@ -55,16 +51,14 @@ int PermWrite(const Perm_t *perm, FILE *f)
 }
 
 
-/**
- ** Write a Permutation to a File.
- ** This function creates a file, writes a single permutation to the file and
- ** closes the file. If a file with the specified name already exists, its
- ** contents are destroyed.
- ** @see PermWrite
- ** @param perm Permutation to write.
- ** @param fn File name.
- ** @return The function returns 0 on success and -1 on error.
- **/
+/// Write a Permutation to a File.
+/// This function creates a file, writes a single permutation to the file and
+/// closes the file. If a file with the specified name already exists, its
+/// contents are destroyed.
+/// @see PermWrite
+/// @param perm Permutation to write.
+/// @param fn File name.
+/// @return The function returns 0 on success and -1 on error.
 
 int PermSave(const Perm_t *perm, const char *fn)
 {
@@ -88,6 +82,4 @@ int PermSave(const Perm_t *perm, const char *fn)
     return 0;
 }
 
-/**
- ** @}
- **/
+/// @}

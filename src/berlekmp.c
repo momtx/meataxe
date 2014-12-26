@@ -12,15 +12,11 @@
 
 MTX_DEFINE_FILE_INFO
 
-/**
- ** @addtogroup poly
- ** @{
- **/
+/// @addtogroup poly
+/// @{
 
 
-/**
- ** Internal representation of a factor.
- **/
+/// Internal representation of a factor.
 typedef struct { Poly_t *p; long n; } factor_t;
 
 /* ------------------------------------------------------------------
@@ -271,13 +267,11 @@ static Poly_t **berlekamp(const Poly_t *pol, const Matrix_t  *kernel)
 
 
    
-/**
- ** Factor a polynomial.
- ** This function decomposes a polynomial into irreducible factors using the
- ** Berlekamp algorithm.
- ** @param pol Polynomial to factor.
- ** @return The factorization of @a pol or 0 on error.
- **/
+/// Factor a polynomial.
+/// This function decomposes a polynomial into irreducible factors using the
+/// Berlekamp algorithm.
+/// @param pol Polynomial to factor.
+/// @return The factorization of @a pol or 0 on error.
 
 FPoly_t *Factorization(const Poly_t *pol)
 {
@@ -333,9 +327,7 @@ FPoly_t *Factorization(const Poly_t *pol)
 }
 
 
-/**
- ** @}
- **/
+/// @}
 
 
 

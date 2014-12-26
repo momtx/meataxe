@@ -16,37 +16,29 @@
 
 MTX_DEFINE_FILE_INFO
 
+/// @addtogroup algo
+/// @{
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
+/// Stable power of a matrix.
+/// This function takes a square matrix M and finds an integer n>0 such that 
+/// ker(M<sup>n</sup>) = ker(M<sup>n+1</sup>). 
+/// @a ker must be a pointer to a variable of type Matrix_t*, 
+/// where the stable kernel will be stored. Both @a pwr and @a ker may be 
+/// NULL if the corresponding information is not needed.
+///
+/// Note that the number $n$ found by StablePower_() is not guararanteed 
+/// to be minimal. In fact, n will always be a power of two since the
+/// function only examines matrices of the form M<sup>2<sup>k</sup></sup>.
+///
+/// This function modifies the matrix. To avoid this, use StablePower().
+/// @param mat The matrix.
+/// @param pwr Stable power.
+/// @param ker Kernel of the stable power.
+/// @return 0 on success, -1 on error.
 
-/**
-!section algo.etc
- ** Stable power of a matrix.
- ** @param mat
-    The matrix.
- ** @param pwr
-    Stable power.
- ** @param ker
-    Kernel of the stable power.
- ** @return
-    $0$ on success, $-1$ on error.
-!description
-    This function takes a matrix $M$ and finds an integer $n>0$ such that 
-    $\ker M^n = \ker M^{n+1}$. The matrix, which must be quare, is passed
-    in |mat|. |pwr| must be a pointer to a variable receiving the power, 
-    $n$. |ker| must be a pointer to a variable of type |Matrix_t *|, 
-    where the stable kernel will be stored. Both |pwr| and |ker| may be 
-    NULL if the corresponding information is not needed.
-
-    Note that the number $n$ found by |StablePower_()| is not guararanteed 
-    to be minimal. In fact, $n$ will always be a power of two since the
-    function only examines matrices of the form $M^{2^k}$.
-
-    This function modifies the matrix. To avoid this, use |StablePower()|.
- ** @see StablePower
- **/
 
 int StablePower_(Matrix_t *mat, int *pwr, Matrix_t **ker)
-
 {
     int p;			/* Current power */
     Matrix_t *k1, *k2;		/* Temporary matrices */
@@ -92,29 +84,17 @@ int StablePower_(Matrix_t *mat, int *pwr, Matrix_t **ker)
     return 0;
 }
 
-
-
-
-/**
- ** Stable power of a matrix.
- ** @param mat
-    The matrix.
- ** @param pwr
-    Stable power.
- ** @param ker
-    Kernel of the stable power.
- ** @return
-    $0$ on success, $-1$ on error.
-!description
-    This function works like |StablePower_()|, but it does not modify
-    the matrix  in |mat|. This means, of course, that a temporary copy
-    of the matrix is created.
-
- ** @see StablePower_
- **/
+////////////////////////////////////////////////////////////////////////////////////////////////////
+/// Stable power of a matrix.
+/// This function works like |StablePower_()|, but it does not modify
+/// the matrix  in |mat|. This means, of course, that a temporary copy
+/// of the matrix is created.
+/// @param mat The matrix.
+/// @param pwr Stable power.
+/// @param ker Kernel of the stable power.
+/// @return $0$ on success, $-1$ on error.
 
 int StablePower(const Matrix_t *mat, int *pwr, Matrix_t **ker)
-
 {
     int rc;
     Matrix_t *tmp;
@@ -130,3 +110,4 @@ int StablePower(const Matrix_t *mat, int *pwr, Matrix_t **ker)
     return rc;
 }
 
+/// @}

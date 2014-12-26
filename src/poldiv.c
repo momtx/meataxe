@@ -17,30 +17,26 @@
 
 MTX_DEFINE_FILE_INFO
 
-/** 
- ** @addtogroup poly
- ** @{
- **/
+/// @addtogroup poly
+/// @{
 
 
-/**
- ** Polynomial Division.
- ** This function performs a polynomial division. Given two polynomials a and
- ** b≠0 over the same field, %PolDivMod() finds two  polynomials q and r such
- ** that a=qb+r, and deg(r)<deg(b).
- **
- ** The quotient q is returned as the function result. This is a newly 
- ** allocated polynomial. The caller is responsible for deleting the quotient
- ** when it no longer needed.
- **
- ** The remainder r, is stored in @em a and replaces the original value. If you
- ** need to preserve the value of @em a you must make a copy using PolDup() before
- ** calling %PolDivMod(). @em b is not changed.
- ** @see PolMod()
- ** @param a First polynomial (numerator) on call, remainder on return.
- ** @param b Second polynomial (denominator).
- ** @return The quotient or 0 on error.
- **/
+/// Polynomial Division.
+/// This function performs a polynomial division. Given two polynomials a and
+/// b≠0 over the same field, %PolDivMod() finds two  polynomials q and r such
+/// that a=qb+r, and deg(r)<deg(b).
+///
+/// The quotient q is returned as the function result. This is a newly 
+/// allocated polynomial. The caller is responsible for deleting the quotient
+/// when it no longer needed.
+///
+/// The remainder r, is stored in @em a and replaces the original value. If you
+/// need to preserve the value of @em a you must make a copy using PolDup() before
+/// calling %PolDivMod(). @em b is not changed.
+/// @see PolMod()
+/// @param a First polynomial (numerator) on call, remainder on return.
+/// @param b Second polynomial (denominator).
+/// @return The quotient or 0 on error.
 
 Poly_t *PolDivMod(Poly_t *a, const Poly_t *b)
 {
@@ -97,14 +93,12 @@ Poly_t *PolDivMod(Poly_t *a, const Poly_t *b)
 
 
 
-/**
- ** Polynomial division.
- ** This function replaces @em a with the remainder of the division of @em a by @em b.
- ** @see PolDivMod()
- ** @param a First polynomial (numerator) on call, remainder on return.
- ** @param b Second polynomial (denominator).
- ** @return @em a or 0 on error.
- **/
+/// Polynomial division.
+/// This function replaces @em a with the remainder of the division of @em a by @em b.
+/// @see PolDivMod()
+/// @param a First polynomial (numerator) on call, remainder on return.
+/// @param b Second polynomial (denominator).
+/// @return @em a or 0 on error.
 
 Poly_t *PolMod(Poly_t *a, const Poly_t *b)
 {
@@ -147,6 +141,4 @@ Poly_t *PolMod(Poly_t *a, const Poly_t *b)
     return a;
 }
 
-/** 
- ** @}
- **/
+/// @}
