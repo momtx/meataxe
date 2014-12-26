@@ -64,6 +64,17 @@ $(document).ready(function(){initNavTree('group__wgen.html','');});
 <div class="title">The Word Generator</div>  </div>
 </div><!--header-->
 <div class="contents">
+<a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
+<p>Given a finitely generated matrix algebra A, the word generator produces a sequence of "random" elements of A, i.e., words in the generators. Words are numbered starting with 1. Here is an example demonstrating the usage of the word generator: </p><div class="fragment"><div class="line"><a class="code" href="structMatRep__t.html">MatRep_t</a> *rep;</div>
+<div class="line">...</div>
+<div class="line">WgData_t *wg = <a class="code" href="group__wgen.html#ga97e3abed700363e44cc1712dd50a66c9">WgAlloc</a>(rep);</div>
+<div class="line"><a class="code" href="structMatrix__t.html">Matrix_t</a> *word = <a class="code" href="group__wgen.html#ga294cd5d6f364ddfd37d23d4f4922ab04">WgMakeWord</a>(wg,1833);</div>
+<div class="line"><span class="keywordtype">long</span> nul = <a class="code" href="group__mat.html#ga32c728600c42829bc06bb632eea82daf">MatNullity__</a>(word);</div>
+<div class="line">printf(<span class="stringliteral">&quot;Word 1833 has nullity %ld\n&quot;</span>,nul);</div>
+<div class="line"><a class="code" href="group__wgen.html#gaadae8a9f919922675d7484eb892cf07e">WgFree</a>(wg);</div>
+</div><!-- fragment --><p>The generator produces words in blocks of 238, i.e., words 1 to 238 belong to block 1, words 239 to 476 to block 2 and so on. For each block, 8 monomials a,b,...,h in the generators are chosen by calculating "random" products of the generators. Then, all possible sums of 2 up to 6 of the monomials are calculated, yielding 238 words. The order in which these sums are taken is fixed: a+b+c, a+b+c+f, a+d+e+g+h, a+b+d+e+g+h, ..., c+d+e+f+g+h. See the <code>BitTab</code>[] array in wgen.c for the complete list.</p>
+<p>Remark: since the generators are often invertible and the word generator is typically used to find words with a small but nontrival kernel, it is a good idea to take at least two summands. There seems to be no reason, however, why sums of 7 or 8 monomials are not used.</p>
+<p>The calculation of a...h involves a simple pseudorandom number generator which is seeded with the block number, and some magic including the use of fixed recipes for the first two blocks (words 1 to 476). The number of factors in any monomial is limited to 5 for the first 200 blocks, to 6 for blocks 200 to 1999, and to 7 for blocks 2000 to 19999. For example, assuming two generators x and y, the summand xyxyxyx has 7 factors and thus cannot appear before block 2000, which means not before word 476000. </p>
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="nested-classes"></a>
 Data Structures</h2></td></tr>
@@ -92,17 +103,6 @@ Functions</h2></td></tr>
 <tr class="memdesc:ga9c4b1b5f94691410db6b267530cfc1c3"><td class="mdescLeft">&#160;</td><td class="mdescRight">Calculate finger print.  <a href="#ga9c4b1b5f94691410db6b267530cfc1c3">More...</a><br /></td></tr>
 <tr class="separator:ga9c4b1b5f94691410db6b267530cfc1c3"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
-<a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
-<p>Given a finitely generated matrix algebra A, the word generator produces a sequence of "random" elements of A, i.e., words in the generators. Words are numbered starting with 1. Here is an example demonstrating the usage of the word generator: </p><div class="fragment"><div class="line"><a class="code" href="structMatRep__t.html">MatRep_t</a> *rep;</div>
-<div class="line">...</div>
-<div class="line">WgData_t *wg = <a class="code" href="group__wgen.html#ga97e3abed700363e44cc1712dd50a66c9">WgAlloc</a>(rep);</div>
-<div class="line"><a class="code" href="structMatrix__t.html">Matrix_t</a> *word = <a class="code" href="group__wgen.html#ga294cd5d6f364ddfd37d23d4f4922ab04">WgMakeWord</a>(wg,1833);</div>
-<div class="line"><span class="keywordtype">long</span> nul = <a class="code" href="group__mat.html#ga32c728600c42829bc06bb632eea82daf">MatNullity__</a>(word);</div>
-<div class="line">printf(<span class="stringliteral">&quot;Word 1833 has nullity %ld\n&quot;</span>,nul);</div>
-<div class="line"><a class="code" href="group__wgen.html#gaadae8a9f919922675d7484eb892cf07e">WgFree</a>(wg);</div>
-</div><!-- fragment --><p>The generator produces words in blocks of 238, i.e., words 1 to 238 belong to block 1, words 239 to 476 to block 2 and so on. For each block, 8 monomials a,b,...,h in the generators are chosen by calculating "random" products of the generators. Then, all possible sums of 2 up to 6 of the monomials are calculated, yielding 238 words. The order in which these sums are taken is fixed: a+b+c, a+b+c+f, a+d+e+g+h, a+b+d+e+g+h, ..., c+d+e+f+g+h. See the <code>BitTab</code>[] array in wgen.c for the complete list.</p>
-<p>Remark: since the generators are often invertible and the word generator is typically used to find words with a small but nontrival kernel, it is a good idea to take at least two summands. There seems to be no reason, however, why sums of 7 or 8 monomials are not used.</p>
-<p>The calculation of a...h involves a simple pseudorandom number generator which is seeded with the block number, and some magic including the use of fixed recipes for the first two blocks (words 1 to 476). The number of factors in any monomial is limited to 5 for the first 200 blocks, to 6 for blocks 200 to 1999, and to 7 for blocks 2000 to 19999. For example, assuming two generators x and y, the summand xyxyxyx has 7 factors and thus cannot appear before block 2000, which means not before word 476000. </p>
 <h2 class="groupheader">Function Documentation</h2>
 <a class="anchor" id="ga97e3abed700363e44cc1712dd50a66c9"></a>
 <div class="memitem">
@@ -304,6 +304,6 @@ Functions</h2></td></tr>
 </div><!-- contents -->
 </div><!-- doc-content -->
 <hr size="1"><address style="text-align: right;"><small>
-MeatAxe 2.4 documentation, generated on Sun Aug 31 2014 23:06:40</small></address>
+MeatAxe 2.4 documentation, generated on Fri Dec 26 2014 11:45:31</small></address>
 </body>
 </html>

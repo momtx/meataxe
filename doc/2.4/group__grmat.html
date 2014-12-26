@@ -63,6 +63,10 @@ $(document).ready(function(){initNavTree('group__grmat.html','');});
 <div class="title">Greased Matrices</div>  </div>
 </div><!--header-->
 <div class="contents">
+<a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
+<p>A greased matrix is a matrix over a finite field, which has been optimized for fast row operations. The optimization ("grease") is achieved by precomputing linear combinations of blocks of rows.</p>
+<p>The number of rows per block, also called grease level, is restricted to the range 1...16. Grease level 3, for example, means that the rows of the matrix are divided in blocks of three rows, and for each block, all linear combinations of the three rows are calculated once. Multiplying a single vector by the matrix can then be carried out with only n/3 row operations.</p>
+<p>On the other hand, the greased matrix needs more memory. For grease level 8 with GF(2), the memory needed is increased by a factor of 32. </p>
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="func-members"></a>
 Functions</h2></td></tr>
@@ -82,10 +86,6 @@ Functions</h2></td></tr>
 <tr class="memdesc:ga859336c8f25564daa765d75da6f3cd61"><td class="mdescLeft">&#160;</td><td class="mdescRight">Calculate extraction table for grease.  <a href="#ga859336c8f25564daa765d75da6f3cd61">More...</a><br /></td></tr>
 <tr class="separator:ga859336c8f25564daa765d75da6f3cd61"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
-<a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
-<p>A greased matrix is a matrix over a finite field, which has been optimized for fast row operations. The optimization ("grease") is achieved by precomputing linear combinations of blocks of rows.</p>
-<p>The number of rows per block, also called grease level, is restricted to the range 1...16. Grease level 3, for example, means that the rows of the matrix are divided in blocks of three rows, and for each block, all linear combinations of the three rows are calculated once. Multiplying a single vector by the matrix can then be carried out with only n/3 row operations.</p>
-<p>On the other hand, the greased matrix needs more memory. For grease level 8 with GF(2), the memory needed is increased by a factor of 32. </p>
 <h2 class="groupheader">Function Documentation</h2>
 <a class="anchor" id="ga859336c8f25564daa765d75da6f3cd61"></a>
 <div class="memitem">
@@ -154,7 +154,7 @@ Functions</h2></td></tr>
 </div><div class="memdoc">
 
 <p>Multiply a vector by a greased matrix. </p>
-<p>This function calculates the matrix product of the vector <em>v</em> with the matrix <em>M</em> and write the result to <em>w</em>. The length of <em>v</em> must coincide with the number of rows of <em>M</em>. The result <em>w</em> is as long as the length of a row of <em>M</em>. Unlike <a class="el" href="group__ffrow.html#gad7fd5ec7f0f6003159d73a269648ffe3" title="Multiply a vector by a matrix. ">FfMapRow()</a>, this function sets field and row length correctly! </p><dl class="params"><dt>Parameters</dt><dd>
+<p>This function calculates the matrix product of the vector <em>v</em> with the matrix <em>M</em> and write the result to <em>w</em>. The length of <em>v</em> must coincide with the number of rows of <em>M</em>. The result <em>w</em> is as long as the length of a row of <em>M</em>. Unlike FfMapRow(), this function sets field and row length correctly! </p><dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">v</td><td>The vector. </td></tr>
     <tr><td class="paramname">M</td><td>Pointer to the matrix. </td></tr>
@@ -255,6 +255,6 @@ Functions</h2></td></tr>
 </div><!-- contents -->
 </div><!-- doc-content -->
 <hr size="1"><address style="text-align: right;"><small>
-MeatAxe 2.4 documentation, generated on Sun Aug 31 2014 23:06:40</small></address>
+MeatAxe 2.4 documentation, generated on Fri Dec 26 2014 11:45:31</small></address>
 </body>
 </html>

@@ -64,6 +64,10 @@ $(document).ready(function(){initNavTree('group__perm.html','');});
 <div class="title">Permutations</div>  </div>
 </div><!--header-->
 <div class="contents">
+<a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
+<p>In the MeatAxe, a permutation of degree n operates on {0,1,...,n-1} and is represented by a <a class="el" href="structPerm__t.html" title="A Permutation. ">Perm_t</a> structure. However, in the textual representation produced by <a class="el" href="group__perm.html#ga87a9303e2abdef0f5e5dae5143063409" title="Print a permutation This function prints a permutation on the standard output using cycle notation...">PermPrint()</a> or by the <a class="el" href="prog_zpr.html">zpr</a> program, the points are numbered from 1...n.</p>
+<p>Only permutations of equal degree can be multiplied. This can be confusing because the textual representation produced by <a class="el" href="group__perm.html#ga87a9303e2abdef0f5e5dae5143063409" title="Print a permutation This function prints a permutation on the standard output using cycle notation...">PermPrint()</a> does not include the degree, and fixed points are always suppressed. For example "(3 4)(5 6 7)" could be interpreted as a permutation of degree 8 or any higher degree. All these permutations are in some natural way equal to each other, but they are different and incompatible in the MeatAxe.</p>
+<p>Permutations are usually created with <a class="el" href="group__perm.html#ga47c0192a17465cb4206d1f8045c0870e" title="Allocate a permutation This function creates a permutation of the specified degree. ">PermAlloc()</a> or read from a file with <a class="el" href="group__perm.html#gadfa5b9c319612767fbff2d24fa932ea2" title="Read a Permutation from a File. ">PermRead()</a>. When a permutation is no longer used, the application must release the associated memory by calling <a class="el" href="group__perm.html#ga2411bec269dacba53e53b6bbc0bb27a6" title="Free a permutation. ">PermFree()</a>. </p>
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="nested-classes"></a>
 Data Structures</h2></td></tr>
@@ -116,10 +120,6 @@ Functions</h2></td></tr>
 <tr class="memdesc:ga605215145959e3ef6cfab9e796eb2d7e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Write a Permutation to a File.  <a href="#ga605215145959e3ef6cfab9e796eb2d7e">More...</a><br /></td></tr>
 <tr class="separator:ga605215145959e3ef6cfab9e796eb2d7e"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
-<a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
-<p>In the MeatAxe, a permutation of degree n operates on {0,1,...,n-1} and is represented by a <a class="el" href="structPerm__t.html" title="A Permutation. ">Perm_t</a> structure. However, in the textual representation produced by <a class="el" href="group__perm.html#ga87a9303e2abdef0f5e5dae5143063409" title="Print a permutation This function prints a permutation on the standard output using cycle notation...">PermPrint()</a> or by the <a class="el" href="prog_zpr.html">zpr</a> program, the points are numbered from 1...n.</p>
-<p>Only permutations of equal degree can be multiplied. This could cause confusion because the textual representation produced by <a class="el" href="group__perm.html#ga87a9303e2abdef0f5e5dae5143063409" title="Print a permutation This function prints a permutation on the standard output using cycle notation...">PermPrint()</a> does not include the degree, and fixed points are always suppressed. For example "(3 4)(5 6 7)" could be interpreted as a permutation of degree 8 or any higher degree. All these permutations are in some natural way equal to each other, but they are different and incompatible in the MeatAxe.</p>
-<p>Permutations are usually created with <a class="el" href="group__perm.html#ga47c0192a17465cb4206d1f8045c0870e" title="Allocate a permutation This function creates a permutation of the specified degree. ">PermAlloc()</a> or read from a file with <a class="el" href="group__perm.html#gadfa5b9c319612767fbff2d24fa932ea2" title="Read a Permutation from a File. ">PermRead()</a>. When a permutation is no longer used, the application must release the associated memory by calling <a class="el" href="group__perm.html#ga2411bec269dacba53e53b6bbc0bb27a6" title="Free a permutation. ">PermFree()</a>. </p>
 <h2 class="groupheader">Function Documentation</h2>
 <a class="anchor" id="ga47c0192a17465cb4206d1f8045c0870e"></a>
 <div class="memitem">
@@ -273,7 +273,7 @@ Functions</h2></td></tr>
 </div><div class="memdoc">
 
 <p>Check a permutation. </p>
-<p>This function checks if the argument, is a pointer to a valid permutation. If the permutation is o.k., the function return 1. Otherwise, an error is signalled and, if the error handler does not terminate the program, the function returns 0. </p><dl class="section return"><dt>Returns</dt><dd>1 if <em>p</em> is valid permutation, 0 otherwise. </dd></dl>
+<p>This function checks if the argument is a pointer to a valid permutation. If the permutation is o.k., the function returns 1. Otherwise, an error is signalled and, if the error handler does not terminate the program, the function returns 0. </p><dl class="section return"><dt>Returns</dt><dd>1 if <em>p</em> is a valid permutation, 0 otherwise. </dd></dl>
 
 </div>
 </div>
@@ -541,6 +541,6 @@ Perm=(1 9)(2 3 6)(4 5 7)
 </div><!-- contents -->
 </div><!-- doc-content -->
 <hr size="1"><address style="text-align: right;"><small>
-MeatAxe 2.4 documentation, generated on Sun Aug 31 2014 23:06:40</small></address>
+MeatAxe 2.4 documentation, generated on Fri Dec 26 2014 11:45:31</small></address>
 </body>
 </html>

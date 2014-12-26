@@ -4,7 +4,7 @@
 <meta http-equiv="Content-Type" content="text/xhtml;charset=UTF-8"/>
 <meta http-equiv="X-UA-Compatible" content="IE=9"/>
 <meta name="generator" content="Doxygen 1.8.8"/>
-<title>MeatAxe: Bit-String Handling</title>
+<title>MeatAxe: Bit Strings</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -61,12 +61,12 @@ $(document).ready(function(){initNavTree('group__bs.html','');});
 <a href="#nested-classes">Data Structures</a> &#124;
 <a href="#func-members">Functions</a>  </div>
   <div class="headertitle">
-<div class="title">Bit-String Handling</div>  </div>
+<div class="title">Bit Strings</div>  </div>
 </div><!--header-->
 <div class="contents">
-
-<p>Bit strings can be written to and read from files.  
-<a href="#details">More...</a></p>
+<a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
+<p>The <a class="el" href="structBitString__t.html" title="A bit string. ">BitString_t</a> type represents a string of 0's and 1's. You may also think of it as a subset {0,1,2,...,N-1}, where each 1 in the bit string means that the subset contains the corresponding element. Unlike the set_t type bit strings are static objects which cannot change their size. However, operations like the intersection of two sets are much faster with <a class="el" href="structBitString__t.html" title="A bit string. ">BitString_t</a> than with set_t objects.</p>
+<p>Bit strings can be written to and read from files. The file format consists of a header followed by the data. The header contains three 32-bit integers. The first number is $-3$, the second number is the size of the bit string, and the third number is always zero. The file header is followed by the bit string data which is written as a sequence of 32-bit integers where bit 0 of the first integer contains the first bit of the string. </p>
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="nested-classes"></a>
 Data Structures</h2></td></tr>
@@ -131,9 +131,6 @@ Functions</h2></td></tr>
 <tr class="memdesc:gae0ca35883593a9f31b7a910d87f04bea"><td class="mdescLeft">&#160;</td><td class="mdescRight">Test a bit in a bit string.  <a href="#gae0ca35883593a9f31b7a910d87f04bea">More...</a><br /></td></tr>
 <tr class="separator:gae0ca35883593a9f31b7a910d87f04bea"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
-<a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
-<p>Bit strings can be written to and read from files. </p>
-<p>The file format consists of a header followed by the data. The header contains three 32-bit integers. The first number is $-3$, the second number is the size of the bit string, and the third number is always zero. The file header is followed by the bit string data which is written as a sequence of 32-bit integers where bit 0 of the first integer contains the first bit of the string. </p>
 <h2 class="groupheader">Function Documentation</h2>
 <a class="anchor" id="gac6e0cbd69a2f84f9e7e19459d9dd569f"></a>
 <div class="memitem">
@@ -670,6 +667,6 @@ Functions</h2></td></tr>
 </div><!-- contents -->
 </div><!-- doc-content -->
 <hr size="1"><address style="text-align: right;"><small>
-MeatAxe 2.4 documentation, generated on Sun Aug 31 2014 23:06:39</small></address>
+MeatAxe 2.4 documentation, generated on Fri Dec 26 2014 11:45:31</small></address>
 </body>
 </html>

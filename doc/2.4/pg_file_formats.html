@@ -68,12 +68,13 @@ Binary Data Files</h1>
 &gt; 1 | Matrix over GF(T)| no. of rows   | no. of columns
 -1  | Permutation      | no. of points | no. of permutations
 -2  | Polynomial       | field         | degree
+-3  | Bit string       | size          | 0
 -8  | Integer matrix   | no. of rows   | no. of columns
 </pre><p>Note: most MeatAxe programs expect their input objects in separate files rather than reading multiple objects from a single file. This is true, for example, for the set of generators that is used by programs like <a class="el" href="prog_zsp.html">zsp - Spin Up</a> or <a class="el" href="prog_chop.html">chop - Find Irreducible Constituents</a>. For this reason, most data files contain only a single object.</p>
-<h2><a class="anchor" id="Matrices"></a>
+<h2><a class="anchor" id="sec_fileformats_binary_mat"></a>
 Matrices</h2>
-<p>Matrices are stored as a sequence of rows in the internal format (see UNDEFINED:kernel.ff), but the rows are truncated to their actual length. For example, a row with 17 entries over GF(125) on a machine with sizeof(long)=4 would occupy 20 bytes in memory but only 17 bytes in a data file. As specified in UNDEFINED:kernel.ff, unused bits in the last byte of each row are always filled with zeroes.</p>
-<h2><a class="anchor" id="Permutations"></a>
+<p>Matrices are stored as a sequence of rows in the internal format (see <a class="el" href="group__ff.html">Finite Fields</a>), but the rows are truncated to their actual length. For example, a row with 17 entries over GF(125) on a machine with sizeof(long)=4 would occupy 20 bytes in memory but only 17 bytes in a data file. As specified in UNDEFINED:kernel.ff, unused bits in the last byte of each row are always filled with zeroes.</p>
+<h2><a class="anchor" id="sec_fileformats_binary_perm"></a>
 Permutations</h2>
 <p>A permutation of degree N is stored as N 32-bit integers in little-endian format, the i-th number being the image of i (for i = 0...N-1).</p>
 <p>For example, the permutation (1 2)(3 4 5) on five points is represented as (0 1)(2 3 4). The following hexdump shows the corresponding data file: </p><pre class="fragment">Offset  Content
@@ -86,18 +87,18 @@ Permutations</h2>
 0000018 04 00 00 00     p(3) = 4
 000001c 02 00 00 00     p(4) = 2
 </pre><p>For compatibility with older MeatAxe versions, the program can also read a different format where the points are numbered from 1 to N.</p>
-<h2><a class="anchor" id="polynomials"></a>
-polynomials</h2>
-<dl class="todo"><dt><b><a class="el" href="todo.html#_todo000001">Todo:</a></b></dt><dd><p class="startdd">integer matrices </p>
-<p>bit strings </p>
-<p class="enddd">new format</p>
-</dd></dl>
-<h1><a class="anchor" id="sec_fileformats_text"></a>
-Text Files</h1>
-<dl class="todo"><dt><b><a class="el" href="todo.html#_todo000002">Todo:</a></b></dt><dd>old format </dd></dl>
+<h2><a class="anchor" id="sec_fileformats_binary_poly"></a>
+Polynomials</h2>
+<p>A polynomial of degree n, p(x)=a<sub>n</sub>x<sup>n</sup>+...+a<sub>1</sub>x+a<sub>0</sub>, over GF(q) is stored with the header (-2,n,q). The header is followd by one row of size n+1 containing the coefficients in ascendig order: (a<sub>0</sub>,a<sub>0</sub>,...a<sub>n</sub>).</p>
+<h2><a class="anchor" id="sec_fileformats_binary_imat"></a>
+Integer matrices</h2>
+<p>An r-by-c matrix is stored with the header (-8,r,c), followed by the marks in theit "natural" order, i.e., starting with a<sub>11</sub> and ending with a<sub>rc&lt;</sub>. The marks are stored in 32-bit little-endian format.</p>
+<h2><a class="anchor" id="sec_fileformats_binary_bs"></a>
+Bit strings</h2>
+<p>A bit string of length n is stored with the header (-3,n,0), followed by k 32-bit little-endian numbers, where k is chosen such that 32k ≤ n &lt; 32k+1. The least significant bit of the first number is the first bit of the string. </p>
 </div></div><!-- contents -->
 </div><!-- doc-content -->
 <hr size="1"><address style="text-align: right;"><small>
-MeatAxe 2.4 documentation, generated on Sun Aug 31 2014 23:06:39</small></address>
+MeatAxe 2.4 documentation, generated on Fri Dec 26 2014 11:45:30</small></address>
 </body>
 </html>

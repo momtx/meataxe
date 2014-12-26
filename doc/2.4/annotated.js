@@ -3,6 +3,7 @@ var annotated =
     [ "BitString_t", "structBitString__t.html", "structBitString__t" ],
     [ "cf_struct", "structcf__struct.html", null ],
     [ "CfInfo", "structCfInfo.html", null ],
+    [ "entry", "structentry.html", null ],
     [ "Entry_t", "structEntry__t.html", null ],
     [ "factor_t", "structfactor__t.html", null ],
     [ "FPerm_t", "structFPerm__t.html", null ],

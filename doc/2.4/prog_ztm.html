@@ -61,94 +61,28 @@ $(document).ready(function(){initNavTree('prog_ztm.html','');});
 <div class="title">ztm - Tensor Multiply </div>  </div>
 </div><!--header-->
 <div class="contents">
-<div class="textblock"><p>&lt;&lt;&lt;&lt;&lt;&lt;&lt; HEAD</p>
-<h1>syntax Command Line </h1>
-<h1><a class="anchor" id="ztm_syntax"></a>
+<div class="textblock"><h1><a class="anchor" id="ztm_syntax"></a>
 Command Line</h1>
-<p>&gt;&gt;&gt;&gt;&gt;&gt;&gt; 4a68ae339f0300470810ab3c90387657ccf21f0c </p><pre>
+<pre>
 ztm [<em>Options</em>] <em>A</em> <em>B</em> <em>Vectors</em> <em>Result</em> </pre><dl class="section user"><dt><em>Options</em> </dt><dd>Standard options, see <a class="el" href="prog_stdopts.html">Standard Command Line Options</a>. </dd></dl>
 <dl class="section user"><dt>-s <em>Start</em> </dt><dd>Start with the given seed vector number instead of 1. </dd></dl>
 <dl class="section user"><dt><em>A</em> </dt><dd>Input file: Left factor (square matrix). </dd></dl>
 <dl class="section user"><dt><em>B</em> </dt><dd>Input file: Right factor (square matrix). </dd></dl>
 <dl class="section user"><dt><em>Vectors</em> </dt><dd>Input file: Vectors to be multiplied. </dd></dl>
 <dl class="section user"><dt><em>Result</em> </dt><dd>Output file: Vectors.</dd></dl>
-<p>&lt;&lt;&lt;&lt;&lt;&lt;&lt; HEAD </p><h1>inp Input Files </h1>
 <h1><a class="anchor" id="ztm_inp"></a>
 Input Files</h1>
-<blockquote class="doxtable">
-<blockquote class="doxtable">
-<blockquote class="doxtable">
-<blockquote class="doxtable">
-<blockquote class="doxtable">
-<blockquote class="doxtable">
-<blockquote class="doxtable">
-<p>4a68ae339f0300470810ab3c90387657ccf21f0c </p>
-</blockquote>
-</blockquote>
-</blockquote>
-</blockquote>
-</blockquote>
-</blockquote>
-</blockquote>
 <dl class="section user"><dt><em>A</em> </dt><dd>Left factor, m×m matrix. </dd></dl>
 <dl class="section user"><dt><em>B</em> </dt><dd>Right factor, n×n matrix. </dd></dl>
 <dl class="section user"><dt><em>Vectors</em> </dt><dd>Vectors to be multiplied, a r×(mn) matrix.</dd></dl>
-<p>&lt;&lt;&lt;&lt;&lt;&lt;&lt; HEAD </p><h1>out Output Files </h1>
 <h1><a class="anchor" id="ztm_out"></a>
 Output Files</h1>
-<blockquote class="doxtable">
-<blockquote class="doxtable">
-<blockquote class="doxtable">
-<blockquote class="doxtable">
-<blockquote class="doxtable">
-<blockquote class="doxtable">
-<blockquote class="doxtable">
-<p>4a68ae339f0300470810ab3c90387657ccf21f0c </p>
-</blockquote>
-</blockquote>
-</blockquote>
-</blockquote>
-</blockquote>
-</blockquote>
-</blockquote>
 <dl class="section user"><dt><em>Result</em> </dt><dd>Vectors.</dd></dl>
-<p>&lt;&lt;&lt;&lt;&lt;&lt;&lt; HEAD </p><h1>desc Description </h1>
 <h1><a class="anchor" id="ztm_desc"></a>
 Description</h1>
-<blockquote class="doxtable">
-<blockquote class="doxtable">
-<blockquote class="doxtable">
-<blockquote class="doxtable">
-<blockquote class="doxtable">
-<blockquote class="doxtable">
-<blockquote class="doxtable">
-<p>4a68ae339f0300470810ab3c90387657ccf21f0c </p>
-</blockquote>
-</blockquote>
-</blockquote>
-</blockquote>
-</blockquote>
-</blockquote>
-</blockquote>
 <p>This program reads two matrices from A and B, a list of vectors, and calculates the image of the vectors under A⊗B. <em>A</em> and <em>B</em> must be square matrices of dimension m and n, respetively This calculation could be done with the <a class="el" href="prog_zte.html">zte</a> and <a class="el" href="prog_zmu.html">zmu</a> programs, but using <b>ztm</b> avoids the memory-consuming calculation of A⊗B.</p>
-<p>&lt;&lt;&lt;&lt;&lt;&lt;&lt; HEAD </p><h1>impl Implementation Details </h1>
 <h2><a class="anchor" id="ztm_impl"></a>
 Implementation Details</h2>
-<blockquote class="doxtable">
-<blockquote class="doxtable">
-<blockquote class="doxtable">
-<blockquote class="doxtable">
-<blockquote class="doxtable">
-<blockquote class="doxtable">
-<blockquote class="doxtable">
-<p>4a68ae339f0300470810ab3c90387657ccf21f0c </p>
-</blockquote>
-</blockquote>
-</blockquote>
-</blockquote>
-</blockquote>
-</blockquote>
-</blockquote>
 <p>Let m, n be the dimensions of A and B, respectively. For each input vector v∊F<sup>1×mn</sup>, the program computes the m×n matrix \(\hat{v}\) with </p><p class="formulaDsp">
 \[ \hat{v}_{ik} = v_{(i-1)n + k}\qquad (1\leq i\leq m,\ 1\leq k\leq n) \]
 </p>
@@ -159,6 +93,6 @@ Implementation Details</h2>
 </div></div><!-- contents -->
 </div><!-- doc-content -->
 <hr size="1"><address style="text-align: right;"><small>
-MeatAxe 2.4 documentation, generated on Sun Aug 31 2014 23:06:39</small></address>
+MeatAxe 2.4 documentation, generated on Fri Dec 26 2014 11:45:31</small></address>
 </body>
 </html>

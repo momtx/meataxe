@@ -26,11 +26,12 @@ var pg_userguide =
     [ "Program Index", "pg_progs_index.html", "pg_progs_index" ],
     [ "File Formats", "pg_file_formats.html", [
       [ "Binary Data Files", "pg_file_formats.html#sec_fileformats_binary", [
-        [ "Matrices", "pg_file_formats.html#Matrices", null ],
-        [ "Permutations", "pg_file_formats.html#Permutations", null ],
-        [ "polynomials", "pg_file_formats.html#polynomials", null ]
-      ] ],
-      [ "Text Files", "pg_file_formats.html#sec_fileformats_text", null ]
+        [ "Matrices", "pg_file_formats.html#sec_fileformats_binary_mat", null ],
+        [ "Permutations", "pg_file_formats.html#sec_fileformats_binary_perm", null ],
+        [ "Polynomials", "pg_file_formats.html#sec_fileformats_binary_poly", null ],
+        [ "Integer matrices", "pg_file_formats.html#sec_fileformats_binary_imat", null ],
+        [ "Bit strings", "pg_file_formats.html#sec_fileformats_binary_bs", null ]
+      ] ]
     ] ],
     [ "Bibliography", "pg_bib.html", null ]
 ];

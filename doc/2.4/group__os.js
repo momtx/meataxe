@@ -11,9 +11,11 @@ var group__os =
     [ "SysGetPid", "group__os.html#ga617f1910179cdd2eda84756f4733365f", null ],
     [ "SysInit", "group__os.html#ga8982c2f3405aa3f55a2d26861d52151b", null ],
     [ "SysMalloc", "group__os.html#ga1fe3719479540b125640168d0d261431", null ],
+    [ "SysReadLong32", "group__os.html#ga88a258f384760978af565207b9da5431", null ],
     [ "SysRealloc", "group__os.html#ga8b602942188816093bf8d2684445cab7", null ],
     [ "SysRemoveDirectory", "group__os.html#gac7e2bb6c67e72428b075794dfd0dd7c7", null ],
     [ "SysRemoveFile", "group__os.html#ga296534f104ea341147116de1826c4cd1", null ],
     [ "SysSetTimeLimit", "group__os.html#ga2a3f80757f1ffab46bd53fca68e30ea8", null ],
-    [ "SysTimeUsed", "group__os.html#ga53527694c0f5cf0c7e3a4cfe45092e43", null ]
+    [ "SysTimeUsed", "group__os.html#ga53527694c0f5cf0c7e3a4cfe45092e43", null ],
+    [ "SysWriteLong32", "group__os.html#ga32d29a97fda897a3c658e2943a0a189f", null ]
 ];

@@ -64,6 +64,8 @@ $(document).ready(function(){initNavTree('group__os.html','');});
 <div class="title">Operating System Interface</div>  </div>
 </div><!--header-->
 <div class="contents">
+<a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
+<p>The MeatAxe is written for a UNIX-like operating environment and uses many functions of the standard C library. To make the MeatAxe more portable between different operating systems, some C library and system calls are accessed through wrapper functions. These wrapper functions have names that begin with 'Sys'. For example <code><a class="el" href="group__os.html#ga124aa4812c2d1ab9b8d2c6a8e33e87f7" title="Free memory block. ">SysFree()</a></code> is the wrapper function for <code>free()</code>. </p>
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="define-members"></a>
 Macros</h2></td></tr>
@@ -82,6 +84,12 @@ Macros</h2></td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="func-members"></a>
 Functions</h2></td></tr>
+<tr class="memitem:ga88a258f384760978af565207b9da5431"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__os.html#ga88a258f384760978af565207b9da5431">SysReadLong32</a> (FILE *f, long *buf, int n)</td></tr>
+<tr class="memdesc:ga88a258f384760978af565207b9da5431"><td class="mdescLeft">&#160;</td><td class="mdescRight">Read long integers.  <a href="#ga88a258f384760978af565207b9da5431">More...</a><br /></td></tr>
+<tr class="separator:ga88a258f384760978af565207b9da5431"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga32d29a97fda897a3c658e2943a0a189f"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__os.html#ga32d29a97fda897a3c658e2943a0a189f">SysWriteLong32</a> (FILE *f, const long *buf, int n)</td></tr>
+<tr class="memdesc:ga32d29a97fda897a3c658e2943a0a189f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Write long integers.  <a href="#ga32d29a97fda897a3c658e2943a0a189f">More...</a><br /></td></tr>
+<tr class="separator:ga32d29a97fda897a3c658e2943a0a189f"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ga8982c2f3405aa3f55a2d26861d52151b"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__os.html#ga8982c2f3405aa3f55a2d26861d52151b">SysInit</a> ()</td></tr>
 <tr class="memdesc:ga8982c2f3405aa3f55a2d26861d52151b"><td class="mdescLeft">&#160;</td><td class="mdescRight">OS-specific initialization.  <a href="#ga8982c2f3405aa3f55a2d26861d52151b">More...</a><br /></td></tr>
 <tr class="separator:ga8982c2f3405aa3f55a2d26861d52151b"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -101,7 +109,7 @@ Functions</h2></td></tr>
 <tr class="memdesc:ga296534f104ea341147116de1826c4cd1"><td class="mdescLeft">&#160;</td><td class="mdescRight">Remove a file This function deletes a file.  <a href="#ga296534f104ea341147116de1826c4cd1">More...</a><br /></td></tr>
 <tr class="separator:ga296534f104ea341147116de1826c4cd1"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:gac7e2bb6c67e72428b075794dfd0dd7c7"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__os.html#gac7e2bb6c67e72428b075794dfd0dd7c7">SysRemoveDirectory</a> (const char *name)</td></tr>
-<tr class="memdesc:gac7e2bb6c67e72428b075794dfd0dd7c7"><td class="mdescLeft">&#160;</td><td class="mdescRight">Remove a directory.  <a href="#gac7e2bb6c67e72428b075794dfd0dd7c7">More...</a><br /></td></tr>
+<tr class="memdesc:gac7e2bb6c67e72428b075794dfd0dd7c7"><td class="mdescLeft">&#160;</td><td class="mdescRight">Removes a directory (which must be empty).  <a href="#gac7e2bb6c67e72428b075794dfd0dd7c7">More...</a><br /></td></tr>
 <tr class="separator:gac7e2bb6c67e72428b075794dfd0dd7c7"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:gabfbd7e59a8797ba01bc57310bcc0391a"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__os.html#gabfbd7e59a8797ba01bc57310bcc0391a">SysCreateDirectory</a> (const char *name)</td></tr>
 <tr class="memdesc:gabfbd7e59a8797ba01bc57310bcc0391a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Create a directory.  <a href="#gabfbd7e59a8797ba01bc57310bcc0391a">More...</a><br /></td></tr>
@@ -113,7 +121,7 @@ Functions</h2></td></tr>
 <tr class="memdesc:ga1fe3719479540b125640168d0d261431"><td class="mdescLeft">&#160;</td><td class="mdescRight">Allocate memory.  <a href="#ga1fe3719479540b125640168d0d261431">More...</a><br /></td></tr>
 <tr class="separator:ga1fe3719479540b125640168d0d261431"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ga8b602942188816093bf8d2684445cab7"><td class="memItemLeft" align="right" valign="top">void *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__os.html#ga8b602942188816093bf8d2684445cab7">SysRealloc</a> (void *buf, size_t nbytes)</td></tr>
-<tr class="memdesc:ga8b602942188816093bf8d2684445cab7"><td class="mdescLeft">&#160;</td><td class="mdescRight">Resize memory block.  <a href="#ga8b602942188816093bf8d2684445cab7">More...</a><br /></td></tr>
+<tr class="memdesc:ga8b602942188816093bf8d2684445cab7"><td class="mdescLeft">&#160;</td><td class="mdescRight">Resizes a memory block.  <a href="#ga8b602942188816093bf8d2684445cab7">More...</a><br /></td></tr>
 <tr class="separator:ga8b602942188816093bf8d2684445cab7"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ga124aa4812c2d1ab9b8d2c6a8e33e87f7"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__os.html#ga124aa4812c2d1ab9b8d2c6a8e33e87f7">SysFree</a> (void *x)</td></tr>
 <tr class="memdesc:ga124aa4812c2d1ab9b8d2c6a8e33e87f7"><td class="mdescLeft">&#160;</td><td class="mdescRight">Free memory block.  <a href="#ga124aa4812c2d1ab9b8d2c6a8e33e87f7">More...</a><br /></td></tr>
@@ -122,8 +130,6 @@ Functions</h2></td></tr>
 <tr class="memdesc:ga617f1910179cdd2eda84756f4733365f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get process id.  <a href="#ga617f1910179cdd2eda84756f4733365f">More...</a><br /></td></tr>
 <tr class="separator:ga617f1910179cdd2eda84756f4733365f"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
-<a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
-<p>The MeatAxe is written for a UNIX-like operating environment and uses many functions of the standard C library. To make the MeatAxe more portable between different operating systems, some C library and system calls are accessed through wrapper functions. These wrapper functions have names that begin with 'Sys'. For example <code><a class="el" href="group__os.html#ga124aa4812c2d1ab9b8d2c6a8e33e87f7" title="Free memory block. ">SysFree()</a></code> is the wrapper function for <code>free()</code>. </p>
 <h2 class="groupheader">Function Documentation</h2>
 <a class="anchor" id="gabfbd7e59a8797ba01bc57310bcc0391a"></a>
 <div class="memitem">
@@ -140,7 +146,7 @@ Functions</h2></td></tr>
 </div><div class="memdoc">
 
 <p>Create a directory. </p>
-<p>This function creates a new directory. If the directory cannot be created for some reason, a run-time error is generated and the function returns -1. </p><dl class="section see"><dt>See also</dt><dd><a class="el" href="group__os.html#gac7e2bb6c67e72428b075794dfd0dd7c7" title="Remove a directory. ">SysRemoveDirectory()</a> </dd></dl>
+<p>This function creates a new directory. If the directory cannot be created for some reason, a run-time error is generated and the function returns -1. </p><dl class="section see"><dt>See also</dt><dd><a class="el" href="group__os.html#gac7e2bb6c67e72428b075794dfd0dd7c7" title="Removes a directory (which must be empty). ">SysRemoveDirectory()</a> </dd></dl>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">name</td><td>Name of the directory. </td></tr>
@@ -179,7 +185,7 @@ Functions</h2></td></tr>
 <p>This function opens a file, like <code>fopen()</code>. The second argument, must be one of the predfined constants FM_READ (open for reading), FM_CREAT (create a new file and open for writing, or FM_APPEND (append to existing file or create a new file). Additional flags may be or'ed to the mode: </p><dl class="section user"><dt>FM_LIB</dt><dd>If the file does not exist in the current directory, look in the library directory. The library directory is defined either by the environment variable <code>MTXLIB</code>, or at compile-time by the macro <code>MTXLIB</code>. </dd></dl>
 <dl class="section user"><dt>FM_TEXT</dt><dd>Open in text mode. This flag must be used on some systems (e.g., MS-DOS) to open text files. By default, files are assumed to contain binary data. </dd></dl>
 <dl class="section user"><dt>FM_NOERROR</dt><dd>Do not generate an error if the file does not exist. </dd></dl>
-<dl class="section see"><dt>See also</dt><dd><a class="el" href="group__ffio.html#ga0c85661c2c651e7d6559b9c4aec7c0a9" title="Open File and Read Header. ">FfReadHeader()</a> <a class="el" href="group__ffio.html#ga934c1203caedefc7aba7d54af67d1eb5" title="Open File and Write Header. ">FfWriteHeader()</a> </dd></dl>
+<dl class="section see"><dt>See also</dt><dd><a class="el" href="group__ff.html#ga0847dcfd2ecf66641c11735a2027731a" title="Open File and Read Header. ">FfReadHeader()</a> <a class="el" href="group__ff.html#ga23b0790950cf88547cd42b845dfa866f" title="Open file and write header. ">FfWriteHeader()</a> </dd></dl>
 <dl class="section return"><dt>Returns</dt><dd>A pointer to the open file or NULL on error. </dd></dl>
 
 </div>
@@ -233,7 +239,7 @@ Functions</h2></td></tr>
 </div><div class="memdoc">
 
 <p>Set file pointer. </p>
-<p>This function sets the file pointer to a given position. If pos is greater than or equal to zero, it is interpreted as an absolute position (relative to start of file). If <code>pos</code> is negative, the file pointer is moved to the end of file. </p><dl class="section see"><dt>See also</dt><dd><a class="el" href="group__os.html#ga8247c466e4fcafb7b7445caa492b6128" title="Set file pointer relative to current position. ">SysFseekRelative()</a>, <a class="el" href="group__ffio.html#gacb22ee413f32e58f4a2f2bb74698fad8" title="Move to a Row. ">FfSeekRow()</a> </dd></dl>
+<p>This function sets the file pointer to a given position. If pos is greater than or equal to zero, it is interpreted as an absolute position (relative to start of file). If <code>pos</code> is negative, the file pointer is moved to the end of file. </p><dl class="section see"><dt>See also</dt><dd><a class="el" href="group__os.html#ga8247c466e4fcafb7b7445caa492b6128" title="Set file pointer relative to current position. ">SysFseekRelative()</a>, <a class="el" href="group__ff.html#gacb22ee413f32e58f4a2f2bb74698fad8" title="Move to a Row. ">FfSeekRow()</a> </dd></dl>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">file</td><td>File handle. </td></tr>
@@ -278,7 +284,7 @@ Functions</h2></td></tr>
   </dd>
 </dl>
 <dl class="section return"><dt>Returns</dt><dd>0 on success, nonzero on error. </dd></dl>
-<dl class="section see"><dt>See also</dt><dd><a class="el" href="group__os.html#ga4ed02840c8dcc05e99114ff2422acbed" title="Set file pointer. ">SysFseek()</a>, <a class="el" href="group__ffio.html#gacb22ee413f32e58f4a2f2bb74698fad8" title="Move to a Row. ">FfSeekRow()</a> </dd></dl>
+<dl class="section see"><dt>See also</dt><dd><a class="el" href="group__os.html#ga4ed02840c8dcc05e99114ff2422acbed" title="Set file pointer. ">SysFseek()</a>, <a class="el" href="group__ff.html#gacb22ee413f32e58f4a2f2bb74698fad8" title="Move to a Row. ">FfSeekRow()</a> </dd></dl>
 
 </div>
 </div>
@@ -344,6 +350,54 @@ Functions</h2></td></tr>
 
 </div>
 </div>
+<a class="anchor" id="ga88a258f384760978af565207b9da5431"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">int SysReadLong32 </td>
+          <td>(</td>
+          <td class="paramtype">FILE *&#160;</td>
+          <td class="paramname"><em>f</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">long *&#160;</td>
+          <td class="paramname"><em>buf</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">int&#160;</td>
+          <td class="paramname"><em>n</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Read long integers. </p>
+<p>This function reads @ n long integers from the file <em>f</em> into the array <em>buf</em>. <em>buf</em> must point to a memory area of at least n*sizeof(long) bytes and the file must be open for reading. The return value indicates how many integers have actually been read. This number may be less than <em>n</em> because the end of file was encountered while reading. A negative return value indicates a file i/o error.</p>
+<p>SysReadLong32() expects that the numbers in the file are 4-byte integers in little-endian format, i.e. the least significant byte first. Using a machine-independent data format makes MeatAxe data files more portable, but there are also some disadvantages:</p><ul>
+<li>The conversion to and from machine-independent format involves several arithmetic operations for each number read/written.</li>
+<li>The highest number which can be read/written is 2<sup>32</sup>-1. <dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">f</td><td>File to read from. </td></tr>
+    <tr><td class="paramname">buf</td><td>Pointer to buffer. </td></tr>
+    <tr><td class="paramname">n</td><td>Number of integers to read. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>Number of integers that were actually read, or $/1$ on error. </dd></dl>
+</li>
+</ul>
+
+</div>
+</div>
 <a class="anchor" id="ga8b602942188816093bf8d2684445cab7"></a>
 <div class="memitem">
 <div class="memproto">
@@ -368,10 +422,10 @@ Functions</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Resize memory block. </p>
+<p>Resizes a memory block. </p>
 <p>This function works like <code>realloc()</code> but handles zero-length blocks differently (namely, by allocating 1 byte instead) to avoid problems with broken <code>realloc()</code> implementations. </p><dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">buf</td><td>Pointer to memory block. </td></tr>
+    <tr><td class="paramname">buf</td><td>Pointer to the memory block. </td></tr>
     <tr><td class="paramname">nbytes</td><td>Desired new size. </td></tr>
   </table>
   </dd>
@@ -394,11 +448,11 @@ Functions</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Remove a directory. </p>
-<p>This function removes the specified directory. </p><dl class="section see"><dt>See also</dt><dd><a class="el" href="group__os.html#gabfbd7e59a8797ba01bc57310bcc0391a" title="Create a directory. ">SysCreateDirectory()</a>. </dd></dl>
+<p>Removes a directory (which must be empty). </p>
+<dl class="section see"><dt>See also</dt><dd><a class="el" href="group__os.html#gabfbd7e59a8797ba01bc57310bcc0391a" title="Create a directory. ">SysCreateDirectory()</a>. </dd></dl>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">name</td><td>Name of the directory. </td></tr>
+    <tr><td class="paramname">name</td><td>Name of the directory to be removed. </td></tr>
   </table>
   </dd>
 </dl>
@@ -470,9 +524,52 @@ Functions</h2></td></tr>
 
 </div>
 </div>
+<a class="anchor" id="ga32d29a97fda897a3c658e2943a0a189f"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">int SysWriteLong32 </td>
+          <td>(</td>
+          <td class="paramtype">FILE *&#160;</td>
+          <td class="paramname"><em>f</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const long *&#160;</td>
+          <td class="paramname"><em>buf</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">int&#160;</td>
+          <td class="paramname"><em>n</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Write long integers. </p>
+<p>This function writes <em>n</em> long integers from the the array <em>buf</em> to the file <em>f</em>. <em>buf</em> must point to a memory area of at least n*sizeof(long) bytes and <em>f</em> must be open for writing. The numbers are written in a machine-independent format which can be read by SysReadLong(). </p><dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">f</td><td>File to write to. </td></tr>
+    <tr><td class="paramname">buf</td><td>Pointer to buffer. </td></tr>
+    <tr><td class="paramname">n</td><td>Number of integers to write. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>Number of integers that were written, or $-1$ on error. </dd></dl>
+
+</div>
+</div>
 </div><!-- contents -->
 </div><!-- doc-content -->
 <hr size="1"><address style="text-align: right;"><small>
-MeatAxe 2.4 documentation, generated on Sun Aug 31 2014 23:06:40</small></address>
+MeatAxe 2.4 documentation, generated on Fri Dec 26 2014 11:45:31</small></address>
 </body>
 </html>

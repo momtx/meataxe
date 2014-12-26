@@ -64,6 +64,20 @@ $(document).ready(function(){initNavTree('group__mat.html','');});
 <div class="title">Matrices over Finite Fields</div>  </div>
 </div><!--header-->
 <div class="contents">
+<a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
+<p>In the MeatAxe, a matrix over a finite field is represented by a <a class="el" href="structMatrix__t.html" title="A matrix over a finite field. ">Matrix_t</a> structure. Matrices can be created in many ways, for example</p><ul>
+<li>by calling <a class="el" href="group__mat.html#ga06620e0d44ea5adce49d162abaf8840d" title="Create a new matrix. ">MatAlloc()</a>,</li>
+<li>by making a copy of an existing matrix with <a class="el" href="group__mat.html#ga494bd054f6b7f259cc07c7ea7abc4a16" title="Duplicate a matrix This function creates a copy of an existing matrix. ">MatDup()</a>, or</li>
+<li>by reading a matrix from a data file with <a class="el" href="group__mat.html#ga09bbc8fd9eef53f4691578717bea1ef3" title="Read a matrix from a file. ">MatRead()</a> or <a class="el" href="group__mat.html#ga10c390bd4d069b00a12fbe05ad2a14d3" title="Read a matrix from a file. ">MatLoad()</a>.</li>
+</ul>
+<p>Matrices that no longer needed must be deleted by calling <a class="el" href="group__mat.html#gaa1eba5c99382a059b5a62b4de4292f82" title="Delete a matrix. ">MatFree()</a>. Matrices can consume large amounts of memory, so it always a good idea to delete a matrix as early as possible.</p>
+<p>As with row vectors, row and column indexs are zero-based. For example, in a 3 by 5 matrix the row index runs from 0 to 2 and the column index runs from 0 to 4.</p>
+<p>A matrix A with entries (a<sub>ij</sub>) is said to be in <b>echelon form</b> if the following conditions are satisfied:</p>
+<ul>
+<li>Each row has a first non-zero element, called the <b>pivot element</b>. The pivot element may have any value except zero.</li>
+<li>If a<sub>ij</sub> is the pivot element of the i-th row, all elements below are zero, i.e., a<sub>ik</sub>=0 for all k&gt;i.</li>
+</ul>
+<p>If a matrix is in echelon form, the column indexes of its pivot elements are called the <b>pivot columns</b> of the matrix. The list of all pivot columns is called the <b>pivot table</b> of the matrix. For a matrix in echelon form the number of rows, <code>Nor</code>, is always less than or equal to the number of columns, <code>Noc</code>. When different from 0, the <code>PivotTable</code> field is a pointer to an array of integers containing first the pivot columns and then the non-pivot columns. This means, the size of the array is always <code>Noc:</code> the first <code>Nor</code> elements contain the pivot columns and the remaining <code>Noc-<code>Nor</code> elements</code> contain the non-pivot columns in arbitrary order. </p>
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="nested-classes"></a>
 Data Structures</h2></td></tr>
@@ -176,22 +190,6 @@ Functions</h2></td></tr>
 <tr class="memdesc:gad63b9348b04e346f283df0d6e5fb692d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Multiply a Matrix by a Constant.  <a href="#gad63b9348b04e346f283df0d6e5fb692d">More...</a><br /></td></tr>
 <tr class="separator:gad63b9348b04e346f283df0d6e5fb692d"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
-<a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
-<p>In the MeatAxe, a matrix over a finite field is represented by a <a class="el" href="structMatrix__t.html" title="A matrix over a finite field. ">Matrix_t</a> structure. Matrices can be created in many ways, for example</p><ul>
-<li>by calling <a class="el" href="group__mat.html#ga06620e0d44ea5adce49d162abaf8840d" title="Create a new matrix. ">MatAlloc()</a>,</li>
-<li>by making a copy of an existing matrix with <a class="el" href="group__mat.html#ga494bd054f6b7f259cc07c7ea7abc4a16" title="Duplicate a matrix This function creates a copy of an existing matrix. ">MatDup()</a>, or</li>
-<li>by reading a matrix from a data file with <a class="el" href="group__mat.html#ga09bbc8fd9eef53f4691578717bea1ef3" title="Read a matrix from a file. ">MatRead()</a> or <a class="el" href="group__mat.html#ga10c390bd4d069b00a12fbe05ad2a14d3" title="Read a matrix from a file. ">MatLoad()</a>.</li>
-</ul>
-<p>The application is responsible for releasing matrices which are no longer needed. Matrices can consume large amounts of memory, so it always a good idea to delete a matrix as early as possible. There is only one possibility of deleting a matrix: calling <a class="el" href="group__mat.html#gaa1eba5c99382a059b5a62b4de4292f82" title="Delete a matrix. ">MatFree()</a>.</p>
-<h1><a class="anchor" id="ech"></a>
-Echelon form and pivot tables</h1>
-<p>A matrix A with entries (a<sub>ij</sub>) is said to be in <b>echelon form</b> if the following conditions are satisfied:</p>
-<ul>
-<li>Each row has a first non-zero element, called the <b>pivot element</b>. The pivot element may have any value except zero.</li>
-<li>If a<sub>ij</sub> is the pivot element of the i-th row, all elements below are zero, i.e., a<sub>ik</sub>=0 for all k&gt;i.</li>
-</ul>
-<p>If a matrix is in echelon form, the column indexes of its pivot elements are called the <b>pivot columns</b> of the matrix. The list of all pivot columns is called the <b>pivot table</b> of the matrix.</p>
-<p>The <a class="el" href="structMatrix__t.html" title="A matrix over a finite field. ">Matrix_t</a> structure, which represents a matrix, has a <code>PivotTable</code> field which is used to store the pivot table. When different from 0, <code>PivotTable</code> is a pointer to an array of integers containing first the pivot columns and then the non-pivot columns. This means, the size of the array is always <code>Noc:</code> the first <code>Nor</code> elements contain the pivot columns and the remaining <code>Noc-<code>Nor</code> elements</code> contain the non-pivot columns in arbitrary order. Note that for a matrix in echelon form <code>Nor</code> is always less or equal to <code>Noc</code>. </p>
 <h2 class="groupheader">Function Documentation</h2>
 <a class="anchor" id="ga1d7a805c571f70c31e34f9162f602272"></a>
 <div class="memitem">
@@ -1316,6 +1314,6 @@ Echelon form and pivot tables</h1>
 </div><!-- contents -->
 </div><!-- doc-content -->
 <hr size="1"><address style="text-align: right;"><small>
-MeatAxe 2.4 documentation, generated on Sun Aug 31 2014 23:06:40</small></address>
+MeatAxe 2.4 documentation, generated on Fri Dec 26 2014 11:45:31</small></address>
 </body>
 </html>

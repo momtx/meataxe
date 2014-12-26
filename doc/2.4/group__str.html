@@ -64,9 +64,9 @@ $(document).ready(function(){initNavTree('group__str.html','');});
 <div class="title">Dynamic Strings</div>  </div>
 </div><!--header-->
 <div class="contents">
-
-<p>These functions are used to work with dynamically allocated strings.  
-<a href="#details">More...</a></p>
+<a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
+<p>These functions are used to work with dynamically allocated strings. </p>
+<p>A dynamic string contains a normal «char*» pointing to a NUL terminated text. Note however, that dynamic strings use their own memory management which cannot be mixed with the standard C library memory functions. Unused strings must be freed with <a class="el" href="group__str.html#ga3734e05372979e0c0a453e7f88dac76c" title="Free a string. ">StrFree()</a>, and you must never use free() or realloc() on a dynamic string. </p>
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="nested-classes"></a>
 Data Structures</h2></td></tr>
@@ -98,9 +98,6 @@ Functions</h2></td></tr>
 <tr class="memdesc:gafe5c92b72acb2b4cee1eb367a8d2defb"><td class="mdescLeft">&#160;</td><td class="mdescRight">vsnprintf() replacement.  <a href="#gafe5c92b72acb2b4cee1eb367a8d2defb">More...</a><br /></td></tr>
 <tr class="separator:gafe5c92b72acb2b4cee1eb367a8d2defb"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
-<a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
-<p>These functions are used to work with dynamically allocated strings. </p>
-<p>A dynamic string contains a normal «char*» pointing to a NUL terminated text. Note however, that dynamic strings use their own memory management which cannot be mixed with the standard C library memory functions. Unused strings must be freed with <a class="el" href="group__str.html#ga3734e05372979e0c0a453e7f88dac76c" title="Free a string. ">StrFree()</a>, and you must never use free() or realloc() on a dynamic string. </p>
 <h2 class="groupheader">Function Documentation</h2>
 <a class="anchor" id="ga074ad11c3c01f760f6ad9d6cdae43a99"></a>
 <div class="memitem">
@@ -339,6 +336,6 @@ Functions</h2></td></tr>
 </div><!-- contents -->
 </div><!-- doc-content -->
 <hr size="1"><address style="text-align: right;"><small>
-MeatAxe 2.4 documentation, generated on Sun Aug 31 2014 23:06:40</small></address>
+MeatAxe 2.4 documentation, generated on Fri Dec 26 2014 11:45:31</small></address>
 </body>
 </html>

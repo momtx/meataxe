@@ -63,142 +63,48 @@ $(document).ready(function(){initNavTree('structMatrix__t.html','');});
 <div class="title">Matrix_t Class Reference<div class="ingroups"><a class="el" href="group__mat.html">Matrices over Finite Fields</a></div></div>  </div>
 </div><!--header-->
 <div class="contents">
-
-<p>A matrix over a finite field.  
- <a href="structMatrix__t.html#details">More...</a></p>
-<table class="memberdecls">
-<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-attribs"></a>
-Data Fields</h2></td></tr>
-<tr class="memitem:a7a1be4f2cd86d21f99dda2f1b007cb5a"><td class="memItemLeft" align="right" valign="top">unsigned long&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structMatrix__t.html#a7a1be4f2cd86d21f99dda2f1b007cb5a">Magic</a></td></tr>
-<tr class="memdesc:a7a1be4f2cd86d21f99dda2f1b007cb5a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Used internally.  <a href="#a7a1be4f2cd86d21f99dda2f1b007cb5a">More...</a><br /></td></tr>
-<tr class="separator:a7a1be4f2cd86d21f99dda2f1b007cb5a"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:abe222f384e99fda430cdee99fd115e20"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structMatrix__t.html#abe222f384e99fda430cdee99fd115e20">Field</a></td></tr>
-<tr class="memdesc:abe222f384e99fda430cdee99fd115e20"><td class="mdescLeft">&#160;</td><td class="mdescRight">Field order.  <a href="#abe222f384e99fda430cdee99fd115e20">More...</a><br /></td></tr>
-<tr class="separator:abe222f384e99fda430cdee99fd115e20"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a8a5efd601eee9ddd3ef4f1cd9e751b6d"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structMatrix__t.html#a8a5efd601eee9ddd3ef4f1cd9e751b6d">Nor</a></td></tr>
-<tr class="memdesc:a8a5efd601eee9ddd3ef4f1cd9e751b6d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Number of rows.  <a href="#a8a5efd601eee9ddd3ef4f1cd9e751b6d">More...</a><br /></td></tr>
-<tr class="separator:a8a5efd601eee9ddd3ef4f1cd9e751b6d"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a90d6177cc3938028fffe2cfd35a850f9"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structMatrix__t.html#a90d6177cc3938028fffe2cfd35a850f9">Noc</a></td></tr>
-<tr class="memdesc:a90d6177cc3938028fffe2cfd35a850f9"><td class="mdescLeft">&#160;</td><td class="mdescRight">Number of columns.  <a href="#a90d6177cc3938028fffe2cfd35a850f9">More...</a><br /></td></tr>
-<tr class="separator:a90d6177cc3938028fffe2cfd35a850f9"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a52f52c18ad29fc865180f69ab177c4dc"><td class="memItemLeft" align="right" valign="top"><a class="el" href="group__ff.html#ga2dc160f7cd3b7190becfc9eab62b58ac">PTR</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structMatrix__t.html#a52f52c18ad29fc865180f69ab177c4dc">Data</a></td></tr>
-<tr class="memdesc:a52f52c18ad29fc865180f69ab177c4dc"><td class="mdescLeft">&#160;</td><td class="mdescRight">Data, organized as array of rows.  <a href="#a52f52c18ad29fc865180f69ab177c4dc">More...</a><br /></td></tr>
-<tr class="separator:a52f52c18ad29fc865180f69ab177c4dc"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aabd8dcfd77ee092b3ac1fddd06611dc2"><td class="memItemLeft" align="right" valign="top">size_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structMatrix__t.html#aabd8dcfd77ee092b3ac1fddd06611dc2">RowSize</a></td></tr>
-<tr class="memdesc:aabd8dcfd77ee092b3ac1fddd06611dc2"><td class="mdescLeft">&#160;</td><td class="mdescRight">Size (in bytes) of one row.  <a href="#aabd8dcfd77ee092b3ac1fddd06611dc2">More...</a><br /></td></tr>
-<tr class="separator:aabd8dcfd77ee092b3ac1fddd06611dc2"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a032d810f63c1b96a11d8bfcf6cef8aa2"><td class="memItemLeft" align="right" valign="top">int *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structMatrix__t.html#a032d810f63c1b96a11d8bfcf6cef8aa2">PivotTable</a></td></tr>
-<tr class="memdesc:a032d810f63c1b96a11d8bfcf6cef8aa2"><td class="mdescLeft">&#160;</td><td class="mdescRight">Pivot table (if matrix is in echelon form) .  <a href="#a032d810f63c1b96a11d8bfcf6cef8aa2">More...</a><br /></td></tr>
-<tr class="separator:a032d810f63c1b96a11d8bfcf6cef8aa2"><td class="memSeparator" colspan="2">&#160;</td></tr>
-</table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>A matrix over a finite field. </p>
-<p>The <code>Data</code> field is a pointer to the matrix elements, organized as an array of rows. Note that the size of a row (<code>RowSize</code> field) is different from the number of columns because more than one mark can be packed into a byte, and rows are always padded to a multiple of sizeof(long). Both Nor and Noc may be zero. In this case, Data ist still a valid pointer, but the memory block it points to has size zero. The pivot table is optional and can be NULL. Besides the marks, each matrix carries the field order, the number of rows and the number of columns. There is no global field order or row length as at the kernel layer. </p>
-</div><h2 class="groupheader">Field Documentation</h2>
-<a class="anchor" id="a52f52c18ad29fc865180f69ab177c4dc"></a>
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname"><a class="el" href="group__ff.html#ga2dc160f7cd3b7190becfc9eab62b58ac">PTR</a> Matrix_t::Data</td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-
-<p>Data, organized as array of rows. </p>
-
-</div>
-</div>
-<a class="anchor" id="abe222f384e99fda430cdee99fd115e20"></a>
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">int Matrix_t::Field</td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-
-<p>Field order. </p>
-
-</div>
-</div>
-<a class="anchor" id="a7a1be4f2cd86d21f99dda2f1b007cb5a"></a>
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">unsigned long Matrix_t::Magic</td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-
-<p>Used internally. </p>
-
-</div>
-</div>
-<a class="anchor" id="a90d6177cc3938028fffe2cfd35a850f9"></a>
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">int Matrix_t::Noc</td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-
-<p>Number of columns. </p>
-
-</div>
-</div>
-<a class="anchor" id="a8a5efd601eee9ddd3ef4f1cd9e751b6d"></a>
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">int Matrix_t::Nor</td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-
-<p>Number of rows. </p>
-
-</div>
-</div>
-<a class="anchor" id="a032d810f63c1b96a11d8bfcf6cef8aa2"></a>
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">int* Matrix_t::PivotTable</td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-
-<p>Pivot table (if matrix is in echelon form) . </p>
-
-</div>
-</div>
-<a class="anchor" id="aabd8dcfd77ee092b3ac1fddd06611dc2"></a>
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">size_t Matrix_t::RowSize</td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-
-<p>Size (in bytes) of one row. </p>
-
-</div>
-</div>
+<p>The <code>Data</code> field is a pointer to the matrix elements, organized as an array of rows.</p>
+<p>Note that the size of a row (<code>RowSize</code> field) is different from the number of columns because more than one mark can be packed into a byte, and rows are always padded to a multiple of sizeof(long). Both Nor and Noc may be zero. In this case, Data ist still a valid pointer, but the memory block it points to has size zero. The pivot table is optional and can be NULL. Besides the marks, each matrix carries the field order, the number of rows and the number of columns. There is no global field order or row length as at the kernel layer. </p>
+</div><table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-attribs"></a>
+Data Fields</h2></td></tr>
+<tr class="memitem:a7a1be4f2cd86d21f99dda2f1b007cb5a"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a7a1be4f2cd86d21f99dda2f1b007cb5a"></a>
+unsigned long&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structMatrix__t.html#a7a1be4f2cd86d21f99dda2f1b007cb5a">Magic</a></td></tr>
+<tr class="memdesc:a7a1be4f2cd86d21f99dda2f1b007cb5a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Used internally. <br /></td></tr>
+<tr class="separator:a7a1be4f2cd86d21f99dda2f1b007cb5a"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:abe222f384e99fda430cdee99fd115e20"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="abe222f384e99fda430cdee99fd115e20"></a>
+int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structMatrix__t.html#abe222f384e99fda430cdee99fd115e20">Field</a></td></tr>
+<tr class="memdesc:abe222f384e99fda430cdee99fd115e20"><td class="mdescLeft">&#160;</td><td class="mdescRight">Field order. <br /></td></tr>
+<tr class="separator:abe222f384e99fda430cdee99fd115e20"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a8a5efd601eee9ddd3ef4f1cd9e751b6d"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a8a5efd601eee9ddd3ef4f1cd9e751b6d"></a>
+int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structMatrix__t.html#a8a5efd601eee9ddd3ef4f1cd9e751b6d">Nor</a></td></tr>
+<tr class="memdesc:a8a5efd601eee9ddd3ef4f1cd9e751b6d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Number of rows. <br /></td></tr>
+<tr class="separator:a8a5efd601eee9ddd3ef4f1cd9e751b6d"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a90d6177cc3938028fffe2cfd35a850f9"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a90d6177cc3938028fffe2cfd35a850f9"></a>
+int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structMatrix__t.html#a90d6177cc3938028fffe2cfd35a850f9">Noc</a></td></tr>
+<tr class="memdesc:a90d6177cc3938028fffe2cfd35a850f9"><td class="mdescLeft">&#160;</td><td class="mdescRight">Number of columns. <br /></td></tr>
+<tr class="separator:a90d6177cc3938028fffe2cfd35a850f9"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a52f52c18ad29fc865180f69ab177c4dc"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a52f52c18ad29fc865180f69ab177c4dc"></a>
+<a class="el" href="group__ff.html#ga2dc160f7cd3b7190becfc9eab62b58ac">PTR</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structMatrix__t.html#a52f52c18ad29fc865180f69ab177c4dc">Data</a></td></tr>
+<tr class="memdesc:a52f52c18ad29fc865180f69ab177c4dc"><td class="mdescLeft">&#160;</td><td class="mdescRight">Data, organized as array of rows. <br /></td></tr>
+<tr class="separator:a52f52c18ad29fc865180f69ab177c4dc"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aabd8dcfd77ee092b3ac1fddd06611dc2"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="aabd8dcfd77ee092b3ac1fddd06611dc2"></a>
+size_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structMatrix__t.html#aabd8dcfd77ee092b3ac1fddd06611dc2">RowSize</a></td></tr>
+<tr class="memdesc:aabd8dcfd77ee092b3ac1fddd06611dc2"><td class="mdescLeft">&#160;</td><td class="mdescRight">Size (in bytes) of one row. <br /></td></tr>
+<tr class="separator:aabd8dcfd77ee092b3ac1fddd06611dc2"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a032d810f63c1b96a11d8bfcf6cef8aa2"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a032d810f63c1b96a11d8bfcf6cef8aa2"></a>
+int *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structMatrix__t.html#a032d810f63c1b96a11d8bfcf6cef8aa2">PivotTable</a></td></tr>
+<tr class="memdesc:a032d810f63c1b96a11d8bfcf6cef8aa2"><td class="mdescLeft">&#160;</td><td class="mdescRight">Pivot table (if matrix is in echelon form). <br /></td></tr>
+<tr class="separator:a032d810f63c1b96a11d8bfcf6cef8aa2"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table>
 <hr/>The documentation for this class was generated from the following file:<ul>
 <li>src/<a class="el" href="meataxe_8h_source.html">meataxe.h</a></li>
 </ul>
 </div><!-- contents -->
 </div><!-- doc-content -->
 <hr size="1"><address style="text-align: right;"><small>
-MeatAxe 2.4 documentation, generated on Sun Aug 31 2014 23:06:40</small></address>
+MeatAxe 2.4 documentation, generated on Fri Dec 26 2014 11:45:31</small></address>
 </body>
 </html>

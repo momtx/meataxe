@@ -63,26 +63,26 @@ $(document).ready(function(){initNavTree('group__misc.html','');});
 <div class="title">Miscellaneous</div>  </div>
 </div><!--header-->
 <div class="contents">
+<a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="func-members"></a>
 Functions</h2></td></tr>
 <tr class="memitem:gafb5bb93037bf607b58141cf09ba3a176"><td class="memItemLeft" align="right" valign="top">long&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__misc.html#gafb5bb93037bf607b58141cf09ba3a176">gcd</a> (long a, long b)</td></tr>
-<tr class="memdesc:gafb5bb93037bf607b58141cf09ba3a176"><td class="mdescLeft">&#160;</td><td class="mdescRight">Greatest Common Divisor.  <a href="#gafb5bb93037bf607b58141cf09ba3a176">More...</a><br /></td></tr>
+<tr class="memdesc:gafb5bb93037bf607b58141cf09ba3a176"><td class="mdescLeft">&#160;</td><td class="mdescRight">Calculates the greatest common divisor of two integers.  <a href="#gafb5bb93037bf607b58141cf09ba3a176">More...</a><br /></td></tr>
 <tr class="separator:gafb5bb93037bf607b58141cf09ba3a176"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ga323e0a3637702c14772261fffd317d31"><td class="memItemLeft" align="right" valign="top">long&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__misc.html#ga323e0a3637702c14772261fffd317d31">lcm</a> (long a, long b)</td></tr>
-<tr class="memdesc:ga323e0a3637702c14772261fffd317d31"><td class="mdescLeft">&#160;</td><td class="mdescRight">Least Common Multiple.  <a href="#ga323e0a3637702c14772261fffd317d31">More...</a><br /></td></tr>
+<tr class="memdesc:ga323e0a3637702c14772261fffd317d31"><td class="mdescLeft">&#160;</td><td class="mdescRight">Calculates the least common multiple of two integers.  <a href="#ga323e0a3637702c14772261fffd317d31">More...</a><br /></td></tr>
 <tr class="separator:ga323e0a3637702c14772261fffd317d31"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ga5dbb0145bd2a4a1e36c045bd4158533a"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__misc.html#ga5dbb0145bd2a4a1e36c045bd4158533a">MtxRandomInit</a> (unsigned x)</td></tr>
-<tr class="memdesc:ga5dbb0145bd2a4a1e36c045bd4158533a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Initialize the random number generator.  <a href="#ga5dbb0145bd2a4a1e36c045bd4158533a">More...</a><br /></td></tr>
+<tr class="memdesc:ga5dbb0145bd2a4a1e36c045bd4158533a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Initializes the random number generator.  <a href="#ga5dbb0145bd2a4a1e36c045bd4158533a">More...</a><br /></td></tr>
 <tr class="separator:ga5dbb0145bd2a4a1e36c045bd4158533a"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ga0c3a8104b9874adb0b918ebdef80f942"><td class="memItemLeft" align="right" valign="top">long&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__misc.html#ga0c3a8104b9874adb0b918ebdef80f942">MtxRandom</a> (void)</td></tr>
-<tr class="memdesc:ga0c3a8104b9874adb0b918ebdef80f942"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get the next (Pseudo-)Random number.  <a href="#ga0c3a8104b9874adb0b918ebdef80f942">More...</a><br /></td></tr>
+<tr class="memdesc:ga0c3a8104b9874adb0b918ebdef80f942"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get the next (pseudo-)random number This function returns a nonnegative (pseudo) random number.  <a href="#ga0c3a8104b9874adb0b918ebdef80f942">More...</a><br /></td></tr>
 <tr class="separator:ga0c3a8104b9874adb0b918ebdef80f942"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ga978417d97126ed14eab3c75055769fbd"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__misc.html#ga978417d97126ed14eab3c75055769fbd">MtxRandomInt</a> (int max)</td></tr>
 <tr class="memdesc:ga978417d97126ed14eab3c75055769fbd"><td class="mdescLeft">&#160;</td><td class="mdescRight">Random number.  <a href="#ga978417d97126ed14eab3c75055769fbd">More...</a><br /></td></tr>
 <tr class="separator:ga978417d97126ed14eab3c75055769fbd"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
-<a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <h2 class="groupheader">Function Documentation</h2>
 <a class="anchor" id="gafb5bb93037bf607b58141cf09ba3a176"></a>
 <div class="memitem">
@@ -108,8 +108,8 @@ Functions</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Greatest Common Divisor. </p>
-<p>This function returns the greatest common divisor of two integers. If both numbers are positive, the result is positive. If one or both numbers are negative, the result may be positive or negative. If one of the numbers is zero, the function returns the other number. If both numbers are zero, the result is zero. </p><dl class="params"><dt>Parameters</dt><dd>
+<p>Calculates the greatest common divisor of two integers. </p>
+<p>If both numbers are positive, the result is positive. If one or both numbers are negative, the result may be positive or negative. If one of the numbers is zero the function returns the other number. If both numbers are zero, the result is zero. </p><dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">a</td><td>First number. </td></tr>
     <tr><td class="paramname">b</td><td>Second number. </td></tr>
@@ -144,8 +144,8 @@ Functions</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Least Common Multiple. </p>
-<p>This function returns the least common multiple of two integers. If both numbers are positive, the result is positive. If one or both numbers are negative, the result may be positive or negative. If both numbers are zero, a division by zero occurs. </p><dl class="params"><dt>Parameters</dt><dd>
+<p>Calculates the least common multiple of two integers. </p>
+<p>If both numbers are positive, the result is positive. If one or both numbers are negative, the result may be positive or negative. If both numbers are zero, a division by zero occurs. </p><dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">a</td><td>First number. </td></tr>
     <tr><td class="paramname">b</td><td>Second number. </td></tr>
@@ -170,8 +170,8 @@ Functions</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Get the next (Pseudo-)Random number. </p>
-<p>This function returns a nonnegative (pseudo) random number. </p><dl class="section return"><dt>Returns</dt><dd>Pseudo random number. </dd></dl>
+<p>Get the next (pseudo-)random number This function returns a nonnegative (pseudo) random number. </p>
+<dl class="section return"><dt>Returns</dt><dd>A nonnegative number. </dd></dl>
 
 </div>
 </div>
@@ -189,7 +189,7 @@ Functions</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Initialize the random number generator. </p>
+<p>Initializes the random number generator. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">x</td><td>Seed value. </td></tr>
@@ -221,6 +221,6 @@ Functions</h2></td></tr>
 </div><!-- contents -->
 </div><!-- doc-content -->
 <hr size="1"><address style="text-align: right;"><small>
-MeatAxe 2.4 documentation, generated on Sun Aug 31 2014 23:06:40</small></address>
+MeatAxe 2.4 documentation, generated on Fri Dec 26 2014 11:45:31</small></address>
 </body>
 </html>

@@ -61,27 +61,21 @@ $(document).ready(function(){initNavTree('structMatRep__t.html','');});
 <div class="title">MatRep_t Class Reference<div class="ingroups"><a class="el" href="group__mrep.html">Matrix Representations</a></div></div>  </div>
 </div><!--header-->
 <div class="contents">
-
-<p>A matrix representation.  
- <a href="structMatRep__t.html#details">More...</a></p>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>A matrix representation. </p>
-<p>This data structure is basically a collection of N matrices, representing the generators of the algebra.</p>
-<p>A matrix representation is created with <a class="el" href="group__mrep.html#ga5f82015bc6ebbb1b678f62510ea22fd6" title="Create a Matrix Representation. ">MrAlloc()</a>. If the generators are available, they can be passed to <a class="el" href="group__mrep.html#ga5f82015bc6ebbb1b678f62510ea22fd6" title="Create a Matrix Representation. ">MrAlloc()</a>. Generators can also be added to a matrix representation with <a class="el" href="group__mrep.html#ga5047c4d5417b7d21887f945ec6ad5f6a" title="Add a Matrix to a Representation. ">MrAddGenerator()</a>. In both cases the user can choose if a copy of the matrices or only a reference to the matrices is stored in the representation. In either case, deleting the representation with <a class="el" href="group__mrep.html#ga3cc838c237d592c2a737a0bab946ee55" title="Delete a Matrix Representation. ">MrFree()</a> will also delete the generators. For example, after the following code has been executed: </p><pre>
-<a class="el" href="structMatrix__t.html" title="A matrix over a finite field. ">Matrix_t</a> *mat = MatLoad("matrix");
-Rep = MrAlloc(1,&amp;mat,0);
-MrFree(Rep);
-</pre><p> the <code>mat</code> pointer is no longer valid, because the matrix representation has been by <a class="el" href="group__mrep.html#ga3cc838c237d592c2a737a0bab946ee55" title="Delete a Matrix Representation. ">MrFree()</a>. However, after </p><pre>
-<a class="el" href="structMatrix__t.html" title="A matrix over a finite field. ">Matrix_t</a> *mat = MatLoad("matrix");
-Rep = MrAlloc(1,&amp;mat,MR_COPY_GENERATORS);
-MrFree(Rep);
-</pre><p> <code>mat</code> is still valid because a copy of the matrix was created. </p>
+<p>This data structure is basically a collection of N matrices, representing the generators of the algebra. A matrix representation is created with <a class="el" href="group__mrep.html#ga5f82015bc6ebbb1b678f62510ea22fd6" title="Create a matrix representation. ">MrAlloc()</a>. If the generators are available, they can be passed to <a class="el" href="group__mrep.html#ga5f82015bc6ebbb1b678f62510ea22fd6" title="Create a matrix representation. ">MrAlloc()</a>. Generators can also be added to a matrix representation with <a class="el" href="group__mrep.html#ga5047c4d5417b7d21887f945ec6ad5f6a" title="Add a Matrix to a Representation. ">MrAddGenerator()</a>. In both cases the user can choose if a copy of the matrices or only a reference to the matrices is stored in the representation. In either case, deleting the representation with <a class="el" href="group__mrep.html#ga3cc838c237d592c2a737a0bab946ee55" title="Delete a matrix representation. ">MrFree()</a> will also delete the generators. For example, after the following code has been executed: </p><div class="fragment"><div class="line"><a class="code" href="structMatrix__t.html">Matrix_t</a> *mat = <a class="code" href="group__mat.html#ga10c390bd4d069b00a12fbe05ad2a14d3">MatLoad</a>(<span class="stringliteral">&quot;matrix&quot;</span>);</div>
+<div class="line">Rep = <a class="code" href="group__mrep.html#ga5f82015bc6ebbb1b678f62510ea22fd6">MrAlloc</a>(1,&amp;mat,0);</div>
+<div class="line"><a class="code" href="group__mrep.html#ga3cc838c237d592c2a737a0bab946ee55">MrFree</a>(Rep);                               <span class="comment">// *** invalidates mat</span></div>
+</div><!-- fragment --><p> the <code>mat</code> pointer is no longer valid, because the matrix was deleted by <a class="el" href="group__mrep.html#ga3cc838c237d592c2a737a0bab946ee55" title="Delete a matrix representation. ">MrFree()</a>. However, after </p><div class="fragment"><div class="line"><a class="code" href="structMatrix__t.html">Matrix_t</a> *mat = <a class="code" href="group__mat.html#ga10c390bd4d069b00a12fbe05ad2a14d3">MatLoad</a>(<span class="stringliteral">&quot;matrix&quot;</span>);</div>
+<div class="line">Rep = <a class="code" href="group__mrep.html#ga5f82015bc6ebbb1b678f62510ea22fd6">MrAlloc</a>(1,&amp;mat,MR_COPY_GENERATORS);</div>
+<div class="line"><a class="code" href="group__mrep.html#ga3cc838c237d592c2a737a0bab946ee55">MrFree</a>(Rep);                               <span class="comment">// *** mat remains valid</span></div>
+</div><!-- fragment --><p> <code>mat</code> is still valid because a copy of the matrix was created. </p>
 </div><hr/>The documentation for this class was generated from the following file:<ul>
 <li>src/<a class="el" href="meataxe_8h_source.html">meataxe.h</a></li>
 </ul>
 </div><!-- contents -->
 </div><!-- doc-content -->
 <hr size="1"><address style="text-align: right;"><small>
-MeatAxe 2.4 documentation, generated on Sun Aug 31 2014 23:06:40</small></address>
+MeatAxe 2.4 documentation, generated on Fri Dec 26 2014 11:45:31</small></address>
 </body>
 </html>
