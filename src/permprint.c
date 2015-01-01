@@ -42,13 +42,13 @@ void PermPrint(const char *name, const Perm_t *perm)
    int count = 0, k;
    int i;
 
-   // Check arguments
+   // check arguments
    if (!PermIsValid(perm)) {
       MTX_ERROR1("%E",MTX_ERR_BADARG);
       return;
    }
 
-   // Print the name
+   // print the name
    if (name != NULL) {
       printf("%s=",name);
    }

@@ -22,11 +22,9 @@ void Perm_ConvertOld(long *data, int len)
 {
    int i;
 
-   /* Check if this is an old-style permutation. We check
-      if 0 in included (= news tyle) or not (=old style).
-      ---------------------------------------------------- */
+   // if point 0 exists the permutation is already in new format
    for (i = 0; i < len; ++i) {
-      if (data[i] == 0) {       /* New format: nothing to do */
+      if (data[i] == 0) {
          return;
       }
    }

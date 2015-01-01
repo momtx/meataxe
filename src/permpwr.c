@@ -33,7 +33,7 @@ Perm_t *PermPower(const Perm_t *p, int n)
    long *xq;
    long i, k, l;
 
-   // Check arguments
+   // check arguments
    if (!PermIsValid(p)) {
       return NULL;
    }
@@ -42,7 +42,7 @@ Perm_t *PermPower(const Perm_t *p, int n)
       return NULL;
    }
 
-   // Allocate a new permutation for the result
+   // allocate a new permutation for the result
    q = PermAlloc(p->Degree);
    if (q == NULL) {
       return NULL;
@@ -50,7 +50,7 @@ Perm_t *PermPower(const Perm_t *p, int n)
    xp = p->Data;
    xq = q->Data;
 
-   // Calculate the n-th power
+   // calculate the n-th power
    for (i = 0; i < p->Degree; ++i) {
       for (k = i, l = n; l > 0; --l) {
          k = xp[k];

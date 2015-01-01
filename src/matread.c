@@ -1,21 +1,21 @@
-/* ============================= C MeatAxe ==================================
-   File:        $Id: matread.c,v 1.1.1.1 2007/09/02 11:06:17 mringe Exp $
-   Comment:     Read a matrix from a file.
-   --------------------------------------------------------------------------
-   (C) Copyright 1998 Michael Ringe, Lehrstuhl D fuer Mathematik,
-   RWTH Aachen, Germany  <mringe@math.rwth-aachen.de>
-   This program is free software; see the file COPYING for details.
-   ========================================================================== */
-
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// C MeatAxe - Read a matrix from a file
+//
+// (C) Copyright 1998-2015 Michael Ringe, Lehrstuhl D fuer Mathematik, RWTH Aachen
+//
+// This program is free software; see the file COPYING for details.
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 #include "meataxe.h"
 #include <stdlib.h>
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// Local data
 
 MTX_DEFINE_FILE_INFO
 
 /// @addtogroup mat
 /// @{
-
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 /// Read a matrix from a file.
@@ -24,28 +24,26 @@ MTX_DEFINE_FILE_INFO
 
 Matrix_t *MatRead(FILE *f)
 {
-    Matrix_t *m;
-    long hdr[3];
+   Matrix_t *m;
+   long hdr[3];
 
-    if (SysReadLong(f,hdr,3) != 3) 
-    {
-	MTX_ERROR("Cannot read header");
-	return NULL;
-    }
-    if (hdr[0] < 2) 
-    {
-	MTX_ERROR1("%E",MTX_ERR_NOTMATRIX);
-	return NULL;
-    }
-    m = MatAlloc(hdr[0],hdr[1],hdr[2]);
-    if (m == NULL) 
-	return NULL;
-    if (FfReadRows(f,m->Data,m->Nor) != m->Nor)
-    {
-	MatFree(m);
-	return NULL;
-    }
-    return m;
+   if (SysReadLong(f,hdr,3) != 3) {
+      MTX_ERROR("Cannot read header");
+      return NULL;
+   }
+   if (hdr[0] < 2) {
+      MTX_ERROR1("%E",MTX_ERR_NOTMATRIX);
+      return NULL;
+   }
+   m = MatAlloc(hdr[0],hdr[1],hdr[2]);
+   if (m == NULL) {
+      return NULL;
+   }
+   if (FfReadRows(f,m->Data,m->Nor) != m->Nor) {
+      MatFree(m);
+      return NULL;
+   }
+   return m;
 }
 
 
@@ -58,14 +56,15 @@ Matrix_t *MatRead(FILE *f)
 
 Matrix_t *MatLoad(const char *fn)
 {
-    FILE *f;
-    Matrix_t *m;
+   FILE *f;
+   Matrix_t *m;
 
-    if ((f = SysFopen(fn,FM_READ)) == NULL)
-	return NULL;
-    m = MatRead(f);
-    fclose(f);
-    return m;
+   if ((f = SysFopen(fn,FM_READ)) == NULL) {
+      return NULL;
+   }
+   m = MatRead(f);
+   fclose(f);
+   return m;
 }
 
 
