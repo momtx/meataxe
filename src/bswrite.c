@@ -10,9 +10,8 @@
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // Local data
-   
-MTX_DEFINE_FILE_INFO
 
+MTX_DEFINE_FILE_INFO
 
 /// @addtogroup bs
 /// @{
@@ -23,43 +22,37 @@ MTX_DEFINE_FILE_INFO
 /// @param f File to write to. Must be open for writing.
 /// @return 0 on success, -1 on error.
 
-int BsWrite(BitString_t *bs, FILE *f)	
+int BsWrite(BitString_t *bs, FILE *f)
 {
-    long hdr[3];	/* File header */
+   long file_header[3];
 
-    /* Check arguments 
-       --------------- */
-    if (!BsIsValid(bs))
-    {
-	MTX_ERROR1("bs: %E",MTX_ERR_BADARG);
-	return -1;
-    }
-    if (f == NULL)
-    {
-	MTX_ERROR1("f: %E",MTX_ERR_BADARG);
-	return -1;
-    }
+   // check arguments
+   if (!BsIsValid(bs)) {
+      MTX_ERROR1("bs: %E",MTX_ERR_BADARG);
+      return -1;
+   }
+   if (f == NULL) {
+      MTX_ERROR1("f: %E",MTX_ERR_BADARG);
+      return -1;
+   }
 
-    /* Write header
-       ------------ */
-    hdr[0] = -3;
-    hdr[1] = bs->Size;
-    hdr[2] = 0;
-    if (SysWriteLong32(f,hdr,3) != 3)
-    {
-	MTX_ERROR("Cannot write bit string header");
-	return -1;
-    }
+   // write header
+   file_header[0] = -3;
+   file_header[1] = bs->Size;
+   file_header[2] = 0;
+   if (SysWriteLong32(f,file_header,3) != 3) {
+      MTX_ERROR("Cannot write bit string header");
+      return -1;
+   }
 
-    /* Write data
-       ---------- */
-    if (SysWriteLongX(f,bs->Data,(bs->Size + 7) / 8) != (bs->Size + 7) / 8)
-    {
-	MTX_ERROR("Cannot write bit string data");
-	return -1;
-    }
+   // write data
+   if (SysWriteLongX(f,bs->Data,(bs->Size + 7) / 8) != (bs->Size + 7) / 8) {
+      MTX_ERROR("Cannot write bit string data");
+      return -1;
+   }
 
-    return 0;
+   return 0;
 }
+
 
 /// @}

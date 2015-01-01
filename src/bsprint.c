@@ -12,8 +12,8 @@
 // Local data
 
 /*
-MTX_DEFINE_FILE_INFO 
-*/
+   MTX_DEFINE_FILE_INFO
+ */
 
 /// @addtogroup bs
 /// @{
@@ -27,11 +27,13 @@ MTX_DEFINE_FILE_INFO
 
 void BsPrint(const char *name, const BitString_t *bs)
 {
-    int i;
-    if (name != NULL) printf("%s=\n",name);
-    for (i = 0; i < bs->Size; ++i)
-	printf("%d",BsTest(bs,i));
-    printf("\n");
+   int i;
+   if (name != NULL) { printf("%s=\n",name); }
+   for (i = 0; i < bs->Size; ++i) {
+      printf("%d",BsTest(bs,i));
+   }
+   printf("\n");
 }
+
 
 /// @}

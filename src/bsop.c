@@ -8,14 +8,13 @@
 
 #include "meataxe.h"
 #include <string.h>
-   
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // Local data
 
 MTX_DEFINE_FILE_INFO
 
-#define BPL (sizeof(long) * 8)		/* Number of bits in a long */
-
+#define BPL (sizeof(long) * 8)          /* Number of bits in a long */
 
 /// @addtogroup bs
 /// @{
@@ -26,13 +25,14 @@ MTX_DEFINE_FILE_INFO
 /// @return 0 on success, -1 on error.
 
 int BsClearAll(BitString_t *bs)
-
 {
-    if (!BsIsValid(bs))
-	return -1;
-    memset(bs->Data,0,bs->BufSize * sizeof(long));
-    return 0;
+   if (!BsIsValid(bs)) {
+      return -1;
+   }
+   memset(bs->Data,0,bs->BufSize * sizeof(long));
+   return 0;
 }
+
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 /// Compare two bit strings
@@ -42,14 +42,17 @@ int BsClearAll(BitString_t *bs)
 
 int BsCompare(const BitString_t *a, const BitString_t *b)
 {
-    int i;
-    if (!BsIsValid(a) || !BsIsValid(b))
-	return -1;
-    i = a->Size - b->Size;
-    if (i != 0)
-	return i;
-    return memcmp(a->Data,b->Data,a->BufSize * sizeof(long));
+   int i;
+   if (!BsIsValid(a) || !BsIsValid(b)) {
+      return -1;
+   }
+   i = a->Size - b->Size;
+   if (i != 0) {
+      return i;
+   }
+   return memcmp(a->Data,b->Data,a->BufSize * sizeof(long));
 }
+
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 /// Copy a bit string
@@ -59,17 +62,18 @@ int BsCompare(const BitString_t *a, const BitString_t *b)
 /// @return @em dest on success, 0 on error.
 
 BitString_t *BsCopy(BitString_t *dest, const BitString_t *src)
-{	
-    if (!BsIsValid(dest) || !BsIsValid(src))
-	return NULL;
-    if (dest->Size != src->Size)
-    {
-	MTX_ERROR1("%E",MTX_ERR_INCOMPAT);
-	return NULL;
-    }
-    memcpy(dest->Data,src->Data,src->BufSize * sizeof(long));
-    return dest;
+{
+   if (!BsIsValid(dest) || !BsIsValid(src)) {
+      return NULL;
+   }
+   if (dest->Size != src->Size) {
+      MTX_ERROR1("%E",MTX_ERR_INCOMPAT);
+      return NULL;
+   }
+   memcpy(dest->Data,src->Data,src->BufSize * sizeof(long));
+   return dest;
 }
+
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 /// @fn int BsSet(BitString_t *bs, int i)
@@ -86,16 +90,17 @@ BitString_t *BsCopy(BitString_t *dest, const BitString_t *src)
 
 int BsSet(BitString_t *bs, int i)
 {
-    if (!BsIsValid(bs))
-	return -1;
-    if (i < 0 || i >= bs->Size)
-    {
-	MTX_ERROR2("i=%d: %E",i,MTX_ERR_BADARG);
-	return -1;
-    }
-    bs->Data[i / BPL] |= 1L << (i % BPL);
-    return 0;
+   if (!BsIsValid(bs)) {
+      return -1;
+   }
+   if ((i < 0) || (i >= bs->Size)) {
+      MTX_ERROR2("i=%d: %E",i,MTX_ERR_BADARG);
+      return -1;
+   }
+   bs->Data[i / BPL] |= 1L << (i % BPL);
+   return 0;
 }
+
 
 #endif
 
@@ -113,17 +118,18 @@ int BsSet(BitString_t *bs, int i)
 #ifdef DEBUG
 
 int BsClear(BitString_t *bs, int i)
-{	
-    if (!BsIsValid(bs))
-	return -1;
-    if (i < 0 || i >= bs->Size)
-    {
-	MTX_ERROR2("i=%d: %E",i,MTX_ERR_BADARG);
-	return -1;
-    }
-    bs->Data[i / BPL] &= ~(1L << (i % BPL));
-    return 0;
+{
+   if (!BsIsValid(bs)) {
+      return -1;
+   }
+   if ((i < 0) || (i >= bs->Size)) {
+      MTX_ERROR2("i=%d: %E",i,MTX_ERR_BADARG);
+      return -1;
+   }
+   bs->Data[i / BPL] &= ~(1L << (i % BPL));
+   return 0;
 }
+
 
 #endif
 
@@ -137,15 +143,15 @@ int BsClear(BitString_t *bs, int i)
 #ifdef DEBUG
 
 int BsTest(const BitString_t *bs, int i)
-{	
-    if (!BsIsValid(bs))
-	return -1;
-    if (i < 0 || i >= bs->Size)
-    {
-	MTX_ERROR2("i=%d: %E",i,MTX_ERR_BADARG);
-	return -1;
-    }
-    return (bs->Data[i / BPL] & (1L << (i % BPL))) != 0 ? 1 : 0;
+{
+   if (!BsIsValid(bs)) {
+      return -1;
+   }
+   if ((i < 0) || (i >= bs->Size)) {
+      MTX_ERROR2("i=%d: %E",i,MTX_ERR_BADARG);
+      return -1;
+   }
+   return (bs->Data[i / BPL] & (1L << (i % BPL))) != 0 ? 1 : 0;
 }
 
 

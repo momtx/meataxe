@@ -18,16 +18,16 @@
 /// change their size. However, operations like the intersection of two sets are much faster with
 /// BitString_t than with set_t objects.
 ///
-/// Bit strings can be written to and read from files. The file format consists 
+/// Bit strings can be written to and read from files. The file format consists
 /// of a header followed by the data. The header contains three 32-bit integers.
-/// The first number is $-3$, the second number is the size of the bit 
+/// The first number is $-3$, the second number is the size of the bit
 /// string, and the third number is always zero. The file header is followed by
 /// the bit string data which is written as a sequence of 32-bit integers where
 /// bit 0 of the first integer contains the first bit of the string.
 
 /// @class BitString_t
 /// A bit string.
-   
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // Local data
 
@@ -41,33 +41,31 @@ MTX_DEFINE_FILE_INFO
 /// Check if a bit string is valid.
 /// This function checks if its argument, is a pointer to a valid
 /// bit string.
-/// If the bit string is o.k., the function returns 1. 
-/// Otherwise, an error is signaled and, if the error handler does not 
+/// If the bit string is o.k., the function returns 1.
+/// Otherwise, an error is signaled and, if the error handler does not
 /// terminate the program, the function returns 0.
 /// @param bs Bit string to check.
 /// @return 1 if \p bs is a valid bit string, 0 otherwise.
 
 int BsIsValid(const BitString_t *bs)
 {
-    if (bs == NULL)
-    {
-	MTX_ERROR("NULL bit string");
-	return 0;
-    }
-    if (bs->Magic != BS_MAGIC || bs->Size < 0)
-    {
-	MTX_ERROR2("Invalid bit string (magic=%d, size=%d)",
-	    (int)bs->Magic,bs->Size);
-	return 0;
-    }
-    if (bs->BufSize != (int) BS(bs->Size))
-    {
-	MTX_ERROR2("Inconsistent bit string size %d, %d)",
-	    bs->Size,(int) BS(bs->Size));
-	return 0;
-    }
-    return 1;
+   if (bs == NULL) {
+      MTX_ERROR("NULL bit string");
+      return 0;
+   }
+   if ((bs->Magic != BS_MAGIC) || (bs->Size < 0)) {
+      MTX_ERROR2("Invalid bit string (magic=%d, size=%d)",
+                 (int)bs->Magic,bs->Size);
+      return 0;
+   }
+   if (bs->BufSize != (int) BS(bs->Size)) {
+      MTX_ERROR2("Inconsistent bit string size %d, %d)",
+                 bs->Size,(int) BS(bs->Size));
+      return 0;
+   }
+   return 1;
 }
+
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 /// Create a bit string.
@@ -79,35 +77,32 @@ int BsIsValid(const BitString_t *bs)
 
 BitString_t *BsAlloc(int size)
 {
-    BitString_t *n;
-    int bufsize;	/* Number of long integers in data buffer */
+   BitString_t *n;
+   int bufsize;         /* Number of long integers in data buffer */
 
-    if (size < 0)
-    {
-	MTX_ERROR1("Illegal size %d",size);
-	return NULL;
-    }
+   if (size < 0) {
+      MTX_ERROR1("Illegal size %d",size);
+      return NULL;
+   }
 
-    /* Allocate data buffer
-       -------------------- */
-    bufsize = BS(size);
-    n = (BitString_t *) SysMalloc(sizeof(BitString_t) + 
-	(bufsize == 0 ? 0 : bufsize - 1) * sizeof(long));
-    if (n == NULL) 
-    {
-	MTX_ERROR("Cannot allocate bit string");
-	return NULL;
-    }
+   // allocate data buffer
+   bufsize = BS(size);
+   n = (BitString_t *) SysMalloc(sizeof(BitString_t) +
+                                 (bufsize == 0 ? 0 : bufsize - 1) * sizeof(long));
+   if (n == NULL) {
+      MTX_ERROR("Cannot allocate bit string");
+      return NULL;
+   }
 
-    /* Initialize
-       ---------- */
-    n->Magic = BS_MAGIC;
-    n->Size = size;
-    n->BufSize = bufsize;
-    memset(n->Data,0,sizeof(long) * bufsize);
+   // initialize
+   n->Magic = BS_MAGIC;
+   n->Size = size;
+   n->BufSize = bufsize;
+   memset(n->Data,0,sizeof(long) * bufsize);
 
-    return n;
+   return n;
 }
+
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 /// Free a bit string.
@@ -116,11 +111,13 @@ BitString_t *BsAlloc(int size)
 
 int BsFree(BitString_t *bs)
 {
-    if (!BsIsValid(bs))
-	return -1;
-    memset(bs,0,sizeof(BitString_t));
-    SysFree(bs);
-    return 0;
+   if (!BsIsValid(bs)) {
+      return -1;
+   }
+   memset(bs,0,sizeof(BitString_t));
+   SysFree(bs);
+   return 0;
 }
+
 
 /// @}

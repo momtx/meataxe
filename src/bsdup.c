@@ -23,18 +23,19 @@ MTX_DEFINE_FILE_INFO
 
 BitString_t *BsDup(const BitString_t *src)
 {
-    BitString_t *n;
+   BitString_t *n;
 
-    if (!BsIsValid(src))
-    {
-	MTX_ERROR1("%E",MTX_ERR_BADARG);
-	return NULL;
-    }
-    n = BsAlloc(src->Size);
-    if (n == NULL)
-	return NULL;
-    memcpy(n->Data,src->Data,src->BufSize * sizeof(long));
-    return n;
+   if (!BsIsValid(src)) {
+      MTX_ERROR1("%E",MTX_ERR_BADARG);
+      return NULL;
+   }
+   n = BsAlloc(src->Size);
+   if (n == NULL) {
+      return NULL;
+   }
+   memcpy(n->Data,src->Data,src->BufSize * sizeof(long));
+   return n;
 }
+
 
 /// @}
