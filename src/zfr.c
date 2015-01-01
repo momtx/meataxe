@@ -1,11 +1,10 @@
-/* ============================= C MeatAxe ==================================
-   File:        $Id: zfr.c,v 1.1.1.1 2007/09/02 11:06:17 mringe Exp $
-   Comment:     Apply the Frobenius automorphism to a matrix.
-   --------------------------------------------------------------------------
-   (C) Copyright 1999 Michael Ringe, Lehrstuhl D fuer Mathematik,
-   RWTH Aachen, Germany  <mringe@math.rwth-aachen.de>
-   This program is free software; see the file COPYING for details.
-   ========================================================================== */
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// C MeatAxe - Apply the Frobenius automorphism to a matrix.
+//
+// (C) Copyright 1998-2015 Michael Ringe, Lehrstuhl D fuer Mathematik, RWTH Aachen
+//
+// This program is free software; see the file COPYING for details.
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
 #include "meataxe.h"
@@ -163,11 +162,7 @@ int main(int argc, const char **argv)
 /**
 @page prog_zfr zfr - Frobenius Automorphism
 
-<<<<<<< HEAD
-@section syntax Command Line
-=======
 @section zfr_syntax Command Line
->>>>>>> 4a68ae339f0300470810ab3c90387657ccf21f0c
 <pre>
 zfr @em Options @em Mat @em Result
 </pre>
@@ -179,17 +174,6 @@ zfr @em Options @em Mat @em Result
 @par @em Result
   Result matrix
 
-<<<<<<< HEAD
-@section inp Input Files
-@par @em Mat
-  Input matrix
-
-@section out Output Files
-@par @em Result
-  Result matrix
-
-@section desc Description
-=======
 @section zfr_inp Input Files
 @par @em Mat
   Input matrix
@@ -199,7 +183,6 @@ zfr @em Options @em Mat @em Result
   Result matrix
 
 @section zfr_desc Description
->>>>>>> 4a68ae339f0300470810ab3c90387657ccf21f0c
 This program reads a matrix, applies the Frobenius automorphism 
 x↦x<sup>p</sup>, where p is the characteristic of the field, 
 to each entry and writes out the result. 

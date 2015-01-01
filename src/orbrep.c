@@ -1,12 +1,10 @@
-/* ============================= C MeatAxe ==================================
-   File:        $Id $
-   Comment:     Make a permutation which maps A to B.
-   --------------------------------------------------------------------------
-   (C) Copyright 2000 Lehrstuhl D fuer Mathematik,
-   RWTH Aachen, Germany  <mringe@math.rwth-aachen.de>
-   Written by Juergen Mueller.
-   This program is free software; see the file COPYING for details.
-   ========================================================================== */
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// C MeatAxe - Make a permutation which maps A to B
+//
+// (C) Copyright 1998-2015 Michael Ringe, Lehrstuhl D fuer Mathematik, RWTH Aachen
+//
+// This program is free software; see the file COPYING for details.
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 #include "meataxe.h"
 #include <stdlib.h>
@@ -239,11 +237,7 @@ int main(int argc, const char **argv)
 /**
 @page prog_orbrep orbrep - Find a permutation which maps A to B
 
-<<<<<<< HEAD
-@section syntax Command Line
-=======
 @section orbrep_syntax Command Line
->>>>>>> 4a68ae339f0300470810ab3c90387657ccf21f0c
 <pre>
 orbrep [@em Options] [-g @em NPerms] @em Perm @em Seed @em Stop @em Script
 </pre>
@@ -261,17 +255,6 @@ orbrep [@em Options] [-g @em NPerms] @em Perm @em Seed @em Stop @em Script
 @par @em Script
 Result (see description).
 
-<<<<<<< HEAD
-@section inp Input Files
-@par @em Perm.1, @em Perm.2, ...
-  Permutations.
-
-@section out Output Files
-@par @em Script
-  Result.
-
-@section desc Description
-=======
 @section orbrep_inp Input Files
 @par @em Perm.1, @em Perm.2, ...
   Permutations.
@@ -281,7 +264,6 @@ Result (see description).
   Result.
 
 @section orbrep_desc Description
->>>>>>> 4a68ae339f0300470810ab3c90387657ccf21f0c
 Given a set of generating permutations, this program find a product of the
 generators which maps a given point, @em Start, to a second given
 point, @em Stop.

@@ -1,11 +1,10 @@
-/* ============================= C MeatAxe ==================================
-   File:        $Id: ztr.c,v 1.1.1.1 2007/09/02 11:06:17 mringe Exp $
-   Comment:     Transpose a matrix.
-   --------------------------------------------------------------------------
-   (C) Copyright 1999 Michael Ringe, Lehrstuhl D fuer Mathematik,
-   RWTH Aachen, Germany  <mringe@math.rwth-aachen.de>
-   This program is free software; see the file COPYING for details.
-   ========================================================================== */
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// C MeatAxe - Transpose a matrix.
+//
+// (C) Copyright 1998-2015 Michael Ringe, Lehrstuhl D fuer Mathematik, RWTH Aachen
+//
+// This program is free software; see the file COPYING for details.
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 #include "meataxe.h"
 
@@ -142,11 +141,7 @@ int main(int argc, const char **argv)
 /**
 @page prog_ztr ztr - Transpose
 
-<<<<<<< HEAD
-@section syntax Command Line
-=======
 @section ztr_syntax Command Line
->>>>>>> 4a68ae339f0300470810ab3c90387657ccf21f0c
 <pre>
 ztr [@em Options] @em Mat @em Result
 </pre>
@@ -160,30 +155,18 @@ Standard options, see @ref prog_stdopts.
 @par @em Result
     Transposed matrix.
 
-<<<<<<< HEAD
-@section inp Input Files
-=======
 @section ztr_inp Input Files
->>>>>>> 4a68ae339f0300470810ab3c90387657ccf21f0c
 
 @par @em Mat
     Input matrix.
 
-<<<<<<< HEAD
-@section out Output Files
-=======
 @section ztr_out Output Files
->>>>>>> 4a68ae339f0300470810ab3c90387657ccf21f0c
 
 @par @em Result
     Transposed matrix.
 
 
-<<<<<<< HEAD
-@section desc Description
-=======
 @section ztr_desc Description
->>>>>>> 4a68ae339f0300470810ab3c90387657ccf21f0c
 This program transposes a matrix.
 
 */

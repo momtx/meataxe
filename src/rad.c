@@ -1,15 +1,10 @@
-/* ============================= C MeatAxe ==================================
-   File:        $Id: rad.c,v 1.1.1.1 2007/09/02 11:06:17 mringe Exp $
-   Comment:     Calculate the radical series of a module, or calculate the
-                homomorphism of the PIMs corresponding to the irreducible
-		constituents.
-   --------------------------------------------------------------------------
-   Written by Moagdolna Szoke.
-   Revised by Michael Ringe.
-   (C) Copyright 1999 Lehrstuhl D fuer Mathematik,
-   RWTH Aachen, Germany <mringe@math.rwth-aachen.de>
-   This program is free software; see the file COPYING for details.
-   ========================================================================== */
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// C MeatAxe - Calculate radical series or homomorphism of the PIMs 
+//
+// (C) Copyright 1998-2015 Michael Ringe, Lehrstuhl D fuer Mathematik, RWTH Aachen
+//
+// This program is free software; see the file COPYING for details.
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 #include "meataxe.h"
 #include <ctype.h>
@@ -527,11 +522,7 @@ int main(int argc, const char **argv)
 /**
 @page prog_rad rad - Radical Series
 
-<<<<<<< HEAD
-@section syntax Command Line
-=======
 @section rad_syntax Command Line
->>>>>>> 4a68ae339f0300470810ab3c90387657ccf21f0c
 <pre>
 rad @em Options [-l @em MaxLength] [-H @em Num] @em Module
 </pre>
@@ -545,40 +536,24 @@ rad @em Options [-l @em MaxLength] [-H @em Num] @em Module
 @par @em Module
   Module name.
 
-<<<<<<< HEAD
-@section inp Input Files
-=======
 @section rad_inp Input Files
->>>>>>> 4a68ae339f0300470810ab3c90387657ccf21f0c
 @par @em Name.cfinfo
   Constituent information.
 @par @em NameCf.std.1, @em NameCf.std.2, ...
   Generators on the irreducible constituents.
 
-<<<<<<< HEAD
-@section out Output Files
-=======
 @section rad_out Output Files
->>>>>>> 4a68ae339f0300470810ab3c90387657ccf21f0c
 @par @em Name.cfinfo
   Radical information.
 @par @em NameCf.hX
   Generators for the X-th head.
 
-<<<<<<< HEAD
-@section desc Description
-=======
 @section rad_desc Description
->>>>>>> 4a68ae339f0300470810ab3c90387657ccf21f0c
 This program calculates the radical series of an arbitrary module @em Name,
 or the homomorphisms from the projective modules
 corresponding to the composition factors of the given module to the module.
 
-<<<<<<< HEAD
-@section impl Implementation Details
-=======
 @section rad_impl Implementation Details
->>>>>>> 4a68ae339f0300470810ab3c90387657ccf21f0c
 The program uses an algorithm by Magdolna Szöke, see @ref Sz98 "[Sz98]".
 
 **/

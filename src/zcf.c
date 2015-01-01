@@ -1,11 +1,10 @@
-/* ============================= C MeatAxe ==================================
-   File:        $Id: zcf.c,v 1.1.1.1 2007/09/02 11:06:17 mringe Exp $
-   Comment:     Change field.
-   --------------------------------------------------------------------------
-   (C) Copyright 1999 Michael Ringe, Lehrstuhl D fuer Mathematik,
-   RWTH Aachen, Germany  <mringe@math.rwth-aachen.de>
-   This program is free software; see the file COPYING for details.
-   ========================================================================== */
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// C MeatAxe - Change field.
+//
+// (C) Copyright 1998-2015 Michael Ringe, Lehrstuhl D fuer Mathematik, RWTH Aachen
+//
+// This program is free software; see the file COPYING for details.
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
 #include "meataxe.h"
@@ -395,11 +394,7 @@ int main(int argc, const char **argv)
 /**
 @page prog_zcf zcf - Change Field
 
-<<<<<<< HEAD
-@section syntax Command Line
-=======
 @section zcf_syntax Command Line
->>>>>>> 4a68ae339f0300470810ab3c90387657ccf21f0c
 <pre>
 zcf @em Options @em q @em Input @em Output
 </pre>
@@ -416,29 +411,17 @@ Input file.
 @par @em Output
 Output file.
 
-<<<<<<< HEAD
-@section inp Input Files
-=======
 @section zcf_inp Input Files
->>>>>>> 4a68ae339f0300470810ab3c90387657ccf21f0c
 
 @par @em Input
 Input file.
 
-<<<<<<< HEAD
-@section out Output Files
-=======
 @section zcf_out Output Files
->>>>>>> 4a68ae339f0300470810ab3c90387657ccf21f0c
 
 @par @em Output
 Output file.
 
-<<<<<<< HEAD
-@section desc Description
-=======
 @section zcf_desc Description
->>>>>>> 4a68ae339f0300470810ab3c90387657ccf21f0c
 
 This program converts between various data types. Currently
 there are two kinds of conversions available:
@@ -450,11 +433,7 @@ there are two kinds of conversions available:
   into the corresponding n times n permutation matrix over
   GF(@em q).
 
-<<<<<<< HEAD
-@section impl Implementation Details
-=======
 @section zcf_impl Implementation Details
->>>>>>> 4a68ae339f0300470810ab3c90387657ccf21f0c
 For matrices, the conversion is done in two steps. First,
 all entries of the matrix are converted to integers.
 Then, they are mapped to the new field and reassembled into rows.

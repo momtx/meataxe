@@ -1,11 +1,10 @@
-/* ============================= C MeatAxe ==================================
-   File:        $Id: mkdotl.c,v 1.1.1.1 2007/09/02 11:06:17 mringe Exp $
-   Comment:     This program calculates the dotted lines.
-   --------------------------------------------------------------------------
-   (C) Copyright 1998 Michael Ringe, Lehrstuhl D fuer Mathematik,
-   RWTH Aachen, Germany  <mringe@math.rwth-aachen.de>
-   This program is free software; see the file COPYING for details.
-   ========================================================================== */
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// C MeatAxe - Calculate the dotted-lines.
+//
+// (C) Copyright 1998-2015 Michael Ringe, Lehrstuhl D fuer Mathematik, RWTH Aachen
+//
+// This program is free software; see the file COPYING for details.
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
 #include "meataxe.h"
@@ -611,11 +610,7 @@ int main(int argc, char *argv[])
 /**
 @page prog_mkdotl mkdotl - Find Dotted-lines
 
-<<<<<<< HEAD
-@section syntax Command Line
-=======
 @section mkdotl_syntax Command Line
->>>>>>> 4a68ae339f0300470810ab3c90387657ccf21f0c
 <pre>
 mkdotl [@em Options] [-G] [--nodup] @em Name
 </pre>
@@ -629,11 +624,7 @@ mkdotl [@em Options] [-G] [--nodup] @em Name
 @par @em Name
   Name of the representation.
 
-<<<<<<< HEAD
-@section inp Input Files
-=======
 @section mkdotl_inp Input Files
->>>>>>> 4a68ae339f0300470810ab3c90387657ccf21f0c
 @par @em Name.cfinfo
   Constituent info file.
 @par @em NameCf.v
@@ -643,19 +634,12 @@ mkdotl [@em Options] [-G] [--nodup] @em Name
 @par @em Name.mnt
   Mountain data, created by @ref prog_mkinc "mkinc".
   
-<<<<<<< HEAD
-@section out Output Files
-@par @em Name.dot
-  Dotted-lines.
 
-@section desc Description
-=======
 @section mkdotl_out Output Files
 @par @em Name.dot
   Dotted-lines.
 
 @section mkdotl_desc Description
->>>>>>> 4a68ae339f0300470810ab3c90387657ccf21f0c
 This program calculates a set of dotted lines between the local
 submodules. More precisely, it computes one dotted line for
 each submodule with head isomoprphic to S⊕S, S irreducible.

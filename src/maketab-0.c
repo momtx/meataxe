@@ -1,11 +1,10 @@
-/* ============================= C MeatAxe ==================================
-   File:        $Id: maketab-0.c,v 1.1.1.1 2007/09/02 11:06:17 mringe Exp $
-   Comment:     Calculate arithmetic tables
-   --------------------------------------------------------------------------
-   (C) Copyright 1998 Michael Ringe, Lehrstuhl D fuer Mathematik,
-   RWTH Aachen, Germany  <mringe@math.rwth-aachen.de>
-   This program is free software; see the file COPYING for details.
-   ========================================================================== */
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// C MeatAxe - Calculate arithmetic tables
+//
+// (C) Copyright 1998-2015 Michael Ringe, Lehrstuhl D fuer Mathematik, RWTH Aachen
+//
+// This program is free software; see the file COPYING for details.
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
 #include "meataxe.h"
@@ -694,11 +693,7 @@ int main(int argc, char *argv[])
 /**
 @page prog_maketab maketab - Calculate Arithmetic Tables
 
-<<<<<<< HEAD
-@section syntax Command Line
-=======
 @section maketab-0_syntax Command Line
->>>>>>> 4a68ae339f0300470810ab3c90387657ccf21f0c
 <pre>
 maketab @em Field
 </pre>
@@ -706,19 +701,11 @@ maketab @em Field
 @par @em Field
   The field order.
 
-<<<<<<< HEAD
-@section out Output Files
-@par pXXX.zzz
-  Arithmetic tables for GF(XXX).
-
-@section desc Description
-=======
 @section maketab-0_out Output Files
 @par pXXX.zzz
   Arithmetic tables for GF(XXX).
 
 @section maketab-0_desc Description
->>>>>>> 4a68ae339f0300470810ab3c90387657ccf21f0c
 
 @attention
    This program is no longer needed. Arithmetic tables are calculated automatically

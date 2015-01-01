@@ -1,11 +1,10 @@
-/* ============================= C MeatAxe ==================================
-   File:        $Id: zvp.c,v 1.1.1.1 2007/09/02 11:06:17 mringe Exp $
-   Comment:     Vector permute (make permutations from matrices)
-   --------------------------------------------------------------------------
-   (C) Copyright 1999 Michael Ringe, Lehrstuhl D fuer Mathematik,
-   RWTH Aachen, Germany  <mringe@math.rwth-aachen.de>
-   This program is free software; see the file COPYING for details.
-   ========================================================================== */
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// C MeatAxe - Vector permute (make permutations from matrices)
+//
+// (C) Copyright 1998-2015 Michael Ringe, Lehrstuhl D fuer Mathematik, RWTH Aachen
+//
+// This program is free software; see the file COPYING for details.
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
 #include <stdlib.h>
@@ -512,11 +511,7 @@ int main(int argc, const char **argv)
 /**
 @page prog_zvp zvp - Vector permute
 
-<<<<<<< HEAD
-@section syntax Command Line
-=======
 @section zvp_syntax Command Line
->>>>>>> 4a68ae339f0300470810ab3c90387657ccf21f0c
 <pre>
 zvp [@em Options] [-g @em NGen] [-l @em Limit] [-s @em Start] [-np] @em Man @em Seed @em Perm [@em Orbit]
 </pre>
@@ -558,11 +553,7 @@ Standard options, see @ref prog_stdopts.
 @par @em Orbit
     Orbit file name. Default is "orbit".
 
-<<<<<<< HEAD
-@section inp Input Files
-=======
 @section zvp_inp Input Files
->>>>>>> 4a68ae339f0300470810ab3c90387657ccf21f0c
 
 @par @em Mat.1, @em Mat.2, ...
     Generators (square matrices).
@@ -570,11 +561,7 @@ Standard options, see @ref prog_stdopts.
 @par @em Seed
     Seed vectors (matrix).
 
-<<<<<<< HEAD
-@section out Output Files
-=======
 @section zvp_out Output Files
->>>>>>> 4a68ae339f0300470810ab3c90387657ccf21f0c
 
 @par @em Perm.1, @em Perm.2, ...
     Permutations.
@@ -582,11 +569,7 @@ Standard options, see @ref prog_stdopts.
 @par @em Orbit
     The orbit (matrix).
 
-<<<<<<< HEAD
-@section desc Description
-=======
 @section zvp_desc Description
->>>>>>> 4a68ae339f0300470810ab3c90387657ccf21f0c
 This program reads a set of matrices and one or more vectors from 
 @em Seed, and finds the orbit of the vector under the matrices. The 
 action of the matrices on the orbit is written out in permutation form.
@@ -602,11 +585,7 @@ available or the orbit is small enough (as specified by "-l").
 With "-p" all vectors in the orbit file are normalized, i.e., their first
 non-zero entry is equal to one.
 
-<<<<<<< HEAD
-@subsection impl Implementation Details
-=======
 @subsection zvp_impl Implementation Details
->>>>>>> 4a68ae339f0300470810ab3c90387657ccf21f0c
 After initializing everything and reading the input files the program
 enters the main loop. The next seed vector is read in, or generated,
 and the orbit is set up initially to contain only this vector.

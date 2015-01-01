@@ -1,11 +1,10 @@
-/* ============================= C MeatAxe ==================================
-   File:        $Id: znu.c,v 1.1.1.1 2007/09/02 11:06:17 mringe Exp $
-   Comment:     This program calculates the null space of a matrix.
-   --------------------------------------------------------------------------
-   (C) Copyright 1999 Michael Ringe, Lehrstuhl D fuer Mathematik,
-   RWTH Aachen, Germany  <mringe@math.rwth-aachen.de>
-   This program is free software; see the file COPYING for details.
-   ========================================================================== */
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// C MeatAxe - This program calculates the null space of a matrix.
+//
+// (C) Copyright 1998-2015 Michael Ringe, Lehrstuhl D fuer Mathematik, RWTH Aachen
+//
+// This program is free software; see the file COPYING for details.
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
 
@@ -128,11 +127,7 @@ int main(int argc, const char **argv)
 /**
 @page prog_znu znu - Null-Space
 
-<<<<<<< HEAD
-@section syntax Command Line
-=======
 @section znu_syntax Command Line
->>>>>>> 4a68ae339f0300470810ab3c90387657ccf21f0c
 <pre>
 znu @em Options [-G] @e Matrix [@em NullSpace]
 </pre>
@@ -146,17 +141,6 @@ znu @em Options [-G] @e Matrix [@em NullSpace]
 @par @em NullSpace
   The null-space.
   
-<<<<<<< HEAD
-@section inp Input Files
-@par @em Matrix
-  The matrix (M×N).
-
-@section out Output Files
-@par @em NullSpace
-  The null-space, a L×M matrix in echelon form.
-
-@section desc Description
-=======
 @section znu_inp Input Files
 @par @em Matrix
   The matrix (M×N).
@@ -166,18 +150,13 @@ znu @em Options [-G] @e Matrix [@em NullSpace]
   The null-space, a L×M matrix in echelon form.
 
 @section znu_desc Description
->>>>>>> 4a68ae339f0300470810ab3c90387657ccf21f0c
 This program reads in a matrix and outputs a basis for its null-space in
 echelon form. If the @em Nullspace argument is omitted the null-space is
 not written out, but its dimension is still printed.
 
 Notice that the input matrix does not need to be square.
 
-<<<<<<< HEAD
-@section impl Implementation Details
-=======
 @section znu_impl Implementation Details
->>>>>>> 4a68ae339f0300470810ab3c90387657ccf21f0c
 After reading the matrix, the program generates the n×n identity matrix in
 memory where n is the number of rows. It then proceeds to perform row operations
 on the matrix until it is in echelon form. The same row operations are

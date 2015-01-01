@@ -1,11 +1,10 @@
-/* ============================= C MeatAxe ==================================
-   File:        $Id: zkd.c,v 1.1.1.1 2007/09/02 11:06:17 mringe Exp $
-   Comment:     Condense a permutation
-   --------------------------------------------------------------------------
-   (C) Copyright 1999 Michael Ringe, Lehrstuhl D fuer Mathematik,
-   RWTH Aachen, Germany  <mringe@math.rwth-aachen.de>
-   This program is free software; see the file COPYING for details.
-   ========================================================================== */
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// C MeatAxe - Condense a permutation
+//
+// (C) Copyright 1998-2015 Michael Ringe, Lehrstuhl D fuer Mathematik, RWTH Aachen
+//
+// This program is free software; see the file COPYING for details.
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
 #include "meataxe.h"
@@ -265,11 +264,7 @@ int main(int argc, const char **argv)
 /**
 @page prog_zkd zkd - Condense a Permutation
 
-<<<<<<< HEAD
-@section syntax Command Line
-=======
 @section zkd_syntax Command Line
->>>>>>> 4a68ae339f0300470810ab3c90387657ccf21f0c
 <pre>
 zkd @em Options @em Field @em Orbits @em Perm @em Kond
 </pre>
@@ -286,31 +281,19 @@ Permutation to be condensed.
 @par @em Kond
 Condensed permutation.
 
-<<<<<<< HEAD
-@section inp Input Files
-=======
 @section zkd_inp Input Files
->>>>>>> 4a68ae339f0300470810ab3c90387657ccf21f0c
 @par @em Orbits
 Orbits and orbit sizes.
 @par @em Perm
 Permutation to be condensed.
 
 
-<<<<<<< HEAD
-@section out Output Files
-=======
 @section zkd_out Output Files
->>>>>>> 4a68ae339f0300470810ab3c90387657ccf21f0c
 @par @em Kond
 Condensed permutation.
 
 
-<<<<<<< HEAD
-@section desc Description
-=======
 @section zkd_desc Description
->>>>>>> 4a68ae339f0300470810ab3c90387657ccf21f0c
 This program reads an orbit file (@em Orbits) and a permutation
 from @em Perm.
 It outputs the condensed form, i.e., a matrix over GF(q) to @em Result.
@@ -333,11 +316,7 @@ In this case, @em Result is an integer matrix with the same dimensions as in the
 GF(q) case.
 
 
-<<<<<<< HEAD
-@section impl Implementation Details
-=======
 @section zkd_impl Implementation Details
->>>>>>> 4a68ae339f0300470810ab3c90387657ccf21f0c
 Let r be the number of orbits,
 @f$O_1,\ldots,O_r@f$ the orbits and, for @f$i=1,\ldots,r@f$, @f$l_i:=|O_i|@f$
 the size of the i-th orbit.

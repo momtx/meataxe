@@ -1,11 +1,10 @@
-/* ============================= C MeatAxe ==================================
-   File:        $Id: zsi.c,v 1.1.1.1 2007/09/02 11:06:17 mringe Exp $
-   Comment:     Sum and intersection of two subspaces.
-   --------------------------------------------------------------------------
-   (C) Copyright 1999 Michael Ringe, Lehrstuhl D fuer Mathematik,
-   RWTH Aachen, Germany  <mringe@math.rwth-aachen.de>
-   This program is free software; see the file COPYING for details.
-   ========================================================================== */
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// C MeatAxe - Sum and intersection of two subspaces.
+//
+// (C) Copyright 1998-2015 Michael Ringe, Lehrstuhl D fuer Mathematik, RWTH Aachen
+//
+// This program is free software; see the file COPYING for details.
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
 #include <stdlib.h>
@@ -186,11 +185,7 @@ int main(int argc, const char **argv)
 /**
 @page prog_zsi zsi - Sum and Intersection
 
-<<<<<<< HEAD
-@section syntax Command Line
-=======
 @section zsi_syntax Command Line
->>>>>>> 4a68ae339f0300470810ab3c90387657ccf21f0c
 <pre>
 zsi [@em Options] @em Space1 @em Space2 @em Sum @em Int
 </pre>
@@ -206,31 +201,19 @@ zsi [@em Options] @em Space1 @em Space2 @em Sum @em Int
 @par @em Int
   Intersection.
 
-<<<<<<< HEAD
-@section inp Input Files
-=======
 @section zsi_inp Input Files
->>>>>>> 4a68ae339f0300470810ab3c90387657ccf21f0c
 @par @em Space1
   First space.
 @par @em Space2
   Second space.
 
-<<<<<<< HEAD
-@section out Output Files
-=======
 @section zsi_out Output Files
->>>>>>> 4a68ae339f0300470810ab3c90387657ccf21f0c
 @par @em Sum
   Sum.
 @par @em Int
   Intersection.
 
-<<<<<<< HEAD
-@section desc Description
-=======
 @section zsi_desc Description
->>>>>>> 4a68ae339f0300470810ab3c90387657ccf21f0c
 
 This program reads in two spaces from @em Space1 and @em Space2
 and writes out their sum and intersection, in semi-echelon form, to

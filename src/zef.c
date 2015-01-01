@@ -1,11 +1,10 @@
-/* ============================= C MeatAxe ==================================
-   File:        $Id: zef.c,v 1.1.1.1 2007/09/02 11:06:17 mringe Exp $
-   Comment:     Reduce to (normalized) echelon form
-   --------------------------------------------------------------------------
-   (C) Copyright 1999 Michael Ringe, Lehrstuhl D fuer Mathematik,
-   RWTH Aachen, Germany  <mringe@math.rwth-aachen.de>
-   This program is free software; see the file COPYING for details.
-   ========================================================================== */
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// C MeatAxe - Reduce to (normalized) echelon form
+//
+// (C) Copyright 1998-2015 Michael Ringe, Lehrstuhl D fuer Mathematik, RWTH Aachen
+//
+// This program is free software; see the file COPYING for details.
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
 
@@ -134,11 +133,7 @@ int main(int argc, const char **argv)
 /**
 @page prog_zef zef - Echelon Form
 
-<<<<<<< HEAD
-@section syntax Command Line
-=======
 @section zef_syntax Command Line
->>>>>>> 4a68ae339f0300470810ab3c90387657ccf21f0c
 <pre>
 zef @em Options [-G] @em Inp @em Out
 </pre>
@@ -152,17 +147,6 @@ zef @em Options [-G] @em Inp @em Out
 @par @em Out
   Output matrix.
 
-<<<<<<< HEAD
-@section inp Input Files
-@par @em Inp
-  Input matrix.
-
-@section out Output Files
-@par @em Out
-  Output matrix.
-
-@section desc Description
-=======
 @section zef_inp Input Files
 @par @em Inp
   Input matrix.
@@ -172,7 +156,6 @@ zef @em Options [-G] @em Inp @em Out
   Output matrix.
 
 @section zef_desc Description
->>>>>>> 4a68ae339f0300470810ab3c90387657ccf21f0c
 This program reads in a matrix, performs a Gaussian elimination to put
 the matrix into semi-echelon form, and writes out the result.
 

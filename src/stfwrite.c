@@ -1,11 +1,10 @@
-/* ============================= C MeatAxe ==================================
-   File:        $Id: stfwrite.c,v 1.1.1.1 2007/09/02 11:06:17 mringe Exp $
-   Comment:     Structured Text File (STF) output functions.
-   --------------------------------------------------------------------------
-   (C) Copyright 1997 Michael Ringe, Lehrstuhl D fuer Mathematik,
-   RWTH Aachen, Germany  <mringe@math.rwth-aachen.de>
-   This program is free software; see the file COPYING for details.
-   ========================================================================== */
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// C MeatAxe - Structured Text File (STF) output functions.
+//
+// (C) Copyright 1998-2015 Michael Ringe, Lehrstuhl D fuer Mathematik, RWTH Aachen
+//
+// This program is free software; see the file COPYING for details.
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
 #include "meataxe.h"
@@ -23,7 +22,8 @@ MTX_DEFINE_FILE_INFO
 /// @{
 
 
-/// Write a Raw Value.
+////////////////////////////////////////////////////////////////////////////////////////////////////
+/// Write a raw value.
 
 int StfPut(StfData *f, const char *text)
 {
@@ -48,7 +48,8 @@ int StfPut(StfData *f, const char *text)
 }
 
 
-/// Write an Integer.
+////////////////////////////////////////////////////////////////////////////////////////////////////
+/// Write an integer.
 
 int StfPutInt(StfData *f, int value)
 {
@@ -58,7 +59,8 @@ int StfPutInt(StfData *f, int value)
 }
 
 
-/// Write a String.
+////////////////////////////////////////////////////////////////////////////////////////////////////
+/// Write a string.
 
 int StfPutString(StfData *f, const char *text)
 {
@@ -91,8 +93,8 @@ int StfPutString(StfData *f, const char *text)
     return result;
 }
 
-
-/// Write a Vector.
+////////////////////////////////////////////////////////////////////////////////////////////////////
+/// Write a vector.
 
 int StfPutVector(StfData *f, int size, const int *value)
 {
@@ -116,7 +118,8 @@ int StfPutVector(StfData *f, int size, const int *value)
 
 
 
-/// Start a New Entry.
+////////////////////////////////////////////////////////////////////////////////////////////////////
+/// Start a new entry.
 /// This function begins a new entry. Be sure to terminate any incomplete 
 /// entries with StfEndEntry() before you start a new entry. If you don't, 
 /// the incomplete entry may be lost, and the data file may become corrupted.
@@ -157,7 +160,8 @@ int StfBeginEntry(StfData *f, const char *name)
 
 
 
-/// End Entry.
+////////////////////////////////////////////////////////////////////////////////////////////////////
+/// End entry.
 /// This function terminates the current entry and flushes the STF's line
 /// buffer. See StfBeginEntry() for an example.
 /// @param f Pointer to a structured text file (STF) object.
@@ -171,7 +175,8 @@ int StfEndEntry(StfData *f)
 }
 
 
-/// Write a String.
+////////////////////////////////////////////////////////////////////////////////////////////////////
+/// Write a string.
 /// This function writes an arbitrary text to a structured text file. 
 /// For example, the statement
 /// @code
@@ -202,7 +207,8 @@ int StfWriteValue(StfData *f, const char *name, const char *value)
 
 
 
-/// Write a String.
+////////////////////////////////////////////////////////////////////////////////////////////////////
+/// Write a string.
 /// @param f Pointer to a structured text file (STF) object.
 /// @param name Name of the entry.
 /// @param value String to write.
@@ -238,7 +244,8 @@ int StfWriteString(StfData *f, const char *name, const char *value)
 }
 
 
-/// Write an Integer.
+////////////////////////////////////////////////////////////////////////////////////////////////////
+/// Write an enteger.
 /// This function writes an integer to a structured text file. For example, 
 /// the statement
 /// @code
@@ -272,7 +279,8 @@ int StfWriteInt(StfData *f, const char *name, int value)
 
 
 
-/// Write a Vector.
+////////////////////////////////////////////////////////////////////////////////////////////////////
+/// Write a vector.
 /// This function writes a sequence of integers to a structured text file.
 /// For example, the statement
 /// @code

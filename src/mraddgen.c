@@ -1,11 +1,10 @@
-/* ============================= C MeatAxe ==================================
-   File:        $Id: mraddgen.c,v 1.1.1.1 2007/09/02 11:06:17 mringe Exp $
-   Comment:     Add a generator to a matrix representation.
-   --------------------------------------------------------------------------
-   (C) Copyright 1998 Michael Ringe, Lehrstuhl D fuer Mathematik,
-   RWTH Aachen, Germany  <mringe@math.rwth-aachen.de>
-   This program is free software; see the file COPYING for details.
-   ========================================================================== */
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// C MeatAxe - Add a generator to a matrix representation
+//
+// (C) Copyright 1998-2015 Michael Ringe, Lehrstuhl D fuer Mathematik, RWTH Aachen
+//
+// This program is free software; see the file COPYING for details.
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
 #include "meataxe.h"
@@ -15,6 +14,7 @@ MTX_DEFINE_FILE_INFO
 /// @addtogroup mrep
 /// @{
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
 /// Add a Matrix to a Representation.
 /// This function adds a generator, i.e., a matrix, to a matrix representation. 
 /// The matrix must be square. If there are already generators in the 

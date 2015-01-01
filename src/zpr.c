@@ -1,11 +1,10 @@
-/* ============================= C MeatAxe ==================================
-   File:        $Id: zpr.c,v 1.1.1.1 2007/09/02 11:06:17 mringe Exp $
-   Comment:     Print a matrix or permutaion.
-   --------------------------------------------------------------------------
-   (C) Copyright 1997 Michael Ringe, Lehrstuhl D fuer Mathematik,
-   RWTH Aachen, Germany  <mringe@math.rwth-aachen.de>
-   This program is free software; see the file COPYING for details.
-   ========================================================================== */
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// C MeatAxe - Print a matrix or permutaion.
+//
+// (C) Copyright 1998-2015 Michael Ringe, Lehrstuhl D fuer Mathematik, RWTH Aachen
+//
+// This program is free software; see the file COPYING for details.
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 #include "meataxe.h"
 #include <ctype.h>
@@ -603,11 +602,7 @@ int main(int argc, const char **argv)
 @page prog_zpr zpr - Print Matrices and Permutations
 @see @ref prog_zcv
 
-<<<<<<< HEAD
-@section syntax Command Line
-=======
 @section zpr_syntax Command Line
->>>>>>> 4a68ae339f0300470810ab3c90387657ccf21f0c
 <pre>
 zpr [@em Options] [-Gs] @em DataFile [@em TextFile]
 </pre>
@@ -623,17 +618,6 @@ zpr [@em Options] [-Gs] @em DataFile [@em TextFile]
 @par @em TextFile
   Output file (text)
 
-<<<<<<< HEAD
-@section inp Input Files
-@par @em DataFile
-  Input file (binary)
-
-@section out Output Files
-@par @em TextFile
-  Output file (text)
-
-@section desc Description
-=======
 @section zpr_inp Input Files
 @par @em DataFile
   Input file (binary)
@@ -643,7 +627,6 @@ zpr [@em Options] [-Gs] @em DataFile [@em TextFile]
   Output file (text)
 
 @section zpr_desc Description
->>>>>>> 4a68ae339f0300470810ab3c90387657ccf21f0c
 This program prints the contents of a MeatAxe data file in readable
 format. The text produced by @b zpr can be converted into binary format by
 the @ref prog_zcv "zcv" program.

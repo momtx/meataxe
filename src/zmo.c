@@ -1,11 +1,10 @@
-/* ============================= C MeatAxe ==================================
-   File:        $Id: zmo.c,v 1.1.1.1 2007/09/02 11:06:17 mringe Exp $
-   Comment:     Make orbits under permutations
-   --------------------------------------------------------------------------
-   (C) Copyright 1999 Michael Ringe, Lehrstuhl D fuer Mathematik,
-   RWTH Aachen, Germany  <mringe@math.rwth-aachen.de>
-   This program is free software; see the file COPYING for details.
-   ========================================================================== */
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// C MeatAxe - Make orbits under permutations
+//
+// (C) Copyright 1998-2015 Michael Ringe, Lehrstuhl D fuer Mathematik, RWTH Aachen
+//
+// This program is free software; see the file COPYING for details.
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
 #include "meataxe.h"
@@ -309,11 +308,7 @@ int main(int argc, const char **argv)
 /**
 @page prog_zmo zmo - Make Orbits
 
-<<<<<<< HEAD
-@section syntax Command Line
-=======
 @section zmo_syntax Command Line
->>>>>>> 4a68ae339f0300470810ab3c90387657ccf21f0c
 <pre>
 zmo @em Options [-g @em NPerms] [-s @em Seed] @em Perm @em Orbits
 </pre>
@@ -333,28 +328,16 @@ Permutation base name.
 @par @em Orbits
 Output file name.
 
-<<<<<<< HEAD
-@section inp Input Files
-@par @em Perm.1, @em Perm.2, ...
-Permutations.
-
-@section out Output Files
-=======
 @section zmo_inp Input Files
 @par @em Perm.1, @em Perm.2, ...
 Permutations.
 
 @section zmo_out Output Files
->>>>>>> 4a68ae339f0300470810ab3c90387657ccf21f0c
 @par @em Orbits
 Orbit number and sizes.
 
 
-<<<<<<< HEAD
-@section desc Description
-=======
 @section zmo_desc Description
->>>>>>> 4a68ae339f0300470810ab3c90387657ccf21f0c
 
 This program calculates the orbits under a set of permutations.
 By default, the program works with two permutations which are read
@@ -380,11 +363,7 @@ At the end, the program prints a message containing the orbit sizes.
 Note that at most 20 different orbit sizes are shown here.
 
 
-<<<<<<< HEAD
-@section impl Implementation Details
-=======
 @section zmo_impl Implementation Details
->>>>>>> 4a68ae339f0300470810ab3c90387657ccf21f0c
 The algorithm uses a fixed size stack to store points. At the beginning,
 a seed point is searched which has not yes assigned an orbit number.
 This point is assigned the next orbit number (beginning with 0) and put on the stack.

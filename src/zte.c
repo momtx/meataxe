@@ -1,11 +1,10 @@
-/* ============================= C MeatAxe ==================================
-   File:        $Id: zte.c,v 1.1.1.1 2007/09/02 11:06:17 mringe Exp $
-   Comment:     Tensor product of two matrices or permutations.
-   --------------------------------------------------------------------------
-   (C) Copyright 1999 Michael Ringe, Lehrstuhl D fuer Mathematik,
-   RWTH Aachen, Germany  <mringe@math.rwth-aachen.de>
-   This program is free software; see the file COPYING for details.
-   ========================================================================== */
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// C MeatAxe - Tensor product of two matrices or permutations.
+//
+// (C) Copyright 1998-2015 Michael Ringe, Lehrstuhl D fuer Mathematik, RWTH Aachen
+//
+// This program is free software; see the file COPYING for details.
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
 #include "meataxe.h"
@@ -275,11 +274,7 @@ int main(int argc, const char **argv)
 /**
 @page prog_zte zte - Tensor Product
 
-<<<<<<< HEAD
-@section syntax Command Line
-=======
 @section zte_syntax Command Line
->>>>>>> 4a68ae339f0300470810ab3c90387657ccf21f0c
 <pre>
 zte [@em Options] @em A @em B @em Result
 </pre>
@@ -293,29 +288,17 @@ zte [@em Options] @em A @em B @em Result
 @par @em Result
   Result matrix
 
-<<<<<<< HEAD
-@section inp Input Files
-=======
 @section zte_inp Input Files
->>>>>>> 4a68ae339f0300470810ab3c90387657ccf21f0c
 @par @em A
   Left factor (patrix or permutation).
 @par @em B
   Right factor (patrix or permutation).
 
-<<<<<<< HEAD
-@section out Output Files
-@par @em Result
-  Result matrix
-
-@section desc Description
-=======
 @section zte_out Output Files
 @par @em Result
   Result matrix
 
 @section zte_desc Description
->>>>>>> 4a68ae339f0300470810ab3c90387657ccf21f0c
 This program reads in two matrices or permutations and writes out their tensor
 (Kronecker) product.
 If @em A is an m×n matrix, and @em B is an m'×n' matrix, the

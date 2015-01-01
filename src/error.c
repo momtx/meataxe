@@ -1,11 +1,10 @@
-/* ============================= C MeatAxe ==================================
-   File:        $Id: error.c,v 1.1.1.1 2007/09/02 11:06:17 mringe Exp $
-   Comment:     Error handling
-   --------------------------------------------------------------------------
-   (C) Copyright 1999 Michael Ringe, Lehrstuhl D fuer Mathematik,
-   RWTH Aachen, Germany  <mringe@math.rwth-aachen.de>
-   This program is free software; see the file COPYING for details.
-   ========================================================================== */
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// C MeatAxe - Error handling
+//
+// (C) Copyright 1998-2015 Michael Ringe, Lehrstuhl D fuer Mathematik, RWTH Aachen
+//
+// This program is free software; see the file COPYING for details.
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 #include "meataxe.h"
 #include <stdio.h>
@@ -143,13 +142,7 @@ int MtxError(MtxFileInfo_t *fi, int line, const char *text, ...)
     return 0;
 }
 
-
-
-
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-
-
-
 /// @class MtxFileInfo_t
 /// File information structure.
 /// This data structure contains information about a source file. It is information
@@ -159,11 +152,13 @@ int MtxError(MtxFileInfo_t *fi, int line, const char *text, ...)
 /// |MTX_DEFINE_FILE_INFO| which can be used to define this structure.
 
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
 /// @class MtxErrorRecord_t
 /// Error data structure
 /// This data structure contains detailed information on an error that occured
 /// inside the {\MeatAxe} library.
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
 /// @class MtxErrorHandler_t
 /// This is the type of an application error handler.
 

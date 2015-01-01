@@ -1,11 +1,10 @@
-/* ============================= C MeatAxe ==================================
-   File:        $Id: msclean.c,v 1.1.1.1 2007/09/02 11:06:17 mringe Exp $
-   Comment:     Matrix set cleaning functions.
-   --------------------------------------------------------------------------
-   (C) Copyright 1999 Michael Ringe, Lehrstuhl D fuer Mathematik,
-   RWTH Aachen, Germany  <mringe@math.rwth-aachen.de>
-   This program is free software; see the file COPYING for details.
-   ========================================================================== */
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// C MeatAxe - Matrix set cleaning functions
+//
+// (C) Copyright 1998-2015 Michael Ringe, Lehrstuhl D fuer Mathematik, RWTH Aachen
+//
+// This program is free software; see the file COPYING for details.
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 #include "meataxe.h"
 
@@ -19,6 +18,8 @@ MTX_DEFINE_FILE_INFO
 /// @addtogroup matset
 /// @{
 
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 int MatFindPivot(const Matrix_t *mat, int *row, int *col, FEL *f)
 {
@@ -43,7 +44,8 @@ int MatFindPivot(const Matrix_t *mat, int *row, int *col, FEL *f)
 
 
 
-/// Clean a Matrix with a Matrix Set.
+////////////////////////////////////////////////////////////////////////////////////////////////////
+/// Clean a matrix with a matrix set.
 /// This function cleans a matrix with a matrix set by adding suitable
 /// multiples of the members of the set to the matrix. When the function
 /// returns, all pivot positions of @a mat, as defined by @a set, are zero.
@@ -85,7 +87,8 @@ int MsClean(const MatrixSet_t *set, Matrix_t *mat)
 
 
 
-/// Extend a Matrix Set.
+////////////////////////////////////////////////////////////////////////////////////////////////////
+/// Extend a matrix set.
 /// This function cleans a matrix with a matrix by calling MsClean().
 /// If the resulting matrix is nonzero, it is added to the matrix set,
 /// and the function returns 0. Otherwise the return value is 1,
@@ -101,7 +104,6 @@ int MsClean(const MatrixSet_t *set, Matrix_t *mat)
 /// the span of @a set, -1 on error.
 
 int MsCleanAndAppend(MatrixSet_t *set, Matrix_t *mat)
-
 {
     int piv_row, piv_col;
     FEL piv_mark;

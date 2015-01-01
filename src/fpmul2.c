@@ -1,11 +1,10 @@
-/* ============================= C MeatAxe ==================================
-   File:        $Id: fpmul2.c,v 1.1.1.1 2007/09/02 11:06:17 mringe Exp $
-   Comment:     Print a factored polynomial.
-   --------------------------------------------------------------------------
-   (C) Copyright 1998 Michael Ringe, Lehrstuhl D fuer Mathematik,
-   RWTH Aachen, Germany  <mringe@math.rwth-aachen.de>
-   This program is free software; see the file COPYING for details.
-   ========================================================================== */
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// C MeatAxe - Print a factored polynomial
+//
+// (C) Copyright 1998-2015 Michael Ringe, Lehrstuhl D fuer Mathematik, RWTH Aachen
+//
+// This program is free software; see the file COPYING for details.
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 #include "meataxe.h"
 
@@ -20,7 +19,8 @@ MTX_DEFINE_FILE_INFO
 /// @addtogroup poly
 /// @{
 
-/// Multiply Factored Polynomials.
+////////////////////////////////////////////////////////////////////////////////////////////////////
+/// Multiply factored polynomials.
 /// Multiplies @em dest by @em src. The previous content of @em dest is lost.
 /// @see FpMulP()
 /// @param dest Factored polynomial to modify.

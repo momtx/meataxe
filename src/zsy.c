@@ -1,11 +1,10 @@
-/* ============================= C MeatAxe ==================================
-   File:        $Id: zsy.c,v 1.1.1.1 2007/09/02 11:06:17 mringe Exp $
-   Comment:     Symmetric tensor product.
-   --------------------------------------------------------------------------
-   (C) Copyright 1997 Michael Ringe, Lehrstuhl D fuer Mathematik,
-   RWTH Aachen, Germany  <mringe@math.rwth-aachen.de>
-   This program is free software; see the file COPYING for details.
-   ========================================================================== */
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// C MeatAxe - Symmetric tensor product.
+//
+// (C) Copyright 1998-2015 Michael Ringe, Lehrstuhl D fuer Mathematik, RWTH Aachen
+//
+// This program is free software; see the file COPYING for details.
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
 #include "meataxe.h"
@@ -600,11 +599,7 @@ int main(int argc, const char **argv)
 /**
 @page prog_zsy zsy - Symmetrized Tensor Product
 
-<<<<<<< HEAD
-@section syntax Command Line
-=======
 @section zsy_syntax Command Line
->>>>>>> 4a68ae339f0300470810ab3c90387657ccf21f0c
 <pre>
 zsy [@em Options] [-G] @em Mode @em Inp @em Out
 </pre>
@@ -620,17 +615,6 @@ zsy [@em Options] [-G] @em Mode @em Inp @em Out
 @par @em Out
   Result matrix.
 
-<<<<<<< HEAD
-@section inp Input Files
-@par @em Mat
-  Input matrix or permutation.
-
-@section out Output Files
-@par @em Result
-  Result matrix.
-
-@section desc Description
-=======
 @section zsy_inp Input Files
 @par @em Mat
   Input matrix or permutation.
@@ -640,7 +624,6 @@ zsy [@em Options] [-G] @em Mode @em Inp @em Out
   Result matrix.
 
 @section zsy_desc Description
->>>>>>> 4a68ae339f0300470810ab3c90387657ccf21f0c
 This program reads a matrix or permutation, calculates its symmetrized tensor
 product according to @em Mode, and writes out the result.
 
@@ -662,11 +645,7 @@ existing ones, it will usually be used with square matrices. However,
 the input is not required to be square.
 
 
-<<<<<<< HEAD
-@subsection perms Permutations
-=======
 @subsection zsy_perms Permutations
->>>>>>> 4a68ae339f0300470810ab3c90387657ccf21f0c
 Currently, only modes s2, e2 and e3 are available for permutations.
 The result gives the operation of the input permutation on unordered
 pairs (e2, s2) or triples (e3) of points.
@@ -754,11 +733,7 @@ Here are some examples:
 
 
 
-<<<<<<< HEAD
-@section impl Implementation Details
-=======
 @section zsy_impl Implementation Details
->>>>>>> 4a68ae339f0300470810ab3c90387657ccf21f0c
 If the input file contains more than one permutation, only the
 first permutation is read in and processed.
 

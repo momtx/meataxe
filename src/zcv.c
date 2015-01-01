@@ -1,12 +1,10 @@
-/* ============================= C MeatAxe ==================================
-   File:        $Id: zcv.c,v 1.1.1.1 2007/09/02 11:06:17 mringe Exp $
-   Comment:     Convert a matrix or permutation from ASCII (readable)
-                format to binary format.
-   --------------------------------------------------------------------------
-   (C) Copyright 1999 Michael Ringe, Lehrstuhl D fuer Mathematik,
-   RWTH Aachen, Germany  <mringe@math.rwth-aachen.de>
-   This program is free software; see the file COPYING for details.
-   ========================================================================== */
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// C MeatAxe - Convert a matrix or permutation from ASCII (readable)
+//
+// (C) Copyright 1998-2015 Michael Ringe, Lehrstuhl D fuer Mathematik, RWTH Aachen
+//
+// This program is free software; see the file COPYING for details.
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
 #define MAXLINE 4000	/* Max. input line size */
@@ -647,11 +645,7 @@ int main(int argc, const char **argv)
 @page prog_zcv zcv - Convert Text to Binary Format
 @see @ref prog_zpr
 
-<<<<<<< HEAD
-@section syntax Command Line
-=======
 @section zcv_syntax Command Line
->>>>>>> 4a68ae339f0300470810ab3c90387657ccf21f0c
 <pre>
 zcv @em Options @em TextFile @em DataFile
 </pre>
@@ -665,29 +659,17 @@ Input file (text)
 @par @em DataFile
 Output file (binary)
 
-<<<<<<< HEAD
-@section inp Input Files
-=======
 @section zcv_inp Input Files
->>>>>>> 4a68ae339f0300470810ab3c90387657ccf21f0c
 
 @par @em TextFile
 Input file (text)
 
-<<<<<<< HEAD
-@section out Output Files
-=======
 @section zcv_out Output Files
->>>>>>> 4a68ae339f0300470810ab3c90387657ccf21f0c
 
 @par @em DataFile
 Output file (binary)
 
-<<<<<<< HEAD
-@section desc Description
-=======
 @section zcv_desc Description
->>>>>>> 4a68ae339f0300470810ab3c90387657ccf21f0c
 This program converts a text file into binary format.
 If the input file name is "-", input is read from stdin. 
 

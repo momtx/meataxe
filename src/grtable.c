@@ -1,11 +1,10 @@
-/* ============================= C MeatAxe ==================================
-   File:        $Id: grtable.c,v 1.1.1.1 2007/09/02 11:06:17 mringe Exp $
-   Comment:     Calculation of extraction tables for greasing.
-   --------------------------------------------------------------------------
-   Written by Max Neunhoeffer.
-   
-   This program is free software; see the file COPYING for details.
-   ========================================================================== */
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// C MeatAxe - Calculation of extraction tables for greasing
+//
+// (C) Copyright 1998-2015 Michael Ringe, Lehrstuhl D fuer Mathematik, RWTH Aachen
+//
+// This program is free software; see the file COPYING for details.
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 #include "meataxe.h"
 
@@ -21,9 +20,9 @@ MTX_DEFINE_FILE_INFO
 
 
 
-/* Builds the tables used for the extraction of grease bits. 
-   It can build tables for the following field/grease combinations:
-   field: 2-256, grrows: 1-16 */
+////////////////////////////////////////////////////////////////////////////////////////////////////
+/// Builds the tables used for the extraction of grease bits. 
+//  It can build tables for the following field/grease combinations: field: 2-256, grrows: 1-16
 
 static GrExtractionTable_t *BuildExtractionTable(int fl,int grrows)
 {
@@ -153,6 +152,7 @@ static GrExtractionTable_t *BuildExtractionTable(int fl,int grrows)
 }
 
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
 /// Calculate extraction table for grease.
 /// This function calculates the extraction table for greased matrix
 /// operations for a particular combination of field order and grease level.

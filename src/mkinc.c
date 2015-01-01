@@ -1,11 +1,10 @@
-/* ============================= C MeatAxe ==================================
-   File:        $Id: mkinc.c,v 1.1.1.1 2007/09/02 11:06:17 mringe Exp $
-   Comment:     Calculate the incidences between mountains.
-   --------------------------------------------------------------------------
-   (C) Copyright 1998 Michael Ringe, Lehrstuhl D fuer Mathematik,
-   RWTH Aachen, Germany  <mringe@math.rwth-aachen.de>
-   This program is free software; see the file COPYING for details.
-   ========================================================================== */
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// C MeatAxe - Calculate the incidences between mountains
+//
+// (C) Copyright 1998-2015 Michael Ringe, Lehrstuhl D fuer Mathematik, RWTH Aachen
+//
+// This program is free software; see the file COPYING for details.
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 #include "meataxe.h"
 #include <string.h>
@@ -504,11 +503,7 @@ int main(int argc, const char **argv)
 /**
 @page prog_mkinc mkinc - Find Mountains
 
-<<<<<<< HEAD
-@section syntax Command Line
-=======
 @section mkinc_syntax Command Line
->>>>>>> 4a68ae339f0300470810ab3c90387657ccf21f0c
 <pre>
 mkinc [@em Options] [-G] @em Name
 </pre>
@@ -520,11 +515,7 @@ mkinc [@em Options] [-G] @em Name
 @par @em Name
   Name of the representation.
 
-<<<<<<< HEAD
-@section inp Input Files
-=======
 @section mkinc_inp Input Files
->>>>>>> 4a68ae339f0300470810ab3c90387657ccf21f0c
 @par @em Name.cfinfo
   Constituent info file.
 @par @em NameCf.1, @em NameCf.2, ...
@@ -538,11 +529,7 @@ mkinc [@em Options] [-G] @em Name
 @par @em NameCf.k
   Uncondense matrices.
 
-<<<<<<< HEAD
-@section out Output Files
-=======
 @section mkinc_out Output Files
->>>>>>> 4a68ae339f0300470810ab3c90387657ccf21f0c
 @par @em Name.v
   Mountains.
 @par @em Name.mnt
@@ -550,11 +537,7 @@ mkinc [@em Options] [-G] @em Name
 @par @em Name.inc
   Incidence matrix.
 
-<<<<<<< HEAD
-@section desc Description
-=======
 @section mkinc_desc Description
->>>>>>> 4a68ae339f0300470810ab3c90387657ccf21f0c
 This program runs in two steps. During the first step, all cyclic
 cyclic submodules found by @ref prog_mkcycl "mkcycl" are uncondensed, giving the
 local submodules, the "mountains", of the original module. Then, each
@@ -569,11 +552,7 @@ local submodules. The result is a matrix which contains a 1 for
 each incidence. This matrix is written to the file @em Name.inc.
 
 
-<<<<<<< HEAD
-@section impl Implementation Details
-=======
 @section mkinc_impl Implementation Details
->>>>>>> 4a68ae339f0300470810ab3c90387657ccf21f0c
 The whole calculation of step 2 is done in the condensed modules. 
 This is possible because incidences between local submodules do not 
 change if they are condensed. Usually this saves a lot of both memory 

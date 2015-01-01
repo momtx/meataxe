@@ -1,12 +1,10 @@
-/* ============================= C MeatAxe ==================================
-   File:        $Id: mkcycl.c,v 1.1.1.1 2007/09/02 11:06:17 mringe Exp $
-   Comment:     This program calculates a representative for each cyclic
-		submodule of the condensed modules.h
-   --------------------------------------------------------------------------
-   (C) Copyright 1998 Michael Ringe, Lehrstuhl D fuer Mathematik,
-   RWTH Aachen, Germany  <mringe@math.rwth-aachen.de>
-   This program is free software; see the file COPYING for details.
-   ========================================================================== */
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// C MeatAxe - Calculate a representative for each cyclic submodule of the condensed modules.
+//
+// (C) Copyright 1998-2015 Michael Ringe, Lehrstuhl D fuer Mathematik, RWTH Aachen
+//
+// This program is free software; see the file COPYING for details.
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
 #include "meataxe.h"
@@ -260,11 +258,7 @@ int main(int argc, char *argv[])
 /**
 @page prog_mkcycl mkcycl - Find Cyclic Subspaces
 
-<<<<<<< HEAD
-@section syntax Command Line
-=======
 @section mkcycl_syntax Command Line
->>>>>>> 4a68ae339f0300470810ab3c90387657ccf21f0c
 <pre>
 mkcycl @em Options [-G] @em Name
 </pre>
@@ -276,11 +270,7 @@ mkcycl @em Options [-G] @em Name
 @par @em Name
   Name of the representation.
 
-<<<<<<< HEAD
-@section inp Input Files
-=======
 @section mkcycl_inp Input Files
->>>>>>> 4a68ae339f0300470810ab3c90387657ccf21f0c
 @par @em Name.cfinfo
   Constituent info file.
 @par @em NameCf.1k, @em NameCf.2k, ...
@@ -288,19 +278,11 @@ mkcycl @em Options [-G] @em Name
 @par @em NameCf.np
   Condensed peak words
 
-<<<<<<< HEAD
-@section out Output Files
-@par @em NameCf.v
-  Cyclic submodules.
-
-@section desc Description
-=======
 @section mkcycl_out Output Files
 @par @em NameCf.v
   Cyclic submodules.
 
 @section mkcycl_desc Description
->>>>>>> 4a68ae339f0300470810ab3c90387657ccf21f0c
 This program is invoked after @ref prog_pwkond "pwkond" has calculated the
 condensation with respect to the peak words. @b mkcycl calculates, for each
 condensed module, its 1-dimensional subspaces. The output is a list of vectors
@@ -308,11 +290,7 @@ condensed module, its 1-dimensional subspaces. The output is a list of vectors
 submodules. For example, if "X10a" is the constituent's name, the list of
 vectors is written to "X10a.v".
 
-<<<<<<< HEAD
-@section impl Implementation Details
-=======
 @section mkcycl_impl Implementation Details
->>>>>>> 4a68ae339f0300470810ab3c90387657ccf21f0c
 @b mkcycl uses a very simple approach: it spins up every vector in the 
 condensed module (avoiding scalar multiples, though), and maintains a
 list of all cyclic submodules found. As the dimension of the condensed

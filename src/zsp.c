@@ -1,11 +1,10 @@
-/* ============================= C MeatAxe ==================================
-   File:        $Id: zsp.c,v 1.1.1.1 2007/09/02 11:06:17 mringe Exp $
-   Comment:     Spinup, split, and standard basis
-   --------------------------------------------------------------------------
-   (C) Copyright 1999 Michael Ringe, Lehrstuhl D fuer Mathematik,
-   RWTH Aachen, Germany  <mringe@math.rwth-aachen.de>
-   This program is free software; see the file COPYING for details.
-   ========================================================================== */
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// C MeatAxe - Spinup, split, and standard basis
+//
+// (C) Copyright 1998-2015 Michael Ringe, Lehrstuhl D fuer Mathematik, RWTH Aachen
+//
+// This program is free software; see the file COPYING for details.
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 #include "meataxe.h"
 
@@ -435,11 +434,7 @@ int main(int argc, const char **argv)
 /**
 @page prog_zsp zsp - Spin Up
 
-<<<<<<< HEAD
-@section syntax Command Line
-=======
 @section zsp_syntax Command Line
->>>>>>> 4a68ae339f0300470810ab3c90387657ccf21f0c
 <pre>
 zsp [@em Options] [-1emc] [-b @em Bas] [-s @em Sub] [-q @em Quot] [-o @em Scr] [-n @em Vector]
     [-d @em MaxDim] [-x @em MaxTries] @em Gen1 @em Gen2 @em Seed
@@ -491,11 +486,7 @@ Standard options, see @ref prog_stdopts
   Seed space file name.
 
 
-<<<<<<< HEAD
-@section inp Input Files
-=======
 @section zsp_inp Input Files
->>>>>>> 4a68ae339f0300470810ab3c90387657ccf21f0c
 @par @em Gen1
   First generator, if "-g" is not used.
 @par @em Gen2
@@ -505,11 +496,7 @@ Standard options, see @ref prog_stdopts
 @par @em Seed
   Seed vectors.
 
-<<<<<<< HEAD
-@section out Output Files
-=======
 @section zsp_out Output Files
->>>>>>> 4a68ae339f0300470810ab3c90387657ccf21f0c
 @par @em Sub.1, @em Sub.2, ...
   Action on the subspace (with -s).
 @par @em Quot.1, @em Quot.2, ...
@@ -519,11 +506,7 @@ Standard options, see @ref prog_stdopts
 @par @em Script
   Spin-up script (with -o).
 
-<<<<<<< HEAD
-@section desc Description
-=======
 @section zsp_desc Description
->>>>>>> 4a68ae339f0300470810ab3c90387657ccf21f0c
 This program takes as input a set of matrices or permutations (the "generators"), 
 and a list of seed vectors. It uses the spin-up algorithm to find a subspace which
 is invariant under the generators. If the generators are matrices, @b zsp can optionally split the representation, i.e., calculate the
@@ -606,11 +589,7 @@ the search continues with the next seed vector. "-d" cannot be used
 together with neither "-e" nor "-c".
 
 
-<<<<<<< HEAD
-@subsection stdb Standard Basis
-=======
 @subsection zsp_stdb Standard Basis
->>>>>>> 4a68ae339f0300470810ab3c90387657ccf21f0c
 If you use "-t", @b zsp spins up canonically, producing the "standard 
 basis". In this mode, the production of the subspace from the seed 
 vector is independent of the chosen basis. Note that the standard
@@ -618,11 +597,7 @@ basis algorithm allocates an additional matrix of the same size as
 the generators.
 
 
-<<<<<<< HEAD
-@subsection of Specifying Output Files
-=======
 @subsection zsp_output_options Specifying Output Files
->>>>>>> 4a68ae339f0300470810ab3c90387657ccf21f0c
 @b zsp can produce four different output files, which are all optional.
 If you use the "-b" option, a basis of the invariant subspace is written
 to @em Bas. The basis is always in echelon form. 
@@ -668,11 +643,7 @@ Details on the format of the spin-up script can be found in the library referenc
 under SpinUp().
 
 
-<<<<<<< HEAD
-@section impl Implementation Details
-=======
 @section zsp_impl Implementation Details
->>>>>>> 4a68ae339f0300470810ab3c90387657ccf21f0c
 All generators, the seed vectors (depending on "-1" and "-n"), and
 a workspace are hold in memory.
 The workspace is the size as generators unless the maximal

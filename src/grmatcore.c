@@ -1,12 +1,10 @@
-/* ============================= C MeatAxe ==================================
-   File:        $Id: grmatcore.c,v 1.1.1.1 2007/09/02 11:06:17 mringe Exp $
-   Comment:     Basic greased matrix functions.
-   --------------------------------------------------------------------------
-   Written by Max Neunhoeffer.
-   Adapted by Michael Ringe.
-
-   This program is free software; see the file COPYING for details.
-   ========================================================================== */
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// C MeatAxe - Basic greased matrix functions
+//
+// (C) Copyright 1998-2015 Michael Ringe, Lehrstuhl D fuer Mathematik, RWTH Aachen
+//
+// This program is free software; see the file COPYING for details.
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 #include "meataxe.h"
 #include <string.h>
@@ -38,6 +36,7 @@ MTX_DEFINE_FILE_INFO
 /// @{
 
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
 /// Check a greased matrix.
 /// This function checks if the argument |mat| is a pointer to a valid
 /// greased matrix. If the matrix is o.k., the function returns 1.
@@ -66,6 +65,7 @@ int GrMatIsValid(const GreasedMatrix_t *mat)
 
 
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
 /// Free a greased matrix.
 /// 0 on success, -1 on error.
 /// This function frees a greased matrix, releasing all internally
@@ -89,6 +89,7 @@ int GrMatFree(GreasedMatrix_t *mat)
 
 
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
 /// Create a greased matrix.
 /// This function creates a greased matrix from an existing normal matrix.
 /// Basically, this means that linear combinations of the rows of @a mat

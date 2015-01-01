@@ -1,11 +1,10 @@
-/* ============================= C MeatAxe ==================================
-   File:        $Id: zpt.c,v 1.1.1.1 2007/09/02 11:06:17 mringe Exp $
-   Comment:     Paste matrices.
-   --------------------------------------------------------------------------
-   (C) Copyright 1999 Michael Ringe, Lehrstuhl D fuer Mathematik,
-   RWTH Aachen, Germany  <mringe@math.rwth-aachen.de>
-   This program is free software; see the file COPYING for details.
-   ========================================================================== */
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// C MeatAxe - Paste matrices.
+//
+// (C) Copyright 1998-2015 Michael Ringe, Lehrstuhl D fuer Mathematik, RWTH Aachen
+//
+// This program is free software; see the file COPYING for details.
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
 #include "meataxe.h"
@@ -371,11 +370,7 @@ int main(int argc, const char **argv)
 /**
 @page prog_zpt zpt - Paste
 
-<<<<<<< HEAD
-@section syntax Command Line
-=======
 @section zpt_syntax Command Line
->>>>>>> 4a68ae339f0300470810ab3c90387657ccf21f0c
 <pre>
 zpt @em Options [-r @em NRows] [-c @em NCols] @em Out @em Inp [@em Inp ...]
 </pre>
@@ -391,28 +386,16 @@ Output file.
 @par @em Inp
 Input piece.
 
-<<<<<<< HEAD
-@section inp Input Files
-@par @em Inp
-Input piece.
-
-@section out Output Files
-=======
 @section zpt_inp Input Files
 @par @em Inp
 Input piece.
 
 @section zpt_out Output Files
->>>>>>> 4a68ae339f0300470810ab3c90387657ccf21f0c
 @par @em Out
 Output file.
 
 
-<<<<<<< HEAD
-@section desc Description
-=======
 @section zpt_desc Description
->>>>>>> 4a68ae339f0300470810ab3c90387657ccf21f0c
 This program reads matrices from one or more input files and pastes the pieces together
 to one matrix. The way in which the pieces are put together is controlled by two
 parameters, @em NRows and @em NCols. For example,
@@ -440,11 +423,7 @@ A 0
 If only one of @em NRows and @em NCols is specified, the other
 parameter is assumed to be one. 
 
-<<<<<<< HEAD
-@subsection perms Permutations
-=======
 @subsection ztp_perms Permutations
->>>>>>> 4a68ae339f0300470810ab3c90387657ccf21f0c
 The program can also paste permutations, i.e., copy permutations from
 several files into one file. In this case, "-c" cannot be used. For
 example,

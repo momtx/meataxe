@@ -1,13 +1,10 @@
-/* ============================= C MeatAxe ==================================
-   File:        $Id: mkhom.c,v 1.1.1.1 2007/09/02 11:06:17 mringe Exp $
-   Comment:     Calculate homomorphisms between modules.
-   --------------------------------------------------------------------------
-   Written by Magdolna Szoke. 
-   Revised by Michael Ringe.
-   (C) Copyright 1999 Lehrstuhl D fuer Mathematik,
-   RWTH Aachen, Germany  <mringe@math.rwth-aachen.de>
-   This program is free software; see the file COPYING for details.
-   ========================================================================== */
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// C MeatAxe - Calculate homomorphisms between modules
+//
+// (C) Copyright 1998-2015 Michael Ringe, Lehrstuhl D fuer Mathematik, RWTH Aachen
+//
+// This program is free software; see the file COPYING for details.
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 #include "meataxe.h"
 #include <string.h>
@@ -1208,11 +1205,7 @@ int main(int argc, const char **argv)
 /**
 @page prog_mkhom mkhom - Homomorphisms
 
-<<<<<<< HEAD
-@section syntax Command Line
-=======
 @section mkhom_syntax Command Line
->>>>>>> 4a68ae339f0300470810ab3c90387657ccf21f0c
 <pre>
 mkhom [@em Options] [-ts] [-r|-l] [-b @em Mode] [-H @em Dim] @em M @em N @em Hom
 </pre>
@@ -1240,11 +1233,7 @@ mkhom [@em Options] [-ts] [-r|-l] [-b @em Mode] [-H @em Dim] @em M @em N @em Hom
     Homomorphisms.
   
 
-<<<<<<< HEAD
-@section inp Input Files
-=======
 @section mkhom_inp Input Files
->>>>>>> 4a68ae339f0300470810ab3c90387657ccf21f0c
 
 @par @em M.cfinfo, @em N.cfinfo
   Constituent information.
@@ -1257,11 +1246,7 @@ mkhom [@em Options] [-ts] [-r|-l] [-b @em Mode] [-H @em Dim] @em M @em N @em Hom
 @par @em MCf.k
   Uncondense matrix produced by @ref prog_pwkond "pwkond".
 
-<<<<<<< HEAD
-@section out Output Files
-=======
 @section mkhom_out Output Files
->>>>>>> 4a68ae339f0300470810ab3c90387657ccf21f0c
 @par @em M.std
   The spinning basis for @em M.
 @par @em Hom.1, @em Hom.2,...
@@ -1269,11 +1254,7 @@ mkhom [@em Options] [-ts] [-r|-l] [-b @em Mode] [-H @em Dim] @em M @em N @em Hom
 @par @em M.std.1, @em M.std.2,...
   Generators in spinning basis (with -t).
 
-<<<<<<< HEAD
-@section desc Description
-=======
 @section mkhom_desc Description
->>>>>>> 4a68ae339f0300470810ab3c90387657ccf21f0c
 This program calculates a basis for the vector space of homomorphisms
 between two kG-modules, Hom<sub>kG</sub>(M,N). In the case M=N the program
 optionally finds a generating set for the algebra of endomoprhisms,
@@ -1289,10 +1270,6 @@ and N, multiply the matrices from the left with the inverse of @em Hom.
 @p mkhom uses peak words of the first module. Thus, before using the program, 
 @ref prog_chop "chop" and @ref prog_pwkond "pwkond" must have been run on the first module.
 
-<<<<<<< HEAD
-@section impl Implementation Details
-=======
 @section mkhom_impl Implementation Details
->>>>>>> 4a68ae339f0300470810ab3c90387657ccf21f0c
 The algorithm used by this program was developed by Magdolna Szöke [@ref Sz98].
 **/

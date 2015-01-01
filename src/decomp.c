@@ -1,13 +1,10 @@
-/* ============================= C MeatAxe ==================================
-   File:        $Id: decomp.c,v 1.1.1.1 2007/09/02 11:06:17 mringe Exp $
-   Comment:     Decompose a module into direct summands.
-   --------------------------------------------------------------------------
-   Written by Magdolna Szoke.
-   Revised by Michael Ringe.
-   (C) Copyright 1999 Lehrstuhl D fuer Mathematik,
-   RWTH Aachen, Germany  <mringe@math.rwth-aachen.de>
-   This program is free software; see the file COPYING for details.
-   ========================================================================== */
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// C MeatAxe - Decompose a module into direct summands.
+//
+// (C) Copyright 1998-2015 Michael Ringe, Lehrstuhl D fuer Mathematik, RWTH Aachen
+//
+// This program is free software; see the file COPYING for details.
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
 #include "meataxe.h"
@@ -323,11 +320,7 @@ int main(int argc, const char **argv)
 /**
 @page prog_decomp decomp - Decompose a Module                                                  
 
-<<<<<<< HEAD
-@section syntax Command Line
-=======
 @section decomp_syntax Command Line
->>>>>>> 4a68ae339f0300470810ab3c90387657ccf21f0c
 <pre>
 decomp @em Options [-ta] @em Module @em Endo @em RadBasis
 </pre>
@@ -345,11 +338,7 @@ decomp @em Options [-ta] @em Module @em Endo @em RadBasis
 @par @em RadBasis
     Basis for radical series of the endomorphism ring.
 
-<<<<<<< HEAD
-@section inp Input Files
-=======
 @section decomp_inp Input Files
->>>>>>> 4a68ae339f0300470810ab3c90387657ccf21f0c
 @par @em Module.1, @em Module.2, ...
   Generators for the module.
 @par @em Module.cfinfo
@@ -367,11 +356,7 @@ decomp @em Options [-ta] @em Module @em Endo @em RadBasis
 @par @em Endo.lrr.soc
   Basis if the socle of @em Endo.lrr (make by @ref prog_soc "soc").
 
-<<<<<<< HEAD
-@section out Output Files
-=======
 @section decomp_out Output Files
->>>>>>> 4a68ae339f0300470810ab3c90387657ccf21f0c
 @par @em Module.dec
   Basis of the module reflecting the decomposition.
 @par @em Module.dec.1, @em Module.dec.2, ...
@@ -380,11 +365,7 @@ decomp @em Options [-ta] @em Module @em Endo @em RadBasis
 @par @em Module.@em Comp.1, @em Module.@em Comp.2, ...
   Generators on the components (with -a).
 
-<<<<<<< HEAD
-@section desc Description
-=======
 @section decomp_desc Description
->>>>>>> 4a68ae339f0300470810ab3c90387657ccf21f0c
 This program decomposes a module into its direct summands, using the
 head of the endomorphism ring. It assumes that the endomorphism ring
 and its left regular representation has already be calculated using
@@ -408,11 +389,7 @@ the left regular representation.
   plus one letter) and a number counting isomorphic summands that 
   occur more than once in the decomposition.
                                                                                 
-<<<<<<< HEAD
-@section impl Implementation Details
-=======
 @section decomp_impl Implementation Details
->>>>>>> 4a68ae339f0300470810ab3c90387657ccf21f0c
   The algorithm used by this program was developed by Magdolna Szöke [@ref Sz98].
 
 **/

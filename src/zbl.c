@@ -1,10 +1,10 @@
-/* ========================== C MeatAxe =============================
-   zbl.c - Make matrix lower triangular (keeping bottom left).
-
-   (C) Copyright 1993 Michael Ringe, Lehrstuhl D fuer Mathematik,
-   RWTH Aachen, Germany  <mringe@tiffy.math.rwth-aachen.de>
-   This program is free software; see the file COPYING for details.
-   ================================================================== */
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// C MeatAxe - 
+//
+// (C) Copyright 1998-2015 Michael Ringe, Lehrstuhl D fuer Mathematik, RWTH Aachen
+//
+// This program is free software; see the file COPYING for details.
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 #include "meataxe.h"
 
@@ -110,11 +110,7 @@ int main(int argc, char *argv[])
 /**
 @page prog_zbl zbl - Bottom Left
 
-<<<<<<< HEAD
-@section syntax Command Line
-=======
 @section zbl_syntax Command Line
->>>>>>> 4a68ae339f0300470810ab3c90387657ccf21f0c
 <pre>
 zbl [@em Options] @em Input @em Output
 </pre>
@@ -128,17 +124,6 @@ Input matrix
 @par @em Output
 Result matrix
 
-<<<<<<< HEAD
-@section inp Input Files
-@par @em Input
-Input matrix
-
-@section out Output Files
-@par @em Output
-Result matrix
-
-@section desc Description
-=======
 @section zbl_inp Input Files
 @par @em Input
 Input matrix
@@ -148,7 +133,6 @@ Input matrix
 Result matrix
 
 @section zbl_desc Description
->>>>>>> 4a68ae339f0300470810ab3c90387657ccf21f0c
 
 This program reads in a matrix, zeroizes all entries above the main diagonal,
 and writes out the result. For example:

@@ -1,13 +1,10 @@
-/* ============================= C MeatAxe ==================================
-   File:        $Id: mktree.c,v 1.1.1.1 2007/09/02 11:06:17 mringe Exp $
-   Comment:     Program to calculate an element tree of a group.
-   --------------------------------------------------------------------------
-   Written by Markus Wiegelmann.
-   Revised by Michael Ringe.
-   (C) Copyright 1997  Lehrstuhl D fuer Mathematik,
-   RWTH Aachen, Germany  <mringe@math.rwth-aachen.de>
-   This program is free software; see the file COPYING for details.
-   ========================================================================== */
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// C MeatAxe - Calculate an element tree of a group
+//
+// (C) Copyright 1998-2015 Michael Ringe, Lehrstuhl D fuer Mathematik, RWTH Aachen
+//
+// This program is free software; see the file COPYING for details.
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
 #include "meataxe.h"
@@ -301,11 +298,7 @@ int main(int argc, const char **argv)
 /**
 @page prog_mktree mktree - Enumerate Group Elements
 
-<<<<<<< HEAD
-@section syntax Command Line
-=======
 @section mktree_syntax Command Line
->>>>>>> 4a68ae339f0300470810ab3c90387657ccf21f0c
 <pre>
 mktree @em Options [-n] [-g @em NGen] @em Name
 </pre>
@@ -319,17 +312,6 @@ mktree @em Options [-n] [-g @em NGen] @em Name
 @par @em Name
   Name of the representation.
 
-<<<<<<< HEAD
-@section inp Input Files
-@par @em Name.1, @em Name.2, ...
-  Generators.
-
-@section out Output Files
-@par @em Name.elt
-  Element tree.
-
-@section desc Description
-=======
 @section mktree_inp Input Files
 @par @em Name.1, @em Name.2, ...
   Generators.
@@ -339,7 +321,6 @@ mktree @em Options [-n] [-g @em NGen] @em Name
   Element tree.
 
 @section mktree_desc Description
->>>>>>> 4a68ae339f0300470810ab3c90387657ccf21f0c
 This program enumerates all elements of a finitely generated matrix
 group. By default, the program assumes that the group has two
 generators, which are read from @em Name.1 and @em Name.2.
@@ -381,11 +362,7 @@ Line   Contents     Meaning
 10      7    1      aaaab
 </pre>
 
-<<<<<<< HEAD
-@section impl Implementatino Details
-=======
 @section mktree_impl Implementatino Details
->>>>>>> 4a68ae339f0300470810ab3c90387657ccf21f0c
 The program holds all group elements in memory. This limits the application
 of the program to fairly small groups and representations of small degree.
 **/

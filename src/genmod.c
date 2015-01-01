@@ -1,12 +1,10 @@
-/* ============================= C MeatAxe ==================================
-   File:        $Id: genmod.c,v 1.2 2007-11-08 22:06:52 mringe Exp $
-   Comment:     This program calculates a basis for any submodule listet in
-		the .out file.
-   --------------------------------------------------------------------------
-   (C) Copyright 1997 Michael Ringe, Lehrstuhl D fuer Mathematik,
-   RWTH Aachen, Germany  <mringe@math.rwth-aachen.de>
-   This program is free software; see the file COPYING for details.
-   ========================================================================== */
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// C MeatAxe - Calculates submodule basis 
+//
+// (C) Copyright 1998-2015 Michael Ringe, Lehrstuhl D fuer Mathematik, RWTH Aachen
+//
+// This program is free software; see the file COPYING for details.
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 #include "meataxe.h"
 #include <string.h>
@@ -177,11 +175,7 @@ int main(int argc, const char *argv[])
 /**
 @page prog_genmod genmod - Make Submodule
 
-<<<<<<< HEAD
-@section syntax Command Line
-=======
 @section genmod_syntax Command Line
->>>>>>> 4a68ae339f0300470810ab3c90387657ccf21f0c
 <pre>
 genmod @em Options [-m] @em Name @em Number
 </pre>
@@ -195,29 +189,17 @@ genmod @em Options [-m] @em Name @em Number
 @par @em Number
   Submodule number.
 
-<<<<<<< HEAD
-@section inp Input Files
-=======
 @section genmod_inp Input Files
->>>>>>> 4a68ae339f0300470810ab3c90387657ccf21f0c
 @par @em Name.sub
   Submodule information.
 @par @em Name.v
   Mountains.
 
-<<<<<<< HEAD
-@section out Output Files
-@par Name.sNumber, Name.mNumber
-  The result (see decription).
-
-@section desc Description
-=======
 @section genmod_out Output Files
 @par Name.sNumber, Name.mNumber
   The result (see decription).
 
 @section genmod_desc Description
->>>>>>> 4a68ae339f0300470810ab3c90387657ccf21f0c
 This program makes a submodule, i.e., it takes the mountains
 contained in that submodule and spins them up. The result
 is written to <em>Name</em>.s<em>Number</em>. The program assumes that

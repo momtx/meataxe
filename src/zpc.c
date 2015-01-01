@@ -1,11 +1,10 @@
-/* ============================= C MeatAxe ==================================
-   File:        $Id: zpc.c,v 1.1.1.1 2007/09/02 11:06:17 mringe Exp $
-   Comment:     Permutation chop.
-   --------------------------------------------------------------------------
-   (C) Copyright 1997 Michael Ringe, Lehrstuhl D fuer Mathematik,
-   RWTH Aachen, Germany  <mringe@math.rwth-aachen.de>
-   This program is free software; see the file COPYING for details.
-   ========================================================================== */
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// C MeatAxe - Permutation chop.
+//
+// (C) Copyright 1998-2015 Michael Ringe, Lehrstuhl D fuer Mathematik, RWTH Aachen
+//
+// This program is free software; see the file COPYING for details.
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
 #include <string.h>
@@ -404,11 +403,7 @@ int main(int argc, char *argv[])
 /**
 @page prog_zpc zpc - Permutation Chop
 
-<<<<<<< HEAD
-@section syntax Command Line
-=======
 @section zpc_syntax Command Line
->>>>>>> 4a68ae339f0300470810ab3c90387657ccf21f0c
 <pre>
 zpc [@em Options] [-b] @em Perm1 @em Perm2 @em Seed @em S1 @em S2 @em Q1 @em Q2
 
@@ -437,11 +432,7 @@ zpc [@em Options] [-b] -g @em NPerm[.@em NGen] @em Perm @em Seed @em Ssub @em Qu
   Base name for the action on the remaining points (with -g).
   
 
-<<<<<<< HEAD
-@section inp Input Files
-=======
 @section zpc_inp Input Files
->>>>>>> 4a68ae339f0300470810ab3c90387657ccf21f0c
 @par @em Perm1, @em Perm2
   Generators (without -g).
 @par @em Perm.1, @em Perm.2, ...
@@ -449,11 +440,7 @@ zpc [@em Options] [-b] -g @em NPerm[.@em NGen] @em Perm @em Seed @em Ssub @em Qu
 @par @em Seed
   Seed point or block.
 
-<<<<<<< HEAD
-@section inp Output Files
-=======
 @section zpc_out Output Files
->>>>>>> 4a68ae339f0300470810ab3c90387657ccf21f0c
 @par @em S1, @em S2
   Action on the orbit or block system (without -g).
 @par @em Sub.1, @em Sub.2, ...
@@ -463,11 +450,7 @@ zpc [@em Options] [-b] -g @em NPerm[.@em NGen] @em Perm @em Seed @em Ssub @em Qu
 @par @em Quot.1, @em Quot.2, ...
   Action on the remaining points (with -g).
 
-<<<<<<< HEAD
-@section desc Description
-=======
 @section zpc_desc Description
->>>>>>> 4a68ae339f0300470810ab3c90387657ccf21f0c
 If invoked without any options, this program reads two permutations from @em Perm1 and @em Perm2
 and a point from @em Seed. The orbit containing that point is made, and the action on the orbit
 is written to @em S1 and @em S2.

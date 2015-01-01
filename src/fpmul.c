@@ -1,11 +1,10 @@
-/* ============================= C MeatAxe ==================================
-   File:        $Id: fpmul.c,v 1.1.1.1 2007/09/02 11:06:17 mringe Exp $
-   Comment:     Print a factored polynomial.
-   --------------------------------------------------------------------------
-   (C) Copyright 1998 Michael Ringe, Lehrstuhl D fuer Mathematik,
-   RWTH Aachen, Germany  <mringe@math.rwth-aachen.de>
-   This program is free software; see the file COPYING for details.
-   ========================================================================== */
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// C MeatAxe - Multiply factored polynomial
+//
+// (C) Copyright 1998-2015 Michael Ringe, Lehrstuhl D fuer Mathematik, RWTH Aachen
+//
+// This program is free software; see the file COPYING for details.
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 #include "meataxe.h"
 
@@ -20,7 +19,8 @@ MTX_DEFINE_FILE_INFO
 /// @addtogroup poly
 /// @{
 
-/// Multiply With an Irreducible Polynomial.
+////////////////////////////////////////////////////////////////////////////////////////////////////
+/// Multiply with an irreducible polynomial.
 /// This function multiplies a factored polynomial with the power of an
 /// an irreducible factor. It is not checked that @em src is irreducible.
 /// @see FpMul()

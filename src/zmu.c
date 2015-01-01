@@ -1,11 +1,10 @@
-/* ============================= C MeatAxe ==================================
-   File:        $Id: zmu.c,v 1.1.1.1 2007/09/02 11:06:17 mringe Exp $
-   Comment:     Multiply matrices or permutations.
-   --------------------------------------------------------------------------
-   (C) Copyright 1999 Michael Ringe, Lehrstuhl D fuer Mathematik,
-   RWTH Aachen, Germany  <mringe@math.rwth-aachen.de>
-   This program is free software; see the file COPYING for details.
-   ========================================================================== */
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// C MeatAxe - Multiply matrices or permutations.
+//
+// (C) Copyright 1998-2015 Michael Ringe, Lehrstuhl D fuer Mathematik, RWTH Aachen
+//
+// This program is free software; see the file COPYING for details.
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
 #include "meataxe.h"
@@ -499,11 +498,7 @@ int main(int argc, const char **argv)
 
 @see  @ref prog_zpt
 
-<<<<<<< HEAD
-@section syntax Command Line
-=======
 @section zmu_syntax Command Line
->>>>>>> 4a68ae339f0300470810ab3c90387657ccf21f0c
 <pre>
 zmu @em [Options] [-r @em Row[/@em NRows]] [-c @em Col[/@em NCols]] @em A @em B @em Result
 </pre>
@@ -530,11 +525,7 @@ Right factor.
 @par @em Result
 Product.
 
-<<<<<<< HEAD
-@section inp Input Files
-=======
 @section zmu_inp Input Files
->>>>>>> 4a68ae339f0300470810ab3c90387657ccf21f0c
 
 @par @em A
 Left factor.
@@ -542,20 +533,12 @@ Left factor.
 @par @em B
 Right factor.
 
-<<<<<<< HEAD
-@section out Output Files
-=======
 @section zmu_out Output Files
->>>>>>> 4a68ae339f0300470810ab3c90387657ccf21f0c
 
 @par @em Result
 Product.
 
-<<<<<<< HEAD
-@section desc Description
-=======
 @section zmu_desc Description
->>>>>>> 4a68ae339f0300470810ab3c90387657ccf21f0c
 This program reads two matrices or permutations and writes their product to @em Result.
 
 The input files must contain two compatible objects, i.e., their product must be defined.

@@ -1,11 +1,10 @@
-/* ============================= C MeatAxe ==================================
-   File:        $Id: cfcomp.c,v 1.1.1.1 2007/09/02 11:06:16 mringe Exp $
-   Comment:     
-   --------------------------------------------------------------------------
-   (C) Copyright 1997 Michael Ringe, Lehrstuhl D fuer Mathematik,
-   RWTH Aachen, Germany  <mringe@math.rwth-aachen.de>
-   This program is free software; see the file COPYING for details.
-   ========================================================================== */
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// C MeatAxe - Compare irreducibe constituents
+//
+// (C) Copyright 1998-2015 Michael Ringe, Lehrstuhl D fuer Mathematik, RWTH Aachen
+//
+// This program is free software; see the file COPYING for details.
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
 #include "meataxe.h"
@@ -160,11 +159,7 @@ int main(int argc, const char *argv[])
 /**
 @page prog_cfcomp cfcomp - Compare Irreducible Constituents
 
-<<<<<<< HEAD
-@section syntax Command Line
-=======
 @section cfcomp_syntax Command Line
->>>>>>> 4a68ae339f0300470810ab3c90387657ccf21f0c
 <pre>
 cfcomp [@em Options] @em Module @em Irred [@em Irred ...]
 </pre>
@@ -176,21 +171,13 @@ cfcomp [@em Options] @em Module @em Irred [@em Irred ...]
 @par @em Irred
   Irreducible module.
 
-<<<<<<< HEAD
-@section inp Input Files
-=======
 @section cfcomp_inp Input Files
->>>>>>> 4a68ae339f0300470810ab3c90387657ccf21f0c
 @par @em Module.cfinfo
   Constituent info file.
 @par @em Irred.1, @em Irred.2, ...
   Generators.
 
-<<<<<<< HEAD
-@section desc Description
-=======
 @section cfcomp_desc Description
->>>>>>> 4a68ae339f0300470810ab3c90387657ccf21f0c
 After @em Module has been chopped, you can use this program to determine 
 if a given irreducible module, @em Irred, is a constituent of @em Module.
 If yes, the program finds out which of the constituents of @em Module is 

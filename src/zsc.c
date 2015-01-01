@@ -1,11 +1,10 @@
-/* ============================= C MeatAxe ==================================
-   File:        $Id: zsc.c,v 1.1.1.1 2007/09/02 11:06:17 mringe Exp $
-   Comment:     Spinup with script
-   --------------------------------------------------------------------------
-   (C) Copyright 1999 Michael Ringe, Lehrstuhl D fuer Mathematik,
-   RWTH Aachen, Germany  <mringe@math.rwth-aachen.de>
-   This program is free software; see the file COPYING for details.
-   ========================================================================== */
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// C MeatAxe - Spinup with script
+//
+// (C) Copyright 1998-2015 Michael Ringe, Lehrstuhl D fuer Mathematik, RWTH Aachen
+//
+// This program is free software; see the file COPYING for details.
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 #include "meataxe.h"
 
@@ -210,11 +209,7 @@ int main(int argc, const char *argv[])
 /**
 @page prog_zsc zsc - Spin-Up With Script
 
-<<<<<<< HEAD
-@section syntax Command Line
-=======
 @section zsc_syntax Command Line
->>>>>>> 4a68ae339f0300470810ab3c90387657ccf21f0c
 <pre>
 zsc [@em Options] [-g @em NGen] @em Gen @em Seed @em Script @em Output
 </pre>
@@ -232,11 +227,7 @@ zsc [@em Options] [-g @em NGen] @em Gen @em Seed @em Script @em Output
 @par @em Output
   Output base name. Default is @em Script.
 
-<<<<<<< HEAD
-@section inp Input Files
-=======
 @section zsc_inp Input Files
->>>>>>> 4a68ae339f0300470810ab3c90387657ccf21f0c
 @par @em Gen.1, @em Gen.2, ...
   Generators.
 @par @em Seed
@@ -244,19 +235,11 @@ zsc [@em Options] [-g @em NGen] @em Gen @em Seed @em Script @em Output
 @par @em Op
   Spin-up script.
 
-<<<<<<< HEAD
-@section out Output Files
-@par @em Output.0001, @em Output.0002, ...
-  Spin-Up result, one file per seed vector.
-
-@section desc Description
-=======
 @section zsc_out Output Files
 @par @em Output.0001, @em Output.0002, ...
   Spin-Up result, one file per seed vector.
 
 @section zsc_desc Description
->>>>>>> 4a68ae339f0300470810ab3c90387657ccf21f0c
 This program reads in two or more matrices (generators), a list of seed vectors 
 and a list of operations (the script). Then, ZSC applies the script to each 
 seed vector and writes the output in a separate file for each vector.

@@ -1,11 +1,10 @@
-/* ============================= C MeatAxe ==================================
-   File:        $Id: zuk.c,v 1.1.1.1 2007/09/02 11:06:17 mringe Exp $
-   Comment:     Uncondense vectors
-   --------------------------------------------------------------------------
-   (C) Copyright 1999 Michael Ringe, Lehrstuhl D fuer Mathematik,
-   RWTH Aachen, Germany  <mringe@math.rwth-aachen.de>
-   This program is free software; see the file COPYING for details.
-   ========================================================================== */
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// C MeatAxe - Uncondense vectors
+//
+// (C) Copyright 1998-2015 Michael Ringe, Lehrstuhl D fuer Mathematik, RWTH Aachen
+//
+// This program is free software; see the file COPYING for details.
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
 #include "meataxe.h"
@@ -228,11 +227,7 @@ int main(int argc, const char **argv)
 /**
 @page prog_zuk zuk - Uncondense Vectors
 
-<<<<<<< HEAD
-@section syntax Command Line
-=======
 @section zuk_syntax Command Line
->>>>>>> 4a68ae339f0300470810ab3c90387657ccf21f0c
 <pre>
 zuk @em Options @em Vectors @em Orbits @em Result
 </pre>
@@ -246,29 +241,17 @@ zuk @em Options @em Vectors @em Orbits @em Result
 @par @em Result
   Uncondensed vectors.
 
-<<<<<<< HEAD
-@section inp Input Files
-=======
 @section zuk_inp Input Files
->>>>>>> 4a68ae339f0300470810ab3c90387657ccf21f0c
 @par @em Vectors
   Vectors to uncondense.
 @par @em Orbits
   Orbit tables produced by @ref prog_zmo "zmo".
 
-<<<<<<< HEAD
-@section out Output Files
-@par @em Result
-  Uncondensed vectors.
-
-@section desc Description
-=======
 @section zuk_out Output Files
 @par @em Result
   Uncondensed vectors.
 
 @section zuk_desc Description
->>>>>>> 4a68ae339f0300470810ab3c90387657ccf21f0c
 This program reads a matrix which is assumed to be a condensed space of a permutation
 representation whose orbits are in the file @em Orbits. The vectors in @em Vectors are
 elongated so as to lie in the original permutation space and written out to 

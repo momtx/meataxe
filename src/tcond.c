@@ -1,12 +1,10 @@
-/* ============================= C MeatAxe ==================================
-   File:        $Id: tcond.c,v 1.1.1.1 2007/09/02 11:06:17 mringe Exp $
-   Comment:     Condensation of tensor products.
-   --------------------------------------------------------------------------
-   Written by Markus Wiegelmann. Revised by Michael Ringe.
-   (C) Copyright 1999  Lehrstuhl D fuer Mathematik,
-   RWTH Aachen, Germany  <mringe@math.rwth-aachen.de>
-   This program is free software; see the file COPYING for details.
-   ========================================================================== */
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// C MeatAxe - Condensation of tensor products.
+//
+// (C) Copyright 1998-2015 Michael Ringe, Lehrstuhl D fuer Mathematik, RWTH Aachen
+//
+// This program is free software; see the file COPYING for details.
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 #include "meataxe.h"
 #include <string.h>
@@ -496,11 +494,7 @@ int main(int argc, const char **argv)
 /**
 @page prog_tcond tcond - Tensor Product Condensation
 
-<<<<<<< HEAD
-@section syntax Command Line
-=======
 @section tcond_syntax Command Line
->>>>>>> 4a68ae339f0300470810ab3c90387657ccf21f0c
 <pre>
 tcond [@em Options] [-nt] [-T @em MaxTime] [-g @em NGen] @em Info @em M @em N @em Result
 </pre>
@@ -523,11 +517,7 @@ tcond [@em Options] [-nt] [-T @em MaxTime] [-g @em NGen] @em Info @em M @em N @e
 @par @em Result
   Condensed representation.
 
-<<<<<<< HEAD
-@section inp Input Files
-=======
 @section tcond_inp Input Files
->>>>>>> 4a68ae339f0300470810ab3c90387657ccf21f0c
 @par @em Info.tki
   Tensor condensation info, made by @ref prog_precond "precond".
 @par @em M.1, @em M.2, ...
@@ -543,11 +533,7 @@ tcond [@em Options] [-nt] [-T @em MaxTime] [-g @em NGen] @em Info @em M @em N @e
 @par @em Info.p.1, @em Info.p.2, 
   Projection matrices for constituents.
 
-<<<<<<< HEAD
-@section out Output Files
-=======
 @section tcond_out Output Files
->>>>>>> 4a68ae339f0300470810ab3c90387657ccf21f0c
 @par @em Result.1, @em Result.2, ...
   Condensed matrices.
 @par @em M.ss.1, @em M.ss.2, ...
@@ -555,11 +541,7 @@ tcond [@em Options] [-nt] [-T @em MaxTime] [-g @em NGen] @em Info @em M @em N @e
 @par @em N.ss.1, @em N.ss.2, ...
   Transformed generators (with -t)
 
-<<<<<<< HEAD
-@section desc Description
-=======
 @section tcond_desc Description
->>>>>>> 4a68ae339f0300470810ab3c90387657ccf21f0c
 This program performs the final steps of the tensor condensation procedure.
 It calculates, for one or more elements a₁,a₂,…∊A,
 the action of e<sub>H</sub>a<sub>i</sub>e<sub>H</sub> on the condensed tensor
@@ -597,11 +579,7 @@ tcond -g 2 tp g g result
 After these commands are completed, the action of the condensed generators
 is in "result.1", "result.2", and "result.3".
 
-<<<<<<< HEAD
-@section impl Implementatin Details
-=======
 @section tcond_impl Implementatin Details
->>>>>>> 4a68ae339f0300470810ab3c90387657ccf21f0c
 The algorithm used by this program is described in @ref Wie94 "[Wie94]".
 
 

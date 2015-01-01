@@ -1,11 +1,10 @@
-/* ============================= C MeatAxe ==================================
-   File:        $Id: ziv.c,v 1.1.1.1 2007/09/02 11:06:17 mringe Exp $
-   Comment:     Invert a matrix or permutation.
-   --------------------------------------------------------------------------
-   (C) Copyright 1997 Michael Ringe, Lehrstuhl D fuer Mathematik,
-   RWTH Aachen, Germany  <mringe@math.rwth-aachen.de>
-   This program is free software; see the file COPYING for details.
-   ========================================================================== */
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// C MeatAxe - Invert a matrix or permutation.
+//
+// (C) Copyright 1998-2015 Michael Ringe, Lehrstuhl D fuer Mathematik, RWTH Aachen
+//
+// This program is free software; see the file COPYING for details.
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
 
@@ -79,7 +78,6 @@ static void Cleanup()
 
 
 int main(int argc, const char **argv)
-
 {
     void *x, *y;
     int rc = 0;
@@ -108,11 +106,7 @@ int main(int argc, const char **argv)
 /**
 @page prog_ziv ziv - Invert
 
-<<<<<<< HEAD
-@section syntax Command Line
-=======
 @section ziv_syntax Command Line
->>>>>>> 4a68ae339f0300470810ab3c90387657ccf21f0c
 <pre>
 ziv @em Options @em Input @em Result
 </pre>
@@ -124,17 +118,6 @@ ziv @em Options @em Input @em Result
 @par @em Result
   Result file.
 
-<<<<<<< HEAD
-@section inp Input Files
-@par @em Input
-  A square natrix or permutation.
-
-@section out Output Files
-@par @em Result
-  Inverted matrix or permutation.
-
-@section desc Description
-=======
 @section ziv_inp Input Files
 @par @em Input
   A square natrix or permutation.
@@ -144,6 +127,5 @@ ziv @em Options @em Input @em Result
   Inverted matrix or permutation.
 
 @section ziv_desc Description
->>>>>>> 4a68ae339f0300470810ab3c90387657ccf21f0c
 This program inverts a matrix or permutation.
 **/

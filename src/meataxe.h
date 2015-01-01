@@ -1,11 +1,10 @@
-/* ============================= C MeatAxe ==================================
-   File:        $Id: meataxe.h,v 1.3 2007-09-03 21:35:22 mringe Exp $
-   Comment:     MeatAxe library external interfaces.
-   --------------------------------------------------------------------------
-   (C) Copyright 2004 Michael Ringe, Lehrstuhl D fuer Mathematik,
-   RWTH Aachen, Germany  <mringe@math.rwth-aachen.de>
-   This program is free software; see the file COPYING for details.
-   ========================================================================== */
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// C MeatAxe - library interfaces
+//
+// (C) Copyright 1998-2015 Michael Ringe, Lehrstuhl D fuer Mathematik, RWTH Aachen
+//
+// This program is free software; see the file COPYING for details.
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 #ifndef MEATAXE_H_INCLUDED
 #define MEATAXE_H_INCLUDED

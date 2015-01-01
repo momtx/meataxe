@@ -1,13 +1,10 @@
-/* ============================= C MeatAxe ==================================
-   File:        $Id: mkhom_old.c,v 1.1.1.1 2007/09/02 11:06:17 mringe Exp $
-   Comment:     Calculate homomorphisms between modules.
-   --------------------------------------------------------------------------
-   Written by Magdolna Szoke. 
-   Revised by Michael Ringe.
-   (C) Copyright 1999 Lehrstuhl D fuer Mathematik,
-   RWTH Aachen, Germany  <mringe@math.rwth-aachen.de>
-   This program is free software; see the file COPYING for details.
-   ========================================================================== */
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// C MeatAxe - Calculate homomorphisms between modules
+//
+// (C) Copyright 1998-2015 Michael Ringe, Lehrstuhl D fuer Mathematik, RWTH Aachen
+//
+// This program is free software; see the file COPYING for details.
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 #include "meataxe.h"
 #include <string.h>
@@ -1429,11 +1426,7 @@ int main(int argc, const char **argv)
     
 !implementation
     The algorithm used by this program was developed by Magdolna Sz"oke
-<<<<<<< HEAD
-    \cite{Sz98}.
-=======
     @ref Sz98.
->>>>>>> 4a68ae339f0300470810ab3c90387657ccf21f0c
  **/
 
 

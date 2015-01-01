@@ -1,11 +1,10 @@
-/* ============================= C MeatAxe ==================================
-   File:        $Id: zct.c,v 1.1.1.1 2007/09/02 11:06:17 mringe Exp $
-   Comment:     Cut file.
-   --------------------------------------------------------------------------
-   (C) Copyright 1999 Michael Ringe, Lehrstuhl D fuer Mathematik,
-   RWTH Aachen, Germany  <mringe@math.rwth-aachen.de>
-   This program is free software; see the file COPYING for details.
-   ========================================================================== */
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// C MeatAxe - Cut file.
+//
+// (C) Copyright 1998-2015 Michael Ringe, Lehrstuhl D fuer Mathematik, RWTH Aachen
+//
+// This program is free software; see the file COPYING for details.
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 #include "meataxe.h"
 
@@ -349,11 +348,7 @@ int main(int argc, const char **argv)
 /**
 @page prog_zct zct - Cut
 
-<<<<<<< HEAD
-@section syntax Command Line
-=======
 @section zct_syntax Command Line
->>>>>>> 4a68ae339f0300470810ab3c90387657ccf21f0c
 <pre>
 zct @em Options @em Rows[:@em Columns] @em Input @em Output
 </pre>
@@ -369,28 +364,16 @@ Input matrix or permutation.
 @par @em Output
 Output file.
 
-<<<<<<< HEAD
-@section inp Input Files
-@par @em Input
-Input matrix or permutations.
-
-@section out Output Files
-=======
 @section zct_inp Input Files
 @par @em Input
 Input matrix or permutations.
 
 @section zct_out Output Files
->>>>>>> 4a68ae339f0300470810ab3c90387657ccf21f0c
 @par @em Output
 Output file.
 
 
-<<<<<<< HEAD
-@section desc Description
-=======
 @section zct_desc Description
->>>>>>> 4a68ae339f0300470810ab3c90387657ccf21f0c
 This program cuts a piece, specified by @em Rows and @em Columns,
 out of the file @em Input, and writes the piece to @em Output.
 The input may be a matrix or a set of permutations.
@@ -455,11 +438,7 @@ list must be empty in  this case, because @b zct can cut only entire
 permutations.
 
 
-<<<<<<< HEAD
-@section impl Implementation Details
-=======
 @section zct_impl Implementation Details
->>>>>>> 4a68ae339f0300470810ab3c90387657ccf21f0c
 The number of entries in the @em Rows and @em Columns list
 must not be greater than 10. One row (or permutation, respectively)
 of the input file and the whole result of the cut must fit into

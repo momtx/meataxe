@@ -1,11 +1,10 @@
-/* ============================= C MeatAxe ==================================
-   File:        $Id: zpo.c,v 1.1.1.1 2007/09/02 11:06:17 mringe Exp $
-   Comment:     Power of a matrix or permutation.
-   --------------------------------------------------------------------------
-   (C) Copyright 1999 Michael Ringe, Lehrstuhl D fuer Mathematik,
-   RWTH Aachen, Germany  <mringe@math.rwth-aachen.de>
-   This program is free software; see the file COPYING for details.
-   ========================================================================== */
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// C MeatAxe - Power of a matrix or permutation.
+//
+// (C) Copyright 1998-2015 Michael Ringe, Lehrstuhl D fuer Mathematik, RWTH Aachen
+//
+// This program is free software; see the file COPYING for details.
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 #include "meataxe.h"
 
@@ -126,11 +125,7 @@ int main(int argc, const char **argv)
 /**
 @page prog_zpo zpo - Power
 
-<<<<<<< HEAD
-@section syntax Command Line
-=======
 @section zpo_syntax Command Line
->>>>>>> 4a68ae339f0300470810ab3c90387657ccf21f0c
 <pre>
 zpo [@em Options] @em Input @em N @em Result
 </pre>
@@ -144,17 +139,6 @@ zpo [@em Options] @em Input @em N @em Result
 @par @em Result
   Output file.
 
-<<<<<<< HEAD
-@section inp Input Files
-@par @em Input
-  Input file.
-
-@section inp Output Files
-@par @em Result
-  Output file.
-
-@section desc Description
-=======
 @section zpo_inp Input Files
 @par @em Input
   Input file.
@@ -164,7 +148,6 @@ zpo [@em Options] @em Input @em N @em Result
   Output file.
 
 @section zpo_desc Description
->>>>>>> 4a68ae339f0300470810ab3c90387657ccf21f0c
 This program calculates the @em N-th power of a matrix or permutation.
 The exponent @em N may be negative. For compatibility with the old @b zsm program,
 the power may be specified in the @b zsm format. The following example

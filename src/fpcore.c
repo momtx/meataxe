@@ -1,11 +1,10 @@
-/* ============================= C MeatAxe ==================================
-   File:        $Id: fpcore.c,v 1.1.1.1 2007/09/02 11:06:17 mringe Exp $
-   Comment:     Basic factored polynomial functions.
-   --------------------------------------------------------------------------
-   (C) Copyright 1998 Michael Ringe, Lehrstuhl D fuer Mathematik,
-   RWTH Aachen, Germany  <mringe@math.rwth-aachen.de>
-   This program is free software; see the file COPYING for details.
-   ========================================================================== */
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// C MeatAxe - Basic factored polynomial functions
+//
+// (C) Copyright 1998-2015 Michael Ringe, Lehrstuhl D fuer Mathematik, RWTH Aachen
+//
+// This program is free software; see the file COPYING for details.
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 #include "meataxe.h"
 #include <string.h>
@@ -23,15 +22,17 @@ MTX_DEFINE_FILE_INFO
 /// @addtogroup poly
 /// @{
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
 /// @class FPoly_t
 /// A Factored Polynomial.
 /// This structure contains a polynomial which is split into factors. The factors
 /// need not be irreducible.
    
 
-/// Check a Factored Polynomial.
+////////////////////////////////////////////////////////////////////////////////////////////////////
+/// Check a factored polynomial.
 /// @param p The polynomial.
-/// @return 1 if @em p is a valid factores polynomial, 0 otherwise.
+/// @return 1 if @em p is a valid factored polynomial, 0 otherwise.
 
 int FpIsValid(const FPoly_t *p)
 {
@@ -77,7 +78,8 @@ int FpIsValid(const FPoly_t *p)
 
 
 
-/// Allocate a Factored Polynomial.
+////////////////////////////////////////////////////////////////////////////////////////////////////
+/// Allocate a factored polynomial.
 /// This function creates a new Fpoly_t structure.
 /// The new polynomial is empty, i.e., it has no factors.
 /// @return Pointer to the new FPoly_t structure or 0 on error.
@@ -117,7 +119,8 @@ FPoly_t *FpAlloc()
 
 
 
-/// Free a Factored Polynomial.
+////////////////////////////////////////////////////////////////////////////////////////////////////
+/// Free a factored polynomial.
 /// @return 0 on success, -1 on error.
 /// @see FPoly_t FpAlloc
 

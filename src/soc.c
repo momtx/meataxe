@@ -1,14 +1,10 @@
-/* ============================= C MeatAxe ==================================
-   File:        $Id: soc.c,v 1.1.1.1 2007/09/02 11:06:17 mringe Exp $
-   Comment:     This program calculates the socle series of a module. Is is
-                assumed that chop and pwkond have been run.
-   --------------------------------------------------------------------------
-   Written by Moagdolna Szoke.
-   Revised by Michael Ringe.
-   (C) Copyright 1998 Lehrstuhl D fuer Mathematik,
-   RWTH Aachen, Germany <mringe@math.rwth-aachen.de>
-   This program is free software; see the file COPYING for details.
-   ========================================================================== */
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// C MeatAxe - Calculates the socle series of a module.
+//
+// (C) Copyright 1998-2015 Michael Ringe, Lehrstuhl D fuer Mathematik, RWTH Aachen
+//
+// This program is free software; see the file COPYING for details.
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
 #include "meataxe.h"
@@ -390,11 +386,7 @@ int main( int argc, const char **argv)
 /**
 @page prog_soc soc - Socle Series
 
-<<<<<<< HEAD
-@section syntax Command Line
-=======
 @section soc_syntax Command Line
->>>>>>> 4a68ae339f0300470810ab3c90387657ccf21f0c
 <pre>
 soc @em Options [-l @em MaxLength] @em Module
 </pre>
@@ -406,11 +398,7 @@ soc @em Options [-l @em MaxLength] @em Module
 @par @em Module
   Module name.
 
-<<<<<<< HEAD
-@section inp Input Files
-=======
 @section soc_inp Input Files
->>>>>>> 4a68ae339f0300470810ab3c90387657ccf21f0c
 @par @em Name.cfinfo.
   Constituent information.
 @par @em NameCf.std.1, @em NameCf.std.2, ...
@@ -420,21 +408,13 @@ soc @em Options [-l @em MaxLength] @em Module
 @par @em NameCf.k
   Uncondense matrix
 
-<<<<<<< HEAD
-@section out Output Files
-=======
 @section soc_out Output Files
->>>>>>> 4a68ae339f0300470810ab3c90387657ccf21f0c
 @par @em Name.cfinfo.
   Socle information, see description.
 @par @em Name.soc.
   A basis reflecting the Loewy structure.
 
-<<<<<<< HEAD
-@section desc Description
-=======
 @section soc_desc Description
->>>>>>> 4a68ae339f0300470810ab3c90387657ccf21f0c
 This program determines the Loewy structure of a module by calculating the socles.
 Before using the program, you must run @ref prog_chop "chop" and @ref prog_pwkond "pwkond"
 with the "-t" option. For example,
@@ -464,11 +444,7 @@ If the socle series is not calculated completely because the maximum length
 has been reached, the partial basis found so far is extended with random
 vectors to form a complete basis.
 
-<<<<<<< HEAD
-@section impl Implementation Details
-=======
 @section soc_impl Implementation Details
->>>>>>> 4a68ae339f0300470810ab3c90387657ccf21f0c
 This program uses an algorithm by Magdolna Szöke, see @ref Sz98 "[Sz98]".
 
 **/

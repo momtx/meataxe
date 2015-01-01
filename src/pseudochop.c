@@ -1,18 +1,10 @@
-/* ============================= C MeatAxe ==================================
-   File:        $Id: pseudochop.c,v 1.2 2007-09-06 20:36:19 mringe Exp $
-   Comment:     This program works like chop but assumes that all constituents
-                occur in a "reference" module that has already been chopped,
-		and that peak words have already be calculates on the
-		reference module.
-   --------------------------------------------------------------------------
-   Originally written by Markus Wiegelmann.
-   Modifications by Klaus Lux and Michael Ringe.
-   ========================================================================== */
-
-/*******************************************************************************
-*   This program produces the output of the chop-function without running      *
-*   chop. The program needs all accuring compositionfactors and peakwords.     *
-*******************************************************************************/
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// C MeatAxe - Chop with known peak words
+//
+// (C) Copyright 1998-2015 Michael Ringe, Lehrstuhl D fuer Mathematik, RWTH Aachen
+//
+// This program is free software; see the file COPYING for details.
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 #include "meataxe.h"
 
@@ -166,11 +158,7 @@ int main(int argc, const char *argv[])
 - @ref prog_chop
 - @ref prog_pwkond
 
-<<<<<<< HEAD
-@section syntax Syntax
-=======
 @section pseudochop_syntax Syntax
->>>>>>> 4a68ae339f0300470810ab3c90387657ccf21f0c
 <pre>
 pseudochop [-QVs] @em Module @em Reference
 </pre>
@@ -186,11 +174,7 @@ Name of the module to chop.
 @par @em Reference
 Name of the reference module, where chop and pwknd -t have been run.
 
-<<<<<<< HEAD
-@section inp Input files
-=======
 @section pseudochop_inp Input files
->>>>>>> 4a68ae339f0300470810ab3c90387657ccf21f0c
 @par @em Reference.cfinfo
 Constituent information for the reference module.
 
@@ -200,21 +184,14 @@ Composition factors of the reference module.
 @par @em Module .1 @em Module .2 ...
 Action of the generators on @em Module
 
-<<<<<<< HEAD
-@section out Output files
-The output is the same as for chop.
-
-@section desc Description
-=======
 @section pseudochop_out Output files
 The output is the same as for chop.
 
 @section pseudochop_desc Description
->>>>>>> 4a68ae339f0300470810ab3c90387657ccf21f0c
 This program can be used to produce the chop output for a given module without
 actually doing all the work. To do so, there must be another module (the "reference
 module") which contains all constituents that occur in the module to be chopped,
-and the reference module must have been chopped, and peak wordds must have been
+and the reference module must have been chopped, and peak words must have been
 calculated.
 
 */

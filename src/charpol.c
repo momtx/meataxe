@@ -1,11 +1,10 @@
-/* ============================= C MeatAxe ==================================
-   File:        $Id: charpol.c,v 1.2 2007-11-16 00:13:44 mringe Exp $
-   Comment:     Characteristic polynomial of a matrix
-   --------------------------------------------------------------------------
-   (C) Copyright 1999 Michael Ringe, Lehrstuhl D fuer Mathematik,
-   RWTH Aachen, Germany  <mringe@math.rwth-aachen.de>
-   This program is free software; see the file COPYING for details.
-   ========================================================================== */
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// C MeatAxe - Characteristic polynomial of a matrix
+//
+// (C) Copyright 1998-2015 Michael Ringe, Lehrstuhl D fuer Mathematik, RWTH Aachen
+//
+// This program is free software; see the file COPYING for details.
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
 #include "meataxe.h"
@@ -22,6 +21,7 @@ MTX_DEFINE_FILE_INFO
 /// @{
 
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
 /// Seed for Characteristic Polynomial.
 /// This variable is used by CharPolFactor() to select the first
 /// seed vector. By default, CharPolSeed has the value 0, i.e., the
@@ -186,6 +186,7 @@ static void spinup_cyclic()
 
 
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
 /// Characteristic Polynomial.
 /// This function returns one factor of the characteristic polynomial of
 /// a given matrix. Further calls with a 0 argument return
@@ -256,6 +257,7 @@ Poly_t *CharPolFactor(const Matrix_t *mat)
 
 
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
 /// Characteristic Polynomial.
 /// This function calculates the characteristic polynomial of a matrix in
 /// factored form. The return value is a pointer to a FPoly_t structure

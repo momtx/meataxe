@@ -1,11 +1,10 @@
-/* ============================= C MeatAxe ==================================
-   File:        $Id: zor.c,v 1.1.1.1 2007/09/02 11:06:17 mringe Exp $
-   Comment:     Order of a matrix or permutations.
-   --------------------------------------------------------------------------
-   (C) Copyright 1998 Michael Ringe, Lehrstuhl D fuer Mathematik,
-   RWTH Aachen, Germany  <mringe@math.rwth-aachen.de>
-   This program is free software; see the file COPYING for details.
-   ========================================================================== */
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// C MeatAxe - Order of a matrix or permutations.
+//
+// (C) Copyright 1998-2015 Michael Ringe, Lehrstuhl D fuer Mathematik, RWTH Aachen
+//
+// This program is free software; see the file COPYING for details.
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 #include "meataxe.h"
 #include <stdlib.h>
@@ -289,11 +288,7 @@ int main(int argc, const char **argv)
 /**
 @page prog_zor zor - Order
 
-<<<<<<< HEAD
 @section syntax Command Line
-=======
-@section zor_syntax Command Line
->>>>>>> 4a68ae339f0300470810ab3c90387657ccf21f0c
 <pre>
 zor @em Options [-q] [-m @em MaxOrder] @em Input
 </pre>
@@ -307,19 +302,11 @@ zor @em Options [-q] [-m @em MaxOrder] @em Input
 @par @em Input
   Input file.
 
-<<<<<<< HEAD
-@section inp Input Files
-@par @em Input
-  Matrix or permutation.
-
-@section desc Description
-=======
 @section zor_inp Input Files
 @par @em Input
   Matrix or permutation.
 
 @section zor_desc Description
->>>>>>> 4a68ae339f0300470810ab3c90387657ccf21f0c
 This program reads a file, containing either permutations, or a
 square matrix, and calculates the order(s) and prints the message
 <pre>
@@ -336,11 +323,7 @@ ORDER IS A MULTIPLE OF @em NNN
 </pre>
 Note: The "-q" and "-m" options have no effect for permutations.
 
-<<<<<<< HEAD
-@section impl Implementation Details
-=======
 @section zor_impl Implementation Details
->>>>>>> 4a68ae339f0300470810ab3c90387657ccf21f0c
 If the input is a matrix, the order is found by calculating the orders on cyclic
 subspaces and taking the least common multiple.
 The algorithm works as follows:

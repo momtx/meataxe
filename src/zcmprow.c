@@ -1,11 +1,10 @@
-/* ============================= C MeatAxe ==================================
-   File:        $Id: zcmprow.c,v 1.1.1.1 2007/09/02 11:06:17 mringe Exp $
-   Comment:     Compare rows.
-   --------------------------------------------------------------------------
-   (C) Copyright 1998 Michael Ringe, Lehrstuhl D fuer Mathematik,
-   RWTH Aachen, Germany  <mringe@math.rwth-aachen.de>
-   This program is free software; see the file COPYING for details.
-   ========================================================================== */
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// C MeatAxe - Compare rows.
+//
+// (C) Copyright 1998-2015 Michael Ringe, Lehrstuhl D fuer Mathematik, RWTH Aachen
+//
+// This program is free software; see the file COPYING for details.
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
 #include "meataxe.h"
@@ -17,7 +16,8 @@
 /// @addtogroup ff
 /// @{
 
-/// Compare two Rows.
+////////////////////////////////////////////////////////////////////////////////////////////////////
+/// Compare two rows.
 /// This function compares two row vectors. As with all row operations, the row 
 /// length must have been set before with FfSetNoc(). 
 /// The return value is negative if the first row is "less" than the second 

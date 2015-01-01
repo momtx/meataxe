@@ -1,11 +1,10 @@
-/* ============================= C MeatAxe ==================================
-   File:        $Id: zts.c,v 1.1.1.1 2007/09/02 11:06:17 mringe Exp $
-   Comment:     Tensor spin
-   --------------------------------------------------------------------------
-   (C) Copyright 2000 Michael Ringe, Lehrstuhl D fuer Mathematik,
-   RWTH Aachen, Germany  <mringe@math.rwth-aachen.de>
-   This program is free software; see the file COPYING for details.
-   ========================================================================== */
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// C MeatAxe - Tensor spin
+//
+// (C) Copyright 1998-2015 Michael Ringe, Lehrstuhl D fuer Mathematik, RWTH Aachen
+//
+// This program is free software; see the file COPYING for details.
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 #include "meataxe.h"
 
@@ -407,11 +406,7 @@ int main(int argc, const char **argv)
 @page prog_zts zts - Tensor Split
 
 
-<<<<<<< HEAD
-@section syntax Command Line
-=======
 @section zts_syntax Command Line
->>>>>>> 4a68ae339f0300470810ab3c90387657ccf21f0c
 <pre>
 zts @em Options [-g @em NumGen] @em M @em N @em Seed [@em Sub]
 </pre>
@@ -440,11 +435,7 @@ Standard options, see @ref prog_stdopts
     on the invariant subspace.
 
 
-<<<<<<< HEAD
-@section inp Input Files
-=======
 @section zts_inp Input Files
->>>>>>> 4a68ae339f0300470810ab3c90387657ccf21f0c
 
 @par \em M.1, \em M.2, ...
 Generator action on left module. Unless changed with -g,
@@ -456,11 +447,7 @@ Generator action on right module
 @par @em Seed
 Seed vector(s).
 
-<<<<<<< HEAD
-@section out Output Files
-=======
 @section zts_out Output Files
->>>>>>> 4a68ae339f0300470810ab3c90387657ccf21f0c
 
 @par @em Sub
 Basis of the invariant subspace.
@@ -472,11 +459,7 @@ Generator action on the invariant subspace.
 - @ref prog_tuc
 - @ref prog_zsp
 
-<<<<<<< HEAD
-@section desc Description
-=======
 @section zts_desc Description
->>>>>>> 4a68ae339f0300470810ab3c90387657ccf21f0c
 This program is similar to @ref prog_zsp "zsp", but it works on the tensor
 product of two modules, M⊗N. @b zts spins up one or more vectors, and optionally
 calculates a matrix representation corresponding to the invariant
@@ -499,11 +482,7 @@ invariant subspace to @em Sub, calculates the action of the
 generators on the invariant subspace, and writes it to
 @em Sub.1, @em Sub.2,...
 
-<<<<<<< HEAD
-@section impl Implementation Details
-=======
 @section zts_impl Implementation Details
->>>>>>> 4a68ae339f0300470810ab3c90387657ccf21f0c
 Let \f$B=(b_1,\ldots,b_m)\f$ be a basis of \e M,
 \f$C=(c_1,\ldots,c_n)\f$ a basis of \e N,
 and denote by \f$B\otimes C\f$ the lexicographically ordered basis

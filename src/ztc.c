@@ -1,11 +1,10 @@
-/* ============================= C MeatAxe ==================================
-   File:        $Id: ztc.c,v 1.1.1.1 2007/09/02 11:06:17 mringe Exp $
-   Comment:     Trace of a matrix or permutation.
-   --------------------------------------------------------------------------
-   (C) Copyright 1999 Michael Ringe, Lehrstuhl D fuer Mathematik,
-   RWTH Aachen, Germany  <mringe@math.rwth-aachen.de>
-   This program is free software; see the file COPYING for details.
-   ========================================================================== */
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// C MeatAxe - Trace of a matrix or permutation.
+//
+// (C) Copyright 1998-2015 Michael Ringe, Lehrstuhl D fuer Mathematik, RWTH Aachen
+//
+// This program is free software; see the file COPYING for details.
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
 #include "meataxe.h"
@@ -191,11 +190,7 @@ int main(int argc, const char **argv)
 /**
 @page prog_ztc ztc - Trace
 
-<<<<<<< HEAD
-@section syntax Command Line
-=======
 @section ztc_syntax Command Line
->>>>>>> 4a68ae339f0300470810ab3c90387657ccf21f0c
 <pre>
 ztc [@em Options] [-G] @em Inp
 </pre>
@@ -207,19 +202,11 @@ ztc [@em Options] [-G] @em Inp
 @par @em Inp
   Input matrix or permutation.
 
-<<<<<<< HEAD
-@section inp Input Files
-@par @em Inp
-  Input matrix or permutation.
-
-@section desc Description
-=======
 @section ztc_inp Input Files
 @par @em Inp
   Input matrix or permutation.
 
 @section ztc_desc Description
->>>>>>> 4a68ae339f0300470810ab3c90387657ccf21f0c
 This program reads a matrix or permutation calculates its trace and
 outputs this to the user.
 If the input file is a matrix, it is read row by row and the diagonal

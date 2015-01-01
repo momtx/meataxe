@@ -1,19 +1,17 @@
-/* ============================= C MeatAxe ==================================
-   File:        $Id: mscore.c,v 1.1.1.1 2007/09/02 11:06:17 mringe Exp $
-   Comment:     Matrix set core functions.
-   --------------------------------------------------------------------------
-   (C) Copyright 1999 Michael Ringe, Lehrstuhl D fuer Mathematik,
-   RWTH Aachen, Germany  <mringe@math.rwth-aachen.de>
-   This program is free software; see the file COPYING for details.
-   ========================================================================== */
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// C MeatAxe - Matrix set core functions
+//
+// (C) Copyright 1998-2015 Michael Ringe, Lehrstuhl D fuer Mathematik, RWTH Aachen
+//
+// This program is free software; see the file COPYING for details.
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 #include "meataxe.h"
 #include <string.h>
 
    
-/* --------------------------------------------------------------------------
-   Local data
-   -------------------------------------------------------------------------- */
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// Local data
 
 MTX_DEFINE_FILE_INFO
 #define MS_MAGIC 0x6263659B
@@ -22,6 +20,7 @@ MTX_DEFINE_FILE_INFO
 /// @defgroup matset Matrix Sets
 /// @{
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
 /// @class MatrixSet_t
 /// @brief A Set of Matrices.
 /// The MatrixSet_t structure represents a sequence of linearly independent
@@ -47,7 +46,8 @@ MTX_DEFINE_FILE_INFO
 /// too.
 
 
-/// Check a Matrix Set.
+////////////////////////////////////////////////////////////////////////////////////////////////////
+/// Check a matrix set.
 /// This function checks if the argument |set| is a pointer to a valid
 /// matrix. If the matrix set is valid, the function returns 1. Otherwise, 
 /// an error is signalled and, if the error handler does not terminate the 
@@ -118,7 +118,8 @@ int MsIsValid(const MatrixSet_t *set)
 
 
 
-/// Allocate a Matrix Set.
+////////////////////////////////////////////////////////////////////////////////////////////////////
+/// Allocate a matrix set.
 /// This function allocates a new matrix set. The set is initially empty.
 /// When the set is no longer needed, if must be freed with MsFree().
 /// @return Pointer to the new matrix set, or 0 on error.
@@ -141,7 +142,8 @@ MatrixSet_t *MsAlloc()
 
 
 
-/// Free a Matrix Set.
+////////////////////////////////////////////////////////////////////////////////////////////////////
+/// Free a matrix set.
 /// This function frees a matrix set. All matrices in the set are freed, too.
 /// @param set Pointer to the matrix set.
 /// @return 0 on success, -1 on error.

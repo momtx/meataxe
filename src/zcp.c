@@ -1,11 +1,10 @@
-/* ============================= C MeatAxe ==================================
-   File:        $Id: zcp.c,v 1.1.1.1 2007/09/02 11:06:17 mringe Exp $
-   Comment:     Characteristic polynomial of a matrix
-   --------------------------------------------------------------------------
-   (C) Copyright 1999 Michael Ringe, Lehrstuhl D fuer Mathematik,
-   RWTH Aachen, Germany  <mringe@math.rwth-aachen.de>
-   This program is free software; see the file COPYING for details.
-   ========================================================================== */
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// C MeatAxe - Characteristic polynomial of a matrix
+//
+// (C) Copyright 1998-2015 Michael Ringe, Lehrstuhl D fuer Mathematik, RWTH Aachen
+//
+// This program is free software; see the file COPYING for details.
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
 #include "meataxe.h"
@@ -52,9 +51,7 @@ static MtxApplication_t *App = NULL;
 
 
 
-/* ------------------------------------------------------------------
-   init()
-   ------------------------------------------------------------------ */
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 static int Init(int argc, const char **argv)
 
@@ -82,13 +79,7 @@ static int Init(int argc, const char **argv)
 }
 
 
-
-
-/* ------------------------------------------------------------------
-   write_init() - Called once before factors are written
-   write_factor() - Write one factor
-   write_end() - Called once after all factors have been written
-   ------------------------------------------------------------------ */
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 static int first;
 
@@ -112,9 +103,9 @@ static void write_init()
     }
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 static void write_end()
-
 {
     int i;
 
@@ -135,9 +126,9 @@ static void write_end()
 }
 
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 static void write_one(const Poly_t *pol)
-
 { 
     if (opt_G)
     {
@@ -164,6 +155,7 @@ static void write_one(const Poly_t *pol)
 }
 
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 static void Cleanup()
 
@@ -177,9 +169,7 @@ static void Cleanup()
 }
 
 
-/* ------------------------------------------------------------------
-   main()
-   ------------------------------------------------------------------ */
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 int main(int argc, const char **argv)
 
@@ -222,11 +212,7 @@ int main(int argc, const char **argv)
 /**
 @page prog_zcp zcp - Characteristic Polynomial
 
-<<<<<<< HEAD
-@section syntax Command Line
-=======
 @section zcp_syntax Command Line
->>>>>>> 4a68ae339f0300470810ab3c90387657ccf21f0c
 <pre>
 zcp @em Options [-Gfm] @em Matrix
 </pre>
@@ -246,19 +232,11 @@ Calculate the minimal polynomial
 @par @em Mat
 Input matrix
 
-<<<<<<< HEAD
-@section inp Input Files
-@par @em Mat
-Input matrix
-
-@section desc Description
-=======
 @section zcp_inp Input Files
 @par @em Mat
 Input matrix
 
 @section zcp_desc Description
->>>>>>> 4a68ae339f0300470810ab3c90387657ccf21f0c
 
 This program reads in a square matrix and calculates its characteristic or
 minimal polynomial. With no options, the characteristic polynomial is
@@ -271,11 +249,7 @@ is readable by the GAP computer program. The output, then, is a
 sequence of sequences of finite field elements, representing the
 coefficients of the factors in ascending order.
 
-<<<<<<< HEAD
-@section impl Implementation Details
-=======
 @section zcp_impl Implementation Details
->>>>>>> 4a68ae339f0300470810ab3c90387657ccf21f0c
 The characteristic polynomial of a matrix A is computed by constructing a sequence 
 @f[
         0=U_0<U_1<\ldots<U_n=V

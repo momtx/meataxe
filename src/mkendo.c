@@ -1,11 +1,10 @@
-/* ============================= C MeatAxe ==================================
-   File:        $Id: mkendo.c,v 1.1.1.1 2007/09/02 11:06:17 mringe Exp $
-   Comment:     Find endomorphisms
-   --------------------------------------------------------------------------
-   (C) Copyright 1998 Michael Ringe, Lehrstuhl D fuer Mathematik,
-   RWTH Aachen, Germany  <mringe@math.rwth-aachen.de>
-   This program is free software; see the file COPYING for details.
-   ========================================================================== */
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// C MeatAxe - Find endomorphisms
+//
+// (C) Copyright 1998-2015 Michael Ringe, Lehrstuhl D fuer Mathematik, RWTH Aachen
+//
+// This program is free software; see the file COPYING for details.
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 #include "meataxe.h"
 
@@ -16,7 +15,6 @@ MTX_DEFINE_FILE_INFO
 
 static Matrix_t *MakeEndo(const MatRep_t *rep, const Matrix_t *sb1, 
     const Matrix_t *vec)
-
 {
     Matrix_t *sb2;
     Matrix_t *endo;
@@ -37,7 +35,7 @@ static Matrix_t *MakeEndo(const MatRep_t *rep, const Matrix_t *sb1,
 
 
 
-
+////////////////////////////////////////////////////////////////////////////////////////////////////
 /// Calculate the endomorphism ring.
 /// This function calculates a basis for the endomorphism ring E of an
 /// irreducible module. The dimension of E is equal to the degree [F':F]

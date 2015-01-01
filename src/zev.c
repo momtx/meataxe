@@ -1,11 +1,10 @@
-/* ============================= C MeatAxe ==================================
-   File:        $Id: zev.c,v 1.1.1.1 2007/09/02 11:06:17 mringe Exp $
-   Comment:     Calculate eigenvalues and multiplitcities.
-   --------------------------------------------------------------------------
-   (C) Copyright 1998 Michael Ringe, Lehrstuhl D fuer Mathematik,
-   RWTH Aachen, Germany  <mringe@math.rwth-aachen.de>
-   This program is free software; see the file COPYING for details.
-   ========================================================================== */
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// C MeatAxe - Calculate eigenvalues and multiplitcities.
+//
+// (C) Copyright 1998-2015 Michael Ringe, Lehrstuhl D fuer Mathematik, RWTH Aachen
+//
+// This program is free software; see the file COPYING for details.
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
 #include "meataxe.h"
@@ -250,11 +249,7 @@ int main(int argc, const char **argv)
 /**
 @page prog_zev zev - Eigenvalues
 
-<<<<<<< HEAD
-@section syntax Command Line
-=======
 @section zev_syntax Command Line
->>>>>>> 4a68ae339f0300470810ab3c90387657ccf21f0c
 <pre>
 zev @em Options [-G] @em Matrix [@em Poly [@em Group]]
 </pre>
@@ -270,22 +265,14 @@ zev @em Options [-G] @em Matrix [@em Poly [@em Group]]
 @par @em Group
   Group of polynomials to check (default: all groups).
 
-<<<<<<< HEAD
-@section inp Input Files
-=======
 @section zev_inp Input Files
->>>>>>> 4a68ae339f0300470810ab3c90387657ccf21f0c
 @par @em Matrix
   Input matrix.
 @par @em Poly
   Polynomials.
 
 
-<<<<<<< HEAD
-@section desc Description
-=======
 @section zev_desc Description
->>>>>>> 4a68ae339f0300470810ab3c90387657ccf21f0c
 This program reads a matrix from @em Matrix and a list of polynomials
 from @em Poly (or from the standard input).
 For each input polynomial, it evaluates that function
@@ -362,11 +349,7 @@ This file contains 7 polynomials in two groups. The polynomial
 "b11" in group "p11b11" is x<sup>5</sup>+4x<sup>4</sup>+4x<sup>3</sup>+x<sup>2</sup>+3x+4.
 
 
-<<<<<<< HEAD
-@subsection of Output Format
-=======
 @subsection zev_output_format Output Format
->>>>>>> 4a68ae339f0300470810ab3c90387657ccf21f0c
 There are two output formats. By default the nullities are printed in
 tabular form giving group, name, degree and multiplicity (i.e., nullity
 divided by degree) for each
@@ -387,11 +370,7 @@ MeatAxe.BrauerChar := 1*(1) + 4*(-1) + 2*(0) + 1*(-i2);
 Note that "i2" does not appear in the expression because its
 coefficient is zero.
 
-<<<<<<< HEAD
-@section impl Implementation Details
-=======
 @section zev_impl Implementation Details
->>>>>>> 4a68ae339f0300470810ab3c90387657ccf21f0c
 There must be enough memory to hold the input matrix and two
 more matrices of the same size.
 Lines in the polynomial input file must not be longer than 1023

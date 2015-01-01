@@ -1,12 +1,10 @@
-/* ============================= C MeatAxe ==================================
-   File:        $Id: pwkond.c,v 1.2 2007-09-03 21:35:22 mringe Exp $
-   Comment:     This program finds the peak words and does the generalized
-                condensation for each composition factor.
-   --------------------------------------------------------------------------
-   (C) Copyright 1999 Michael Ringe, Lehrstuhl D fuer Mathematik,
-   RWTH Aachen, Germany  <mringe@math.rwth-aachen.de>
-   This program is free software; see the file COPYING for details.
-   ========================================================================== */
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// C MeatAxe - Find peak words and condense
+//
+// (C) Copyright 1998-2015 Michael Ringe, Lehrstuhl D fuer Mathematik, RWTH Aachen
+//
+// This program is free software; see the file COPYING for details.
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
 #include "meataxe.h"
@@ -1002,11 +1000,7 @@ int main(int argc, const char **argv)
 /**
 @page prog_pwkond pwkond - Peak Word Condensation
 
-<<<<<<< HEAD
-@section syntax Command Line
-=======
 @section pwkond_syntax Command Line
->>>>>>> 4a68ae339f0300470810ab3c90387657ccf21f0c
 <pre>
 pwkond @em Options [-Gnptbk] [-i @em List] [-e @em List] @em Name [@em Name ...]
 </pre>
@@ -1033,11 +1027,7 @@ Words to be excluded, for example "-e 3,20-99".
 @par @em Name
 Name of the representation.
 
-<<<<<<< HEAD
-@section inp Input Files
-=======
 @section pwkond_inp Input Files
->>>>>>> 4a68ae339f0300470810ab3c90387657ccf21f0c
 @par @em Name.cfinfo
 Constituent info file.
 @par @em Name.1, @em Name.2, ...
@@ -1048,11 +1038,7 @@ Generators on the irreducible constituents. NameCF is the representation name
 followed by the dimension and a letter to distinguish inequivalent constituents
 of the same dimension (see @ref prog_chop "chop").
 
-<<<<<<< HEAD
-@section out Output Files
-=======
 @section pwkond_out Output Files
->>>>>>> 4a68ae339f0300470810ab3c90387657ccf21f0c
 @par @em Name.cfinfo
 Constituent info file.
 
@@ -1078,11 +1064,7 @@ Peak word kernel (with -k or without -n).
 Semisimplicity basis (with -b).
 
 
-<<<<<<< HEAD
-@section desc Description
-=======
 @section pwkond_desc Description
->>>>>>> 4a68ae339f0300470810ab3c90387657ccf21f0c
 
 After the irreducible constituents of a module, or a number of modules,
 have been found with @ref prog_chop "chop", this program can be used
@@ -1148,11 +1130,7 @@ semisimple produces undefined results. Most probably, @b pwkond will stop
 with the error message "row index out of range", or it will write a
 singular matrix to @em Name.ssb.
 
-<<<<<<< HEAD
-@section impl Implementation Details
-=======
 @section pwkond_impl Implementation Details
->>>>>>> 4a68ae339f0300470810ab3c90387657ccf21f0c
 Internally, a peak word is represented by a pair (n,p) where n is
 the canonical number of the word (See @ref prog_zmw "zmw"), and p is a 
 polynomial. The peak word represented by this pair is p(Wn), Wn 

@@ -1,11 +1,10 @@
-/* ============================= C MeatAxe ==================================
-   File:        $Id: mkgraph.c,v 1.1.1.1 2007/09/02 11:06:17 mringe Exp $
-   Comment:     Draw the submodule lattice
-   --------------------------------------------------------------------------
-   (C) Copyright 1997 Michael Ringe, Lehrstuhl D fuer Mathematik,
-   RWTH Aachen, Germany  <mringe@math.rwth-aachen.de>
-   This program is free software; see the file COPYING for details.
-   ========================================================================== */
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// C MeatAxe - Draw the submodule lattice
+//
+// (C) Copyright 1998-2015 Michael Ringe, Lehrstuhl D fuer Mathematik, RWTH Aachen
+//
+// This program is free software; see the file COPYING for details.
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 /* Use the PostScript output routine by default */
 
@@ -729,11 +728,7 @@ int main(int argc, char *argv[])
 /**
 @page prog_mkgraph mkgraph - Draw a Submodule Lattice
 
-<<<<<<< HEAD
-@section syntax Command Line
-=======
 @section mkgraph_syntax Command Line
->>>>>>> 4a68ae339f0300470810ab3c90387657ccf21f0c
 <pre>
 mkgraph [@em Options] [-G] [-b @em BlockNo] @em Name [@em Lower @em Upper]A
 </pre>
@@ -752,17 +747,6 @@ mkgraph [@em Options] [-G] [-b @em BlockNo] @em Name [@em Lower @em Upper]A
 @par @em Upper
   Numer of the greatest submodule to be drawn.
 
-<<<<<<< HEAD
-@section inp Input Files
-@par @em Name.gra
-  Lattice information.
-
-@section out Output Files
-@par @em Name.ps
-  Lattice diagram.
-
-@section desc Description
-=======
 @section mkgraph_inp Input Files
 @par @em Name.gra
   Lattice information.
@@ -772,7 +756,6 @@ mkgraph [@em Options] [-G] [-b @em BlockNo] @em Name [@em Lower @em Upper]A
   Lattice diagram.
 
 @section mkgraph_desc Description
->>>>>>> 4a68ae339f0300470810ab3c90387657ccf21f0c
 This program creates a graphical representation of a submodule lattice
 in postscript or other formats. The first argument must be the module
 name. @ref prog_mksub "mksub" must have been run, because @b mkgraph reads
@@ -796,11 +779,7 @@ The output is written to @em Name.ps unless "-G" is used.
 
 If the option "-G" is used, @b mkgraph creates commands that can be read by xGAP.
 
-<<<<<<< HEAD
-@section impl Implementation Details
-=======
 @section mkgraph_impl Implementation Details
->>>>>>> 4a68ae339f0300470810ab3c90387657ccf21f0c
 The algorithm used to position the nodes (submodules) is very simple. In
 most cases the result is far from optimal, but also much better than a
 random drawing. Submodules are grouped into layers according to their

@@ -1,11 +1,11 @@
-/* ============================= C MeatAxe ==================================
-   File:        $Id: checksum.c,v 1.1.1.1 2007/09/02 11:06:17 mringe Exp $
-   Comment:     
-   --------------------------------------------------------------------------
-   (C) Copyright 1997 Michael Ringe, Lehrstuhl D fuer Mathematik,
-   RWTH Aachen, Germany  <mringe@math.rwth-aachen.de>
-   This program is free software; see the file COPYING for details.
-   ========================================================================== */
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// C MeatAxe - Calculate checksum
+//
+// (C) Copyright 1998-2015 Michael Ringe, Lehrstuhl D fuer Mathematik, RWTH Aachen
+//
+// This program is free software; see the file COPYING for details.
+// Also see the original copright notice at the end of file.
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 /* Berkeley crc, modified by mr July 1994 */
 

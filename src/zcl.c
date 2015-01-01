@@ -126,11 +126,7 @@ int main(int argc, const char **argv)
 /**
 @page prog_zcl zcl - Clean
 
-<<<<<<< HEAD
-@section syntax Command Line
-=======
 @section zcl_syntax Command Line
->>>>>>> 4a68ae339f0300470810ab3c90387657ccf21f0c
 <pre>
 zcl [@em Options] @em Subsp @em Mat @em CleanedMat @em Ops
 </pre>
@@ -159,11 +155,7 @@ zcl [@em Options] @em Subsp @em Mat @em CleanedMat @em Ops
   Row operations (L⨯N).
 
 
-<<<<<<< HEAD
-@section desc Description
-=======
 @section zcl_desc Description
->>>>>>> 4a68ae339f0300470810ab3c90387657ccf21f0c
 This program "cleans" @em Mat with @em Subsp, i.e., it adds suitable linear
 combinations of rows of @em Subsp to each row of @em Mat such that all pivot
 columns in the result are zero. It writes two matrices to @em CleanedMat and @em Ops

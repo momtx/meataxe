@@ -1,11 +1,10 @@
-/* ============================= C MeatAxe ==================================
-   File:        $Id: stfcore.c,v 1.1.1.1 2007/09/02 11:06:17 mringe Exp $
-   Comment:     Structured Text File (STF) basic functions.
-   --------------------------------------------------------------------------
-   (C) Copyright 1997 Michael Ringe, Lehrstuhl D fuer Mathematik,
-   RWTH Aachen, Germany  <mringe@math.rwth-aachen.de>
-   This program is free software; see the file COPYING for details.
-   ========================================================================== */
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// C MeatAxe - Structured Text File (STF) basic functions.
+//
+// (C) Copyright 1998-2015 Michael Ringe, Lehrstuhl D fuer Mathematik, RWTH Aachen
+//
+// This program is free software; see the file COPYING for details.
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
 #include "meataxe.h"
@@ -13,6 +12,9 @@
 #include <ctype.h>
 #include <string.h>
 #include <stdlib.h>
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// Local data
 
 MTX_DEFINE_FILE_INFO 
 
@@ -55,8 +57,7 @@ MTX_DEFINE_FILE_INFO
 /// </pre>
 /// The format has been chosen such that GAP can read the text file without modification.
 
-
-
+////////////////////////////////////////////////////////////////////////////////////////////////////
 /// Close a Structured Text File.
 /// This function closes a structured text file.
 /// Closing the file implies that the memory occupied by the StfData structure is freed.
@@ -79,20 +80,12 @@ int StfClose(StfData *f)
 
 
 
-
-/* -----------------------------------------------------------------------------
- * StfInitData() - Initialize a STF data structure
- * 
- * Description:
- *   This funcion initializes a <StfData> structure.
- *
- * Remarks:
- *   The function assures that either the data structure is completely 
- *   initialized or, in case of any error, no resources are allocated.
- *
- * Return:
- *   0 = Success, -1 = Error
- * -------------------------------------------------------------------------- */
+////////////////////////////////////////////////////////////////////////////////////////////////////
+/// Initialize a STF data structure
+/// This funcion initializes a StfData structure.
+///  The function assures that either the data structure is completely 
+///  initialized or, in case of any error, no resources are allocated.
+/// @return 0 on success, -1 on error
 
 static int StfInitData(StfData *f)
 {
@@ -109,7 +102,8 @@ static int StfInitData(StfData *f)
 
 
 
-/// Open a Structured Text File.
+////////////////////////////////////////////////////////////////////////////////////////////////////
+/// Open a structured text file.
 /// This function opens a structured text file. It returns to a StfData structure which
 /// can be used with StfXXX() functions.
 /// @a name and @a mode have the same semantics as with SysFopen().

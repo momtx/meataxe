@@ -1,11 +1,10 @@
-/* ============================= C MeatAxe ==================================
-   File:        $Id: temap.c,v 1.1.1.1 2007/09/02 11:06:17 mringe Exp $
-   Comment:     Map undfer tensor product.
-   --------------------------------------------------------------------------
-   (C) Copyright 1999 Michael Ringe, Lehrstuhl D fuer Mathematik,
-   RWTH Aachen, Germany  <mringe@math.rwth-aachen.de>
-   This program is free software; see the file COPYING for details.
-   ========================================================================== */
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// C MeatAxe - Map under tensor product.
+//
+// (C) Copyright 1998-2015 Michael Ringe, Lehrstuhl D fuer Mathematik, RWTH Aachen
+//
+// This program is free software; see the file COPYING for details.
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
 #include "meataxe.h"
@@ -22,7 +21,7 @@ MTX_DEFINE_FILE_INFO
 /// @{
 
 
-/// Map Under Tensor Product.
+/// Map under tensor product.
 /// This function applies the tensor product of two matrices to one or more 
 /// vectors. The same calculation could be done with MatMul() and
 /// MatTensor(), but this function is usually faster and uses less memory,

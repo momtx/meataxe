@@ -1,11 +1,10 @@
-/* ============================= C MeatAxe ==================================
-   File:        $Id: stfread.c,v 1.1.1.1 2007/09/02 11:06:17 mringe Exp $
-   Comment:     Structured Text File (STF) input functions.
-   --------------------------------------------------------------------------
-   (C) Copyright 1997 Michael Ringe, Lehrstuhl D fuer Mathematik,
-   RWTH Aachen, Germany  <mringe@math.rwth-aachen.de>
-   This program is free software; see the file COPYING for details.
-   ========================================================================== */
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// C MeatAxe - Structured Text File (STF) input functions.
+//
+// (C) Copyright 1998-2015 Michael Ringe, Lehrstuhl D fuer Mathematik, RWTH Aachen
+//
+// This program is free software; see the file COPYING for details.
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 #include "meataxe.h"
 #include <stdio.h>
@@ -19,7 +18,8 @@ MTX_DEFINE_FILE_INFO
 /// @addtogroup stf
 /// @{
 
-/// Read Next Line.
+////////////////////////////////////////////////////////////////////////////////////////////////////
+/// Read next line.
 /// This function reads a single text line into the STF object's internal 
 /// line buffer and prepares the text for parsing with StfGetXXX() functions.
 /// StfReadLine() strips comments and assembles multi-line texts into a 
@@ -73,7 +73,8 @@ int StfReadLine(StfData *f)
 
 
 
-/// Get Entry Name.
+////////////////////////////////////////////////////////////////////////////////////////////////////
+/// Get entry name.
 /// This function extracts the name part of internal line buffer and prepares 
 /// the buffer for further parsing with StfGetXXX() functions.
 /// On return,  <tt>f->GetPtr</tt> points to the first non-space character after
@@ -115,7 +116,8 @@ const char *StfGetName(StfData *f)
 
 
 
-/// Read an Integer.
+////////////////////////////////////////////////////////////////////////////////////////////////////
+/// Read an integer.
 /// This function gets one integer from the current line and increments the
 /// read pointer accordingly. Before this function is called, a line must 
 /// have been read with StfReadLine() and prepared with StfGetName().
@@ -184,6 +186,7 @@ int StfGetInt(StfData *f, int *buf)
 
 
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
 /// Read a string.
 /// This function gets a string from the current line and increments the
 /// read pointer accordingly. Before this function is called, a line must 
@@ -259,6 +262,7 @@ int StfGetString(StfData *f, char *buf, size_t bufsize)
 }
 
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
 /// Skip text.
 /// This function reads (and skips) the text given by @a pattern.
 /// Before using this function, a line must have been read with StfReadLine()
@@ -309,6 +313,7 @@ int StfMatch(StfData *f, const char *pattern)
 
 
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
 /// Read a vector.
 /// This function reads a sequence of integers. The sequence must have been
 /// written with StfWriteVector() or at least in the same format.

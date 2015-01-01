@@ -1,11 +1,10 @@
-/* ============================= C MeatAxe ==================================
-   File:        $Id: fpdup.c,v 1.1.1.1 2007/09/02 11:06:17 mringe Exp $
-   Comment:     Duplicate a factored polynomial.
-   --------------------------------------------------------------------------
-   (C) Copyright 1998 Michael Ringe, Lehrstuhl D fuer Mathematik,
-   RWTH Aachen, Germany  <mringe@math.rwth-aachen.de>
-   This program is free software; see the file COPYING for details.
-   ========================================================================== */
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// C MeatAxe - Duplicate a factored polynomial
+//
+// (C) Copyright 1998-2015 Michael Ringe, Lehrstuhl D fuer Mathematik, RWTH Aachen
+//
+// This program is free software; see the file COPYING for details.
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 #include "meataxe.h"
 
@@ -20,7 +19,8 @@ MTX_DEFINE_FILE_INFO
 /// @addtogroup poly
 /// @{
 
-/// Duplicate a Factored Polynomial.
+////////////////////////////////////////////////////////////////////////////////////////////////////
+/// Duplicate a factored polynomial.
 /// This function creates a copy of a factored polynomial.
 /// @param src Pointer to a factored polynomial.
 /// @return A pointer to a copy of @em src, or 0 on error.

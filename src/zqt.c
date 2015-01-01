@@ -1,11 +1,10 @@
-/* ============================= C MeatAxe ==================================
-   File:        $Id: zqt.c,v 1.1.1.1 2007/09/02 11:06:17 mringe Exp $
-   Comment:     Projection on quotient.
-   --------------------------------------------------------------------------
-   (C) Copyright 1999 Michael Ringe, Lehrstuhl D fuer Mathematik,
-   RWTH Aachen, Germany  <mringe@math.rwth-aachen.de>
-   This program is free software; see the file COPYING for details.
-   ========================================================================== */
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// C MeatAxe - Projection on quotient.
+//
+// (C) Copyright 1998-2015 Michael Ringe, Lehrstuhl D fuer Mathematik, RWTH Aachen
+//
+// This program is free software; see the file COPYING for details.
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 #include "meataxe.h"
 #include <string.h>
@@ -234,11 +233,7 @@ int main(int argc, const char **argv)
 /**
 @page prog_zqt zqt - Clean and Quotient
 
-<<<<<<< HEAD
-@section syntax Command Line
-=======
 @section zqt_syntax Command Line
->>>>>>> 4a68ae339f0300470810ab3c90387657ccf21f0c
 <pre>
 zqt [@em Options] [-i] @em Subsp @em Matrix @em Quot
 </pre>
@@ -254,30 +249,18 @@ zqt [@em Options] [-i] @em Subsp @em Matrix @em Quot
 @par @em Quot.
   The quotient.
 
-<<<<<<< HEAD
-@section ifile Input Files
-=======
 @section zqt_inp Input Files
->>>>>>> 4a68ae339f0300470810ab3c90387657ccf21f0c
 @par @em Subsp
   The subspace, a M×N matrix in echelon form.
 @par @em Mat
   The matrix (L×N).
 
-<<<<<<< HEAD
-@section ofile Output Files
-=======
 @section zqt_out Output Files
->>>>>>> 4a68ae339f0300470810ab3c90387657ccf21f0c
 @par @em Quot.
   The quotient, a L×(N-M) matrix.
   With "-i", the action on the quotient, a (N-M)×(N-M) matrix.
 
-<<<<<<< HEAD
-@section desc Description
-=======
 @section zqt_desc Description
->>>>>>> 4a68ae339f0300470810ab3c90387657ccf21f0c
 This program reads in a subspace and applies the canonical map to its quotient
 on a matrix. The result is written out to @em Quot.
 @em Subsp should be a matrix in semi-echelon form, and the two
@@ -323,11 +306,7 @@ zqt X T1 KZ2
 </pre>
 
 
-<<<<<<< HEAD
-@section impl Implementation Details
-=======
 @section zqt_impl Implementation Details
->>>>>>> 4a68ae339f0300470810ab3c90387657ccf21f0c
 It is not completely checked that @em Subsp is in echelon form.
 
 The Subspace and one row of both @em Matrix and @em Subsp must fit into memory.

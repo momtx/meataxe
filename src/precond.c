@@ -1,13 +1,10 @@
-/* ============================= C MeatAxe ==================================
-   File:        $Id: precond.c,v 1.1.1.1 2007/09/02 11:06:17 mringe Exp $
-   Comment:     This program creates various files needed by the tensor
-		condense programs.
-   --------------------------------------------------------------------------
-   Written by Michael Ringe, based on a program by Makrus Wiegelmann.
-   (C) Copyright 1999  Lehrstuhl D fuer Mathematik,
-   RWTH Aachen, Germany  <mringe@math.rwth-aachen.de>
-   This program is free software; see the file COPYING for details.
-   ========================================================================== */
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// C MeatAxe - Precondensation of tensor products
+//
+// (C) Copyright 1998-2015 Michael Ringe, Lehrstuhl D fuer Mathematik, RWTH Aachen
+//
+// This program is free software; see the file COPYING for details.
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 #include "meataxe.h"
 
@@ -553,11 +550,7 @@ int main(int argc, const char **argv)
 /**
 @page prog_precond precond - Precondensation of Tensor Products"
 
-<<<<<<< HEAD
-@section syntax Command Line
-=======
 @section precond_syntax Command Line
->>>>>>> 4a68ae339f0300470810ab3c90387657ccf21f0c
 <pre>
 precond @em Options @em Info @em M @em N
 </pre>
@@ -571,21 +564,13 @@ precond @em Options @em Info @em M @em N
 @par @em N
   Name of second module (right factor).
 
-<<<<<<< HEAD
-@section inp Input Files
-=======
 @section precond_inp Input Files
->>>>>>> 4a68ae339f0300470810ab3c90387657ccf21f0c
 @par @em M.cfinfo, @em N.cfinfo
   Constituent information.
 @par @em MCf.std.1, @em MCf.std.2, ..., @em NCf.std.1, @em NCf.std.2, ...
   Standard generators of the condensation subgroup H for each constituent.
 
-<<<<<<< HEAD
-@section out Output Files
-=======
 @section precond_out Output Files
->>>>>>> 4a68ae339f0300470810ab3c90387657ccf21f0c
 @par @em Info.tki
   Tensor condensation info file.
 @par @em Info.q.1, @em Info.q.2, ...
@@ -594,11 +579,7 @@ precond @em Options @em Info @em M @em N
   Projections for each constituent.
 
 
-<<<<<<< HEAD
-@section desc Description
-=======
 @section precond_desc Description
->>>>>>> 4a68ae339f0300470810ab3c90387657ccf21f0c
 This program performs two tasks:
 - It compares the irreducible constituents of M<sub>H</sub> and N<sub>H</sub>,
   and finds all pairs (S<sub>i</sub>,T<sub>j</sub>) of constituents where
@@ -610,11 +591,7 @@ This program performs two tasks:
 If there is no peak word for a constituent, @b precond will issue a warning
 but continue. However, the P and Q matrices for this constituent are zero.
 
-<<<<<<< HEAD
-@section impl Implementation Details
-=======
 @section precond_impl Implementation Details
->>>>>>> 4a68ae339f0300470810ab3c90387657ccf21f0c
 Step 1, matching of constituents, is implemented in the same way as in @ref prog_chop "chop"
 and @ref prog_cfcomp "cfcomp", i.e., by using the standard basis with respect to identifying 
 words.
