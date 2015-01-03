@@ -9,33 +9,32 @@
 #include "meataxe.h"
 #include <string.h>
 
-   
-/* --------------------------------------------------------------------------
-   Local data
-   -------------------------------------------------------------------------- */
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// Local data
 
 MTX_DEFINE_FILE_INFO
-   
 
-#define MAT_MAGIC 0x6233af91	/* HACK: Duplicated from  matcore.c */
+#define MAT_MAGIC 0x6233af91    /* HACK: Duplicated from  matcore.c */
 #define IS_MATRIX(x) (((Matrix_t *)(x))->Magic == MAT_MAGIC)
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 static void *XRead(FILE *f)
 {
-    long fl;
+   long fl;
 
-    if (SysReadLong(f,&fl,1) != 1)
-    {
-	MTX_ERROR("Error reading file header: %S");
-	return NULL;
-    }
-    SysFseek(f,0);
-    if (fl >= 2)
-	return (void *)MatRead(f);
-    else
-	return (void *)PermRead(f);
+   if (SysReadLong(f,&fl,1) != 1) {
+      MTX_ERROR("Error reading file header: %S");
+      return NULL;
+   }
+   SysFseek(f,0);
+   if (fl >= 2) {
+      return (void *)MatRead(f);
+   } else {
+      return (void *)PermRead(f);
+   }
 }
+
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 /// Load a matrix or permutation.
@@ -46,20 +45,17 @@ static void *XRead(FILE *f)
 
 void *XLoad(const char *fn)
 {
-    FILE *f;
-    void *x;
+   FILE *f;
+   void *x;
 
-    f = SysFopen(fn,FM_READ);
-    if (f == NULL) 
-    {
-	MTX_ERROR1("Cannot open %s: %S",fn);
-	return NULL;
-    }
-    x = XRead(f);
-    return x;
+   f = SysFopen(fn,FM_READ);
+   if (f == NULL) {
+      MTX_ERROR1("Cannot open %s: %S",fn);
+      return NULL;
+   }
+   x = XRead(f);
+   return x;
 }
-
-
 
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -71,11 +67,11 @@ void *XLoad(const char *fn)
 /// @return $0$ on success, $-1$ on error.
 
 int XSave(void *a, const char *fn)
-
 {
-    if (IS_MATRIX(a))
-	return MatSave((Matrix_t *)a,fn);
-    return PermSave((Perm_t *)a,fn);
+   if (IS_MATRIX(a)) {
+      return MatSave((Matrix_t *)a,fn);
+   }
+   return PermSave((Perm_t *)a,fn);
 }
 
 
@@ -88,11 +84,13 @@ int XSave(void *a, const char *fn)
 
 void XMul(void *a, void *b)
 {
-    if (IS_MATRIX(a))
-	MatMul((Matrix_t *)a,(Matrix_t *)b);
-    else
-	PermMul((Perm_t *)a,(Perm_t *)b);
+   if (IS_MATRIX(a)) {
+      MatMul((Matrix_t *)a,(Matrix_t *)b);
+   } else {
+      PermMul((Perm_t *)a,(Perm_t *)b);
+   }
 }
+
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 /// Order of a matrix or permutation.
@@ -102,49 +100,49 @@ void XMul(void *a, void *b)
 
 long XOrder(void *a)
 {
-    if (IS_MATRIX(a))
-	return MatOrder((Matrix_t *)a);
-    else
-	return PermOrder((Perm_t *)a);
+   if (IS_MATRIX(a)) {
+      return MatOrder((Matrix_t *)a);
+   } else {
+      return PermOrder((Perm_t *)a);
+   }
 }
 
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 /// Check object compatibility.
-/// This function checks if two objects are compatible for |XMul()|, i.e., 
-/// if they are of the same type (matrix or permutation) and have the same 
+/// This function checks if two objects are compatible for |XMul()|, i.e.,
+/// if they are of the same type (matrix or permutation) and have the same
 /// attributes.
 /// @param a First matrix or permutation.
 /// @param b Second matrix or permutation.
 
 int XIsCompatible(void *a, void *b)
 {
-    if (IS_MATRIX(a))
-    {
-	Matrix_t *am = (Matrix_t *) a;
-	Matrix_t *bm = (Matrix_t *) b;
-	return IS_MATRIX(b) && am->Field == bm->Field && am->Nor == bm->Nor 
-	    && am->Noc == bm->Noc;
-    }
-    else
-    {
-	Perm_t *ap = (Perm_t *) a;
-	Perm_t *bp = (Perm_t *) b;
-	return !IS_MATRIX(b) && ap->Degree == bp->Degree;
-    }
+   if (IS_MATRIX(a)) {
+      Matrix_t *am = (Matrix_t *) a;
+      Matrix_t *bm = (Matrix_t *) b;
+      return IS_MATRIX(b) && am->Field == bm->Field && am->Nor == bm->Nor
+             && am->Noc == bm->Noc;
+   } else {
+      Perm_t *ap = (Perm_t *) a;
+      Perm_t *bp = (Perm_t *) b;
+      return !IS_MATRIX(b) && ap->Degree == bp->Degree;
+   }
 }
+
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 /// Duplicate a matrix or permutation.
 /// This function creates a copy of a matrix or permutation.
 /// @param a The matrix or permutation.
 /// @return Pointer to a copy of a, or NULL on error.
-/// @see 
+/// @see
 
 void *XDup(void *a)
 {
-    return IS_MATRIX(a) ? (void *) MatDup(a) : (void *)PermDup(a);
+   return IS_MATRIX(a) ? (void *) MatDup(a) : (void *)PermDup(a);
 }
+
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 /// Inverse of a matrix or permutation.
@@ -153,8 +151,9 @@ void *XDup(void *a)
 
 void *XInverse(void *a)
 {
-    return IS_MATRIX(a) ? (void *) MatInverse(a) : (void *)PermInverse(a);
+   return IS_MATRIX(a) ? (void *) MatInverse(a) : (void *)PermInverse(a);
 }
+
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 /// Free a matrix or permutation.
@@ -162,12 +161,12 @@ void *XInverse(void *a)
 
 void XFree(void *a)
 {
-    if (IS_MATRIX(a))
-	MatFree((Matrix_t *)a);
-    else
-	PermFree((Perm_t *)a);
+   if (IS_MATRIX(a)) {
+      MatFree((Matrix_t *)a);
+   } else {
+      PermFree((Perm_t *)a);
+   }
 }
-
 
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -180,26 +179,25 @@ void XFree(void *a)
 
 void *XPower(void *a, int n)
 {
-    void *b;
-    int neg = 0;
+   void *b;
+   int neg = 0;
 
-    if (n < 0)
-    {
-	a = XInverse(a);
-	if (a == NULL)
-	    return NULL;
-	n = -n;
-	neg = 1;
-    }
+   if (n < 0) {
+      a = XInverse(a);
+      if (a == NULL) {
+         return NULL;
+      }
+      n = -n;
+      neg = 1;
+   }
 
-    if (IS_MATRIX(a))
-	b = (void *) MatPower((Matrix_t *) a,n);
-    else
-	b = (void *) PermPower((Perm_t *) a,n);
-    if (neg)
-	XFree(a);
-    return b;
+   if (IS_MATRIX(a)) {
+      b = (void *) MatPower((Matrix_t *) a,n);
+   } else {
+      b = (void *) PermPower((Perm_t *) a,n);
+   }
+   if (neg) {
+      XFree(a);
+   }
+   return b;
 }
-
-
-

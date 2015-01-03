@@ -9,13 +9,10 @@
 #include "meataxe.h"
 #include <string.h>
 
-   
-/* --------------------------------------------------------------------------
-   Local data
-   -------------------------------------------------------------------------- */
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// Local data
 
 MTX_DEFINE_FILE_INFO
-
 
 /// @addtogroup mf
 /// @{
@@ -33,15 +30,16 @@ MTX_DEFINE_FILE_INFO
 
 int MfWriteLong(MtxFile_t *f, const long *buf, int count)
 {
-    int rc;
-    if (!MfIsValid(f)) {
-	return -1;
-    }
-    rc = SysWriteLong(f->File,buf,count);
-    if (rc != count) {
-	MTX_ERROR1("%s: write failed",f->Name);
-    }
-    return rc;
+   int rc;
+   if (!MfIsValid(f)) {
+      return -1;
+   }
+   rc = SysWriteLong(f->File,buf,count);
+   if (rc != count) {
+      MTX_ERROR1("%s: write failed",f->Name);
+   }
+   return rc;
 }
+
 
 /// @}

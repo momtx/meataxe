@@ -8,13 +8,10 @@
 
 #include "meataxe.h"
 
-   
-/* --------------------------------------------------------------------------
-   Local data
-   -------------------------------------------------------------------------- */
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// Local data
 
 MTX_DEFINE_FILE_INFO
-
 
 /// @addtogroup poly
 /// @{
@@ -29,24 +26,22 @@ MTX_DEFINE_FILE_INFO
 
 FPoly_t *FpMul(FPoly_t *dest, const FPoly_t *src)
 {
-    int i;
+   int i;
 
-    /* Check the arguments
-       ------------------- */
-    if (!FpIsValid(src) || !FpIsValid(dest))
-	return NULL;
+   /* Check the arguments
+      ------------------- */
+   if (!FpIsValid(src) || !FpIsValid(dest)) {
+      return NULL;
+   }
 
-    for (i = 0; i < src->NFactors; ++i)
-    {
-	if (FpMulP(dest,src->Factor[i],src->Mult[i]) == NULL)
-	{
-	    MTX_ERROR("Cannot multiply");
-	    return NULL;
-	}
-    }
-    return dest;
+   for (i = 0; i < src->NFactors; ++i) {
+      if (FpMulP(dest,src->Factor[i],src->Mult[i]) == NULL) {
+         MTX_ERROR("Cannot multiply");
+         return NULL;
+      }
+   }
+   return dest;
 }
 
 
 /// @}
-

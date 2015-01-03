@@ -9,10 +9,8 @@
 #include "meataxe.h"
 #include <string.h>
 
-   
-/* --------------------------------------------------------------------------
-   Local data
-   -------------------------------------------------------------------------- */
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// Local data
 
 MTX_DEFINE_FILE_INFO
 
@@ -30,11 +28,10 @@ MTX_DEFINE_FILE_INFO
 /// for each block, all linear combinations of the three rows are calculated
 /// once. Multiplying a single vector by the matrix can then be carried out
 /// with only n/3 row operations.
-/// 
+///
 /// On the other hand, the greased matrix needs more memory. For grease level
 /// 8 with GF(2), the memory needed is increased by a factor of 32.
 /// @{
-
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 /// Check a greased matrix.
@@ -47,22 +44,18 @@ MTX_DEFINE_FILE_INFO
 
 int GrMatIsValid(const GreasedMatrix_t *mat)
 {
-    if (mat == NULL)
-    {
-	MTX_ERROR("NULL matrix");
-	return 0;
-    }
-    if (mat->Magic != GMAT_MAGIC || mat->Field < 2 || mat->Nor < 0 || 
-	mat->Noc < 0)
-    {
-	MTX_ERROR3("Invalid greased matrix (field=%d, nor=%d, noc=%d)",
-            mat->Field,mat->Nor,mat->Noc);
-	return 0;
-    }
-    return 1;
+   if (mat == NULL) {
+      MTX_ERROR("NULL matrix");
+      return 0;
+   }
+   if ((mat->Magic != GMAT_MAGIC) || (mat->Field < 2) || (mat->Nor < 0) ||
+       (mat->Noc < 0)) {
+      MTX_ERROR3("Invalid greased matrix (field=%d, nor=%d, noc=%d)",
+                 mat->Field,mat->Nor,mat->Noc);
+      return 0;
+   }
+   return 1;
 }
-
-
 
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -77,16 +70,16 @@ int GrMatIsValid(const GreasedMatrix_t *mat)
 
 int GrMatFree(GreasedMatrix_t *mat)
 {
-    if (!GrMatIsValid(mat))
-	return -1;
-    if (mat->PrecalcData != NULL)
-	SysFree(mat->PrecalcData);
-    memset(mat,0,sizeof(Matrix_t));
-    SysFree(mat);
-    return 0;
+   if (!GrMatIsValid(mat)) {
+      return -1;
+   }
+   if (mat->PrecalcData != NULL) {
+      SysFree(mat->PrecalcData);
+   }
+   memset(mat,0,sizeof(Matrix_t));
+   SysFree(mat);
+   return 0;
 }
-
-
 
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -99,7 +92,7 @@ int GrMatFree(GreasedMatrix_t *mat)
 /// deleting it. @a gr_nrows is the grease level, or block size, and must
 /// be in the range 0...16. A grease level of 0 means that greasing is
 /// switched off.
-/// 
+///
 /// To destroy a greased matrix, use GrMatFree().
 /// @param M The normal matrix.
 /// @param gr_rows Grease level (number of rows per block).
@@ -107,91 +100,91 @@ int GrMatFree(GreasedMatrix_t *mat)
 
 GreasedMatrix_t *GrMatAlloc(const Matrix_t *M, int gr_rows)
 {
-    long i,j,k,l; /* counters */
-    long rows;    /* number of rows written so far in current part */
-    PTR p;        /* to write vectors */
-    PTR q;        /* to read vectors from the original matrix */
-    PTR r;        /* to read vectors from previous results */
-    PTR bs;       /* start of current block of vectors */
-    PTR v;        /* space for one vector */
-    long nrvecs;  /* number of vectors in greased table */
-    GreasedMatrix_t *res;  /* the result */
+   long i,j,k,l;  /* counters */
+   long rows;     /* number of rows written so far in current part */
+   PTR p;         /* to write vectors */
+   PTR q;         /* to read vectors from the original matrix */
+   PTR r;         /* to read vectors from previous results */
+   PTR bs;        /* start of current block of vectors */
+   PTR v;         /* space for one vector */
+   long nrvecs;   /* number of vectors in greased table */
+   GreasedMatrix_t *res;   /* the result */
 
-    res = ALLOC(GreasedMatrix_t);
-    if (res == NULL)
-	return NULL;
-    res->Field = M->Field;
-    res->Noc = M->Noc;
-    res->Nor = M->Nor;
-    res->GrRows = gr_rows;
+   res = ALLOC(GreasedMatrix_t);
+   if (res == NULL) {
+      return NULL;
+   }
+   res->Field = M->Field;
+   res->Noc = M->Noc;
+   res->Nor = M->Nor;
+   res->GrRows = gr_rows;
 
-    FfSetField(M->Field);
-    FfSetNoc(M->Noc);
+   FfSetField(M->Field);
+   FfSetNoc(M->Noc);
 
-    /* special case of greasing switched off: */
-    if (gr_rows == 0)
-    {
-	res->GrBlockSize = 1;
-	res->PrecalcData = FfAlloc(M->Nor);
-	res->NumVecs = M->Nor;
-	memcpy(res->PrecalcData,M->Data,FfCurrentRowSize * M->Nor);
-	res->ExtrTab = NULL;
-    	res->Magic = GMAT_MAGIC;
-	return res;
-    }
+   /* special case of greasing switched off: */
+   if (gr_rows == 0) {
+      res->GrBlockSize = 1;
+      res->PrecalcData = FfAlloc(M->Nor);
+      res->NumVecs = M->Nor;
+      memcpy(res->PrecalcData,M->Data,FfCurrentRowSize * M->Nor);
+      res->ExtrTab = NULL;
+      res->Magic = GMAT_MAGIC;
+      return res;
+   }
 
-    nrvecs = 1;
-    for (i = gr_rows;i > 0;i--)
-	nrvecs *= M->Field; /* This calculates fl^gr_rows */
-    res->GrBlockSize = --nrvecs;  /* the null vector is not stored! */
+   nrvecs = 1;
+   for (i = gr_rows; i > 0; i--) {
+      nrvecs *= M->Field;   /* This calculates fl^gr_rows */
+   }
+   res->GrBlockSize = --nrvecs;   /* the null vector is not stored! */
 
-    nrvecs = nrvecs * (M->Nor / gr_rows) + M->Nor % gr_rows;
-    res->NumVecs = nrvecs;
-    if ((res->PrecalcData = FfAlloc(nrvecs)) == NULL)
-	return NULL;
-    v = FfAlloc(1);
+   nrvecs = nrvecs * (M->Nor / gr_rows) + M->Nor % gr_rows;
+   res->NumVecs = nrvecs;
+   if ((res->PrecalcData = FfAlloc(nrvecs)) == NULL) {
+      return NULL;
+   }
+   v = FfAlloc(1);
 
-  /* Now we calculate all linear combinations necessary: */
-    p = res->PrecalcData;
-    q = M->Data;
-    for (i = M->Nor / gr_rows; i > 0; i--)
-    {  /* all greasing block */
-	bs = p;
-	rows = 0;  /* this is 1 - 1 = fl^0 - 1 */
+   /* Now we calculate all linear combinations necessary: */
+   p = res->PrecalcData;
+   q = M->Data;
+   for (i = M->Nor / gr_rows; i > 0; i--) { /* all greasing block */
+      bs = p;
+      rows = 0;    /* this is 1 - 1 = fl^0 - 1 */
 
-    /* now for all vectors in the block: */
-    for (j = gr_rows;j > 0;j--)
-    {   /* all vectors in block */
-      for (k = 1; k < M->Field; k++)
-      {  /* all field elements */
-	FfCopyRow(v,q);
-	FfMulRow(v,FfFromInt(k));
-	FfCopyRow(p,v);   /* copy the new multiple */
-	FfStepPtr(&p);
+      /* now for all vectors in the block: */
+      for (j = gr_rows; j > 0; j--) { /* all vectors in block */
+         for (k = 1; k < M->Field; k++) { /* all field elements */
+            FfCopyRow(v,q);
+            FfMulRow(v,FfFromInt(k));
+            FfCopyRow(p,v); /* copy the new multiple */
+            FfStepPtr(&p);
 
-	r = bs;      /* start from the beginning of the current block */
-	for (l = rows;l > 0;l--) {   /* for all vectors so far */
-	  FfCopyRow(p,r);
-	  FfStepPtr(&r);
-	  FfAddRow(p,v);
-	  FfStepPtr(&p);
-	}
+            r = bs;  /* start from the beginning of the current block */
+            for (l = rows; l > 0; l--) { /* for all vectors so far */
+               FfCopyRow(p,r);
+               FfStepPtr(&r);
+               FfAddRow(p,v);
+               FfStepPtr(&p);
+            }
+         }
+         FfStepPtr(&q); /* take a new row of the original matrix */
+         rows = (rows + 1) * M->Field - 1; /* the null vector is not there */
       }
-      FfStepPtr(&q);   /* take a new row of the original matrix */
-      rows = (rows+1)*M->Field - 1;  /* the null vector is not there */
-    }
-  }
+   }
 
-    for (i = M->Nor % gr_rows;i > 0;i--) {  /* the rest of the vectors */
-	FfCopyRow(p,q);
-	FfStepPtr(&p);
-	FfStepPtr(&q);
-    }
-    res->ExtrTab = GrGetExtractionTable(M->Field,gr_rows);
-    SysFree(v);
+   for (i = M->Nor % gr_rows; i > 0; i--) { /* the rest of the vectors */
+      FfCopyRow(p,q);
+      FfStepPtr(&p);
+      FfStepPtr(&q);
+   }
+   res->ExtrTab = GrGetExtractionTable(M->Field,gr_rows);
+   SysFree(v);
 
-    res->Magic = GMAT_MAGIC;
-    return res;
+   res->Magic = GMAT_MAGIC;
+   return res;
 }
+
 
 /// @}

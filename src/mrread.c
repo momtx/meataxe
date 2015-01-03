@@ -10,8 +10,8 @@
 #include <string.h>
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-///   Local data
-   
+// Local data
+
 MTX_DEFINE_FILE_INFO
 
 /// @addtogroup mrep
@@ -23,7 +23,7 @@ MTX_DEFINE_FILE_INFO
 /// from files. Each generator ist expected in a different file. The file name
 /// is constructed by appending ".1", ".2" etc. to @a basename or, if @a basename
 /// contains a "%d" placeholder, by replacing the "%d" with "1", "2", etc.
-/// For example, the following lines 
+/// For example, the following lines
 /// @code
 /// m11 = MrLoad("m11",2);
 /// m11 = MrLoad("m11.%d",2);
@@ -36,52 +36,49 @@ MTX_DEFINE_FILE_INFO
 
 MatRep_t *MrLoad(const char *basename, int ngen)
 {
-    char *fn;
-    int ext_format;	    /* '%d' found in <basename> */
-    MatRep_t *mr;
-    int i;
+   char *fn;
+   int ext_format;          /* '%d' found in <basename> */
+   MatRep_t *mr;
+   int i;
 
-    /* Make a copy of the basename and reserve extra bytes for the extension.
-       ---------------------------------------------------------------------- */
-    fn = SysMalloc(strlen(basename) + 10);
-    if (fn == NULL)
-    {
-	MTX_ERROR("Cannot allocate buffer");
-	return NULL;
-    }
+   /* Make a copy of the basename and reserve extra bytes for the extension.
+      ---------------------------------------------------------------------- */
+   fn = SysMalloc(strlen(basename) + 10);
+   if (fn == NULL) {
+      MTX_ERROR("Cannot allocate buffer");
+      return NULL;
+   }
 
-    /* Allocate the Representation
-       --------------------------- */
-    mr = MrAlloc(0,NULL,0);
-    if (mr == NULL)
-    {
-	MTX_ERROR("Cannot allocate representation");
-	SysFree(fn);
-	return NULL;
-    }
+   /* Allocate the Representation
+      --------------------------- */
+   mr = MrAlloc(0,NULL,0);
+   if (mr == NULL) {
+      MTX_ERROR("Cannot allocate representation");
+      SysFree(fn);
+      return NULL;
+   }
 
-    /* Read the generators
-       ------------------- */
-    ext_format = strstr(basename,"%d") != NULL;
-    for (i = 0; i < ngen; ++i)
-    {
-	Matrix_t *gen;
-	if (ext_format)
-	    sprintf(fn,basename,i+1);
-	else
-	    sprintf(fn,"%s.%d",basename,i+1);
-	if ((gen = MatLoad(fn)) == NULL || MrAddGenerator(mr,gen,0) != 0)
-	{
-	    MTX_ERROR("Cannot load generator");
-	    MrFree(mr);
-	    SysFree(fn);
-	    return NULL;
-	}
-    }
+   /* Read the generators
+      ------------------- */
+   ext_format = strstr(basename,"%d") != NULL;
+   for (i = 0; i < ngen; ++i) {
+      Matrix_t *gen;
+      if (ext_format) {
+         sprintf(fn,basename,i + 1);
+      } else {
+         sprintf(fn,"%s.%d",basename,i + 1);
+      }
+      if (((gen = MatLoad(fn)) == NULL) || (MrAddGenerator(mr,gen,0) != 0)) {
+         MTX_ERROR("Cannot load generator");
+         MrFree(mr);
+         SysFree(fn);
+         return NULL;
+      }
+   }
 
-    SysFree(fn);
-    return mr;
+   SysFree(fn);
+   return mr;
 }
 
-/// @}
 
+/// @}

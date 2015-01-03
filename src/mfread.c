@@ -9,10 +9,8 @@
 #include "meataxe.h"
 #include <string.h>
 
-   
-/* --------------------------------------------------------------------------
-   Local data
-   -------------------------------------------------------------------------- */
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// Local data
 
 MTX_DEFINE_FILE_INFO
 
@@ -21,7 +19,7 @@ MTX_DEFINE_FILE_INFO
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 /// Read row vectors from a file.
-/// This function reads @a nrows rows from a data file into a buffer. 
+/// This function reads @a nrows rows from a data file into a buffer.
 /// Unlike FfReadRows(), this function changes the current row size to
 /// the appropriate value, which is stored in the MtxFile_t object.
 /// @param f Pointer to the file.
@@ -31,30 +29,33 @@ MTX_DEFINE_FILE_INFO
 
 int MfReadRows(MtxFile_t *f, PTR buf, int nrows)
 {
-    int i;
-    register char *b = (char *) buf;
+   int i;
+   register char *b = (char *) buf;
 
-    if (!MfIsValid(f))
-	return -1;
-    if (FfNoc != f->Noc)
-	FfSetNoc(f->Noc);
+   if (!MfIsValid(f)) {
+      return -1;
+   }
+   if (FfNoc != f->Noc) {
+      FfSetNoc(f->Noc);
+   }
 
-    /* Handle special case <FfNoc> = 0
-       ------------------------------- */
-    if (FfNoc == 0)
-	return nrows;
+   /* Handle special case <FfNoc> = 0
+      ------------------------------- */
+   if (FfNoc == 0) {
+      return nrows;
+   }
 
-    /* Read rows one by one
-       -------------------- */
-    for (i = 0; i < nrows; ++i)
-    {
-        if (fread(b,FfTrueRowSize(FfNoc),1,f->File) != 1) break;
-	b += FfCurrentRowSize;
-    }
-    if (ferror(f->File)) 
-	MTX_ERROR1("%s: Read failed: %S",f->Name);
-    return i;
+   /* Read rows one by one
+      -------------------- */
+   for (i = 0; i < nrows; ++i) {
+      if (fread(b,FfTrueRowSize(FfNoc),1,f->File) != 1) { break; }
+      b += FfCurrentRowSize;
+   }
+   if (ferror(f->File)) {
+      MTX_ERROR1("%s: Read failed: %S",f->Name);
+   }
+   return i;
 }
 
-/// @}
 
+/// @}

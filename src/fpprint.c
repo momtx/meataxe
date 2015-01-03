@@ -8,14 +8,10 @@
 
 #include "meataxe.h"
 
-   
-/* --------------------------------------------------------------------------
-   Local data
-   -------------------------------------------------------------------------- */
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// Local data
 
 /*MTX_DEFINE_FILE_INFO*/
-
-
 
 /// @addtogroup poly
 /// @{
@@ -29,24 +25,26 @@
 
 int FpPrint(const char *name, const FPoly_t *p)
 {
-    int i;
-    if (!FpIsValid(p))
-	return -1;
-    if (name != NULL) 
-	printf("%s =",name);
-    for (i = 0; i < p->NFactors; ++i)
-    {   
-	int e = p->Mult[i];
-	if (i > 0) printf("    * ");
-	printf("(");
-	PolPrint(NULL,p->Factor[i]);
-	if (e > 1)
-	    printf(")^%d\n",e);
-	else
-	    printf(")\n");
-    }
-    return 0;
+   int i;
+   if (!FpIsValid(p)) {
+      return -1;
+   }
+   if (name != NULL) {
+      printf("%s =",name);
+   }
+   for (i = 0; i < p->NFactors; ++i) {
+      int e = p->Mult[i];
+      if (i > 0) { printf("    * "); }
+      printf("(");
+      PolPrint(NULL,p->Factor[i]);
+      if (e > 1) {
+         printf(")^%d\n",e);
+      } else {
+         printf(")\n");
+      }
+   }
+   return 0;
 }
 
-/// @}
 
+/// @}
