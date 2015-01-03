@@ -21,7 +21,6 @@ MTX_DEFINE_FILE_INFO
 /// @defgroup cfinfo Module Structure
 /// @{
 
-
 /// @class CfInfo
 /// Constituent data structure.
 /// The CFInfo data structure contains all information about one 

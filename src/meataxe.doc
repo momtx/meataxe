@@ -4,7 +4,6 @@
 
 @mainpage The C MeatAxe
 
-@section intro Introduction
 The MeatAxe is a set of programs for working with matrices over
 finite fields. Its primary purpose is the calculation of modular
 character tables, although it can be used for other purposes, such
@@ -27,7 +26,7 @@ will be able to work with mixed types, but at present
 ZSP is restricted to matrices only, and ZMU can multiply
 a matrix by a permutation, but not vice versa.
 
-@section intro_c Remarks on the C implementation
+<b>Remarks on the C implementation</b><br>
 Most of the programs (including their documentation) in this package
 are based on the FORTRAN code written by Richard A. Parker.
 The translation from FORTRAN to C was done in 1989 and since then both
@@ -42,7 +41,7 @@ I have tried to make the programs as straightforward and user-friendly
 as possible. Moreover, the source code is freely available, so be free
 to change any parts you are annoyed with.
 
-@section intro_plat Supported platforms
+<b>Supported platforms</b><br>
 The MeatAxe should run on most UNIX platforms including Linux, NetBSD,
 Ultrix, Solaris, HP-UX, and on Windows NT. Other platforms as MS-DOS,
 VM/CMS and VMS are not officially supported, but it should not be too
@@ -53,20 +52,6 @@ operating system may impose some additional restrictions on the programs.
 For example, the length and syntax of file names may be more restricted
 as in UNIX, and CPU time information may not be available or incorrect.
 
-@section intro_doc Some notes on the documentation
-
-@attention
-The MeatAxe documentation was originally written in LaTeX and is currently
-being migrated to Doxygen. Until this task is finished
-the hypertext documentation you are currently reading may be incomplete.
-
-The MeatAxe documentation is split into two parts. The first part (@ref pg_userguide)
-is aimed at users who do not intend to modify the source code nor use the MeatAxe in
-their own programs.
-
-Users interested in programming with the MeatAxe and MeatAxe internals
-in general will find the second part, @ref pg_programming.
-
 - @subpage changelog
 - @subpage pg_userguide
 - @subpage pg_programming
@@ -76,10 +61,10 @@ in general will find the second part, @ref pg_programming.
 @page pg_userguide User's Guide
 Sections:
 
-- @subpage changelog
 - @subpage pg_start
 - @subpage pg_using
 - @subpage prog_stdopts
+- @subpage pg_progs_conv
 - @subpage pg_progs_lattice
 - @subpage pg_progs_index
 - @subpage pg_file_formats
