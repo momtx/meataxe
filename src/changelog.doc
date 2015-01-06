@@ -5,6 +5,12 @@
 @page changelog Release Notes
 
 @section r2_4_x Release 2.4.X
+@par Jan-2015
+Refactoring of tests (work in progress).
+
+@par Jan-2015
+The documentation was updated ad extended (work in progress).
+
 @par Aug-2012
 The documentation was updated ad extended (but is still far from complete).
 

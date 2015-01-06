@@ -4,7 +4,6 @@
 /ssh_
 .*.swp
 /tags
-/tests/
 /tmp/
 *.unc-backup.md5~
 *.unc-backup~

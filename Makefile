@@ -108,9 +108,9 @@ TS_OBJS1=c-args c-bitstring c-charpol\
 	c-ffio c-fileio c-ffmat c-ffrow c-fpoly \
 	c-grease c-kernel c-matins c-matrix c-matset\
 	c-os c-perm c-poly c-pseed c-quot c-random \
-	c-sets c-stf c-tensor
+	c-sets c-stf c-tensor c-zzz
 
-TS_OBJS=tmp/zzztest.o $(TS_OBJS1:%=tmp/%.o) tmp/libmtx.a
+TS_OBJS=$(TS_OBJS1:%=tmp/%.o) tmp/libmtx.a
 
 bin/zzztest: bin/mk.dir $(TS_OBJS)
 	@echo "Linking $@"
@@ -125,7 +125,12 @@ TESTS=0000\
   0113 0114 0115 0116 0117 0118 0200 0201 0210 0211\
   0212 0213 0214 0215
 
-check: tmp/zzztest.done $(TESTS:%=tmp/t-%.done)
+#tests: $(TESTS:%=tmp/t-%.done)
+test: tmp/zzztest.done 
+
+tmp/c-%.o: tmp/mk.dir tests/c-%.c src/meataxe.h tmp/config.h
+	@echo "Compiling $*.c -> $@"
+	@$(CC) $(CFLAGS) -Isrc -c tests/c-$*.c -o $@
 
 tmp/zzztest.done: tmp/mk.dir bin/zzztest
 	cd tmp && ../bin/zzztest
@@ -149,7 +154,7 @@ tmp/config.h: tmp/mk.dir Makefile Makefile.conf src/genconfig.c
 	@tmp/genconfig >$@
 
 
-.PHONY: tar clean install check
+.PHONY: tar clean install test
 .PRECIOUS: tmp/%.o
 
 
@@ -180,7 +185,7 @@ EXPORTED_FILES =\
   $(PROGRAMS:%=src/%.c)\
   $(LIB_OBJS:%=src/%.c)\
   src/meataxe.h src/genconfig.c\
-  src/check.h $(TS_OBJS1:%=src/%.c) $(TS_OBJS1:%=src/%.h) src/zzztest.c\
+  tests/check.h $(TS_OBJS1:%=tests/%.c) $(TS_OBJS1:%=tests/%.h) \
   $(TESTS:%=tests/t-%) tests/config tests/data\
   Makefile Makefile.conf.dist README COPYING\
   src/meataxe.doc src/changelog.doc\
