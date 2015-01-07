@@ -34,7 +34,6 @@ static int CheckError()
 
 #endif
 
-
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 #define NMAT 5
@@ -54,11 +53,11 @@ test_F TestBsAlloc()
       BsIsValid(m[i]);
       MTX_VERIFY(m[i]->Size == bssize[i]);
       for (k = 0; k < bssize[i]; ++k) {
-	  ASSERT(!BsTest(m[i],k));
+         ASSERT(!BsTest(m[i],k));
       }
    }
    for (i = 0; i < NMAT; ++i) {
-       ASSERT_EQ_INT(BsFree(m[i]), 0);
+      ASSERT_EQ_INT(BsFree(m[i]), 0);
    }
    old_err_handler = MtxSetErrorHandler(MyErrorHandler);
 #ifdef DEBUG
@@ -78,21 +77,21 @@ static void TestSetClear(int size, BitString_t *a)
    for (i = 0; i < size; ++i) {
       int k;
       for (k = 0; k < i; ++k) {
-	  ASSERT(BsTest(a,k));
+         ASSERT(BsTest(a,k));
       }
       for (; k < size; ++k) {
-	  ASSERT(!BsTest(a,k));
+         ASSERT(!BsTest(a,k));
       }
       BsSet(a,i);
    }
    for (i = 0; i < size; ++i) {
       int k;
       for (k = 0; k < i; ++k) {
-	  ASSERT(!BsTest(a,k));
+         ASSERT(!BsTest(a,k));
       }
       for (; k < size; ++k) {
-	  ASSERT(BsTest(a,k));
-         }
+         ASSERT(BsTest(a,k));
+      }
       BsClear(a,i);
    }
 
@@ -101,9 +100,10 @@ static void TestSetClear(int size, BitString_t *a)
    }
    ASSERT_EQ_INT(BsClearAll(a), 0);
    for (i = 0; i < size; ++i) {
-       ASSERT(!BsTest(a,i));
+      ASSERT(!BsTest(a,i));
    }
 }
+
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -282,6 +282,7 @@ static void TestAndOr1(int size)
    BsFree(a);
 }
 
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 test_F BsAndOrMinusRandomTest()
@@ -290,6 +291,7 @@ test_F BsAndOrMinusRandomTest()
       TestAndOr1(i);
    }
 }
+
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -322,6 +324,7 @@ test_F BsIntersectionCountRandomTest()
    }
 }
 
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 test_F BsIsSubRandomTest()
@@ -341,13 +344,13 @@ test_F BsIsSubRandomTest()
       for (k = 0; k < size; ++k) {
          if (!BsTest(a,k)) {
             BsSet(b,k);
-	    ASSERT(!BsIsSub(b,a));
+            ASSERT(!BsIsSub(b,a));
             BsClear(b,k);
          }
       }
       for (k = 0; k < size; ++k) {
          BsClear(b,k);
-	 ASSERT(BsIsSub(b,a));
+         ASSERT(BsIsSub(b,a));
       }
       BsFree(a);
       BsFree(b);

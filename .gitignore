@@ -1,10 +1,11 @@
 /bin/
 /doc/
+/Makefile.conf
 /push
+/push_doc
 /ssh_
 .*.swp
 /tags
 /tmp/
-*.unc-backup.md5~
 *.unc-backup~
-
+*.unc-backup.md5~
