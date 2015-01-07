@@ -14,7 +14,7 @@ PROGRAMS = \
 all build: $(PROGRAMS:%=bin/%)
 
 clean:
-	rm -rf bin tmp
+	rm -rf bin tmp *.zzz check.ma1 check.pe1 check.po1
 	-cd tests; make clean
 
 
@@ -128,9 +128,17 @@ TESTS=0000\
 #tests: $(TESTS:%=tmp/t-%.done)
 test: tmp/zzztest.done 
 
+tmp/test_table.c: tmp/tex $(TS_OBJS1:%=tests/%.c)
+	tmp/tex $(TS_OBJS1:%=tests/%.c) >$@
+
+tmp/tex: tests/tex.c
+	@$(CC) -Itests -Isrc $(CFLAGS) $(LFLAGS) $< -o $@
+
 tmp/c-%.o: tmp/mk.dir tests/c-%.c src/meataxe.h tmp/config.h
 	@echo "Compiling $*.c -> $@"
-	@$(CC) $(CFLAGS) -Isrc -c tests/c-$*.c -o $@
+	@$(CC) $(CFLAGS) -Itests -Isrc -c tests/c-$*.c -o $@
+
+tmp/c-zzz.o: tmp/test_table.c
 
 tmp/zzztest.done: tmp/mk.dir bin/zzztest
 	cd tmp && ../bin/zzztest

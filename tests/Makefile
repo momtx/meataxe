@@ -1,1 +1,2 @@
+.PHONY: clean
 clean:
