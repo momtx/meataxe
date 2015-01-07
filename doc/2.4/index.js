@@ -1,11 +1,6 @@
 var index =
 [
-    [ "Introduction", "index.html#intro", null ],
-    [ "Remarks on the C implementation", "index.html#intro_c", null ],
-    [ "Supported platforms", "index.html#intro_plat", null ],
-    [ "Some notes on the documentation", "index.html#intro_doc", null ],
     [ "Release Notes", "changelog.html", [
-      [ "2.4.X", "changelog.html#Release", null ],
       [ "Release 2.4.X", "changelog.html#r2_4_x", null ],
       [ "Release 2.4.13", "changelog.html#r2_4_13", null ],
       [ "Release 2.4.8", "changelog.html#r2_4_8", null ],

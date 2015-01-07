@@ -61,24 +61,15 @@ $(document).ready(function(){initNavTree('index.html','');});
 <div class="title">The C MeatAxe </div>  </div>
 </div><!--header-->
 <div class="contents">
-<div class="textblock"><h1><a class="anchor" id="intro"></a>
-Introduction</h1>
-<p>The MeatAxe is a set of programs for working with matrices over finite fields. Its primary purpose is the calculation of modular character tables, although it can be used for other purposes, such as investigating subgroup structure, module structure etc. Indeed, there is a set of programs (see <a class="el" href="pg_progs_lattice.html">The Lattice Programs</a>) to compute automatically the submodule lattice of a given module.</p>
+<div class="textblock"><p>The MeatAxe is a set of programs for working with matrices over finite fields. Its primary purpose is the calculation of modular character tables, although it can be used for other purposes, such as investigating subgroup structure, module structure etc. Indeed, there is a set of programs (see <a class="el" href="pg_progs_lattice.html">The Lattice Programs</a>) to compute automatically the submodule lattice of a given module.</p>
 <p>Each of the programs is self-contained, reading its input from files, and writing its output to files. To make the MeatAxe usable, therefore, it is necessary to write operating system commands to run the various programs. This documentation is primarily for the programs, and further documentation is necessary for the various implementations in differing operating environments.</p>
 <p>The primitive objects are of two types: matrices and permutations. Permutation objects can be handled, but not as smoothly as you might expect. For example, it is hoped that programs such as split (<a class="el" href="prog_zsp.html">zsp</a>) and multiply (<a class="el" href="prog_zmu.html">zmu</a>) will be able to work with mixed types, but at present ZSP is restricted to matrices only, and ZMU can multiply a matrix by a permutation, but not vice versa.</p>
-<h1><a class="anchor" id="intro_c"></a>
-Remarks on the C implementation</h1>
-<p>Most of the programs (including their documentation) in this package are based on the FORTRAN code written by Richard A. Parker. The translation from FORTRAN to C was done in 1989 and since then both versions have developed independently. The user interface of the C programs has been changed significantly (e.g., command line arguments were introduced) and some new programs have been added which are not available in the FORTRAN MeatAxe.</p>
+<p><b>Remarks on the C implementation</b><br />
+ Most of the programs (including their documentation) in this package are based on the FORTRAN code written by Richard A. Parker. The translation from FORTRAN to C was done in 1989 and since then both versions have developed independently. The user interface of the C programs has been changed significantly (e.g., command line arguments were introduced) and some new programs have been added which are not available in the FORTRAN MeatAxe.</p>
 <p>The objective of this suite of programs is research, so that where simplicity and power are in contention, power is selected. Nevertheless, I have tried to make the programs as straightforward and user-friendly as possible. Moreover, the source code is freely available, so be free to change any parts you are annoyed with.</p>
-<h1><a class="anchor" id="intro_plat"></a>
-Supported platforms</h1>
-<p>The MeatAxe should run on most UNIX platforms including Linux, NetBSD, Ultrix, Solaris, HP-UX, and on Windows NT. Other platforms as MS-DOS, VM/CMS and VMS are not officially supported, but it should not be too difficult to compile and run the programs on those systems.</p>
+<p><b>Supported platforms</b><br />
+ The MeatAxe should run on most UNIX platforms including Linux, NetBSD, Ultrix, Solaris, HP-UX, and on Windows NT. Other platforms as MS-DOS, VM/CMS and VMS are not officially supported, but it should not be too difficult to compile and run the programs on those systems.</p>
 <p>Users of the MeatAxe on a non-UNIX platform should be aware that their operating system may impose some additional restrictions on the programs. For example, the length and syntax of file names may be more restricted as in UNIX, and CPU time information may not be available or incorrect.</p>
-<h1><a class="anchor" id="intro_doc"></a>
-Some notes on the documentation</h1>
-<dl class="section attention"><dt>Attention</dt><dd>The MeatAxe documentation was originally written in LaTeX and is currently being migrated to Doxygen. Until this task is finished the hypertext documentation you are currently reading may be incomplete.</dd></dl>
-<p>The MeatAxe documentation is split into two parts. The first part (<a class="el" href="pg_userguide.html">User's Guide</a>) is aimed at users who do not intend to modify the source code nor use the MeatAxe in their own programs.</p>
-<p>Users interested in programming with the MeatAxe and MeatAxe internals in general will find the second part, <a class="el" href="pg_programming.html">Programmer's Guide</a>.</p>
 <ul>
 <li><a class="el" href="changelog.html">Release Notes</a></li>
 <li><a class="el" href="pg_userguide.html">User's Guide</a></li>
@@ -87,6 +78,6 @@ Some notes on the documentation</h1>
 </div></div><!-- contents -->
 </div><!-- doc-content -->
 <hr size="1"><address style="text-align: right;"><small>
-MeatAxe 2.4 documentation, generated on Fri Dec 26 2014 11:45:31</small></address>
+MeatAxe 2.4 documentation, generated on Wed Jan 7 2015 08:38:23</small></address>
 </body>
 </html>

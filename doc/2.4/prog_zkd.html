@@ -61,94 +61,28 @@ $(document).ready(function(){initNavTree('prog_zkd.html','');});
 <div class="title">zkd - Condense a Permutation </div>  </div>
 </div><!--header-->
 <div class="contents">
-<div class="textblock"><p>&lt;&lt;&lt;&lt;&lt;&lt;&lt; HEAD</p>
-<h1>syntax Command Line </h1>
-<h1><a class="anchor" id="zkd_syntax"></a>
+<div class="textblock"><h1><a class="anchor" id="zkd_syntax"></a>
 Command Line</h1>
-<p>&gt;&gt;&gt;&gt;&gt;&gt;&gt; 4a68ae339f0300470810ab3c90387657ccf21f0c </p><pre>
+<pre>
 zkd <em>Options</em> <em>Field</em> <em>Orbits</em> <em>Perm</em> <em>Kond</em> </pre><dl class="section user"><dt><em>Options</em> </dt><dd>Standard options, see <a class="el" href="prog_stdopts.html">Standard Command Line Options</a></dd></dl>
 <dl class="section user"><dt><em>Field</em> </dt><dd>The field order or "Z" for integer condensation. </dd></dl>
 <dl class="section user"><dt><em>Orbits</em> </dt><dd>Orbits and orbit sizes. </dd></dl>
 <dl class="section user"><dt><em>Perm</em> </dt><dd>Permutation to be condensed. </dd></dl>
 <dl class="section user"><dt><em>Kond</em> </dt><dd>Condensed permutation.</dd></dl>
-<p>&lt;&lt;&lt;&lt;&lt;&lt;&lt; HEAD </p><h1>inp Input Files </h1>
 <h1><a class="anchor" id="zkd_inp"></a>
 Input Files</h1>
-<blockquote class="doxtable">
-<blockquote class="doxtable">
-<blockquote class="doxtable">
-<blockquote class="doxtable">
-<blockquote class="doxtable">
-<blockquote class="doxtable">
-<blockquote class="doxtable">
-<p>4a68ae339f0300470810ab3c90387657ccf21f0c </p>
-</blockquote>
-</blockquote>
-</blockquote>
-</blockquote>
-</blockquote>
-</blockquote>
-</blockquote>
 <dl class="section user"><dt><em>Orbits</em> </dt><dd>Orbits and orbit sizes. </dd></dl>
 <dl class="section user"><dt><em>Perm</em> </dt><dd>Permutation to be condensed.</dd></dl>
-<p>&lt;&lt;&lt;&lt;&lt;&lt;&lt; HEAD </p><h1>out Output Files </h1>
 <h1><a class="anchor" id="zkd_out"></a>
 Output Files</h1>
-<blockquote class="doxtable">
-<blockquote class="doxtable">
-<blockquote class="doxtable">
-<blockquote class="doxtable">
-<blockquote class="doxtable">
-<blockquote class="doxtable">
-<blockquote class="doxtable">
-<p>4a68ae339f0300470810ab3c90387657ccf21f0c </p>
-</blockquote>
-</blockquote>
-</blockquote>
-</blockquote>
-</blockquote>
-</blockquote>
-</blockquote>
 <dl class="section user"><dt><em>Kond</em> </dt><dd>Condensed permutation.</dd></dl>
-<p>&lt;&lt;&lt;&lt;&lt;&lt;&lt; HEAD </p><h1>desc Description </h1>
 <h1><a class="anchor" id="zkd_desc"></a>
 Description</h1>
-<blockquote class="doxtable">
-<blockquote class="doxtable">
-<blockquote class="doxtable">
-<blockquote class="doxtable">
-<blockquote class="doxtable">
-<blockquote class="doxtable">
-<blockquote class="doxtable">
-<p>4a68ae339f0300470810ab3c90387657ccf21f0c </p>
-</blockquote>
-</blockquote>
-</blockquote>
-</blockquote>
-</blockquote>
-</blockquote>
-</blockquote>
 <p>This program reads an orbit file (<em>Orbits</em>) and a permutation from <em>Perm</em>. It outputs the condensed form, i.e., a matrix over GF(q) to <em>Result</em>. The field must be specified on the command line because the other input data is is all to do with permutations and the program would otherwise not know which field was intended. The orbit file must contain two integer matrices containing the orbit numbers for each point and the orbit sizes, repectively. It is usually produced by the <a class="el" href="prog_zmo.html">zmo</a> program.</p>
 <p>The second input file, <em>Perm</em>, must contain one or more permutations. Notice that only the first permutation is read in and condensed. If there are more than one permutation, the others are ignored. Unlike in previous versions of this program, it is not assumed that the orbits are contiguous.</p>
 <dl class="section user"><dt>Integer condensation</dt><dd>If <em>Field</em> is the letter "Z", <b>zkd</b> condenses over the integers. In this case, <em>Result</em> is an integer matrix with the same dimensions as in the GF(q) case.</dd></dl>
-<p>&lt;&lt;&lt;&lt;&lt;&lt;&lt; HEAD </p><h1>impl Implementation Details </h1>
 <h1><a class="anchor" id="zkd_impl"></a>
 Implementation Details</h1>
-<blockquote class="doxtable">
-<blockquote class="doxtable">
-<blockquote class="doxtable">
-<blockquote class="doxtable">
-<blockquote class="doxtable">
-<blockquote class="doxtable">
-<blockquote class="doxtable">
-<p>4a68ae339f0300470810ab3c90387657ccf21f0c </p>
-</blockquote>
-</blockquote>
-</blockquote>
-</blockquote>
-</blockquote>
-</blockquote>
-</blockquote>
 <p>Let r be the number of orbits, \(O_1,\ldots,O_r\) the orbits and, for \(i=1,\ldots,r\), \(l_i:=|O_i|\) the size of the i-th orbit. The first step is to calculate the largest power (m) of the characteristic that divides any of the orbit sizes. ZKD assumes that this is the order of the Sylow-p subgroup of the condensation subgroup, but it prints out its findings with the message </p><pre>
 p-part taken has order N
 </pre><p> so the user can check it. If this is not the order of the Sylow-p subgroup of the condensation group, the program will not know, so will continue. Normally, however, the condensation subgroup K will have trivial Sylow-p subgroup, or at any rate the Sylow subgroup will have a regular orbit, and in this case at least the condensation is legitimate.</p>
@@ -170,6 +104,6 @@ p-part taken has order N
 </div></div><!-- contents -->
 </div><!-- doc-content -->
 <hr size="1"><address style="text-align: right;"><small>
-MeatAxe 2.4 documentation, generated on Fri Dec 26 2014 11:45:31</small></address>
+MeatAxe 2.4 documentation, generated on Wed Jan 7 2015 08:38:22</small></address>
 </body>
 </html>

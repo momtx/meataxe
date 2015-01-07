@@ -20,6 +20,7 @@ var annotated =
     [ "MatrixSetElement_t", "structMatrixSetElement__t.html", null ],
     [ "MtxApplication_t", "structMtxApplication__t.html", "structMtxApplication__t" ],
     [ "MtxApplicationInfo_t", "structMtxApplicationInfo__t.html", "structMtxApplicationInfo__t" ],
+    [ "MtxErrorHandler_t", "classMtxErrorHandler__t.html", null ],
     [ "MtxErrorRecord_t", "structMtxErrorRecord__t.html", null ],
     [ "MtxFile_t", "structMtxFile__t.html", "structMtxFile__t" ],
     [ "MtxFileInfo_t", "structMtxFileInfo__t.html", null ],
@@ -32,6 +33,7 @@ var annotated =
     [ "String", "structString.html", null ],
     [ "SvVector_t", "structSvVector__t.html", null ],
     [ "Symmetrizer_t", "structSymmetrizer__t.html", null ],
+    [ "test_Definition", "structtest__Definition.html", null ],
     [ "TkData_t", "structTkData__t.html", "structTkData__t" ],
     [ "tPivotEntry", "structtPivotEntry.html", null ],
     [ "WgData_t", "structWgData__t.html", "structWgData__t" ]

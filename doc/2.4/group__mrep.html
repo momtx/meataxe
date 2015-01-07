@@ -65,7 +65,6 @@ $(document).ready(function(){initNavTree('group__mrep.html','');});
 </div><!--header-->
 <div class="contents">
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
-<p>Local data. </p>
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="nested-classes"></a>
 Data Structures</h2></td></tr>
@@ -75,6 +74,9 @@ Data Structures</h2></td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="func-members"></a>
 Functions</h2></td></tr>
+<tr class="memitem:ga53d6edd2ec7c5b4d7198fab122979976"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__mrep.html#ga53d6edd2ec7c5b4d7198fab122979976">MrChangeBasis</a> (<a class="el" href="structMatRep__t.html">MatRep_t</a> *rep, const <a class="el" href="structMatrix__t.html">Matrix_t</a> *trans)</td></tr>
+<tr class="memdesc:ga53d6edd2ec7c5b4d7198fab122979976"><td class="mdescLeft">&#160;</td><td class="mdescRight">Change basis.  <a href="#ga53d6edd2ec7c5b4d7198fab122979976">More...</a><br /></td></tr>
+<tr class="separator:ga53d6edd2ec7c5b4d7198fab122979976"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ga5047c4d5417b7d21887f945ec6ad5f6a"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__mrep.html#ga5047c4d5417b7d21887f945ec6ad5f6a">MrAddGenerator</a> (<a class="el" href="structMatRep__t.html">MatRep_t</a> *rep, <a class="el" href="structMatrix__t.html">Matrix_t</a> *gen, int flags)</td></tr>
 <tr class="memdesc:ga5047c4d5417b7d21887f945ec6ad5f6a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Add a Matrix to a Representation.  <a href="#ga5047c4d5417b7d21887f945ec6ad5f6a">More...</a><br /></td></tr>
 <tr class="separator:ga5047c4d5417b7d21887f945ec6ad5f6a"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -181,6 +183,42 @@ Functions</h2></td></tr>
   </dd>
 </dl>
 <dl class="section return"><dt>Returns</dt><dd>Pointer to the new matrix representation or 0 on error. </dd></dl>
+
+</div>
+</div>
+<a class="anchor" id="ga53d6edd2ec7c5b4d7198fab122979976"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">int MrChangeBasis </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="structMatRep__t.html">MatRep_t</a> *&#160;</td>
+          <td class="paramname"><em>rep</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const <a class="el" href="structMatrix__t.html">Matrix_t</a> *&#160;</td>
+          <td class="paramname"><em>trans</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Change basis. </p>
+<p>This function performs a change of basis on a matrix representation. The transformed generators are given by g'<sub>i</sub> = T g<sub>i</sub> T<sup>-1</sup>. </p><dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">rep</td><td>Matrix representation. </td></tr>
+    <tr><td class="paramname">trans</td><td>Transformation matrix mapping the old basis to the new basis. In other words, the rows of the matrix are the new basis vectors </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>0 on success, -1 on error. </dd></dl>
 
 </div>
 </div>
@@ -336,6 +374,6 @@ Functions</h2></td></tr>
 </div><!-- contents -->
 </div><!-- doc-content -->
 <hr size="1"><address style="text-align: right;"><small>
-MeatAxe 2.4 documentation, generated on Fri Dec 26 2014 11:45:31</small></address>
+MeatAxe 2.4 documentation, generated on Wed Jan 7 2015 08:38:23</small></address>
 </body>
 </html>

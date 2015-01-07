@@ -11,6 +11,7 @@ var group__mat =
     ] ],
     [ "Mat_DeletePivotTable", "group__mat.html#ga1d7a805c571f70c31e34f9162f602272", null ],
     [ "MatAdd", "group__mat.html#gaa6c1f3b0d54a8dccb48f83338a36a6cf", null ],
+    [ "MatAddMul", "group__mat.html#gadc790223f689e1709a9bd77faf4b7453", null ],
     [ "MatAlloc", "group__mat.html#ga06620e0d44ea5adce49d162abaf8840d", null ],
     [ "MatClean", "group__mat.html#gaf540f605031ba857d02f2cf558b47ed1", null ],
     [ "MatCompare", "group__mat.html#gada7faff926b57e0d21191018f4f1823b", null ],
@@ -42,5 +43,7 @@ var group__mat =
     [ "MatSave", "group__mat.html#gab3a78cc293a56e9b73a8c6b3d5254f4c", null ],
     [ "MatTrace", "group__mat.html#gacc7e0fce362468e1a89dbfec4776d48f", null ],
     [ "MatTransposed", "group__mat.html#ga7a2edca3247137c7a04df74017819241", null ],
-    [ "MatWrite", "group__mat.html#gac61c071f417d0685dbcb8fe444feebca", null ]
+    [ "MatWrite", "group__mat.html#gac61c071f417d0685dbcb8fe444feebca", null ],
+    [ "StablePower", "group__mat.html#gaf68d2d6683e91c84f19fbe02c5446693", null ],
+    [ "StablePower_", "group__mat.html#ga06bd7bba0fd200cc8287527e0b950db0", null ]
 ];

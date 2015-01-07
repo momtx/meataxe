@@ -61,23 +61,13 @@ $(document).ready(function(){initNavTree('prog_mktree.html','');});
 <div class="title">mktree - Enumerate Group Elements </div>  </div>
 </div><!--header-->
 <div class="contents">
-<div class="textblock"><p>&lt;&lt;&lt;&lt;&lt;&lt;&lt; HEAD</p>
-<h1>syntax Command Line </h1>
-<h1><a class="anchor" id="mktree_syntax"></a>
+<div class="textblock"><h1><a class="anchor" id="mktree_syntax"></a>
 Command Line</h1>
-<p>&gt;&gt;&gt;&gt;&gt;&gt;&gt; 4a68ae339f0300470810ab3c90387657ccf21f0c </p><pre>
+<pre>
 mktree <em>Options</em> [-n] [-g <em>NGen</em>] <em>Name</em> </pre><dl class="section user"><dt><em>Options</em> </dt><dd>Standard options, see <a class="el" href="prog_stdopts.html">Standard Command Line Options</a> </dd></dl>
 <dl class="section user"><dt>-n</dt><dd>Do not write the outpt file. </dd></dl>
 <dl class="section user"><dt>-g</dt><dd>Set the number of generators (default: 2). </dd></dl>
 <dl class="section user"><dt><em>Name</em> </dt><dd>Name of the representation.</dd></dl>
-<p>&lt;&lt;&lt;&lt;&lt;&lt;&lt; HEAD </p>
-<h1><a class="anchor" id="inp"></a>
-Input Files</h1>
-<dl class="section user"><dt><em>Name</em>.1, <em>Name</em>.2, ...</dt><dd>Generators.</dd></dl>
-<h1><a class="anchor" id="out"></a>
-Output Files</h1>
-<dl class="section user"><dt><em>Name</em>.elt</dt><dd>Element tree.</dd></dl>
-<h1>desc Description </h1>
 <h1><a class="anchor" id="mktree_inp"></a>
 Input Files</h1>
 <dl class="section user"><dt><em>Name</em>.1, <em>Name</em>.2, ...</dt><dd>Generators.</dd></dl>
@@ -86,21 +76,6 @@ Output Files</h1>
 <dl class="section user"><dt><em>Name</em>.elt</dt><dd>Element tree.</dd></dl>
 <h1><a class="anchor" id="mktree_desc"></a>
 Description</h1>
-<blockquote class="doxtable">
-<blockquote class="doxtable">
-<blockquote class="doxtable">
-<blockquote class="doxtable">
-<blockquote class="doxtable">
-<blockquote class="doxtable">
-<blockquote class="doxtable">
-<p>4a68ae339f0300470810ab3c90387657ccf21f0c </p>
-</blockquote>
-</blockquote>
-</blockquote>
-</blockquote>
-</blockquote>
-</blockquote>
-</blockquote>
 <p>This program enumerates all elements of a finitely generated matrix group. By default, the program assumes that the group has two generators, which are read from <em>Name.1</em> and <em>Name.2</em>. A different number of generators can be specified with "-g".</p>
 <p>Unless the "-n" option is used, the program writes the element tree to <em>Name.elt</em>. The element tree describes how the group elements can be calculated as products of generators. It is actually a matrix with two columns and one row for each group element. The i-th row of this matrix describes how the i-th element is calculated:</p>
 <ul>
@@ -122,28 +97,12 @@ Line   Contents     Meaning
  8      5    0      aaaa
  9      5    1      aaab
 10      7    1      aaaab
-</pre><p>&lt;&lt;&lt;&lt;&lt;&lt;&lt; HEAD </p><h1>impl Implementatino Details </h1>
-<h1><a class="anchor" id="mktree_impl"></a>
+</pre><h1><a class="anchor" id="mktree_impl"></a>
 Implementatino Details</h1>
-<blockquote class="doxtable">
-<blockquote class="doxtable">
-<blockquote class="doxtable">
-<blockquote class="doxtable">
-<blockquote class="doxtable">
-<blockquote class="doxtable">
-<blockquote class="doxtable">
-<p>4a68ae339f0300470810ab3c90387657ccf21f0c </p>
-</blockquote>
-</blockquote>
-</blockquote>
-</blockquote>
-</blockquote>
-</blockquote>
-</blockquote>
 <p>The program holds all group elements in memory. This limits the application of the program to fairly small groups and representations of small degree. </p>
 </div></div><!-- contents -->
 </div><!-- doc-content -->
 <hr size="1"><address style="text-align: right;"><small>
-MeatAxe 2.4 documentation, generated on Fri Dec 26 2014 11:45:30</small></address>
+MeatAxe 2.4 documentation, generated on Wed Jan 7 2015 08:38:22</small></address>
 </body>
 </html>

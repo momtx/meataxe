@@ -61,84 +61,30 @@ $(document).ready(function(){initNavTree('prog_mkcycl.html','');});
 <div class="title">mkcycl - Find Cyclic Subspaces </div>  </div>
 </div><!--header-->
 <div class="contents">
-<div class="textblock"><p>&lt;&lt;&lt;&lt;&lt;&lt;&lt; HEAD</p>
-<h1>syntax Command Line </h1>
-<h1><a class="anchor" id="mkcycl_syntax"></a>
+<div class="textblock"><h1><a class="anchor" id="mkcycl_syntax"></a>
 Command Line</h1>
-<p>&gt;&gt;&gt;&gt;&gt;&gt;&gt; 4a68ae339f0300470810ab3c90387657ccf21f0c </p><pre>
+<pre>
 mkcycl <em>Options</em> [-G] <em>Name</em> </pre><dl class="section user"><dt><em>Options</em> </dt><dd>Standard options, see <a class="el" href="prog_stdopts.html">Standard Command Line Options</a> </dd></dl>
 <dl class="section user"><dt>-G</dt><dd>Produce output in GAP format. </dd></dl>
 <dl class="section user"><dt><em>Name</em> </dt><dd>Name of the representation.</dd></dl>
-<p>&lt;&lt;&lt;&lt;&lt;&lt;&lt; HEAD </p><h1>inp Input Files </h1>
 <h1><a class="anchor" id="mkcycl_inp"></a>
 Input Files</h1>
-<blockquote class="doxtable">
-<blockquote class="doxtable">
-<blockquote class="doxtable">
-<blockquote class="doxtable">
-<blockquote class="doxtable">
-<blockquote class="doxtable">
-<blockquote class="doxtable">
-<p>4a68ae339f0300470810ab3c90387657ccf21f0c </p>
-</blockquote>
-</blockquote>
-</blockquote>
-</blockquote>
-</blockquote>
-</blockquote>
-</blockquote>
 <dl class="section user"><dt><em>Name</em>.cfinfo</dt><dd>Constituent info file. </dd></dl>
 <dl class="section user"><dt><em>NameCf</em>.1k, <em>NameCf</em>.2k, ...</dt><dd>Generators on condensed modules. </dd></dl>
 <dl class="section user"><dt><em>NameCf</em>.np</dt><dd>Condensed peak words</dd></dl>
-<p>&lt;&lt;&lt;&lt;&lt;&lt;&lt; HEAD </p>
-<h1><a class="anchor" id="out"></a>
-Output Files</h1>
-<dl class="section user"><dt><em>NameCf</em>.v</dt><dd>Cyclic submodules.</dd></dl>
-<h1>desc Description </h1>
 <h1><a class="anchor" id="mkcycl_out"></a>
 Output Files</h1>
 <dl class="section user"><dt><em>NameCf</em>.v</dt><dd>Cyclic submodules.</dd></dl>
 <h1><a class="anchor" id="mkcycl_desc"></a>
 Description</h1>
-<blockquote class="doxtable">
-<blockquote class="doxtable">
-<blockquote class="doxtable">
-<blockquote class="doxtable">
-<blockquote class="doxtable">
-<blockquote class="doxtable">
-<blockquote class="doxtable">
-<p>4a68ae339f0300470810ab3c90387657ccf21f0c </p>
-</blockquote>
-</blockquote>
-</blockquote>
-</blockquote>
-</blockquote>
-</blockquote>
-</blockquote>
 <p>This program is invoked after <a class="el" href="prog_pwkond.html">pwkond</a> has calculated the condensation with respect to the peak words. <b>mkcycl</b> calculates, for each condensed module, its 1-dimensional subspaces. The output is a list of vectors (in matrix form) for each irreducible constituent, which generate all cyclic submodules. For example, if "X10a" is the constituent's name, the list of vectors is written to "X10a.v".</p>
-<p>&lt;&lt;&lt;&lt;&lt;&lt;&lt; HEAD </p><h1>impl Implementation Details </h1>
 <h1><a class="anchor" id="mkcycl_impl"></a>
 Implementation Details</h1>
-<blockquote class="doxtable">
-<blockquote class="doxtable">
-<blockquote class="doxtable">
-<blockquote class="doxtable">
-<blockquote class="doxtable">
-<blockquote class="doxtable">
-<blockquote class="doxtable">
-<p>4a68ae339f0300470810ab3c90387657ccf21f0c </p>
-</blockquote>
-</blockquote>
-</blockquote>
-</blockquote>
-</blockquote>
-</blockquote>
-</blockquote>
 <p><b>mkcycl</b> uses a very simple approach: it spins up every vector in the condensed module (avoiding scalar multiples, though), and maintains a list of all cyclic submodules found. As the dimension of the condensed module grows, the number of vectors to spin up quickly becomes very large. This poses an upper limit on the dimension of condensed modules, i.e., on the multiplicity of irreducible constituents. Over GF(2), for example, a 16-dimensional condensed module requires about 20 hours of CPU time on a standard workstation.</p>
 <p>A second limit concerns the number of cyclic submodules. Usually there are much less cyclic submodules than 1-spaces. Sometimes, however, it may happen that the peak word found in the second step is "bad" in the sense that the condensed generators commute. In such a case one finds a large number of cyclic submodules and the following steps will probably take too much time. For this reason, the <a class="el" href="prog_pwkond.html">pwkond</a> program has an option to exclude one or more specified peak words from the search. So, if the peak word turns out to be "bad", you can try another one. </p>
 </div></div><!-- contents -->
 </div><!-- doc-content -->
 <hr size="1"><address style="text-align: right;"><small>
-MeatAxe 2.4 documentation, generated on Fri Dec 26 2014 11:45:30</small></address>
+MeatAxe 2.4 documentation, generated on Wed Jan 7 2015 08:38:22</small></address>
 </body>
 </html>

@@ -130,8 +130,7 @@ Variables</h2></td></tr>
 <p>Characteristic Polynomial. </p>
 <p>This function returns one factor of the characteristic polynomial of a given matrix. Further calls with a 0 argument return more factors or 0, if there are no more factors. Note that the factors obtained in this way are in general not irreducible.</p>
 <p>Here is how CharPolFactor() works: If <em>mat</em> is different from 0, CharPolFactor() initializes its internal data and starts computing one cyclic subspace. The choice of starting vector for this first subspace depends on the global variable CharPolSeed. Usually, this variable has a value of 0, corresponding to the vector (1,0,...,0). Then, the polynomial of the matrix restricted to that cyclic subspace is constructed and returned to the caller.</p>
-<p>If <em>mat</em> is 0 on the next call, CharPolFactor() resumes at the point where it returned the last time, calculates the next cyclic subspace and so on, until the complete space is exhausted.</p>
-<dl class="section attention"><dt>Attention</dt><dd>Since the function uses static variables to store information across multiple calls, your program must not use CharPolFactor() on more than one matrix at the same time. </dd></dl>
+<p>If <em>mat</em> is 0 on the next call, CharPolFactor() resumes at the point where it returned the last time, calculates the next cyclic subspace and so on, until the complete space is exhausted. </p><dl class="section attention"><dt>Attention</dt><dd>Since the function uses static variables to store information across multiple calls, your program must not use CharPolFactor() on more than one matrix at the same time. </dd></dl>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">mat</td><td>Pointer to the matrix. </td></tr>
@@ -215,6 +214,6 @@ Variables</h2></td></tr>
 </div><!-- contents -->
 </div><!-- doc-content -->
 <hr size="1"><address style="text-align: right;"><small>
-MeatAxe 2.4 documentation, generated on Fri Dec 26 2014 11:45:31</small></address>
+MeatAxe 2.4 documentation, generated on Wed Jan 7 2015 08:38:23</small></address>
 </body>
 </html>

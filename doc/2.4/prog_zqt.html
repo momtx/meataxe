@@ -61,73 +61,23 @@ $(document).ready(function(){initNavTree('prog_zqt.html','');});
 <div class="title">zqt - Clean and Quotient </div>  </div>
 </div><!--header-->
 <div class="contents">
-<div class="textblock"><p>&lt;&lt;&lt;&lt;&lt;&lt;&lt; HEAD</p>
-<h1>syntax Command Line </h1>
-<h1><a class="anchor" id="zqt_syntax"></a>
+<div class="textblock"><h1><a class="anchor" id="zqt_syntax"></a>
 Command Line</h1>
-<p>&gt;&gt;&gt;&gt;&gt;&gt;&gt; 4a68ae339f0300470810ab3c90387657ccf21f0c </p><pre>
+<pre>
 zqt [<em>Options</em>] [-i] <em>Subsp</em> <em>Matrix</em> <em>Quot</em> </pre><dl class="section user"><dt><em>Options</em> </dt><dd>Standard options, see <a class="el" href="prog_stdopts.html">Standard Command Line Options</a> </dd></dl>
 <dl class="section user"><dt>-i</dt><dd>Calculate the action on the quotient. </dd></dl>
 <dl class="section user"><dt><em>Subsp</em> </dt><dd>The subspace. </dd></dl>
 <dl class="section user"><dt><em>Mat</em> </dt><dd>The matrix. </dd></dl>
 <dl class="section user"><dt><em>Quot</em>.</dt><dd>The quotient.</dd></dl>
-<p>&lt;&lt;&lt;&lt;&lt;&lt;&lt; HEAD </p><h1>ifile Input Files </h1>
 <h1><a class="anchor" id="zqt_inp"></a>
 Input Files</h1>
-<blockquote class="doxtable">
-<blockquote class="doxtable">
-<blockquote class="doxtable">
-<blockquote class="doxtable">
-<blockquote class="doxtable">
-<blockquote class="doxtable">
-<blockquote class="doxtable">
-<p>4a68ae339f0300470810ab3c90387657ccf21f0c </p>
-</blockquote>
-</blockquote>
-</blockquote>
-</blockquote>
-</blockquote>
-</blockquote>
-</blockquote>
 <dl class="section user"><dt><em>Subsp</em> </dt><dd>The subspace, a M×N matrix in echelon form. </dd></dl>
 <dl class="section user"><dt><em>Mat</em> </dt><dd>The matrix (L×N).</dd></dl>
-<p>&lt;&lt;&lt;&lt;&lt;&lt;&lt; HEAD </p><h1>ofile Output Files </h1>
 <h1><a class="anchor" id="zqt_out"></a>
 Output Files</h1>
-<blockquote class="doxtable">
-<blockquote class="doxtable">
-<blockquote class="doxtable">
-<blockquote class="doxtable">
-<blockquote class="doxtable">
-<blockquote class="doxtable">
-<blockquote class="doxtable">
-<p>4a68ae339f0300470810ab3c90387657ccf21f0c </p>
-</blockquote>
-</blockquote>
-</blockquote>
-</blockquote>
-</blockquote>
-</blockquote>
-</blockquote>
 <dl class="section user"><dt><em>Quot</em>.</dt><dd>The quotient, a L×(N-M) matrix. With "-i", the action on the quotient, a (N-M)×(N-M) matrix.</dd></dl>
-<p>&lt;&lt;&lt;&lt;&lt;&lt;&lt; HEAD </p><h1>desc Description </h1>
 <h1><a class="anchor" id="zqt_desc"></a>
 Description</h1>
-<blockquote class="doxtable">
-<blockquote class="doxtable">
-<blockquote class="doxtable">
-<blockquote class="doxtable">
-<blockquote class="doxtable">
-<blockquote class="doxtable">
-<blockquote class="doxtable">
-<p>4a68ae339f0300470810ab3c90387657ccf21f0c </p>
-</blockquote>
-</blockquote>
-</blockquote>
-</blockquote>
-</blockquote>
-</blockquote>
-</blockquote>
 <p>This program reads in a subspace and applies the canonical map to its quotient on a matrix. The result is written out to <em>Quot</em>. <em>Subsp</em> should be a matrix in semi-echelon form, and the two input matrices must have the same field parameter and the same number of columns. If this is not the case the program stops with an error message.</p>
 <p>Otherwise the program reads in <em>Subsp</em>, builds a table of pivot columns and then proceeds, row by row, through <em>Matrix</em>. For each row, the significant entries are zeroized by adding the correct multiple of rows of <em>Subsp</em>. The insignificant columns are then extracted and written out to <em>Quot</em>. Hence</p><ul>
 <li><em>Subsp</em> has M rows, N columns and is in echelon form,</li>
@@ -145,29 +95,13 @@ zmu Y1 Z1 T1   calculate KZ1 = condensed Z1
 zqt X T1 KZ1
 zmu Y1 Z2 T1   calculate KZ2 = condensed Z2
 zqt X T1 KZ2
-</pre><p>&lt;&lt;&lt;&lt;&lt;&lt;&lt; HEAD </p><h1>impl Implementation Details </h1>
-<h1><a class="anchor" id="zqt_impl"></a>
+</pre><h1><a class="anchor" id="zqt_impl"></a>
 Implementation Details</h1>
-<blockquote class="doxtable">
-<blockquote class="doxtable">
-<blockquote class="doxtable">
-<blockquote class="doxtable">
-<blockquote class="doxtable">
-<blockquote class="doxtable">
-<blockquote class="doxtable">
-<p>4a68ae339f0300470810ab3c90387657ccf21f0c </p>
-</blockquote>
-</blockquote>
-</blockquote>
-</blockquote>
-</blockquote>
-</blockquote>
-</blockquote>
 <p>It is not completely checked that <em>Subsp</em> is in echelon form.</p>
 <p>The Subspace and one row of both <em>Matrix</em> and <em>Subsp</em> must fit into memory. </p>
 </div></div><!-- contents -->
 </div><!-- doc-content -->
 <hr size="1"><address style="text-align: right;"><small>
-MeatAxe 2.4 documentation, generated on Fri Dec 26 2014 11:45:31</small></address>
+MeatAxe 2.4 documentation, generated on Wed Jan 7 2015 08:38:22</small></address>
 </body>
 </html>

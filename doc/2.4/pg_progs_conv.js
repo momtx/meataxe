@@ -31,7 +31,6 @@ var pg_progs_conv =
       [ "Input Files", "prog_zpt.html#zpt_inp", null ],
       [ "Output Files", "prog_zpt.html#zpt_out", null ],
       [ "Description", "prog_zpt.html#zpt_desc", [
-        [ "Permutations", "prog_zpt.html#perms", null ],
         [ "Permutations", "prog_zpt.html#ztp_perms", null ]
       ] ]
     ] ]

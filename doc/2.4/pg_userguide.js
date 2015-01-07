@@ -1,12 +1,5 @@
 var pg_userguide =
 [
-    [ "Release Notes", "changelog.html", [
-      [ "2.4.X", "changelog.html#Release", null ],
-      [ "Release 2.4.X", "changelog.html#r2_4_x", null ],
-      [ "Release 2.4.13", "changelog.html#r2_4_13", null ],
-      [ "Release 2.4.8", "changelog.html#r2_4_8", null ],
-      [ "Release 2.4.7", "changelog.html#r2_4_7", null ]
-    ] ],
     [ "Installing the MeatAxe", "pg_start.html", [
       [ "Compiling", "pg_start.html#start_compile", null ]
     ] ],
@@ -20,6 +13,7 @@ var pg_userguide =
       [ "Universal Options", "prog_stdopts.html#co", null ],
       [ "Other Commonly Used Options", "prog_stdopts.html#oo", null ]
     ] ],
+    [ "File Conversion Programs", "pg_progs_conv.html", "pg_progs_conv" ],
     [ "The Lattice Programs", "pg_progs_lattice.html", [
       [ "Condensation Programs", "pg_progs_lattice.html#sec_progs_cond", null ]
     ] ],

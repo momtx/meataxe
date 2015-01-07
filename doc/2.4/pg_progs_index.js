@@ -1,20 +1,15 @@
 var pg_progs_index =
 [
     [ "cfcomp - Compare Irreducible Constituents", "prog_cfcomp.html", [
-      [ "Command Line", "prog_cfcomp.html#syntax", null ],
       [ "Command Line", "prog_cfcomp.html#cfcomp_syntax", null ],
-      [ "Input Files", "prog_cfcomp.html#inp", null ],
       [ "Input Files", "prog_cfcomp.html#cfcomp_inp", null ],
-      [ "Description", "prog_cfcomp.html#desc", null ],
       [ "Description", "prog_cfcomp.html#cfcomp_desc", null ]
     ] ],
     [ "chop - Find Irreducible Constituents", "prog_chop.html", [
       [ "Command Line", "prog_chop.html#chop_syntax", null ],
-      [ "Output Files", "prog_chop.html#out", null ],
       [ "Input Files", "prog_chop.html#chop_inp", null ],
       [ "Output Files", "prog_chop.html#chop_out", null ],
       [ "Description", "prog_chop.html#chop_desc", null ],
-      [ "Implementation Details", "prog_chop.html#impl", null ],
       [ "Implementation Details", "prog_chop.html#chop_impl", null ]
     ] ],
     [ "decomp - Decompose a Module", "prog_decomp.html", [
@@ -246,7 +241,7 @@ var pg_progs_index =
       [ "Implementation Details", "prog_znu.html#znu_impl", null ]
     ] ],
     [ "zor - Order", "prog_zor.html", [
-      [ "Command Line", "prog_zor.html#zor_syntax", null ],
+      [ "Command Line", "prog_zor.html#syntax", null ],
       [ "Input Files", "prog_zor.html#zor_inp", null ],
       [ "Description", "prog_zor.html#zor_desc", null ],
       [ "Implementation Details", "prog_zor.html#zor_impl", null ]
@@ -274,7 +269,6 @@ var pg_progs_index =
       [ "Input Files", "prog_zpt.html#zpt_inp", null ],
       [ "Output Files", "prog_zpt.html#zpt_out", null ],
       [ "Description", "prog_zpt.html#zpt_desc", [
-        [ "Permutations", "prog_zpt.html#perms", null ],
         [ "Permutations", "prog_zpt.html#ztp_perms", null ]
       ] ]
     ] ],
@@ -317,9 +311,9 @@ var pg_progs_index =
       [ "Input Files", "prog_zsp.html#zsp_inp", null ],
       [ "Output Files", "prog_zsp.html#zsp_out", null ],
       [ "Description", "prog_zsp.html#zsp_desc", [
+        [ "Specifying Input Files", "prog_zsp.html#inp", null ],
         [ "Specifying the Seed Mode", "prog_zsp.html#seedmode", null ],
         [ "Specifying the Search Mode", "prog_zsp.html#srchmode", null ],
-        [ "Standard Basis", "prog_zsp.html#stdb", null ],
         [ "Standard Basis", "prog_zsp.html#zsp_stdb", null ],
         [ "Specifying Output Files", "prog_zsp.html#zsp_output_options", null ]
       ] ],

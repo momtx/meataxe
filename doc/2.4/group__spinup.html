@@ -79,7 +79,7 @@ Data Structures</h2></td></tr>
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="func-members"></a>
 Functions</h2></td></tr>
 <tr class="memitem:gaf7d5c685345c6154e892347d6301489a"><td class="memItemLeft" align="right" valign="top"><a class="el" href="structMatrix__t.html">Matrix_t</a> *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__spinup.html#gaf7d5c685345c6154e892347d6301489a">QProjection</a> (const <a class="el" href="structMatrix__t.html">Matrix_t</a> *subspace, const <a class="el" href="structMatrix__t.html">Matrix_t</a> *vectors)</td></tr>
-<tr class="memdesc:gaf7d5c685345c6154e892347d6301489a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Projection on Quotient.  <a href="#gaf7d5c685345c6154e892347d6301489a">More...</a><br /></td></tr>
+<tr class="memdesc:gaf7d5c685345c6154e892347d6301489a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Projection on quotient.  <a href="#gaf7d5c685345c6154e892347d6301489a">More...</a><br /></td></tr>
 <tr class="separator:gaf7d5c685345c6154e892347d6301489a"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ga8b3cdad9ad1587b8ef9249d1bf309958"><td class="memItemLeft" align="right" valign="top"><a class="el" href="structMatrix__t.html">Matrix_t</a> *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__spinup.html#ga8b3cdad9ad1587b8ef9249d1bf309958">QAction</a> (const <a class="el" href="structMatrix__t.html">Matrix_t</a> *subspace, const <a class="el" href="structMatrix__t.html">Matrix_t</a> *gen)</td></tr>
 <tr class="memdesc:ga8b3cdad9ad1587b8ef9249d1bf309958"><td class="mdescLeft">&#160;</td><td class="mdescRight">Action on Quotient.  <a href="#ga8b3cdad9ad1587b8ef9249d1bf309958">More...</a><br /></td></tr>
@@ -188,7 +188,7 @@ Functions</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Projection on Quotient. </p>
+<p>Projection on quotient. </p>
 <p>This function calculates the projection of a matrix onto the quotient by a subspace. The first matrix, <em>subspace</em> must be in echelon form, while the second argument can be any matrix. Of course both matrices must be over the same field and have the same number of columns. The return value is a pointer to a matrix containing the projections the <em>vectors</em>. This matrix is not in echelon form and may even contain null rows.</p>
 <p>The projection depends on the basis for the subspace and is calculated as follows. Let V=F<sup>n×n</sup> and (w<sub>1</sub>,...w<sub>s</sub>) be a basis for the subspace W≤V. The basis, written as a matrix of row vectors, is assumed to be in semi-echelon form. By looking at the pivot columns we can construct the vectors w<sub>s+1</sub>,...w<sub>n</sub> by taking all vectors which have a exactly one 1 at any non-pivot position and are zero otherwise. Then, (w<sub>1</sub>,...,w<sub>s</sub>,w<sub>s+1</sub>,...,w<sub>n</sub>) is a basis for V in semi-echelon form and defines the decomposition of any vector into subspace and quotient part.</p>
 <dl class="params"><dt>Parameters</dt><dd>
@@ -502,6 +502,6 @@ Functions</h2></td></tr>
 </div><!-- contents -->
 </div><!-- doc-content -->
 <hr size="1"><address style="text-align: right;"><small>
-MeatAxe 2.4 documentation, generated on Fri Dec 26 2014 11:45:31</small></address>
+MeatAxe 2.4 documentation, generated on Wed Jan 7 2015 08:38:23</small></address>
 </body>
 </html>

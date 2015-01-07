@@ -61,11 +61,9 @@ $(document).ready(function(){initNavTree('prog_mkhom.html','');});
 <div class="title">mkhom - Homomorphisms </div>  </div>
 </div><!--header-->
 <div class="contents">
-<div class="textblock"><p>&lt;&lt;&lt;&lt;&lt;&lt;&lt; HEAD</p>
-<h1>syntax Command Line </h1>
-<h1><a class="anchor" id="mkhom_syntax"></a>
+<div class="textblock"><h1><a class="anchor" id="mkhom_syntax"></a>
 Command Line</h1>
-<p>&gt;&gt;&gt;&gt;&gt;&gt;&gt; 4a68ae339f0300470810ab3c90387657ccf21f0c </p><pre>
+<pre>
 mkhom [<em>Options</em>] [-ts] [-r|-l] [-b <em>Mode</em>] [-H <em>Dim</em>] <em>M</em> <em>N</em> <em>Hom</em> </pre><dl class="section user"><dt><em>Options</em> </dt><dd>Standard options, see <a class="el" href="prog_stdopts.html">Standard Command Line Options</a> </dd></dl>
 <dl class="section user"><dt>-t</dt><dd>Calculate generators for <em>M</em> in spinning basis. </dd></dl>
 <dl class="section user"><dt>-s</dt><dd>When <em>M</em> equals <em>N</em>, calculate endomorphisms in spinning basis. </dd></dl>
@@ -76,93 +74,29 @@ mkhom [<em>Options</em>] [-ts] [-r|-l] [-b <em>Mode</em>] [-H <em>Dim</em>] <em>
 <dl class="section user"><dt><em>M</em> </dt><dd>First representation. </dd></dl>
 <dl class="section user"><dt><em>N</em> </dt><dd>Second representation. </dd></dl>
 <dl class="section user"><dt><em>Hom</em> </dt><dd>Homomorphisms.</dd></dl>
-<p>&lt;&lt;&lt;&lt;&lt;&lt;&lt; HEAD </p><h1>inp Input Files </h1>
 <h1><a class="anchor" id="mkhom_inp"></a>
 Input Files</h1>
-<blockquote class="doxtable">
-<blockquote class="doxtable">
-<blockquote class="doxtable">
-<blockquote class="doxtable">
-<blockquote class="doxtable">
-<blockquote class="doxtable">
-<blockquote class="doxtable">
-<p>4a68ae339f0300470810ab3c90387657ccf21f0c </p>
-</blockquote>
-</blockquote>
-</blockquote>
-</blockquote>
-</blockquote>
-</blockquote>
-</blockquote>
 <dl class="section user"><dt><em>M</em>.cfinfo, <em>N</em>.cfinfo</dt><dd>Constituent information. </dd></dl>
 <dl class="section user"><dt><em>M</em>.1, <em>M</em>.2,...</dt><dd>Generators in the first representation. </dd></dl>
 <dl class="section user"><dt><em>N</em>.1, <em>N</em>.2,...</dt><dd>Generators in the second representation. </dd></dl>
 <dl class="section user"><dt><em>M</em>.rad</dt><dd>Generators for the head of <em>M</em> (with -H). </dd></dl>
 <dl class="section user"><dt><em>MCf</em>.k</dt><dd>Uncondense matrix produced by <a class="el" href="prog_pwkond.html">pwkond</a>.</dd></dl>
-<p>&lt;&lt;&lt;&lt;&lt;&lt;&lt; HEAD </p><h1>out Output Files </h1>
 <h1><a class="anchor" id="mkhom_out"></a>
 Output Files</h1>
-<blockquote class="doxtable">
-<blockquote class="doxtable">
-<blockquote class="doxtable">
-<blockquote class="doxtable">
-<blockquote class="doxtable">
-<blockquote class="doxtable">
-<blockquote class="doxtable">
-<p>4a68ae339f0300470810ab3c90387657ccf21f0c </p>
-</blockquote>
-</blockquote>
-</blockquote>
-</blockquote>
-</blockquote>
-</blockquote>
-</blockquote>
 <dl class="section user"><dt><em>M</em>.std</dt><dd>The spinning basis for <em>M</em>. </dd></dl>
 <dl class="section user"><dt><em>Hom</em>.1, <em>Hom</em>.2,...</dt><dd>A k-basis of Hom(<em>M</em>,<em>N</em>). </dd></dl>
 <dl class="section user"><dt><em>M</em>.std.1, <em>M</em>.std.2,...</dt><dd>Generators in spinning basis (with -t).</dd></dl>
-<p>&lt;&lt;&lt;&lt;&lt;&lt;&lt; HEAD </p><h1>desc Description </h1>
 <h1><a class="anchor" id="mkhom_desc"></a>
 Description</h1>
-<blockquote class="doxtable">
-<blockquote class="doxtable">
-<blockquote class="doxtable">
-<blockquote class="doxtable">
-<blockquote class="doxtable">
-<blockquote class="doxtable">
-<blockquote class="doxtable">
-<p>4a68ae339f0300470810ab3c90387657ccf21f0c </p>
-</blockquote>
-</blockquote>
-</blockquote>
-</blockquote>
-</blockquote>
-</blockquote>
-</blockquote>
 <p>This program calculates a basis for the vector space of homomorphisms between two kG-modules, Hom<sub>kG</sub>(M,N). In the case M=N the program optionally finds a generating set for the algebra of endomoprhisms, End<sub>kG</sub>(M), and calculates the corresponding left or right regular representation.</p>
 <p>If used without any options, <code>mkhom</code> writes the spinning basis of M to <em>M.std</em>, and a k-basis of the homomorphism space to <em>Hom.1</em>, <em>Hom.2</em>,... The latter are given with respect to the spinning basis of M and the original basis of N. To get the homomorphisms with respect to the original bases of M and N, multiply the matrices from the left with the inverse of <em>Hom</em>.</p>
 <p><code>mkhom</code> uses peak words of the first module. Thus, before using the program, <a class="el" href="prog_chop.html">chop</a> and <a class="el" href="prog_pwkond.html">pwkond</a> must have been run on the first module.</p>
-<p>&lt;&lt;&lt;&lt;&lt;&lt;&lt; HEAD </p><h1>impl Implementation Details </h1>
 <h1><a class="anchor" id="mkhom_impl"></a>
 Implementation Details</h1>
-<blockquote class="doxtable">
-<blockquote class="doxtable">
-<blockquote class="doxtable">
-<blockquote class="doxtable">
-<blockquote class="doxtable">
-<blockquote class="doxtable">
-<blockquote class="doxtable">
-<p>4a68ae339f0300470810ab3c90387657ccf21f0c </p>
-</blockquote>
-</blockquote>
-</blockquote>
-</blockquote>
-</blockquote>
-</blockquote>
-</blockquote>
 <p>The algorithm used by this program was developed by Magdolna Szöke [<a class="el" href="pg_bib.html#Sz98">Sz98</a>]. </p>
 </div></div><!-- contents -->
 </div><!-- doc-content -->
 <hr size="1"><address style="text-align: right;"><small>
-MeatAxe 2.4 documentation, generated on Fri Dec 26 2014 11:45:30</small></address>
+MeatAxe 2.4 documentation, generated on Wed Jan 7 2015 08:38:22</small></address>
 </body>
 </html>

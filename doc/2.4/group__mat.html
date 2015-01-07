@@ -87,6 +87,9 @@ Data Structures</h2></td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="func-members"></a>
 Functions</h2></td></tr>
+<tr class="memitem:gadc790223f689e1709a9bd77faf4b7453"><td class="memItemLeft" align="right" valign="top"><a class="el" href="structMatrix__t.html">Matrix_t</a> *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__mat.html#gadc790223f689e1709a9bd77faf4b7453">MatAddMul</a> (<a class="el" href="structMatrix__t.html">Matrix_t</a> *dest, const <a class="el" href="structMatrix__t.html">Matrix_t</a> *src, <a class="el" href="group__ff.html#ga7aa199c0a6bba46562519780595ee2f3">FEL</a> coeff)</td></tr>
+<tr class="memdesc:gadc790223f689e1709a9bd77faf4b7453"><td class="mdescLeft">&#160;</td><td class="mdescRight">Add a multiple of a matrix.  <a href="#gadc790223f689e1709a9bd77faf4b7453">More...</a><br /></td></tr>
+<tr class="separator:gadc790223f689e1709a9bd77faf4b7453"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:gaa6c1f3b0d54a8dccb48f83338a36a6cf"><td class="memItemLeft" align="right" valign="top"><a class="el" href="structMatrix__t.html">Matrix_t</a> *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__mat.html#gaa6c1f3b0d54a8dccb48f83338a36a6cf">MatAdd</a> (<a class="el" href="structMatrix__t.html">Matrix_t</a> *dest, const <a class="el" href="structMatrix__t.html">Matrix_t</a> *src)</td></tr>
 <tr class="memdesc:gaa6c1f3b0d54a8dccb48f83338a36a6cf"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sum of two matrices.  <a href="#gaa6c1f3b0d54a8dccb48f83338a36a6cf">More...</a><br /></td></tr>
 <tr class="separator:gaa6c1f3b0d54a8dccb48f83338a36a6cf"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -163,10 +166,10 @@ Functions</h2></td></tr>
 <tr class="memdesc:ga1f99f1d8df6029caa43024f35e5c76e2"><td class="mdescLeft">&#160;</td><td class="mdescRight">Reduce to echelon form.  <a href="#ga1f99f1d8df6029caa43024f35e5c76e2">More...</a><br /></td></tr>
 <tr class="separator:ga1f99f1d8df6029caa43024f35e5c76e2"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ga375192f076aa6b5affbe996c7bd65485"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__mat.html#ga375192f076aa6b5affbe996c7bd65485">MatPrint</a> (const char *name, const <a class="el" href="structMatrix__t.html">Matrix_t</a> *m)</td></tr>
-<tr class="memdesc:ga375192f076aa6b5affbe996c7bd65485"><td class="mdescLeft">&#160;</td><td class="mdescRight">Print a Matrix on stdout.  <a href="#ga375192f076aa6b5affbe996c7bd65485">More...</a><br /></td></tr>
+<tr class="memdesc:ga375192f076aa6b5affbe996c7bd65485"><td class="mdescLeft">&#160;</td><td class="mdescRight">Print a matrix on stdout.  <a href="#ga375192f076aa6b5affbe996c7bd65485">More...</a><br /></td></tr>
 <tr class="separator:ga375192f076aa6b5affbe996c7bd65485"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ga8e15736c076f1502120930c5cda593a0"><td class="memItemLeft" align="right" valign="top"><a class="el" href="structMatrix__t.html">Matrix_t</a> *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__mat.html#ga8e15736c076f1502120930c5cda593a0">MatPower</a> (const <a class="el" href="structMatrix__t.html">Matrix_t</a> *mat, long n)</td></tr>
-<tr class="memdesc:ga8e15736c076f1502120930c5cda593a0"><td class="mdescLeft">&#160;</td><td class="mdescRight">!section obj.mat Power of a matrix.  <a href="#ga8e15736c076f1502120930c5cda593a0">More...</a><br /></td></tr>
+<tr class="memdesc:ga8e15736c076f1502120930c5cda593a0"><td class="mdescLeft">&#160;</td><td class="mdescRight">Power of a matrix.  <a href="#ga8e15736c076f1502120930c5cda593a0">More...</a><br /></td></tr>
 <tr class="separator:ga8e15736c076f1502120930c5cda593a0"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ga09bbc8fd9eef53f4691578717bea1ef3"><td class="memItemLeft" align="right" valign="top"><a class="el" href="structMatrix__t.html">Matrix_t</a> *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__mat.html#ga09bbc8fd9eef53f4691578717bea1ef3">MatRead</a> (FILE *f)</td></tr>
 <tr class="memdesc:ga09bbc8fd9eef53f4691578717bea1ef3"><td class="mdescLeft">&#160;</td><td class="mdescRight">Read a matrix from a file.  <a href="#ga09bbc8fd9eef53f4691578717bea1ef3">More...</a><br /></td></tr>
@@ -189,6 +192,12 @@ Functions</h2></td></tr>
 <tr class="memitem:gad63b9348b04e346f283df0d6e5fb692d"><td class="memItemLeft" align="right" valign="top"><a class="el" href="structMatrix__t.html">Matrix_t</a> *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__mat.html#gad63b9348b04e346f283df0d6e5fb692d">MatMulScalar</a> (<a class="el" href="structMatrix__t.html">Matrix_t</a> *dest, <a class="el" href="group__ff.html#ga7aa199c0a6bba46562519780595ee2f3">FEL</a> coeff)</td></tr>
 <tr class="memdesc:gad63b9348b04e346f283df0d6e5fb692d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Multiply a Matrix by a Constant.  <a href="#gad63b9348b04e346f283df0d6e5fb692d">More...</a><br /></td></tr>
 <tr class="separator:gad63b9348b04e346f283df0d6e5fb692d"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga06bd7bba0fd200cc8287527e0b950db0"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__mat.html#ga06bd7bba0fd200cc8287527e0b950db0">StablePower_</a> (<a class="el" href="structMatrix__t.html">Matrix_t</a> *mat, int *pwr, <a class="el" href="structMatrix__t.html">Matrix_t</a> **ker)</td></tr>
+<tr class="memdesc:ga06bd7bba0fd200cc8287527e0b950db0"><td class="mdescLeft">&#160;</td><td class="mdescRight">Stable power of a matrix.  <a href="#ga06bd7bba0fd200cc8287527e0b950db0">More...</a><br /></td></tr>
+<tr class="separator:ga06bd7bba0fd200cc8287527e0b950db0"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:gaf68d2d6683e91c84f19fbe02c5446693"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__mat.html#gaf68d2d6683e91c84f19fbe02c5446693">StablePower</a> (const <a class="el" href="structMatrix__t.html">Matrix_t</a> *mat, int *pwr, <a class="el" href="structMatrix__t.html">Matrix_t</a> **ker)</td></tr>
+<tr class="memdesc:gaf68d2d6683e91c84f19fbe02c5446693"><td class="mdescLeft">&#160;</td><td class="mdescRight">Stable power of a matrix.  <a href="#gaf68d2d6683e91c84f19fbe02c5446693">More...</a><br /></td></tr>
+<tr class="separator:gaf68d2d6683e91c84f19fbe02c5446693"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <h2 class="groupheader">Function Documentation</h2>
 <a class="anchor" id="ga1d7a805c571f70c31e34f9162f602272"></a>
@@ -241,6 +250,49 @@ Functions</h2></td></tr>
 
 <p>Sum of two matrices. </p>
 <p>This function adds <em>src</em> to <em>dest</em>, overwriteing the previos value in <em>dest</em>. The matrices must be over the same field and have the same dimensions. </p><dl class="section return"><dt>Returns</dt><dd><em>dest</em> on success, 0 on error. </dd></dl>
+
+</div>
+</div>
+<a class="anchor" id="gadc790223f689e1709a9bd77faf4b7453"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="structMatrix__t.html">Matrix_t</a>* MatAddMul </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="structMatrix__t.html">Matrix_t</a> *&#160;</td>
+          <td class="paramname"><em>dest</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const <a class="el" href="structMatrix__t.html">Matrix_t</a> *&#160;</td>
+          <td class="paramname"><em>src</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="group__ff.html#ga7aa199c0a6bba46562519780595ee2f3">FEL</a>&#160;</td>
+          <td class="paramname"><em>coeff</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Add a multiple of a matrix. </p>
+<p>This function adds a multiple of a matrix to another matrix. The matrices must be compatible for addition. |MatAddMul()| handles special cases (|coeff| equals 0 or 1) in an intelligent way, so there is no need for the caller to do this. </p><dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">dest</td><td>Matrix to add to. </td></tr>
+    <tr><td class="paramname">src</td><td>Matrix to add. </td></tr>
+    <tr><td class="paramname">coeff</td><td>Coefficient. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>The function returns |dest|, or |NULL| on error. </dd></dl>
 
 </div>
 </div>
@@ -820,14 +872,13 @@ Functions</h2></td></tr>
 </div><div class="memdoc">
 
 <p>Read a matrix from a file. </p>
-<p>!synopsis <a class="el" href="structMatrix__t.html" title="A matrix over a finite field. ">Matrix_t</a> *MatLoad(const char *fn); </p><dl class="params"><dt>Parameters</dt><dd>
+<p>This function opens a file, reads a single matrix, and closes the file. To read more than one matrix from a file, use |MatRead()|. </p><dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">fn</td><td>File name. </td></tr>
   </table>
   </dd>
 </dl>
-<dl class="section return"><dt>Returns</dt><dd>Pointer to the matrix, or |NULL| on error. !description This function opens a file, reads a single matrix, and closes the file.</dd></dl>
-<p>To read more than one matrix from a file, use |MatRead()|. </p><dl class="section see"><dt>See also</dt><dd><a class="el" href="group__mat.html#ga09bbc8fd9eef53f4691578717bea1ef3" title="Read a matrix from a file. ">MatRead</a> </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd>Pointer to the matrix, or |NULL| on error. </dd></dl>
 
 </div>
 </div>
@@ -856,7 +907,7 @@ Functions</h2></td></tr>
 </div><div class="memdoc">
 
 <p>Multiply matrices This function multiplies <em>dest</em> from the right by <em>src</em>. </p>
-<p>The matrices must be compatible for multiplication, i.e. they must be over the same field, and the number of columns of <em>dest</em> must be equal to the number of rows of <em>src</em>. The result of the multiplication is stored in <em>dest</em>, overwriting the original contents. </p><dl class="section see"><dt>See also</dt><dd><a class="el" href="group__mat.html#ga8e15736c076f1502120930c5cda593a0" title="!section obj.mat Power of a matrix. ">MatPower()</a> </dd></dl>
+<p>The matrices must be compatible for multiplication, i.e. they must be over the same field, and the number of columns of <em>dest</em> must be equal to the number of rows of <em>src</em>. The result of the multiplication is stored in <em>dest</em>, overwriting the original contents. </p><dl class="section see"><dt>See also</dt><dd><a class="el" href="group__mat.html#ga8e15736c076f1502120930c5cda593a0" title="Power of a matrix. ">MatPower()</a> </dd></dl>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">dest</td><td>Left factor and result. </td></tr>
@@ -1115,16 +1166,16 @@ Functions</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>!section obj.mat Power of a matrix. </p>
-<p>!synopsis <a class="el" href="structMatrix__t.html" title="A matrix over a finite field. ">Matrix_t</a> *MatPower(const <a class="el" href="structMatrix__t.html" title="A matrix over a finite field. ">Matrix_t</a> *mat, long n); </p><dl class="params"><dt>Parameters</dt><dd>
+<p>Power of a matrix. </p>
+<p>This function calculates the n-th power of a matrix, using the binary method. This method is generally faster than multiplying the matrix $n$ times by itself. On the other hand, a third matrix is temporarily created in addition to the original matrix and the result matrix. The cases n=0 and n=1 are handled separately, avoiding unnecessary memory allocation and calculation.</p>
+<p>Negative exponents are not allowed. To calculate a negative power, you must first invert the matrix with <a class="el" href="group__mat.html#gad558823c4f5d656143d4164838e7a2c3" title="Inverse of a matrix This function calculates the inverse of a matrix. ">MatInverse()</a> and then call <a class="el" href="group__mat.html#ga8e15736c076f1502120930c5cda593a0" title="Power of a matrix. ">MatPower()</a> with the inverted matrix and a positive exponent. </p><dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">mat</td><td>Pointer to the matrix. </td></tr>
     <tr><td class="paramname">n</td><td>Exponent. </td></tr>
   </table>
   </dd>
 </dl>
-<dl class="section return"><dt>Returns</dt><dd>|n|-th power of |mat|, or |NULL| on error. !description This function calculates the $n$-th power of a matrix, using the binary method. This method is generally faster than multiplying the matrix $n$ times by itself. On the other hand, a third matrix is temporarily created in addition to the original matrix and the result matrix. The cases $n=0$ and $n=1$ are handled separately, avoiding unnecessary memory allocation and calculation.</dd></dl>
-<p>Negative exponents are not allowed. To calculate a negative power, you must first invert the matrix with |MatInverse()| and then call |MatPower()| with the inverted matrix and a positive exponent. </p><dl class="section see"><dt>See also</dt><dd><a class="el" href="group__mat.html#gab9718111f7c42fe1d0af862b1073d70f" title="Multiply matrices This function multiplies dest from the right by src. ">MatMul</a> <a class="el" href="group__mat.html#gad558823c4f5d656143d4164838e7a2c3" title="Inverse of a matrix This function calculates the inverse of a matrix. ">MatInverse</a> </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd>n-th power of mat, or NULL on error. </dd></dl>
 
 </div>
 </div>
@@ -1152,7 +1203,7 @@ Functions</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Print a Matrix on stdout. </p>
+<p>Print a matrix on stdout. </p>
 <p>This function prints a matrix on the standard output in readable form. If <em>name</em> is not 0, the name followed by an equal sign is printed before the matrix. </p><dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">name</td><td>Name to print before the matrix, or 0. </td></tr>
@@ -1311,9 +1362,97 @@ Functions</h2></td></tr>
 
 </div>
 </div>
+<a class="anchor" id="gaf68d2d6683e91c84f19fbe02c5446693"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">int StablePower </td>
+          <td>(</td>
+          <td class="paramtype">const <a class="el" href="structMatrix__t.html">Matrix_t</a> *&#160;</td>
+          <td class="paramname"><em>mat</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">int *&#160;</td>
+          <td class="paramname"><em>pwr</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="structMatrix__t.html">Matrix_t</a> **&#160;</td>
+          <td class="paramname"><em>ker</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Stable power of a matrix. </p>
+<p>This function works like |StablePower_()|, but it does not modify the matrix in |mat|. This means, of course, that a temporary copy of the matrix is created. </p><dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">mat</td><td>The matrix. </td></tr>
+    <tr><td class="paramname">pwr</td><td>Stable power. </td></tr>
+    <tr><td class="paramname">ker</td><td>Kernel of the stable power. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>$0$ on success, $-1$ on error. </dd></dl>
+
+</div>
+</div>
+<a class="anchor" id="ga06bd7bba0fd200cc8287527e0b950db0"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">int StablePower_ </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="structMatrix__t.html">Matrix_t</a> *&#160;</td>
+          <td class="paramname"><em>mat</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">int *&#160;</td>
+          <td class="paramname"><em>pwr</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="structMatrix__t.html">Matrix_t</a> **&#160;</td>
+          <td class="paramname"><em>ker</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Stable power of a matrix. </p>
+<p>This function takes a square matrix M and finds an integer n&gt;0 such that ker(M<sup>n</sup>) = ker(M<sup>n+1</sup>). <em>ker</em> must be a pointer to a variable of type Matrix_t*, where the stable kernel will be stored. Both <em>pwr</em> and <em>ker</em> may be NULL if the corresponding information is not needed.</p>
+<p>Note that the number $n$ found by <a class="el" href="group__mat.html#ga06bd7bba0fd200cc8287527e0b950db0" title="Stable power of a matrix. ">StablePower_()</a> is not guararanteed to be minimal. In fact, n will always be a power of two since the function only examines matrices of the form M<sup>2<sup>k</sup></sup>.</p>
+<p>This function modifies the matrix. To avoid this, use <a class="el" href="group__mat.html#gaf68d2d6683e91c84f19fbe02c5446693" title="Stable power of a matrix. ">StablePower()</a>. </p><dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">mat</td><td>The matrix. </td></tr>
+    <tr><td class="paramname">pwr</td><td>Stable power. </td></tr>
+    <tr><td class="paramname">ker</td><td>Kernel of the stable power. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>0 on success, -1 on error. </dd></dl>
+
+</div>
+</div>
 </div><!-- contents -->
 </div><!-- doc-content -->
 <hr size="1"><address style="text-align: right;"><small>
-MeatAxe 2.4 documentation, generated on Fri Dec 26 2014 11:45:31</small></address>
+MeatAxe 2.4 documentation, generated on Wed Jan 7 2015 08:38:23</small></address>
 </body>
 </html>

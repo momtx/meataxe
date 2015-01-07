@@ -61,35 +61,17 @@ $(document).ready(function(){initNavTree('prog_decomp.html','');});
 <div class="title">decomp - Decompose a Module </div>  </div>
 </div><!--header-->
 <div class="contents">
-<div class="textblock"><p>&lt;&lt;&lt;&lt;&lt;&lt;&lt; HEAD</p>
-<h1>syntax Command Line </h1>
-<h1><a class="anchor" id="decomp_syntax"></a>
+<div class="textblock"><h1><a class="anchor" id="decomp_syntax"></a>
 Command Line</h1>
-<p>&gt;&gt;&gt;&gt;&gt;&gt;&gt; 4a68ae339f0300470810ab3c90387657ccf21f0c </p><pre>
+<pre>
 decomp <em>Options</em> [-ta] <em>Module</em> <em>Endo</em> <em>RadBasis</em> </pre><dl class="section user"><dt><em>Options</em> </dt><dd>Standard options, see <a class="el" href="prog_stdopts.html">Standard Command Line Options</a> </dd></dl>
 <dl class="section user"><dt>-t</dt><dd>Transform generators. </dd></dl>
 <dl class="section user"><dt>-a</dt><dd>Calculate the action on direct summands. </dd></dl>
 <dl class="section user"><dt><em>Module</em> </dt><dd>Name of the module to decompose. </dd></dl>
 <dl class="section user"><dt><em>Endo</em> </dt><dd>Name of the endomorphism ring. </dd></dl>
 <dl class="section user"><dt><em>RadBasis</em> </dt><dd>Basis for radical series of the endomorphism ring.</dd></dl>
-<p>&lt;&lt;&lt;&lt;&lt;&lt;&lt; HEAD </p><h1>inp Input Files </h1>
 <h1><a class="anchor" id="decomp_inp"></a>
 Input Files</h1>
-<blockquote class="doxtable">
-<blockquote class="doxtable">
-<blockquote class="doxtable">
-<blockquote class="doxtable">
-<blockquote class="doxtable">
-<blockquote class="doxtable">
-<blockquote class="doxtable">
-<p>4a68ae339f0300470810ab3c90387657ccf21f0c </p>
-</blockquote>
-</blockquote>
-</blockquote>
-</blockquote>
-</blockquote>
-</blockquote>
-</blockquote>
 <dl class="section user"><dt><em>Module</em>.1, <em>Module</em>.2, ...</dt><dd>Generators for the module. </dd></dl>
 <dl class="section user"><dt><em>Module</em>.cfinfo</dt><dd>Constituent information. </dd></dl>
 <dl class="section user"><dt><em>Endo</em>.1, <em>Endo</em>.2, ...</dt><dd>A k-Basis of the endomorphism ring. </dd></dl>
@@ -97,73 +79,25 @@ Input Files</h1>
 <dl class="section user"><dt><em>Endo</em>.lrr.1, <em>Endo</em>.lrr.2, ...</dt><dd>Left regular representation of the endomorphism ring. </dd></dl>
 <dl class="section user"><dt><em>Endo</em>.lrr.cfinfo</dt><dd>Constituent information for the left regular representation. At least <a class="el" href="prog_chop.html">chop</a> and <a class="el" href="prog_mksub.html">mksub</a> must have been run. </dd></dl>
 <dl class="section user"><dt><em>Endo</em>.lrr.soc</dt><dd>Basis if the socle of <em>Endo.lrr</em> (make by <a class="el" href="prog_soc.html">soc</a>).</dd></dl>
-<p>&lt;&lt;&lt;&lt;&lt;&lt;&lt; HEAD </p><h1>out Output Files </h1>
 <h1><a class="anchor" id="decomp_out"></a>
 Output Files</h1>
-<blockquote class="doxtable">
-<blockquote class="doxtable">
-<blockquote class="doxtable">
-<blockquote class="doxtable">
-<blockquote class="doxtable">
-<blockquote class="doxtable">
-<blockquote class="doxtable">
-<p>4a68ae339f0300470810ab3c90387657ccf21f0c </p>
-</blockquote>
-</blockquote>
-</blockquote>
-</blockquote>
-</blockquote>
-</blockquote>
-</blockquote>
 <dl class="section user"><dt><em>Module</em>.dec</dt><dd>Basis of the module reflecting the decomposition. </dd></dl>
 <dl class="section user"><dt><em>Module</em>.dec.1, <em>Module</em>.dec.2, ...</dt><dd>Basis of the module reflecting the decomposition. Generators in decomp. basis (with -t). </dd></dl>
 <dl class="section user"><dt><em>Module</em>.<em>Comp</em>.1, <em>Module</em>.<em>Comp</em>.2, ...</dt><dd>Generators on the components (with -a).</dd></dl>
-<p>&lt;&lt;&lt;&lt;&lt;&lt;&lt; HEAD </p><h1>desc Description </h1>
 <h1><a class="anchor" id="decomp_desc"></a>
 Description</h1>
-<blockquote class="doxtable">
-<blockquote class="doxtable">
-<blockquote class="doxtable">
-<blockquote class="doxtable">
-<blockquote class="doxtable">
-<blockquote class="doxtable">
-<blockquote class="doxtable">
-<p>4a68ae339f0300470810ab3c90387657ccf21f0c </p>
-</blockquote>
-</blockquote>
-</blockquote>
-</blockquote>
-</blockquote>
-</blockquote>
-</blockquote>
 <p>This program decomposes a module into its direct summands, using the head of the endomorphism ring. It assumes that the endomorphism ring and its left regular representation has already be calculated using <a class="el" href="prog_mkhom.html">mkhom</a>. It also expects that <a class="el" href="prog_chop.html">chop</a>. <a class="el" href="prog_pwkond.html">pwkond</a>, and <a class="el" href="prog_rad.html">rad</a> have been run on the left regular representation.</p>
 <p><b>decomp</b> produces three types of output files:</p><ul>
 <li>A basis of the module reflecting the decomposition is written to <em>Module.dec</em>. With respect to this basis, the generators have a block-diagonal structure with the blocks corresponding to the direct summands.</li>
 <li>If you use the "-t" option, <b>decomp</b> calculates the action of the generators with respect to the decomposition basis, and writes it to <em>Module.dec.1</em>, <em>Module.dec.2</em>,...</li>
 <li>If you use the "-a" option, the program also calculates the action of the generators on each direct summand, i.e., the blocks of the matrices above. They are written to <em>Module</em>.<em>Comp.1</em>, <em>Module</em>.<em>Comp.2</em>, and so on, where <em>Comp</em> is the name of the direct summand, containing the isomorphism type (dimension plus one letter) and a number counting isomorphic summands that occur more than once in the decomposition.</li>
 </ul>
-<p>&lt;&lt;&lt;&lt;&lt;&lt;&lt; HEAD </p><h1>impl Implementation Details </h1>
 <h1><a class="anchor" id="decomp_impl"></a>
 Implementation Details</h1>
-<blockquote class="doxtable">
-<blockquote class="doxtable">
-<blockquote class="doxtable">
-<blockquote class="doxtable">
-<blockquote class="doxtable">
-<blockquote class="doxtable">
-<blockquote class="doxtable">
-<p>4a68ae339f0300470810ab3c90387657ccf21f0c </p>
-</blockquote>
-</blockquote>
-</blockquote>
-</blockquote>
-</blockquote>
-</blockquote>
-</blockquote>
 <p>The algorithm used by this program was developed by Magdolna Szöke [<a class="el" href="pg_bib.html#Sz98">Sz98</a>]. </p>
 </div></div><!-- contents -->
 </div><!-- doc-content -->
 <hr size="1"><address style="text-align: right;"><small>
-MeatAxe 2.4 documentation, generated on Fri Dec 26 2014 11:45:30</small></address>
+MeatAxe 2.4 documentation, generated on Wed Jan 7 2015 08:38:22</small></address>
 </body>
 </html>

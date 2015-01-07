@@ -61,24 +61,14 @@ $(document).ready(function(){initNavTree('prog_znu.html','');});
 <div class="title">znu - Null-Space </div>  </div>
 </div><!--header-->
 <div class="contents">
-<div class="textblock"><p>&lt;&lt;&lt;&lt;&lt;&lt;&lt; HEAD</p>
-<h1>syntax Command Line </h1>
-<h1><a class="anchor" id="znu_syntax"></a>
+<div class="textblock"><h1><a class="anchor" id="znu_syntax"></a>
 Command Line</h1>
-<p>&gt;&gt;&gt;&gt;&gt;&gt;&gt; 4a68ae339f0300470810ab3c90387657ccf21f0c </p><pre>
+<pre>
 znu <em>Options</em> [-G] <em>Matrix</em> [<em>NullSpace</em>]
 </pre><dl class="section user"><dt><em>Options</em> </dt><dd>Standard options, see <a class="el" href="prog_stdopts.html">Standard Command Line Options</a> </dd></dl>
 <dl class="section user"><dt>-G</dt><dd>Output in GAP format. </dd></dl>
 <dl class="section user"><dt><em>Matrix</em> </dt><dd>The matrix. </dd></dl>
 <dl class="section user"><dt><em>NullSpace</em> </dt><dd>The null-space.</dd></dl>
-<p>&lt;&lt;&lt;&lt;&lt;&lt;&lt; HEAD </p>
-<h1><a class="anchor" id="inp"></a>
-Input Files</h1>
-<dl class="section user"><dt><em>Matrix</em> </dt><dd>The matrix (M×N).</dd></dl>
-<h1><a class="anchor" id="out"></a>
-Output Files</h1>
-<dl class="section user"><dt><em>NullSpace</em> </dt><dd>The null-space, a L×M matrix in echelon form.</dd></dl>
-<h1>desc Description </h1>
 <h1><a class="anchor" id="znu_inp"></a>
 Input Files</h1>
 <dl class="section user"><dt><em>Matrix</em> </dt><dd>The matrix (M×N).</dd></dl>
@@ -87,45 +77,14 @@ Output Files</h1>
 <dl class="section user"><dt><em>NullSpace</em> </dt><dd>The null-space, a L×M matrix in echelon form.</dd></dl>
 <h1><a class="anchor" id="znu_desc"></a>
 Description</h1>
-<blockquote class="doxtable">
-<blockquote class="doxtable">
-<blockquote class="doxtable">
-<blockquote class="doxtable">
-<blockquote class="doxtable">
-<blockquote class="doxtable">
-<blockquote class="doxtable">
-<p>4a68ae339f0300470810ab3c90387657ccf21f0c </p>
-</blockquote>
-</blockquote>
-</blockquote>
-</blockquote>
-</blockquote>
-</blockquote>
-</blockquote>
 <p>This program reads in a matrix and outputs a basis for its null-space in echelon form. If the <em>Nullspace</em> argument is omitted the null-space is not written out, but its dimension is still printed.</p>
 <p>Notice that the input matrix does not need to be square.</p>
-<p>&lt;&lt;&lt;&lt;&lt;&lt;&lt; HEAD </p><h1>impl Implementation Details </h1>
 <h1><a class="anchor" id="znu_impl"></a>
 Implementation Details</h1>
-<blockquote class="doxtable">
-<blockquote class="doxtable">
-<blockquote class="doxtable">
-<blockquote class="doxtable">
-<blockquote class="doxtable">
-<blockquote class="doxtable">
-<blockquote class="doxtable">
-<p>4a68ae339f0300470810ab3c90387657ccf21f0c </p>
-</blockquote>
-</blockquote>
-</blockquote>
-</blockquote>
-</blockquote>
-</blockquote>
-</blockquote>
 <p>After reading the matrix, the program generates the n×n identity matrix in memory where n is the number of rows. It then proceeds to perform row operations on the matrix until it is in echelon form. The same row operations are performed on the identity matrix, and whenever a row in the original matrix becomes zero, the corresponding row of the other matrix is marked for output. The null-space is always reduced to echelon form. </p>
 </div></div><!-- contents -->
 </div><!-- doc-content -->
 <hr size="1"><address style="text-align: right;"><small>
-MeatAxe 2.4 documentation, generated on Fri Dec 26 2014 11:45:31</small></address>
+MeatAxe 2.4 documentation, generated on Wed Jan 7 2015 08:38:22</small></address>
 </body>
 </html>

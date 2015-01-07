@@ -61,11 +61,9 @@ $(document).ready(function(){initNavTree('prog_zcl.html','');});
 <div class="title">zcl - Clean </div>  </div>
 </div><!--header-->
 <div class="contents">
-<div class="textblock"><p>&lt;&lt;&lt;&lt;&lt;&lt;&lt; HEAD</p>
-<h1>syntax Command Line </h1>
-<h1><a class="anchor" id="zcl_syntax"></a>
+<div class="textblock"><h1><a class="anchor" id="zcl_syntax"></a>
 Command Line</h1>
-<p>&gt;&gt;&gt;&gt;&gt;&gt;&gt; 4a68ae339f0300470810ab3c90387657ccf21f0c </p><pre>
+<pre>
 zcl [<em>Options</em>] <em>Subsp</em> <em>Mat</em> <em>CleanedMat</em> <em>Ops</em> </pre><dl class="section user"><dt><em>Options</em> </dt><dd>Standard options, see <a class="el" href="prog_stdopts.html">Standard Command Line Options</a> </dd></dl>
 <dl class="section user"><dt><em>Subsp</em> </dt><dd>Subspace to clean with. </dd></dl>
 <dl class="section user"><dt><em>Mat</em> </dt><dd>Matrix to be cleaned. </dd></dl>
@@ -79,24 +77,8 @@ Input Files</h1>
 Output Files</h1>
 <dl class="section user"><dt><em>CleanedMat</em> </dt><dd>Cleaned matrix (L⨯M). </dd></dl>
 <dl class="section user"><dt><em>Ops</em> </dt><dd>Row operations (L⨯N).</dd></dl>
-<p>&lt;&lt;&lt;&lt;&lt;&lt;&lt; HEAD </p><h1>desc Description </h1>
 <h1><a class="anchor" id="zcl_desc"></a>
 Description</h1>
-<blockquote class="doxtable">
-<blockquote class="doxtable">
-<blockquote class="doxtable">
-<blockquote class="doxtable">
-<blockquote class="doxtable">
-<blockquote class="doxtable">
-<blockquote class="doxtable">
-<p>4a68ae339f0300470810ab3c90387657ccf21f0c </p>
-</blockquote>
-</blockquote>
-</blockquote>
-</blockquote>
-</blockquote>
-</blockquote>
-</blockquote>
 <p>This program "cleans" <em>Mat</em> with <em>Subsp</em>, i.e., it adds suitable linear combinations of rows of <em>Subsp</em> to each row of <em>Mat</em> such that all pivot columns in the result are zero. It writes two matrices to <em>CleanedMat</em> and <em>Ops</em> such that <em>Mat</em> = <em>Ops⋅<em>Subsp</em> +</em> <em>CleanedMat</em>. If <em>Subsp</em> is not in echelon form, it is first reduced to echelon form, and the previous equation holds for the reduced Matrix. <em>Subsp</em> and <em>Mat</em> must be over the same field and have the same number of columns.</p>
 <p>One use of this program is to calculate the action of a generator on an invariant subspace: Take the subspace in echelon form (as it is on output from <a class="el" href="prog_zsp.html">zsp</a>), and multiply it by a generator. Cleaning the result with the original basis yields a zero matrix, and <em>RowOps</em> is the action of the generator on the invariant subspace. For example, if <code>subsp</code> is the subspace and <code>gen</code> is the generator, </p><pre>
 # zmu subsp gen image
@@ -109,6 +91,6 @@ Implementation Details</h1>
 </div></div><!-- contents -->
 </div><!-- doc-content -->
 <hr size="1"><address style="text-align: right;"><small>
-MeatAxe 2.4 documentation, generated on Fri Dec 26 2014 11:45:31</small></address>
+MeatAxe 2.4 documentation, generated on Wed Jan 7 2015 08:38:22</small></address>
 </body>
 </html>

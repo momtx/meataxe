@@ -61,11 +61,9 @@ $(document).ready(function(){initNavTree('prog_pwkond.html','');});
 <div class="title">pwkond - Peak Word Condensation </div>  </div>
 </div><!--header-->
 <div class="contents">
-<div class="textblock"><p>&lt;&lt;&lt;&lt;&lt;&lt;&lt; HEAD</p>
-<h1>syntax Command Line </h1>
-<h1><a class="anchor" id="pwkond_syntax"></a>
+<div class="textblock"><h1><a class="anchor" id="pwkond_syntax"></a>
 Command Line</h1>
-<p>&gt;&gt;&gt;&gt;&gt;&gt;&gt; 4a68ae339f0300470810ab3c90387657ccf21f0c </p><pre>
+<pre>
 pwkond <em>Options</em> [-Gnptbk] [-i <em>List</em>] [-e <em>List</em>] <em>Name</em> [<em>Name</em> ...]
 </pre><dl class="section user"><dt><em>Options</em> </dt><dd>Standard options, see <a class="el" href="prog_stdopts.html">Standard Command Line Options</a> </dd></dl>
 <dl class="section user"><dt>-G</dt><dd>Produce output in GAP format. </dd></dl>
@@ -77,45 +75,13 @@ pwkond <em>Options</em> [-Gnptbk] [-i <em>List</em>] [-e <em>List</em>] <em>Name
 <dl class="section user"><dt>-i <em>List</em> </dt><dd>Word to try first, for example "-i 100,20-35". </dd></dl>
 <dl class="section user"><dt>-e <em>List</em> </dt><dd>Words to be excluded, for example "-e 3,20-99".</dd></dl>
 <dl class="section user"><dt><em>Name</em> </dt><dd>Name of the representation.</dd></dl>
-<p>&lt;&lt;&lt;&lt;&lt;&lt;&lt; HEAD </p><h1>inp Input Files </h1>
 <h1><a class="anchor" id="pwkond_inp"></a>
 Input Files</h1>
-<blockquote class="doxtable">
-<blockquote class="doxtable">
-<blockquote class="doxtable">
-<blockquote class="doxtable">
-<blockquote class="doxtable">
-<blockquote class="doxtable">
-<blockquote class="doxtable">
-<p>4a68ae339f0300470810ab3c90387657ccf21f0c </p>
-</blockquote>
-</blockquote>
-</blockquote>
-</blockquote>
-</blockquote>
-</blockquote>
-</blockquote>
 <dl class="section user"><dt><em>Name</em>.cfinfo</dt><dd>Constituent info file. </dd></dl>
 <dl class="section user"><dt><em>Name</em>.1, <em>Name</em>.2, ...</dt><dd>Generators.</dd></dl>
 <dl class="section user"><dt><em>NameCF</em>.1, <em>NameCF</em>.2, ...</dt><dd>Generators on the irreducible constituents. NameCF is the representation name followed by the dimension and a letter to distinguish inequivalent constituents of the same dimension (see <a class="el" href="prog_chop.html">chop</a>).</dd></dl>
-<p>&lt;&lt;&lt;&lt;&lt;&lt;&lt; HEAD </p><h1>out Output Files </h1>
 <h1><a class="anchor" id="pwkond_out"></a>
 Output Files</h1>
-<blockquote class="doxtable">
-<blockquote class="doxtable">
-<blockquote class="doxtable">
-<blockquote class="doxtable">
-<blockquote class="doxtable">
-<blockquote class="doxtable">
-<blockquote class="doxtable">
-<p>4a68ae339f0300470810ab3c90387657ccf21f0c </p>
-</blockquote>
-</blockquote>
-</blockquote>
-</blockquote>
-</blockquote>
-</blockquote>
-</blockquote>
 <dl class="section user"><dt><em>Name</em>.cfinfo</dt><dd>Constituent info file.</dd></dl>
 <dl class="section user"><dt><em>NameCF</em>.1k, <em>NameCF</em>.2k, ...</dt><dd>Condensed generators on the irreducible constituents.</dd></dl>
 <dl class="section user"><dt><em>NameCF</em>.1.std, <em>NameCF</em>.2.std, ...</dt><dd>Condensed generators in standard basis (with -t).</dd></dl>
@@ -124,24 +90,8 @@ Output Files</h1>
 <dl class="section user"><dt><em>NameCF</em>.im</dt><dd>Image used for the condensation.</dd></dl>
 <dl class="section user"><dt><em>NameCF</em>.k</dt><dd>Peak word kernel (with -k or without -n).</dd></dl>
 <dl class="section user"><dt><em>NameCF</em>.ssb</dt><dd>Semisimplicity basis (with -b).</dd></dl>
-<p>&lt;&lt;&lt;&lt;&lt;&lt;&lt; HEAD </p><h1>desc Description </h1>
 <h1><a class="anchor" id="pwkond_desc"></a>
 Description</h1>
-<blockquote class="doxtable">
-<blockquote class="doxtable">
-<blockquote class="doxtable">
-<blockquote class="doxtable">
-<blockquote class="doxtable">
-<blockquote class="doxtable">
-<blockquote class="doxtable">
-<p>4a68ae339f0300470810ab3c90387657ccf21f0c </p>
-</blockquote>
-</blockquote>
-</blockquote>
-</blockquote>
-</blockquote>
-</blockquote>
-</blockquote>
 <p>After the irreducible constituents of a module, or a number of modules, have been found with <a class="el" href="prog_chop.html">chop</a>, this program can be used</p><ul>
 <li>to calulate peak words for the constituents,</li>
 <li>to condense the module using the peak words,</li>
@@ -159,29 +109,13 @@ Description</h1>
 <li>X10a.k Kernel of the peak word. The .cfinfo file is written each time a peak word is found. So, if the program does not terminate or dies unexpectedly the information about the peak words found so far are not lost.</li>
 </ul>
 <p>If the module is semisimple, <b>pwkond</b> can calculate a basis that respects the decomposition into irreducible constituents. With respect to this basis, the generators are in block diagonal form, where the blocks occur in the order determined by <a class="el" href="prog_chop.html">chop</a>. All blocks corresponding to the same constituent are equal, not only equivalent, and the blocks occur in their "natural" order (as defined by <a class="el" href="prog_chop.html">chop</a>). This is essential for the tensor condensation procedure (see <a class="el" href="prog_precond.html">precond</a>). To calculate the semisimplicity basis, use the "-b" option. The basis is written to <em>Name.ssb</em>. Using "-b" with a module that is not semisimple produces undefined results. Most probably, <b>pwkond</b> will stop with the error message "row index out of range", or it will write a singular matrix to <em>Name.ssb</em>.</p>
-<p>&lt;&lt;&lt;&lt;&lt;&lt;&lt; HEAD </p><h1>impl Implementation Details </h1>
 <h1><a class="anchor" id="pwkond_impl"></a>
 Implementation Details</h1>
-<blockquote class="doxtable">
-<blockquote class="doxtable">
-<blockquote class="doxtable">
-<blockquote class="doxtable">
-<blockquote class="doxtable">
-<blockquote class="doxtable">
-<blockquote class="doxtable">
-<p>4a68ae339f0300470810ab3c90387657ccf21f0c </p>
-</blockquote>
-</blockquote>
-</blockquote>
-</blockquote>
-</blockquote>
-</blockquote>
-</blockquote>
 <p>Internally, a peak word is represented by a pair (n,p) where n is the canonical number of the word (See <a class="el" href="prog_zmw.html">zmw</a>), and p is a polynomial. The peak word represented by this pair is p(Wn), Wn being the n-th word. Without "-p", <b>pwkond</b> considers only linear polynomials. If the "-p" option is used, <b>pwkond</b> can find polynomials of any degree.</p>
 <p>Whenever a peak word is found, the generalized condensation is calculated as follows: The peakword is caculated as a matrix acting on V, which is then repeatedly raised to higher powers until the nullity stabilizes. The stable nullity equals the multiplicity k of the constituent times the degree [E:F] of the splitting field extension. Having a power w^N of the peakword with stable nullity, the condensation onto its kernel, i.e., the projection of V onto V/w^N(V), is determined in the same way as in the <a class="el" href="prog_zqt.html">zqt</a> program. </p>
 </div></div><!-- contents -->
 </div><!-- doc-content -->
 <hr size="1"><address style="text-align: right;"><small>
-MeatAxe 2.4 documentation, generated on Fri Dec 26 2014 11:45:30</small></address>
+MeatAxe 2.4 documentation, generated on Wed Jan 7 2015 08:38:22</small></address>
 </body>
 </html>

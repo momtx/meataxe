@@ -61,69 +61,31 @@ $(document).ready(function(){initNavTree('prog_zsc.html','');});
 <div class="title">zsc - Spin-Up With Script </div>  </div>
 </div><!--header-->
 <div class="contents">
-<div class="textblock"><p>&lt;&lt;&lt;&lt;&lt;&lt;&lt; HEAD</p>
-<h1>syntax Command Line </h1>
-<h1><a class="anchor" id="zsc_syntax"></a>
+<div class="textblock"><h1><a class="anchor" id="zsc_syntax"></a>
 Command Line</h1>
-<p>&gt;&gt;&gt;&gt;&gt;&gt;&gt; 4a68ae339f0300470810ab3c90387657ccf21f0c </p><pre>
+<pre>
 zsc [<em>Options</em>] [-g <em>NGen</em>] <em>Gen</em> <em>Seed</em> <em>Script</em> <em>Output</em> </pre><dl class="section user"><dt><em>Options</em> </dt><dd>Standard options, see <a class="el" href="prog_stdopts.html">Standard Command Line Options</a>. </dd></dl>
 <dl class="section user"><dt>-g <em>NGen</em> </dt><dd>Set the number of generators (default: 2). </dd></dl>
 <dl class="section user"><dt><em>Gen</em> </dt><dd>Generator base name. </dd></dl>
 <dl class="section user"><dt><em>Seed</em> </dt><dd>Seed space. </dd></dl>
 <dl class="section user"><dt><em>Script</em> </dt><dd>Spin-up script. </dd></dl>
 <dl class="section user"><dt><em>Output</em> </dt><dd>Output base name. Default is <em>Script</em>.</dd></dl>
-<p>&lt;&lt;&lt;&lt;&lt;&lt;&lt; HEAD </p><h1>inp Input Files </h1>
 <h1><a class="anchor" id="zsc_inp"></a>
 Input Files</h1>
-<blockquote class="doxtable">
-<blockquote class="doxtable">
-<blockquote class="doxtable">
-<blockquote class="doxtable">
-<blockquote class="doxtable">
-<blockquote class="doxtable">
-<blockquote class="doxtable">
-<p>4a68ae339f0300470810ab3c90387657ccf21f0c </p>
-</blockquote>
-</blockquote>
-</blockquote>
-</blockquote>
-</blockquote>
-</blockquote>
-</blockquote>
 <dl class="section user"><dt><em>Gen</em>.1, <em>Gen</em>.2, ...</dt><dd>Generators. </dd></dl>
 <dl class="section user"><dt><em>Seed</em> </dt><dd>Seed space. </dd></dl>
 <dl class="section user"><dt><em>Op</em> </dt><dd>Spin-up script.</dd></dl>
-<p>&lt;&lt;&lt;&lt;&lt;&lt;&lt; HEAD </p>
-<h1><a class="anchor" id="out"></a>
-Output Files</h1>
-<dl class="section user"><dt><em>Output</em>.0001, <em>Output</em>.0002, ...</dt><dd>Spin-Up result, one file per seed vector.</dd></dl>
-<h1>desc Description </h1>
 <h1><a class="anchor" id="zsc_out"></a>
 Output Files</h1>
 <dl class="section user"><dt><em>Output</em>.0001, <em>Output</em>.0002, ...</dt><dd>Spin-Up result, one file per seed vector.</dd></dl>
 <h1><a class="anchor" id="zsc_desc"></a>
 Description</h1>
-<blockquote class="doxtable">
-<blockquote class="doxtable">
-<blockquote class="doxtable">
-<blockquote class="doxtable">
-<blockquote class="doxtable">
-<blockquote class="doxtable">
-<blockquote class="doxtable">
-<p>4a68ae339f0300470810ab3c90387657ccf21f0c </p>
-</blockquote>
-</blockquote>
-</blockquote>
-</blockquote>
-</blockquote>
-</blockquote>
-</blockquote>
 <p>This program reads in two or more matrices (generators), a list of seed vectors and a list of operations (the script). Then, ZSC applies the script to each seed vector and writes the output in a separate file for each vector.</p>
 <p>The generators must be square matrices over the same field. <em>Seed</em> must be a matrix over the same field with the same number of columns. <em>Script</em> must be an integer matrix with two columns in the format produced by the <a class="el" href="prog_zsp.html">zsp</a> program. Only one seed vectur may be used in the script, i.e., each row except the first row of <em>Script</em> must be of the form (x,y) with x≥0.</p>
 <p>The number of generators is 2 by default. This can be changed by using the "-g" option. The number of output files equals the number of seed vectors. If no fourth argument is given, the output name defaults to <em>Seed</em>. For example, </p><pre>zsc -g 3 gen seed op</pre><p> reads three generators fom "gen.1", "gen.2" and "gen.3", seed vectors from `seed', the script from "op", and writes the output to "seed.0001", "seed.0002", ... </p>
 </div></div><!-- contents -->
 </div><!-- doc-content -->
 <hr size="1"><address style="text-align: right;"><small>
-MeatAxe 2.4 documentation, generated on Fri Dec 26 2014 11:45:31</small></address>
+MeatAxe 2.4 documentation, generated on Wed Jan 7 2015 08:38:23</small></address>
 </body>
 </html>

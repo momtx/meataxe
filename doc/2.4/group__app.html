@@ -96,9 +96,7 @@ $(document).ready(function(){initNavTree('group__app.html','');});
 <div class="line">    <span class="keywordflow">return</span> 0;</div>
 <div class="line">}</div>
 </div><!-- fragment --><p> This sample application expects two arguments and recognizes two options. One option ("-l") has an additional integer argument, <em>level</em>. The value of <em>level</em> must be between 0 and 100. If not specified by the user, a default value of 42 is used.</p>
-<h1><a class="anchor" id="tmpdir"></a>
-Temporary Directories</h1>
-<p>If an application needs a temporary directory to store interdediate files, it can use <a class="el" href="group__app.html#gaa92b1f9e36e03707542b389f13cd83cc" title="Create a temporary directory. ">AppCreateTempDir()</a>. This function creates a new directory and returns its name. The directory will be removed when the application object is destroyed, i.e., in |AppFree()|. Note that the application must not leave any file in the temporary directory. Otherwise, a run-time error is generated when <a class="el" href="group__app.html#ga0d084e383e4dae0b5c3c9babaf53c273" title="End an application. ">AppFree()</a> tries to remove the directory. The following code example shows how to use <a class="el" href="group__app.html#gaa92b1f9e36e03707542b389f13cd83cc" title="Create a temporary directory. ">AppCreateTempDir()</a>: </p><div class="fragment"><div class="line"><span class="keywordtype">int</span> main(<span class="keywordtype">int</span> argc, <span class="keywordtype">char</span> **argv)</div>
+<dl class="section user"><dt>Temporary Directories TODO: move to AppCreateTempDir()</dt><dd>If an application needs a temporary directory to store interdediate files, it can use <a class="el" href="group__app.html#gaa92b1f9e36e03707542b389f13cd83cc" title="Create a temporary directory. ">AppCreateTempDir()</a>. This function creates a new directory and returns its name. The directory will be removed when the application object is destroyed, i.e., in |AppFree()|. Note that the application must not leave any file in the temporary directory. Otherwise, a run-time error is generated when <a class="el" href="group__app.html#ga0d084e383e4dae0b5c3c9babaf53c273" title="End an application. ">AppFree()</a> tries to remove the directory. The following code example shows how to use <a class="el" href="group__app.html#gaa92b1f9e36e03707542b389f13cd83cc" title="Create a temporary directory. ">AppCreateTempDir()</a>: <div class="fragment"><div class="line"><span class="keywordtype">int</span> main(<span class="keywordtype">int</span> argc, <span class="keywordtype">char</span> **argv)</div>
 <div class="line">{</div>
 <div class="line">    <a class="code" href="structMtxApplication__t.html">MtxApplication_t</a> *app = <a class="code" href="group__app.html#ga8925f5813215f1be93dcfa321798292b">AppAlloc</a>(argc,argv,&amp;appinfo);</div>
 <div class="line">    <span class="keyword">const</span> <span class="keywordtype">char</span> *tmpdir = <a class="code" href="group__app.html#gaa92b1f9e36e03707542b389f13cd83cc">AppCreateTempDir</a>(app);</div>
@@ -112,11 +110,30 @@ Temporary Directories</h1>
 <div class="line">    <a class="code" href="group__app.html#ga0d084e383e4dae0b5c3c9babaf53c273">AppFree</a>(app);</div>
 <div class="line">    <span class="keywordflow">return</span> 0;</div>
 <div class="line">}</div>
-</div><!-- fragment --> <table class="memberdecls">
+</div><!-- fragment --></dd></dl>
+<dl class="section user"><dt>Error handling</dt><dd>Note that invalid parameters are not always detected by the MeatAxe library. For example, most kernel functions such as <a class="el" href="group__ff.html#gababccce21c8779b9cbb85a4a071163a5" title="Finite field addition. ">FfAdd()</a> do not check their arguments for the sake of performance. Thus, calling these function with invalid arguments may produce random results or even crash the program. On the other hand, most higher-level functions like <a class="el" href="group__mat.html#gaa6c1f3b0d54a8dccb48f83338a36a6cf" title="Sum of two matrices. ">MatAdd()</a> do some plausibility checks on their arguments before processing them. <br />
+ When an error is detected, the default action is to terminate the program immediately with an appropriate error message. While this minimizes the chance of not noticing an error, it may be undesirable in some situations. For example, the application may be able to recover from the error. In order to prevent the MeatAxe library from terminating the program, the application can define an application error handler. This is a function which is called on each error. <br />
+ To use the MeatAxe error reporting mechanism, the following steps are necessary:<ul>
+<li>Insert the macro |MTX_DEFINE_FILE_INFO| somewhere at the top of each source file. This macro defines a |MtxFileInfo_t| structure which is used in reporting errors.</li>
+<li>To report an error, use any of the |MTX_ERRORx| macros. There are several variants for different numbers of arguments. Note that the error message passed to |MTX_ERRORx()| is in printf style, but only a resticted set of format specifiers is available. See |MtxFormatMessage()| for details. Here is a short example:</li>
+</ul>
+</dd></dl>
+<p>#include "meataxe.h"</p>
+<p>MTX_DEFINE_FILE_INFO</p>
+<p>int divide(int a, int b) { if (b == 0) { MTX_ERROR("Division by 0"); return 0; } return a / b; }  Note that you must not assume that MTX_ERROR terminates the program. In fact MTX_ERROR may return if a user-defined error handler has been installed. </p>
+<table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="nested-classes"></a>
 Data Structures</h2></td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><b>msg_struct</b></td></tr>
 <tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Internal data structure. <br /></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structMtxFileInfo__t.html">MtxFileInfo_t</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Source file information.  <a href="structMtxFileInfo__t.html#details">More...</a><br /></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structMtxErrorRecord__t.html">MtxErrorRecord_t</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Run-time error information.  <a href="structMtxErrorRecord__t.html#details">More...</a><br /></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMtxErrorHandler__t.html">MtxErrorHandler_t</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="func-members"></a>
@@ -145,6 +162,12 @@ Functions</h2></td></tr>
 <tr class="memitem:gaa92b1f9e36e03707542b389f13cd83cc"><td class="memItemLeft" align="right" valign="top">const char *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__app.html#gaa92b1f9e36e03707542b389f13cd83cc">AppCreateTempDir</a> (<a class="el" href="structMtxApplication__t.html">MtxApplication_t</a> *app)</td></tr>
 <tr class="memdesc:gaa92b1f9e36e03707542b389f13cd83cc"><td class="mdescLeft">&#160;</td><td class="mdescRight">Create a temporary directory.  <a href="#gaa92b1f9e36e03707542b389f13cd83cc">More...</a><br /></td></tr>
 <tr class="separator:gaa92b1f9e36e03707542b389f13cd83cc"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:gae626833239b53f0e83b074461fa7d41d"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classMtxErrorHandler__t.html">MtxErrorHandler_t</a> *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__app.html#gae626833239b53f0e83b074461fa7d41d">MtxSetErrorHandler</a> (<a class="el" href="classMtxErrorHandler__t.html">MtxErrorHandler_t</a> *h)</td></tr>
+<tr class="memdesc:gae626833239b53f0e83b074461fa7d41d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Define an application error handler.  <a href="#gae626833239b53f0e83b074461fa7d41d">More...</a><br /></td></tr>
+<tr class="separator:gae626833239b53f0e83b074461fa7d41d"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:gada96c1d6f0308e6ebdee5326d9df0d21"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__app.html#gada96c1d6f0308e6ebdee5326d9df0d21">MtxError</a> (<a class="el" href="structMtxFileInfo__t.html">MtxFileInfo_t</a> *fi, int line, const char *text,...)</td></tr>
+<tr class="memdesc:gada96c1d6f0308e6ebdee5326d9df0d21"><td class="mdescLeft">&#160;</td><td class="mdescRight">Signal an error.  <a href="#gada96c1d6f0308e6ebdee5326d9df0d21">More...</a><br /></td></tr>
+<tr class="separator:gada96c1d6f0308e6ebdee5326d9df0d21"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:gaf88b48cab3ac8ea8b467a2aa0462a3ae"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__app.html#gaf88b48cab3ac8ea8b467a2aa0462a3ae">MtxFormatMessage</a> (char *buf, int bufsize, const char *msg, va_list al)</td></tr>
 <tr class="memdesc:gaf88b48cab3ac8ea8b467a2aa0462a3ae"><td class="mdescLeft">&#160;</td><td class="mdescRight">Format a message.  <a href="#gaf88b48cab3ac8ea8b467a2aa0462a3ae">More...</a><br /></td></tr>
 <tr class="separator:gaf88b48cab3ac8ea8b467a2aa0462a3ae"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -487,6 +510,56 @@ int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group
 
 </div>
 </div>
+<a class="anchor" id="gada96c1d6f0308e6ebdee5326d9df0d21"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">int MtxError </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="structMtxFileInfo__t.html">MtxFileInfo_t</a> *&#160;</td>
+          <td class="paramname"><em>fi</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">int&#160;</td>
+          <td class="paramname"><em>line</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const char *&#160;</td>
+          <td class="paramname"><em>text</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">&#160;</td>
+          <td class="paramname"><em>...</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Signal an error. </p>
+<p>This function is mainly used internally by the {} library to report errors. If an application error handler has been installed, it is executed. Otherwise an error message is written to the error log file (stderr by default) and the program is terminated. The error message, |msg|, is formatted with |MtxFormatMessage()|. </p><dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">fi</td><td>Pointer to a file information structure. </td></tr>
+    <tr><td class="paramname">line</td><td>Line number where the error occured. </td></tr>
+    <tr><td class="paramname">text</td><td>Error description. </td></tr>
+    <tr><td class="paramname">...</td><td>Optional arguments to be inserted into the error description. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>The return value is always 0. </dd></dl>
+
+</div>
+</div>
 <a class="anchor" id="gaf88b48cab3ac8ea8b467a2aa0462a3ae"></a>
 <div class="memitem">
 <div class="memproto">
@@ -584,6 +657,31 @@ int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group
 
 </div>
 </div>
+<a class="anchor" id="gae626833239b53f0e83b074461fa7d41d"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classMtxErrorHandler__t.html">MtxErrorHandler_t</a>* MtxSetErrorHandler </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="classMtxErrorHandler__t.html">MtxErrorHandler_t</a> *&#160;</td>
+          <td class="paramname"><em>h</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Define an application error handler. </p>
+<p>This function defines an application error handler which is called every time an error occurs inside the {} library. </p><dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">h</td><td>Address of the new error handler or NULL to restore the default handler. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>The previous error handler. </dd></dl>
+
+</div>
+</div>
 <h2 class="groupheader">Variable Documentation</h2>
 <a class="anchor" id="ga7454969768c5fe7d37dc43c0475a1c64"></a>
 <div class="memitem">
@@ -633,6 +731,6 @@ int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group
 </div><!-- contents -->
 </div><!-- doc-content -->
 <hr size="1"><address style="text-align: right;"><small>
-MeatAxe 2.4 documentation, generated on Fri Dec 26 2014 11:45:31</small></address>
+MeatAxe 2.4 documentation, generated on Wed Jan 7 2015 08:38:23</small></address>
 </body>
 </html>

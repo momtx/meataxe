@@ -11,5 +11,9 @@ var group__mf =
     [ "MfClose", "group__mf.html#gab5f254075ae39ec04c15668f3e493acd", null ],
     [ "MfCreate", "group__mf.html#gadae5198af7d4dd4c445fddd28b9ea631", null ],
     [ "MfIsValid", "group__mf.html#ga07ad957122f91c94eb875db1cb3447a5", null ],
-    [ "MfOpen", "group__mf.html#ga32bb24f9bc15167c6645a8de5a557a50", null ]
+    [ "MfOpen", "group__mf.html#ga32bb24f9bc15167c6645a8de5a557a50", null ],
+    [ "MfReadLong", "group__mf.html#ga5681b3786f13b06024c75dd5a7e07444", null ],
+    [ "MfReadRows", "group__mf.html#ga71139050b8b8dfcdd18ed6510e378f57", null ],
+    [ "MfWriteLong", "group__mf.html#ga9aed92ac968fabce55498ccb962e6959", null ],
+    [ "MfWriteRows", "group__mf.html#ga13e03f16c2971221b2fc065c589ed128", null ]
 ];

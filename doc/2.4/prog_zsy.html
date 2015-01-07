@@ -61,24 +61,14 @@ $(document).ready(function(){initNavTree('prog_zsy.html','');});
 <div class="title">zsy - Symmetrized Tensor Product </div>  </div>
 </div><!--header-->
 <div class="contents">
-<div class="textblock"><p>&lt;&lt;&lt;&lt;&lt;&lt;&lt; HEAD</p>
-<h1>syntax Command Line </h1>
-<h1><a class="anchor" id="zsy_syntax"></a>
+<div class="textblock"><h1><a class="anchor" id="zsy_syntax"></a>
 Command Line</h1>
-<p>&gt;&gt;&gt;&gt;&gt;&gt;&gt; 4a68ae339f0300470810ab3c90387657ccf21f0c </p><pre>
+<pre>
 zsy [<em>Options</em>] [-G] <em>Mode</em> <em>Inp</em> <em>Out</em> </pre><dl class="section user"><dt><em>Options</em> </dt><dd>Standard options, see <a class="el" href="prog_stdopts.html">Standard Command Line Options</a> </dd></dl>
 <dl class="section user"><dt>-G</dt><dd>GAP output. </dd></dl>
 <dl class="section user"><dt><em>Mode</em> </dt><dd>Symmetrization mode: "e2", "s2", "e3" or "e4". </dd></dl>
 <dl class="section user"><dt><em>Inp</em> </dt><dd>Input matrix. </dd></dl>
 <dl class="section user"><dt><em>Out</em> </dt><dd>Result matrix.</dd></dl>
-<p>&lt;&lt;&lt;&lt;&lt;&lt;&lt; HEAD </p>
-<h1><a class="anchor" id="inp"></a>
-Input Files</h1>
-<dl class="section user"><dt><em>Mat</em> </dt><dd>Input matrix or permutation.</dd></dl>
-<h1><a class="anchor" id="out"></a>
-Output Files</h1>
-<dl class="section user"><dt><em>Result</em> </dt><dd>Result matrix.</dd></dl>
-<h1>desc Description </h1>
 <h1><a class="anchor" id="zsy_inp"></a>
 Input Files</h1>
 <dl class="section user"><dt><em>Mat</em> </dt><dd>Input matrix or permutation.</dd></dl>
@@ -87,21 +77,6 @@ Output Files</h1>
 <dl class="section user"><dt><em>Result</em> </dt><dd>Result matrix.</dd></dl>
 <h1><a class="anchor" id="zsy_desc"></a>
 Description</h1>
-<blockquote class="doxtable">
-<blockquote class="doxtable">
-<blockquote class="doxtable">
-<blockquote class="doxtable">
-<blockquote class="doxtable">
-<blockquote class="doxtable">
-<blockquote class="doxtable">
-<p>4a68ae339f0300470810ab3c90387657ccf21f0c </p>
-</blockquote>
-</blockquote>
-</blockquote>
-</blockquote>
-</blockquote>
-</blockquote>
-</blockquote>
 <p>This program reads a matrix or permutation, calculates its symmetrized tensor product according to <em>Mode</em>, and writes out the result.</p>
 <p>The <em>Mode</em> argument specifies the tensor product to be taken and the kind of symmetrization to be performed. Currently there are 4 Modes available:</p><ul>
 <li>"s2" is the symmetric tensor square. The output has size n(n+1)/2 (For matrices, number of lines, for permutations, degree).</li>
@@ -110,24 +85,8 @@ Description</h1>
 <li>"e4" is the antisymmetric fourth power. The output has size n(n-1)(n-2)(n-3)/24.</li>
 </ul>
 <p>Since the typical application of <b>zsy</b> is to generate new representations from existing ones, it will usually be used with square matrices. However, the input is not required to be square.</p>
-<p>&lt;&lt;&lt;&lt;&lt;&lt;&lt; HEAD </p><h1>perms Permutations </h1>
 <h2><a class="anchor" id="zsy_perms"></a>
 Permutations</h2>
-<blockquote class="doxtable">
-<blockquote class="doxtable">
-<blockquote class="doxtable">
-<blockquote class="doxtable">
-<blockquote class="doxtable">
-<blockquote class="doxtable">
-<blockquote class="doxtable">
-<p>4a68ae339f0300470810ab3c90387657ccf21f0c </p>
-</blockquote>
-</blockquote>
-</blockquote>
-</blockquote>
-</blockquote>
-</blockquote>
-</blockquote>
 <p>Currently, only modes s2, e2 and e3 are available for permutations. The result gives the operation of the input permutation on unordered pairs (e2, s2) or triples (e3) of points. More precisely, if the given permutation operates on 1...n, then:</p><ul>
 <li>s2 is the operation on (i,k) with 1≤i≤k≤n.</li>
 <li>e2 is the operation on (i,k) with 1≤i&lt;k≤n.</li>
@@ -161,29 +120,13 @@ Matrices</h2>
      (1 2 2 3)     (4  2  6  4 12  6  1  4  1  9)
                    (0  0  0  4  2  4  0  1  4  1)
                    (4  4  6  8 12 12  1  4  4  9)
-</pre><p>&lt;&lt;&lt;&lt;&lt;&lt;&lt; HEAD </p><h1>impl Implementation Details </h1>
-<h1><a class="anchor" id="zsy_impl"></a>
+</pre><h1><a class="anchor" id="zsy_impl"></a>
 Implementation Details</h1>
-<blockquote class="doxtable">
-<blockquote class="doxtable">
-<blockquote class="doxtable">
-<blockquote class="doxtable">
-<blockquote class="doxtable">
-<blockquote class="doxtable">
-<blockquote class="doxtable">
-<p>4a68ae339f0300470810ab3c90387657ccf21f0c </p>
-</blockquote>
-</blockquote>
-</blockquote>
-</blockquote>
-</blockquote>
-</blockquote>
-</blockquote>
 <p>If the input file contains more than one permutation, only the first permutation is read in and processed.</p>
 <p>If the input is a matrix, the whole input matrix and one row of the result must fit into memory. In case of permutations both the input and the result must fit into memory. </p>
 </div></div><!-- contents -->
 </div><!-- doc-content -->
 <hr size="1"><address style="text-align: right;"><small>
-MeatAxe 2.4 documentation, generated on Fri Dec 26 2014 11:45:31</small></address>
+MeatAxe 2.4 documentation, generated on Wed Jan 7 2015 08:38:23</small></address>
 </body>
 </html>

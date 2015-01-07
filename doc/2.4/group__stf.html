@@ -66,17 +66,15 @@ $(document).ready(function(){initNavTree('group__stf.html','');});
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <p>The MeatAxe library provides functions for input and output of data in human-readable text format. </p>
 <p>Files that are created with this set of functions have a defined structure, and are refered to as "structured text files" (STF). An examples for this type of files is the .cfinfo file which is used by the submodule lattice programs.</p>
-<h1><a class="anchor" id="filefmt"></a>
-File format</h1>
-<p>A structured text file is interpreted as a sequence of lines. While the STF input functions can read very long lines, the output functions try to limit the line length to 80 characters in order to make the file more readable. Each line is one of the following:</p><ul>
+<p><b>File format</b><br />
+ A structured text file is interpreted as a sequence of lines. While the STF input functions can read very long lines, the output functions try to limit the line length to 80 characters in order to make the file more readable. Each line is one of the following:</p><ul>
 <li>Lines starting with a "#" in column 1 are comment lines and are ignored completely. Empty lines are ignored, too.</li>
 <li>A non-comment line with a non-blank character in column 1 marks the beginning of a new entry. Such a line has the format <div class="fragment"><div class="line">Name := Value</div>
 </div><!-- fragment --> Both <em>Name</em> and <em>Value</em> are arbitrary strings, except that they cannot contain leading or trailing blanks. In fact leading and trailing blanks as well as any blanks around the ":=" are removed on input.</li>
 <li>Lines starting with a whitspace character are interpreted as continuing lines. Obviously a continuing line may occur only after an entry has started. The contents of the continuing line, after leading lanks have been removed, are appended to <em>Value</em>.</li>
 </ul>
-<h1><a class="anchor" id="datafmt"></a>
-Data formats</h1>
-<p>Besides the removal of leading and trailing blanks there is no restriction on the format of </p>
+<p><b>Data formats</b><br />
+ Besides the removal of leading and trailing blanks there is no restriction on the format of </p>
 <p>in an STF entry. There are, however, predefined functions that read and write integers and sequences of integers. An application should use these functions where possible. The format used by the integer i/o functions is most easily demonstrated in an example: </p><pre>
 Field := 7;
 Multiplicity := [1,1,1,2];
@@ -86,19 +84,19 @@ Dimensions := [11,22,33,44,55];
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="func-members"></a>
 Functions</h2></td></tr>
 <tr class="memitem:ga72c3c61ad2f0c722a4efd683d64a1b0b"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__stf.html#ga72c3c61ad2f0c722a4efd683d64a1b0b">StfClose</a> (<a class="el" href="structStfData.html">StfData</a> *f)</td></tr>
-<tr class="memdesc:ga72c3c61ad2f0c722a4efd683d64a1b0b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Close a Structured Text File.  <a href="#ga72c3c61ad2f0c722a4efd683d64a1b0b">More...</a><br /></td></tr>
+<tr class="memdesc:ga72c3c61ad2f0c722a4efd683d64a1b0b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Close a structured text file.  <a href="#ga72c3c61ad2f0c722a4efd683d64a1b0b">More...</a><br /></td></tr>
 <tr class="separator:ga72c3c61ad2f0c722a4efd683d64a1b0b"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ga8f928187e433aff6028abd71b5e258d2"><td class="memItemLeft" align="right" valign="top"><a class="el" href="structStfData.html">StfData</a> *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__stf.html#ga8f928187e433aff6028abd71b5e258d2">StfOpen</a> (const char *name, int mode)</td></tr>
-<tr class="memdesc:ga8f928187e433aff6028abd71b5e258d2"><td class="mdescLeft">&#160;</td><td class="mdescRight">Open a Structured Text File.  <a href="#ga8f928187e433aff6028abd71b5e258d2">More...</a><br /></td></tr>
+<tr class="memdesc:ga8f928187e433aff6028abd71b5e258d2"><td class="mdescLeft">&#160;</td><td class="mdescRight">Open a structured text file.  <a href="#ga8f928187e433aff6028abd71b5e258d2">More...</a><br /></td></tr>
 <tr class="separator:ga8f928187e433aff6028abd71b5e258d2"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:gaf33d64f31aa949791aec5323ed664d94"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__stf.html#gaf33d64f31aa949791aec5323ed664d94">StfReadLine</a> (<a class="el" href="structStfData.html">StfData</a> *f)</td></tr>
-<tr class="memdesc:gaf33d64f31aa949791aec5323ed664d94"><td class="mdescLeft">&#160;</td><td class="mdescRight">Read Next Line.  <a href="#gaf33d64f31aa949791aec5323ed664d94">More...</a><br /></td></tr>
+<tr class="memdesc:gaf33d64f31aa949791aec5323ed664d94"><td class="mdescLeft">&#160;</td><td class="mdescRight">Read next line.  <a href="#gaf33d64f31aa949791aec5323ed664d94">More...</a><br /></td></tr>
 <tr class="separator:gaf33d64f31aa949791aec5323ed664d94"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:gac454624d144c5030c5df95d00992b17c"><td class="memItemLeft" align="right" valign="top">const char *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__stf.html#gac454624d144c5030c5df95d00992b17c">StfGetName</a> (<a class="el" href="structStfData.html">StfData</a> *f)</td></tr>
-<tr class="memdesc:gac454624d144c5030c5df95d00992b17c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get Entry Name.  <a href="#gac454624d144c5030c5df95d00992b17c">More...</a><br /></td></tr>
+<tr class="memdesc:gac454624d144c5030c5df95d00992b17c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get entry name.  <a href="#gac454624d144c5030c5df95d00992b17c">More...</a><br /></td></tr>
 <tr class="separator:gac454624d144c5030c5df95d00992b17c"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:gacae5ca04ddec2b04d03197245fb0e46a"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__stf.html#gacae5ca04ddec2b04d03197245fb0e46a">StfGetInt</a> (<a class="el" href="structStfData.html">StfData</a> *f, int *buf)</td></tr>
-<tr class="memdesc:gacae5ca04ddec2b04d03197245fb0e46a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Read an Integer.  <a href="#gacae5ca04ddec2b04d03197245fb0e46a">More...</a><br /></td></tr>
+<tr class="memdesc:gacae5ca04ddec2b04d03197245fb0e46a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Read an integer.  <a href="#gacae5ca04ddec2b04d03197245fb0e46a">More...</a><br /></td></tr>
 <tr class="separator:gacae5ca04ddec2b04d03197245fb0e46a"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ga671e00105b070d52a2fbee08cc1614c5"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__stf.html#ga671e00105b070d52a2fbee08cc1614c5">StfGetString</a> (<a class="el" href="structStfData.html">StfData</a> *f, char *buf, size_t bufsize)</td></tr>
 <tr class="memdesc:ga671e00105b070d52a2fbee08cc1614c5"><td class="mdescLeft">&#160;</td><td class="mdescRight">Read a string.  <a href="#ga671e00105b070d52a2fbee08cc1614c5">More...</a><br /></td></tr>
@@ -111,37 +109,37 @@ Functions</h2></td></tr>
 <tr class="separator:ga91387f2a327ffd2fffc5adc8d0efbb58"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ga98ac6553e32e8dfbcf3e81e80d9516ae"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ga98ac6553e32e8dfbcf3e81e80d9516ae"></a>
 int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__stf.html#ga98ac6553e32e8dfbcf3e81e80d9516ae">StfPut</a> (<a class="el" href="structStfData.html">StfData</a> *f, const char *text)</td></tr>
-<tr class="memdesc:ga98ac6553e32e8dfbcf3e81e80d9516ae"><td class="mdescLeft">&#160;</td><td class="mdescRight">Write a Raw Value. <br /></td></tr>
+<tr class="memdesc:ga98ac6553e32e8dfbcf3e81e80d9516ae"><td class="mdescLeft">&#160;</td><td class="mdescRight">Write a raw value. <br /></td></tr>
 <tr class="separator:ga98ac6553e32e8dfbcf3e81e80d9516ae"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:gacb89175605caf1f9c08dec4dcadb569a"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="gacb89175605caf1f9c08dec4dcadb569a"></a>
 int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__stf.html#gacb89175605caf1f9c08dec4dcadb569a">StfPutInt</a> (<a class="el" href="structStfData.html">StfData</a> *f, int value)</td></tr>
-<tr class="memdesc:gacb89175605caf1f9c08dec4dcadb569a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Write an Integer. <br /></td></tr>
+<tr class="memdesc:gacb89175605caf1f9c08dec4dcadb569a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Write an integer. <br /></td></tr>
 <tr class="separator:gacb89175605caf1f9c08dec4dcadb569a"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:gae1531f18eb565a1d3db1da4c2b55f6b7"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="gae1531f18eb565a1d3db1da4c2b55f6b7"></a>
 int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__stf.html#gae1531f18eb565a1d3db1da4c2b55f6b7">StfPutString</a> (<a class="el" href="structStfData.html">StfData</a> *f, const char *text)</td></tr>
-<tr class="memdesc:gae1531f18eb565a1d3db1da4c2b55f6b7"><td class="mdescLeft">&#160;</td><td class="mdescRight">Write a <a class="el" href="structString.html" title="A dynamic string. ">String</a>. <br /></td></tr>
+<tr class="memdesc:gae1531f18eb565a1d3db1da4c2b55f6b7"><td class="mdescLeft">&#160;</td><td class="mdescRight">Write a string. <br /></td></tr>
 <tr class="separator:gae1531f18eb565a1d3db1da4c2b55f6b7"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ga1fee60a1c80fc0a9177c13ac6b0c2099"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ga1fee60a1c80fc0a9177c13ac6b0c2099"></a>
 int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__stf.html#ga1fee60a1c80fc0a9177c13ac6b0c2099">StfPutVector</a> (<a class="el" href="structStfData.html">StfData</a> *f, int size, const int *value)</td></tr>
-<tr class="memdesc:ga1fee60a1c80fc0a9177c13ac6b0c2099"><td class="mdescLeft">&#160;</td><td class="mdescRight">Write a Vector. <br /></td></tr>
+<tr class="memdesc:ga1fee60a1c80fc0a9177c13ac6b0c2099"><td class="mdescLeft">&#160;</td><td class="mdescRight">Write a vector. <br /></td></tr>
 <tr class="separator:ga1fee60a1c80fc0a9177c13ac6b0c2099"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:gade11b9ba48a1c23475d168862ec82a3d"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__stf.html#gade11b9ba48a1c23475d168862ec82a3d">StfBeginEntry</a> (<a class="el" href="structStfData.html">StfData</a> *f, const char *name)</td></tr>
-<tr class="memdesc:gade11b9ba48a1c23475d168862ec82a3d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Start a New Entry.  <a href="#gade11b9ba48a1c23475d168862ec82a3d">More...</a><br /></td></tr>
+<tr class="memdesc:gade11b9ba48a1c23475d168862ec82a3d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Start a new entry.  <a href="#gade11b9ba48a1c23475d168862ec82a3d">More...</a><br /></td></tr>
 <tr class="separator:gade11b9ba48a1c23475d168862ec82a3d"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ga3e26da787726a09b98ee2428abba3cf7"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__stf.html#ga3e26da787726a09b98ee2428abba3cf7">StfEndEntry</a> (<a class="el" href="structStfData.html">StfData</a> *f)</td></tr>
-<tr class="memdesc:ga3e26da787726a09b98ee2428abba3cf7"><td class="mdescLeft">&#160;</td><td class="mdescRight">End Entry.  <a href="#ga3e26da787726a09b98ee2428abba3cf7">More...</a><br /></td></tr>
+<tr class="memdesc:ga3e26da787726a09b98ee2428abba3cf7"><td class="mdescLeft">&#160;</td><td class="mdescRight">End entry.  <a href="#ga3e26da787726a09b98ee2428abba3cf7">More...</a><br /></td></tr>
 <tr class="separator:ga3e26da787726a09b98ee2428abba3cf7"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ga3851785ef394d4feb34784bec8a244eb"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__stf.html#ga3851785ef394d4feb34784bec8a244eb">StfWriteValue</a> (<a class="el" href="structStfData.html">StfData</a> *f, const char *name, const char *value)</td></tr>
-<tr class="memdesc:ga3851785ef394d4feb34784bec8a244eb"><td class="mdescLeft">&#160;</td><td class="mdescRight">Write a <a class="el" href="structString.html" title="A dynamic string. ">String</a>.  <a href="#ga3851785ef394d4feb34784bec8a244eb">More...</a><br /></td></tr>
+<tr class="memdesc:ga3851785ef394d4feb34784bec8a244eb"><td class="mdescLeft">&#160;</td><td class="mdescRight">Write a string.  <a href="#ga3851785ef394d4feb34784bec8a244eb">More...</a><br /></td></tr>
 <tr class="separator:ga3851785ef394d4feb34784bec8a244eb"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:gaf3fba4db33c0571a5ef27dd48a3a9e5d"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__stf.html#gaf3fba4db33c0571a5ef27dd48a3a9e5d">StfWriteString</a> (<a class="el" href="structStfData.html">StfData</a> *f, const char *name, const char *value)</td></tr>
-<tr class="memdesc:gaf3fba4db33c0571a5ef27dd48a3a9e5d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Write a <a class="el" href="structString.html" title="A dynamic string. ">String</a>.  <a href="#gaf3fba4db33c0571a5ef27dd48a3a9e5d">More...</a><br /></td></tr>
+<tr class="memdesc:gaf3fba4db33c0571a5ef27dd48a3a9e5d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Write a string.  <a href="#gaf3fba4db33c0571a5ef27dd48a3a9e5d">More...</a><br /></td></tr>
 <tr class="separator:gaf3fba4db33c0571a5ef27dd48a3a9e5d"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ga2395278458ccc93b839989cb3be5e4fd"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__stf.html#ga2395278458ccc93b839989cb3be5e4fd">StfWriteInt</a> (<a class="el" href="structStfData.html">StfData</a> *f, const char *name, int value)</td></tr>
-<tr class="memdesc:ga2395278458ccc93b839989cb3be5e4fd"><td class="mdescLeft">&#160;</td><td class="mdescRight">Write an Integer.  <a href="#ga2395278458ccc93b839989cb3be5e4fd">More...</a><br /></td></tr>
+<tr class="memdesc:ga2395278458ccc93b839989cb3be5e4fd"><td class="mdescLeft">&#160;</td><td class="mdescRight">Write an enteger.  <a href="#ga2395278458ccc93b839989cb3be5e4fd">More...</a><br /></td></tr>
 <tr class="separator:ga2395278458ccc93b839989cb3be5e4fd"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:gad71b3e21e1935b649b2ad183f957b038"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__stf.html#gad71b3e21e1935b649b2ad183f957b038">StfWriteVector</a> (<a class="el" href="structStfData.html">StfData</a> *f, const char *name, int size, const int *value)</td></tr>
-<tr class="memdesc:gad71b3e21e1935b649b2ad183f957b038"><td class="mdescLeft">&#160;</td><td class="mdescRight">Write a Vector.  <a href="#gad71b3e21e1935b649b2ad183f957b038">More...</a><br /></td></tr>
+<tr class="memdesc:gad71b3e21e1935b649b2ad183f957b038"><td class="mdescLeft">&#160;</td><td class="mdescRight">Write a vector.  <a href="#gad71b3e21e1935b649b2ad183f957b038">More...</a><br /></td></tr>
 <tr class="separator:gad71b3e21e1935b649b2ad183f957b038"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <h2 class="groupheader">Function Documentation</h2>
@@ -169,8 +167,8 @@ int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group
       </table>
 </div><div class="memdoc">
 
-<p>Start a New Entry. </p>
-<p>This function begins a new entry. Be sure to terminate any incomplete entries with <a class="el" href="group__stf.html#ga3e26da787726a09b98ee2428abba3cf7" title="End Entry. ">StfEndEntry()</a> before you start a new entry. If you don't, the incomplete entry may be lost, and the data file may become corrupted.</p>
+<p>Start a new entry. </p>
+<p>This function begins a new entry. Be sure to terminate any incomplete entries with <a class="el" href="group__stf.html#ga3e26da787726a09b98ee2428abba3cf7" title="End entry. ">StfEndEntry()</a> before you start a new entry. If you don't, the incomplete entry may be lost, and the data file may become corrupted.</p>
 <p>Before you use StfBeginEntry(), check if you can do the job with one of the StfWriteXXX() functions. In particular, there are functions to write integers and sequences of integers. If you have more complicated data to write, you may need to construct the output manually. Here is an example: </p><div class="fragment"><div class="line"><a name="l00001"></a><span class="lineno">    1</span>&#160;StfBeginEntry(f,&quot;Param&quot;);</div>
 <div class="line"><a name="l00002"></a><span class="lineno">    2</span>&#160;StfPut(f,&quot;(&quot;);</div>
 <div class="line"><a name="l00003"></a><span class="lineno">    3</span>&#160;StfPutInt(f,11);</div>
@@ -205,7 +203,7 @@ Param := (11:22);
       </table>
 </div><div class="memdoc">
 
-<p>Close a Structured Text File. </p>
+<p>Close a structured text file. </p>
 <p>This function closes a structured text file. Closing the file implies that the memory occupied by the <a class="el" href="structStfData.html" title="Structured text file. ">StfData</a> structure is freed. Thus, after return, <em>f</em> is invalid and must not be dereferenced. </p><dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">f</td><td>Pointer to an open structured text file (STF) object. </td></tr>
@@ -230,8 +228,8 @@ Param := (11:22);
       </table>
 </div><div class="memdoc">
 
-<p>End Entry. </p>
-<p>This function terminates the current entry and flushes the STF's line buffer. See <a class="el" href="group__stf.html#gade11b9ba48a1c23475d168862ec82a3d" title="Start a New Entry. ">StfBeginEntry()</a> for an example. </p><dl class="params"><dt>Parameters</dt><dd>
+<p>End entry. </p>
+<p>This function terminates the current entry and flushes the STF's line buffer. See <a class="el" href="group__stf.html#gade11b9ba48a1c23475d168862ec82a3d" title="Start a new entry. ">StfBeginEntry()</a> for an example. </p><dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">f</td><td>Pointer to a structured text file (STF) object. </td></tr>
   </table>
@@ -265,8 +263,8 @@ Param := (11:22);
       </table>
 </div><div class="memdoc">
 
-<p>Read an Integer. </p>
-<p>This function gets one integer from the current line and increments the read pointer accordingly. Before this function is called, a line must have been read with <a class="el" href="group__stf.html#gaf33d64f31aa949791aec5323ed664d94" title="Read Next Line. ">StfReadLine()</a> and prepared with <a class="el" href="group__stf.html#gac454624d144c5030c5df95d00992b17c" title="Get Entry Name. ">StfGetName()</a>.</p>
+<p>Read an integer. </p>
+<p>This function gets one integer from the current line and increments the read pointer accordingly. Before this function is called, a line must have been read with <a class="el" href="group__stf.html#gaf33d64f31aa949791aec5323ed664d94" title="Read next line. ">StfReadLine()</a> and prepared with <a class="el" href="group__stf.html#gac454624d144c5030c5df95d00992b17c" title="Get entry name. ">StfGetName()</a>.</p>
 <p>Reading starts at the current position. Any leading blanks are skipped. On return, the new current position is the character following the last digit. If there is no integer to read, the current position is not changed, and the function returns -1.</p>
 <p>Here is an example: </p><div class="fragment"><div class="line"><a name="l00001"></a><span class="lineno">    1</span>&#160;StfFile *f = StfOpen(&quot;test&quot;,&quot;r&quot;);</div>
 <div class="line"><a name="l00002"></a><span class="lineno">    2</span>&#160;int dim, degree, result = 0;</div>
@@ -303,8 +301,8 @@ Param := (11:22);
       </table>
 </div><div class="memdoc">
 
-<p>Get Entry Name. </p>
-<p>This function extracts the name part of internal line buffer and prepares the buffer for further parsing with StfGetXXX() functions. On return, <code>f-&gt;GetPtr</code> points to the first non-space character after the ":=". StfGetName() can be called only after a line was successfully read with <a class="el" href="group__stf.html#gaf33d64f31aa949791aec5323ed664d94" title="Read Next Line. ">StfReadLine()</a>. It must be called before any of the StfGetXXX() functions. See <a class="el" href="group__stf.html#gacae5ca04ddec2b04d03197245fb0e46a" title="Read an Integer. ">StfGetInt()</a> for an example. </p><dl class="params"><dt>Parameters</dt><dd>
+<p>Get entry name. </p>
+<p>This function extracts the name part of internal line buffer and prepares the buffer for further parsing with StfGetXXX() functions. On return, <code>f-&gt;GetPtr</code> points to the first non-space character after the ":=". StfGetName() can be called only after a line was successfully read with <a class="el" href="group__stf.html#gaf33d64f31aa949791aec5323ed664d94" title="Read next line. ">StfReadLine()</a>. It must be called before any of the StfGetXXX() functions. See <a class="el" href="group__stf.html#gacae5ca04ddec2b04d03197245fb0e46a" title="Read an integer. ">StfGetInt()</a> for an example. </p><dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">f</td><td>Pointer to a structured text file (STF) object. </td></tr>
   </table>
@@ -345,7 +343,7 @@ Param := (11:22);
 </div><div class="memdoc">
 
 <p>Read a string. </p>
-<p>This function gets a string from the current line and increments the read pointer accordingly. Before this function is called, a line must have been read with <a class="el" href="group__stf.html#gaf33d64f31aa949791aec5323ed664d94" title="Read Next Line. ">StfReadLine()</a> and prepared with <a class="el" href="group__stf.html#gac454624d144c5030c5df95d00992b17c" title="Get Entry Name. ">StfGetName()</a>. The string is expected at the current position of the test file and must be in C syntax, i.e., enclosed in double quotation marks. </p><dl class="params"><dt>Parameters</dt><dd>
+<p>This function gets a string from the current line and increments the read pointer accordingly. Before this function is called, a line must have been read with <a class="el" href="group__stf.html#gaf33d64f31aa949791aec5323ed664d94" title="Read next line. ">StfReadLine()</a> and prepared with <a class="el" href="group__stf.html#gac454624d144c5030c5df95d00992b17c" title="Get entry name. ">StfGetName()</a>. The string is expected at the current position of the test file and must be in C syntax, i.e., enclosed in double quotation marks. </p><dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">f</td><td>Pointer to a structured text file (STF) object. </td></tr>
     <tr><td class="paramname">buf</td><td>Pointer to a buffer receiving the value. </td></tr>
@@ -388,8 +386,8 @@ Param := (11:22);
 </div><div class="memdoc">
 
 <p>Read a vector. </p>
-<p>This function reads a sequence of integers. The sequence must have been written with <a class="el" href="group__stf.html#gad71b3e21e1935b649b2ad183f957b038" title="Write a Vector. ">StfWriteVector()</a> or at least in the same format.</p>
-<p>Before using this function, a line must have been read with <a class="el" href="group__stf.html#gaf33d64f31aa949791aec5323ed664d94" title="Read Next Line. ">StfReadLine()</a> and prepared with StfGetname(). Reading starts at the current position, i.e., at the first non-space character after the ":=", or at the first character that was not read by the previous StfGetXXX() or <a class="el" href="group__stf.html#ga50a13c2223fdd3b3ceef067d9de1dd63" title="Skip text. ">StfMatch()</a>.</p>
+<p>This function reads a sequence of integers. The sequence must have been written with <a class="el" href="group__stf.html#gad71b3e21e1935b649b2ad183f957b038" title="Write a vector. ">StfWriteVector()</a> or at least in the same format.</p>
+<p>Before using this function, a line must have been read with <a class="el" href="group__stf.html#gaf33d64f31aa949791aec5323ed664d94" title="Read next line. ">StfReadLine()</a> and prepared with StfGetname(). Reading starts at the current position, i.e., at the first non-space character after the ":=", or at the first character that was not read by the previous StfGetXXX() or <a class="el" href="group__stf.html#ga50a13c2223fdd3b3ceef067d9de1dd63" title="Skip text. ">StfMatch()</a>.</p>
 <p>The caller must supply two buffers, the data buffer (<em>buf</em>) and an integer buffer (<em>bufsize</em>). When StfGetVector() is called, the variable pointed to by <em>bufsize</em> must contain the maximal number of integers that can be stored in <em>buf</em>. On successful return, the variable contains the number of integers that were actually stored, which may be smaller than the original value. If the vector is to long to fit into the user-supplied buffer, the function reads as many entries as possible and returns -1.</p>
 <p>Here is an example: </p><div class="fragment"><div class="line"><a name="l00001"></a><span class="lineno">    1</span>&#160;char *name = StfGetName(f);</div>
 <div class="line"><a name="l00002"></a><span class="lineno">    2</span>&#160;if (!strcmp(name,&quot;Vector&quot;))</div>
@@ -436,7 +434,7 @@ Param := (11:22);
 </div><div class="memdoc">
 
 <p>Skip text. </p>
-<p>This function reads (and skips) the text given by <em>pattern</em>. Before using this function, a line must have been read with <a class="el" href="group__stf.html#gaf33d64f31aa949791aec5323ed664d94" title="Read Next Line. ">StfReadLine()</a> and prepared with StfGetname(). Reading starts at the current position, i.e., at the first non-space character after the ":=", or at the first character that was not read by the previous StfGetXXX() or <a class="el" href="group__stf.html#ga50a13c2223fdd3b3ceef067d9de1dd63" title="Skip text. ">StfMatch()</a>. A space in <em>pattern</em> matches any number (including 0) of spaces or tabs. Any other characters in <em>pattern</em> are matched one-to-one against the input line. If <em>pattern</em> is matched completely, the current position is updated to the character after the last matched character. Otherwise, the current position is not changed and the function returns -1. </p><dl class="params"><dt>Parameters</dt><dd>
+<p>This function reads (and skips) the text given by <em>pattern</em>. Before using this function, a line must have been read with <a class="el" href="group__stf.html#gaf33d64f31aa949791aec5323ed664d94" title="Read next line. ">StfReadLine()</a> and prepared with StfGetname(). Reading starts at the current position, i.e., at the first non-space character after the ":=", or at the first character that was not read by the previous StfGetXXX() or <a class="el" href="group__stf.html#ga50a13c2223fdd3b3ceef067d9de1dd63" title="Skip text. ">StfMatch()</a>. A space in <em>pattern</em> matches any number (including 0) of spaces or tabs. Any other characters in <em>pattern</em> are matched one-to-one against the input line. If <em>pattern</em> is matched completely, the current position is updated to the character after the last matched character. Otherwise, the current position is not changed and the function returns -1. </p><dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">f</td><td>Pointer to a structured text file (STF) object. </td></tr>
     <tr><td class="paramname">pattern</td><td>The text to be skipped. </td></tr>
@@ -471,8 +469,8 @@ Param := (11:22);
       </table>
 </div><div class="memdoc">
 
-<p>Open a Structured Text File. </p>
-<p>This function opens a structured text file. It returns to a <a class="el" href="structStfData.html" title="Structured text file. ">StfData</a> structure which can be used with StfXXX() functions. <em>name</em> and <em>mode</em> have the same semantics as with <a class="el" href="group__os.html#ga7fcb1d88bc45137760162aa62dfa748a" title="Open a file. ">SysFopen()</a>. If the mode contains <code>FM_CREATE</code>, a new file is created and opened for writing, for example with <a class="el" href="group__stf.html#ga2395278458ccc93b839989cb3be5e4fd" title="Write an Integer. ">StfWriteInt()</a>. If a file with the specified name already exists, it is truncated to length zero. Otherwise, a new file is created.</p>
+<p>Open a structured text file. </p>
+<p>This function opens a structured text file. It returns to a <a class="el" href="structStfData.html" title="Structured text file. ">StfData</a> structure which can be used with StfXxx() functions. <em>name</em> and <em>mode</em> have the same semantics as with <a class="el" href="group__os.html#ga7fcb1d88bc45137760162aa62dfa748a" title="Open a file. ">SysFopen()</a>. If the mode contains <code>FM_CREATE</code>, a new file is created and opened for writing, for example with <a class="el" href="group__stf.html#ga2395278458ccc93b839989cb3be5e4fd" title="Write an enteger. ">StfWriteInt()</a>. If a file with the specified name already exists, it is truncated to length zero. Otherwise, a new file is created.</p>
 <p>The mode <em>FM_READ</em> opens the file for reading. If the file does not exist the function fails. FM_TEXT is always added implicitely to the mode. </p><dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">name</td><td>File name. </td></tr>
@@ -498,8 +496,8 @@ Param := (11:22);
       </table>
 </div><div class="memdoc">
 
-<p>Read Next Line. </p>
-<p>This function reads a single text line into the STF object's internal line buffer and prepares the text for parsing with StfGetXXX() functions. <a class="el" href="group__stf.html#gaf33d64f31aa949791aec5323ed664d94" title="Read Next Line. ">StfReadLine()</a> strips comments and assembles multi-line texts into a single line. Thus, the application need not handle comments and multi-line texts. </p><dl class="params"><dt>Parameters</dt><dd>
+<p>Read next line. </p>
+<p>This function reads a single text line into the STF object's internal line buffer and prepares the text for parsing with StfGetXXX() functions. <a class="el" href="group__stf.html#gaf33d64f31aa949791aec5323ed664d94" title="Read next line. ">StfReadLine()</a> strips comments and assembles multi-line texts into a single line. Thus, the application need not handle comments and multi-line texts. </p><dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">f</td><td>Pointer to a structured text file (STF) object. </td></tr>
   </table>
@@ -539,7 +537,7 @@ Param := (11:22);
       </table>
 </div><div class="memdoc">
 
-<p>Write an Integer. </p>
+<p>Write an enteger. </p>
 <p>This function writes an integer to a structured text file. For example, the statement </p><div class="fragment"><div class="line"><a name="l00001"></a><span class="lineno">    1</span>&#160;StfWriteInt(f,&quot;Dimension&quot;,42);</div>
 </div><!-- fragment --><p> produces the following output line: </p><pre>
 Dimension := 42;
@@ -585,7 +583,7 @@ Dimension := 42;
       </table>
 </div><div class="memdoc">
 
-<p>Write a <a class="el" href="structString.html" title="A dynamic string. ">String</a>. </p>
+<p>Write a string. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">f</td><td>Pointer to a structured text file (STF) object. </td></tr>
@@ -631,7 +629,7 @@ Title := "This is a test ";
       </table>
 </div><div class="memdoc">
 
-<p>Write a <a class="el" href="structString.html" title="A dynamic string. ">String</a>. </p>
+<p>Write a string. </p>
 <p>This function writes an arbitrary text to a structured text file. For example, the statement </p><div class="fragment"><div class="line"><a name="l00001"></a><span class="lineno">    1</span>&#160;StfWriteValue(f,&quot;Note&quot;,&quot;This is a note&quot;);</div>
 </div><!-- fragment --><p> produces the following output line: </p><pre>
 Note := This is a note;
@@ -683,7 +681,7 @@ Note := This is a note;
       </table>
 </div><div class="memdoc">
 
-<p>Write a Vector. </p>
+<p>Write a vector. </p>
 <p>This function writes a sequence of integers to a structured text file. For example, the statement </p><div class="fragment"><div class="line"><a name="l00001"></a><span class="lineno">    1</span>&#160;int dims[5] = {11,22,33,44,55};</div>
 <div class="line"><a name="l00002"></a><span class="lineno">    2</span>&#160;StfWriteVector(f,&quot;Dimensions&quot;,dims,5);</div>
 </div><!-- fragment --><p> produces the following output line: </p><pre>
@@ -704,6 +702,6 @@ Dimensions := [11,22,33,44,55];
 </div><!-- contents -->
 </div><!-- doc-content -->
 <hr size="1"><address style="text-align: right;"><small>
-MeatAxe 2.4 documentation, generated on Fri Dec 26 2014 11:45:31</small></address>
+MeatAxe 2.4 documentation, generated on Wed Jan 7 2015 08:38:23</small></address>
 </body>
 </html>

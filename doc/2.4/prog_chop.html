@@ -61,11 +61,9 @@ $(document).ready(function(){initNavTree('prog_chop.html','');});
 <div class="title">chop - Find Irreducible Constituents </div>  </div>
 </div><!--header-->
 <div class="contents">
-<div class="textblock"><p>&lt;&lt;&lt;&lt;&lt;&lt;&lt; HEAD</p>
-<h1>syntax Command Line </h1>
-<h1><a class="anchor" id="chop_syntax"></a>
+<div class="textblock"><h1><a class="anchor" id="chop_syntax"></a>
 Command Line</h1>
-<p>&gt;&gt;&gt;&gt;&gt;&gt;&gt; 4a68ae339f0300470810ab3c90387657ccf21f0c </p><pre>
+<pre>
 chop [<em>Options</em>] [-Gi] [-g <em>NGen</em>] [-s <em>Word</em>] [-n <em>MaxNul</em>] [-d <em>MaxDeg</em>] <em>Name</em> </pre><dl class="section user"><dt><em>Options</em> </dt><dd>Standard options, see <a class="el" href="prog_stdopts.html">Standard Command Line Options</a></dd></dl>
 <dl class="section user"><dt><em>-G</em> &ndash;gap</dt><dd>Produce GAP output. Implies -Q.</dd></dl>
 <dl class="section user"><dt><em>-i</em> &ndash;read-cfinfo</dt><dd>Read <em>Name.cfinfo</em>, if it exists, to determine the number of generators.</dd></dl>
@@ -74,71 +72,19 @@ chop [<em>Options</em>] [-Gi] [-g <em>NGen</em>] [-s <em>Word</em>] [-n <em>MaxN
 <dl class="section user"><dt>-n <em>MaxNul</em> </dt><dd>Set limit on nullity. Only null-spaces with a dimension less than or equal to <em>MaxNul</em> are searched completely.</dd></dl>
 <dl class="section user"><dt>-d <em>MaxDeg</em> </dt><dd>Set limit on degrees of polynomials.</dd></dl>
 <dl class="section user"><dt><em>Name</em> </dt><dd>Name of the module to chop.</dd></dl>
-<p>&lt;&lt;&lt;&lt;&lt;&lt;&lt; HEAD </p>
-<h1><a class="anchor" id="inp"></a>
-Input Files</h1>
-<dl class="section user"><dt><em>Name</em>.1, <em>Name</em>.2, ...</dt><dd>Action of the generators on the module.</dd></dl>
-<h1>out Output Files </h1>
 <h1><a class="anchor" id="chop_inp"></a>
 Input Files</h1>
 <dl class="section user"><dt><em>Name</em>.1, <em>Name</em>.2, ...</dt><dd>Action of the generators on the module.</dd></dl>
 <h1><a class="anchor" id="chop_out"></a>
 Output Files</h1>
-<blockquote class="doxtable">
-<blockquote class="doxtable">
-<blockquote class="doxtable">
-<blockquote class="doxtable">
-<blockquote class="doxtable">
-<blockquote class="doxtable">
-<blockquote class="doxtable">
-<p>4a68ae339f0300470810ab3c90387657ccf21f0c </p>
-</blockquote>
-</blockquote>
-</blockquote>
-</blockquote>
-</blockquote>
-</blockquote>
-</blockquote>
 <dl class="section user"><dt><em>Name</em>.cfinfo</dt><dd>Constituent information file</dd></dl>
 <dl class="section user"><dt><em>Name</em>.X.1, <em>Name</em>.X.2, ...</dt><dd>Action of the generators on the constituent X.</dd></dl>
-<p>&lt;&lt;&lt;&lt;&lt;&lt;&lt; HEAD </p><h1>desc Description </h1>
 <h1><a class="anchor" id="chop_desc"></a>
 Description</h1>
-<blockquote class="doxtable">
-<blockquote class="doxtable">
-<blockquote class="doxtable">
-<blockquote class="doxtable">
-<blockquote class="doxtable">
-<blockquote class="doxtable">
-<blockquote class="doxtable">
-<p>4a68ae339f0300470810ab3c90387657ccf21f0c </p>
-</blockquote>
-</blockquote>
-</blockquote>
-</blockquote>
-</blockquote>
-</blockquote>
-</blockquote>
 <p>This program calculates the irreducible constituents of a given matrix representation. The representing matrices of the generators are read from input files, see "input Files" above. Unless a different number of generators has been specified with -g, two generators are expected. However, if the "-i" option is used, and the file <em>Name.cfinfo</em> exists, <b>chop</b> takes the number of generators from this file and ignores the "-g" option.</p>
 <p>For each composition factor <b>chop</b> writes the action of the generators to <em>CFName.1</em>, <em>CFName.2</em>, ... <em>CFName</em> is the name of the composition factor, which is constructed by appending the dimension and a letter to the module name. For example, "X10a.1" is the action of the first generator on the first composition factor of dimension 10 of the module X. If a second, inequivalent composition factor of dimension 10 was found, it would be named `X10b' and so on. <b>chop</b> also creates the file <em>Name.cfinfo'</em> containing a list of all composition factors. This file is used by subsequent programs such as <a class="el" href="prog_pwkond.html">pwkond</a>.</p>
-<p>&lt;&lt;&lt;&lt;&lt;&lt;&lt; HEAD </p><h1>impl Implementation Details </h1>
 <h1><a class="anchor" id="chop_impl"></a>
 Implementation Details</h1>
-<blockquote class="doxtable">
-<blockquote class="doxtable">
-<blockquote class="doxtable">
-<blockquote class="doxtable">
-<blockquote class="doxtable">
-<blockquote class="doxtable">
-<blockquote class="doxtable">
-<p>4a68ae339f0300470810ab3c90387657ccf21f0c </p>
-</blockquote>
-</blockquote>
-</blockquote>
-</blockquote>
-</blockquote>
-</blockquote>
-</blockquote>
 <p><b>chop</b> repeatedly splits a module into submodule and quotient until it arrives at the irreducible constituents. Thus, it finds a composition series. The program assumes that the algebra generated by the input matrices contains the unit matrix.</p>
 <p>In order to split a given module or to prove its irreducibility the algorithm needs an element of the algebra with a non-trivial but low-dimensional kernel. Such elements are searched by taking linear combinations of certain products of the generators ("words"). See the description of the <a class="el" href="prog_zmw.html">zmw</a> program for more details on the word generator. By default, <b>chop</b> tries all words in the order defined by the word generator. The "-s" option may be used to make <b>chop</b> start with a word different from 1.</p>
 <p>For each word A generated in this way, the program calculates its characteristic polynomial and examines the irreducible factors. If p(x) is an irreducible factor, p(A) has a non-trivial kernel. Then, one vector of the kernel is chosen and the smallest submodule containing this vector is calculated. If the vector spans a proper submodule, the action of the generators on this submodule as well as on the quotient are calculated and the same procedure is applied recursively to both submodule and quotient.</p>
@@ -151,6 +97,6 @@ threshold" m is maintained by the program. Initially, m is set to 3 or to the va
 </div></div><!-- contents -->
 </div><!-- doc-content -->
 <hr size="1"><address style="text-align: right;"><small>
-MeatAxe 2.4 documentation, generated on Fri Dec 26 2014 11:45:30</small></address>
+MeatAxe 2.4 documentation, generated on Wed Jan 7 2015 08:38:22</small></address>
 </body>
 </html>

@@ -61,61 +61,23 @@ $(document).ready(function(){initNavTree('prog_zpt.html','');});
 <div class="title">zpt - Paste </div>  </div>
 </div><!--header-->
 <div class="contents">
-<div class="textblock"><p>&lt;&lt;&lt;&lt;&lt;&lt;&lt; HEAD</p>
-<h1>syntax Command Line </h1>
-<h1><a class="anchor" id="zpt_syntax"></a>
+<div class="textblock"><h1><a class="anchor" id="zpt_syntax"></a>
 Command Line</h1>
-<p>&gt;&gt;&gt;&gt;&gt;&gt;&gt; 4a68ae339f0300470810ab3c90387657ccf21f0c </p><pre>
+<pre>
 zpt <em>Options</em> [-r <em>NRows</em>] [-c <em>NCols</em>] <em>Out</em> <em>Inp</em> [<em>Inp</em> ...]
 </pre><dl class="section user"><dt><em>Options</em> </dt><dd>Standard options, see <a class="el" href="prog_stdopts.html">Standard Command Line Options</a> </dd></dl>
 <dl class="section user"><dt>-r <em>Rows</em> </dt><dd>Set number of rows. </dd></dl>
 <dl class="section user"><dt><em>Columns</em> </dt><dd>Set number of columns. </dd></dl>
 <dl class="section user"><dt><em>Out</em> </dt><dd>Output file. </dd></dl>
 <dl class="section user"><dt><em>Inp</em> </dt><dd>Input piece.</dd></dl>
-<p>&lt;&lt;&lt;&lt;&lt;&lt;&lt; HEAD </p>
-<h1><a class="anchor" id="inp"></a>
-Input Files</h1>
-<dl class="section user"><dt><em>Inp</em> </dt><dd>Input piece.</dd></dl>
-<h1>out Output Files </h1>
 <h1><a class="anchor" id="zpt_inp"></a>
 Input Files</h1>
 <dl class="section user"><dt><em>Inp</em> </dt><dd>Input piece.</dd></dl>
 <h1><a class="anchor" id="zpt_out"></a>
 Output Files</h1>
-<blockquote class="doxtable">
-<blockquote class="doxtable">
-<blockquote class="doxtable">
-<blockquote class="doxtable">
-<blockquote class="doxtable">
-<blockquote class="doxtable">
-<blockquote class="doxtable">
-<p>4a68ae339f0300470810ab3c90387657ccf21f0c </p>
-</blockquote>
-</blockquote>
-</blockquote>
-</blockquote>
-</blockquote>
-</blockquote>
-</blockquote>
 <dl class="section user"><dt><em>Out</em> </dt><dd>Output file.</dd></dl>
-<p>&lt;&lt;&lt;&lt;&lt;&lt;&lt; HEAD </p><h1>desc Description </h1>
 <h1><a class="anchor" id="zpt_desc"></a>
 Description</h1>
-<blockquote class="doxtable">
-<blockquote class="doxtable">
-<blockquote class="doxtable">
-<blockquote class="doxtable">
-<blockquote class="doxtable">
-<blockquote class="doxtable">
-<blockquote class="doxtable">
-<p>4a68ae339f0300470810ab3c90387657ccf21f0c </p>
-</blockquote>
-</blockquote>
-</blockquote>
-</blockquote>
-</blockquote>
-</blockquote>
-</blockquote>
 <p>This program reads matrices from one or more input files and pastes the pieces together to one matrix. The way in which the pieces are put together is controlled by two parameters, <em>NRows</em> and <em>NCols</em>. For example, </p><pre>
 zpt -r 2 -c 3 x aa ab ac ba bb bc
 </pre><p> would paste together 6 matrices in two rows and three columns. The resulting matrix is written to "x" and looks like this: </p><pre>
@@ -127,30 +89,14 @@ zpt -r 2 -c 2 A+B A - - B
 A 0
 0 B
 </pre><p> If only one of <em>NRows</em> and <em>NCols</em> is specified, the other parameter is assumed to be one.</p>
-<p>&lt;&lt;&lt;&lt;&lt;&lt;&lt; HEAD </p><h1>perms Permutations </h1>
 <h2><a class="anchor" id="ztp_perms"></a>
 Permutations</h2>
-<blockquote class="doxtable">
-<blockquote class="doxtable">
-<blockquote class="doxtable">
-<blockquote class="doxtable">
-<blockquote class="doxtable">
-<blockquote class="doxtable">
-<blockquote class="doxtable">
-<p>4a68ae339f0300470810ab3c90387657ccf21f0c </p>
-</blockquote>
-</blockquote>
-</blockquote>
-</blockquote>
-</blockquote>
-</blockquote>
-</blockquote>
 <p>The program can also paste permutations, i.e., copy permutations from several files into one file. In this case, "-c" cannot be used. For example, </p><pre>
 zpt all perm1 perm2 perm3
 </pre><p> writes the permutations from "perm1", "perm2", and "perm3" into the file "all". Each of the input file may contain one or more permutations. Of course all permutations must have the same degree. Note: pasting permutations is supported only for compatibility with older versions of the MeatAxe. </p>
 </div></div><!-- contents -->
 </div><!-- doc-content -->
 <hr size="1"><address style="text-align: right;"><small>
-MeatAxe 2.4 documentation, generated on Fri Dec 26 2014 11:45:31</small></address>
+MeatAxe 2.4 documentation, generated on Wed Jan 7 2015 08:38:22</small></address>
 </body>
 </html>

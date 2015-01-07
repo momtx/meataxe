@@ -61,99 +61,33 @@ $(document).ready(function(){initNavTree('prog_zcf.html','');});
 <div class="title">zcf - Change Field </div>  </div>
 </div><!--header-->
 <div class="contents">
-<div class="textblock"><p>&lt;&lt;&lt;&lt;&lt;&lt;&lt; HEAD</p>
-<h1>syntax Command Line </h1>
-<h1><a class="anchor" id="zcf_syntax"></a>
+<div class="textblock"><h1><a class="anchor" id="zcf_syntax"></a>
 Command Line</h1>
-<p>&gt;&gt;&gt;&gt;&gt;&gt;&gt; 4a68ae339f0300470810ab3c90387657ccf21f0c </p><pre>
+<pre>
 zcf <em>Options</em> <em>q</em> <em>Input</em> <em>Output</em> </pre><dl class="section user"><dt><em>Options</em> </dt><dd>Standard options, see <a class="el" href="prog_stdopts.html">Standard Command Line Options</a></dd></dl>
 <dl class="section user"><dt><em>q</em> </dt><dd>New field order.</dd></dl>
 <dl class="section user"><dt><em>Input</em> </dt><dd>Input file.</dd></dl>
 <dl class="section user"><dt><em>Output</em> </dt><dd>Output file.</dd></dl>
-<p>&lt;&lt;&lt;&lt;&lt;&lt;&lt; HEAD </p><h1>inp Input Files </h1>
 <h1><a class="anchor" id="zcf_inp"></a>
 Input Files</h1>
-<blockquote class="doxtable">
-<blockquote class="doxtable">
-<blockquote class="doxtable">
-<blockquote class="doxtable">
-<blockquote class="doxtable">
-<blockquote class="doxtable">
-<blockquote class="doxtable">
-<p>4a68ae339f0300470810ab3c90387657ccf21f0c </p>
-</blockquote>
-</blockquote>
-</blockquote>
-</blockquote>
-</blockquote>
-</blockquote>
-</blockquote>
 <dl class="section user"><dt><em>Input</em> </dt><dd>Input file.</dd></dl>
-<p>&lt;&lt;&lt;&lt;&lt;&lt;&lt; HEAD </p><h1>out Output Files </h1>
 <h1><a class="anchor" id="zcf_out"></a>
 Output Files</h1>
-<blockquote class="doxtable">
-<blockquote class="doxtable">
-<blockquote class="doxtable">
-<blockquote class="doxtable">
-<blockquote class="doxtable">
-<blockquote class="doxtable">
-<blockquote class="doxtable">
-<p>4a68ae339f0300470810ab3c90387657ccf21f0c </p>
-</blockquote>
-</blockquote>
-</blockquote>
-</blockquote>
-</blockquote>
-</blockquote>
-</blockquote>
 <dl class="section user"><dt><em>Output</em> </dt><dd>Output file.</dd></dl>
-<p>&lt;&lt;&lt;&lt;&lt;&lt;&lt; HEAD </p><h1>desc Description </h1>
 <h1><a class="anchor" id="zcf_desc"></a>
 Description</h1>
-<blockquote class="doxtable">
-<blockquote class="doxtable">
-<blockquote class="doxtable">
-<blockquote class="doxtable">
-<blockquote class="doxtable">
-<blockquote class="doxtable">
-<blockquote class="doxtable">
-<p>4a68ae339f0300470810ab3c90387657ccf21f0c </p>
-</blockquote>
-</blockquote>
-</blockquote>
-</blockquote>
-</blockquote>
-</blockquote>
-</blockquote>
 <p>This program converts between various data types. Currently there are two kinds of conversions available:</p><ul>
 <li>If <em>Input</em> is a matrix, the field is changed to GF(<em>q</em>). The current field of the input file must be a subfield or a superfield of GF(<em>q</em>). In the latter case, all matrix entries must be in GF(<em>q</em>).</li>
 <li>If <em>Input</em> is a permutation of degree n, it is converted into the corresponding n times n permutation matrix over GF(<em>q</em>).</li>
 </ul>
-<p>&lt;&lt;&lt;&lt;&lt;&lt;&lt; HEAD </p><h1>impl Implementation Details </h1>
 <h1><a class="anchor" id="zcf_impl"></a>
 Implementation Details</h1>
-<blockquote class="doxtable">
-<blockquote class="doxtable">
-<blockquote class="doxtable">
-<blockquote class="doxtable">
-<blockquote class="doxtable">
-<blockquote class="doxtable">
-<blockquote class="doxtable">
-<p>4a68ae339f0300470810ab3c90387657ccf21f0c </p>
-</blockquote>
-</blockquote>
-</blockquote>
-</blockquote>
-</blockquote>
-</blockquote>
-</blockquote>
 <p>For matrices, the conversion is done in two steps. First, all entries of the matrix are converted to integers. Then, they are mapped to the new field and reassembled into rows. The result is written out row by row.</p>
 <p>In case of permutations the output matrix is generated row by row by inserting ones at the positions specified by the permutation.</p>
 <p>If the input is a matrix, the whole matrix must fit into memory. Additionally, the program needs n⋅m⋅s bytes of memory, where m and n are the dimensions of the input matrix and s=1 for the small arithmetic version and s=2 for the big version. In case of permutations, the input permutation and one row of the output file must fit into memory. </p>
 </div></div><!-- contents -->
 </div><!-- doc-content -->
 <hr size="1"><address style="text-align: right;"><small>
-MeatAxe 2.4 documentation, generated on Fri Dec 26 2014 11:45:31</small></address>
+MeatAxe 2.4 documentation, generated on Wed Jan 7 2015 08:38:22</small></address>
 </body>
 </html>

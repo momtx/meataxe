@@ -88,6 +88,18 @@ Functions</h2></td></tr>
 int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__mf.html#gab5f254075ae39ec04c15668f3e493acd">MfClose</a> (<a class="el" href="structMtxFile__t.html">MtxFile_t</a> *file)</td></tr>
 <tr class="memdesc:gab5f254075ae39ec04c15668f3e493acd"><td class="mdescLeft">&#160;</td><td class="mdescRight">Close a File. <br /></td></tr>
 <tr class="separator:gab5f254075ae39ec04c15668f3e493acd"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga71139050b8b8dfcdd18ed6510e378f57"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__mf.html#ga71139050b8b8dfcdd18ed6510e378f57">MfReadRows</a> (<a class="el" href="structMtxFile__t.html">MtxFile_t</a> *f, <a class="el" href="group__ff.html#ga2dc160f7cd3b7190becfc9eab62b58ac">PTR</a> buf, int nrows)</td></tr>
+<tr class="memdesc:ga71139050b8b8dfcdd18ed6510e378f57"><td class="mdescLeft">&#160;</td><td class="mdescRight">Read row vectors from a file.  <a href="#ga71139050b8b8dfcdd18ed6510e378f57">More...</a><br /></td></tr>
+<tr class="separator:ga71139050b8b8dfcdd18ed6510e378f57"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga5681b3786f13b06024c75dd5a7e07444"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__mf.html#ga5681b3786f13b06024c75dd5a7e07444">MfReadLong</a> (<a class="el" href="structMtxFile__t.html">MtxFile_t</a> *f, long *buf, int count)</td></tr>
+<tr class="memdesc:ga5681b3786f13b06024c75dd5a7e07444"><td class="mdescLeft">&#160;</td><td class="mdescRight">Read long integers from a file.  <a href="#ga5681b3786f13b06024c75dd5a7e07444">More...</a><br /></td></tr>
+<tr class="separator:ga5681b3786f13b06024c75dd5a7e07444"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga13e03f16c2971221b2fc065c589ed128"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__mf.html#ga13e03f16c2971221b2fc065c589ed128">MfWriteRows</a> (<a class="el" href="structMtxFile__t.html">MtxFile_t</a> *f, <a class="el" href="group__ff.html#ga2dc160f7cd3b7190becfc9eab62b58ac">PTR</a> buf, int nrows)</td></tr>
+<tr class="memdesc:ga13e03f16c2971221b2fc065c589ed128"><td class="mdescLeft">&#160;</td><td class="mdescRight">Write row vectors to a file.  <a href="#ga13e03f16c2971221b2fc065c589ed128">More...</a><br /></td></tr>
+<tr class="separator:ga13e03f16c2971221b2fc065c589ed128"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga9aed92ac968fabce55498ccb962e6959"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__mf.html#ga9aed92ac968fabce55498ccb962e6959">MfWriteLong</a> (<a class="el" href="structMtxFile__t.html">MtxFile_t</a> *f, const long *buf, int count)</td></tr>
+<tr class="memdesc:ga9aed92ac968fabce55498ccb962e6959"><td class="mdescLeft">&#160;</td><td class="mdescRight">Write long integers to a file.  <a href="#ga9aed92ac968fabce55498ccb962e6959">More...</a><br /></td></tr>
+<tr class="separator:ga9aed92ac968fabce55498ccb962e6959"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <h2 class="groupheader">Function Documentation</h2>
 <a class="anchor" id="gadae5198af7d4dd4c445fddd28b9ea631"></a>
@@ -156,9 +168,181 @@ int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group
 
 </div>
 </div>
+<a class="anchor" id="ga5681b3786f13b06024c75dd5a7e07444"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">int MfReadLong </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="structMtxFile__t.html">MtxFile_t</a> *&#160;</td>
+          <td class="paramname"><em>f</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">long *&#160;</td>
+          <td class="paramname"><em>buf</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">int&#160;</td>
+          <td class="paramname"><em>count</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Read long integers from a file. </p>
+<p>This function reads |count| long integers from a data file into a buffer. If necessary, the data is converted from machine independent format into the format needed by the platform. See |SysReadLong()| for details. </p><dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">f</td><td>Pointer to the file. </td></tr>
+    <tr><td class="paramname">buf</td><td>Data buffer. </td></tr>
+    <tr><td class="paramname">count</td><td>Number of integers to read. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>Number of integers that were actually read. Any value other than |count| indicates an error. </dd></dl>
+
+</div>
+</div>
+<a class="anchor" id="ga71139050b8b8dfcdd18ed6510e378f57"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">int MfReadRows </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="structMtxFile__t.html">MtxFile_t</a> *&#160;</td>
+          <td class="paramname"><em>f</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="group__ff.html#ga2dc160f7cd3b7190becfc9eab62b58ac">PTR</a>&#160;</td>
+          <td class="paramname"><em>buf</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">int&#160;</td>
+          <td class="paramname"><em>nrows</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Read row vectors from a file. </p>
+<p>This function reads <em>nrows</em> rows from a data file into a buffer. Unlike <a class="el" href="group__ff.html#ga39f5d066a7a11ec4718d1ad56e155b4c" title="Read Rows This function reads 1 or more rows from a file. ">FfReadRows()</a>, this function changes the current row size to the appropriate value, which is stored in the <a class="el" href="structMtxFile__t.html" title="MeatAxe data file object. ">MtxFile_t</a> object. </p><dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">f</td><td>Pointer to the file. </td></tr>
+    <tr><td class="paramname">buf</td><td>Data buffer. </td></tr>
+    <tr><td class="paramname">nrows</td><td>Number of rows to read. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>Number of rows that were actually read. Any value other than count indicates an error. </dd></dl>
+
+</div>
+</div>
+<a class="anchor" id="ga9aed92ac968fabce55498ccb962e6959"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">int MfWriteLong </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="structMtxFile__t.html">MtxFile_t</a> *&#160;</td>
+          <td class="paramname"><em>f</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const long *&#160;</td>
+          <td class="paramname"><em>buf</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">int&#160;</td>
+          <td class="paramname"><em>count</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Write long integers to a file. </p>
+<p>This function writes |count| long integers from buffer into a data file. If necessary, the data is converted from machine independent format into the format needed by the platform. See |SysWriteLong()| for details. </p><dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">f</td><td>Pointer to the file. </td></tr>
+    <tr><td class="paramname">buf</td><td>Data buffer. </td></tr>
+    <tr><td class="paramname">count</td><td>Number of integers to write. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>Number of integers that were actually written. Any value other than count indicates an error. </dd></dl>
+
+</div>
+</div>
+<a class="anchor" id="ga13e03f16c2971221b2fc065c589ed128"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">int MfWriteRows </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="structMtxFile__t.html">MtxFile_t</a> *&#160;</td>
+          <td class="paramname"><em>f</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="group__ff.html#ga2dc160f7cd3b7190becfc9eab62b58ac">PTR</a>&#160;</td>
+          <td class="paramname"><em>buf</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">int&#160;</td>
+          <td class="paramname"><em>nrows</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Write row vectors to a file. </p>
+<p>This function writes |nrows| rows from a data file into a buffer. Unlike |FfWriteRows()|, this function changes the current row size to the appropriate value, which is stored in the |MtxFile_t| object. </p><dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">f</td><td>Pointer to the file. </td></tr>
+    <tr><td class="paramname">buf</td><td>Data buffer. </td></tr>
+    <tr><td class="paramname">nrows</td><td>Number of rows to write. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>Number of rows that were actually written. Any value other than count indicates an error. </dd></dl>
+
+</div>
+</div>
 </div><!-- contents -->
 </div><!-- doc-content -->
 <hr size="1"><address style="text-align: right;"><small>
-MeatAxe 2.4 documentation, generated on Fri Dec 26 2014 11:45:31</small></address>
+MeatAxe 2.4 documentation, generated on Wed Jan 7 2015 08:38:23</small></address>
 </body>
 </html>

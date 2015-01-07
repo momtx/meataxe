@@ -91,7 +91,7 @@ Functions</h2></td></tr>
 <tr class="memdesc:ga3d3db7e61dcdc96115085884fca740dd"><td class="mdescLeft">&#160;</td><td class="mdescRight">Creates a symbolic description of a word.  <a href="#ga3d3db7e61dcdc96115085884fca740dd">More...</a><br /></td></tr>
 <tr class="separator:ga3d3db7e61dcdc96115085884fca740dd"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ga294cd5d6f364ddfd37d23d4f4922ab04"><td class="memItemLeft" align="right" valign="top"><a class="el" href="structMatrix__t.html">Matrix_t</a> *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__wgen.html#ga294cd5d6f364ddfd37d23d4f4922ab04">WgMakeWord</a> (<a class="el" href="structWgData__t.html">WgData_t</a> *b, long n)</td></tr>
-<tr class="memdesc:ga294cd5d6f364ddfd37d23d4f4922ab04"><td class="mdescLeft">&#160;</td><td class="mdescRight">Calculates a Word.  <a href="#ga294cd5d6f364ddfd37d23d4f4922ab04">More...</a><br /></td></tr>
+<tr class="memdesc:ga294cd5d6f364ddfd37d23d4f4922ab04"><td class="mdescLeft">&#160;</td><td class="mdescRight">Calculates a word.  <a href="#ga294cd5d6f364ddfd37d23d4f4922ab04">More...</a><br /></td></tr>
 <tr class="separator:ga294cd5d6f364ddfd37d23d4f4922ab04"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ga97e3abed700363e44cc1712dd50a66c9"><td class="memItemLeft" align="right" valign="top"><a class="el" href="structWgData__t.html">WgData_t</a> *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__wgen.html#ga97e3abed700363e44cc1712dd50a66c9">WgAlloc</a> (const <a class="el" href="structMatRep__t.html">MatRep_t</a> *rep)</td></tr>
 <tr class="memdesc:ga97e3abed700363e44cc1712dd50a66c9"><td class="mdescLeft">&#160;</td><td class="mdescRight">Initialize the word generator.  <a href="#ga97e3abed700363e44cc1712dd50a66c9">More...</a><br /></td></tr>
@@ -119,7 +119,7 @@ Functions</h2></td></tr>
 </div><div class="memdoc">
 
 <p>Initialize the word generator. </p>
-<p>This function initializes the word generator for a given matrix representation <em>rep</em>. There must be at least one generator. On success, <a class="el" href="group__wgen.html#ga97e3abed700363e44cc1712dd50a66c9" title="Initialize the word generator. ">WgAlloc()</a> returns a pointer to an internal data structure which can be used in subsequent calls to <a class="el" href="group__wgen.html#ga294cd5d6f364ddfd37d23d4f4922ab04" title="Calculates a Word. ">WgMakeWord()</a> and <a class="el" href="group__wgen.html#gaadae8a9f919922675d7484eb892cf07e" title="Terminate the word generator. ">WgFree()</a>. If an error occurs, the return value is 0.</p>
+<p>This function initializes the word generator for a given matrix representation <em>rep</em>. There must be at least one generator. On success, <a class="el" href="group__wgen.html#ga97e3abed700363e44cc1712dd50a66c9" title="Initialize the word generator. ">WgAlloc()</a> returns a pointer to an internal data structure which can be used in subsequent calls to <a class="el" href="group__wgen.html#ga294cd5d6f364ddfd37d23d4f4922ab04" title="Calculates a word. ">WgMakeWord()</a> and <a class="el" href="group__wgen.html#gaadae8a9f919922675d7484eb892cf07e" title="Terminate the word generator. ">WgFree()</a>. If an error occurs, the return value is 0.</p>
 <p>Note that the word generator does not create internal copies of the generators. The caller must assure that the generators are not deleted or modified as long as the word generator is in use.</p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
@@ -253,7 +253,7 @@ Functions</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Calculates a Word. </p>
+<p>Calculates a word. </p>
 <p>This function calculates an element in a matrix algebra, given its number. Generators for the algebra are specified when the <a class="el" href="structWgData__t.html" title="Word Generator Data. ">WgData_t</a> structure is allocated with <a class="el" href="group__wgen.html#ga97e3abed700363e44cc1712dd50a66c9" title="Initialize the word generator. ">WgAlloc()</a>. </p><dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">b</td><td>Pointer to word generator data. </td></tr>
@@ -304,6 +304,6 @@ Functions</h2></td></tr>
 </div><!-- contents -->
 </div><!-- doc-content -->
 <hr size="1"><address style="text-align: right;"><small>
-MeatAxe 2.4 documentation, generated on Fri Dec 26 2014 11:45:31</small></address>
+MeatAxe 2.4 documentation, generated on Wed Jan 7 2015 08:38:23</small></address>
 </body>
 </html>

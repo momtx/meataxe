@@ -7,7 +7,7 @@ var modules =
     [ "Miscellaneous", "group__misc.html", "group__misc" ],
     [ "The seed vector generator", "group__pseed.html", "group__pseed" ],
     [ "Greased Matrices", "group__grmat.html", "group__grmat" ],
-    [ "Integer Matrices", "group__imat.html", "group__imat" ],
+    [ "Integer matrices", "group__imat.html", "group__imat" ],
     [ "Finite Fields", "group__ff.html", "group__ff" ],
     [ "Matrices over Finite Fields", "group__mat.html", "group__mat" ],
     [ "File I/O", "group__mf.html", "group__mf" ],

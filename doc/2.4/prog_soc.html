@@ -61,74 +61,24 @@ $(document).ready(function(){initNavTree('prog_soc.html','');});
 <div class="title">soc - Socle Series </div>  </div>
 </div><!--header-->
 <div class="contents">
-<div class="textblock"><p>&lt;&lt;&lt;&lt;&lt;&lt;&lt; HEAD</p>
-<h1>syntax Command Line </h1>
-<h1><a class="anchor" id="soc_syntax"></a>
+<div class="textblock"><h1><a class="anchor" id="soc_syntax"></a>
 Command Line</h1>
-<p>&gt;&gt;&gt;&gt;&gt;&gt;&gt; 4a68ae339f0300470810ab3c90387657ccf21f0c </p><pre>
+<pre>
 soc <em>Options</em> [-l <em>MaxLength</em>] <em>Module</em> </pre><dl class="section user"><dt><em>Options</em> </dt><dd>Standard options, see <a class="el" href="prog_stdopts.html">Standard Command Line Options</a> </dd></dl>
 <dl class="section user"><dt>-l <em>MaxLength</em> </dt><dd>Maximum number of layers to compute. </dd></dl>
 <dl class="section user"><dt><em>Module</em> </dt><dd>Module name.</dd></dl>
-<p>&lt;&lt;&lt;&lt;&lt;&lt;&lt; HEAD </p><h1>inp Input Files </h1>
 <h1><a class="anchor" id="soc_inp"></a>
 Input Files</h1>
-<blockquote class="doxtable">
-<blockquote class="doxtable">
-<blockquote class="doxtable">
-<blockquote class="doxtable">
-<blockquote class="doxtable">
-<blockquote class="doxtable">
-<blockquote class="doxtable">
-<p>4a68ae339f0300470810ab3c90387657ccf21f0c </p>
-</blockquote>
-</blockquote>
-</blockquote>
-</blockquote>
-</blockquote>
-</blockquote>
-</blockquote>
 <dl class="section user"><dt><em>Name</em>.cfinfo.</dt><dd>Constituent information. </dd></dl>
 <dl class="section user"><dt><em>NameCf</em>.std.1, <em>NameCf</em>.std.2, ...</dt><dd>Generators on the irreducible constituents. </dd></dl>
 <dl class="section user"><dt><em>NameCf</em>.op</dt><dd>Spin-up script for the standard basis. </dd></dl>
 <dl class="section user"><dt><em>NameCf</em>.k</dt><dd>Uncondense matrix</dd></dl>
-<p>&lt;&lt;&lt;&lt;&lt;&lt;&lt; HEAD </p><h1>out Output Files </h1>
 <h1><a class="anchor" id="soc_out"></a>
 Output Files</h1>
-<blockquote class="doxtable">
-<blockquote class="doxtable">
-<blockquote class="doxtable">
-<blockquote class="doxtable">
-<blockquote class="doxtable">
-<blockquote class="doxtable">
-<blockquote class="doxtable">
-<p>4a68ae339f0300470810ab3c90387657ccf21f0c </p>
-</blockquote>
-</blockquote>
-</blockquote>
-</blockquote>
-</blockquote>
-</blockquote>
-</blockquote>
 <dl class="section user"><dt><em>Name</em>.cfinfo.</dt><dd>Socle information, see description. </dd></dl>
 <dl class="section user"><dt><em>Name</em>.soc.</dt><dd>A basis reflecting the Loewy structure.</dd></dl>
-<p>&lt;&lt;&lt;&lt;&lt;&lt;&lt; HEAD </p><h1>desc Description </h1>
 <h1><a class="anchor" id="soc_desc"></a>
 Description</h1>
-<blockquote class="doxtable">
-<blockquote class="doxtable">
-<blockquote class="doxtable">
-<blockquote class="doxtable">
-<blockquote class="doxtable">
-<blockquote class="doxtable">
-<blockquote class="doxtable">
-<p>4a68ae339f0300470810ab3c90387657ccf21f0c </p>
-</blockquote>
-</blockquote>
-</blockquote>
-</blockquote>
-</blockquote>
-</blockquote>
-</blockquote>
 <p>This program determines the Loewy structure of a module by calculating the socles. Before using the program, you must run <a class="el" href="prog_chop.html">chop</a> and <a class="el" href="prog_pwkond.html">pwkond</a> with the "-t" option. For example, </p><pre>
 chop m11
 pwkond -t m11
@@ -139,28 +89,12 @@ CFInfo.Socles := [[1,0,0],[0,1,1],[2,0,0],[0,1,1],[1,0,0]];
 </pre><p> The numbers in <code>CFInfo.socles</code> are the multiplicities of the irreducible constituents for each layer of the socle series.</p>
 <p>Using the "-l" option, you can specify a maximum length. After <em>MaxLength</em> socles have been calculated, the program prints a warning and stops.</p>
 <p>A basis basis reflecting the Loewy structure of the module is written to <em>Name.soc</em>. Note: <b>soc</b> always writes a basis of the full space. If the socle series is not calculated completely because the maximum length has been reached, the partial basis found so far is extended with random vectors to form a complete basis.</p>
-<p>&lt;&lt;&lt;&lt;&lt;&lt;&lt; HEAD </p><h1>impl Implementation Details </h1>
 <h1><a class="anchor" id="soc_impl"></a>
 Implementation Details</h1>
-<blockquote class="doxtable">
-<blockquote class="doxtable">
-<blockquote class="doxtable">
-<blockquote class="doxtable">
-<blockquote class="doxtable">
-<blockquote class="doxtable">
-<blockquote class="doxtable">
-<p>4a68ae339f0300470810ab3c90387657ccf21f0c </p>
-</blockquote>
-</blockquote>
-</blockquote>
-</blockquote>
-</blockquote>
-</blockquote>
-</blockquote>
 <p>This program uses an algorithm by Magdolna Szöke, see <a class="el" href="pg_bib.html#Sz98">[Sz98]</a>. </p>
 </div></div><!-- contents -->
 </div><!-- doc-content -->
 <hr size="1"><address style="text-align: right;"><small>
-MeatAxe 2.4 documentation, generated on Fri Dec 26 2014 11:45:30</small></address>
+MeatAxe 2.4 documentation, generated on Wed Jan 7 2015 08:38:22</small></address>
 </body>
 </html>
