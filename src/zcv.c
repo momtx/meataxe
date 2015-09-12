@@ -9,7 +9,7 @@
 
 #define MAXLINE 4000	/* Max. input line size */
 
-#include "meataxe.h"
+#include <meataxe.h>
 #include <ctype.h>
 #include <string.h>
 #include <stdlib.h>

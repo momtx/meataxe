@@ -27,7 +27,7 @@
    Include files
    -------------------------------------------------------------------------- */
 
-#include "meataxe.h"
+#include <meataxe.h>
 
 #if defined (_WIN32)
 

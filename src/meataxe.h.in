@@ -12,7 +12,7 @@
 #include <stdio.h>
 #include <stdarg.h>
 
-#define MTX_VERSION "2.4"
+@@insert_config_here
 
 #if defined GCC
 #define MTX_PRINTF_ATTRIBUTE(f,v) __attribute__((format(printf,f,v)))

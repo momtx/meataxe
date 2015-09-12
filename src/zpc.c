@@ -9,7 +9,7 @@
 
 #include <string.h>
 #include <stdlib.h>
-#include "meataxe.h"
+#include <meataxe.h>
 
 
 /* ------------------------------------------------------------------

@@ -6,7 +6,7 @@
 // This program is free software; see the file COPYING for details.
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#include "meataxe.h"
+#include <meataxe.h>
 #include <limits.h>
 #include <stdlib.h>
 

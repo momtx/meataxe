@@ -1,5 +1,9 @@
 #include <string.h>
 #include <stdio.h>
+#include <time.h>
+
+#define MKSTRING2(x) #x
+#define MKSTRING(x) MKSTRING2(x)
 
 static int IsBigEndian()
 {
@@ -12,42 +16,41 @@ static int IsBigEndian()
 }
 
 
-int main()
+static void printConfig()
 {
-    FILE *f = 0;
-    static char svnversion[50] = "UNKNOWN";
 
-    printf("#ifndef CONFIG_H_INCLUDED\n");
-    printf("#define CONFIG_H_INCLUDED\n");
     printf("#define MTX_CONFIG_BIG_ENDIAN %d\n",IsBigEndian());
     printf("#define MTX_CONFIG_LONG32 %d\n",sizeof(long) == 4);
     printf("#define MTX_CONFIG_LONG64 %d\n",sizeof(long) == 8);
 
-    printf("#define MTX_CONFIG_STRING \"");
-    if (sizeof(long) == 8) printf(" 64");
-    if (sizeof(long) == 4) printf(" 32");
-    if (IsBigEndian()) printf(" BIG_ENDIAN");
+    printf("#define MTX_CONFIG \"");
+    switch (sizeof(long)) {
+	case 8: printf("L64"); break;
+	case 4: printf("L32"); break;
+	default: printf("??"); break;
+    }
+    printf(IsBigEndian() ? " BE" : " LE");
+    printf(" ZZZ=%d", ZZZ);
     printf("\"\n");
 
-    if ((f = fopen("svnversion","r")) != 0) {
-	char line[sizeof(svnversion) + 1];
-	if (fgets(line,sizeof(line),f) != 0) {
-	    char *c = line + strlen(line);
-	    while (c > line && (unsigned char)c[-1] <= 32) --c;
-	    if (c > line) {
-	        *c = 0;
-		for (c = line; *c; ++c) {
-		    if (*c == '"' || *c == '\\')
-			*c = '_';
-		}
-		strcpy(svnversion,line);
-	    }
-	}
-	fclose(f);
-    }
-    printf("#define MTX_BUILD \"%s\"\n",svnversion);
-
-    printf("#endif\n");
-    return 0;
+    time_t now = time(0);
+    struct tm *tm = localtime(&now);
+    printf("#define MTXBUILDTIME \"%04d-%02d-%02d/%0d:%02d:%02d\"\n", tm->tm_year + 1900,
+	    tm->tm_mon+1, tm->tm_mday, tm->tm_hour, tm->tm_min, tm->tm_sec);
+    printf("#define MTX_VERSION \"%s\"\n",MKSTRING(MTXVERSION) );
+    printf("#define MTXVERSION \"%s\"\n",MKSTRING(MTXVERSION) );
 }
 
+
+int main()
+{
+    char line[1000];
+
+    while (fgets(line, sizeof(line), stdin) != NULL) {
+	if (strncmp(line, "@@insert_config_here", 20) == 0) {
+	    printConfig();
+	} else {
+	    fputs(line,stdout);
+	}
+    }
+}

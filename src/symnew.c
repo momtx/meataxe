@@ -1,4 +1,4 @@
-#include "meataxe.h"
+#include <meataxe.h>
 #include <stdlib.h>
 #include <string.h>
 

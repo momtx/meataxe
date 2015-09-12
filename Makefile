@@ -1,9 +1,56 @@
+
+# ------------------------------------------------------------------------------
+# Build-time configuration
+#
+# Note 1: don't change the settings below. Instead, write you customized
+# settings to Makefile.conf. This will make upgrading to a new version of
+# the MeatAxe easier.
+#
+# Note 2: even if you use the default settings you must create an empty
+# Makefile.conf to build the MeatAxe.
+# ------------------------------------------------------------------------------
+
+# Directory where binaries and run-time files will be installed.
+MTXROOT = ${CWD}
+
+# Directory where executables are installed.
+# This must be an absolute path (starting with '/').
+MTXBIN=${MTXROOT}/bin
+
+# MeatAxe library directory (obsolete, not used anymore)
+MTXLIB=${MTXROOT}/lib
+
+# C compiler and common compiler/linker flags
+# The default is to use GNU C
+CC=gcc	
+CFLAGS1=-std=c99 -g -O3 -Wall
+LDFLAGS1=-g -Wall
+# For debugging:
+#CFLAGS1=-std=c99 -g -Wall -Werror -DDEBUG -DPARANOID
+#CFLAGS1=-std=c99 -g -Wall -Werror -DASM_MMX -DDEBUG
+
+# Select which kernel you want to use.
+# Standard kernel, up to GF(256)
+ZZZ=0
+# Big kernel, up to GF(2^16)
+#ZZZ=1
+
+# configuration overrides
 include Makefile.conf
 
-MTX_VERSION = 2.4
+# ------------------------------------------------------------------------------
+# Other settings
+# ------------------------------------------------------------------------------
 
-CFLAGS=$(CFLAGS1) -Itmp
-LFLAGS=$(LFLAGS1)
+V=0
+SILENT0=@
+SILENT1=
+SILENT=${SILENT${V}}
+
+MTXVERSION = 2.4.35-SNAPSHOT
+
+CFLAGS=$(CFLAGS1) -I"${MTXROOT}/include" -Itmp -DZZZ=${ZZZ}
+LDFLAGS=$(LDFLAGS1)
 
 PROGRAMS = \
   cfcomp checksum chop decomp genmod mkcycl mkdotl mkgraph mkhom mkhom_old\
@@ -11,7 +58,11 @@ PROGRAMS = \
   zad zbl zcf zcl zcp zct zcv zef zev zfr ziv zkd zmo zmu zmw znu zor zpo zpr \
   zpt zqt zro zsc zsi zsp zsy ztc zte ztm ztr zts zuk zvp
 
-all build: $(PROGRAMS:%=bin/%)
+# ------------------------------------------------------------------------------
+# Main targets
+# ------------------------------------------------------------------------------
+
+all build: $(PROGRAMS:%=${MTXBIN}/%) ${MTXROOT}/lib/libmtx.a ${MTXROOT}/include/meataxe.h
 
 clean:
 	rm -rf bin tmp *.zzz check.ma1 check.pe1 check.po1
@@ -22,25 +73,26 @@ clean:
 # Compile C sources
 # ------------------------------------------------------------------------------
 
-tmp/%.o: tmp/mk.dir src/%.c src/meataxe.h tmp/config.h
-	@echo "Compiling $*.c"
-	@$(CC) $(CFLAGS) -c src/$*.c -o $@
+tmp/%.o: tmp/mk.dir src/%.c ${MTXROOT}/include/meataxe.h
+	${SILENT}echo "CC $*.c -> $@"
+	${SILENT}${CC} $(CFLAGS) -c src/$*.c -o $@
 
 tmp/mk.dir:
 	mkdir -p tmp
 	touch $@
 
-bin/mk.dir:
-	mkdir -p bin
+${MTXBIN}/mk.dir:
+	mkdir -p "${MTXBIN}"
 	touch $@
 
 # ------------------------------------------------------------------------------
 # Link programs
 # ------------------------------------------------------------------------------
 
-bin/%: bin/mk.dir tmp/%.o tmp/libmtx.a
-	@echo "Linking $@"
-	@$(CC) $(LFLAGS) -o $@ tmp/$*.o tmp/libmtx.a
+${MTXBIN}/%: ${MTXBIN}/mk.dir tmp/%.o ${MTXROOT}/lib/libmtx.a
+	${SILENT}mkdir -p "${MTXBIN}"
+	${SILENT}echo "LD $@"
+	${SILENT}$(CC) $(LFLAGS) -o $@ tmp/$*.o "${MTXROOT}/lib/libmtx.a"
 
 
 # ------------------------------------------------------------------------------
@@ -94,11 +146,23 @@ LIB_OBJS=\
 	zzz2 \
 	version
 
-tmp/libmtx.a: $(LIB_OBJS:%=tmp/%.o)
-	@echo "Creating $@"
-	@rm -f $@
-	@ar r $@ $(LIB_OBJS:%=tmp/%.o)
+${MTXROOT}/lib/libmtx.a: $(LIB_OBJS:%=tmp/%.o)
+	${SILENT}echo "AR $@"
+	${SILENT}mkdir -p "${MTXROOT}/lib"
+	${SILENT}rm -f "$@"
+	${SILENT}ar r "$@" $(LIB_OBJS:%=tmp/%.o)
 
+${MTXROOT}/include/meataxe.h: src/meataxe.h.in tmp/genconfig
+	${SILENT}echo "CF src/meataxe.h.in -> $@"
+	${SILENT}mkdir -p "${MTXROOT}/include"
+	${SILENT}tmp/genconfig <src/meataxe.h.in >"$@"
+
+tmp/genconfig: Makefile Makefile.conf src/genconfig.c
+	${SILENT}echo "CL src/genconfig.c -> $@"
+	${SILENT}mkdir -p tmp
+	${SILENT}$(CC) $(CFLAGS) -DZZZ=${ZZZ} -DMTXVERSION="${MTXVERSION} \
+	   "$(LFLAGS) -o "$@" src/genconfig.c
+   
 
 # ------------------------------------------------------------------------------
 # Test suite
@@ -112,13 +176,15 @@ TS_OBJS1=c-args c-bitstring c-charpol\
 
 TS_OBJS=$(TS_OBJS1:%=tmp/%.o) tmp/libmtx.a
 
-bin/zzztest: bin/mk.dir $(TS_OBJS)
-	@echo "Linking $@"
-	@$(CC) $(CFLAGS) -o $@ $(TS_OBJS)
+${MTXBIN}/zzztest: $(TS_OBJS)
+	${SILENT}echo "LD $@"
+	${SILENT}mkdir -p "${MTXBIN}"
+	${SILENT}$(CC) $(CFLAGS) -o "$@" $(TS_OBJS)
 
-bin/checksum: bin/mk.dir tmp/checksum.o
-	@echo "Linking $@"
-	@$(CC) $(CFLAGS) -o $@ tmp/checksum.o
+${MTXBIN}/checksum: tmp/checksum.o
+	${SILENT}mkdir -p "${MTXBIN}"
+	${SILENT}echo "LD $@"
+	${SILENT}$(CC) $(CFLAGS) -o "$@" tmp/checksum.o
 
 TESTS=0000\
   0100 0100 0105 0106 0107 0108 0109 0110 0111 0112\
@@ -134,17 +200,19 @@ tmp/test_table.c: tmp/tex $(TS_OBJS1:%=tests/%.c)
 tmp/tex: tests/tex.c
 	@$(CC) -Itests -Isrc $(CFLAGS) $(LFLAGS) $< -o $@
 
-tmp/c-%.o: tmp/mk.dir tests/c-%.c src/meataxe.h tmp/config.h
-	@echo "Compiling $*.c -> $@"
-	@$(CC) $(CFLAGS) -Itests -Isrc -c tests/c-$*.c -o $@
+tmp/c-%.o: tests/c-%.c src/meataxe.h tmp/config.h
+	${SILENT}mkdir -p tmp
+	${SILENT}echo "CC $*.c -> $@"
+	${SILENT}$(CC) $(CFLAGS) -Itests -Isrc -c tests/c-$*.c -o $@
 
 tmp/c-zzz.o: tmp/test_table.c
 
-tmp/zzztest.done: tmp/mk.dir bin/zzztest
-	cd tmp && ../bin/zzztest
+tmp/zzztest.done: ${MTXBIN}/zzztest
+	mkdir -p tmp
+	cd tmp && ../xxxxxxbin/zzztest
 	touch $@
 
-tmp/t-%.done: tmp/mk.dir tests/t-% tmp/t.config bin/checksum build
+tmp/t-%.done: tmp/mk.dir tests/t-% tmp/t.config ${MTXBIN}/checksum build
 	@echo "t-$* `grep '^#:' tests/t-$* | cut -c 3-100`"
 	@cd tmp && ../tests/t-$*
 	@touch $@
@@ -153,13 +221,20 @@ tmp/t.config: tmp/mk.dir tests/config
 	cp tests/config $@
 
 # ------------------------------------------------------------------------------
-# config.h
+# install
 # ------------------------------------------------------------------------------
 
-tmp/config.h: tmp/mk.dir Makefile Makefile.conf src/genconfig.c
-	@echo "Generating config.h"
-	@$(CC) $(CFLAGS) $(LFLAGS) -o tmp/genconfig src/genconfig.c
-	@tmp/genconfig >$@
+install: 
+	echo "installing in ${MTXROOT}"
+
+## ------------------------------------------------------------------------------
+## config.h
+## ------------------------------------------------------------------------------
+#
+#tmp/config.h: tmp/mk.dir Makefile Makefile.conf src/genconfig.c
+#	@echo "Generating config.h"
+#	@$(CC) $(CFLAGS) $(LFLAGS) -o tmp/genconfig src/genconfig.c
+#	@tmp/genconfig >$@
 
 
 .PHONY: tar clean install test
@@ -167,12 +242,12 @@ tmp/config.h: tmp/mk.dir Makefile Makefile.conf src/genconfig.c
 
 
 # ------------------------------------------------------------------------------
-# Documentation
+# Documentation (requires Doxygen)
 # ------------------------------------------------------------------------------
 
 .PHONY: doc
 
-docDir = doc/${MTX_VERSION}
+docDir = doc/${MTXVERSION}
 docDocs = src/changelog.doc src/meataxe.doc src/sections.doc
 docProducts = ${docDir}/index.html ${docDir}/pages.html ${docDir}/classes.html
 
@@ -206,6 +281,4 @@ tar: all rebuild-doc
 	&& rm meataxe-$$V \
 	&& gzip meataxe-$$V.tar \
 	&& echo "Created meataxe-$$V.tar.gz"
-
-
 

@@ -8,7 +8,7 @@
 
 #include <stdlib.h>
 #include <string.h>
-#include "meataxe.h"
+#include <meataxe.h>
 
 #define MAXVEC 100000   /* Default value for maxvec */
 

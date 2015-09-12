@@ -8,7 +8,7 @@
 
 /* Use the PostScript output routine by default */
 
-#include "meataxe.h"
+#include <meataxe.h>
 
 #include <ctype.h>
 #include <string.h>

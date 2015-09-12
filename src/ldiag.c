@@ -6,7 +6,7 @@
 // This program is free software; see the file COPYING for details.
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#include "meataxe.h"
+#include <meataxe.h>
 #include <string.h>
 
 MTX_DEFINE_FILE_INFO
