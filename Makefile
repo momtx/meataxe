@@ -32,7 +32,7 @@ LDFLAGS1=-g -Wall
 # Select which kernel you want to use.
 # Standard kernel, up to GF(256)
 ZZZ=0
-# Big kernel, up to GF(2^16)
+# Big kernel, up to GF(2^16)  -- NOTE: THIS IS NO LONGER AVAILABLE
 #ZZZ=1
 
 # configuration overrides
@@ -116,7 +116,7 @@ LIB_OBJS=\
 	isisom kernel-$(ZZZ) \
 	ldiag \
 	maddmul mat2vec matadd matclean matcmp \
-	maketabF \
+	maketab-$(ZZZ) \
 	matcopy matcore matcut \
 	matdup matech matid matins matinv matmul \
 	matnull matorder \
