@@ -40,6 +40,18 @@ FEL FfGen = 0;
 
 int FfNoc = 0;
 
+/// The number of bytes occupied by a single row in memory.
+/// Equal to <tt>FfRowSize(FfNoc)</tt> and always a multiple of sizeof(long).
+
+size_t FfCurrentRowSize = (size_t) -1;
+
+/// The number of bytes occupied by a row in a data file.
+/// Equal to <tt>FfTrueRowSize(FfNoc)</tt>. FfCurrentRowSizeIo can be smaller than
+/// FfCurrentRowSize because there is nothere is no padding in data files.
+
+size_t FfCurrentRowSizeIo = -1;
+
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 /// Allocate memory and initialize

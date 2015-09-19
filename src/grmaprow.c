@@ -10,6 +10,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+#if ZZZ == 0	// greasing is only available for the standard kernel
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // Local data
 
@@ -17,6 +19,7 @@ MTX_DEFINE_FILE_INFO
 
 /// @addtogroup grmat
 /// @{
+
 
 static long *extractednrs = NULL;
 static long extrtablen = 0;
@@ -213,5 +216,6 @@ void GrMapRow(PTR v,GreasedMatrix_t *M, PTR w)
    }
 }
 
+#endif
 
 /// @}

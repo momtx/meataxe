@@ -106,6 +106,7 @@ extern int FfChar;
 extern FEL FfGen;
 extern int FfNoc;
 extern size_t FfCurrentRowSize;
+extern size_t FfCurrentRowSizeIo;
 
 
 /* Arithmetic */
