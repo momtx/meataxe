@@ -6,7 +6,7 @@
 // This program is free software; see the file COPYING for details.
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#include "c-bitstring.h"
+//#include "c-bitstring.h"
 #include "check.h"
 
 #include <string.h>
