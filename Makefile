@@ -174,12 +174,15 @@ TS_OBJS1=c-args c-bitstring c-charpol\
 	c-os c-perm c-poly c-pseed c-quot c-random \
 	c-sets c-stf c-tensor c-zzz
 
-TS_OBJS=$(TS_OBJS1:%=tmp/%.o) tmp/libmtx.a
+TS_OBJS=$(TS_OBJS1:%=tmp/%.o) ${MTXROOT}/lib/libmtx.a
+
+tmp/c-%.o: tests/c-%.c
+	${SILENT}$(CC) -c $(CFLAGS) -o "$@" "$<"
 
 ${MTXBIN}/zzztest: $(TS_OBJS)
 	${SILENT}echo "LD $@"
 	${SILENT}mkdir -p "${MTXBIN}"
-	${SILENT}$(CC) $(CFLAGS) -o "$@" $(TS_OBJS)
+	${SILENT}$(CC) $(LDFLAGS) -o "$@" $(TS_OBJS)
 
 ${MTXBIN}/checksum: tmp/checksum.o
 	${SILENT}mkdir -p "${MTXBIN}"
@@ -203,9 +206,10 @@ tmp/tex: tests/tex.c
 tmp/c-%.o: tests/c-%.c src/meataxe.h tmp/config.h
 	${SILENT}mkdir -p tmp
 	${SILENT}echo "CC $*.c -> $@"
-	${SILENT}$(CC) $(CFLAGS) -Itests -Isrc -c tests/c-$*.c -o $@
+	${SILENT}$(CC) $(CFLAGS) -Itests -Isrc -c "tests/c-$*.c" -o "$@"
 
-tmp/c-zzz.o: tmp/test_table.c
+tmp/c-zzz.o: tests/c-zzz.c tmp/test_table.c
+	${SILENT}$(CC) $(CFLAGS) -Itests -Isrc -c tests/c-zzz.c -o $@
 
 tmp/zzztest.done: ${MTXBIN}/zzztest
 	mkdir -p tmp
@@ -220,25 +224,16 @@ tmp/t-%.done: tmp/mk.dir tests/t-% tmp/t.config ${MTXBIN}/checksum build
 tmp/t.config: tmp/mk.dir tests/config
 	cp tests/config $@
 
-# ------------------------------------------------------------------------------
-# install
-# ------------------------------------------------------------------------------
-
-install: 
-	echo "installing in ${MTXROOT}"
-
-## ------------------------------------------------------------------------------
-## config.h
-## ------------------------------------------------------------------------------
-#
-#tmp/config.h: tmp/mk.dir Makefile Makefile.conf src/genconfig.c
-#	@echo "Generating config.h"
-#	@$(CC) $(CFLAGS) $(LFLAGS) -o tmp/genconfig src/genconfig.c
-#	@tmp/genconfig >$@
-
-
 .PHONY: tar clean install test
 .PRECIOUS: tmp/%.o
+
+
+# ------------------------------------------------------------------------------
+# Package maintenance
+# ------------------------------------------------------------------------------
+
+info:
+	@echo "TS_OBJS=${TS_OBJS}"
 
 
 # ------------------------------------------------------------------------------
@@ -254,7 +249,8 @@ docProducts = ${docDir}/index.html ${docDir}/pages.html ${docDir}/classes.html
 doc: ${docProducts}
 
 ${docProducts}: \
-   etc/Doxyfile etc/layout.xml $(PROGRAMS:%=src/%.c) $(LIB_OBJS:%=src/%.c) src/meataxe.h  \
+   etc/Doxyfile etc/layout.xml $(PROGRAMS:%=src/%.c) $(LIB_OBJS:%=src/%.c) \
+   ${MTXROOT}/include/meataxe.h  \
    ${docDocs} src/meataxe.doc src/changelog.doc
 	mkdir -p ${docDir}
 	doxygen etc/Doxyfile
@@ -267,18 +263,17 @@ ${docProducts}: \
 EXPORTED_FILES =\
   $(PROGRAMS:%=src/%.c)\
   $(LIB_OBJS:%=src/%.c)\
-  src/meataxe.h src/genconfig.c\
-  tests/check.h $(TS_OBJS1:%=tests/%.c) $(TS_OBJS1:%=tests/%.h) \
-  $(TESTS:%=tests/t-%) tests/config tests/data\
-  Makefile Makefile.conf.dist README COPYING\
+  src/meataxe.h.in src/genconfig.c\
+  Makefile README.md COPYING\
   src/meataxe.doc src/changelog.doc\
 
-tar: all rebuild-doc
-	V=2.4.`cat svnversion` \
-	&& rm -f meataxe-$$V meataxe-$$V.tar meataxe-$$V.tar.gz \
-	&& ln -s . meataxe-$$V \
-	&& tar cf meataxe-$$V.tar $(EXPORTED_FILES) \
-	&& rm meataxe-$$V \
-	&& gzip meataxe-$$V.tar \
-	&& echo "Created meataxe-$$V.tar.gz"
+  #tests/check.h $(TS_OBJS1:%=tests/%.c) $(TS_OBJS1:%=tests/%.h) \
+
+tar: all doc
+	rm -f meataxe-${MTXVERSION} meataxe-${MTXVERSION}.tar meataxe-${MTXVERSION}.tar.gz \
+	&& ln -s . meataxe-${MTXVERSION} \
+	&& tar cf meataxe-${MTXVERSION}.tar $(EXPORTED_FILES:%=meataxe-${MTXVERSION}/%) \
+	&& rm meataxe-${MTXVERSION} \
+	&& gzip meataxe-${MTXVERSION}.tar \
+	&& echo "Created meataxe-${MTXVERSION}.tar.gz"
 

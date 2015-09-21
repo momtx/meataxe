@@ -189,7 +189,6 @@ TestFunctions[] = {
 #include "c-random.h"
 #include "c-os.h"
 #include "c-ffmat.h"
-#include "c-bitstring.h"
 #include "c-grease.h"
 #include "c-kernel.h"
 #include "c-matset.h"
