@@ -68,6 +68,12 @@ clean:
 	rm -rf bin tmp *.zzz check.ma1 check.pe1 check.po1
 	-cd tests; make clean
 
+Makefile.conf:
+	@echo "------"
+	@echo "Create Makefile.conf (which may be empty) and try again"
+	@echo "Read the Makefile for more information"
+	@echo "------"
+	@false
 
 # ------------------------------------------------------------------------------
 # Compile C sources
