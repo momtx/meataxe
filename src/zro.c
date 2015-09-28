@@ -129,7 +129,7 @@ static void RandomOrders()
 	if (opt_s)
 	{
 	    int i;
-	    for (i = 0; i <= MAXORDERS && CountTab[i] > 0 && Order[i] != o; ++i);
+	    for (i = 0; i < MAXORDERS && CountTab[i] > 0 && Order[i] != o; ++i);
 	    if (i < MAXORDERS)
 	    {
 		Order[i] = o;

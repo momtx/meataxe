@@ -1,5 +1,4 @@
 #include <meataxe.h>
-#include "config.h"
 
 #define MKSTRING2(x) #x
 #define MKSTRING(x) MKSTRING2(x)

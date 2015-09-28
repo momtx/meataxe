@@ -8,7 +8,6 @@
 
 
 #include <meataxe.h>
-#include "config.h"
 
 MTX_DEFINE_FILE_INFO
 

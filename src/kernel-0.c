@@ -390,12 +390,13 @@ FEL FfEmbed(FEL a, int subfield)
    if (subfield == FfOrder) {
       return a;
    }
-   for (i = 0; mtx_embedord[i] != subfield && i < 4; ++i) {
+   for (i = 0; i < 4; ++i) {
+       if (mtx_embedord[i] == subfield) {
+	   return mtx_embed[i][a];
+       }
    }
-   if (i >= 4) {
-      MTX_ERROR2("Cannot embed GF(%d) into GF(%d)",(int)subfield,(int)FfOrder);
-   }
-   return mtx_embed[i][a];
+   MTX_ERROR2("Cannot embed GF(%d) into GF(%d)",(int)subfield,(int)FfOrder);
+   return FF_ZERO;
 }
 
 
@@ -417,13 +418,13 @@ FEL FfRestrict(FEL a, int subfield)
    if (subfield == FfOrder) {
       return a;
    }
-   for (i = 0; mtx_embedord[i] != subfield && i < 4; ++i) {
+   for (i = 0; i < 4; ++i) {
+       if( mtx_embedord[i] == subfield) {
+	    return mtx_restrict[i][a];
+       }
    }
-   if (i >= 4) {
-      MTX_ERROR2("Cannot restrict GF(%d) to GF(%d)",(int)FfOrder,
-                 (int)subfield);
-   }
-   return mtx_restrict[i][a];
+   MTX_ERROR2("Cannot restrict GF(%d) to GF(%d)",(int)FfOrder, (int)subfield);
+   return FF_ZERO;
 }
 
 
