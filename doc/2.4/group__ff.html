@@ -122,21 +122,6 @@ typedef <a class="el" href="group__ff.html#ga7aa199c0a6bba46562519780595ee2f3">F
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="func-members"></a>
 Functions</h2></td></tr>
-<tr class="memitem:ga39f5d066a7a11ec4718d1ad56e155b4c"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__ff.html#ga39f5d066a7a11ec4718d1ad56e155b4c">FfReadRows</a> (FILE *f, <a class="el" href="group__ff.html#ga2dc160f7cd3b7190becfc9eab62b58ac">PTR</a> buf, int n)</td></tr>
-<tr class="memdesc:ga39f5d066a7a11ec4718d1ad56e155b4c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Read Rows This function reads 1 or more rows from a file.  <a href="#ga39f5d066a7a11ec4718d1ad56e155b4c">More...</a><br /></td></tr>
-<tr class="separator:ga39f5d066a7a11ec4718d1ad56e155b4c"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:gac0425c9851a076ec59771ff409cf90fd"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__ff.html#gac0425c9851a076ec59771ff409cf90fd">FfWriteRows</a> (FILE *f, <a class="el" href="group__ff.html#ga2dc160f7cd3b7190becfc9eab62b58ac">PTR</a> buf, int n)</td></tr>
-<tr class="memdesc:gac0425c9851a076ec59771ff409cf90fd"><td class="mdescLeft">&#160;</td><td class="mdescRight">Write rows This function writes 1 or more rows to a file.  <a href="#gac0425c9851a076ec59771ff409cf90fd">More...</a><br /></td></tr>
-<tr class="separator:gac0425c9851a076ec59771ff409cf90fd"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:gacb22ee413f32e58f4a2f2bb74698fad8"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__ff.html#gacb22ee413f32e58f4a2f2bb74698fad8">FfSeekRow</a> (FILE *f, int pos)</td></tr>
-<tr class="memdesc:gacb22ee413f32e58f4a2f2bb74698fad8"><td class="mdescLeft">&#160;</td><td class="mdescRight">Move to a Row.  <a href="#gacb22ee413f32e58f4a2f2bb74698fad8">More...</a><br /></td></tr>
-<tr class="separator:gacb22ee413f32e58f4a2f2bb74698fad8"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ga0847dcfd2ecf66641c11735a2027731a"><td class="memItemLeft" align="right" valign="top">FILE *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__ff.html#ga0847dcfd2ecf66641c11735a2027731a">FfReadHeader</a> (const char *name, int *field, int *nor, int *noc)</td></tr>
-<tr class="memdesc:ga0847dcfd2ecf66641c11735a2027731a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Open File and Read Header.  <a href="#ga0847dcfd2ecf66641c11735a2027731a">More...</a><br /></td></tr>
-<tr class="separator:ga0847dcfd2ecf66641c11735a2027731a"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ga23b0790950cf88547cd42b845dfa866f"><td class="memItemLeft" align="right" valign="top">FILE *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__ff.html#ga23b0790950cf88547cd42b845dfa866f">FfWriteHeader</a> (const char *name, int field, int nor, int noc)</td></tr>
-<tr class="memdesc:ga23b0790950cf88547cd42b845dfa866f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Open file and write header.  <a href="#ga23b0790950cf88547cd42b845dfa866f">More...</a><br /></td></tr>
-<tr class="separator:ga23b0790950cf88547cd42b845dfa866f"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:gababccce21c8779b9cbb85a4a071163a5"><td class="memItemLeft" align="right" valign="top"><a class="el" href="group__ff.html#ga7aa199c0a6bba46562519780595ee2f3">FEL</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__ff.html#gababccce21c8779b9cbb85a4a071163a5">FfAdd</a> (<a class="el" href="group__ff.html#ga7aa199c0a6bba46562519780595ee2f3">FEL</a> a, <a class="el" href="group__ff.html#ga7aa199c0a6bba46562519780595ee2f3">FEL</a> b)</td></tr>
 <tr class="memdesc:gababccce21c8779b9cbb85a4a071163a5"><td class="mdescLeft">&#160;</td><td class="mdescRight">Finite field addition.  <a href="#gababccce21c8779b9cbb85a4a071163a5">More...</a><br /></td></tr>
 <tr class="separator:gababccce21c8779b9cbb85a4a071163a5"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -215,6 +200,12 @@ Functions</h2></td></tr>
 <tr class="memitem:ga71d62ce3689f54e934b90bad709d8b82"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__ff.html#ga71d62ce3689f54e934b90bad709d8b82">FfMulRow</a> (<a class="el" href="group__ff.html#ga2dc160f7cd3b7190becfc9eab62b58ac">PTR</a> row, <a class="el" href="group__ff.html#ga7aa199c0a6bba46562519780595ee2f3">FEL</a> mark)</td></tr>
 <tr class="memdesc:ga71d62ce3689f54e934b90bad709d8b82"><td class="mdescLeft">&#160;</td><td class="mdescRight">Multiply a row by a coefficient.  <a href="#ga71d62ce3689f54e934b90bad709d8b82">More...</a><br /></td></tr>
 <tr class="separator:ga71d62ce3689f54e934b90bad709d8b82"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga0847dcfd2ecf66641c11735a2027731a"><td class="memItemLeft" align="right" valign="top">FILE *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__ff.html#ga0847dcfd2ecf66641c11735a2027731a">FfReadHeader</a> (const char *name, int *field, int *nor, int *noc)</td></tr>
+<tr class="memdesc:ga0847dcfd2ecf66641c11735a2027731a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Open File and Read Header.  <a href="#ga0847dcfd2ecf66641c11735a2027731a">More...</a><br /></td></tr>
+<tr class="separator:ga0847dcfd2ecf66641c11735a2027731a"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga39f5d066a7a11ec4718d1ad56e155b4c"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__ff.html#ga39f5d066a7a11ec4718d1ad56e155b4c">FfReadRows</a> (FILE *f, <a class="el" href="group__ff.html#ga2dc160f7cd3b7190becfc9eab62b58ac">PTR</a> buf, int n)</td></tr>
+<tr class="memdesc:ga39f5d066a7a11ec4718d1ad56e155b4c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Read Rows This function reads 1 or more rows from a file.  <a href="#ga39f5d066a7a11ec4718d1ad56e155b4c">More...</a><br /></td></tr>
+<tr class="separator:ga39f5d066a7a11ec4718d1ad56e155b4c"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ga83c2ea29d3d9b631a893910cd3d852c6"><td class="memItemLeft" align="right" valign="top"><a class="el" href="group__ff.html#ga7aa199c0a6bba46562519780595ee2f3">FEL</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__ff.html#ga83c2ea29d3d9b631a893910cd3d852c6">FfRestrict</a> (<a class="el" href="group__ff.html#ga7aa199c0a6bba46562519780595ee2f3">FEL</a> a, int subfield)</td></tr>
 <tr class="memdesc:ga83c2ea29d3d9b631a893910cd3d852c6"><td class="mdescLeft">&#160;</td><td class="mdescRight">Restrict to a subfield.  <a href="#ga83c2ea29d3d9b631a893910cd3d852c6">More...</a><br /></td></tr>
 <tr class="separator:ga83c2ea29d3d9b631a893910cd3d852c6"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -224,6 +215,9 @@ Functions</h2></td></tr>
 <tr class="memitem:ga4991816cc92dbc53c8945825b88a86c7"><td class="memItemLeft" align="right" valign="top"><a class="el" href="group__ff.html#ga7aa199c0a6bba46562519780595ee2f3">FEL</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__ff.html#ga4991816cc92dbc53c8945825b88a86c7">FfScalarProduct</a> (<a class="el" href="group__ff.html#ga2dc160f7cd3b7190becfc9eab62b58ac">PTR</a> a, <a class="el" href="group__ff.html#ga2dc160f7cd3b7190becfc9eab62b58ac">PTR</a> b)</td></tr>
 <tr class="memdesc:ga4991816cc92dbc53c8945825b88a86c7"><td class="mdescLeft">&#160;</td><td class="mdescRight">Scalar Product of Two Vectors.  <a href="#ga4991816cc92dbc53c8945825b88a86c7">More...</a><br /></td></tr>
 <tr class="separator:ga4991816cc92dbc53c8945825b88a86c7"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:gacb22ee413f32e58f4a2f2bb74698fad8"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__ff.html#gacb22ee413f32e58f4a2f2bb74698fad8">FfSeekRow</a> (FILE *f, int pos)</td></tr>
+<tr class="memdesc:gacb22ee413f32e58f4a2f2bb74698fad8"><td class="mdescLeft">&#160;</td><td class="mdescRight">Move to a Row.  <a href="#gacb22ee413f32e58f4a2f2bb74698fad8">More...</a><br /></td></tr>
+<tr class="separator:gacb22ee413f32e58f4a2f2bb74698fad8"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ga80a63e88c5e305f287388c9c29b70360"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__ff.html#ga80a63e88c5e305f287388c9c29b70360">FfStepPtr</a> (<a class="el" href="group__ff.html#ga2dc160f7cd3b7190becfc9eab62b58ac">PTR</a> *x)</td></tr>
 <tr class="memdesc:ga80a63e88c5e305f287388c9c29b70360"><td class="mdescLeft">&#160;</td><td class="mdescRight">Advance to next row.  <a href="#ga80a63e88c5e305f287388c9c29b70360">More...</a><br /></td></tr>
 <tr class="separator:ga80a63e88c5e305f287388c9c29b70360"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -239,6 +233,12 @@ Functions</h2></td></tr>
 <tr class="memitem:ga1a0113d077e98ea763ff39cdf326b3ad"><td class="memItemLeft" align="right" valign="top">size_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__ff.html#ga1a0113d077e98ea763ff39cdf326b3ad">FfTrueRowSize</a> (int noc)</td></tr>
 <tr class="memdesc:ga1a0113d077e98ea763ff39cdf326b3ad"><td class="mdescLeft">&#160;</td><td class="mdescRight">Number of used bytes in a row.  <a href="#ga1a0113d077e98ea763ff39cdf326b3ad">More...</a><br /></td></tr>
 <tr class="separator:ga1a0113d077e98ea763ff39cdf326b3ad"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga23b0790950cf88547cd42b845dfa866f"><td class="memItemLeft" align="right" valign="top">FILE *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__ff.html#ga23b0790950cf88547cd42b845dfa866f">FfWriteHeader</a> (const char *name, int field, int nor, int noc)</td></tr>
+<tr class="memdesc:ga23b0790950cf88547cd42b845dfa866f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Open file and write header.  <a href="#ga23b0790950cf88547cd42b845dfa866f">More...</a><br /></td></tr>
+<tr class="separator:ga23b0790950cf88547cd42b845dfa866f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:gac0425c9851a076ec59771ff409cf90fd"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__ff.html#gac0425c9851a076ec59771ff409cf90fd">FfWriteRows</a> (FILE *f, <a class="el" href="group__ff.html#ga2dc160f7cd3b7190becfc9eab62b58ac">PTR</a> buf, int n)</td></tr>
+<tr class="memdesc:gac0425c9851a076ec59771ff409cf90fd"><td class="mdescLeft">&#160;</td><td class="mdescRight">Write rows This function writes 1 or more rows to a file.  <a href="#gac0425c9851a076ec59771ff409cf90fd">More...</a><br /></td></tr>
+<tr class="separator:gac0425c9851a076ec59771ff409cf90fd"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ga84c50a136fb0e885fd8b231f46114f10"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__ff.html#ga84c50a136fb0e885fd8b231f46114f10">FfSumAndIntersection</a> (<a class="el" href="group__ff.html#ga2dc160f7cd3b7190becfc9eab62b58ac">PTR</a> wrk1, int *nor1, int *nor2, <a class="el" href="group__ff.html#ga2dc160f7cd3b7190becfc9eab62b58ac">PTR</a> wrk2, int *piv)</td></tr>
 <tr class="memdesc:ga84c50a136fb0e885fd8b231f46114f10"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sum and Intersection of Two Vector Spaces.  <a href="#ga84c50a136fb0e885fd8b231f46114f10">More...</a><br /></td></tr>
 <tr class="separator:ga84c50a136fb0e885fd8b231f46114f10"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -1794,6 +1794,6 @@ Variables</h2></td></tr>
 </div><!-- contents -->
 </div><!-- doc-content -->
 <hr size="1"><address style="text-align: right;"><small>
-MeatAxe 2.4 documentation, generated on Wed Jan 7 2015 08:38:23</small></address>
+MeatAxe 2.4 documentation, generated on Mon Sep 28 2015 19:03:51</small></address>
 </body>
 </html>
