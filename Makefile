@@ -11,7 +11,7 @@
 # ------------------------------------------------------------------------------
 
 # Directory where binaries and run-time files will be installed.
-MTXROOT = ${CWD}
+MTXROOT = ${CURDIR}
 
 # Directory where executables are installed.
 # This must be an absolute path (starting with '/').
