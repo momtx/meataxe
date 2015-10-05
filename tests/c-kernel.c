@@ -315,7 +315,6 @@ static void TestSubfield1(int fld, int sub)
    FEL tabemb[256];
    int i;
 
-   FfSetField(fld);
    FfSetField(sub);
    for (i = 0; i < sub; ++i) {
       tabsub[i] = FfFromInt(i);
