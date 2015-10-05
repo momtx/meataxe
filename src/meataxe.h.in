@@ -17,24 +17,24 @@
 #if defined GCC
 #define MTX_PRINTF_ATTRIBUTE(f,v) __attribute__((format(printf,f,v)))
 #else
-#define MTX_PRINTF_ATTRIBUTE(f,v) 
+#define MTX_PRINTF_ATTRIBUTE(f,v)
 #endif
 
-extern char *MtxVersion;	/**< The MeatAxe version. */
+extern char *MtxVersion;        /**< The MeatAxe version. */
 
 /** @addtogroup os
-  * @{
-  **/
+ * @{
+ **/
 
-#define FM_READ	    0x01	/**< File mode: read */
-#define FM_CREATE   0x02	/**< File mode: write */
-#define FM_APPEND   0x03	/**< File mode: append */
-#define FM_TEXT	    0x10
-#define FM_LIB	    0x20
+#define FM_READ     0x01        /**< File mode: read */
+#define FM_CREATE   0x02        /**< File mode: write */
+#define FM_APPEND   0x03        /**< File mode: append */
+#define FM_TEXT     0x10
+#define FM_LIB      0x20
 #define FM_NOERROR  0x40
 
 /** @}
-  **/
+**/
 
 int SysCreateDirectory(const char *name);
 int SysGetPid();
@@ -58,33 +58,31 @@ int SysWriteLongX(FILE *f, const long *buf, int n);
 
 #define ALLOC(type) ((type *) SysMalloc(sizeof(type)))
 #define NALLOC(type,n) ((type *) SysMalloc((size_t)(n) * sizeof(type)))
-#define NREALLOC(x,type,n)\
-	((type *) SysRealloc(x,(size_t)(n) * sizeof(type)))
+#define NREALLOC(x,type,n) \
+   ((type *) SysRealloc(x,(size_t)(n) * sizeof(type)))
 #define FREE(x) SysFree(x)
 
 /** @} **/
 
-
-
 /* ---------------------------------------------------------------------------------------------- */
 
 /**
- ** @addtogroup ff
- ** @{
- **/
+** @addtogroup ff
+** @{
+**/
 
 /* Data types and constants
    ------------------------ */
 
-#if ZZZ==0
+#if ZZZ == 0
 
-typedef unsigned char FEL;		/**< A finite field element */
-typedef FEL *PTR;			/**< A pointer to a row vector */
-#define FF_ZERO ((FEL)0)		/**< The zero field element */
-#define FF_ONE ((FEL)1)			/**< The unit element */
+typedef unsigned char FEL;              /**< A finite field element */
+typedef FEL *PTR;                       /**< A pointer to a row vector */
+#define FF_ZERO ((FEL)0)                /**< The zero field element */
+#define FF_ONE ((FEL)1)                 /**< The unit element */
 #define ZZZVERSION 6
 
-#elif ZZZ==1
+#elif ZZZ == 1
 
 typedef unsigned short FEL;
 typedef unsigned short *PTR;
@@ -107,7 +105,6 @@ extern FEL FfGen;
 extern int FfNoc;
 extern size_t FfCurrentRowSize;
 
-
 /* Arithmetic */
 FEL FfAdd(FEL a, FEL b);
 FEL FfSub(FEL a, FEL b);
@@ -120,16 +117,16 @@ int FfMakeTables(int field);
 int FfSetField(int field);
 int FfSetNoc(int noc);
 
-
 void FfAddMulRow(PTR dest, PTR src, FEL f);
+void FfAddMulRowPartial(PTR dest, PTR src, FEL f, int firstcol);
 PTR FfAddRow(PTR dest, PTR src);
-PTR FfAddRowPartial(PTR dest, PTR src, int first, int len);
+PTR FfAddRowPartial(PTR dest, PTR src, int first);
 PTR FfAlloc(int nor);
 int FfCmpRows(PTR p1, PTR p2);
 void FfCleanRow(PTR row, PTR matrix, int nor, const int *piv);
 void FfCleanRow2(PTR row, PTR matrix, int nor, const int *piv, PTR row2);
-void FfCleanRowAndRepeat(PTR row, PTR mat, int nor, const int *piv, 
-    PTR row2, PTR mat2);
+void FfCleanRowAndRepeat(PTR row, PTR mat, int nor, const int *piv,
+                         PTR row2, PTR mat2);
 void FfCopyRow(PTR dest, PTR src);
 FEL FfEmbed(FEL a, int subfield);
 FEL FfExtract(PTR row, int col);
@@ -154,13 +151,11 @@ size_t FfTrueRowSize(int noc);
 FILE *FfWriteHeader(const char *name, int fld, int nor, int noc);
 int FfWriteRows(FILE *f, PTR buf, int n);
 
-
 /* --------------------------------------------------------------------------
    Macro versions of kernel functions
    -------------------------------------------------------------------------- */
 
-
-#if ZZZ==0
+#if ZZZ == 0
 
 extern FEL mtx_tmult[256][256];
 extern FEL mtx_tadd[256][256];
@@ -180,11 +175,10 @@ extern FEL mtx_restrict[4][256];
 #define FfNeg(a) (mtx_taddinv[(int)(unsigned char)a])
 #define FfSub(a,b) FfAdd((a),FfNeg(b))
 
-#elif ZZZ==1
+#elif ZZZ == 1
 
-#define FfExtract(row,col) ((FEL)((row)[(col)-1]))
-#define FfInsert(row,col,mark) ((void)((row)[(col)-1] = mark))
-
+#define FfExtract(row,col) ((FEL)((row)[(col) - 1]))
+#define FfInsert(row,col,mark) ((void)((row)[(col) - 1] = mark))
 
 #endif
 
@@ -198,7 +192,6 @@ void FfMapRow(PTR row, PTR matrix, int nor, PTR result);
 void FfPermRow(PTR row, const long *perm, PTR result);
 int FfSumAndIntersection(PTR wrk1, int *nor1, int *nor2, PTR wrk2, int *piv);
 
-
 /* ------------------------------------------------------------------
    Library initialization and cleanup
    ------------------------------------------------------------------ */
@@ -210,22 +203,21 @@ extern int MtxOpt_UseOldWordGenerator;
 int MtxInitLibrary();
 void MtxCleanupLibrary();
 
-
 /** @addtogroup str
- ** @{
- **/
+** @{
+**/
 
 /** A dynamic string.
- ** The only member, S, is a normal «char*» pointing to a NUL terminated
- ** text.
- ** Note however, that dynamic strings use their own memory management
- ** which cannot be mixed with the standard C library memory functions.
- ** Unused strings must be freed with StrFree(), and you must never use
- ** free() or realloc() on a dynamic string.
- **/
+** The only member, S, is a normal «char*» pointing to a NUL terminated
+** text.
+** Note however, that dynamic strings use their own memory management
+** which cannot be mixed with the standard C library memory functions.
+** Unused strings must be freed with StrFree(), and you must never use
+** free() or realloc() on a dynamic string.
+**/
 
 typedef struct {
-    char *S;	/* pointer to NUL terminated string */
+   char *S;     /* pointer to NUL terminated string */
 } String;
 
 String StrAlloc(size_t initial_capacity);
@@ -236,30 +228,29 @@ void StrAppendF(String *s, const char *fmt, ...);
 MTX_PRINTF_ATTRIBUTE(2,3)
 void StrPrintF(String *s, const char *fmt, ...);
 
-/** 
- ** @}
- **/
-
+/**
+** @}
+**/
 
 /* ------------------------------------------------------------------
    Application framework
    ------------------------------------------------------------------ */
 
-extern char MtxBinDir[];	/* MeatAxe library directory */
-extern char MtxLibDir[];	/* MeatAxe program directory */
+extern char MtxBinDir[];        /* MeatAxe library directory */
+extern char MtxLibDir[];        /* MeatAxe program directory */
 
 #define APP_MAX_ARGS 50
 
 /** Application information structure.
-This data structure is used to store information about the application.
-It is used by the command line parser, e.g., to display the help
-text.
-\n Name is the program name,
-\n Description is a one-line description of the program.
-\n Help is a help text that is to be displayed when
-the user invokes the program with '--help'.
-Here is an example:
-<PRE>
+   This data structure is used to store information about the application.
+   It is used by the command line parser, e.g., to display the help
+   text.
+   \n Name is the program name,
+   \n Description is a one-line description of the program.
+   \n Help is a help text that is to be displayed when
+   the user invokes the program with '--help'.
+   Here is an example:
+   <PRE>
     MtxApplicationInfo_t AppInfo = { "sample", "MeatAxe sample",
         "\nSYNTAX\n"
         "    sample [-a] [-l <level>] <input> <ouput>\n"
@@ -267,116 +258,112 @@ Here is an example:
         "    -a, --all ........ Output all data\n"
         "    -l, --level ...... Set output level (default: 42)\n"
      };
-</PRE>
-\sa AppAlloc
-**/
+   </PRE>
+   \sa AppAlloc
+ **/
 
-typedef struct
-{
-    const char *Name;		/**< Program name. */
-    const char *Description;	/**< One-line description of the program. */
-    const char *Help;		/**< Help text. */
+typedef struct {
+   const char *Name;            /**< Program name. */
+   const char *Description;     /**< One-line description of the program. */
+   const char *Help;            /**< Help text. */
 } MtxApplicationInfo_t;
 
-
-
-
 /** Application data.
-This data structure stores all internal data needed by the Application support functions,
-such as command line arguments, temporary directory names, and more.
-\sa AppAlloc
-**/
+   This data structure stores all internal data needed by the Application support functions,
+   such as command line arguments, temporary directory names, and more.
+   \sa AppAlloc
+ **/
 
-typedef struct
-{
-    MtxApplicationInfo_t const *AppInfo;	/**< Program name and description. */
-    int OrigArgC;				/**< Original argc from main(). */
-    const char **OrigArgV;			/**< Original argv from main(). */
-    int ArgC;					/**< Number of arguments. */
-    const char **ArgV;				/**< Arguments. */
-    int OptEnd;					/**< Used internally. */
-    unsigned long IsDone[APP_MAX_ARGS];		/**< Used internally. */
-    const char *OptArg;				/**< Used internally. */
-    int OptInd;					/**< Used internally. */
-    char TempDirName[200];			/**< Directory fr temporary files. */
+typedef struct {
+   MtxApplicationInfo_t const *AppInfo;         /**< Program name and description. */
+   int OrigArgC;                                /**< Original argc from main(). */
+   const char **OrigArgV;                       /**< Original argv from main(). */
+   int ArgC;                                    /**< Number of arguments. */
+   const char **ArgV;                           /**< Arguments. */
+   int OptEnd;                                  /**< Used internally. */
+   unsigned long IsDone[APP_MAX_ARGS];          /**< Used internally. */
+   const char *OptArg;                          /**< Used internally. */
+   int OptInd;                                  /**< Used internally. */
+   char TempDirName[200];                       /**< Directory fr temporary files. */
 } MtxApplication_t;
-
 
 MtxApplication_t *AppAlloc(MtxApplicationInfo_t const *ai, int argc, const char **argv);
 int AppFree(MtxApplication_t *a);
 int AppGetOption(MtxApplication_t *app, const char *spec);
 int AppGetCountedOption(MtxApplication_t *app, const char *spec);
-const char *AppGetTextOption(MtxApplication_t *app, const char *spec, 
-    const char *dflt);
-int AppGetIntOption(MtxApplication_t *app, const char *spec, int dflt, 
-    int min, int max);
+const char *AppGetTextOption(MtxApplication_t *app, const char *spec,
+                             const char *dflt);
+int AppGetIntOption(MtxApplication_t *app, const char *spec, int dflt,
+                    int min, int max);
 int AppGetArguments(MtxApplication_t *app, int min_argc, int max_argc);
 const char *AppCreateTempDir(MtxApplication_t *app);
 
 #define MTX_COMMON_OPTIONS_SYNTAX \
-    "[<Options>]"
+   "[<Options>]"
 
 #define MTX_COMMON_OPTIONS_DESCRIPTION \
-    "    -Q ...................... Quiet, no messages\n" \
-    "    -V ...................... Verbose, more messages\n" \
-    "    -T <MaxTime> ............ Set CPU time limit [s]\n"
-
+   "    -Q ...................... Quiet, no messages\n" \
+   "    -V ...................... Verbose, more messages\n" \
+   "    -T <MaxTime> ............ Set CPU time limit [s]\n"
 
 /* ------------------------------------------------------------------
    Messages and error handling
    ------------------------------------------------------------------ */
-				/* Error message codes (%E arguments) */
-#define MTX_ERR_NOMEM	    1	/* Not enough memory */
-#define MTX_ERR_GAME_OVER   2	/* Time limit exceeded */
-#define MTX_ERR_DIV0	    8	/* Division by 0 or singular Matrix */
-#define MTX_ERR_FILEFMT	    24	/* Bad format */
-#define MTX_ERR_BADARG	    31	/* Bad argument */
-#define MTX_ERR_RANGE	    33	/* Out of range */
-#define MTX_ERR_NOTECH	    34	/* Matrix not in chelon form */
-#define MTX_ERR_NOTSQUARE   35	/* Matrix not square */
-#define MTX_ERR_INCOMPAT    36	/* Arguments are incompatible */
-#define MTX_ERR_BADUSAGE    41	/* Bad command line */
-#define MTX_ERR_OPTION	    42	/* Bad usage of option */
-#define MTX_ERR_NARGS	    43	/* Bad number of arguments */
-#define MTX_ERR_NOTMATRIX   51	/* Not a matrix */
-#define MTX_ERR_NOTPERM	    53	/* Not a permutation */
-
-
+/* Error message codes (%E arguments) */
+#define MTX_ERR_NOMEM       1   /* Not enough memory */
+#define MTX_ERR_GAME_OVER   2   /* Time limit exceeded */
+#define MTX_ERR_DIV0        8   /* Division by 0 or singular Matrix */
+#define MTX_ERR_FILEFMT     24  /* Bad format */
+#define MTX_ERR_BADARG      31  /* Bad argument */
+#define MTX_ERR_RANGE       33  /* Out of range */
+#define MTX_ERR_NOTECH      34  /* Matrix not in chelon form */
+#define MTX_ERR_NOTSQUARE   35  /* Matrix not square */
+#define MTX_ERR_INCOMPAT    36  /* Arguments are incompatible */
+#define MTX_ERR_BADUSAGE    41  /* Bad command line */
+#define MTX_ERR_OPTION      42  /* Bad usage of option */
+#define MTX_ERR_NARGS       43  /* Bad number of arguments */
+#define MTX_ERR_NOTMATRIX   51  /* Not a matrix */
+#define MTX_ERR_NOTPERM     53  /* Not a permutation */
 
 /**
- ** Source file information.
- **/
-typedef struct { const char *Name; const char *BaseName; } MtxFileInfo_t;
+** Source file information.
+**/
+typedef struct {
+   const char *Name;
+   const char *BaseName;
+} MtxFileInfo_t;
 
 /**
- ** Run-time error information.
- **/
-typedef struct { const MtxFileInfo_t *FileInfo; int LineNo; const char *Text; } 
-    MtxErrorRecord_t;
+** Run-time error information.
+**/
+typedef struct {
+   const MtxFileInfo_t *FileInfo;
+   int LineNo;
+   const char *Text;
+}
+MtxErrorRecord_t;
 
-typedef void MtxErrorHandler_t(const MtxErrorRecord_t *);
+typedef void MtxErrorHandler_t (const MtxErrorRecord_t *);
 
 #define MTX_DEFINE_FILE_INFO \
-    static MtxFileInfo_t Mtx_ThisFile = { __FILE__, NULL };
+   static MtxFileInfo_t Mtx_ThisFile = { __FILE__, NULL };
 
 int MtxError(MtxFileInfo_t *fi, int line, const char *text, ...);
 MtxErrorHandler_t *MtxSetErrorHandler(MtxErrorHandler_t *h);
-
 
 #define MTX_ERROR(msg) MtxError(&Mtx_ThisFile,__LINE__,msg)
 #define MTX_ERROR1(msg,a1) MtxError(&Mtx_ThisFile,__LINE__,msg,a1)
 #define MTX_ERROR2(msg,a1,a2) MtxError(&Mtx_ThisFile,__LINE__,msg,a1,a2)
 #define MTX_ERROR3(msg,a1,a2,a3) MtxError(&Mtx_ThisFile,__LINE__,msg,a1,a2,a3)
-#define MTX_ERROR4(msg,a1,a2,a3,a4) MtxError(&Mtx_ThisFile,__LINE__,\
-    msg,a1,a2,a3,a4)
-#define MTX_ERROR5(msg,a1,a2,a3,a4,a5) MtxError(&Mtx_ThisFile,__LINE__,\
-    msg,a1,a2,a3,a4,a5)
-#define MTX_ERROR7(msg,a1,a2,a3,a4,a5,a6,a7) MtxError(&Mtx_ThisFile,__LINE__,\
-    msg,a1,a2,a3,a4,a5,a6,a7)
+#define MTX_ERROR4(msg,a1,a2,a3,a4) MtxError(&Mtx_ThisFile,__LINE__, \
+                                             msg,a1,a2,a3,a4)
+#define MTX_ERROR5(msg,a1,a2,a3,a4,a5) MtxError(&Mtx_ThisFile,__LINE__, \
+                                                msg,a1,a2,a3,a4,a5)
+#define MTX_ERROR7(msg,a1,a2,a3,a4,a5,a6,a7) MtxError(&Mtx_ThisFile,__LINE__, \
+                                                      msg,a1,a2,a3,a4,a5,a6,a7)
 
-
-#define MTX_VERIFY(e) ((void)((e) ||\
-    MtxError(&Mtx_ThisFile,__LINE__,"Assertion failed: %s",#e)))
+#define MTX_VERIFY(e) ((void)((e) || \
+                              MtxError(&Mtx_ThisFile,__LINE__,"Assertion failed: %s",# e)))
 
 #ifdef _DEBUG
 #define DEBUG 1
@@ -389,10 +376,8 @@ MtxErrorHandler_t *MtxSetErrorHandler(MtxErrorHandler_t *h);
 #undef PARANOID
 #endif
 
-
-
 /* ------------------------------------------------------------------
-   Messages 
+   Messages
    ------------------------------------------------------------------ */
 
 int MtxFormatMessage(char *buf, int bufsize, const char *msg, va_list al);
@@ -404,9 +389,8 @@ extern int MtxMessageLevel;
 #define MSG2 (MtxMessageLevel >= 2)
 #define MSG3 (MtxMessageLevel >= 3)
 #define MSG4 (MtxMessageLevel >= 4)
-#define MESSAGE(level,args)\
-  (MtxMessageLevel>=(level) ? ( printf args , fflush(stdout), 1) : 0 )
-
+#define MESSAGE(level,args) \
+   (MtxMessageLevel >= (level) ? (printf args, fflush(stdout), 1) : 0)
 
 /* ------------------------------------------------------------------
    Miscellaneous
@@ -418,23 +402,21 @@ int MtxRandomInt(int max);
 long gcd(long a, long b);
 long lcm(long a, long b);
 
-
 /* ------------------------------------------------------------------
    Structured text files (stfXXX.c)
    ------------------------------------------------------------------ */
 
 /** Structured text file.
-This structure is used for reading from , and writing to
-structured text files.
-**/
-typedef struct
-{
-    FILE *File;		/**< The stream we're using */
-    char *LineBuf;	/**< Buffers one 'line' */
-    char *GetPtr;	/**< Current input position */
-    int LineBufSize;	/**< Current buffer size */
-    int OutPos;		/**< Number of chars in current line (writing only) */
-    int LineNo;		/**< Current line number (reading and writing) */
+   This structure is used for reading from , and writing to
+   structured text files.
+ **/
+typedef struct {
+   FILE *File;          /**< The stream we're using */
+   char *LineBuf;       /**< Buffers one 'line' */
+   char *GetPtr;        /**< Current input position */
+   int LineBufSize;     /**< Current buffer size */
+   int OutPos;          /**< Number of chars in current line (writing only) */
+   int LineNo;          /**< Current line number (reading and writing) */
 } StfData;
 
 int StfClose(StfData *f);
@@ -458,7 +440,6 @@ int StfGetString(StfData *f, char *buf, size_t bufsize);
 int StfMatch(StfData *f, const char *pattern);
 int StfGetVector(StfData *f, int *bufsize, int *buf);
 
-
 /* ------------------------------------------------------------------
    MeatAxe files
    ------------------------------------------------------------------ */
@@ -466,14 +447,13 @@ int StfGetVector(StfData *f, int *bufsize, int *buf);
 /// MeatAxe data file object.
 /// The MtxFile_t structure represents a MeatAxe data file.
 
-typedef struct
-{
-    unsigned long Magic;	/**< Used internally. */
-    int Field;			/**< Field order or type id. */
-    int Nor;			/**< Number of rows. */
-    int Noc;			/**< Number of columns. */
-    FILE *File;			/**< File to read frmo/write to. */
-    char *Name;			/**< File name. */
+typedef struct {
+   unsigned long Magic;         /**< Used internally. */
+   int Field;                   /**< Field order or type id. */
+   int Nor;                     /**< Number of rows. */
+   int Noc;                     /**< Number of columns. */
+   FILE *File;                  /**< File to read frmo/write to. */
+   char *Name;                  /**< File name. */
 } MtxFile_t;
 
 int MfIsValid(const MtxFile_t *file);
@@ -485,19 +465,17 @@ int MfReadRows(MtxFile_t *f, PTR buf, int nrows);
 int MfWriteLong(MtxFile_t *f, const long *buf, int count);
 int MfWriteRows(MtxFile_t *f, PTR buf, int nrows);
 
-
 /* ---------------------------------------------------------------------------------------------- */
 
 /// A matrix over a finite field.
-typedef struct
-{
-    unsigned long Magic; ///< Used internally.
-    int Field;		 ///< Field order. 
-    int Nor;		 ///< Number of rows. 
-    int Noc;		 ///< Number of columns. 
-    PTR Data;		 ///< Data, organized as array of rows. 
-    size_t RowSize;	 ///< Size (in bytes) of one row. 
-    int *PivotTable;	 ///< Pivot table (if matrix is in echelon form).
+typedef struct {
+   unsigned long Magic;  ///< Used internally.
+   int Field;            ///< Field order.
+   int Nor;              ///< Number of rows.
+   int Noc;              ///< Number of columns.
+   PTR Data;             ///< Data, organized as array of rows.
+   size_t RowSize;       ///< Size (in bytes) of one row.
+   int *PivotTable;      ///< Pivot table (if matrix is in echelon form).
 } Matrix_t;
 
 Matrix_t *MatAdd(Matrix_t *dest, const Matrix_t *src);
@@ -505,8 +483,8 @@ Matrix_t *MatAddMul(Matrix_t *dest, const Matrix_t *src, FEL coeff);
 Matrix_t *MatAlloc(int field, int nor, int noc);
 int MatClean(Matrix_t *mat, const Matrix_t *sub);
 int MatCompare(const Matrix_t *a, const Matrix_t *b);
-int MatCopyRegion(Matrix_t *dest, int destrow, int destcol, 
-    const Matrix_t *src, int row1, int col1, int nrows, int ncols);
+int MatCopyRegion(Matrix_t *dest, int destrow, int destcol,
+                  const Matrix_t *src, int row1, int col1, int nrows, int ncols);
 Matrix_t *MatCut(const Matrix_t *src, int row1, int col1, int nrows, int ncols);
 Matrix_t *MatCutRows(const Matrix_t *src, int row1, int nrows);
 Matrix_t *MatDup(const Matrix_t *src);
@@ -537,42 +515,38 @@ int MatWrite(const Matrix_t *mat, FILE *f);
 /* For internal use only */
 void Mat_DeletePivotTable(Matrix_t *mat);
 
-
-
 /* ------------------------------------------------------------------
    Greased matrices
    ------------------------------------------------------------------ */
 
 /**
- ** Extraction table for greasing.
- ** This  structure is used internally for all greased matrix operations.
- **/
+** Extraction table for greasing.
+** This  structure is used internally for all greased matrix operations.
+**/
 
 typedef struct {
-    long ***tabs; /* tables for different remainders
-		     of byte numbers mod grrows */
-    int *nrvals;  /* number of values produced by each table */
-    int nrtabs;   /* number of tables used */
+   long ***tabs;  /* tables for different remainders
+                     of byte numbers mod grrows */
+   int *nrvals;   /* number of values produced by each table */
+   int nrtabs;    /* number of tables used */
 } GrExtractionTable_t;
 
 const GrExtractionTable_t *GrGetExtractionTable(int fl,int grrows);
 
-
 /**
- ** A greased matrix.
- **/
+** A greased matrix.
+**/
 
-typedef struct
-{
-    unsigned long Magic;
-    int Field, Nor, Noc;
-    int GrRows;			/* Grease level (# of rows, 0=no grease) */
-    int GrBlockSize;		/* Vectors per block (= Field^GrRows) */
-    int NumVecs;		/* Total number of vectors in <PrecalcData> */
-    PTR PrecalcData;		/* Precalculated data */
-    const GrExtractionTable_t
-	*ExtrTab;		/* Extraction table */
-    int MPB;			/* Number of marks per byte */
+typedef struct {
+   unsigned long Magic;
+   int Field, Nor, Noc;
+   int GrRows;                  /* Grease level (# of rows, 0=no grease) */
+   int GrBlockSize;             /* Vectors per block (= Field^GrRows) */
+   int NumVecs;                 /* Total number of vectors in <PrecalcData> */
+   PTR PrecalcData;             /* Precalculated data */
+   const GrExtractionTable_t
+   *ExtrTab;                    /* Extraction table */
+   int MPB;                     /* Number of marks per byte */
 } GreasedMatrix_t;
 
 void GrMapRow(PTR v,GreasedMatrix_t *M, PTR w);
@@ -580,20 +554,16 @@ GreasedMatrix_t *GrMatAlloc(const Matrix_t *m, int gr_rows);
 int GrMatFree(GreasedMatrix_t *mat);
 int GrMatIsValid(const GreasedMatrix_t *mat);
 
-
-
 /* ------------------------------------------------------------------
    Permutations
    ------------------------------------------------------------------ */
 
 /** A Permutation. */
-typedef struct
-{
-    unsigned long Magic;  /**< Used internally. */
-    int Degree;		  /**< Degree of the permutation. */
-    long *Data;		  /**< Images of 0,1,2,... */
+typedef struct {
+   unsigned long Magic;   /**< Used internally. */
+   int Degree;            /**< Degree of the permutation. */
+   long *Data;            /**< Images of 0,1,2,... */
 } Perm_t;
-
 
 Perm_t *PermAlloc(int deg);
 int PermCompare(const Perm_t *a, const Perm_t *b);
@@ -616,17 +586,15 @@ void Perm_ConvertOld(long *data, int len);
    Polynomials
    ------------------------------------------------------------------ */
 
-typedef struct
-{
-    unsigned long Magic;/**< Used internally. */
-    int Field;		/**< Field order. */
-    int Degree;		/**< Degree of the polynomial. */
-    FEL *Data;		/**< Coefficients. Degree+1 values, starting with the
-			     constant term. */
-    int BufSize;	/**< Used internally for memory management. */
+typedef struct {
+   unsigned long Magic; /**< Used internally. */
+   int Field;           /**< Field order. */
+   int Degree;          /**< Degree of the polynomial. */
+   FEL *Data;           /**< Coefficients. Degree+1 values, starting with the
+                             constant term. */
+   int BufSize;         /**< Used internally for memory management. */
 }
 Poly_t;
-
 
 Poly_t *PolAdd(Poly_t *dest, const Poly_t *src);
 Poly_t *PolAlloc(int fl, int n);
@@ -647,19 +615,16 @@ Poly_t *PolRead(FILE *f);
 int PolSave(const Poly_t *pol, const char *fn);
 int PolWrite(const Poly_t *p, FILE *f);
 
-
-
 /* ------------------------------------------------------------------
    Factored polynomials
    ------------------------------------------------------------------ */
 
-typedef struct 
-{
-    unsigned long Magic;/**< Used internally. */
-    int NFactors;	/**< Number of different irreducible factors. */
-    int BufSize;	/**< Used internally for memory management. */
-    Poly_t **Factor;	/**< List of irreducible factors. */
-    int *Mult;		/**< Multiplicity of each factor. */
+typedef struct {
+   unsigned long Magic; /**< Used internally. */
+   int NFactors;        /**< Number of different irreducible factors. */
+   int BufSize;         /**< Used internally for memory management. */
+   Poly_t **Factor;     /**< List of irreducible factors. */
+   int *Mult;           /**< Multiplicity of each factor. */
 } FPoly_t;
 
 FPoly_t *FpAlloc();
@@ -671,14 +636,13 @@ int FpPrint(const char *name, const FPoly_t *p);
 
 /* ---------------------------------------------------------------------------------------------- */
 
-typedef struct
-{
-    unsigned long Magic;  /**< Used internally. */
-    int Size;		  /**< Number of bits. */
-    int BufSize;	  /**< Used internally for memory management. */
-    long Data[1];         /**< The bits. The least significant bit
-			       comes first.*/
-} BitString_t;		  /**< A bit string. */
+typedef struct {
+   unsigned long Magic;   /**< Used internally. */
+   int Size;              /**< Number of bits. */
+   int BufSize;           /**< Used internally for memory management. */
+   long Data[1];          /**< The bits. The least significant bit
+                               comes first.*/
+} BitString_t;            /**< A bit string. */
 
 BitString_t *BsAlloc(int size);
 int BsAnd(BitString_t *dest, const BitString_t *src);
@@ -708,19 +672,16 @@ int BsWrite(BitString_t *bs, FILE *f);
 
 #endif
 
-
 /* ------------------------------------------------------------------
    Sets
    ------------------------------------------------------------------ */
 
-typedef struct
-{
-    unsigned long Magic;	/**< Used internally. */
-    int Size;			/**< Number of elements. */
-    int BufSize;		/**< Used internally for memory management. */
-    long *Data;			/**< The elements in ascending order. */
+typedef struct {
+   unsigned long Magic;         /**< Used internally. */
+   int Size;                    /**< Number of elements. */
+   int BufSize;                 /**< Used internally for memory management. */
+   long *Data;                  /**< The elements in ascending order. */
 } Set_t;
-
 
 Set_t *SetAlloc();
 int SetContains(const Set_t *set, long elem);
@@ -730,17 +691,15 @@ int SetInsert(Set_t *set, long elem);
 int SetIsValid(const Set_t *s);
 int SetPrint(char *name, const Set_t *s);
 
-
 /* ------------------------------------------------------------------
    Integer matrices
    ------------------------------------------------------------------ */
 
-typedef struct
-{
-    unsigned long Magic;
-    int Nor;	/**< Number of rows. */
-    int Noc;	/**< Number of colums. */
-    long *Data;	/**< Marks (row by row). */
+typedef struct {
+   unsigned long Magic;
+   int Nor;     /**< Number of rows. */
+   int Noc;     /**< Number of colums. */
+   long *Data;  /**< Marks (row by row). */
 } IntMatrix_t;
 
 IntMatrix_t *ImatAlloc(int nor, int noc);
@@ -750,7 +709,6 @@ IntMatrix_t *ImatLoad(const char *fn);
 IntMatrix_t *ImatRead(FILE *f);
 int ImatSave(const IntMatrix_t *mat, const char *file_name);
 int ImatWrite(const IntMatrix_t *mat, FILE *f);
-
 
 /* --------------------------------------------------------------------------
    Polymorphic objects
@@ -766,36 +724,28 @@ long XOrder(void *a);
 void *XPower(void *a, int n);
 int XSave(void *a, const char *fn);
 
-
-
-
-
-
-
 /* --------------------------------------------------------------------------
    Matrix sets
    -------------------------------------------------------------------------- */
 
 /**
- ** An element of a matrix set.
- **/
+** An element of a matrix set.
+**/
 
-typedef struct
-{
-    Matrix_t *Matrix;
-    int PivRow;
-    int PivCol;
-    FEL PivMark;
+typedef struct {
+   Matrix_t *Matrix;
+   int PivRow;
+   int PivCol;
+   FEL PivMark;
 } MatrixSetElement_t;
 
-
 /**
- ** A set of matrices.
- **/
+** A set of matrices.
+**/
 typedef struct {
-    unsigned long Magic;
-    int Len;
-    MatrixSetElement_t *List;
+   unsigned long Magic;
+   int Len;
+   MatrixSetElement_t *List;
 } MatrixSet_t;
 
 MatrixSet_t *MsAlloc();
@@ -804,17 +754,14 @@ int MsCleanAndAppend(MatrixSet_t *set, Matrix_t *mat);
 int MsFree(MatrixSet_t *set);
 int MsIsValid(const MatrixSet_t *set);
 
-
-
 /* --------------------------------------------------------------------------
    Matrix representations
    -------------------------------------------------------------------------- */
 
-typedef struct
-{
-    unsigned long Magic;
-    int NGen;
-    Matrix_t **Gen;
+typedef struct {
+   unsigned long Magic;
+   int NGen;
+   Matrix_t **Gen;
 } MatRep_t;
 
 #define MR_COPY_GENERATORS  0x0001
@@ -828,20 +775,16 @@ MatRep_t *MrLoad(const char *basename, int ngen);
 int MrSave(const MatRep_t *rep, const char *basename);
 MatRep_t *MrTransposed(const MatRep_t *rep);
 
-
-
 /* ------------------------------------------------------------------
    The word generator
    ------------------------------------------------------------------ */
 
-typedef struct 
-{
-    const MatRep_t *Rep;	/**< The representation. **/
-    Matrix_t *Basis[8];		/**< Products of the generators **/
-    int N2[8];			/**< Coefficients **/
-    int *Description;		/**< Symbolic description of a word **/
+typedef struct {
+   const MatRep_t *Rep;         /**< The representation. **/
+   Matrix_t *Basis[8];          /**< Products of the generators **/
+   int N2[8];                   /**< Coefficients **/
+   int *Description;            /**< Symbolic description of a word **/
 } WgData_t;
-
 
 WgData_t *WgAlloc(const MatRep_t *rep);
 int *WgDescribeWord(WgData_t *b, long n);
@@ -850,56 +793,52 @@ Matrix_t *WgMakeWord(WgData_t *b, long n);
 void WgMakeFingerPrint(WgData_t *b, int fp[6]);
 const char *WgSymbolicName(WgData_t *b, long n);
 
-
-
-
-
 /* ------------------------------------------------------------------
    Spin-up, Split, Quotients, etc.
    ------------------------------------------------------------------ */
 
-#define SF_FIRST	0x0001	/* Try only the first seed vector */
-#define SF_EACH		0x0002	/* Try each seed vector */
-#define SF_MAKE		0x0004	/* Try all 1-dimensional subspaces */
-#define SF_SUB		0x0010	/* Try until finding a proper subspace */
-#define SF_CYCLIC	0x0020	/* Try until finding a cyclic vector */
-#define SF_COMBINE	0x0040	/* Combine the spans */
-#define SF_SEED_MASK	0x000F
-#define SF_MODE_MASK	0x00F0
-#define SF_STD		0x0100	/* Spin up 'canonically' */
+#define SF_FIRST        0x0001  /* Try only the first seed vector */
+#define SF_EACH         0x0002  /* Try each seed vector */
+#define SF_MAKE         0x0004  /* Try all 1-dimensional subspaces */
+#define SF_SUB          0x0010  /* Try until finding a proper subspace */
+#define SF_CYCLIC       0x0020  /* Try until finding a cyclic vector */
+#define SF_COMBINE      0x0040  /* Combine the spans */
+#define SF_SEED_MASK    0x000F
+#define SF_MODE_MASK    0x00F0
+#define SF_STD          0x0100  /* Spin up 'canonically' */
 
 Matrix_t *QProjection(const Matrix_t *subspace, const Matrix_t *vectors);
 Matrix_t *QAction(const Matrix_t *sub, const Matrix_t *gen);
 Matrix_t *SAction(const Matrix_t *sub, const Matrix_t *gen);
 
-typedef struct
-{
-    int MaxSubspaceDimension;
-    int MaxTries;
-    int Result;
+typedef struct {
+   int MaxSubspaceDimension;
+   int MaxTries;
+   int Result;
 } SpinUpInfo_t;
 
 int SpinUpInfoInit(SpinUpInfo_t *info);
 Matrix_t *SpinUp(const Matrix_t *seed, const MatRep_t *rep, int flags,
-    IntMatrix_t **script, SpinUpInfo_t *info);
-Matrix_t *SpinUpWithScript(const Matrix_t *seed, const MatRep_t *rep, 
-    const IntMatrix_t *script);
-int Split(Matrix_t *subspace, const MatRep_t *rep, 
-	  MatRep_t **sub, MatRep_t **quot);
+                 IntMatrix_t **script, SpinUpInfo_t *info);
+Matrix_t *SpinUpWithScript(const Matrix_t *seed, const MatRep_t *rep,
+                           const IntMatrix_t *script);
+int Split(Matrix_t *subspace, const MatRep_t *rep,
+          MatRep_t **sub, MatRep_t **quot);
 
 int ConvertSpinUpScript(IntMatrix_t *script);
 
-Matrix_t *SpinUpWithPermutations(const Matrix_t *seed, int ngen, 
-    const Perm_t **gen, int flags, IntMatrix_t **script, SpinUpInfo_t *info);
-
+Matrix_t *SpinUpWithPermutations(const Matrix_t *seed,
+                                 int ngen,
+                                 const Perm_t **gen,
+                                 int flags,
+                                 IntMatrix_t **script,
+                                 SpinUpInfo_t *info);
 
 /* ------------------------------------------------------------------
    Seed vector generator
    ------------------------------------------------------------------ */
 
 long MakeSeedVector(const Matrix_t *basis, long lastno, PTR vec);
-
-
 
 /* ------------------------------------------------------------------
    Miscellaneous algorithms
@@ -917,15 +856,11 @@ Matrix_t *TensorMap(Matrix_t *vec, const Matrix_t *a, const Matrix_t *b);
 int StablePower(const Matrix_t *mat, int *pwr, Matrix_t **ker);
 int StablePower_(Matrix_t *mat, int *pwr, Matrix_t **ker);
 
-
-
 /* ------------------------------------------------------------------
    Polynomial factorization (Berlekamp algorithm)
    ------------------------------------------------------------------ */
 
 FPoly_t *Factorization(const Poly_t *pol);
-
-
 
 /* ------------------------------------------------------------------
    Characteristic and minimal polynomials (charpol.c, minpol.c)
@@ -937,47 +872,43 @@ FPoly_t *CharPol(const Matrix_t *mat);
 Poly_t *MinPolFactor(Matrix_t *mat);
 FPoly_t *MinPol(Matrix_t *mat);
 
-
-
 /* ------------------------------------------------------------------
    The lattice package
    ------------------------------------------------------------------ */
 /**
- ** @addtogroup cfinfo
- ** @{
- **/ 
+** @addtogroup cfinfo
+** @{
+**/
 
-#define MAXGEN 20	/* Max. number of generators */
-#define LAT_MAXCF 200	/* Max. number of composition factors */
-#define MAXCYCL 30000	/* Max. number of cyclic submodules */
-#define MAXDOTL 90000	/* Max. number of dotted lines */
-#define MAXNSUB 20000	/* Max. number of submodules */
+#define MAXGEN 20       /* Max. number of generators */
+#define LAT_MAXCF 200   /* Max. number of composition factors */
+#define MAXCYCL 30000   /* Max. number of cyclic submodules */
+#define MAXDOTL 90000   /* Max. number of dotted lines */
+#define MAXNSUB 20000   /* Max. number of submodules */
 #define LAT_MAXBASENAME 100
 
-typedef struct
-{
-    long dim, num, mult;
-    long idword;		/* Identifying word */
-    Poly_t *idpol;
-    long peakword;		/* Peak word */
-    Poly_t *peakpol;
-    long nmount;		/* Number of mountains */
-    long ndotl;			/* Number of dotted lines */
-    long spl;			/* Degree of splitting field */
+typedef struct {
+   long dim, num, mult;
+   long idword;                 /* Identifying word */
+   Poly_t *idpol;
+   long peakword;               /* Peak word */
+   Poly_t *peakpol;
+   long nmount;                 /* Number of mountains */
+   long ndotl;                  /* Number of dotted lines */
+   long spl;                    /* Degree of splitting field */
 }
 CfInfo;
 
-typedef struct
-{
-    char BaseName[LAT_MAXBASENAME];	/**< Base name */
-    int Field;				/**< Field order */
-    int NGen;				/**< Number of generators */
-    int NCf;				/**< Number of irred. constituents */
-    CfInfo Cf[LAT_MAXCF];		/**< Data for irred. constituents */
-    int NSocles;			/**< Loewy length */
-    int *Socle;				/**< Mult. of constituents in socles */
-    int NHeads;				/**< Number of radical layers */
-    int *Head;				/**< Mult. of constituents in Heads */
+typedef struct {
+   char BaseName[LAT_MAXBASENAME];      /**< Base name */
+   int Field;                           /**< Field order */
+   int NGen;                            /**< Number of generators */
+   int NCf;                             /**< Number of irred. constituents */
+   CfInfo Cf[LAT_MAXCF];                /**< Data for irred. constituents */
+   int NSocles;                         /**< Loewy length */
+   int *Socle;                          /**< Mult. of constituents in socles */
+   int NHeads;                          /**< Number of radical layers */
+   int *Head;                           /**< Mult. of constituents in Heads */
 } Lat_Info;
 
 int Lat_ReadInfo(Lat_Info *li, const char *basename);
@@ -986,99 +917,85 @@ const char *Lat_CfName(const Lat_Info *li, int cf);
 int Lat_AddHead(Lat_Info *li, int *mult);
 int Lat_AddSocle(Lat_Info *li, int *mult);
 
-
-#define LAT_RG_INVERT		0x0001	/* Invert generators */
-#define LAT_RG_TRANSPOSE	0x0002	/* Transpose generators */
-#define LAT_RG_STD		0x0004	/* Use standard form */
+#define LAT_RG_INVERT           0x0001  /* Invert generators */
+#define LAT_RG_TRANSPOSE        0x0002  /* Transpose generators */
+#define LAT_RG_STD              0x0004  /* Use standard form */
 
 MatRep_t *Lat_ReadCfGens(Lat_Info *info, int cf, int flags);
 
 /**
- ** @}
- **/ 
-
+** @}
+**/
 
 /* ------------------------------------------------------------------
    Tensor condensation package
    ------------------------------------------------------------------ */
 
 /**
- ** @ingroup tp
- ** Tensor condensation state.
- ** The %TkData_t structure is used by the tensor condensation algorithm to store
- ** state information. By use of TK_ReadInfo() and TK_WriteInfo() a program can read
- ** the information from a file, and write back the data to a file if it was modified.
- **/ 
+** @ingroup tp
+** Tensor condensation state.
+** The %TkData_t structure is used by the tensor condensation algorithm to store
+** state information. By use of TK_ReadInfo() and TK_WriteInfo() a program can read
+** the information from a file, and write back the data to a file if it was modified.
+**/
 
-typedef struct
-{
-    char NameM[LAT_MAXBASENAME];	/**< Name of right factor */
-    char NameN[LAT_MAXBASENAME];	/**< Name of left factor */
-    int Dim;				/**< Dimension of condensed module */
-    int NCf;				/**< Number of relevant constituents */
-    int CfIndex[2][LAT_MAXCF];		/**< Constituent number */
+typedef struct {
+   char NameM[LAT_MAXBASENAME];         /**< Name of right factor */
+   char NameN[LAT_MAXBASENAME];         /**< Name of left factor */
+   int Dim;                             /**< Dimension of condensed module */
+   int NCf;                             /**< Number of relevant constituents */
+   int CfIndex[2][LAT_MAXCF];           /**< Constituent number */
 } TkData_t;
 
 int TK_ReadInfo(TkData_t *tki, const char *name);
 int TK_WriteInfo(TkData_t *tki, const char *name);
 
-
-
-
 /* !!!!!!!!!!!!!!! 2.3 STUFF below !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! */
 /* !!!!!!!!!!!!!!! 2.3 STUFF below !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! */
 /* !!!!!!!!!!!!!!! 2.3 STUFF below !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! */
-
-
 
 /* ------------------------------------------------------------------
    Return codes
    ------------------------------------------------------------------ */
 
-#define	EXIT_OK		0	/* Exit code: normal end */
-#define EXIT_ERR	1	/*            error */
-
-
+#define EXIT_OK         0       /* Exit code: normal end */
+#define EXIT_ERR        1       /*            error */
 
 /* ------------------------------------------------------------------
    Function operating on representations and vector spaces
    ------------------------------------------------------------------ */
 
 int IsIsomorphic(const MatRep_t *rep1, const CfInfo *info1,
-    const MatRep_t *rep2, Matrix_t  **trans, int use_pw);
+                 const MatRep_t *rep2, Matrix_t  **trans, int use_pw);
 int MakeEndomorphisms(const MatRep_t *rep, const Matrix_t *nsp,
-    Matrix_t *endo[]);
-Matrix_t *HomogeneousPart(MatRep_t *m, MatRep_t *s, Matrix_t *npw, 
-    const IntMatrix_t *op, int dimends);
-
-
+                      Matrix_t *endo[]);
+Matrix_t *HomogeneousPart(MatRep_t *m, MatRep_t *s, Matrix_t *npw,
+                          const IntMatrix_t *op, int dimends);
 
 /* ------------------------------------------------------------------
    Lattice drawing functions
    ------------------------------------------------------------------ */
 
 /**
- ** Node in a graphical lattice representation.
- **/
-typedef struct
-{
-    double PosX, PosY;		/* Position [0..1] */
-    unsigned long UserData;	/* User-defined attributes */
-    int Layer;			/* Layer number */
-    double Score;		/* Used in optimization */
-    int ScoreCount;
+** Node in a graphical lattice representation.
+**/
+typedef struct {
+   double PosX, PosY;           /* Position [0..1] */
+   unsigned long UserData;      /* User-defined attributes */
+   int Layer;                   /* Layer number */
+   double Score;                /* Used in optimization */
+   int ScoreCount;
 } LdNode_t;
 
 /**
- ** Graphical lattice representation.
- **/
-typedef struct
-{
-    int NNodes;
-    LdNode_t *Nodes;
-    int *IsSub;		/* Incidence relation, <NNodes> * <NNodes> entries */
-    int *LayerNo;	/* Layer numbers */
-    int NLayers;
+** Graphical lattice representation.
+**/
+typedef struct {
+   int NNodes;
+   LdNode_t *Nodes;
+   int *IsSub;          /* Incidence relation, <NNodes> * <NNodes> entries */
+   int *LayerNo;        /* Layer numbers */
+   int NLayers;
 } LdLattice_t;
 
 #define LD_ISSUB(l,i,k) ((l)->IsSub[(i) * (l)->NNodes + (k)])
@@ -1088,14 +1005,8 @@ int LdFree(LdLattice_t *l);
 int LdAddIncidence(LdLattice_t *lat, int sub, int sup);
 int LdSetPositions(LdLattice_t *l);
 
-
-
-
 /* OLD STUFF */
 int ChangeBasisOLD(const Matrix_t *M, int ngen, const Matrix_t *gen[],
-	Matrix_t *newgen[]);
+                   Matrix_t *newgen[]);
 
-
-#endif	/* !defined(_MEATAXE_H_) */
-
-
+#endif  /* !defined(_MEATAXE_H_) */

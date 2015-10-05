@@ -5,6 +5,7 @@
 //
 // (C) Copyright 1998-2014 Michael Ringe, Lehrstuhl D fuer Mathematik, RWTH Aachen
 // Modifications by Tom Hoffman, Mathematics Department, University of Arizona.
+// Contributions by Simon King <simon.king@uni-jena.de>
 //
 // This program is free software; see the file COPYING for details.
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -162,7 +163,7 @@ static int LPR = 0;             /* Long ints per row */
 size_t FfCurrentRowSize = (size_t) -1;
 
 /// The number of bytes occupied by a row in a data file.
-/// Equal to <tt>FfTrueRowSize(FfNoc)</tt>. FfCurrentRowSizeIo can be smaller than
+/// Equal to <tt>FfCurrentRowSizeIo</tt>. FfCurrentRowSizeIo can be smaller than
 /// FfCurrentRowSize because there is nothere is no padding in data files.
 
 int FfCurrentRowSizeIo = -1;
@@ -391,9 +392,9 @@ FEL FfEmbed(FEL a, int subfield)
       return a;
    }
    for (i = 0; i < 4; ++i) {
-       if (mtx_embedord[i] == subfield) {
-	   return mtx_embed[i][a];
-       }
+      if (mtx_embedord[i] == subfield) {
+         return mtx_embed[i][a];
+      }
    }
    MTX_ERROR2("Cannot embed GF(%d) into GF(%d)",(int)subfield,(int)FfOrder);
    return FF_ZERO;
@@ -419,9 +420,9 @@ FEL FfRestrict(FEL a, int subfield)
       return a;
    }
    for (i = 0; i < 4; ++i) {
-       if( mtx_embedord[i] == subfield) {
-	    return mtx_restrict[i][a];
-       }
+      if (mtx_embedord[i] == subfield) {
+         return mtx_restrict[i][a];
+      }
    }
    MTX_ERROR2("Cannot restrict GF(%d) to GF(%d)",(int)FfOrder, (int)subfield);
    return FF_ZERO;
@@ -529,7 +530,7 @@ PTR FfAddRow(PTR dest, PTR src)
 #else
       register BYTE *p1 = dest;
       register BYTE *p2 = src;
-      for (i = FfTrueRowSize(FfNoc); i != 0; --i) {
+      for (i = FfCurrentRowSizeIo; i != 0; --i) {
          register int x = *p2++;
          if (x != 0) { *p1 = mtx_tadd[*p1][x]; }
          p1++;
@@ -542,21 +543,22 @@ PTR FfAddRow(PTR dest, PTR src)
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 /// Add a part two rows.
-/// This works like FfAddRow(), but the operation is performed only on a given range of
-/// columns. Note that the working range is not specified as column indexes but in units of
-/// long integers!
+/// This works like FfAddRow(), but the function is allowed to skip up to @a first columns.
+/// In other words, the operation is guaranteed to be performed only from the given column
+/// until the last column.
 /// @param dest The row to add to.
 /// @param src The row to add.
-/// @param first Number of long integers to skip.
-/// @param len Number of long integers to add.
+/// @param first First column to add
 /// @return Always returns dest.
 
-PTR FfAddRowPartial(PTR dest, PTR src, int first, int len)
+PTR FfAddRowPartial(PTR dest, PTR src, int first)
 {
+   MTX_VERIFY(first < FfNoc);
    register long i;
 
    if (FfChar == 2)     /* characteristic 2 is simple... */
 #ifdef ASM_MMX
+   { XXXXXX_TODO(); }
    {
       __asm__("\n	movl 8(%ebp),%ecx\n"
               "	movl 12(%ebp),%ebx\n"
@@ -581,9 +583,10 @@ PTR FfAddRowPartial(PTR dest, PTR src, int first, int len)
    }
 #else
    {
-      register long *l1 = (long *) dest + first;
-      register long *l2 = (long *) src + first;
-      for (i = len; i != 0; --i) {
+      const int firstl = first / MPB / sizeof(long);
+      register long *l1 = (long *) dest + firstl;
+      register long *l2 = (long *) src + firstl;
+      for (i = LPR - firstl; i != 0; --i) {
          register long x = *l2++;
          *l1 ^= x;
          l1++;
@@ -591,9 +594,9 @@ PTR FfAddRowPartial(PTR dest, PTR src, int first, int len)
    }
 #endif
    else {               /* any other characteristic */
-      register BYTE *p1 = dest + first * sizeof(long);
-      register BYTE *p2 = src + first * sizeof(long);
-      for (i = len * sizeof(long); i != 0; --i) {
+      register BYTE *p1 = dest + first / MPB;
+      register BYTE *p2 = src + first / MPB;
+      for (i = FfCurrentRowSizeIo - first / MPB; i != 0; --i) {
          register int x = *p2++;
          *p1 = mtx_tadd[*p1][x];
          p1++;
@@ -625,7 +628,7 @@ void FfMulRow(PTR row, FEL mark)
    } else if (mark != FF_ONE) {
       multab = mtx_tmult[mark];
       m = row;
-      for (i = FfTrueRowSize(FfNoc); i != 0; --i) {
+      for (i = FfCurrentRowSizeIo; i != 0; --i) {
          register int x = *m;
          if (x != 0) { *m = multab[x]; }
          ++m;
@@ -640,9 +643,6 @@ void FfMulRow(PTR row, FEL mark)
 
 void FfAddMulRow(PTR dest, PTR src, FEL f)
 {
-   register int i;
-   register BYTE *p1, *p2, *multab;
-
    CHECKFEL(f);
    if (f == FF_ZERO) {
       return;
@@ -651,12 +651,51 @@ void FfAddMulRow(PTR dest, PTR src, FEL f)
       FfAddRow(dest,src);
       return;
    }
-   multab = mtx_tmult[f];
-   p1 = dest;
-   p2 = src;
-   for (i = FfTrueRowSize(FfNoc); i != 0; --i) {
-      *p1 = mtx_tadd[*p1][multab[*p2++]];
+   register BYTE *multab = mtx_tmult[f];
+   register BYTE *p1 = dest;
+   register BYTE *p2 = src;
+   for (register int i = FfCurrentRowSizeIo; i != 0; --i) {
+      if (*p2 != 0) {
+         *p1 = mtx_tadd[*p1][multab[*p2]];
+      }
       ++p1;
+      ++p2;
+   }
+}
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+///
+/// Add a multiple of a part of a row.
+/// This works like FfAddMulRow(), but the function is allowed to skip up to @a first columns.
+/// In other words, the operation is guaranteed to be performed only from the given column until
+/// the last column.
+/// @param dest The row to add to.
+/// @param src The row to add.
+/// @param f The multiplier
+/// @param firstcol First column to add
+
+void FfAddMulRowPartial(PTR dest, PTR src, FEL f, int firstcol)
+{
+   CHECKFEL(f);
+   MTX_VERIFY(firstcol < FfNoc);
+
+   if (f == FF_ZERO) {
+      return;
+   }
+   if (f == FF_ONE) {
+      FfAddRowPartial(dest, src, firstcol);
+      return;
+   }
+   BYTE * const multab = mtx_tmult[f];
+   BYTE *p1 = dest + firstcol / MPB;
+   BYTE *p2 = src + firstcol / MPB;
+   for (int i = FfCurrentRowSizeIo - firstcol / MPB; i != 0; --i) {
+      if (*p2 != 0) {
+         *p1 = mtx_tadd[*p1][multab[*p2]];
+      }
+      ++p1;
+      ++p2;
    }
 }
 
@@ -796,8 +835,11 @@ void FfMapRow(PTR row, PTR matrix, int nor, PTR result)
             register int k = FfCurrentRowSizeIo;
             if (f == FF_ONE) {
                for (; k != 0; --k) {
-                  *r = mtx_tadd[*r][*v++];
+                  if (*v != 0) {
+                     *r = mtx_tadd[*r][*v];
+                  }
                   ++r;
+                  ++v;
                }
             } else {
                register BYTE *multab = mtx_tmult[f];
@@ -990,4 +1032,3 @@ int FfFindPivot(PTR row, FEL *mark)
    *mark = mtx_tffirst[*m][0];
    return idx;
 }
-

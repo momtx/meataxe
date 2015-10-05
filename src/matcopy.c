@@ -2,6 +2,7 @@
 // C MeatAxe - Copy (part of) a matrix
 //
 // (C) Copyright 1998-2015 Michael Ringe, Lehrstuhl D fuer Mathematik, RWTH Aachen
+// Contributions by Simon King <simon.king@uni-jena.de>
 //
 // This program is free software; see the file COPYING for details.
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -48,7 +49,8 @@ int MatCopyRegion(Matrix_t *dest, int destrow, int destcol,
       return -1;
    }
    if (src->Field != dest->Field) {
-      return MTX_ERROR1("%E",MTX_ERR_INCOMPAT), -1;
+      MTX_ERROR1("%E",MTX_ERR_INCOMPAT);
+      return -1;
    }
    if (nrows == -1) {
       nrows = src->Nor - row1;
