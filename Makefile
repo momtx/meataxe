@@ -219,7 +219,7 @@ tmp/c-zzz.o: tests/c-zzz.c tmp/test_table.c
 
 tmp/zzztest.done: ${MTXBIN}/zzztest
 	mkdir -p tmp
-	cd tmp && ../xxxxxxbin/zzztest
+	cd tmp && ${MTXBIN}/zzztest
 	touch $@
 
 tmp/t-%.done: tmp/mk.dir tests/t-% tmp/t.config ${MTXBIN}/checksum build
