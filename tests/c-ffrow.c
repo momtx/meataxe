@@ -8,14 +8,11 @@
 
 #include "meataxe.h"
 #include "check.h"
-#include "c-ffrow.h"
 
 #include <stdlib.h>
 #include <stdio.h>
 
-/* --------------------------------------------------------------------------
-   TestScalarProduct() - Test FfScalarProduct()
-   -------------------------------------------------------------------------- */
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 static void TestScalarProduct1(PTR a, PTR b, int size)
 {
@@ -39,8 +36,9 @@ static void TestScalarProduct1(PTR a, PTR b, int size)
    }
 }
 
-
-void TestScalarProduct(unsigned flags)
+////////////////////////////////////////////////////////////////////////////////////////////////////
+ 
+test_F ScalarProduct()
 {
    MtxRandomInit(1231);
    while (NextField() > 0) {
@@ -55,5 +53,4 @@ void TestScalarProduct(unsigned flags)
          SysFree(b);
       }
    }
-   flags = 0;
 }

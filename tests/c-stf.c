@@ -8,13 +8,14 @@
 
 #include "meataxe.h"
 #include "check.h"
-#include "c-stf.h"
 
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 
-void TestStf1(unsigned flags)
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+test_F StructuredTextFile1()
 {
    const char *file_name = "check.tmp";
    const char *string1 = "\t this is a\r\tst\a\bri\"ng\f\n   ";
@@ -64,11 +65,11 @@ void TestStf1(unsigned flags)
    StfClose(f);
 
    remove(file_name);
-   flags = 0;
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void TestStf2(unsigned flags)
+test_F StructuredTextFile2()
 {
    const char *file_name = "check.tmp";
    int vec1[1000];
@@ -98,5 +99,4 @@ void TestStf2(unsigned flags)
    StfClose(f);
 
    remove(file_name);
-   flags = 0;
 }

@@ -8,7 +8,6 @@
 
 #include "meataxe.h"
 #include "check.h"
-#include "c-ffmat.h"
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -61,10 +60,9 @@ static void TestMapRow1(PTR mat, PTR a, PTR b, int size)
 
 }
 
-
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void TestMapRow(unsigned flags)
+test_F MapRow()
 {
    int size = 10;
 
@@ -79,9 +77,7 @@ void TestMapRow(unsigned flags)
       SysFree(a);
       SysFree(b);
    }
-   flags = 0;
 }
-
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -157,7 +153,6 @@ static void TestSumInter1()
    SysFree(w2);
    SysFree(piv);
 }
-
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -273,7 +268,7 @@ static void TestSumInter2()
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void TestSumInter(unsigned flags)
+test_F SumIntersection()
 {
    MtxRandomInit(0);
    while (NextField() > 0) {
@@ -285,5 +280,4 @@ void TestSumInter(unsigned flags)
          TestSumInter2();
       }
    }
-   flags = 0;
 }

@@ -6,7 +6,6 @@
 // This program is free software; see the file COPYING for details.
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-//#include "c-bitstring.h"
 #include "check.h"
 
 #include <string.h>
@@ -38,7 +37,7 @@ static int CheckError()
 
 #define NMAT 5
 
-test_F TestBsAlloc()
+test_F BtStringAllocation()
 {
    static int bssize[NMAT] = { 0,1,10,100,1000 };
    BitString_t  *m[NMAT];
@@ -107,7 +106,7 @@ static void TestSetClear(int size, BitString_t *a)
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-test_F BsBasicOperations()
+test_F BitStringBasicOperations()
 {
    const int size = 50;
    BitString_t *a;
@@ -143,7 +142,7 @@ static void TestCompare1(int size, BitString_t *a, BitString_t *b)
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void TestBsCompare(unsigned flags)
+test_F BitSringCompare()
 {
    const int size = 50;
    BitString_t *a, *b;
@@ -152,7 +151,6 @@ void TestBsCompare(unsigned flags)
    TestCompare1(size,a,b);
    BsFree(b);
    BsFree(a);
-   flags = 0;
 }
 
 
@@ -173,7 +171,7 @@ static void TestCopy1(int size, BitString_t *a, BitString_t *b)
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-test_F BsCopyAndDup()
+test_F BitStringCopy()
 {
    const int size = 49;
    BitString_t *a, *b;
@@ -231,7 +229,7 @@ static void CheckIo1(BitString_t **bs, int n)
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-test_F BsFileIo()
+test_F BitStringFileIo()
 {
    BitString_t *a[10];
    int i;
@@ -285,7 +283,7 @@ static void TestAndOr1(int size)
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-test_F BsAndOrMinusRandomTest()
+test_F BitSTringAndOrMinus()
 {
    for (int i = 0; i < 150; ++i) {
       TestAndOr1(i);
@@ -311,7 +309,7 @@ static void CheckCount1(int size, BitString_t *a, BitString_t *b)
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-test_F BsIntersectionCountRandomTest()
+test_F BitStringIntersectionCount()
 {
    int i;
    MtxRandomInit(42);
@@ -327,7 +325,7 @@ test_F BsIntersectionCountRandomTest()
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-test_F BsIsSubRandomTest()
+test_F BitStringIsSubset()
 {
    int i;
    BitString_t *a, *b;

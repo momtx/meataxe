@@ -8,11 +8,11 @@
 
 #include "meataxe.h"
 #include "check.h"
-#include "c-grease.h"
-#include "c-matrix.h"
 
 #include <stdlib.h>
 #include <stdio.h>
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 static void TestGrMapRow1(Matrix_t *m, int gr_level)
 {
@@ -37,12 +37,9 @@ static void TestGrMapRow1(Matrix_t *m, int gr_level)
    GrMatFree(gm);
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
-/* --------------------------------------------------------------------------
-   TestScalarProduct() - Test FfScalarProduct()
-   -------------------------------------------------------------------------- */
-
-void TestGrMapRow(unsigned flags)
+test_F GreasedMapRow()
 {
    MtxRandomInit(1231);
    while (NextField() > 0) {

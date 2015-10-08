@@ -8,7 +8,6 @@
 
 #include "meataxe.h"
 #include "check.h"
-#include "c-matrix.h"
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -18,12 +17,15 @@ MTX_DEFINE_FILE_INFO
 
 static int ErrorFlag = 0;
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
 static void MyErrorHandler(const MtxErrorRecord_t *err)
 {
    ErrorFlag = 1;
    err = NULL;
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 static int CheckError()
 {
@@ -32,6 +34,7 @@ static int CheckError()
    return i;
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 Perm_t *RndPerm(int degree)
 {
@@ -51,13 +54,11 @@ Perm_t *RndPerm(int degree)
 }
 
 
-/* --------------------------------------------------------------------------
-   TestPermAlloc() - Permutation allocation
-   -------------------------------------------------------------------------- */
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 #define NPERM 3
 
-void TestPermAlloc(unsigned flags)
+test_F PermutationAlloc()
 {
    static const int deg[NPERM] = { 0, 5, 700 };
    Perm_t *p[NPERM];
@@ -76,18 +77,20 @@ void TestPermAlloc(unsigned flags)
       }
    }
    for (i = 0; i < NPERM; ++i) {
-      if (PermFree(p[i]) != 0) { Error("PermFree() failed"); }}
+      if (PermFree(p[i]) != 0) {
+	  Error("PermFree() failed");
+      }
+   }
    old_err_handler = MtxSetErrorHandler(MyErrorHandler);
    for (i = 0; i < NPERM; ++i) {
-      if (PermIsValid(p[i]) || !CheckError()) { Error("PermIsValid() failed"); }}
+      if (PermIsValid(p[i]) || !CheckError()) {
+	  Error("PermIsValid() failed");
+      }
+   }
    MtxSetErrorHandler(old_err_handler);
-   flags = 0;
 }
 
-
-/* --------------------------------------------------------------------------
-   TestPermOrder() - Permutation order
-   -------------------------------------------------------------------------- */
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 static void TestOrd(long *data, int order)
 {
@@ -106,8 +109,9 @@ static void TestOrd(long *data, int order)
    PermFree(p);
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void TestPermOrder(unsigned flags)
+test_F PermutationOrder()
 {
    long p1[] = { 1,0,3,2,5,6,4, -1 };
    long p2[] = {-1};
@@ -118,10 +122,9 @@ void TestPermOrder(unsigned flags)
    TestOrd(p2,1);
    TestOrd(p3,12);
    TestOrd(p4,4);
-
-   flags = 0;
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 static Perm_t *MkPerm(int *a)
 {
@@ -137,12 +140,9 @@ static Perm_t *MkPerm(int *a)
    return p;
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
-/* --------------------------------------------------------------------------
-   TestPermMul() - Permutation multiplication
-   -------------------------------------------------------------------------- */
-
-void TestPermMul(unsigned flags)
+test_F PermutationMultiply()
 {
    static int p1[] = { 1,2,0,4,3, -1 };
    static int p2[] = { 0,1,3,2,4, -1 };
@@ -159,15 +159,11 @@ void TestPermMul(unsigned flags)
    PermFree(perm1);
    PermFree(perm2);
    PermFree(perm3);
-   flags = 0;
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
-/* --------------------------------------------------------------------------
-   TestPermPwr() - Permutation power
-   -------------------------------------------------------------------------- */
-
-void TestPermPwr(unsigned flags)
+test_F PermutationPower()
 {
    Perm_t *p1;
    int i;
@@ -187,15 +183,11 @@ void TestPermPwr(unsigned flags)
       PermFree(p2);
       PermFree(p3);
    }
-   flags = 0;
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
-/* --------------------------------------------------------------------------
-   TestPermInv() - Invert permutation
-   -------------------------------------------------------------------------- */
-
-void TestPermInv(unsigned flags)
+test_F PermutationInverse()
 {
    int i;
 
@@ -212,5 +204,4 @@ void TestPermInv(unsigned flags)
       PermFree(p1);
       PermFree(p2);
    }
-   flags = 0;
 }

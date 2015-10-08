@@ -6,7 +6,6 @@
 // This program is free software; see the file COPYING for details.
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#include "c-fpoly.h"
 #include "meataxe.h"
 #include "check.h"
 
@@ -18,12 +17,15 @@
 
 static int ErrorFlag = 0;
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
 static void MyErrorHandler(const MtxErrorRecord_t *err)
 {
    ErrorFlag = 1;
    err = NULL;
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 static int CheckError()
 {
@@ -32,14 +34,11 @@ static int CheckError()
    return i;
 }
 
-
-/* --------------------------------------------------------------------------
-   TestFPolAlloc() - Permutation allocation
-   -------------------------------------------------------------------------- */
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 #define NPOLY 5
 
-void TestFPolAlloc(unsigned flags)
+test_F FactoredPolynomialAllocation()
 {
    FPoly_t *p[NPOLY];
    MtxErrorHandler_t *old_err_handler;
@@ -63,5 +62,4 @@ void TestFPolAlloc(unsigned flags)
       }
    }
    MtxSetErrorHandler(old_err_handler);
-   flags = 0;
 }

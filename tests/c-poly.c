@@ -6,7 +6,6 @@
 // This program is free software; see the file COPYING for details.
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#include "c-poly.h"
 #include "meataxe.h"
 #include "check.h"
 
@@ -18,12 +17,15 @@ MTX_DEFINE_FILE_INFO
 
 static int ErrorFlag = 0;
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
 static void MyErrorHandler(const MtxErrorRecord_t *err)
 {
    ErrorFlag = 1;
    err = NULL;
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 static int CheckError()
 {
@@ -32,6 +34,7 @@ static int CheckError()
    return i;
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 Poly_t *RndPol(int fl, int mindeg, int maxdeg)
 {
@@ -47,14 +50,11 @@ Poly_t *RndPol(int fl, int mindeg, int maxdeg)
    return p;
 }
 
-
-/* --------------------------------------------------------------------------
-   TestPolAlloc() - Permutation allocation
-   -------------------------------------------------------------------------- */
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 #define NPOLY 5
 
-void TestPolAlloc1(int fl)
+static void TestPolAlloc1(int fl)
 {
    static const int deg[NPOLY] = { -1,0,5,10,200 };
    Poly_t *p[NPOLY];
@@ -83,19 +83,16 @@ void TestPolAlloc1(int fl)
    MtxSetErrorHandler(old_err_handler);
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void TestPolAlloc(unsigned flags)
+test_F TestPolAlloc()
 {
    while (NextField() > 0) {
       TestPolAlloc1(FfOrder);
    }
-   flags = 0;
 }
 
-
-/* --------------------------------------------------------------------------
-   TestPolAlloc() - Permutation allocation
-   -------------------------------------------------------------------------- */
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 #define NPOLY 5
 
@@ -118,6 +115,7 @@ static void TestPolCompare2(int fl1, int deg1, int fl2, int deg2, int result)
    PolFree(b);
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 static void TestPolCompare1(int fl)
 {
@@ -150,8 +148,9 @@ static void TestPolCompare1(int fl)
    PolFree(b);
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void TestPolCompare(unsigned flags)
+test_F PolynomialCompare()
 {
    TestPolCompare2(2,-1,3,-1,-1);
    TestPolCompare2(2, 0,3,-1,-1);
@@ -164,13 +163,9 @@ void TestPolCompare(unsigned flags)
    while (NextField() > 0) {
       TestPolCompare1(FfOrder);
    }
-   flags = 0;
 }
 
-
-/* --------------------------------------------------------------------------
-   TestPolAdd() - Permutation addition
-   -------------------------------------------------------------------------- */
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 static void TestPolAdd1(int fl)
 {
@@ -186,6 +181,7 @@ static void TestPolAdd1(int fl)
    PolFree(c);
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 static void TestPolAdd2(int fl)
 {
@@ -209,20 +205,17 @@ static void TestPolAdd2(int fl)
    PolFree(a);
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void TestPolAdd(unsigned flags)
+test_F PolynomialAdd()
 {
    while (NextField() > 0) {
       TestPolAdd1(FfOrder);
       TestPolAdd2(FfOrder);
    }
-   flags = 0;
 }
 
-
-/* --------------------------------------------------------------------------
-   TestPolMul() - Permutation multiplication
-   -------------------------------------------------------------------------- */
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 static void TestPolMul1(int fl)
 {
@@ -264,6 +257,7 @@ static void TestPolMul1(int fl)
    PolFree(b);
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 static void TestPolMul2(int fl)
 {
@@ -294,20 +288,17 @@ static void TestPolMul2(int fl)
    }
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void TestPolMul(unsigned flags)
+test_F PolynomialMultiply()
 {
    while (NextField() > 0) {
       TestPolMul1(FfOrder);
       TestPolMul2(FfOrder);
    }
-   flags = 0;
 }
 
-
-/* --------------------------------------------------------------------------
-   TestPolMul() - Permutation multiplication
-   -------------------------------------------------------------------------- */
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 static void TestPolGcd1(int fl)
 {
@@ -360,11 +351,11 @@ static void TestPolGcd1(int fl)
    }
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void TestPolGcd(unsigned flags)
+test_F PolynomialGcd()
 {
    while (NextField() > 0) {
       TestPolGcd1(FfOrder);
    }
-   flags = 0;
 }

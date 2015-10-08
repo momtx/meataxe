@@ -8,14 +8,11 @@
 
 #include "meataxe.h"
 #include "check.h"
-#include "c-ffio.h"
 
 #include <stdlib.h>
 #include <string.h>
 
-/* --------------------------------------------------------------------------
-   TestRowIo() - Test row i/o
-   -------------------------------------------------------------------------- */
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 static void TestRowIo2(PTR row0, PTR row1, PTR buf)
 {
@@ -46,6 +43,7 @@ static void TestRowIo2(PTR row0, PTR row1, PTR buf)
    remove(file_name);
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 static void TestRowIo1()
 {
@@ -71,15 +69,16 @@ static void TestRowIo1()
    }
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void TestRowIo(unsigned flags)
+test_F RowIo()
 {
    while (NextField() > 0) {
       TestRowIo1();
    }
-   flags = 0;
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 static int CmpMat(PTR a, PTR b, int nor)
 {
@@ -94,11 +93,9 @@ static int CmpMat(PTR a, PTR b, int nor)
    return 0;
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
-/* --------------------------------------------------------------------------
-   TestHdr() - Test row i/o with header
-   -------------------------------------------------------------------------- */
-
+// Test row i/o with header
 static void TestHdr2(int noc, PTR buf1, PTR buf2, int nor)
 {
    FILE *f;
@@ -141,6 +138,7 @@ static void TestHdr2(int noc, PTR buf1, PTR buf2, int nor)
    remove(file_name);
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 static void TestHdr1()
 {
@@ -171,19 +169,16 @@ static void TestHdr1()
    }
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void TestHdr(unsigned flags)
+test_F FileHeader()
 {
    while (NextField() > 0) {
       TestHdr1();
    }
-   flags = 0;
 }
 
-
-/* --------------------------------------------------------------------------
-   TestSeek() - Test FfSeekRow()
-   -------------------------------------------------------------------------- */
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 static void TestSeek2(int noc, PTR buf1, PTR buf2, int nor)
 {
@@ -222,6 +217,7 @@ static void TestSeek2(int noc, PTR buf1, PTR buf2, int nor)
    remove(file_name);
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 static void TestSeek1()
 {
@@ -252,11 +248,11 @@ static void TestSeek1()
    }
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void TestSeek(unsigned flags)
+test_F Seek()
 {
    while (NextField() > 0) {
       TestSeek1();
    }
-   flags = 0;
 }

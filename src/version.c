@@ -4,5 +4,5 @@
 #define MKSTRING(x) MKSTRING2(x)
 
 static char Version_[] = 
-   "@(#)$MeatAxeVersion: " MTX_VERSION " (" MTXBUILDTIME ") [" MTX_CONFIG "] $";
-char *MtxVersion = Version_ + 21;
+   MTX_VERSION " (" MTXBUILDTIME ") [" MTX_CONFIG "]";
+char *MtxVersion = Version_;

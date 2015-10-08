@@ -183,6 +183,7 @@ TS_OBJS1=c-args c-bitstring c-charpol\
 TS_OBJS=$(TS_OBJS1:%=tmp/%.o) ${MTXROOT}/lib/libmtx.a
 
 tmp/c-%.o: tests/c-%.c
+	${SILENT}mkdir -p tmp
 	${SILENT}$(CC) -c $(CFLAGS) -o "$@" "$<"
 
 ${MTXBIN}/zzztest: $(TS_OBJS)

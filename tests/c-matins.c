@@ -8,12 +8,13 @@
 
 #include "meataxe.h"
 #include "check.h"
-#include "c-matins.h"
 
 #include <stdlib.h>
 #include <stdio.h>
 
-void TestMatInsert1(unsigned flags)
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+static void TestMatInsert1()
 {
    Matrix_t *mat, *a, *e, *z;
    Poly_t *pol;
@@ -67,14 +68,13 @@ void TestMatInsert1(unsigned flags)
    MatFree(mat);
    MatFree(e);
    MatFree(z);
-   flags = 0;
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void TestMatInsert(unsigned flags)
+test_F InsertMatrixIntoPolynomial()
 {
    while (NextField() > 0) {
       TestMatInsert1(FfOrder);
    }
-   flags = 0;
 }

@@ -48,5 +48,10 @@ extern void SelectField(int f);
 extern void MakeFTab();
 extern Matrix_t *MkMat(int nor, int noc, ...);
 
+Perm_t *RndPerm(int degree);
+Matrix_t *RndMat(int fl, int nor, int noc);
+Poly_t *RndPol(int fl, int mindeg, int maxdeg);
+
+
 #endif
 

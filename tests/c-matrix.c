@@ -8,7 +8,6 @@
 
 #include "meataxe.h"
 #include "check.h"
-#include "c-matrix.h"
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -17,12 +16,15 @@ MTX_DEFINE_FILE_INFO
 
 static int ErrorFlag = 0;
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
 static void MyErrorHandler(const MtxErrorRecord_t *err)
 {
    ErrorFlag = 1;
    err = NULL;
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 static int CheckError()
 {
@@ -31,6 +33,7 @@ static int CheckError()
    return i;
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 Matrix_t *RndMat(int fl, int nor, int noc)
 {
@@ -46,10 +49,7 @@ Matrix_t *RndMat(int fl, int nor, int noc)
    return a;
 }
 
-
-/* --------------------------------------------------------------------------
-   TestMatAlloc() - Matrix allocation
-   -------------------------------------------------------------------------- */
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 #define NMAT 5
 
@@ -78,8 +78,9 @@ static void TestMatAlloc1(int fl)
    MtxSetErrorHandler(old_err_handler);
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void TestMatAlloc(unsigned flags)
+test_F MatrixAllocation(unsigned flags)
 {
    while (NextField() > 0) {
       TestMatAlloc1(FfOrder);
@@ -87,6 +88,7 @@ void TestMatAlloc(unsigned flags)
    flags = 0;
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 static void ChkEch(Matrix_t *mat)
 {
@@ -120,10 +122,7 @@ static void ChkEch(Matrix_t *mat)
    }
 }
 
-
-/* --------------------------------------------------------------------------
-   TestEchelonize() - Echelonization
-   -------------------------------------------------------------------------- */
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 static void TestMatEchelonize1(Matrix_t *m, int size)
 {
@@ -157,6 +156,7 @@ static void TestMatEchelonize1(Matrix_t *m, int size)
    }
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 static void TestMatEchelonize2(Matrix_t *m, int size)
 {
@@ -177,8 +177,9 @@ static void TestMatEchelonize2(Matrix_t *m, int size)
    ChkEch(m);
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void TestMatEchelonize(unsigned flags)
+test_F TestMatEchelonize()
 {
    const int size = 10;
 
@@ -188,13 +189,9 @@ void TestMatEchelonize(unsigned flags)
       TestMatEchelonize2(m,size);
       MatFree(m);
    }
-   flags = 0;
 }
 
-
-/* --------------------------------------------------------------------------
-   TestMatCmp() - Matrix comparison
-   -------------------------------------------------------------------------- */
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 static void TestMatCompare1(Matrix_t *a, Matrix_t *b, int size)
 {
@@ -215,6 +212,7 @@ static void TestMatCompare1(Matrix_t *a, Matrix_t *b, int size)
    }
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 static void Check2(int fld1, int nor1, int noc1, int fld2, int nor2,
                    int noc2)
@@ -230,6 +228,7 @@ static void Check2(int fld1, int nor1, int noc1, int fld2, int nor2,
    }
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 static void TestMatCompare2()
 {
@@ -238,8 +237,9 @@ static void TestMatCompare2()
    Check2(2,20,20,2,30,20);
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void TestMatCompare(unsigned flags)
+test_F MatrixCompare()
 {
 
    while (NextField() > 0) {
@@ -253,15 +253,11 @@ void TestMatCompare(unsigned flags)
       }
    }
    TestMatCompare2();
-   flags = 0;
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
-/* --------------------------------------------------------------------------
-   TestMatClean() - Matrix clean
-   -------------------------------------------------------------------------- */
-
-void TestMatClean1()
+static void TestMatClean1()
 {
    Matrix_t *a =
       MkMat(4,6, 1,0,0,0,0,0,  0,1,1,0,0,0, 0,0,0,0,1,0, 0,0,1,1,0,0);
@@ -283,21 +279,18 @@ void TestMatClean1()
    MatFree(c);
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void TestMatClean(unsigned flags)
+test_F MatrixClean()
 {
    while (NextField() > 0) {
       TestMatClean1();
    }
-   flags = 0;
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
-/* --------------------------------------------------------------------------
-   TestMatInv() - Matrix inversion
-   -------------------------------------------------------------------------- */
-
-void TestMatInv1()
+static void TestMatInv1()
 {
    int i;
 
@@ -312,8 +305,9 @@ void TestMatInv1()
    }
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void TestMatInv2()
+static void TestMatInv2()
 {
    Matrix_t *a =
       MkMat(5,5, 1,2,3,0,2,  0,0,0,1,1, 0,0,1,1,0, 0,1,2,3,0, 0,0,0,0,1);
@@ -329,22 +323,19 @@ void TestMatInv2()
    MatFree(id);
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void TestMatInv(unsigned flags)
+test_F TestMatrixInversion()
 {
    while (NextField() > 0) {
       TestMatInv1();
       TestMatInv2();
    }
-   flags = 0;
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
-/* --------------------------------------------------------------------------
-   TestDup() - Matrix duplication
-   -------------------------------------------------------------------------- */
-
-void TestMatDup1(int fl, int nor, int noc)
+static void TestMatDup1(int fl, int nor, int noc)
 {
    Matrix_t *a, *b;
 
@@ -357,8 +348,9 @@ void TestMatDup1(int fl, int nor, int noc)
    MatFree(b);
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void TestMatDup(unsigned flags)
+test_F MatrixDuplication()
 {
    int nor, noc;
    MtxRandomInit(123123);
@@ -369,15 +361,11 @@ void TestMatDup(unsigned flags)
          }
       }
    }
-   flags = 0;
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
-/* --------------------------------------------------------------------------
-   TestNullSpace() - Matrix mull-space
-   -------------------------------------------------------------------------- */
-
-void TestNullSpace1(int fl, int dim)
+static void TestNullSpace1(int fl, int dim)
 {
    Matrix_t *a, *b;
    a = MatId(fl,dim);
@@ -394,8 +382,9 @@ void TestNullSpace1(int fl, int dim)
    MatFree(b);
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void TestNullSpace2(int fl, int dim)
+static void TestNullSpace2(int fl, int dim)
 {
    Matrix_t *a, *b;
    int i;
@@ -417,8 +406,9 @@ void TestNullSpace2(int fl, int dim)
    MatFree(b);
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void TestNullSpace(unsigned flags)
+test_F NullSpace()
 {
    int nor;
 
@@ -431,13 +421,9 @@ void TestNullSpace(unsigned flags)
          }
       }
    }
-   flags = 0;
 }
 
-
-/* --------------------------------------------------------------------------
-   TestMatOrder() - Matrix order
-   -------------------------------------------------------------------------- */
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 static void TestMatOrder2(Matrix_t *a, int order)
 {
@@ -446,6 +432,7 @@ static void TestMatOrder2(Matrix_t *a, int order)
    MatFree(a);
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 static void TestMatOrder1()
 {
@@ -461,19 +448,16 @@ static void TestMatOrder1()
    TestMatOrder2(a,6);
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void TestMatOrder(unsigned flags)
+test_F MatrixOrder()
 {
    while (NextField() > 0) {
       TestMatOrder1();
    }
-   flags = 0;
 }
 
-
-/* --------------------------------------------------------------------------
-   TestMatCut() - Test MatCut()
-   -------------------------------------------------------------------------- */
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 static void TestMatCut1(int fl)
 {
@@ -524,19 +508,16 @@ static void TestMatCut1(int fl)
    MatFree(a);
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void TestMatCut(unsigned flags)
+test_F TestMatrixCut()
 {
    while (NextField() > 0) {
       TestMatCut1(FfOrder);
    }
-   flags = 0;
 }
 
-
-/* --------------------------------------------------------------------------
-   TestMatCopy() - Test MatCopyRegion()
-   -------------------------------------------------------------------------- */
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 static void TestMatCopy1(int fl)
 {
@@ -586,8 +567,9 @@ static void TestMatCopy1(int fl)
    MatFree(b);
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void TestMatCopy(unsigned flags)
+test_F MatrixCopy(unsigned flags)
 {
    while (NextField() > 0) {
       TestMatCopy1(FfOrder);
@@ -595,10 +577,7 @@ void TestMatCopy(unsigned flags)
    flags = 0;
 }
 
-
-/* --------------------------------------------------------------------------
-   TestMatAddMul() - Test MatAddMul()
-   -------------------------------------------------------------------------- */
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 static void TestMatAddMul2(int fl, int nor, int noc, Matrix_t *a, Matrix_t *b,
                            Matrix_t *c)
@@ -625,6 +604,7 @@ static void TestMatAddMul2(int fl, int nor, int noc, Matrix_t *a, Matrix_t *b,
    }
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 static void TestMatAddMul1(int fl)
 {
@@ -641,20 +621,17 @@ static void TestMatAddMul1(int fl)
    }
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void TestMatAddMul(unsigned flags)
+test_F MatrixMultiplyAdd()
 {
    MtxRandomInit(1);
    while (NextField() > 0) {
       TestMatAddMul1(FfOrder);
    }
-   flags = 0;
 }
 
-
-/* --------------------------------------------------------------------------
-   TestMatId() - Test MatId()
-   -------------------------------------------------------------------------- */
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 static void TestMatId2(int fl, int dim)
 {
@@ -681,6 +658,7 @@ static void TestMatId2(int fl, int dim)
    MatFree(m);
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 static void TestMatId1(int fl)
 {
@@ -690,11 +668,11 @@ static void TestMatId1(int fl)
    }
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void TestMatId(unsigned flags)
+test_F MatrixIdentity()
 {
    while (NextField() > 0) {
       TestMatId1(FfOrder);
    }
-   flags = 0;
 }
