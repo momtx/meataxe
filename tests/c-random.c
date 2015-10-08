@@ -1,20 +1,17 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-// C MeatAxe - Tests for the command line parser
+// C MeatAxe - Tests for the pseudorandom number generator
 //
 // (C) Copyright 1998-2015 Michael Ringe, Lehrstuhl D fuer Mathematik, RWTH Aachen
 //
 // This program is free software; see the file COPYING for details.
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#include "c-random.h"
 #include "meataxe.h"
 #include "check.h"
 
 #include <string.h>
 
-/* --------------------------------------------------------------------------
-   Test1() - Check some random numbers
-   -------------------------------------------------------------------------- */
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 static void Test11(unsigned seed, const long *table)
 {
@@ -33,6 +30,7 @@ static void Test11(unsigned seed, const long *table)
    }
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 static void Test1()
 {
@@ -49,10 +47,8 @@ static void Test1()
    Test11(0,Table0);
 }
 
-
-/* --------------------------------------------------------------------------
-   Test2() - Check if the random numbers are sufficiently equally distributed
-   -------------------------------------------------------------------------- */
+////////////////////////////////////////////////////////////////////////////////////////////////////
+/// Check if the random numbers are sufficiently equally distributed
 
 static void Test21(int n, int *count)
 {
@@ -75,6 +71,7 @@ static void Test21(int n, int *count)
    }
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 static void Test2()
 {
@@ -85,10 +82,10 @@ static void Test2()
    }
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void TestRng(unsigned flags)
+test_F RandomNumberGenerator()
 {
    Test1();
    Test2();
-   flags = 0;
 }

@@ -8,19 +8,13 @@
 
 #include "meataxe.h"
 #include "check.h"
-#include "c-fileio.h"
-#include "c-matrix.h"
-#include "c-poly.h"
-#include "c-perm.h"
 
 #include <stdlib.h>
 #include <string.h>
 
-/* --------------------------------------------------------------------------
-   TestFileIo() - Test file i/o
-   -------------------------------------------------------------------------- */
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void TestFileIo(unsigned flags)
+test_F FileIo()
 {
    Matrix_t *mat1, *mat2;
    Poly_t *pol1, *pol2;
@@ -82,5 +76,4 @@ void TestFileIo(unsigned flags)
    MatFree(mat2);
    PolFree(pol2);
    PermFree(perm2);
-   flags = 0;
 }

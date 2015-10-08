@@ -8,18 +8,13 @@
 
 #include "meataxe.h"
 #include "check.h"
-#include "c-pseed.h"
 
 #include <stdlib.h>
 #include <stdio.h>
 
-/*MTX_DEFINE_FILE_INFO*/
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
-/* --------------------------------------------------------------------------
-   TestSeed() - Matrix inversion
-   -------------------------------------------------------------------------- */
-
-void TestSeed(unsigned flags)
+test_F SeedVectorGenerator()
 {
    Matrix_t *basis, *vecs, *cmp;
    PTR dummy;
@@ -51,5 +46,4 @@ void TestSeed(unsigned flags)
    MatFree(cmp);
    MatFree(basis);
    SysFree(dummy);
-   flags = 0;
 }

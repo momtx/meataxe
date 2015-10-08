@@ -1,5 +1,5 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-// C MeatAxe - Check functions for kernel.c.
+// C MeatAxe - Tests for kernel functions
 //
 // (C) Copyright 1998-2015 Michael Ringe, Lehrstuhl D fuer Mathematik, RWTH Aachen
 //
@@ -8,14 +8,11 @@
 
 #include "meataxe.h"
 #include "check.h"
-#include "c-kernel.h"
 
 #include <stdlib.h>
 #include <stdio.h>
 
-/* --------------------------------------------------------------------------
-   Testfield() - Test finite field arithmetic
-   -------------------------------------------------------------------------- */
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 static void TestField1()
 {
@@ -79,19 +76,16 @@ static void TestField1()
    }
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void TestField(unsigned flags)
+test_F FiniteFieldArithmetic()
 {
    while (NextField() > 0) {
       TestField1();
    }
-   flags = 0;
 }
 
-
-/* --------------------------------------------------------------------------
-   TestGen() - Test finite field generator
-   -------------------------------------------------------------------------- */
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 static void TestGen1()
 {
@@ -111,19 +105,16 @@ static void TestGen1()
    }
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void TestGen(unsigned flags)
+test_F FfGenerator()
 {
    while (NextField() > 0) {
       TestGen1();
    }
-   flags = 0;
 }
 
-
-/* --------------------------------------------------------------------------
-   TestInsertExtract() - Test vector insert/extract operations
-   -------------------------------------------------------------------------- */
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 static void TestInsertExtract2(PTR x, int pos)
 {
@@ -152,6 +143,7 @@ static void TestInsertExtract2(PTR x, int pos)
    }
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 static void TestInsertExtract1()
 {
@@ -166,19 +158,16 @@ static void TestInsertExtract1()
    free(x);
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void TestInsertExtract(unsigned flags)
+test_F InsertExtract()
 {
    while (NextField() > 0) {
       TestInsertExtract1();
    }
-   flags = 0;
 }
 
-
-/* --------------------------------------------------------------------------
-   TestFindPiv() - Test FfFindPivot()
-   -------------------------------------------------------------------------- */
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 static void TestFindPiv2(PTR x, int noc)
 {
@@ -205,6 +194,7 @@ static void TestFindPiv2(PTR x, int noc)
    }
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 static void TestFindPiv3(PTR x, int noc)
 {
@@ -227,6 +217,7 @@ static void TestFindPiv3(PTR x, int noc)
    }
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 static void TestFindPiv1()
 {
@@ -241,19 +232,16 @@ static void TestFindPiv1()
    }
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void TestFindPiv(unsigned flags)
+test_F FindPivot()
 {
    while (NextField() > 0) {
       TestFindPiv1();
    }
-   flags = 0;
 }
 
-
-/* --------------------------------------------------------------------------
-   TestFelToInt() - Test FEL <--> integer conversion
-   -------------------------------------------------------------------------- */
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 static void TestFelToInt1()
 {
@@ -295,19 +283,16 @@ static void TestFelToInt1()
 
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void TestFelToInt(unsigned flags)
+test_F FfToInteger()
 {
    while (NextField() > 0) {
       TestFelToInt1();
    }
-   flags = 0;
 }
 
-
-/* --------------------------------------------------------------------------
-   TestSubfield() - Test subfield embedding/restriction
-   -------------------------------------------------------------------------- */
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 static void TestSubfield1(int fld, int sub)
 {
@@ -351,11 +336,10 @@ static void TestSubfield1(int fld, int sub)
    }
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void TestSubfields(unsigned flags)
+test_F Subfields()
 {
-   printf(" 2");
-   fflush(stdout);
    TestSubfield1(256,2);
    TestSubfield1(256,4);
    TestSubfield1(256,16);
@@ -367,32 +351,20 @@ void TestSubfields(unsigned flags)
    TestSubfield1(16,2);
    TestSubfield1(16,4);
 
-   printf(" 3");
-   fflush(stdout);
    TestSubfield1(243,3);
    TestSubfield1(81,3);
    TestSubfield1(81,9);
    TestSubfield1(9,3);
 
-   printf(" 5");
-   fflush(stdout);
    TestSubfield1(125,5);
    TestSubfield1(25,5);
 
-   printf(" 7");
-   fflush(stdout);
    TestSubfield1(49,7);
 
-   printf(" 11");
-   fflush(stdout);
    TestSubfield1(121,11);
-   flags = 0;
 }
 
-
-/* --------------------------------------------------------------------------
-   TestRowOps() - Test row operations
-   -------------------------------------------------------------------------- */
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 static void TestAddRow2(PTR x, PTR y, int noc, int d1, int d2)
 {
@@ -428,6 +400,7 @@ static void TestAddRow2(PTR x, PTR y, int noc, int d1, int d2)
    }
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 static void TestAddRow1a(PTR x, PTR y, int noc)
 {
@@ -452,6 +425,7 @@ static void TestAddRow1a(PTR x, PTR y, int noc)
    }
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 static void TestAddRow1()
 {
@@ -473,19 +447,16 @@ static void TestAddRow1()
    free(y);
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void TestRowOps(unsigned flags)
+test_F RowOperations()
 {
    while (NextField() > 0) {
       TestAddRow1();
    }
-   flags = 0;
 }
 
-
-/* --------------------------------------------------------------------------
-   TestMulRow() - Test FfMulRow()
-   -------------------------------------------------------------------------- */
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 static void TestMulRow1(PTR x, int noc)
 {
@@ -527,8 +498,9 @@ static void TestMulRow1(PTR x, int noc)
 
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void TestMulRow(unsigned flags)
+test_F MulRow()
 {
    while (NextField() > 0) {
       int noc;
@@ -540,13 +512,10 @@ void TestMulRow(unsigned flags)
          free(x);
       }
    }
-   flags = 0;
 }
 
 
-/* --------------------------------------------------------------------------
-   TestPtr() - Test row pointer arithmetic
-   -------------------------------------------------------------------------- */
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 static void TestPtr2(PTR x)
 {
@@ -572,19 +541,16 @@ static void TestPtr1()
    }
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void TestPtr(unsigned flags)
+test_F RowPointerOperations()
 {
    while (NextField() > 0) {
       TestPtr1();
    }
-   flags = 0;
 }
 
-
-/* --------------------------------------------------------------------------
-   TestRowSize() - Test row sizes
-   -------------------------------------------------------------------------- */
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 static void TestRowSize1()
 {
@@ -603,19 +569,16 @@ static void TestRowSize1()
    }
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void TestRowSize(unsigned flags)
+test_F RowSize()
 {
    while (NextField() > 0) {
       TestRowSize1();
    }
-   flags = 0;
 }
 
-
-/* --------------------------------------------------------------------------
-   TestCmpRows() - Test FfCmpRows()
-   -------------------------------------------------------------------------- */
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 static void TestCmpRows2(PTR m1, PTR m2, int noc)
 {
@@ -642,6 +605,7 @@ static void TestCmpRows2(PTR m1, PTR m2, int noc)
    }
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 static void TestCmpRows1()
 {
@@ -658,11 +622,11 @@ static void TestCmpRows1()
    }
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void TestCmpRows(unsigned flags)
+test_F CompareRows(unsigned flags)
 {
    while (NextField() > 0) {
       TestCmpRows1();
    }
-   flags = 0;
 }

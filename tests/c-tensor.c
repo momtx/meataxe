@@ -8,15 +8,11 @@
 
 #include "meataxe.h"
 #include "check.h"
-#include "c-tensor.h"
-#include "c-matrix.h"
 
 #include <stdlib.h>
 #include <stdio.h>
 
-/* --------------------------------------------------------------------------
-   TestMatId() - Test MatId()
-   -------------------------------------------------------------------------- */
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 static void TestMatTensor2(int fl, int dim)
 {
@@ -55,6 +51,7 @@ static void TestMatTensor2(int fl, int dim)
    }
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 static void TestMatTensor1(int fl)
 {
@@ -64,52 +61,12 @@ static void TestMatTensor1(int fl)
    }
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void TestMatTensor(unsigned flags)
+test_F TestMatTensor()
 {
    MtxRandomInit(0);
-
-#if 0
-   {
-      Matrix_t *a, *b;
-      int i;
-      int t0, t1;
-
-      SelectField(2);
-      a = RndMat(2,50,50);
-      b = RndMat(2,50,50);
-      t0 = SysTimeUsed();
-      for (i = 0; i < 10; ++i) {
-         MatFree(MatTensor(a,b));
-         printf(".");
-         fflush(stdout);
-      }
-      t1 = SysTimeUsed() - t0;
-      printf("GF(2): %d.%d\n",t1 / 10,t1 % 10);
-      MatFree(a);
-      MatFree(b);
-
-      SelectField(3);
-      a = RndMat(3,50,50);
-      b = RndMat(3,50,50);
-      t0 = SysTimeUsed();
-      for (i = 0; i < 10; ++i) {
-         MatFree(MatTensor(a,b));
-         printf(".");
-         fflush(stdout);
-      }
-      t1 = SysTimeUsed() - t0;
-      printf("GF(3): %d.%d\n",t1 / 10,t1 % 10);
-      MatFree(a);
-      MatFree(b);
-
-      exit(0);
-
-   }
-#endif
-
    while (NextField() > 0) {
       TestMatTensor1(FfOrder);
    }
-   flags = 0;
 }

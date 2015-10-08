@@ -6,13 +6,14 @@
 // This program is free software; see the file COPYING for details.
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#include "c-sets.h"
 #include "check.h"
 #include "meataxe.h"
 
 #include <string.h>
 
 MTX_DEFINE_FILE_INFO
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 static int ErrorFlag = 0;
 
@@ -22,6 +23,7 @@ static void MyErrorHandler(const MtxErrorRecord_t *err)
    err = NULL;
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 static int CheckError()
 {
@@ -30,14 +32,11 @@ static int CheckError()
    return i;
 }
 
-
-/* --------------------------------------------------------------------------
-   TestSetAlloc() - Set allocation
-   -------------------------------------------------------------------------- */
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 #define NMAT 5
 
-void TestSetAlloc(unsigned flags)
+test_F SetAllocaction()
 {
    Set_t  *m[NMAT];
    MtxErrorHandler_t *old_err_handler;
@@ -63,15 +62,11 @@ void TestSetAlloc(unsigned flags)
       }
    }
    MtxSetErrorHandler(old_err_handler);
-   flags = 0;
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
-/* --------------------------------------------------------------------------
-   TestSetOp() - Set insert/test
-   -------------------------------------------------------------------------- */
-
-void TestSetOp(unsigned flags)
+test_F SetBasicOperations()
 {
    Set_t *s;
    long d[100];
@@ -105,5 +100,4 @@ void TestSetOp(unsigned flags)
       }
    }
    SetFree(s);
-   flags = 0;
 }

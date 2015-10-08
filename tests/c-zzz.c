@@ -9,28 +9,6 @@
 #include "meataxe.h"
 #include "check.h"
 
-#include "c-args.h"
-#include "c-charpol.h"
-#include "c-ffio.h"
-#include "c-fileio.h"
-#include "c-ffmat.h"
-#include "c-ffrow.h"
-#include "c-fpoly.h"
-#include "c-grease.h"
-#include "c-kernel.h"
-#include "c-matrix.h"
-#include "c-matins.h"
-#include "c-matset.h"
-#include "c-os.h"
-#include "c-perm.h"
-#include "c-poly.h"
-#include "c-pseed.h"
-#include "c-quot.h"
-#include "c-random.h"
-#include "c-sets.h"
-#include "c-stf.h"
-#include "c-tensor.h"
-
 #include <stdlib.h>
 #include <string.h>
 
@@ -76,7 +54,6 @@ static MtxApplicationInfo_t AppInfo = {
    MTX_COMMON_OPTIONS_DESCRIPTION
 };
 
-MTX_DEFINE_FILE_INFO
 
 /* --------------------------------------------------------------------------
    Error() - Print error message and exit
@@ -124,8 +101,6 @@ int NextField()
    int f = Fields[NextFieldIndex];
    if (f > 0) {
       ++NextFieldIndex;
-      printf(" %d",f);
-      fflush(stdout);
       FfSetField(f);
       MakeFTab();
    }
@@ -139,8 +114,6 @@ int NextField()
 
 void SelectField(int f)
 {
-   printf(" %d",f);
-   fflush(stdout);
    FfSetField(f);
    MakeFTab();
 }
@@ -179,36 +152,6 @@ Matrix_t *MkMat(int nor, int noc, ...)
    -------------------------------------------------------------------------- */
 
 #define CHECK_FUNCTION_TABLE
-
-struct {
-   int Id;
-   const char *Name;
-   void (*Func)(unsigned);
-}
-TestFunctions[] = {
-#include "c-random.h"
-#include "c-os.h"
-#include "c-ffmat.h"
-#include "c-grease.h"
-#include "c-kernel.h"
-#include "c-matset.h"
-#include "c-matrix.h"
-#include "c-args.h"
-#include "c-tensor.h"
-#include "c-ffrow.h"
-#include "c-matins.h"
-#include "c-quot.h"
-#include "c-perm.h"
-#include "c-charpol.h"
-#include "c-sets.h"
-#include "c-fpoly.h"
-#include "c-fileio.h"
-#include "c-poly.h"
-#include "c-pseed.h"
-#include "c-ffio.h"
-#include "c-stf.h"
-   { -1, NULL, NULL }
-};
 
 static int prtables(int field)
 {
@@ -303,29 +246,12 @@ int main(int argc, const char **argv)
 #endif
 
    printf("MeatAxe Version %s\n",MtxVersion);
-   for (i = 0; TestFunctions[i].Name != NULL; ++i) {
-      int id = TestFunctions[i].Id;
-      int k;
-      for (k = i + 1; TestFunctions[k].Name != NULL; ++k) {
-         if (TestFunctions[k].Id == id) {
-            MTX_ERROR1("Duplicate test function id %d",id);
-         }
-      }
-   }
 
    for( i = 0; i < sizeof(test_AllTests)/sizeof(test_AllTests[0]); ++i) {
        printf("+ %s\n", test_AllTests[i].name);
        fflush(stdout);
        test_AllTests[i].f();
-   }
-
-
-   for (i = 0; TestFunctions[i].Name != NULL; ++i) {
-      printf("Test %4.4d: %s",TestFunctions[i].Id,TestFunctions[i].Name);
-      fflush(stdout);
-      NextFieldIndex = 0;
-      TestFunctions[i].Func(0);
-      printf(" Ok\n");
+       NextFieldIndex = 0;
    }
    printf("All tests passed\n");
    return 0;

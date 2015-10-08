@@ -6,12 +6,13 @@
 // This program is free software; see the file COPYING for details.
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#include "c-os.h"
 #include "meataxe.h"
 #include "check.h"
 
 #include <string.h>
 #include <stdlib.h>
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 static void CheckMem(char *x, char val, int len)
 {
@@ -24,6 +25,7 @@ static void CheckMem(char *x, char val, int len)
    }
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 static void TestAlloc()
 {
@@ -61,9 +63,12 @@ static void TestAlloc()
    }
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
-FILE *SysFopen(const char *name, int mode);
-int SysFseek(FILE *file, long pos);
+//FILE *SysFopen(const char *name, int mode);
+//int SysFseek(FILE *file, long pos);
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 static void TestFiles()
 {
@@ -104,23 +109,20 @@ static void TestFiles()
    remove("check1");
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void TestOs(unsigned flags)
+test_F OsFunctions()
 {
    TestAlloc();
    TestFiles();
-   flags = 0;
 }
 
-
-/* --------------------------------------------------------------------------
-   TestIntIo() - Test SysReadLong() and SysWriteLong()
-   -------------------------------------------------------------------------- */
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 /* Create values between -2^31 and 2^31 */
 #define VAL(i) ((long) ((69069 * (i) + 1) & 0x7FFFFFFF) * (long) (1 - 2 * (i % 2)))
 
-void TestIntIo1(long *buf, int bufsize, int safe)
+static void TestIntIo1(long *buf, int bufsize, int safe)
 {
    int i, k;
    FILE *f;
@@ -163,8 +165,9 @@ void TestIntIo1(long *buf, int bufsize, int safe)
    remove("check1");
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void TestIntIo2()
+static void TestIntIo2()
 {
    FILE *f;
    char buf[16] = {1,0,0,0, 0,2,0,0, 0,0,3,0, 0,0,0,4};
@@ -193,13 +196,13 @@ void TestIntIo2()
    remove("check1");
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void TestIntIo(unsigned flags)
+test_F IntegerIo()
 {
    long *buf;
    buf = NALLOC(long,10000 + 2000);
    TestIntIo1(buf,10000,2000);
    TestIntIo2();
    free(buf);
-   flags = 0;
 }

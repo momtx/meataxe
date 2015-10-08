@@ -183,6 +183,7 @@ TS_OBJS1=c-args c-bitstring c-charpol\
 TS_OBJS=$(TS_OBJS1:%=tmp/%.o) ${MTXROOT}/lib/libmtx.a
 
 tmp/c-%.o: tests/c-%.c
+	${SILENT}mkdir -p tmp
 	${SILENT}$(CC) -c $(CFLAGS) -o "$@" "$<"
 
 ${MTXBIN}/zzztest: $(TS_OBJS)
@@ -219,7 +220,7 @@ tmp/c-zzz.o: tests/c-zzz.c tmp/test_table.c
 
 tmp/zzztest.done: ${MTXBIN}/zzztest
 	mkdir -p tmp
-	cd tmp && ../xxxxxxbin/zzztest
+	cd tmp && ${MTXBIN}/zzztest
 	touch $@
 
 tmp/t-%.done: tmp/mk.dir tests/t-% tmp/t.config ${MTXBIN}/checksum build

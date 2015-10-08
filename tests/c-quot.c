@@ -8,19 +8,15 @@
 
 #include "meataxe.h"
 #include "check.h"
-#include "c-quot.h"
-#include "c-matrix.h"
 
 #include <stdlib.h>
 #include <stdio.h>
 
 /*MTX_DEFINE_FILE_INFO*/
 
-/* --------------------------------------------------------------------------
-   TestMatQuotProj1() - Test QProjection()
-   -------------------------------------------------------------------------- */
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void TestQuotProj1()
+static void TestQuotProj1()
 {
    Matrix_t *sub =
       MkMat(3,5, 1,0,0,0,0, 0,1,1,0,1, 0,0,0,1,1);
@@ -56,8 +52,9 @@ void TestQuotProj1()
    MatFree(prj[1]);
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void TestQuotProj2()
+static void TestQuotProj2()
 {
    int size;
    MtxRandomInit(112);
@@ -87,22 +84,19 @@ void TestQuotProj2()
    }
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void TestQuotProj(unsigned flags)
+test_F QuotientProjection()
 {
    while (NextField() > 0) {
       TestQuotProj1();
       TestQuotProj2();
    }
-   flags = 0;
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
-/* --------------------------------------------------------------------------
-   TestMatQuotop() - Test QAction()
-   -------------------------------------------------------------------------- */
-
-void TestQuotOp1()
+static void TestQuotOp1()
 {
    Matrix_t *sub =
       MkMat(3,5, 1,0,0,0,0, 0,1,1,0,1, 0,0,0,1,1);
@@ -139,11 +133,11 @@ void TestQuotOp1()
    MatFree(op[1]);
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void TestQuotOp(unsigned flags)
+test_F QuotientAction()
 {
    while (NextField() > 0) {
       TestQuotOp1();
    }
-   flags = 0;
 }

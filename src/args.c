@@ -277,7 +277,7 @@ static void PrintHelp(const MtxApplicationInfo_t *ai)
     }
     else
     {
-	printf("NAME\n    %s - %s\n    Revision %s\n\n",
+	printf("NAME\n    %s - %s\n    Version %s\n\n",
 	      ai->Name,ai->Description,v);
 	printf("%s\n",ai->Help);
     }

@@ -6,18 +6,13 @@
 // This program is free software; see the file COPYING for details.
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#include "c-charpol.h"
 #include "meataxe.h"
 #include "check.h"
 
 #include <stdlib.h>
 #include <stdio.h>
 
-/*MTX_DEFINE_FILE_INFO*/
-
-/* --------------------------------------------------------------------------
-   TestCharPol() - Characteristic polynomial
-   -------------------------------------------------------------------------- */
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 static void CheckPoly(Poly_t *p, int degree, ...)
 {
@@ -34,8 +29,9 @@ static void CheckPoly(Poly_t *p, int degree, ...)
    PolFree(p);
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void TestCharPol(unsigned flags)
+test_F CharacteristicPolynomial()
 {
    Matrix_t *a;
    Poly_t *pf;
@@ -54,5 +50,4 @@ void TestCharPol(unsigned flags)
    pf = CharPolFactor(NULL);
    if (pf != NULL) { Error("too many factors"); }
    MatFree(a);
-   flags = 0;
 }

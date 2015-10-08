@@ -8,16 +8,12 @@
 
 #include "meataxe.h"
 #include "check.h"
-#include "c-matrix.h"
-#include "c-matset.h"
 
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 
-/* --------------------------------------------------------------------------
-   TestMsClean() - Test MsClean
-   -------------------------------------------------------------------------- */
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 static void TestMsClean1(MatrixSet_t *set)
 {
@@ -49,8 +45,9 @@ static void TestMsClean1(MatrixSet_t *set)
    MatFree(zero);
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void TestMsClean(unsigned flags)
+test_F MatrixSetClean()
 {
    MtxRandomInit(0);
    while (NextField() > 0) {
@@ -59,15 +56,11 @@ void TestMsClean(unsigned flags)
       TestMsClean1(set);
       MsFree(set);
    }
-   flags = 0;
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
-/* --------------------------------------------------------------------------
-   TestMsAlloc() - Test matrix set creation/destruction
-   -------------------------------------------------------------------------- */
-
-void TestMsAlloc(unsigned flags)
+test_F MatrixSetAllocation()
 {
    while (NextField() > 0) {
       Matrix_t *m1, *m2;
@@ -91,5 +84,4 @@ void TestMsAlloc(unsigned flags)
          Error("MsFree() did not destroy matrices");
       }
    }
-   flags = 0;
 }
