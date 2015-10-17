@@ -1,0 +1,23 @@
+# Decomposition
+
+. ../tests/common.sh
+
+
+cp ../tests/data/ac.? .
+chop -Q -g 2 ac || error "CHOP failed"
+pwkond -Qt ac || error "PWKOND failed"
+mkhom -Q -t -s ac ac end ||  error "MKHOM failed"
+if [ ! -r end.8 -o -r end.9 ]; then error "Wrong number of endomorphisms"; fi
+for g in 1 2; do
+   for e in 1 2 3 4; do
+       zmu ac.std.$g end.$e a
+       zmu end.$e ac.std.$g b
+       cmp a b || error "Endomorphism does not commute with generators"
+   done
+done
+
+
+
+# Clean up
+# --------
+rm -f ac* end* a b

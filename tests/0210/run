@@ -1,0 +1,26 @@
+# Test tensor condensation of 378x378 (Ru)
+
+. ../tests/common.sh
+
+
+cp ../tests/data/Ru-* .
+chop -Q -g 4 Ru-K378 || error "CHOP failed"
+checksum Ru-K37816a.1 140.4266387334 || exit 1
+checksum Ru-K37816a.2 140.1949646745 || exit 1
+checksum Ru-K37820a.1 212.4080859098 || exit 1
+checksum Ru-K37820a.2 212.2255477776 || exit 1
+checksum Ru-K37824a.1 300.891136837 || exit 1
+checksum Ru-K37824a.2 300.285513747 || exit 1
+
+pwkond -Qbt Ru-K378 || error "PWKOND failed"
+checksum Ru-K378.ssb 71454.449071558 || exit 1
+
+precond -Q tp Ru-K378 Ru-K378 || error "PRECOND failed"
+tcond -Q -g 2 tp Ru-M378 Ru-M378 result || error "TCOND failed"
+checksum result.1 9260.4214749600 || exit 1
+checksum result.2 9260.3960108909 || exit 1
+
+
+# Clean up
+# --------
+rm -f Ru-* tp* result*

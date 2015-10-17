@@ -10,17 +10,17 @@ for f in 2 5 9 25 67 125 256 ; do
     zsi -Q m n s2 i2 || exit 1
     zsi -Q ../tests/data/Mat$f m s3 i3 || exit 1
     zsi -Q q m s4 i4 || exit 1
-    zpt -Q -r 8 -c 1 x$f s1 s2 s3 s4 i1 i2 i3 i4 || exit 1
+    zpt -Q -r 8 -c 1 tmp.$$.x$f s1 s2 s3 s4 i1 i2 i3 i4 || exit 1
     rm -f m n q s1 s2 i1 i2 s3 i3 s4 i4
 done
-checksum x2 384.1740937932 || exit 1
-checksum x5 1004.2214196534 || exit 1
-checksum x25 2988.692851586 || exit 1
-checksum x256 2988.2785643016 || exit 1
-checksum x125 2988.347859245 || exit 1
-checksum x9 1500.4013879445 || exit 1
-checksum x67 2988.526555067 || exit 1
+checksum tmp.$$.x2 384.1740937932 || exit 1
+checksum tmp.$$.x5 1004.2214196534 || exit 1
+checksum tmp.$$.x25 2988.692851586 || exit 1
+checksum tmp.$$.x256 2988.2785643016 || exit 1
+checksum tmp.$$.x125 2988.347859245 || exit 1
+checksum tmp.$$.x9 1500.4013879445 || exit 1
+checksum tmp.$$.x67 2988.526555067 || exit 1
 
 # Clean up
 # --------
-rm -f x2 x5 x9 x25 x67 x125 x256
+rm -f tmp.$$.*

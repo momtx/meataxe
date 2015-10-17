@@ -6,65 +6,65 @@
 
 . ../tests/common.sh
 
-# Run the test
-# ------------
-cp ../tests/data/m11.1 ../tests/data/m11.2 .
-chop -Q m11 || error "CHOP failed"
-checksum m111a.1 13.2359650973 || error "Constituent 1a.1 wrong"
-checksum m111a.2 13.2359650973 || error "Constituent 1a.2 wrong"
-checksum m1110a.1 32.3270281250 || error "Constituent 10a.1 wrong"
-checksum m1110a.2 32.2918863322 || error "Constituent 10a.2 wrong"
-checksum m1144a.1 276.823230476 || error "Constituent 44a.1 wrong"
-checksum m1144a.2 276.660717847 || error "Constituent 44a.2 wrong"
+cp ../tests/data/m11.1 tmp.$$.m11.1
+cp ../tests/data/m11.2 tmp.$$.m11.2
 
-pwkond -Qt m11 || error "PWKOND failed"
-grep '^CFInfo.PeakWord.*73,2,1,0,1.*17,2,1,1,1.*307,2,1,1,1' m11.cfinfo > /dev/null \
+chop -Q tmp.$$.m11 || error "CHOP failed"
+checksum tmp.$$.m111a.1 13.2359650973 || error "Constituent 1a.1 wrong"
+checksum tmp.$$.m111a.2 13.2359650973 || error "Constituent 1a.2 wrong"
+checksum tmp.$$.m1110a.1 32.3270281250 || error "Constituent 10a.1 wrong"
+checksum tmp.$$.m1110a.2 32.2918863322 || error "Constituent 10a.2 wrong"
+checksum tmp.$$.m1144a.1 276.823230476 || error "Constituent 44a.1 wrong"
+checksum tmp.$$.m1144a.2 276.660717847 || error "Constituent 44a.2 wrong"
+
+pwkond -Qt tmp.$$.m11 || error "PWKOND failed"
+grep '^CFInfo.PeakWord.*73,2,1,0,1.*17,2,1,1,1.*307,2,1,1,1' tmp.$$.m11.cfinfo > /dev/null \
   || error "Bad peak word in .cfinfo"
-checksum m1110a.1k 14.611010609 || exit 1
-checksum m1110a.2k 14.611010609 || exit 1
-checksum m1110a.im 1552.1241176322 || exit 1
-checksum m1110a.k 40.1412858738 || exit 1
-checksum m1110a.np 14.3386100497 || exit 1
-checksum m1110a.op 92.1437228538 || exit 1
-checksum m1110a.std.1 32.1265501553 || exit 1
-checksum m1110a.std.2 32.2197623699 || exit 1
-checksum m111a.1 13.2359650973 || exit 1
-checksum m111a.1k 16.3951678416 || exit 1
-checksum m111a.2 13.2359650973 || exit 1
-checksum m111a.2k 16.4139868865 || exit 1
-checksum m111a.im 1524.2639815474 || exit 1
-checksum m111a.k 68.3040373077 || exit 1
-checksum m111a.np 16.1448335002 || exit 1
-checksum m111a.op 20.3631149252 || exit 1
-checksum m111a.std.1 13.2359650973 || exit 1
-checksum m111a.std.2 13.2359650973 || exit 1
-checksum m1144a.1k 14.611010609 || exit 1
-checksum m1144a.2k 14.611010609 || exit 1
-checksum m1144a.im 1552.1740282120 || exit 1
-checksum m1144a.k 40.2150449594 || exit 1
-checksum m1144a.np 14.611010609 || exit 1
-checksum m1144a.op 364.2851971165 || exit 1
-checksum m1144a.std.1 276.3068028647 || exit 1
-checksum m1144a.std.2 276.1284419087 || exit 1
+checksum tmp.$$.m1110a.1k 14.611010609 || exit 1
+checksum tmp.$$.m1110a.2k 14.611010609 || exit 1
+checksum tmp.$$.m1110a.im 1552.1241176322 || exit 1
+checksum tmp.$$.m1110a.k 40.1412858738 || exit 1
+checksum tmp.$$.m1110a.np 14.3386100497 || exit 1
+checksum tmp.$$.m1110a.op 92.1437228538 || exit 1
+checksum tmp.$$.m1110a.std.1 32.1265501553 || exit 1
+checksum tmp.$$.m1110a.std.2 32.2197623699 || exit 1
+checksum tmp.$$.m111a.1 13.2359650973 || exit 1
+checksum tmp.$$.m111a.1k 16.3951678416 || exit 1
+checksum tmp.$$.m111a.2 13.2359650973 || exit 1
+checksum tmp.$$.m111a.2k 16.4139868865 || exit 1
+checksum tmp.$$.m111a.im 1524.2639815474 || exit 1
+checksum tmp.$$.m111a.k 68.3040373077 || exit 1
+checksum tmp.$$.m111a.np 16.1448335002 || exit 1
+checksum tmp.$$.m111a.op 20.3631149252 || exit 1
+checksum tmp.$$.m111a.std.1 13.2359650973 || exit 1
+checksum tmp.$$.m111a.std.2 13.2359650973 || exit 1
+checksum tmp.$$.m1144a.1k 14.611010609 || exit 1
+checksum tmp.$$.m1144a.2k 14.611010609 || exit 1
+checksum tmp.$$.m1144a.im 1552.1740282120 || exit 1
+checksum tmp.$$.m1144a.k 40.2150449594 || exit 1
+checksum tmp.$$.m1144a.np 14.611010609 || exit 1
+checksum tmp.$$.m1144a.op 364.2851971165 || exit 1
+checksum tmp.$$.m1144a.std.1 276.3068028647 || exit 1
+checksum tmp.$$.m1144a.std.2 276.1284419087 || exit 1
 
-mkcycl -Q m11 || error "MKCYCL FAILED"
-mkinc -Q m11 || error "MKINC FAILED"
-mkdotl -Q m11 || error "MKDOTL FAILED"
-mksub -Q m11 || error "MKSUB FAILED"
+mkcycl -Q tmp.$$.m11 || error "MKCYCL FAILED"
+mkinc -Q tmp.$$.m11 || error "MKINC FAILED"
+mkdotl -Q tmp.$$.m11 || error "MKDOTL FAILED"
+mksub -Q tmp.$$.m11 || error "MKSUB FAILED"
 
-checksum m11.v 152.3413766612  || exit 1
-checksum m11.inc 144.3930496644 || exit 1
-checksum m11.dot 32.3727123809 || exit 
-checksum m11.lat 357.4054356842 || exit 1
+checksum tmp.$$.m11.v 152.3413766612  || exit 1
+checksum tmp.$$.m11.inc 144.3930496644 || exit 1
+checksum tmp.$$.m11.dot 32.3727123809 || exit 
+checksum tmp.$$.m11.lat 357.4054356842 || exit 1
 
-soc -Q m11 || error "SOC failed"
-rad -Q m11 || error "RAD failed"
+soc -Q tmp.$$.m11 || error "SOC failed"
+rad -Q tmp.$$.m11 || error "RAD failed"
 
-grep '^CFInfo.Socles.*\[\[1,0,0\],\[0,1,1\],\[2,0,0\],\[0,1,1\],\[1,0,0\]\]' m11.cfinfo >/dev/null \
+grep '^CFInfo.Socles.*\[\[1,0,0\],\[0,1,1\],\[2,0,0\],\[0,1,1\],\[1,0,0\]\]' tmp.$$.m11.cfinfo >/dev/null \
   || error "Bad socles in .cfinfo"
-grep '^CFInfo.Heads.*\[\[1,0,0\],\[0,1,1\],\[2,0,0\],\[0,1,1\],\[1,0,0\]\];' m11.cfinfo >/dev/null \
+grep '^CFInfo.Heads.*\[\[1,0,0\],\[0,1,1\],\[2,0,0\],\[0,1,1\],\[1,0,0\]\];' tmp.$$.m11.cfinfo >/dev/null \
   || error "Bad heads in .cfinfo"
 
 # Clean up
 # --------
-rm -f m11* 
+rm -f tmp.$$.m11* 
