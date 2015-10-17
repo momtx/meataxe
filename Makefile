@@ -1,13 +1,9 @@
-
 # ------------------------------------------------------------------------------
 # Build-time configuration
 #
-# Note 1: don't change the settings below. Instead, write you customized
-# settings to Makefile.conf. This will make upgrading to a new version of
-# the MeatAxe easier.
-#
-# Note 2: even if you use the default settings you must create an empty
-# Makefile.conf to build the MeatAxe.
+# Don't change the settings here. Instead, write your customized settings to
+# Makefile.conf. This will make upgrading to a new version of the MeatAxe
+# easier.
 # ------------------------------------------------------------------------------
 
 # Directory where binaries and run-time files will be installed.
@@ -69,11 +65,10 @@ clean:
 	-cd tests; make clean
 
 Makefile.conf:
-	@echo "------"
-	@echo "Create Makefile.conf (which may be empty) and try again"
-	@echo "Read the Makefile for more information"
-	@echo "------"
-	@false
+	@echo "*** Creating empty Makefile.conf"
+	@echo "*** See Makefile for more information"
+	@sleep 5
+	touch "$@"
 
 # ------------------------------------------------------------------------------
 # Compile C sources

@@ -251,7 +251,7 @@ programs and how to use them.
 @section start_compile Compiling
 
 Instructions for compiling and installing the MeatAxe can be found in the file
-README, which is included in the distribution package.
+README.md, which is included in the distribution package.
 There are several options which can be defined at compile time:
 
 @par @c MTXBIN
