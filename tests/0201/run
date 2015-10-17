@@ -3,9 +3,7 @@
 
 . ../tests/common.sh
 
-MTX_TEST_DIR="../tests/${MTX_TEST_ID}"
-
-cp "${MTX_TEST_DIR}/ac.1" "${MTX_TEST_DIR}/ac.2" .
+cp ../tests/data/ac.1 ../tests/data/ac.2 .
 chop -Q ac || error "CHOP failed"
 pwkond -Qt ac || error "PWKOND failed"
 mkcycl -Q ac || error "MKCYCL FAILED"

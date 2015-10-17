@@ -1,0 +1,28 @@
+# ZMO/ZKD
+
+. ../tests/common.sh
+
+
+cp ../tests/data/Perm1 x.1
+cp ../tests/data/Perm2 y.1
+zmo -Q -g 1 x xorb
+zmo -Q -g 1 y yorb
+
+zkd -Q 2 xorb y.1 yk2
+zkd -Q 2 yorb x.1 xk2
+
+zkd -Q 67 xorb y.1 yk67
+zkd -Q 67 yorb x.1 xk67
+
+checksum xk2 36.4104902758 || exit 1
+checksum xk67 156.4003365128 || exit 1
+checksum yk2 42.210610943 || exit 1
+checksum yk67 237.2386581868 || exit 1
+
+# Clean up
+# --------
+rm -f xorb yorb x.1 y.1 xk* yk*
+
+
+
+

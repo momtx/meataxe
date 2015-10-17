@@ -1,0 +1,21 @@
+# Test ZPR -G
+
+. ../tests/common.sh
+
+
+zpr -G ../tests/data/Perm1 p1
+zpr -G ../tests/data/Perm2 p2
+checksum p1 89.1843631757 || exit 1
+checksum p2 89.844334804 || exit 1
+
+zpr -G ../tests/data/Mat2 x2
+zpr -G ../tests/data/Mat25 x25
+zpr -G ../tests/data/Mat67 x67
+checksum x2 1251.4048248722 || exit 1
+checksum x25 5111.3837421290 || exit 1
+checksum x67 1578.4086279539 || exit 1
+
+
+# Clean up
+# --------
+rm -f p1 p2 x2 x25 x67

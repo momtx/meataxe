@@ -1,0 +1,15 @@
+# Test ZCP
+
+. ../tests/common.sh
+
+zcp ../tests/data/ac.1 > zcp.log || error "ZCP failed"
+zcp -f ../tests/data/ac.1 >> zcp.log || error "ZCP failed"
+zcp -G ../tests/data/ac.1 >> zcp.log || error "ZCP failed"
+zcp ../tests/data/ac.2 >> zcp.log || error "ZCP failed"
+zcp -f ../tests/data/ac.2 >> zcp.log || error "ZCP failed"
+zcp -G ../tests/data/ac.2 >> zcp.log || error "ZCP failed"
+checksum zcp.log 4399.265798641 || exit 1
+
+# Clean up
+# --------
+rm -f zcp.log
