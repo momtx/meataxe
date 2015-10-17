@@ -1,0 +1,20 @@
+# Test ZMO.
+# Run ZMO on two permutations with different seed points.
+
+. ../tests/common.sh
+
+cp ../tests/data/Perm1 x.1
+cp ../tests/data/Perm2 x.2
+zmo -Q x orb1
+zmo -s 2 -Q x orb2
+zmo -s 5 -Q x orb5
+zmo -s 12 -Q x orb12
+checksum orb1 140.3351884555 || exit 1
+checksum orb2 140.3351884555 || exit 1
+checksum orb5 140.3351884555 || exit 1
+checksum orb12 140.3993436787 || exit 1
+
+# Clean up
+# --------
+rm -f x.1 x.2 orb*
+

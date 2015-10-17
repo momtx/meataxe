@@ -1,0 +1,26 @@
+# Test ZTE
+
+. ../tests/common.sh
+
+zte ../tests/data/Perm1 ../tests/data/Perm2 x1 || error "ZTE failed"
+checksum x1 1612.4035182646 || exit 1
+
+zte ../tests/data/Mat2 ../tests/data/Mat2 x2 || error "ZTE failed"
+checksum x2 41484.1750919850 || exit 1
+zte ../tests/data/Mat5 ../tests/data/Mat5 x3 || error "ZTE failed"
+checksum x3 110604.1725989114 || exit 1
+zte ../tests/data/Mat9 ../tests/data/Mat9 x4 || error "ZTE failed"
+checksum x4 165900.1690157962 || exit 1
+zte ../tests/data/Mat25 ../tests/data/Mat25 x5 || error "ZTE failed"
+checksum x5 331788.373389295 || exit 1
+zte ../tests/data/Mat67 ../tests/data/Mat67 x6 || error "ZTE failed"
+checksum x6 331788.1207955285 || exit 1
+zte ../tests/data/Mat125 ../tests/data/Mat125 x7 || error "ZTE failed"
+checksum x7 331788.1186469864 || exit 1
+zte ../tests/data/Mat256 ../tests/data/Mat256 x8 || error "ZTE failed"
+checksum x8 331788.2568263515 || exit 1
+
+# Clean up
+# --------
+rm -f x1 x2 x3 x4 x5 x6 x7 x8
+

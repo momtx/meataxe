@@ -1,0 +1,15 @@
+# Test ZOR.
+# Calculate various orders of permutations and matrices.
+
+. ../tests/common.sh
+
+test "`zor ../tests/data/Perm1`" = "ELEMENT 1 HAS ORDER 2" || error "Bad order: Perm1"
+test "`zor ../tests/data/Perm2`" = "ELEMENT 1 HAS ORDER 5" || error "Bad order: Perm2"
+test "`zor ../tests/data/C0.1`" = "ORDER IS 2" || error "Bad order: C0.1"
+test "`zor ../tests/data/C0.2`" = "ORDER IS 23" || error "Bad order: C0.2"
+test "`zor ../tests/data/ac.1`" = "ORDER IS 2" || error "Bad order: ac.1"
+test "`zor ../tests/data/ac.2`" = "ORDER IS 6" || error "Bad order: ac.2"
+
+for f in $TEST_FIELDS ; do 
+    test "`zor ../tests/data/Mat$f`" = "ORDER IS 23" || error "Bad order: Mat$f"
+done

@@ -6,11 +6,9 @@
 
 . ../tests/common.sh
 
-MTX_TEST_DIR="../tests/${MTX_TEST_ID}"
-
 # Run the test
 # ------------
-cp ${MTX_TEST_DIR}/m11.1 ${MTX_TEST_DIR}/m11.2 .
+cp ../tests/data/m11.1 ../tests/data/m11.2 .
 chop -Q m11 || error "CHOP failed"
 checksum m111a.1 13.2359650973 || error "Constituent 1a.1 wrong"
 checksum m111a.2 13.2359650973 || error "Constituent 1a.2 wrong"
