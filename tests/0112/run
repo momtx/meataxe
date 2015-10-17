@@ -34,5 +34,5 @@ checksum tmp.$$.x256 636.811420983
 
 # Clean up
 # --------
-rm -rf tmp.$$.*
+rm -f tmp.$$.*
 

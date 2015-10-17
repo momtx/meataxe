@@ -22,5 +22,5 @@ checksum tmp.$$.x8 331788.2568263515 || exit 1
 
 # Clean up
 # --------
-rm -f tmp.$$.x1 tmp.$$.x2 tmp.$$.x3 tmp.$$.x4 tmp.$$.x5 tmp.$$.x6 tmp.$$.x7 tmp.$$.x8
+rm -f tmp.$$.*
 

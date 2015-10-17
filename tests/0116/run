@@ -3,10 +3,10 @@
 . ../tests/common.sh
 
 
-zpr -G ../tests/data/Perm1 p1
-zpr -G ../tests/data/Perm2 p2
-checksum p1 89.1843631757 || exit 1
-checksum p2 89.844334804 || exit 1
+zpr -G ../tests/data/Perm1 tmp.$$.p1
+zpr -G ../tests/data/Perm2 tmp.$$.p2
+checksum tmp.$$.p1 89.1843631757 || exit 1
+checksum tmp.$$.p2 89.844334804 || exit 1
 
 zpr -G ../tests/data/Mat2 tmp.$$.x2
 zpr -G ../tests/data/Mat25 tmp.$$.x25
@@ -18,4 +18,4 @@ checksum tmp.$$.x67 1578.4086279539 || exit 1
 
 # Clean up
 # --------
-rm -f p1 p2 tmp.$$.*
+rm -f tmp.$$.*

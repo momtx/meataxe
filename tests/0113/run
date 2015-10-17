@@ -22,5 +22,5 @@ checksum tmp.$$.x4 11412.1035840264 || exit 1
 
 # Clean up
 # --------
-rm -f tmp.$$.x1 tmp.$$.x2 tmp.$$.x3 tmp.$$.x4 m9 m67 m25
+rm -f tmp.$$.*
 

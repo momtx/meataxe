@@ -2,14 +2,13 @@
 
 . ../tests/common.sh
 
-rm -f f1 f2 f3
+rm -f tmp.$$.f1 tmp.$$.f2 tmp.$$.f3
 FILES="Perm1 Perm2 Mat2 Mat5 Mat25 Perm1 Mat256 Mat125 Perm2"
 for f in Perm1 Perm2 Mat2 Mat5 Mat25 Perm1 Mat256 Mat125 Perm2; do
-   cat ../tests/data/$f >> f1
+   cat ../tests/data/$f >> tmp.$$.f1
 done
-zpr f1 f2
-zcv -Q f2 f3
-cmp f1 f3
+zpr tmp.$$.f1 tmp.$$.f2
+zcv -Q tmp.$$.f2 tmp.$$.f3
+cmp tmp.$$.f1 tmp.$$.f3
 
-rm -f f1 f2 f3
-
+rm -f tmp.$$.*

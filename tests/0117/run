@@ -4,46 +4,46 @@
 
 cp ../tests/data/C0.? ../tests/data/Ru-K378.? ../tests/data/m11.? .
 
-zmw -Q 1 m11.1 m11.2 m11.w1
-zmw -Q -g 2 2           m11 m11.w2 m11.nsp2
-zmw -Q -g 2 30000       m11 m11.w30000
-zmw -Q -g 2 30000/1,1   m11 m11.w30000a
-zmw -Q -g 2 30000/1,0,1 m11 m11.w30000b
-checksum m11.nsp2 96.844299070 || exit 1
-checksum m11.w1 1580.1969168749 || exit 1
-checksum m11.w2 1580.1791650568 || exit 1
-checksum m11.w30000 1580.2393324304 || exit 1
-checksum m11.w30000a 1580.3654180630 || exit 1
-checksum m11.w30000b 1580.3148524887 || exit 1
+zmw -Q 1 m11.1 m11.2 tmp.$$.m11.w1
+zmw -Q -g 2 2           m11 tmp.$$.m11.w2 tmp.$$.m11.nsp2
+zmw -Q -g 2 30000       m11 tmp.$$.m11.w30000
+zmw -Q -g 2 30000/1,1   m11 tmp.$$.m11.w30000a
+zmw -Q -g 2 30000/1,0,1 m11 tmp.$$.m11.w30000b
+checksum tmp.$$.m11.nsp2 96.844299070 || exit 1
+checksum tmp.$$.m11.w1 1580.1969168749 || exit 1
+checksum tmp.$$.m11.w2 1580.1791650568 || exit 1
+checksum tmp.$$.m11.w30000 1580.2393324304 || exit 1
+checksum tmp.$$.m11.w30000a 1580.3654180630 || exit 1
+checksum tmp.$$.m11.w30000b 1580.3148524887 || exit 1
 
 
-zmw -Q 1 C0.1 C0.2 C0.w1
-zmw -Q -g 2 2           C0 C0.w2 C0.nsp2
-zmw -Q -g 2 30000       C0 C0.w30000
-zmw -Q -g 2 30000/1,1   C0 C0.w30000a
-zmw -Q -g 2 30000/1,0,1 C0 C0.w30000b
-checksum C0.nsp2 22.2231203470 || exit 1
-checksum C0.w1 132.3844254271 || exit 1
-checksum C0.w2 132.3763503839 || exit 1
-checksum C0.w30000 132.2868511499 || exit 1
-checksum C0.w30000a 132.2107905487 || exit 1
-checksum C0.w30000b 132.2328541461 || exit 1
+zmw -Q 1 C0.1 C0.2 tmp.$$.C0.w1
+zmw -Q -g 2 2           C0 tmp.$$.C0.w2 tmp.$$.C0.nsp2
+zmw -Q -g 2 30000       C0 tmp.$$.C0.w30000
+zmw -Q -g 2 30000/1,1   C0 tmp.$$.C0.w30000a
+zmw -Q -g 2 30000/1,0,1 C0 tmp.$$.C0.w30000b
+checksum tmp.$$.C0.nsp2 22.2231203470 || exit 1
+checksum tmp.$$.C0.w1 132.3844254271 || exit 1
+checksum tmp.$$.C0.w2 132.3763503839 || exit 1
+checksum tmp.$$.C0.w30000 132.2868511499 || exit 1
+checksum tmp.$$.C0.w30000a 132.2107905487 || exit 1
+checksum tmp.$$.C0.w30000b 132.2328541461 || exit 1
 
 
-zmw -Q -g 4 1           Ru-K378 Ru-K378.w1
-zmw -Q -g 4 2           Ru-K378 Ru-K378.w2 Ru-K378.nsp2
-zmw -Q -g 4 30000       Ru-K378 Ru-K378.w30000
-zmw -Q -g 4 30000/1,1   Ru-K378 Ru-K378.w30000a
-zmw -Q -g 4 30000/1,0,1 Ru-K378 Ru-K378.w30000b
-checksum Ru-K378.nsp2 12.264062116 || exit 1
-checksum Ru-K378.w1 71454.457047687 || exit 1
-checksum Ru-K378.w2 71454.2129756229 || exit 1
-checksum Ru-K378.w30000 71454.1130959179 || exit 1
-checksum Ru-K378.w30000a 71454.3916009444 || exit 1
-checksum Ru-K378.w30000b 71454.1936415476 || exit 1
+zmw -Q -g 4 1           Ru-K378 tmp.$$.Ru-K378.w1
+zmw -Q -g 4 2           Ru-K378 tmp.$$.Ru-K378.w2 tmp.$$.Ru-K378.nsp2
+zmw -Q -g 4 30000       Ru-K378 tmp.$$.Ru-K378.w30000
+zmw -Q -g 4 30000/1,1   Ru-K378 tmp.$$.Ru-K378.w30000a
+zmw -Q -g 4 30000/1,0,1 Ru-K378 tmp.$$.Ru-K378.w30000b
+checksum tmp.$$.Ru-K378.nsp2 12.264062116 || exit 1
+checksum tmp.$$.Ru-K378.w1 71454.457047687 || exit 1
+checksum tmp.$$.Ru-K378.w2 71454.2129756229 || exit 1
+checksum tmp.$$.Ru-K378.w30000 71454.1130959179 || exit 1
+checksum tmp.$$.Ru-K378.w30000a 71454.3916009444 || exit 1
+checksum tmp.$$.Ru-K378.w30000b 71454.1936415476 || exit 1
 
 
 # Clean up
 # --------
-rm -f C0* Ru* m11*
+rm -f tmp.$$.*
 

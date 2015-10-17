@@ -73,23 +73,17 @@ Makefile.conf:
 # Compile C sources
 # ------------------------------------------------------------------------------
 
-tmp/%.o: tmp/mk.dir src/%.c ${MTXROOT}/include/meataxe.h
+tmp/%.o: src/%.c ${MTXROOT}/include/meataxe.h
+	$(info CC $@ ($?))
+	${SILENT}mkdir -p tmp
 	${SILENT}echo "CC $*.c -> $@"
 	${SILENT}${CC} $(CFLAGS) -c src/$*.c -o $@
-
-tmp/mk.dir:
-	mkdir -p tmp
-	touch $@
-
-${MTXBIN}/mk.dir:
-	mkdir -p "${MTXBIN}"
-	touch $@
 
 # ------------------------------------------------------------------------------
 # Link programs
 # ------------------------------------------------------------------------------
 
-${MTXBIN}/%: ${MTXBIN}/mk.dir tmp/%.o ${MTXROOT}/lib/libmtx.a
+${MTXBIN}/%: tmp/%.o ${MTXROOT}/lib/libmtx.a
 	${SILENT}mkdir -p "${MTXBIN}"
 	${SILENT}echo "LD $@"
 	${SILENT}$(CC) $(LFLAGS) -o $@ tmp/$*.o "${MTXROOT}/lib/libmtx.a"
@@ -225,14 +219,6 @@ tmp/test-%.done: tests/common.sh tests/%/run $(PROGRAMS:%=${MTXBIN}/%)
 	   PATH="${MTXBIN}:/usr/bin:/bin" ../tests/$*/run
 	@touch "$@"
 
-
-#tmp/t-%.done: tmp/mk.dir tests/t-% tmp/t.config ${MTXBIN}/checksum build
-#	@echo "t-$* `grep '^#:' tests/t-$* | cut -c 3-100`"
-#	@cd tmp && ../tests/t-$*
-#	@touch $@
-
-#tmp/t.config: tmp/mk.dir tests/config
-#	cp tests/config $@
 
 .PHONY: tar clean install test
 .PRECIOUS: tmp/%.o

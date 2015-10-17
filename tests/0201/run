@@ -3,105 +3,107 @@
 
 . ../tests/common.sh
 
-cp ../tests/data/ac.1 ../tests/data/ac.2 .
-chop -Q ac || error "CHOP failed"
-pwkond -Qt ac || error "PWKOND failed"
-mkcycl -Q ac || error "MKCYCL FAILED"
-mkinc -Q ac || error "MKINC FAILED"
-mkdotl -Q ac || error "MKDOTL FAILED"
+cp ../tests/data/ac.1 tmp.$$.ac.1
+cp ../tests/data/ac.2 tmp.$$.ac.2
+
+chop -Q tmp.$$.ac || error "CHOP failed"
+pwkond -Qt tmp.$$.ac || error "PWKOND failed"
+mkcycl -Q tmp.$$.ac || error "MKCYCL FAILED"
+mkinc -Q tmp.$$.ac || error "MKINC FAILED"
+mkdotl -Q tmp.$$.ac || error "MKDOTL FAILED"
 
 
-checksum ac13a.1 51.3491483597 || exit 1
-checksum ac13a.2 51.468370449 || exit 1
-checksum ac13b.1 51.2266691897 || exit 1
-checksum ac13b.2 51.261138323 || exit 1
-checksum ac15a.1 57.2155442712 || exit 1
-checksum ac15a.2 57.1393962256 || exit 1
-checksum ac15b.1 57.1286099572 || exit 1
-checksum ac15b.2 57.3398535674 || exit 1
-checksum ac1a.1 13.676879948 || exit 1
-checksum ac1a.2 13.676879948 || exit 1
-checksum ac1b.1 13.216858090 || exit 1
-checksum ac1b.2 13.216858090 || exit 1
-checksum ac20a.1 92.229506744 || exit 1
-checksum ac20a.2 92.1163172752 || exit 1
-checksum ac6a.1 24.2795158042 || exit 1
-checksum ac6a.2 24.1812560580 || exit 1
-checksum ac6b.1 24.4146659509 || exit 1
-checksum ac6b.2 24.2591230619 || exit 1
-checksum  ac13a.1k 15.3735951001 || exit 1
-checksum  ac13a.2k 15.2692696932 || exit 1
-checksum  ac13a.im 5588.1018886353 || exit 1
-checksum  ac13a.k 114.1852000107 || exit 1
-checksum  ac13a.np 15.3735951001 || exit 1
-checksum  ac13a.op 116.1434302319 || exit 1
-checksum  ac13a.std.1 51.1341035583 || exit 1
-checksum  ac13a.std.2 51.3031257604 || exit 1
-checksum  ac13b.1k 15.4065917066 || exit 1
-checksum  ac13b.2k 15.3784855020 || exit 1
-checksum  ac13b.im 5588.3026691109 || exit 1
-checksum  ac13b.k 114.673143616 || exit 1
-checksum  ac13b.np 15.2412680684 || exit 1
-checksum  ac13b.op 116.2232209994 || exit 1
-checksum  ac13b.std.1 51.3148633772 || exit 1
-checksum  ac13b.std.2 51.3687791875 || exit 1
-checksum  ac15a.1k 13.676879948 || exit 1
-checksum  ac15a.2k 13.676879948 || exit 1
-checksum  ac15a.im 5656.3960831087 || exit 1
-checksum  ac15a.k 46.3692290641 || exit 1
-checksum  ac15a.np 13.875839278 || exit 1
-checksum  ac15a.op 132.3600722105 || exit 1
-checksum  ac15a.std.1 57.4188225054 || exit 1
-checksum  ac15a.std.2 57.2150126891 || exit 1
-checksum  ac15b.1k 13.676879948 || exit 1
-checksum  ac15b.2k 13.676879948 || exit 1
-checksum  ac15b.im 5656.3925725671 || exit 1
-checksum  ac15b.k 46.1113606288 || exit 1
-checksum  ac15b.np 13.875839278 || exit 1
-checksum  ac15b.op 132.4271282311 || exit 1
-checksum  ac15b.std.1 57.1273027310 || exit 1
-checksum  ac15b.std.2 57.2871487742 || exit 1
-checksum  ac1a.1k 15.4046888461 || exit 1
-checksum  ac1a.2k 15.4046888461 || exit 1
-checksum  ac1a.im 5588.2400716500 || exit 1
-checksum  ac1a.k 114.3161758726 || exit 1
-checksum  ac1a.np 15.3735951001 || exit 1
-checksum  ac1a.op 20.3631149252 || exit 1
-checksum  ac1a.std.1 13.676879948 || exit 1
-checksum  ac1a.std.2 13.676879948 || exit 1
-checksum  ac1b.1k 16.3010833487 || exit 1
-checksum  ac1b.2k 16.1741663166 || exit 1
-checksum  ac1b.im 5554.2558313414 || exit 1
-checksum  ac1b.k 148.2508123456 || exit 1
-checksum  ac1b.np 16.980507503 || exit 1
-checksum  ac1b.op 20.3631149252 || exit 1
-checksum  ac1b.std.1 13.216858090 || exit 1
-checksum  ac1b.std.2 13.216858090 || exit 1
-checksum  ac20a.1k 14.2496095088 || exit 1
-checksum  ac20a.2k 14.2496095088 || exit 1
-checksum  ac20a.im 5622.2879402696 || exit 1
-checksum  ac20a.k 80.858524691 || exit 1
-checksum  ac20a.np 14.1724028115 || exit 1
-checksum  ac20a.op 172.328947574 || exit 1
-checksum  ac20a.std.1 92.2767148963 || exit 1
-checksum  ac20a.std.2 92.2643430606 || exit 1
-checksum  ac6a.1k 13.676879948 || exit 1
-checksum  ac6a.2k 13.875839278 || exit 1
-checksum  ac6a.im 5656.190130402 || exit 1
-checksum  ac6a.k 46.2506132362 || exit 1
-checksum  ac6a.np 13.875839278 || exit 1
-checksum  ac6a.op 60.1950372072 || exit 1
-checksum  ac6a.std.1 24.635441334 || exit 1
-checksum  ac6a.std.2 24.1956280200 || exit 1
-checksum  ac6b.1k 13.875839278 || exit 1
-checksum  ac6b.2k 13.216858090 || exit 1
-checksum  ac6b.im 5656.2613275838 || exit 1
-checksum  ac6b.k 46.1417146914 || exit 1
-checksum  ac6b.np 13.875839278 || exit 1
-checksum  ac6b.op 60.1950372072 || exit 1
-checksum  ac6b.std.1 24.1029222010 || exit 1
-checksum  ac6b.std.2 24.826954725 || exit 1
+checksum tmp.$$.ac13a.1 51.3491483597 || exit 1
+checksum tmp.$$.ac13a.2 51.468370449 || exit 1
+checksum tmp.$$.ac13b.1 51.2266691897 || exit 1
+checksum tmp.$$.ac13b.2 51.261138323 || exit 1
+checksum tmp.$$.ac15a.1 57.2155442712 || exit 1
+checksum tmp.$$.ac15a.2 57.1393962256 || exit 1
+checksum tmp.$$.ac15b.1 57.1286099572 || exit 1
+checksum tmp.$$.ac15b.2 57.3398535674 || exit 1
+checksum tmp.$$.ac1a.1 13.676879948 || exit 1
+checksum tmp.$$.ac1a.2 13.676879948 || exit 1
+checksum tmp.$$.ac1b.1 13.216858090 || exit 1
+checksum tmp.$$.ac1b.2 13.216858090 || exit 1
+checksum tmp.$$.ac20a.1 92.229506744 || exit 1
+checksum tmp.$$.ac20a.2 92.1163172752 || exit 1
+checksum tmp.$$.ac6a.1 24.2795158042 || exit 1
+checksum tmp.$$.ac6a.2 24.1812560580 || exit 1
+checksum tmp.$$.ac6b.1 24.4146659509 || exit 1
+checksum tmp.$$.ac6b.2 24.2591230619 || exit 1
+checksum  tmp.$$.ac13a.1k 15.3735951001 || exit 1
+checksum  tmp.$$.ac13a.2k 15.2692696932 || exit 1
+checksum  tmp.$$.ac13a.im 5588.1018886353 || exit 1
+checksum  tmp.$$.ac13a.k 114.1852000107 || exit 1
+checksum  tmp.$$.ac13a.np 15.3735951001 || exit 1
+checksum  tmp.$$.ac13a.op 116.1434302319 || exit 1
+checksum  tmp.$$.ac13a.std.1 51.1341035583 || exit 1
+checksum  tmp.$$.ac13a.std.2 51.3031257604 || exit 1
+checksum  tmp.$$.ac13b.1k 15.4065917066 || exit 1
+checksum  tmp.$$.ac13b.2k 15.3784855020 || exit 1
+checksum  tmp.$$.ac13b.im 5588.3026691109 || exit 1
+checksum  tmp.$$.ac13b.k 114.673143616 || exit 1
+checksum  tmp.$$.ac13b.np 15.2412680684 || exit 1
+checksum  tmp.$$.ac13b.op 116.2232209994 || exit 1
+checksum  tmp.$$.ac13b.std.1 51.3148633772 || exit 1
+checksum  tmp.$$.ac13b.std.2 51.3687791875 || exit 1
+checksum  tmp.$$.ac15a.1k 13.676879948 || exit 1
+checksum  tmp.$$.ac15a.2k 13.676879948 || exit 1
+checksum  tmp.$$.ac15a.im 5656.3960831087 || exit 1
+checksum  tmp.$$.ac15a.k 46.3692290641 || exit 1
+checksum  tmp.$$.ac15a.np 13.875839278 || exit 1
+checksum  tmp.$$.ac15a.op 132.3600722105 || exit 1
+checksum  tmp.$$.ac15a.std.1 57.4188225054 || exit 1
+checksum  tmp.$$.ac15a.std.2 57.2150126891 || exit 1
+checksum  tmp.$$.ac15b.1k 13.676879948 || exit 1
+checksum  tmp.$$.ac15b.2k 13.676879948 || exit 1
+checksum  tmp.$$.ac15b.im 5656.3925725671 || exit 1
+checksum  tmp.$$.ac15b.k 46.1113606288 || exit 1
+checksum  tmp.$$.ac15b.np 13.875839278 || exit 1
+checksum  tmp.$$.ac15b.op 132.4271282311 || exit 1
+checksum  tmp.$$.ac15b.std.1 57.1273027310 || exit 1
+checksum  tmp.$$.ac15b.std.2 57.2871487742 || exit 1
+checksum  tmp.$$.ac1a.1k 15.4046888461 || exit 1
+checksum  tmp.$$.ac1a.2k 15.4046888461 || exit 1
+checksum  tmp.$$.ac1a.im 5588.2400716500 || exit 1
+checksum  tmp.$$.ac1a.k 114.3161758726 || exit 1
+checksum  tmp.$$.ac1a.np 15.3735951001 || exit 1
+checksum  tmp.$$.ac1a.op 20.3631149252 || exit 1
+checksum  tmp.$$.ac1a.std.1 13.676879948 || exit 1
+checksum  tmp.$$.ac1a.std.2 13.676879948 || exit 1
+checksum  tmp.$$.ac1b.1k 16.3010833487 || exit 1
+checksum  tmp.$$.ac1b.2k 16.1741663166 || exit 1
+checksum  tmp.$$.ac1b.im 5554.2558313414 || exit 1
+checksum  tmp.$$.ac1b.k 148.2508123456 || exit 1
+checksum  tmp.$$.ac1b.np 16.980507503 || exit 1
+checksum  tmp.$$.ac1b.op 20.3631149252 || exit 1
+checksum  tmp.$$.ac1b.std.1 13.216858090 || exit 1
+checksum  tmp.$$.ac1b.std.2 13.216858090 || exit 1
+checksum  tmp.$$.ac20a.1k 14.2496095088 || exit 1
+checksum  tmp.$$.ac20a.2k 14.2496095088 || exit 1
+checksum  tmp.$$.ac20a.im 5622.2879402696 || exit 1
+checksum  tmp.$$.ac20a.k 80.858524691 || exit 1
+checksum  tmp.$$.ac20a.np 14.1724028115 || exit 1
+checksum  tmp.$$.ac20a.op 172.328947574 || exit 1
+checksum  tmp.$$.ac20a.std.1 92.2767148963 || exit 1
+checksum  tmp.$$.ac20a.std.2 92.2643430606 || exit 1
+checksum  tmp.$$.ac6a.1k 13.676879948 || exit 1
+checksum  tmp.$$.ac6a.2k 13.875839278 || exit 1
+checksum  tmp.$$.ac6a.im 5656.190130402 || exit 1
+checksum  tmp.$$.ac6a.k 46.2506132362 || exit 1
+checksum  tmp.$$.ac6a.np 13.875839278 || exit 1
+checksum  tmp.$$.ac6a.op 60.1950372072 || exit 1
+checksum  tmp.$$.ac6a.std.1 24.635441334 || exit 1
+checksum  tmp.$$.ac6a.std.2 24.1956280200 || exit 1
+checksum  tmp.$$.ac6b.1k 13.875839278 || exit 1
+checksum  tmp.$$.ac6b.2k 13.216858090 || exit 1
+checksum  tmp.$$.ac6b.im 5656.2613275838 || exit 1
+checksum  tmp.$$.ac6b.k 46.1417146914 || exit 1
+checksum  tmp.$$.ac6b.np 13.875839278 || exit 1
+checksum  tmp.$$.ac6b.op 60.1950372072 || exit 1
+checksum  tmp.$$.ac6b.std.1 24.1029222010 || exit 1
+checksum  tmp.$$.ac6b.std.2 24.826954725 || exit 1
 
 # Clean up
 # --------
-rm -f ac* 
+rm -f tmp.$$.*

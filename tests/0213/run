@@ -7,16 +7,16 @@ cp ../tests/data/m11.1 tmp.$$.m11.1
 cp ../tests/data/m11.2 tmp.$$.m11.2
 chop -Q -g 2 tmp.$$.m11 || error "CHOP failed"
 pwkond -Qt tmp.$$.m11 || error "PWKOND failed"
-mkhom -Qts tmp.$$.m11 tmp.$$.m11 end ||  error "MKHOM failed"
-if [ ! -r end.4 -o -r end.5 ]; then error "Wrong number of endomorphisms"; fi
+mkhom -Qts tmp.$$.m11 tmp.$$.m11 tmp.$$.end ||  error "MKHOM failed"
+if [ ! -r tmp.$$.end.4 -o -r tmp.$$.end.5 ]; then error "Wrong number of endomorphisms"; fi
 for g in 1 2; do
    for e in 1 2 3 4; do
-       zmu tmp.$$.m11.std.$g end.$e a
-       zmu end.$e tmp.$$.m11.std.$g b
-       cmp a b || error "Endomorphism does not commute with generators"
+       zmu tmp.$$.m11.std.$g tmp.$$.end.$e tmp.$$.a
+       zmu tmp.$$.end.$e tmp.$$.m11.std.$g tmp.$$.b
+       cmp tmp.$$.a tmp.$$.b || error "Endomorphism does not commute with generators"
    done
 done
 
 # Clean up
 # --------
-rm -f tmp.$$.m11* end* a b
+rm -f tmp.$$.*
