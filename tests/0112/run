@@ -1,38 +1,38 @@
 # Test ZUK
 . ../tests/common.sh
 
-cat > orbs.txt << EOT
+cat > tmp.$$.orbs.txt << EOT
 integer matrix rows=1 cols=24
 0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23
 integer matrix rows=1 cols=24
 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1
 EOT
-zcv -Q orbs.txt orbs || error "ZCV failed"
+zcv -Q tmp.$$.orbs.txt tmp.$$.orbs || error "ZCV failed"
 for f in $TEST_FIELDS ; do
-    zuk -Q ../tests/data/Mat$f orbs x || error "ZUK failed"
-    cmp ../tests/data/Mat$f x || error "ZUK with trivial orbits: wrong result"
+    zuk -Q ../tests/data/Mat$f tmp.$$.orbs tmp.$$.x || error "ZUK failed"
+    cmp ../tests/data/Mat$f tmp.$$.x || error "ZUK with trivial orbits: wrong result"
 done
 
 
-cat > orbs.txt << EOT
+cat > tmp.$$.orbs.txt << EOT
 integer matrix rows=1 cols=26
 0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 0 23
 integer matrix rows=1 cols=24
 2 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 2
 EOT
-zcv -Q orbs.txt orbs || error "ZCV failed"
+zcv -Q tmp.$$.orbs.txt tmp.$$.orbs || error "ZCV failed"
 for f in 2 5 9 25 67 125 256 ; do
-    zuk -Q ../tests/data/Mat$f orbs x$f || error "ZUK failed"
+    zuk -Q ../tests/data/Mat$f tmp.$$.orbs tmp.$$.x$f || error "ZUK failed"
 done
-checksum x2 108.2330969734 || exit 1
-checksum x5 228.2024623685 || exit 1
-checksum x9 324.3705451271 || exit 1
-checksum x25 636.903809115 || exit 1
-checksum x67 636.518282449 || exit 1
-checksum x125 636.113758504 || exit 1
-checksum x256 636.811420983 || exit 1
+checksum tmp.$$.x2 108.2330969734
+checksum tmp.$$.x5 228.2024623685
+checksum tmp.$$.x9 324.3705451271
+checksum tmp.$$.x25 636.903809115
+checksum tmp.$$.x67 636.518282449
+checksum tmp.$$.x125 636.113758504
+checksum tmp.$$.x256 636.811420983 
 
 # Clean up
 # --------
-rm -rf orbs.txt orbs x x2 x5 x9 x25 x67 x125 x256
+rm -rf tmp.$$.*
 

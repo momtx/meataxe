@@ -22,7 +22,3 @@ checksum yk67 237.2386581868 || exit 1
 # Clean up
 # --------
 rm -f xorb yorb x.1 y.1 xk* yk*
-
-
-
-

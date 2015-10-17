@@ -1,0 +1,17 @@
+# Test tensor condensation of 248x248 (Th)
+
+. ../tests/common.sh
+
+
+cp ../tests/data/Th-* .
+chop -Q -g 3 Th-m || error "CHOP failed"
+pwkond -Qbt Th-m || error "PWKOND failed"
+precond -Q tp Th-m Th-m || error "PRECOND failed"
+tcond -Q -g 2 tp Th-r Th-r result || error "TCOND failed"
+checksum result.1 32.3964693419 || exit 1
+checksum result.2 32.1346765193 || exit 1
+
+
+# Clean up
+# --------
+rm -f Th-* tp* result*

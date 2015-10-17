@@ -3,20 +3,20 @@
 . ../tests/common.sh
 
 for f in 2 5 9 25 67 125 256 ; do
-    zpt -Q -r 2 -c 3 x$f ../tests/data/Mat$f - ../tests/data/Mat$f - ../tests/data/Mat$f -
+    zpt -Q -r 2 -c 3 tmp.$$.x$f ../tests/data/Mat$f - ../tests/data/Mat$f - ../tests/data/Mat$f -
 done
-checksum x2 444.3704327886 || exit 1
-checksum x5 1164.731234515 || exit 1
-checksum x9 1740.376812746 || exit 1
-checksum x25 3468.1636862360 || exit 1
-checksum x125 3468.713144823 || exit 1
-checksum x67 3468.3032512822 || exit 1
-checksum x256 3468.3805289708 || exit 1
+checksum tmp.$$.x2 444.3704327886 || exit 1
+checksum tmp.$$.x5 1164.731234515 || exit 1
+checksum tmp.$$.x9 1740.376812746 || exit 1
+checksum tmp.$$.x25 3468.1636862360 || exit 1
+checksum tmp.$$.x125 3468.713144823 || exit 1
+checksum tmp.$$.x67 3468.3032512822 || exit 1
+checksum tmp.$$.x256 3468.3805289708 || exit 1
 
-zpt x ../tests/data/Perm1 ../tests/data/Perm2
-zpt y x ../tests/data/Perm1
-checksum x 172.2962610961 || exit 1
-checksum y 252.3860806406 || exit 1
+zpt tmp.$$.x ../tests/data/Perm1 ../tests/data/Perm2
+zpt tmp.$$.y tmp.$$.x ../tests/data/Perm1
+checksum tmp.$$.x 172.2962610961 || exit 1
+checksum tmp.$$.y 252.3860806406 || exit 1
 
-rm -f x y x2 x5 x9 x25 x67 x125 x256
+rm -f tmp.$$.*
 

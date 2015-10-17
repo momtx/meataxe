@@ -6,45 +6,45 @@
 
 . ../tests/common.sh
 
-zcf -Q 2 ../tests/data/Perm1 x1
-zcf -Q 67 ../tests/data/Perm2 x2
-checksum x1 72.1727940686 || exit 1
-checksum x2 412.4152666678 || exit 1
+zcf -Q 2 ../tests/data/Perm1 tmp.$$.x1
+zcf -Q 67 ../tests/data/Perm2 tmp.$$.x2
+checksum tmp.$$.x1 72.1727940686 || exit 1
+checksum tmp.$$.x2 412.4152666678 || exit 1
 
-zcf -Q 4 ../tests/data/Mat2 x1
-zcf -Q 8 ../tests/data/Mat2 x2
-zcf -Q 64 ../tests/data/Mat2 x3
-zcf -Q 256 ../tests/data/Mat2 x4
-zcf -Q 16 x4 x5
-zcf -Q 256 x5 x6
-checksum x1 156.3077623386 || exit 1
-checksum x2 300.3489847350 || exit 1
-checksum x3 588.2290345317 || exit 1
-checksum x4 588.1118762231 || exit 1
-checksum x5 300.739250189  || exit 1
-checksum x6 588.1118762231 || exit 1
+zcf -Q 4 ../tests/data/Mat2 tmp.$$.x1
+zcf -Q 8 ../tests/data/Mat2 tmp.$$.x2
+zcf -Q 64 ../tests/data/Mat2 tmp.$$.x3
+zcf -Q 256 ../tests/data/Mat2 tmp.$$.x4
+zcf -Q 16 tmp.$$.x4 tmp.$$.x5
+zcf -Q 256 tmp.$$.x5 tmp.$$.x6
+checksum tmp.$$.x1 156.3077623386 || exit 1
+checksum tmp.$$.x2 300.3489847350 || exit 1
+checksum tmp.$$.x3 588.2290345317 || exit 1
+checksum tmp.$$.x4 588.1118762231 || exit 1
+checksum tmp.$$.x5 300.739250189  || exit 1
+checksum tmp.$$.x6 588.1118762231 || exit 1
 
-zcf -Q 3 ../tests/data/Mat9 x1
-zcf -Q 9 x1 x2
-zcf -Q 27 x1 x3
-zcf -Q 81 x1 x4
-zcf -Q 81 x2 x5
-checksum x1 132.3443676712 || exit 1
-checksum x2 300.2657099669 || exit 1
-checksum x3 588.3386682308 || exit 1
-checksum x4 588.1829269091 || exit 1
-checksum x5 588.1829269091 || exit 1
+zcf -Q 3 ../tests/data/Mat9 tmp.$$.x1
+zcf -Q 9 tmp.$$.x1 tmp.$$.x2
+zcf -Q 27 tmp.$$.x1 tmp.$$.x3
+zcf -Q 81 tmp.$$.x1 tmp.$$.x4
+zcf -Q 81 tmp.$$.x2 tmp.$$.x5
+checksum tmp.$$.x1 132.3443676712 || exit 1
+checksum tmp.$$.x2 300.2657099669 || exit 1
+checksum tmp.$$.x3 588.3386682308 || exit 1
+checksum tmp.$$.x4 588.1829269091 || exit 1
+checksum tmp.$$.x5 588.1829269091 || exit 1
 
-zcf -Q 25 ../tests/data/Mat5 x1
-zcf -Q 5 x1 x2
-zcf -Q 125 ../tests/data/Mat5 x3
-zcf -Q 5 x3 x4
-checksum x1 588.2136374774 || exit 1
-checksum x2 204.283667245  || exit 1
-checksum x3 588.310971162  || exit 1
-checksum x4 204.283667245  || exit 1
+zcf -Q 25 ../tests/data/Mat5 tmp.$$.x1
+zcf -Q 5 tmp.$$.x1 tmp.$$.x2
+zcf -Q 125 ../tests/data/Mat5 tmp.$$.x3
+zcf -Q 5 tmp.$$.x3 tmp.$$.x4
+checksum tmp.$$.x1 588.2136374774 || exit 1
+checksum tmp.$$.x2 204.283667245  || exit 1
+checksum tmp.$$.x3 588.310971162  || exit 1
+checksum tmp.$$.x4 204.283667245  || exit 1
 
 # Clean up
 # --------
-rm -f x1 x2 x3 x4 x5 x6
+rm -f tmp.$$.*
 

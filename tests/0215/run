@@ -1,0 +1,31 @@
+# Decomposition
+
+. ../tests/common.sh
+
+
+cp ../tests/data/m11.? .
+chop -Q m11
+pwkond -Qt m11
+
+zpt -Q -r 2 -c 2 x.1 m1144a.1 - - m1110a.1
+zpt -Q -r 2 -c 2 x.2 m1144a.2 - - m1110a.2
+
+zpt -Q -r 2 -c 2 y.1 m111a.1 - - m1110a.1
+zpt -Q -r 2 -c 2 y.2 m111a.2 - - m1110a.2
+
+zpt -Q -r 3 -c 3 z.1 m111a.1 - - - m1110a.1 - - - m1110a.1
+zpt -Q -r 3 -c 3 z.2 m111a.2 - - - m1110a.2 - - - m1110a.2
+
+chop -Q x
+chop -Q y
+chop -Q z
+pwkond -Qt x y z
+
+fgrep -q '[[17,2,1,1,1],[307,2,1,1,1]]' x.cfinfo || error "Peak words of x"
+fgrep -q '[[73,2,1,0,1],[17,2,1,1,1]]' y.cfinfo || error "Peak words of y"
+fgrep -q '[[73,2,1,0,1],[17,2,1,1,1]]' z.cfinfo || error "Peak words of z"
+
+
+# Clean up
+# --------
+rm -f m11* x* y* z*
