@@ -168,7 +168,7 @@ tmp/genconfig: Makefile Makefile.conf src/genconfig.c
 # Test suite
 # ------------------------------------------------------------------------------
 
-TESTS=0200 0201
+TESTS=0100 0200 0201
 
 test: tmp/zzztest.done $(TESTS:%=tmp/test-%.done)
 
