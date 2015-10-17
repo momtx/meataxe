@@ -1,0 +1,15 @@
+# ZPR/ZCV test
+
+. ../tests/common.sh
+
+rm -f f1 f2 f3
+FILES="Perm1 Perm2 Mat2 Mat5 Mat25 Perm1 Mat256 Mat125 Perm2"
+for f in Perm1 Perm2 Mat2 Mat5 Mat25 Perm1 Mat256 Mat125 Perm2; do
+   cat ../tests/data/$f >> f1
+done
+zpr f1 f2
+zcv -Q f2 f3
+cmp f1 f3
+
+rm -f f1 f2 f3
+
