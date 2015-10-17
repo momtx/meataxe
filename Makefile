@@ -62,7 +62,6 @@ all build: $(PROGRAMS:%=${MTXBIN}/%) ${MTXROOT}/lib/libmtx.a ${MTXROOT}/include/
 
 clean:
 	rm -rf bin tmp *.zzz check.ma1 check.pe1 check.po1
-	-cd tests; make clean
 
 Makefile.conf:
 	@echo "*** Creating empty Makefile.conf"
@@ -169,6 +168,12 @@ tmp/genconfig: Makefile Makefile.conf src/genconfig.c
 # Test suite
 # ------------------------------------------------------------------------------
 
+TESTS=0200
+
+test: tmp/zzztest.done $(TESTS:%=tmp/test-%.done)
+
+# meataxe library tests
+
 TS_OBJS1=c-args c-bitstring c-charpol\
 	c-ffio c-fileio c-ffmat c-ffrow c-fpoly \
 	c-grease c-kernel c-matins c-matrix c-matset\
@@ -191,14 +196,6 @@ ${MTXBIN}/checksum: tmp/checksum.o
 	${SILENT}echo "LD $@"
 	${SILENT}$(CC) $(CFLAGS) -o "$@" tmp/checksum.o
 
-TESTS=0000\
-  0100 0100 0105 0106 0107 0108 0109 0110 0111 0112\
-  0113 0114 0115 0116 0117 0118 0200 0201 0210 0211\
-  0212 0213 0214 0215
-
-#tests: $(TESTS:%=tmp/t-%.done)
-test: tmp/zzztest.done 
-
 tmp/test_table.c: tmp/tex $(TS_OBJS1:%=tests/%.c)
 	tmp/tex $(TS_OBJS1:%=tests/%.c) >$@
 
@@ -218,13 +215,23 @@ tmp/zzztest.done: ${MTXBIN}/zzztest
 	cd tmp && ${MTXBIN}/zzztest
 	touch $@
 
-tmp/t-%.done: tmp/mk.dir tests/t-% tmp/t.config ${MTXBIN}/checksum build
-	@echo "t-$* `grep '^#:' tests/t-$* | cut -c 3-100`"
-	@cd tmp && ../tests/t-$*
-	@touch $@
+# other tests
 
-tmp/t.config: tmp/mk.dir tests/config
-	cp tests/config $@
+tmp/test-%.done: tests/common.sh tests/%/run $(PROGRAMS:%=${MTXBIN}/%)
+	@echo "Running test $*"
+	${SILENT}mkdir -p tmp
+	@cd tmp && MTXBIN="${MTXBIN}" MTXLIB="${MTXLIB}" MTX_TEST_ID="$*" \
+	   PATH="${MTXBIN}:/usr/bin:/bin" ../tests/$*/run
+	@touch "$@"
+
+
+#tmp/t-%.done: tmp/mk.dir tests/t-% tmp/t.config ${MTXBIN}/checksum build
+#	@echo "t-$* `grep '^#:' tests/t-$* | cut -c 3-100`"
+#	@cd tmp && ../tests/t-$*
+#	@touch $@
+
+#tmp/t.config: tmp/mk.dir tests/config
+#	cp tests/config $@
 
 .PHONY: tar clean install test
 .PRECIOUS: tmp/%.o
@@ -269,8 +276,6 @@ EXPORTED_FILES =\
   Makefile README.md COPYING\
   src/meataxe.doc src/changelog.doc\
 
-  #tests/check.h $(TS_OBJS1:%=tests/%.c) $(TS_OBJS1:%=tests/%.h) \
-
 tar: all doc
 	rm -f meataxe-${MTXVERSION} meataxe-${MTXVERSION}.tar meataxe-${MTXVERSION}.tar.gz \
 	&& ln -s . meataxe-${MTXVERSION} \
@@ -278,4 +283,3 @@ tar: all doc
 	&& rm meataxe-${MTXVERSION} \
 	&& gzip meataxe-${MTXVERSION}.tar \
 	&& echo "Created meataxe-${MTXVERSION}.tar.gz"
-
