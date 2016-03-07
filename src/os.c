@@ -193,8 +193,10 @@ void SysSetTimeLimit(long nsecs)
 /// Additional flags may be or'ed to the mode:
 /// @par FM_LIB
 /// If the file does not exist in the current directory, look in the library directory.
-/// The library directory is defined either by the environment variable @c MTXLIB, or at
-/// compile-time by the macro @c MTXLIB.
+/// The library directory is defined (in order of decreasng priority):
+/// * by the -L command line option,
+/// * by the MTXLIB environment variable, or
+/// * at compile-time by defining MTXLIB in the Makefile.
 /// @par FM_TEXT
 /// Open in text mode. This flag must be used on some systems (e.g., MS-DOS) to open text files.
 /// By default, files are assumed to contain binary data.
@@ -209,9 +211,9 @@ FILE *SysFopen(const char *name, int mode)
    int m;
    FILE *f;
 
-   m = mode & 0x0F;                     /* Append, read or create? */
+   m = mode & 0x0F;                     // append, read or create
    if ((mode & FM_TEXT) == 0) {
-      m += 3;                           /* Binary mode */
+      m += 3;                           // binary mode
    }
    if ((m < 1) || (m > 6) || ((mode & 0x0F) == 0)) {
       MTX_ERROR1("Invalid file mode %d",mode);
@@ -222,17 +224,15 @@ FILE *SysFopen(const char *name, int mode)
       return f;
    }
 
-   /* Search library directory
-      ------------------------ */
-   if ((mode & FM_LIB) != 0) {
+   // Search in the library directory if requested
+   if (((mode & FM_LIB) != 0) && (MtxLibDir[ 0 ] != 0)) {
       strcpy(buf,MtxLibDir);
       strcat(buf,"/");
       strcat(buf,name);
       f = fopen(buf,fmodes[m]);
    }
 
-   /* Error handling
-      -------------- */
+   // Error handling
    if ((f == NULL) && ((mode & FM_NOERROR) == 0)) {
       MTX_ERROR1("%s: %S",name);
    }
