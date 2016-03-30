@@ -45,7 +45,7 @@ SILENT0=@
 SILENT1=
 SILENT=${SILENT${V}}
 
-MTXVERSION = 2.4.35-SNAPSHOT
+MTXVERSION = 2.4.x-SNAPSHOT
 
 CFLAGS=$(CFLAGS1) -I"${MTXROOT}/include" -Itmp \
  -DZZZ=${ZZZ} -DMTXLIB="${MTXROOT}/lib" -DMTXBIN="${MTXBIN}"
@@ -250,9 +250,11 @@ ${docProducts}: \
    etc/Doxyfile etc/layout.xml $(PROGRAMS:%=src/%.c) $(LIB_OBJS:%=src/%.c) \
    ${MTXROOT}/include/meataxe.h  \
    ${docDocs} src/meataxe.doc src/changelog.doc
+	cp etc/Doxyfile tmp/Doxyfile.auto
+	echo "PROJECT_NUMBER=${MTXVERSION}" >>tmp/Doxyfile.auto
+	echo "OUTPUT_DIRECTORY=${docDir}" >>tmp/Doxyfile.auto
 	mkdir -p ${docDir}
-	doxygen etc/Doxyfile
-
+	doxygen tmp/Doxyfile.auto >tmp/doxygen.log
 
 # ------------------------------------------------------------------------------
 # Releasing
