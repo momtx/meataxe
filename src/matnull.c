@@ -171,7 +171,8 @@ Matrix_t *MatNullSpace(const Matrix_t *mat)
 
    // Non-destructive null-space
    if ((tmp = MatDup(mat)) == NULL) {
-      return MTX_ERROR("Cannot duplicate matrix"), NULL;
+      MTX_ERROR("Cannot duplicate matrix");
+      return NULL;
    }
    nsp = MatNullSpace_(tmp,0);
    MatFree(tmp);
@@ -196,3 +197,5 @@ Matrix_t *MatNullSpace__(Matrix_t *mat)
 
 
 /// @}
+
+// vim:sw=3:et
