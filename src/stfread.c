@@ -60,7 +60,7 @@ int StfReadLine(StfData *f)
 	strcpy(f->LineBuf + tlen,lbuf);
 	tlen += len;
 
-	ch = getc(f->File);
+	ch = fgetc(f->File);
 	if (ch != '\t' && ch != EOF)
 	{
 	    ungetc(ch,f->File);
@@ -373,6 +373,6 @@ int StfGetVector(StfData *f, int *bufsize, int *buf)
     return 0;
 }
 
-
-
 /// @}
+
+// vim:sw=3:et

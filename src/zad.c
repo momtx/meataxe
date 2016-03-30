@@ -36,10 +36,10 @@ static MtxApplication_t *App = NULL;
 
 MTX_DEFINE_FILE_INFO
 
-#define MAX_INPUT 20
+#define MTX_MAX_INPUT 20
 int NInput;			    /* Number of input matrices */
-FILE *Input[MAX_INPUT] = {0};	    /* Input matrices */
-int Subtract[MAX_INPUT];
+FILE *Input[MTX_MAX_INPUT] = {0};	    /* Input matrices */
+int Subtract[MTX_MAX_INPUT];
 int Field = -1, Nor = -1, Noc = -1;
 PTR Buf1, Buf2;			    /* Working buffer */
 FILE *Output = NULL;		    /* Output file */
@@ -86,7 +86,7 @@ static int Init(int argc, const char **argv)
 
     /* Parse command line.
        ------------------- */
-    if (AppGetArguments(App,3,MAX_INPUT + 1) < 0)
+    if (AppGetArguments(App,3,MTX_MAX_INPUT + 1) < 0)
 	return -1;
     NInput = App->ArgC - 1;
 

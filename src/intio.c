@@ -37,7 +37,6 @@ MTX_DEFINE_FILE_INFO
 
 int SysReadLong32(FILE *f, long *buf, int n)
 {
-    unsigned char a[4];
     int nread;
 
     /* Check the arguments
@@ -60,11 +59,12 @@ int SysReadLong32(FILE *f, long *buf, int n)
     }
     else
     {
+        unsigned char a[4];
     	for (nread = 0; nread < n; ++nread)
     	{
 	    if (fread(a,1,4,f) != 4) break;
 	    *buf = ((unsigned long)a[0]|((unsigned long)a[1] << 8)|
-		((unsigned long)a[2] << 16)|((long)(char)a[3] << 24));
+		((unsigned long)a[2] << 16)|((long)(signed char)a[3] << 24));
 	    ++buf;
     	}
     }
@@ -119,7 +119,7 @@ static void Swap(long *dest, const long *src, int n)
 {
     for (; n > 0; --n)
     {
-	register long x = *src++;
+	register unsigned long x = (unsigned long) *src++;
 #if MTX_CONFIG_LONG32
 	*dest++ =
 	      (x << 24)
@@ -143,22 +143,25 @@ static void Swap(long *dest, const long *src, int n)
 }
 #endif
 
-#define BLK_SIZE 4096
+#define BLK_SIZE 4096  // must be a multiple of sizeof(long)!
 
 int SysReadLongX(FILE *f, long *buf, int n_bytes)
 {
     int n_read = 0;		/* Bytes read so far */
 #if MTX_CONFIG_BIG_ENDIAN
-    unsigned long tmp[BLK_SIZE];
-    while (n_read < num_elem)
+    long tmp[BLK_SIZE];
+    while (n_read < n_bytes)
     {
-	int n_blk = sizeof(tmp);
-	if (n_read + n_blk > n_bytes)
-	    n_blk = n_bytes - n_read;
-	if (fread(tmp,1,n_blk,f) != n_blk)
-	    break;
-	Swap(buf + n_read / sizeof(long),tmp,(n_blk - 1)/sizeof(long) + 1);
-	n_written += n_blk;
+       int n_blk = sizeof(tmp);
+       if (n_bytes - n_read < sizeof(tmp)) {
+          n_blk = n_bytes - n_read;
+          tmp[n_blk / sizeof(long)] = 0;        // zero pad
+       }
+       if (fread(tmp,1,n_blk,f) != n_blk) {
+          break;
+       }
+       Swap(buf + n_read / sizeof(long),tmp,(n_blk - 1)/sizeof(long) + 1);
+       n_read += n_blk;
     }
 #else
     n_read = fread(buf,1,n_bytes,f);
@@ -171,12 +174,13 @@ int SysWriteLongX(FILE *f, const long *buf, int n_bytes)
 {
     int n_written = 0;
 #if MTX_CONFIG_BIG_ENDIAN
-    unsigned long tmp[BLK_SIZE];
+    long tmp[BLK_SIZE];
     while (n_written < n_bytes)
     {
 	int n_blk = sizeof(tmp);
-	if (n_written + n_blk > n_bytes)
+	if (n_written + n_blk > n_bytes) {
 	    n_blk = n_bytes - n_written;
+        }
 	Swap(tmp,buf + n_written / sizeof(long),(n_blk - 1) / sizeof(long) + 1);
 	if (fwrite(tmp,1,n_blk,f) != n_blk)
 	    break;
@@ -188,7 +192,6 @@ int SysWriteLongX(FILE *f, const long *buf, int n_bytes)
     return n_written;
 }
 
-
-
 /// @}
 
+// vim:sw=3:et

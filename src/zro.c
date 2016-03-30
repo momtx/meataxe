@@ -108,8 +108,8 @@ static void Cleanup()
 
 
 #define MAXORDERS 10
-long Order[MAXORDERS];
-int CountTab[MAXORDERS];
+long Order[MAXORDERS+1];
+int CountTab[MAXORDERS+1];
 
 
 static void RandomOrders()

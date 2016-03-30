@@ -32,8 +32,7 @@ BitString_t *BsRead(FILE *f)
       return NULL;
    }
    if ((hdr[0] != -3) || (hdr[2] != 0)) {
-      MTX_ERROR3("Invalid bit string header (%d,%d,%d)",(int)hdr[0],
-                 (int)hdr[1],(int)hdr[2]);
+      MTX_ERROR3("Invalid bit string header (%ld,%ld,%ld)",hdr[0],hdr[1],hdr[2]);
       return NULL;
    }
    size = (int) hdr[1];

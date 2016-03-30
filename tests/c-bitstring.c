@@ -220,7 +220,7 @@ static void CheckIo1(BitString_t **bs, int n)
    for (i = 0; i < n; ++i) {
       BitString_t *a = BsRead(f);
       if (BsCompare(a,bs[i]) != 0) {
-         Error("Read error");
+         Error("Bitstring differs after write/read");
       }
    }
    fclose(f);

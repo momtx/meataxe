@@ -36,7 +36,8 @@ Matrix_t *MatAddMul(Matrix_t *dest, const Matrix_t *src, FEL coeff)
    }
    if ((dest->Field != src->Field) || (dest->Nor != src->Nor) ||
        (dest->Noc != src->Noc)) {
-      return MTX_ERROR1("%E",MTX_ERR_INCOMPAT), NULL;
+      MTX_ERROR1("%E",MTX_ERR_INCOMPAT);
+      return NULL;
    }
 
    /* Handle special cases

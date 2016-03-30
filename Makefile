@@ -13,17 +13,19 @@ MTXROOT = ${CURDIR}
 # This must be an absolute path (starting with '/').
 MTXBIN=${MTXROOT}/bin
 
-# MeatAxe library directory (obsolete, not used anymore)
-MTXLIB=${MTXROOT}/lib
-
 # C compiler and common compiler/linker flags
 # The default is to use GNU C
-CC=gcc	
+CC=gcc
 CFLAGS1=-std=c99 -g -O3 -Wall
 LDFLAGS1=-g -Wall
 # For debugging:
 #CFLAGS1=-std=c99 -g -Wall -Werror -DDEBUG -DPARANOID
 #CFLAGS1=-std=c99 -g -Wall -Werror -DASM_MMX -DDEBUG
+
+# Flags to pass to the ar utility
+ARFLAGS1=
+# For AIX 64-bit:
+#ARFLAGS1=-X 64
 
 # Select which kernel you want to use.
 # Standard kernel, up to GF(256)
@@ -46,7 +48,7 @@ SILENT=${SILENT${V}}
 MTXVERSION = 2.4.35-SNAPSHOT
 
 CFLAGS=$(CFLAGS1) -I"${MTXROOT}/include" -Itmp \
- -DZZZ=${ZZZ} -DMTXLIB="${MTXLIB}" -DMTXBIN="${MTXBIN}"
+ -DZZZ=${ZZZ} -DMTXLIB="${MTXROOT}/lib" -DMTXBIN="${MTXBIN}"
 LDFLAGS=$(LDFLAGS1)
 
 PROGRAMS = \
@@ -75,9 +77,8 @@ Makefile.conf:
 # ------------------------------------------------------------------------------
 
 tmp/%.o: src/%.c ${MTXROOT}/include/meataxe.h
-	$(info CC $@ ($?))
+	@echo "# CC $*.c -> $@"
 	${SILENT}mkdir -p tmp
-	${SILENT}echo "CC $*.c -> $@"
 	${SILENT}${CC} $(CFLAGS) -c src/$*.c -o $@
 
 # ------------------------------------------------------------------------------
@@ -85,9 +86,9 @@ tmp/%.o: src/%.c ${MTXROOT}/include/meataxe.h
 # ------------------------------------------------------------------------------
 
 ${MTXBIN}/%: tmp/%.o ${MTXROOT}/lib/libmtx.a
+	@echo "LD $@"
 	${SILENT}mkdir -p "${MTXBIN}"
-	${SILENT}echo "LD $@"
-	${SILENT}$(CC) $(LFLAGS) -o $@ tmp/$*.o "${MTXROOT}/lib/libmtx.a"
+	${SILENT}$(CC) $(LDFLAGS) -o $@ tmp/$*.o "${MTXROOT}/lib/libmtx.a"
 
 
 # ------------------------------------------------------------------------------
@@ -142,21 +143,21 @@ LIB_OBJS=\
 	version
 
 ${MTXROOT}/lib/libmtx.a: $(LIB_OBJS:%=tmp/%.o)
-	${SILENT}echo "AR $@"
+	@echo "AR $@"
 	${SILENT}mkdir -p "${MTXROOT}/lib"
 	${SILENT}rm -f "$@"
-	${SILENT}ar r "$@" $(LIB_OBJS:%=tmp/%.o)
+	${SILENT}ar ${ARFLAGS1} r "$@" $(LIB_OBJS:%=tmp/%.o)
 
 ${MTXROOT}/include/meataxe.h: src/meataxe.h.in tmp/genconfig
-	${SILENT}echo "CF src/meataxe.h.in -> $@"
+	@echo "# GEN src/meataxe.h.in -> $@"
 	${SILENT}mkdir -p "${MTXROOT}/include"
 	${SILENT}tmp/genconfig <src/meataxe.h.in >"$@"
 
 tmp/genconfig: Makefile Makefile.conf src/genconfig.c
-	${SILENT}echo "CL src/genconfig.c -> $@"
+	@echo "# CC src/genconfig.c -> $@"
 	${SILENT}mkdir -p tmp
 	${SILENT}$(CC) $(CFLAGS) -DZZZ=${ZZZ} -DMTXVERSION="${MTXVERSION} \
-	   "$(LFLAGS) -o "$@" src/genconfig.c
+	   "$(LDFLAGS) -o "$@" src/genconfig.c
    
 
 # ------------------------------------------------------------------------------
@@ -183,24 +184,24 @@ tmp/c-%.o: tests/c-%.c
 	${SILENT}$(CC) -c $(CFLAGS) -o "$@" "$<"
 
 ${MTXBIN}/zzztest: $(TS_OBJS)
-	${SILENT}echo "LD $@"
+	@echo "LD $@"
 	${SILENT}mkdir -p "${MTXBIN}"
 	${SILENT}$(CC) $(LDFLAGS) -o "$@" $(TS_OBJS)
 
 ${MTXBIN}/checksum: tmp/checksum.o
 	${SILENT}mkdir -p "${MTXBIN}"
-	${SILENT}echo "LD $@"
+	@echo "LD $@"
 	${SILENT}$(CC) $(CFLAGS) -o "$@" tmp/checksum.o
 
 tmp/test_table.c: tmp/tex $(TS_OBJS1:%=tests/%.c)
 	tmp/tex $(TS_OBJS1:%=tests/%.c) >$@
 
 tmp/tex: tests/tex.c
-	@$(CC) -Itests -Isrc $(CFLAGS) $(LFLAGS) $< -o $@
+	@$(CC) -Itests -Isrc $(CFLAGS) $(LDFLAGS) $< -o $@
 
 tmp/c-%.o: tests/c-%.c src/meataxe.h tmp/config.h
 	${SILENT}mkdir -p tmp
-	${SILENT}echo "CC $*.c -> $@"
+	@echo "# CC $*.c -> $@"
 	${SILENT}$(CC) $(CFLAGS) -Itests -Isrc -c "tests/c-$*.c" -o "$@"
 
 tmp/c-zzz.o: tests/c-zzz.c tmp/test_table.c
@@ -216,7 +217,7 @@ tmp/zzztest.done: ${MTXBIN}/zzztest
 tmp/test-%.done: tests/common.sh tests/%/run $(PROGRAMS:%=${MTXBIN}/%)
 	@echo "Running test $*"
 	${SILENT}mkdir -p tmp
-	@cd tmp && MTXBIN="${MTXBIN}" MTXLIB="${MTXLIB}" MTX_TEST_ID="$*" \
+	@cd tmp && MTXBIN="${MTXBIN}" MTXLIB="${MTXROOT}/lib" MTX_TEST_ID="$*" \
 	   PATH="${MTXBIN}:/usr/bin:/bin" ../tests/$*/run
 	@touch "$@"
 

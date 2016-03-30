@@ -59,7 +59,8 @@ Matrix_t *MatCut(const Matrix_t *src, int row1, int col1, int nrows, int ncols)
       return NULL;
    }
    if ((col1 < 0) || (ncols < 0) || (col1 + ncols > src->Noc)) {
-      return MTX_ERROR("Source column index out of bounds"), NULL;
+      MTX_ERROR("Source column index out of bounds");
+      return NULL;
    }
 
    /* Allocate a new matrix for the result
@@ -123,3 +124,5 @@ Matrix_t *MatCutRows(const Matrix_t *src, int row1, int nrows)
 
 
 /// @}
+
+// vim:sw=3:et
