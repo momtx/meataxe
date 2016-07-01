@@ -19,7 +19,7 @@ static void TestScalarProduct1(PTR a, PTR b, int size)
    int count;
    for (count = 0; count < 10; ++count) {
       int i;
-      FEL expected = FF_ZERO, found;
+      FEL expected = FF_ZERO;
       FfMulRow(a,FF_ZERO);
       FfMulRow(b,FF_ZERO);
       for (i = 0; i < size; ++i) {
@@ -29,10 +29,7 @@ static void TestScalarProduct1(PTR a, PTR b, int size)
          FfInsert(b,i,f2);
          expected = FfAdd(expected,FfMul(f1,f2));
       }
-      found = FfScalarProduct(a,b);
-      if (found != expected) {
-         TST_FAIL2("FfScalarProduct() returned %d, expected %d",found,expected);
-      }
+      ASSERT_EQ_INT(FfScalarProduct(a,b), expected);
    }
 }
 

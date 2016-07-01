@@ -1,7 +1,7 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // C MeatAxe - Tests for ffio.c
 //
-// (C) Copyright 1998-2015 Michael Ringe, Lehrstuhl D fuer Mathematik, RWTH Aachen
+// (C) Copyright 1998-2016 Michael Ringe, Lehrstuhl D fuer Mathematik, RWTH Aachen
 //
 // This program is free software; see the file COPYING for details.
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -23,17 +23,13 @@ static void TestRowIo2(PTR row0, PTR row1, PTR buf)
 
    f = SysFopen(file_name,FM_CREATE);
    for (x = 0, i = 0; i < 100; ++i) {
-      if (FfWriteRows(f,(x & 0x1000) ? row0 : row1,1) != 1) {
-         TST_FAIL("FfWriteRows() failed");
-      }
+      ASSERT_EQ_INT(FfWriteRows(f,(x & 0x1000) ? row0 : row1,1), 1);
    }
    fclose(f);
 
    f = SysFopen(file_name,FM_READ);
    for (x = 0, i = 0; i < 100; ++i) {
-      if (FfReadRows(f,buf,1) != 1) {
-         TST_FAIL("FfReadRows() failed");
-      }
+      ASSERT_EQ_INT(FfReadRows(f,buf,1), 1);
       if (FfCmpRows(buf,(x & 0x1000) ? row0 : row1) != 0) {
          TST_FAIL("Compare failed");
       }
@@ -105,35 +101,25 @@ static void TestHdr2(int noc, PTR buf1, PTR buf2, int nor)
    /* Write <buf1> into file
       ---------------------- */
    f = FfWriteHeader(file_name,FfOrder,nor,noc);
-   if (FfWriteRows(f,buf1,nor) != nor) {
-      TST_FAIL("Write failed");
-   }
+   ASSERT_EQ_INT(FfWriteRows(f,buf1,nor), nor);
    fclose(f);
 
    /* Read the file header and check the value.
       ----------------------------------------- */
    memset(buf2,0,FfRowSize(noc) * nor);
    f = FfReadHeader(file_name,&fld2,&nor2,&noc2);
-   if ((fld2 != FfOrder) || (nor2 != nor) || (noc2 != noc)) {
-      TST_FAIL6("Read header %d %d %d, expected %d %d %d",
-            fld2,nor2,noc2,FfOrder,nor,noc);
-   }
+   ASSERT_EQ_INT(fld2, FfOrder);
+   ASSERT_EQ_INT(nor2, nor);
+   ASSERT_EQ_INT(noc2, noc);
 
-   /* Read the rows. If <noc> is not zero, we try to read one
-      more row to check if <FfreadRows()> handles the EOF
-      correctly. For <noc> equal zero FfReadRows() always returns
-      the requestet number of rows, so the check is not possible.
-      ------------------------------------------------------------- */
-   if (FfReadRows(f,buf2,(noc == 0) ? nor : nor + 1) != nor) {
-      TST_FAIL("Read failed");
-   }
+   // Read the rows. If <noc> is not zero, we try to read one more row to check if
+   // <FfreadRows()> handles the EOF correctly. For <noc> = 0 FfReadRows() always returns
+   // the requested number of rows, so the check is not possible.
+   ASSERT_EQ_INT(FfReadRows(f,buf2,(noc == 0) ? nor : nor + 1), nor);
    fclose(f);
 
-   /* Compare <buf1> and <buf2>
-      ------------------------- */
-   if (CmpMat(buf1,buf2,nor)) {
-      TST_FAIL("Compare failed");
-   }
+   // Compare <buf1> and <buf2>
+   ASSERT_EQ_INT(CmpMat(buf1,buf2,nor),0);
 
    remove(file_name);
 }
@@ -210,9 +196,7 @@ static void TestSeek2(int noc, PTR buf1, PTR buf2, int nor)
 
    /* Compare <buf1> and <buf2>
       ------------------------- */
-   if (CmpMat(buf1,buf2,nor)) {
-      TST_FAIL("Compare failed");
-   }
+   ASSERT_EQ_INT(CmpMat(buf1,buf2,nor), 0);
 
    remove(file_name);
 }

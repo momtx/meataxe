@@ -53,9 +53,7 @@ static void TestMapRow1(PTR mat, PTR a, PTR b, int size)
    }
    FfMapRow(a,mat,size,b);
    for (i = 0; i < size; ++i) {
-      if (FfExtract(b,i) != FTab[i % FfOrder]) {
-         TST_FAIL("Error 3");
-      }
+      ASSERT_EQ_INT(FfExtract(b,i), FTab[i % FfOrder]);
    }
 
 }
@@ -135,18 +133,10 @@ static void TestSumInter1()
    }
 
    FfSumAndIntersection(w1,&nor1,&nor2,w2,piv);
-
-   if (nor1 != FfNoc) {
-      TST_FAIL2("Sum has dimension %d, expected %d",nor1, FfNoc);
-   }
-   if (nor2 != (FfNoc - 1) / 3 + 1) {
-      TST_FAIL2("intersection has dimension %d, expected %d",nor2, (FfNoc - 1) / 3 + 1);
-   }
-
+   ASSERT_EQ_INT(nor1, FfNoc);	// whole space
+   ASSERT_EQ_INT(nor2, (FfNoc - 1) / 3 + 1);
    for (i = 0; i < nor2; ++i) {
-      if (piv[nor1 + i] % 3 != 0) {
-         TST_FAIL("Wrong intersection");
-      }
+      ASSERT_EQ_INT(piv[nor1 + i] % 3, 0);
    }
 
    SysFree(w1);
