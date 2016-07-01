@@ -55,22 +55,6 @@ static MtxApplicationInfo_t AppInfo = {
 
 
 /* --------------------------------------------------------------------------
-   Error() - Print error message and exit
-   -------------------------------------------------------------------------- */
-
-void Error(char *msg, ...)
-{
-   va_list al;
-   va_start(al,msg);
-   fprintf(stderr,"\n*** ERROR:");
-   vfprintf(stderr,msg,al);
-   fprintf(stderr,"\n");
-   va_end(al);
-   exit(1);
-}
-
-
-/* --------------------------------------------------------------------------
    MakeFTab() - Create an array of all field elements.
    -------------------------------------------------------------------------- */
 
@@ -85,7 +69,7 @@ void MakeFTab()
    for (i = 0; i < FfOrder; ++i) {
       FTab[i] = FfFromInt(i);
       if (!ISFEL(FTab[i])) {
-         Error("FfFromInt(%d)=%d, illegal value",i,FTab[i]);
+         TST_FAIL2("FfFromInt(%d)=%d, illegal value",i,FTab[i]);
       }
    }
 }
@@ -210,10 +194,10 @@ void TstClearError()
 void TstStartErrorChecking()
 {
    if (TstErrorHandlerActive) {
-       Error("TstStartErrorChecking(): already started");
+       TST_FAIL("TstStartErrorChecking(): already started");
    }
    if (MtxSetErrorHandler(TstErrorHandler)) {
-       Error("TstStartErrorChecking(): other handler is set");
+       TST_FAIL("TstStartErrorChecking(): other handler is set");
    }
    TstErrorHandlerActive = 1;
    TstClearError();

@@ -29,7 +29,7 @@ static void TestMsClean1(MatrixSet_t *set)
          FfInsert(MatGetPtr(m,k / noc),k % noc,FTab[k % (FfOrder - 1) + 1]);
       }
       if (MsCleanAndAppend(set,m) != 0) {
-         Error("MsCleanAndAppend() failed");
+         TST_FAIL("MsCleanAndAppend() failed");
       }
    }
 
@@ -38,7 +38,7 @@ static void TestMsClean1(MatrixSet_t *set)
       Matrix_t *m = RndMat(FfOrder,nor,noc);
       MsClean(set,m);
       if (MatCompare(m,zero) != 0) {
-         Error("MsClean() did not clean completely");
+         TST_FAIL("MsClean() did not clean completely");
       }
       MatFree(m);
    }
@@ -68,20 +68,20 @@ test_F MatrixSetAllocation()
       unsigned long magic;
       set = MsAlloc();
       if (set == NULL) {
-         Error("MsAlloc() failed");
+         TST_FAIL("MsAlloc() failed");
       }
       m1 = RndMat(FfOrder,10,20);
       m2 = RndMat(FfOrder,10,20);
       magic = m1->Magic;
       if ((MsCleanAndAppend(set,m1) != 0)
           || (MsCleanAndAppend(set,m2) != 0)) {
-         Error("MsCleanAndAppend() failed");
+         TST_FAIL("MsCleanAndAppend() failed");
       }
       if (MsFree(set) != 0) {
-         Error("MsFree() failed");
+         TST_FAIL("MsFree() failed");
       }
       if ((m1->Magic == magic) || (m2->Magic == magic)) {
-         Error("MsFree() did not destroy matrices");
+         TST_FAIL("MsFree() did not destroy matrices");
       }
    }
 }

@@ -1,7 +1,7 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // C MeatAxe - Tests for bit strings
 //
-// (C) Copyright 1998-2015 Michael Ringe, Lehrstuhl D fuer Mathematik, RWTH Aachen
+// (C) Copyright 1998-2016 Michael Ringe, Lehrstuhl D fuer Mathematik, RWTH Aachen
 //
 // This program is free software; see the file COPYING for details.
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -12,27 +12,6 @@
 
 MTX_DEFINE_FILE_INFO
 
-static int ErrorFlag = 0;
-
-static void MyErrorHandler(const MtxErrorRecord_t *err)
-{
-   err = NULL;
-   ErrorFlag = 1;
-}
-
-
-#ifdef DEBUG
-
-static int CheckError()
-{
-   int i = ErrorFlag;
-   ErrorFlag = 0;
-   return i;
-}
-
-
-#endif
-
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 #define NMAT 5
@@ -40,8 +19,7 @@ static int CheckError()
 test_F BtStringAllocation()
 {
    static int bssize[NMAT] = { 0,1,10,100,1000 };
-   BitString_t  *m[NMAT];
-   MtxErrorHandler_t *old_err_handler;
+   BitString_t *m[NMAT];
    int i;
 
    for (i = 0; i < NMAT; ++i) {
@@ -58,12 +36,13 @@ test_F BtStringAllocation()
    for (i = 0; i < NMAT; ++i) {
       ASSERT_EQ_INT(BsFree(m[i]), 0);
    }
-   old_err_handler = MtxSetErrorHandler(MyErrorHandler);
-#ifdef DEBUG
+
+   TstStartErrorChecking();
    for (i = 0; i < NMAT; ++i) {
-      if (BsIsValid(m[i]) || !CheckError()) { Error("BsIsValid() failed"); }}
-#endif
-   MtxSetErrorHandler(old_err_handler);
+      if (BsIsValid(m[i]) || !TstHasError()) {
+	  TST_FAIL("BsIsValid() failed");
+      }
+   }
 }
 
 
@@ -122,18 +101,18 @@ static void TestCompare1(int size, BitString_t *a, BitString_t *b)
 {
    int i;
    for (i = 0; i < size; ++i) {
-      if (BsCompare(a,b) != 0) { Error("BsCompare(x,x) != 0"); }
+      ASSERT_EQ_INT(BsCompare(a,b),0);
       BsSet(a,i);
       if (BsCompare(a,b) == 0) {
-         Error("BsCompare() did not detect difference in bit %d",i);
+         TST_FAIL1("BsCompare() did not detect difference in bit %d",i);
       }
       BsSet(b,i);
    }
    for (i = 0; i < size; ++i) {
-      if (BsCompare(a,b) != 0) { Error("BsCompare(x,x) != 0"); }
+      ASSERT_EQ_INT(BsCompare(a,b),0);
       BsClear(a,i);
       if (BsCompare(a,b) == 0) {
-         Error("BsCompare() did not detect difference in bit %d",i);
+         TST_FAIL1("BsCompare() did not detect difference in bit %d",i);
       }
       BsClear(b,i);
    }
@@ -220,7 +199,7 @@ static void CheckIo1(BitString_t **bs, int n)
    for (i = 0; i < n; ++i) {
       BitString_t *a = BsRead(f);
       if (BsCompare(a,bs[i]) != 0) {
-         Error("Bitstring differs after write/read");
+         TST_FAIL("Bitstring differs after write/read");
       }
    }
    fclose(f);

@@ -50,13 +50,13 @@ test_F FactoredPolynomialAllocation()
    }
    for (i = 0; i < NPOLY; ++i) {
       if (FpFree(p[i]) != 0) {
-         Error("FpFree() failed");
+         TST_FAIL("FpFree() failed");
       }
    }
    old_err_handler = MtxSetErrorHandler(MyErrorHandler);
    for (i = 0; i < NPOLY; ++i) {
       if (FpIsValid(p[i]) || !CheckError()) {
-         Error("FpIsValid() failed");
+         TST_FAIL("FpIsValid() failed");
       }
    }
    MtxSetErrorHandler(old_err_handler);

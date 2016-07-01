@@ -31,7 +31,7 @@ static void TestScalarProduct1(PTR a, PTR b, int size)
       }
       found = FfScalarProduct(a,b);
       if (found != expected) {
-         Error("FfScalarProduct() returned %d, expected %d",found,expected);
+         TST_FAIL2("FfScalarProduct() returned %d, expected %d",found,expected);
       }
    }
 }

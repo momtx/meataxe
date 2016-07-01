@@ -36,19 +36,19 @@ test_F FileIo()
 
    mat2 = MatLoad("check.ma1");
    if (MatCompare(mat1,mat2) != 0) {
-      Error("MatSave()/MatLoad() failed");
+      TST_FAIL("MatSave()/MatLoad() failed");
    }
    MatFree(mat2);
 
    pol2 = PolLoad("check.po1");
    if (PolCompare(pol1,pol2) != 0) {
-      Error("PolSave()/PolLoad() failed");
+      TST_FAIL("PolSave()/PolLoad() failed");
    }
    PolFree(pol2);
 
    perm2 = PermLoad("check.pe1");
    if (PermCompare(perm1,perm2) != 0) {
-      Error("PermSave()/PermLoad() failed");
+      TST_FAIL("PermSave()/PermLoad() failed");
    }
    PermFree(perm2);
 
@@ -59,15 +59,15 @@ test_F FileIo()
    fclose(f);
 
    if (MatCompare(mat1,mat2) != 0) {
-      Error("MatWrite()/MatWrite() failed");
+      TST_FAIL("MatWrite()/MatWrite() failed");
    }
    pol2 = PolLoad("check.po1");
    if (PolCompare(pol1,pol2) != 0) {
-      Error("PolWrite()/PolRead() failed");
+      TST_FAIL("PolWrite()/PolRead() failed");
    }
    perm2 = PermLoad("check.pe1");
    if (PermCompare(perm1,perm2) != 0) {
-      Error("PermWrite()/PermRead() failed");
+      TST_FAIL("PermWrite()/PermRead() failed");
    }
 
    MatFree(mat1);

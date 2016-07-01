@@ -52,13 +52,13 @@ test_F SetAllocaction()
    }
    for (i = 0; i < NMAT; ++i) {
       if (SetFree(m[i]) != 0) {
-         Error("SetFree() failed");
+         TST_FAIL("SetFree() failed");
       }
    }
    old_err_handler = MtxSetErrorHandler(MyErrorHandler);
    for (i = 0; i < NMAT; ++i) {
       if (SetIsValid(m[i]) || !CheckError()) {
-         Error("SetIsValid() failed");
+         TST_FAIL("SetIsValid() failed");
       }
    }
    MtxSetErrorHandler(old_err_handler);
@@ -86,16 +86,16 @@ test_F SetBasicOperations()
       int k;
       SetInsert(s,d[i]);
       if (s->Size != i + 1) {
-         Error("Bad size");
+         TST_FAIL("Bad size");
       }
       for (k = 0; k <= i; ++k) {
          if (!SetContains(s,d[k])) {
-            Error("Element not inserted");
+            TST_FAIL("Element not inserted");
          }
       }
       for (k = i + 1; k < 100; ++k) {
          if (SetContains(s,d[k])) {
-            Error("Unexpected Element");
+            TST_FAIL("Unexpected Element");
          }
       }
    }

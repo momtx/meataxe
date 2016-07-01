@@ -24,7 +24,7 @@ static void TestRowIo2(PTR row0, PTR row1, PTR buf)
    f = SysFopen(file_name,FM_CREATE);
    for (x = 0, i = 0; i < 100; ++i) {
       if (FfWriteRows(f,(x & 0x1000) ? row0 : row1,1) != 1) {
-         Error("FfWriteRows() failed");
+         TST_FAIL("FfWriteRows() failed");
       }
    }
    fclose(f);
@@ -32,10 +32,10 @@ static void TestRowIo2(PTR row0, PTR row1, PTR buf)
    f = SysFopen(file_name,FM_READ);
    for (x = 0, i = 0; i < 100; ++i) {
       if (FfReadRows(f,buf,1) != 1) {
-         Error("FfReadRows() failed");
+         TST_FAIL("FfReadRows() failed");
       }
       if (FfCmpRows(buf,(x & 0x1000) ? row0 : row1) != 0) {
-         Error("Compare failed");
+         TST_FAIL("Compare failed");
       }
    }
    fclose(f);
@@ -106,7 +106,7 @@ static void TestHdr2(int noc, PTR buf1, PTR buf2, int nor)
       ---------------------- */
    f = FfWriteHeader(file_name,FfOrder,nor,noc);
    if (FfWriteRows(f,buf1,nor) != nor) {
-      Error("Write failed");
+      TST_FAIL("Write failed");
    }
    fclose(f);
 
@@ -115,7 +115,7 @@ static void TestHdr2(int noc, PTR buf1, PTR buf2, int nor)
    memset(buf2,0,FfRowSize(noc) * nor);
    f = FfReadHeader(file_name,&fld2,&nor2,&noc2);
    if ((fld2 != FfOrder) || (nor2 != nor) || (noc2 != noc)) {
-      Error("Read header %d %d %d, expected %d %d %d",
+      TST_FAIL6("Read header %d %d %d, expected %d %d %d",
             fld2,nor2,noc2,FfOrder,nor,noc);
    }
 
@@ -125,14 +125,14 @@ static void TestHdr2(int noc, PTR buf1, PTR buf2, int nor)
       the requestet number of rows, so the check is not possible.
       ------------------------------------------------------------- */
    if (FfReadRows(f,buf2,(noc == 0) ? nor : nor + 1) != nor) {
-      Error("Read failed");
+      TST_FAIL("Read failed");
    }
    fclose(f);
 
    /* Compare <buf1> and <buf2>
       ------------------------- */
    if (CmpMat(buf1,buf2,nor)) {
-      Error("Compare failed");
+      TST_FAIL("Compare failed");
    }
 
    remove(file_name);
@@ -191,7 +191,7 @@ static void TestSeek2(int noc, PTR buf1, PTR buf2, int nor)
       ---------------------- */
    f = FfWriteHeader(file_name,FfOrder,nor,noc);
    if (FfWriteRows(f,buf1,nor) != nor) {
-      Error("Write failed");
+      TST_FAIL("Write failed");
    }
    fclose(f);
 
@@ -203,7 +203,7 @@ static void TestSeek2(int noc, PTR buf1, PTR buf2, int nor)
       PTR x = (PTR)((char *)buf2 + i * FfCurrentRowSize);
       FfSeekRow(f,i);
       if (FfReadRows(f,x,1) != 1) {
-         Error("Read failed");
+         TST_FAIL("Read failed");
       }
    }
    fclose(f);
@@ -211,7 +211,7 @@ static void TestSeek2(int noc, PTR buf1, PTR buf2, int nor)
    /* Compare <buf1> and <buf2>
       ------------------------- */
    if (CmpMat(buf1,buf2,nor)) {
-      Error("Compare failed");
+      TST_FAIL("Compare failed");
    }
 
    remove(file_name);

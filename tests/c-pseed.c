@@ -33,14 +33,14 @@ test_F SeedVectorGenerator()
       PTR v = MatGetPtr(vecs,i);
       n = MakeSeedVector(basis,n,v);
       if (n < 0) {
-         Error("Out of seed vectors");
+         TST_FAIL("Out of seed vectors");
       }
    }
    if (MakeSeedVector(basis,n,dummy) != -1) {
-      Error("Too many seed vectors");
+      TST_FAIL("Too many seed vectors");
    }
    if (MatCompare(vecs,cmp) != 0) {
-      Error("Wrong seed vectors");
+      TST_FAIL("Wrong seed vectors");
    }
    MatFree(vecs);
    MatFree(cmp);

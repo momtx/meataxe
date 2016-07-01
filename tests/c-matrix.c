@@ -71,10 +71,10 @@ static void TestMatAlloc1(int fl)
       MTX_VERIFY(m[i]->Noc == noc[i]);
    }
    for (i = 0; i < NMAT; ++i) {
-      if (MatFree(m[i]) != 0) { Error("MatFree() failed"); }}
+      if (MatFree(m[i]) != 0) { TST_FAIL("MatFree() failed"); }}
    old_err_handler = MtxSetErrorHandler(MyErrorHandler);
    for (i = 0; i < NMAT; ++i) {
-      if (MatIsValid(m[i]) || !CheckError()) { Error("MatIsValid() failed"); }}
+      if (MatIsValid(m[i]) || !CheckError()) { TST_FAIL("MatIsValid() failed"); }}
    MtxSetErrorHandler(old_err_handler);
 }
 
@@ -99,25 +99,21 @@ static void ChkEch(Matrix_t *mat)
       int k;
       FEL f;
 
-      if ((k = FfFindPivot(p,&f)) != mat->PivotTable[i]) {
-         Error("PivotTable[%d] = %d, expected %d",i,k,mat->PivotTable[i]);
-      }
+      ASSERT_EQ_INT(FfFindPivot(p,&f), mat->PivotTable[i]);
       for (k = 0; k < i; ++k) {
-         if (FfExtract(p,mat->PivotTable[k]) != FF_ZERO) {
-            Error("Matrix not in echelon form");
-         }
+	 ASSERT_EQ_INT(FfExtract(p,mat->PivotTable[k]), FF_ZERO);
       }
    }
    for (i = mat->Nor; i < mat->Noc; ++i) {
       int k;
       int piv = mat->PivotTable[i];
       if ((piv < 0) || (piv >= mat->Noc)) {
-         Error("Invalid pivot column %d at row %d",piv,i);
+	 TST_FAIL2("Invalid pivot column %d at row %d",piv,i);
       }
       for (k = 0; k < i; ++k) {
-         if (mat->PivotTable[k] == piv) {
-            Error("Duplicated pivot column at row %d and %d",i,k);
-         }
+	 if (mat->PivotTable[k] == piv) {
+	    TST_FAIL2("Duplicated pivot column at row %d and %d",i,k);
+	 }
       }
    }
 }
@@ -137,20 +133,17 @@ static void TestMatEchelonize1(Matrix_t *m, int size)
       }
    }
    if (MatEchelonize(m) != size) {
-      Error("MatEchelonize() failed");
+      TST_FAIL("MatEchelonize() failed");
    }
    ChkEch(m);
    for (i = 0; i < size; ++i) {
       PTR p = MatGetPtr(m,i);
       int k;
-      if (m->PivotTable[i] != size - i - 1) {
-         Error("Unexpected pivot column %d (should be %d)",
-               m->PivotTable[i],size - i);
-      }
+      ASSERT_EQ_INT(m->PivotTable[i], size - i - 1);
       for (k = 0; k < size; ++k) {
          FEL f = FfExtract(p,k);
          if ((f == FF_ZERO) ^ (k != size - i - 1)) {
-            Error("Unexpected element %d at column %d",f,k);
+            TST_FAIL2("Unexpected element %d at column %d",f,k);
          }
       }
    }
@@ -172,7 +165,7 @@ static void TestMatEchelonize2(Matrix_t *m, int size)
       }
    }
    if (MatEchelonize(m) < 5) {
-      Error("Test 2: MatEchelonize() failed");
+      TST_FAIL("Test 2: MatEchelonize() failed");
    }
    ChkEch(m);
 }
@@ -197,18 +190,18 @@ static void TestMatCompare1(Matrix_t *a, Matrix_t *b, int size)
 {
    int i;
 
-   if (MatCompare(a,b) != 0) { Error("a != b, should be ="); }
-   if (MatCompare(b,a) != 0) { Error("b != a, should be ="); }
+   if (MatCompare(a,b) != 0) { TST_FAIL("a != b, should be ="); }
+   if (MatCompare(b,a) != 0) { TST_FAIL("b != a, should be ="); }
    for (i = 0; i < size; ++i) {
       PTR pa = MatGetPtr(a,i);
       PTR pb = MatGetPtr(b,i);
       FfInsert(pa,0,FF_ONE);
-      if (MatCompare(a,b) <= 0) { Error("a <= b, should be >"); }
-      if (MatCompare(b,a) >= 0) { Error("b >= a, should be <"); }
+      if (MatCompare(a,b) <= 0) { TST_FAIL("a <= b, should be >"); }
+      if (MatCompare(b,a) >= 0) { TST_FAIL("b >= a, should be <"); }
 
       FfInsert(pb,0,FF_ONE);
-      if (MatCompare(a,b) != 0) { Error("a != b, should be ="); }
-      if (MatCompare(b,a) != 0) { Error("b != a, should be ="); }
+      if (MatCompare(a,b) != 0) { TST_FAIL("a != b, should be ="); }
+      if (MatCompare(b,a) != 0) { TST_FAIL("b != a, should be ="); }
    }
 }
 
@@ -221,10 +214,10 @@ static void Check2(int fld1, int nor1, int noc1, int fld2, int nor2,
    a = MatAlloc(fld1,nor1,noc1);
    b = MatAlloc(fld2,nor2,noc2);
    if (MatCompare(a,b) >= 0) {
-      Error("a >= b, should be <");
+      TST_FAIL("a >= b, should be <");
    }
    if (MatCompare(b,a) <= 0) {
-      Error("b <= a, should be >");
+      TST_FAIL("b <= a, should be >");
    }
 }
 
@@ -268,10 +261,10 @@ static void TestMatClean1()
 
    MatEchelonize(a);
    if (MatClean(b,a) != 2) {
-      Error("MatClean() failed");
+      TST_FAIL("MatClean() failed");
    }
    if (MatCompare(b,c) != 0) {
-      Error("MatClean() produced wrong result");
+      TST_FAIL("MatClean() produced wrong result");
    }
 
    MatFree(a);
@@ -298,7 +291,7 @@ static void TestMatInv1()
       Matrix_t *a = MatId(FfOrder,i);
       Matrix_t *ai = MatInverse(a);
       if (MatCompare(a,ai) != 0) {
-         Error("Wrong inverse of identity matrix");
+         TST_FAIL("Wrong inverse of identity matrix");
       }
       MatFree(a);
       MatFree(ai);
@@ -316,7 +309,7 @@ static void TestMatInv2()
    MatMul(ai,a);
    id = MatId(FfOrder,5);
    if (MatCompare(ai,id) != 0) {
-      Error("M * 1/M != 1");
+      TST_FAIL("M * 1/M != 1");
    }
    MatFree(a);
    MatFree(ai);
@@ -342,7 +335,7 @@ static void TestMatDup1(int fl, int nor, int noc)
    a = RndMat(fl,nor,noc);
    b = MatDup(a);
    if (MatCompare(a,b) != 0) {
-      Error("MatDup() failed");
+      TST_FAIL("MatDup() failed");
    }
    MatFree(a);
    MatFree(b);
@@ -371,12 +364,12 @@ static void TestNullSpace1(int fl, int dim)
    a = MatId(fl,dim);
    b = MatNullSpace(a);
    if (!MatIsValid(b) || (b->Noc != dim) || (b->Nor != 0)) {
-      Error("NullSpace(Id) failed");
+      TST_FAIL("NullSpace(Id) failed");
    }
    MatFree(b);
    b = MatNullSpace__(MatAlloc(fl,dim,dim));
    if (MatCompare(a,b) != 0) {
-      Error("NullSpace(0) != Id");
+      TST_FAIL("NullSpace(0) != Id");
    }
    MatFree(a);
    MatFree(b);
@@ -392,14 +385,14 @@ static void TestNullSpace2(int fl, int dim)
    a = RndMat(fl,dim + 3,dim);
    b = MatNullSpace(a);
    if (b->Nor < 3) {
-      Error("Unexpected null-space dimension");
+      TST_FAIL("Unexpected null-space dimension");
    }
    MatMul(b,a);
    FfSetNoc(b->Noc);
    for (i = 0; i < b->Nor; ++i) {
       FEL f;
       if (FfFindPivot(MatGetPtr(b,i),&f) >= 0) {
-         Error("Wrong null-space");
+         TST_FAIL("Wrong null-space");
       }
    }
    MatFree(a);
@@ -427,8 +420,7 @@ test_F NullSpace()
 
 static void TestMatOrder2(Matrix_t *a, int order)
 {
-   int i = MatOrder(a);
-   if (i != order) { Error("MatOrder() returned %d, expected %d",i,order); }
+   ASSERT_EQ_INT(MatOrder(a), order);
    MatFree(a);
 }
 
@@ -470,12 +462,12 @@ static void TestMatCut1(int fl)
 
    b = MatCut(a,0,0,-1,-1);
    if (MatCompare(a,b) != 0) {
-      Error("MatCut(...0,0,-1,-1) failed");
+      TST_FAIL("MatCut(...0,0,-1,-1) failed");
    }
    MatFree(b);
    b = MatCutRows(a,0,-1);
    if (MatCompare(a,b) != 0) {
-      Error("MatCutRows(...,0,-1) failed");
+      TST_FAIL("MatCutRows(...,0,-1) failed");
    }
    MatFree(b);
 
@@ -498,7 +490,7 @@ static void TestMatCut1(int fl)
             FfSetNoc(bnoc);
             fb = FfExtract(MatGetPtr(b,r),c);
             if (fa != fb) {
-               Error("Error at (%d+%d,%d+%d): %d != %d",nor0,r,noc0,c,
+               TST_FAIL6("Error at (%d+%d,%d+%d): %d != %d",nor0,r,noc0,c,
                      (int)fa,(int)fb);
             }
          }
@@ -543,7 +535,7 @@ static void TestMatCopy1(int fl)
 
       MatMulScalar(b,FF_ZERO);
       if (MatCopyRegion(b,dr0,dc0,a,sr0,sc0,snor,snoc) != 0) {
-         Error("MatCopyRegion() failed");
+         TST_FAIL("MatCopyRegion() failed");
       }
       for (r = 0; r < nor; ++r) {
          int c;
@@ -551,14 +543,10 @@ static void TestMatCopy1(int fl)
             FEL fb = FfExtract(MatGetPtr(b,r),c);
             if ((r < dr0) || (r >= dr0 + snor) || (c < dc0) || (c >= dc0 + snoc)) {
                if (fb != FF_ZERO) {
-                  Error("Found %d at (%d,%d), expected 0",fb,r,c);
+                  TST_FAIL3("Found %d at (%d,%d), expected 0",fb,r,c);
                }
             } else {
-               FEL fa = FfExtract(MatGetPtr(a,sr0 + r - dr0),sc0 + c - dc0);
-               if (fa != fb) {
-                  Error("Error at (%d+%d,%d+%d): %d != %d",sr0,r - dr0,
-                        sc0,c,dc0,(int)fa,(int)fb);
-               }
+	       ASSERT_EQ_INT(FfExtract(MatGetPtr(a,sr0 + r - dr0),sc0 + c - dc0), fb);
             }
          }
       }
@@ -591,14 +579,11 @@ static void TestMatAddMul2(int fl, int nor, int noc, Matrix_t *a, Matrix_t *b,
       for (r = 0; r < nor; ++r) {
          int co;
          for (co = 0; co < noc; ++co) {
-            FEL fa = FfExtract(MatGetPtr(a,r),co);
+	    FEL fa = FfExtract(MatGetPtr(a,r),co);
             FEL fb = FfExtract(MatGetPtr(b,r),co);
             FEL fc = FfExtract(MatGetPtr(c,r),co);
             fb = FfAdd(fb,FfMul(fc,f));
-            if (fa != fb) {
-               Error("Error at (%d,%d): expected %d, found %d",
-                     r,co,fa,fb);
-            }
+	    ASSERT_EQ_INT(fa, fb);
          }
       }
    }
@@ -640,10 +625,10 @@ static void TestMatId2(int fl, int dim)
 
    m = MatId(fl,dim);
    if (m->Field != fl) {
-      Error("Bad field");
+      TST_FAIL("Bad field");
    }
    if ((m->Nor != dim) || (m->Noc != dim)) {
-      Error("Bad dimensions");
+      TST_FAIL("Bad dimensions");
    }
    for (i = 0; i < dim; ++i) {
       int k;
@@ -651,7 +636,7 @@ static void TestMatId2(int fl, int dim)
       for (k = 0; k < dim; ++k) {
          FEL f = FfExtract(r,k);
          if (((k == i) && (f != FF_ONE)) || ((k != i) && (f != FF_ZERO))) {
-            Error("Unexpected element %d at (%d,%d)",f,i,k);
+            TST_FAIL3("Unexpected element %d at (%d,%d)",f,i,k);
          }
       }
    }

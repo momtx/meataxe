@@ -27,12 +27,12 @@ static void TestMatInsert1()
    pol = PolAlloc(FfOrder,-1);
    a = MatInsert(mat,pol);
    if (MatCompare(a,z) != 0) {
-      Error("p(A) != 0 for p(x)=0");
+      TST_FAIL("p(A) != 0 for p(x)=0");
    }
    MatFree(a);
    a = MatInsert_(MatDup(mat),pol);
    if (MatCompare(a,z) != 0) {
-      Error("p(A) != 0 for p(x)=0");
+      TST_FAIL("p(A) != 0 for p(x)=0");
    }
    MatFree(a);
    PolFree(pol);
@@ -41,12 +41,12 @@ static void TestMatInsert1()
    pol = PolAlloc(FfOrder,0);
    a = MatInsert(mat,pol);
    if (MatCompare(a,e) != 0) {
-      Error("p(A) != 1 for p(x)=1");
+      TST_FAIL("p(A) != 1 for p(x)=1");
    }
    MatFree(a);
    a = MatInsert_(MatDup(mat),pol);
    if (MatCompare(a,e) != 0) {
-      Error("p(A) != 0 for p(x)=0");
+      TST_FAIL("p(A) != 0 for p(x)=0");
    }
    MatFree(a);
    PolFree(pol);
@@ -55,12 +55,12 @@ static void TestMatInsert1()
    pol = PolAlloc(FfOrder,1);
    a = MatInsert(mat,pol);
    if (MatCompare(a,mat) != 0) {
-      Error("p(A) != A for p(x)=x");
+      TST_FAIL("p(A) != A for p(x)=x");
    }
    MatFree(a);
    a = MatInsert_(MatDup(mat),pol);
    if (MatCompare(a,mat) != 0) {
-      Error("p(A) != 0 for p(x)=0");
+      TST_FAIL("p(A) != 0 for p(x)=0");
    }
    MatFree(a);
    PolFree(pol);

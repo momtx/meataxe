@@ -39,15 +39,21 @@ void test_Assert(const char *file, int line, const char *func, int e, const char
 void test_EqInt(const char *file, int line, const char *func, int act, int exp,
 	        const char *actstr, const char *expstr);
 #define ASSERT_EQ_INT(act,exp) test_EqInt(__FILE__,__LINE__,__func__,act,exp,#act,#exp)
+void test_Nz(const char *file, int line, const char *func, int act, const char *actstr);
+#define ASSERT_NZ(act) test_Nz(__FILE__,__LINE__,__func__,act,#act)
 
 MTX_PRINTF_ATTRIBUTE(4,5)
 void test_Fail(const char *file, int line, const char *func, const char *msg, ...);
 #define TST_FAIL(txt) test_Fail(__FILE__,__LINE__,__func__,"%s",txt)
 #define TST_FAIL1(txt,a1) test_Fail(__FILE__,__LINE__,__func__,"%s",txt,a1)
-#define TST_FAIL2(txt,a1) test_Fail(__FILE__,__LINE__,__func__,"%s",txt,a1,a2)
+#define TST_FAIL2(txt,a1,a2) test_Fail(__FILE__,__LINE__,__func__,"%s",txt,a1,a2)
+#define TST_FAIL3(txt,a1,a2,a3) test_Fail(__FILE__,__LINE__,__func__,"%s",txt,a1,a2,a3)
+#define TST_FAIL4(txt,a1,a2,a3,a4) test_Fail(__FILE__,__LINE__,__func__,"%s",txt,a1,a2,a3,a4)
+#define TST_FAIL5(txt,a1,a2,a3,a4,a5) test_Fail(__FILE__,__LINE__,__func__,"%s",txt,a1,a2,a3,a4,a5)
+#define TST_FAIL6(txt,a1,a2,a3,a4,a5,a6) \
+   test_Fail(__FILE__,__LINE__,__func__,"%s",txt,a1,a2,a3,a4,a5,a6)
 
 extern FEL *FTab;
-extern void Error(char *msg, ...);
 extern int NextField();
 extern void SelectField(int f);
 extern void MakeFTab();
