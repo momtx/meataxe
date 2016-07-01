@@ -12,27 +12,6 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-MTX_DEFINE_FILE_INFO
-
-static int ErrorFlag = 0;
-
-////////////////////////////////////////////////////////////////////////////////////////////////////
-
-static void MyErrorHandler(const MtxErrorRecord_t *err)
-{
-   ErrorFlag = 1;
-   err = NULL;
-}
-
-////////////////////////////////////////////////////////////////////////////////////////////////////
-
-static int CheckError()
-{
-   int i = ErrorFlag;
-   ErrorFlag = 0;
-   return i;
-}
-
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 Matrix_t *RndMat(int fl, int nor, int noc)
@@ -58,7 +37,6 @@ static void TestMatAlloc1(int fl)
    static const int nor[NMAT] = { 0,0,1,1,9 };
    static const int noc[NMAT] = { 0,1,0,1,9 };
    Matrix_t *m[NMAT];
-   MtxErrorHandler_t *old_err_handler;
    int i;
 
    for (i = 0; i < NMAT; ++i) {
@@ -66,16 +44,19 @@ static void TestMatAlloc1(int fl)
    }
    for (i = 0; i < NMAT; ++i) {
       MatIsValid(m[i]);
-      MTX_VERIFY(m[i]->Field == fl);
-      MTX_VERIFY(m[i]->Nor == nor[i]);
-      MTX_VERIFY(m[i]->Noc == noc[i]);
+      ASSERT(m[i]->Field == fl);
+      ASSERT(m[i]->Nor == nor[i]);
+      ASSERT(m[i]->Noc == noc[i]);
    }
    for (i = 0; i < NMAT; ++i) {
-      if (MatFree(m[i]) != 0) { TST_FAIL("MatFree() failed"); }}
-   old_err_handler = MtxSetErrorHandler(MyErrorHandler);
+      ASSERT_EQ_INT(MatFree(m[i]), 0);
+   }
+   TstStartErrorChecking();
    for (i = 0; i < NMAT; ++i) {
-      if (MatIsValid(m[i]) || !CheckError()) { TST_FAIL("MatIsValid() failed"); }}
-   MtxSetErrorHandler(old_err_handler);
+      ASSERT(!MatIsValid(m[i]));
+      ASSERT(TstHasError());
+   }
+   TstStopErrorChecking();
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -107,13 +88,10 @@ static void ChkEch(Matrix_t *mat)
    for (i = mat->Nor; i < mat->Noc; ++i) {
       int k;
       int piv = mat->PivotTable[i];
-      if ((piv < 0) || (piv >= mat->Noc)) {
-	 TST_FAIL2("Invalid pivot column %d at row %d",piv,i);
-      }
+      ASSERT(piv >= 0);
+      ASSERT(piv < mat->Noc);
       for (k = 0; k < i; ++k) {
-	 if (mat->PivotTable[k] == piv) {
-	    TST_FAIL2("Duplicated pivot column at row %d and %d",i,k);
-	 }
+	 ASSERT(mat->PivotTable[k] != piv);
       }
    }
 }
@@ -624,20 +602,15 @@ static void TestMatId2(int fl, int dim)
    int i;
 
    m = MatId(fl,dim);
-   if (m->Field != fl) {
-      TST_FAIL("Bad field");
-   }
-   if ((m->Nor != dim) || (m->Noc != dim)) {
-      TST_FAIL("Bad dimensions");
-   }
+   ASSERT_EQ_INT(m->Field, fl);
+   ASSERT_EQ_INT(m->Nor, dim);
+   ASSERT_EQ_INT(m->Noc, dim);
    for (i = 0; i < dim; ++i) {
       int k;
       PTR r = MatGetPtr(m,i);
       for (k = 0; k < dim; ++k) {
-         FEL f = FfExtract(r,k);
-         if (((k == i) && (f != FF_ONE)) || ((k != i) && (f != FF_ZERO))) {
-            TST_FAIL3("Unexpected element %d at (%d,%d)",f,i,k);
-         }
+         const FEL f = FfExtract(r,k);
+         if (k == i) ASSERT_EQ_INT(f, FF_ONE); else ASSERT_EQ_INT(f, FF_ZERO);
       }
    }
    MatFree(m);
@@ -645,19 +618,11 @@ static void TestMatId2(int fl, int dim)
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static void TestMatId1(int fl)
-{
-   int dim;
-   for (dim = 0; dim < 100; dim += dim / 10 + 1) {
-      TestMatId2(fl,dim);
-   }
-}
-
-////////////////////////////////////////////////////////////////////////////////////////////////////
-
 test_F MatrixIdentity()
 {
    while (NextField() > 0) {
-      TestMatId1(FfOrder);
+       for (int dim = 0; dim < 100; dim += dim / 10 + 1) {
+	   TestMatId2(FfOrder,dim);
+       }
    }
 }
