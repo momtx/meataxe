@@ -1,7 +1,7 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // C MeatAxe - Tests for kernel functions
 //
-// (C) Copyright 1998-2015 Michael Ringe, Lehrstuhl D fuer Mathematik, RWTH Aachen
+// (C) Copyright 1998-2016 Michael Ringe, Lehrstuhl D fuer Mathematik, RWTH Aachen
 //
 // This program is free software; see the file COPYING for details.
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -16,61 +16,47 @@
 
 static void TestField1()
 {
-   FEL a,b,c;
    int ai, bi, ci;
 
-   /* Test one and zero elements
-      -------------------------- */
+   // one and zero
    for (ai = 0; ai < (int)FfOrder; ++ai) {
-      a = FTab[ai];
-      if (FfAdd(a,FF_ZERO) != a) {
-         TST_FAIL2("%d+0=%d\n",(int)a,(int)FfAdd(a,FF_ZERO));
-      }
-      if (FfMul(a,FF_ONE) != a) {
-         TST_FAIL2("%d*1=%d\n",(int)a,(int)FfMul(a,FF_ONE));
-      }
+      const FEL a = FTab[ai];
+      ASSERT_EQ_INT(FfAdd(a,FF_ZERO),a);
+      ASSERT_EQ_INT(FfMul(a,FF_ONE),a);
    }
 
-   /* Test negative and inverse
-      ------------------------- */
+   // additive and multiplicative inverse
    for (ai = 0; ai < (int)FfOrder; ++ai) {
-      a = FTab[ai];
-      b = FfNeg(a);
-      if (!ISFEL(b) || (FfAdd(a,b) != FF_ZERO)) {
-         TST_FAIL2("Illegal negative: -%d = %d",a,b);
-      }
+      const FEL a = FTab[ai];
+      const FEL minusA = FfNeg(a);
+      ASSERT(ISFEL(minusA));
+      ASSERT_EQ_INT(FfAdd(a,minusA),FF_ZERO);
+
       if (a != FF_ZERO) {
-         b = FfInv(a);
-         if (!ISFEL(b) || (FfMul(a,b) != FF_ONE)) {
-            TST_FAIL("Illegal inverse");
-         }
+	 const FEL inverseOfA = FfInv(a);
+         ASSERT(ISFEL(inverseOfA));
+	 ASSERT_EQ_INT(FfMul(a,inverseOfA), FF_ONE);
       }
    }
 
-   /* Test arithmetic
-      --------------- */
+   // arithmetic
    for (ai = 0; ai < (int)FfOrder; ++ai) {
-      a = FTab[ai];
+      const FEL a = FTab[ai];
       for (bi = ai; bi < (int)FfOrder; ++bi) {
-         b = FTab[bi];
-         c = FfAdd(a,b);
-         if (!ISFEL(c)) { TST_FAIL("FfAdd() error"); }
-         if (c != FfAdd(b,a)) { TST_FAIL("'+' not commutative"); }
-         c = FfMul(a,b);
-         if (!ISFEL(c)) { TST_FAIL("FfMul() error"); }
-         if (c != FfMul(b,a)) { TST_FAIL("'*' not commutative"); }
+         const FEL b = FTab[bi];
+         const FEL aPlusB = FfAdd(a,b);
+         ASSERT(ISFEL(aPlusB));
+         ASSERT_EQ_INT(aPlusB, FfAdd(b,a));	// a+b=b+a
+
+         const FEL aTimesB = FfMul(a,b);
+         ASSERT(ISFEL(aTimesB));
+         ASSERT_EQ_INT(aTimesB, FfMul(b,a));	// ab=ba
 
          for (ci = 0; ci < (int)FfOrder; ++ci) {
-            c = FTab[ci];
-            if (FfAdd(a,FfAdd(b,c)) != FfAdd(FfAdd(a,b),c)) {
-               TST_FAIL("'+' not associative");
-            }
-            if (FfMul(a,FfMul(b,c)) != FfMul(FfMul(a,b),c)) {
-               TST_FAIL("'*' not associative");
-            }
-            if (FfMul(a,FfAdd(b,c)) != FfAdd(FfMul(a,b),FfMul(a,c))) {
-               TST_FAIL("a*(b+c) != a*b+a*c");
-            }
+            const FEL c = FTab[ci];
+	    ASSERT_EQ_INT(FfAdd(a,FfAdd(b,c)), FfAdd(FfAdd(a,b),c));	// a+(b+c)=(a+b)+c
+	    ASSERT_EQ_INT(FfMul(a,FfMul(b,c)), FfMul(FfMul(a,b),c));	// a(bc)=(ab)c
+            ASSERT_EQ_INT(FfMul(a,FfAdd(b,c)), FfAdd(FfMul(a,b),FfMul(a,c))); // a(b+c)=ab+ac
          }
       }
    }
@@ -118,44 +104,21 @@ test_F FfGenerator()
 
 static void TestInsertExtract2(PTR x, int pos)
 {
-   int i1, i2, i3;
-   int max1 = (FfOrder > 32) ? 32 : FfOrder;
-   int max3 = (FfOrder > 16) ? 16 : FfOrder;
+   const int max1 = (FfOrder > 32) ? 32 : FfOrder;
+   const int max3 = (FfOrder > 16) ? 16 : FfOrder;
 
-   for (i1 = 0; i1 < max1; ++i1) {
+   for (int i1 = 0; i1 < max1; ++i1) {
       FfInsert(x,pos + 1 - 1,FTab[i1]);
-      for (i2 = 0; i2 < FfOrder; ++i2) {
+      for (int i2 = 0; i2 < FfOrder; ++i2) {
          FfInsert(x,pos + 2 - 1,FTab[i2]);
-         for (i3 = 0; i3 < max3; ++i3) {
+         for (int i3 = 0; i3 < max3; ++i3) {
             FfInsert(x,pos + 3 - 1,FTab[i3]);
-
-            if ((FfExtract(x,pos + 1 - 1) != FTab[i1]) ||
-                (FfExtract(x,pos + 2 - 1) != FTab[i2]) ||
-                (FfExtract(x,pos + 3 - 1) != FTab[i3])
-                ) {
-               TST_FAIL6("Read %d %d %d, expected %d %d %d",
-                     FfExtract(x,pos + 1 - 1),FfExtract(x,pos + 2 - 1),
-                     FfExtract(x,pos + 3 - 1),FTab[i1],FTab[i2],FTab[i3]);
-            }
-
+	    ASSERT_EQ_INT(FfExtract(x,pos + 0), FTab[i1]);
+	    ASSERT_EQ_INT(FfExtract(x,pos + 1), FTab[i2]);
+	    ASSERT_EQ_INT(FfExtract(x,pos + 2), FTab[i3]);
          }
       }
    }
-}
-
-////////////////////////////////////////////////////////////////////////////////////////////////////
-
-static void TestInsertExtract1()
-{
-   int pos;
-   PTR x;
-
-   FfSetNoc(20);
-   x = FfAlloc(1);
-   for (pos = 0; pos < 14; ++pos) {
-      TestInsertExtract2(x,pos);
-   }
-   free(x);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -163,57 +126,57 @@ static void TestInsertExtract1()
 test_F InsertExtract()
 {
    while (NextField() > 0) {
-      TestInsertExtract1();
-   }
-}
-
-////////////////////////////////////////////////////////////////////////////////////////////////////
-
-static void TestFindPiv2(PTR x, int noc)
-{
-   FEL a;
-   int pos;
-   int i;
-
-   if ((pos = FfFindPivot(x,&a)) >= 0) {
-      TST_FAIL2("Found pivot %d at column %d in empty row",a,pos);
-   }
-   for (i = 0; i < noc; ++i) {
-      FfInsert(x,i,FTab[i % (FfOrder - 1) + 1]);
-   }
-   for (i = 0; i < noc; ++i) {
-      int k;
-      for (k = 1; k < FfOrder; ++k) {
-         FfInsert(x,i,FTab[k]);
-         if (((pos = FfFindPivot(x,&a)) != i) || (a != FTab[k])) {
-            TST_FAIL4("Found Pivot %d at %d, expected %d at %d",
-                  a,pos,FTab[k],i);
-         }
+      FfSetNoc(20);
+      const PTR x = FfAlloc(1);
+      for (int pos = 0; pos < 14; ++pos) {
+	 TestInsertExtract2(x,pos);
       }
-      FfInsert(x,i,FF_ZERO);
+      free(x);
    }
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static void TestFindPiv3(PTR x, int noc)
+static void TestFindPiv2(PTR row, int noc)
 {
-   FEL a;
-   int pos;
+   // fill with nonzero elemets
+   for (int i = 0; i < noc; ++i) {
+      FfInsert(row,i,FTab[i % (FfOrder - 1) + 1]);
+   }
+
+   // test each column
+   for (int i = 0; i < noc; ++i) {
+      for (int k = 1; k < FfOrder; ++k) {
+         FfInsert(row,i,FTab[k]);
+	 FEL pivotElement;
+	 const int pivotColumn = FfFindPivot(row,&pivotElement);
+         ASSERT_EQ_INT(pivotColumn, i);
+	 ASSERT_EQ_INT(pivotElement, FTab[k]);
+      }
+      FfInsert(row,i,FF_ZERO);
+   }
+
+   // empty row
+   FEL dummy;
+   ASSERT_EQ_INT(FfFindPivot(row,&dummy), -1);
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+static void TestFindPiv3(PTR row, int noc)
+{
    int i;
 
-   FfMulRow(x,FF_ZERO);
+   FfMulRow(row,FF_ZERO);
    for (i = noc - 1; i > 0; --i) {
-      FfInsert(x,i,FF_ONE);
-      pos = FfFindPivot(x,&a);
-      if (pos != i) {
-         TST_FAIL2("Found pivot at %d, expected %d",pos,i);
-      }
+      FfInsert(row,i,FF_ONE);
+      FEL pivotValue;
+      const int pivotColumn = FfFindPivot(row,&pivotValue);
+      ASSERT_EQ_INT(pivotColumn , i);
+
+      // reduce row size below pivot column and try again
       FfSetNoc(i);
-      pos = FfFindPivot(x,&a);
-      if (pos != -1) {
-         TST_FAIL2("Found pivot at %d, expected %d",pos,-1);
-      }
+      ASSERT_EQ_INT(FfFindPivot(row,&pivotValue), -1);
    }
 }
 
@@ -221,11 +184,9 @@ static void TestFindPiv3(PTR x, int noc)
 
 static void TestFindPiv1()
 {
-   int noc;
-   PTR x;
-   for (noc = 0; noc < 35; ++noc) {
+   for (int noc = 0; noc < 35; ++noc) {
       FfSetNoc(noc);
-      x = FfAlloc(1);
+      const PTR x = FfAlloc(1);
       TestFindPiv2(x,noc);
       TestFindPiv3(x,noc);
       SysFree(x);
