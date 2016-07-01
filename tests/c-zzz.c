@@ -14,7 +14,6 @@
 
 #include <test_table.c>
 
-__attribute__((format(printf,4,5)))
 void test_Fail(const char *file, int line, const char *func, const char *msg, ...)
 {
     va_list args;
@@ -187,6 +186,63 @@ static int prtables(int field)
 }
 
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+static int TstErrorHandlerActive = 0;
+static int TstErrorCode = 0;
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+static void TstErrorHandler(const MtxErrorRecord_t *err)
+{
+   TstErrorCode = (err != NULL) ? 1 : 0;
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void TstClearError()
+{
+   TstErrorCode = 0;
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void TstStartErrorChecking()
+{
+   if (TstErrorHandlerActive) {
+       Error("TstStartErrorChecking(): already started");
+   }
+   if (MtxSetErrorHandler(TstErrorHandler)) {
+       Error("TstStartErrorChecking(): other handler is set");
+   }
+   TstErrorHandlerActive = 1;
+   TstClearError();
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void TstStopErrorChecking()
+{
+   if (TstErrorHandlerActive) {
+      TstClearError();
+      MtxSetErrorHandler(NULL);
+      TstErrorHandlerActive = 0;
+   }
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+/// Returns and clears the error status.
+
+int TstHasError()
+{
+   const int ec = TstErrorCode;
+   TstErrorCode = 0;
+   return ec != 0;
+}
+
+
+
 /* --------------------------------------------------------------------------
    main()
    -------------------------------------------------------------------------- */
@@ -248,9 +304,14 @@ int main(int argc, const char **argv)
    printf("MeatAxe Version %s\n",MtxVersion);
 
    for( i = 0; i < sizeof(test_AllTests)/sizeof(test_AllTests[0]); ++i) {
-       printf("+ %s\n", test_AllTests[i].name);
+       const test_Definition * const td = test_AllTests + i;
+       printf("+ %s\n", td->name);
        fflush(stdout);
        test_AllTests[i].f();
+       if (TstHasError()) {
+          test_Fail(td->file,td->line,td->name,"Uncaught error");
+       }
+       TstStopErrorChecking();
        NextFieldIndex = 0;
    }
    printf("All tests passed\n");

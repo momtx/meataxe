@@ -86,7 +86,7 @@ tmp/%.o: src/%.c ${MTXROOT}/include/meataxe.h
 # ------------------------------------------------------------------------------
 
 ${MTXBIN}/%: tmp/%.o ${MTXROOT}/lib/libmtx.a
-	@echo "LD $@"
+	@echo "# LD $@"
 	${SILENT}mkdir -p "${MTXBIN}"
 	${SILENT}$(CC) $(LDFLAGS) -o $@ tmp/$*.o "${MTXROOT}/lib/libmtx.a"
 
@@ -143,7 +143,7 @@ LIB_OBJS=\
 	version
 
 ${MTXROOT}/lib/libmtx.a: $(LIB_OBJS:%=tmp/%.o)
-	@echo "AR $@"
+	@echo "# AR $@"
 	${SILENT}mkdir -p "${MTXROOT}/lib"
 	${SILENT}rm -f "$@"
 	${SILENT}ar ${ARFLAGS1} r "$@" $(LIB_OBJS:%=tmp/%.o)
@@ -179,18 +179,18 @@ TS_OBJS1=c-args c-bitstring c-charpol\
 
 TS_OBJS=$(TS_OBJS1:%=tmp/%.o) ${MTXROOT}/lib/libmtx.a
 
-tmp/c-%.o: tests/c-%.c
+tmp/c-%.o: tests/c-%.c tests/check.h
 	${SILENT}mkdir -p tmp
 	${SILENT}$(CC) -c $(CFLAGS) -o "$@" "$<"
 
 ${MTXBIN}/zzztest: $(TS_OBJS)
-	@echo "LD $@"
+	@echo "# LD $@"
 	${SILENT}mkdir -p "${MTXBIN}"
 	${SILENT}$(CC) $(LDFLAGS) -o "$@" $(TS_OBJS)
 
 ${MTXBIN}/checksum: tmp/checksum.o
 	${SILENT}mkdir -p "${MTXBIN}"
-	@echo "LD $@"
+	@echo "# LD $@"
 	${SILENT}$(CC) $(CFLAGS) -o "$@" tmp/checksum.o
 
 tmp/test_table.c: tmp/tex $(TS_OBJS1:%=tests/%.c)

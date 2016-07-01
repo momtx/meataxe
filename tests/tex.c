@@ -23,7 +23,7 @@ static int currentLineNo;
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-__attribute__((format(printf,1,2)))
+MTX_PRINTF_ATTRIBUTE(1,2)
 void fail(const char *message, ...)
 {
    va_list args;

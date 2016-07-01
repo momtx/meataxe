@@ -15,6 +15,90 @@ static int ErrorFlag = 0;
 static MtxApplication_t *App;
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
+
+/// Command line parsing
+
+test_F CommandLineParsing1()
+{
+   TstStartErrorChecking();
+
+   const char *t;
+   static const char *ArgV1[] =
+   { "---", "-a", "--option1", "--option2", "optarg2", "arg1", "arg2" };
+   int ArgC1 = (sizeof(ArgV1) / sizeof(ArgV1[0]));
+
+   if ((App = AppAlloc(NULL,ArgC1,ArgV1)) == NULL) {
+      TST_FAIL("AppAlloc() failed");
+   }
+
+   if (AppGetOption(App,"--option11")) {
+      TST_FAIL("Option --option11 recognized");
+   }
+   if (!AppGetOption(App,"--option1") || TstHasError()) {
+      TST_FAIL("Option --option1 not recognized");
+   }
+   if (!AppGetOption(App,"-a --aaaa") || TstHasError()) {
+      TST_FAIL("Option -a not recognized");
+   }
+   if (AppGetOption(App,"-a --aaaa") || TstHasError()) {
+      TST_FAIL("Option -a repeated");
+   }
+   t = AppGetTextOption(App,"-b --option2",NULL);
+   if ((t == NULL) || strcmp(t,"optarg2") || TstHasError()) {
+      TST_FAIL("Text option not recognized");
+   }
+
+   AppFree(App);
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+test_F ArgumentCountChecking()
+{
+   TstStartErrorChecking();
+
+   static const char *ArgV1[] =
+   { "---", "arg1", "arg2" };
+   int ArgC1 = (sizeof(ArgV1) / sizeof(ArgV1[0]));
+
+   if ((App = AppAlloc(NULL,ArgC1,ArgV1)) == NULL) {
+      TST_FAIL("AppAlloc() failed");
+   }
+
+   if ((AppGetArguments(App,2,2) != 2) || TstHasError()) {
+      TST_FAIL("AppGetArguments() failed");
+   }
+   if ((AppGetArguments(App,1,1) != -1) || !TstHasError()) {
+      TST_FAIL("AppGetArguments(App,1,1) failed");
+   }
+   if ((AppGetArguments(App,3,3) != -1) || !TstHasError()) {
+      TST_FAIL("AppGetArguments(3,3) failed");
+   }
+   AppFree(App);
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+test_F DetectUnknownOption()
+{
+   TstStartErrorChecking();
+
+   static const char *ArgV1[] =
+   { "---", "-a", "--option1", "--option2" };
+   int ArgC1 = (sizeof(ArgV1) / sizeof(ArgV1[0]));
+   if ((App = AppAlloc(NULL,ArgC1,ArgV1)) == NULL) {
+      TST_FAIL("AppAlloc() failed");
+   }
+   AppGetOption(App,"-a");
+   AppGetOption(App,"--option1");
+   if ((AppGetArguments(App,0,100) != -1) || !TstHasError()) {
+      TST_FAIL("Unknown option not detected");
+   }
+   AppFree(App);
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
 static void MyErrorHandler(const MtxErrorRecord_t *err)
 {
    ErrorFlag = (err != NULL) ? 1 : 0;
@@ -29,66 +113,6 @@ static int CheckError()
    return i;
 }
 
-
-////////////////////////////////////////////////////////////////////////////////////////////////////
-/* Test 1
-   Erkennung von Optionen und Optionsargumenten
-   Erkennung von Argumenten
- */
-
-static void Test1()
-{
-   const char *t;
-   static const char *ArgV1[] =
-   { "---", "-a", "--option1", "--option2", "optarg2", "arg1", "arg2" };
-   int ArgC1 = (sizeof(ArgV1) / sizeof(ArgV1[0]));
-
-   if ((App = AppAlloc(NULL,ArgC1,ArgV1)) == NULL) {
-      Error("AppAlloc() failed");
-   }
-
-   if (AppGetOption(App,"--option11")) {
-      Error("Option --option11 recognized");
-   }
-   if (!AppGetOption(App,"--option1") || CheckError()) {
-      Error("Option --option1 not recognized");
-   }
-   if (!AppGetOption(App,"-a --aaaa") || CheckError()) {
-      Error("Option -a not recognized");
-   }
-   if (AppGetOption(App,"-a --aaaa") || CheckError()) {
-      Error("Option -a repeated");
-   }
-   t = AppGetTextOption(App,"-b --option2",NULL);
-   if ((t == NULL) || strcmp(t,"optarg2") || CheckError()) {
-      Error("Text option not recognized");
-   }
-
-   /* Erkennung von Argumenten */
-   if ((AppGetArguments(App,2,2) != 2) || CheckError()) {
-      Error("AppGetArguments() failed");
-   }
-   if ((AppGetArguments(App,1,1) != -1) || !CheckError()) {
-      Error("AppGetArguments(App,1,1) failed");
-   }
-   if ((AppGetArguments(App,3,3) != -1) || !CheckError()) {
-      Error("AppGetArguments(3,3) failed");
-   }
-   AppFree(App);
-
-   /* Erkenung unbenutzter Optionen */
-   if ((App = AppAlloc(NULL,ArgC1,ArgV1)) == NULL) {
-      Error("AppAlloc() failed");
-   }
-   AppGetOption(App,"-a");
-   AppGetOption(App,"--option1");
-   if ((AppGetArguments(App,0,100) != -1) || !CheckError()) {
-      Error("AppGetArguments() failed");
-   }
-   AppFree(App);
-}
-
-
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 /* Test 2
    Erkennung von '--'
@@ -101,20 +125,20 @@ static void Test2()
    int ArgC1 = (sizeof(ArgV1) / sizeof(ArgV1[0]));
 
    if ((App = AppAlloc(NULL,ArgC1,ArgV1)) == NULL) {
-      Error("AppAlloc() failed");
+      TST_FAIL("AppAlloc() failed");
    }
 
    if (!AppGetOption(App,"-a")) {
-      Error("Option -a not recognized");
+      TST_FAIL("Option -a not recognized");
    }
    if (AppGetOption(App,"-b") || CheckError()) {
-      Error("Option -b found after '--'");
+      TST_FAIL("Option -b found after '--'");
    }
    if ((AppGetArguments(App,1,1) != 1) || CheckError()) {
-      Error("AppGetArguments() failed");
+      TST_FAIL("AppGetArguments() failed");
    }
    if (strcmp(App->ArgV[0],"-b")) {
-      Error("Argument after '--' not found");
+      TST_FAIL("Argument after '--' not found");
    }
    AppFree(App);
 }
@@ -132,19 +156,19 @@ static void Test3()
    int argc = (sizeof(argv) / sizeof(argv[0]));
 
    if ((App = AppAlloc(NULL,argc,argv)) == NULL) {
-      Error("AppAlloc() failed");
+      TST_FAIL("AppAlloc() failed");
    }
    if (AppGetIntOption(App,"-a",42,1,10) != 10) {
-      Error("Option -a 10 not recognized");
+      TST_FAIL("Option -a 10 not recognized");
    }
    if (AppGetIntOption(App,"-b --bbb",42,-20,-19) != -20) {
-      Error("Option -bbb 20 not recognized");
+      TST_FAIL("Option -bbb 20 not recognized");
    }
    if (AppGetIntOption(App,"-c",42,0,-1) != 3) {
-      Error("Option -c 3 not recognized");
+      TST_FAIL("Option -c 3 not recognized");
    }
    if (AppGetArguments(App,0,0) != 0) {
-      Error("AppGetArguments() failed");
+      TST_FAIL("AppGetArguments() failed");
    }
    AppFree(App);
 }
@@ -160,19 +184,19 @@ static void Test4()
    int argc = (sizeof(argv) / sizeof(argv[0]));
 
    if ((App = AppAlloc(NULL,argc,argv)) == NULL) {
-      Error("AppAlloc() failed");
+      TST_FAIL("AppAlloc() failed");
    }
    if ((AppGetIntOption(App,"-a",42,1,0) != 42) || !CheckError()) {
-      Error("Error in option '-a 1x0' not found");
+      TST_FAIL("Error in option '-a 1x0' not found");
    }
    if ((AppGetIntOption(App,"-b --bbb",42,21,999) != 42) || !CheckError()) {
-      Error("Range check failed");
+      TST_FAIL("Range check failed");
    }
    if ((AppGetIntOption(App,"-c",42,0,29) != 42) || !CheckError()) {
-      Error("Range check 2 failed");
+      TST_FAIL("Range check 2 failed");
    }
    if (AppGetArguments(App,0,0) != 0) {
-      Error("AppGetArguments() failed");
+      TST_FAIL("AppGetArguments() failed");
    }
    AppFree(App);
 }
@@ -187,16 +211,16 @@ static void Test5()
    int argc = (sizeof(argv) / sizeof(argv[0]));
 
    if ((App = AppAlloc(NULL,argc,argv)) == NULL) {
-      Error("AppAlloc() failed");
+      TST_FAIL("AppAlloc() failed");
    }
    if (!AppGetOption(App,"-a") || CheckError()) {
-      Error("Option '-a' not recognized");
+      TST_FAIL("Option '-a' not recognized");
    }
    if (!AppGetOption(App,"-b") || CheckError()) {
-      Error("Option '-b' not recognized");
+      TST_FAIL("Option '-b' not recognized");
    }
    if ((AppGetArguments(App,0,110) == 0) || !CheckError()) {
-      Error("AppGetArguments())=0 on invalid data");
+      TST_FAIL("AppGetArguments())=0 on invalid data");
    }
    AppFree(App);
 }
@@ -212,13 +236,13 @@ static void Test6()
    int argc = (sizeof(argv) / sizeof(argv[0]));
 
    if ((App = AppAlloc(NULL,argc,argv)) == NULL) {
-      Error("AppAlloc() failed");
+      TST_FAIL("AppAlloc() failed");
    }
    if ((AppGetCountedOption(App,"-a --all") != 4) || CheckError()) {
-      Error("Option '--all' not recognized");
+      TST_FAIL("Option '--all' not recognized");
    }
    if ((AppGetCountedOption(App,"-b") != 3) || CheckError()) {
-      Error("Option '-b' not recognized");
+      TST_FAIL("Option '-b' not recognized");
    }
    AppFree(App);
 }
@@ -233,19 +257,19 @@ static void Test7()
    int argc = (sizeof(argv) / sizeof(argv[0]));
 
    if ((App = AppAlloc(NULL,argc,argv)) == NULL) {
-      Error("AppAlloc() failed");
+      TST_FAIL("AppAlloc() failed");
    }
    if (MtxMessageLevel > -1000) {
-      Error("Option --quiet not processed");
+      TST_FAIL("Option --quiet not processed");
    }
    if (strcmp(MtxBinDir,"binbinbin")) {
-      Error("Option -B not processed");
+      TST_FAIL("Option -B not processed");
    }
    if (strcmp(MtxLibDir,"libliblib")) {
-      Error("Option -L not processed");
+      TST_FAIL("Option -L not processed");
    }
    if ((AppGetArguments(App,0,100) != 0) || CheckError()) {
-      Error("Common options missed");
+      TST_FAIL("Common options missed");
    }
    AppFree(App);
 }
@@ -261,20 +285,20 @@ static void Test8()
    int argc = (sizeof(argv) / sizeof(argv[0]));
 
    if ((App = AppAlloc(NULL,argc,argv)) == NULL) {
-      Error("AppAlloc() failed");
+      TST_FAIL("AppAlloc() failed");
    }
    if (MtxMessageLevel != 3) {
-      Error("Option -V not processed correctly");
+      TST_FAIL("Option -V not processed correctly");
    }
    MtxMessageLevel = 0;
    if (strcmp(MtxBinDir,"BINBIN")) {
-      Error("Option --mtxbin not processed");
+      TST_FAIL("Option --mtxbin not processed");
    }
    if (strcmp(MtxLibDir,"LIBLIB")) {
-      Error("Option --mtxlib not processed");
+      TST_FAIL("Option --mtxlib not processed");
    }
    if ((AppGetArguments(App,0,100) != 0) || CheckError()) {
-      Error("Common options missed");
+      TST_FAIL("Common options missed");
    }
    AppFree(App);
 }
@@ -285,7 +309,6 @@ test_F CommandLineProcessing()
 {
    MtxErrorHandler_t *oldhandler;
    oldhandler = MtxSetErrorHandler(MyErrorHandler);
-   Test1();
    Test2();
    Test3();
    Test4();
