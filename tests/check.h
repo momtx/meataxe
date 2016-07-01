@@ -40,6 +40,11 @@ void test_EqInt(const char *file, int line, const char *func, int act, int exp,
 	        const char *actstr, const char *expstr);
 #define ASSERT_EQ_INT(act,exp) test_EqInt(__FILE__,__LINE__,__func__,act,exp,#act,#exp)
 
+MTX_PRINTF_ATTRIBUTE(4,5)
+void test_Fail(const char *file, int line, const char *func, const char *msg, ...);
+#define TST_FAIL(txt) test_Fail(__FILE__,__LINE__,__func__,"%s",txt)
+#define TST_FAIL1(txt,a1) test_Fail(__FILE__,__LINE__,__func__,"%s",txt,a1)
+#define TST_FAIL2(txt,a1) test_Fail(__FILE__,__LINE__,__func__,"%s",txt,a1,a2)
 
 extern FEL *FTab;
 extern void Error(char *msg, ...);
@@ -52,6 +57,10 @@ Perm_t *RndPerm(int degree);
 Matrix_t *RndMat(int fl, int nor, int noc);
 Poly_t *RndPol(int fl, int mindeg, int maxdeg);
 
+void TstClearError();
+void TstStartErrorChecking();
+void TstStopErrorChecking();
+int TstHasError();
 
 #endif
 

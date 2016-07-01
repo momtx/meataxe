@@ -1,7 +1,7 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // C MeatAxe - Check functions for factored polynomials.
 //
-// (C) Copyright 1998-2015 Michael Ringe, Lehrstuhl D fuer Mathematik, RWTH Aachen
+// (C) Copyright 1998-2016 Michael Ringe, Lehrstuhl D fuer Mathematik, RWTH Aachen
 //
 // This program is free software; see the file COPYING for details.
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -12,8 +12,6 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
-
-/*MTX_DEFINE_FILE_INFO*/
 
 static int ErrorFlag = 0;
 
