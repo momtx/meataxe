@@ -26,22 +26,13 @@ test_F CommandLineParsing1()
    int ArgC1 = (sizeof(ArgV1) / sizeof(ArgV1[0]));
 
    MtxApplication_t *App;
-   if ((App = AppAlloc(NULL,ArgC1,ArgV1)) == NULL) {
-      TST_FAIL("AppAlloc() failed");
-   }
+   ASSERT((App = AppAlloc(NULL,ArgC1,ArgV1)) != NULL);
 
-   if (AppGetOption(App,"--option11")) {
-      TST_FAIL("Option --option11 recognized");
-   }
-   if (!AppGetOption(App,"--option1") || TstHasError()) {
-      TST_FAIL("Option --option1 not recognized");
-   }
-   if (!AppGetOption(App,"-a --aaaa") || TstHasError()) {
-      TST_FAIL("Option -a not recognized");
-   }
-   if (AppGetOption(App,"-a --aaaa") || TstHasError()) {
-      TST_FAIL("Option -a repeated");
-   }
+   ASSERT(!AppGetOption(App,"--option11") && !TstHasError());	// not present
+   ASSERT(AppGetOption(App,"--option1") && !TstHasError());
+   ASSERT(AppGetOption(App,"-a --aaaa") && !TstHasError());	// short and long name
+   ASSERT(!AppGetOption(App,"-a --aaaa") && !TstHasError());	// repeated
+  
    t = AppGetTextOption(App,"-b --option2",NULL);
    if ((t == NULL) || strcmp(t,"optarg2") || TstHasError()) {
       TST_FAIL("Text option not recognized");
