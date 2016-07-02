@@ -1,7 +1,7 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // C MeatAxe - Check greased matrix operations.
 //
-// (C) Copyright 1998-2015 Michael Ringe, Lehrstuhl D fuer Mathematik, RWTH Aachen
+// (C) Copyright 1998-2016 Michael Ringe, Lehrstuhl D fuer Mathematik, RWTH Aachen
 //
 // This program is free software; see the file COPYING for details.
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -27,9 +27,7 @@ static void TestGrMapRow1(Matrix_t *m, int gr_level)
       FfSetNoc(m->Noc);
       FfMapRow(vec,m->Data,m->Nor,res_std);
       GrMapRow(vec,gm,res_grease);
-      if (FfCmpRows(res_grease,res_std) != 0) {
-         Error("FfMapRow() and GrMapRow() produce different results");
-      }
+      ASSERT_EQ_INT(FfCmpRows(res_grease,res_std), 0);
    }
    SysFree(res_std);
    SysFree(res_grease);
@@ -41,7 +39,6 @@ static void TestGrMapRow1(Matrix_t *m, int gr_level)
 
 test_F GreasedMapRow()
 {
-   MtxRandomInit(1231);
    while (NextField() > 0) {
       int gr_level;
       int max_gr_level;

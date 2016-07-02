@@ -76,10 +76,10 @@ static void TestPolAlloc1(int fl)
       }
    }
    for (i = 0; i < NPOLY; ++i) {
-      if (PolFree(p[i]) != 0) { Error("PolFree() failed"); }}
+      if (PolFree(p[i]) != 0) { TST_FAIL("PolFree() failed"); }}
    old_err_handler = MtxSetErrorHandler(MyErrorHandler);
    for (i = 0; i < NPOLY; ++i) {
-      if (PolIsValid(p[i]) || !CheckError()) { Error("PolIsValid() failed"); }}
+      if (PolIsValid(p[i]) || !CheckError()) { TST_FAIL("PolIsValid() failed"); }}
    MtxSetErrorHandler(old_err_handler);
 }
 
@@ -99,18 +99,10 @@ test_F TestPolAlloc()
 static void TestPolCompare2(int fl1, int deg1, int fl2, int deg2, int result)
 {
    Poly_t *a, *b;
-   int i;
-
    a = PolAlloc(fl1,deg1);
    b = PolAlloc(fl2,deg2);
-   i = PolCompare(a,b);
-   if (i != result) {
-      Error("PolCompare(a,b) failed: result=%d, expected %d",i,result);
-   }
-   i = PolCompare(b,a);
-   if (i != -result) {
-      Error("PolCompare(b,a) differs from -PolCompare(a,b)");
-   }
+   ASSERT_EQ_INT(PolCompare(a,b),result);
+   ASSERT_EQ_INT(PolCompare(b,a),-result);
    PolFree(a);
    PolFree(b);
 }
@@ -126,22 +118,22 @@ static void TestPolCompare1(int fl)
    a = PolAlloc(fl,deg);
    b = PolAlloc(fl,deg);
    if (PolCompare(a,b) != 0) {
-      Error("PolCmp(a,a) != 0");
+      TST_FAIL("PolCmp(a,a) != 0");
    }
    for (i = 0; i < deg; ++i) {
       a->Data[i] = FF_ONE;
       if (PolCompare(a,b) == 0) {
-         Error("PolCmp() == 0 on different polnomials");
+         TST_FAIL("PolCmp() == 0 on different polnomials");
       }
       b->Data[i] = FF_ONE;
       if (PolCompare(a,b) != 0) {
-         Error("PolCmp(a,a) != 0");
+         TST_FAIL("PolCmp(a,a) != 0");
       }
    }
    if (FfGen != FF_ONE) {
       a->Data[deg] = FfGen;
       if (PolCompare(a,b) == 0) {
-         Error("PolCmp() == 0 on different polnomials");
+         TST_FAIL("PolCmp() == 0 on different polnomials");
       }
    }
    PolFree(a);
@@ -175,7 +167,7 @@ static void TestPolAdd1(int fl)
    b = PolAlloc(fl,0);
    c = PolAlloc(fl,0);
    PolAdd(a,b);
-   if (PolCompare(a,c) != 0) { Error("PolAdd(a,0)!=a failed"); }
+   if (PolCompare(a,c) != 0) { TST_FAIL("PolAdd(a,0)!=a failed"); }
    PolFree(a);
    PolFree(b);
    PolFree(c);
@@ -195,11 +187,11 @@ static void TestPolAdd2(int fl)
       PolFree(b);
    }
    if (a->Degree != 10) {
-      Error("Wrong degree");
+      TST_FAIL("Wrong degree");
    }
    for (i = 0; i <= 10; ++i) {
       if (a->Data[i] != FF_ONE) {
-         Error("Wrong coefficient");
+         TST_FAIL("Wrong coefficient");
       }
    }
    PolFree(a);
@@ -226,7 +218,7 @@ static void TestPolMul1(int fl)
    a = PolAlloc(fl,1);
    b = PolAlloc(fl,-1);
    PolMul(a,b);
-   if (a->Degree != -1) { Error("x * 0 != 0"); }
+   if (a->Degree != -1) { TST_FAIL("x * 0 != 0"); }
    PolFree(a);
    PolFree(b);
 
@@ -236,7 +228,7 @@ static void TestPolMul1(int fl)
    b = PolAlloc(fl,0);
    PolMul(a,b);
    if ((a->Degree != 1) || (a->Data[0] != FF_ZERO) || (a->Data[1] != FF_ONE)) {
-      Error("x * 1 != x");
+      TST_FAIL("x * 1 != x");
    }
    PolFree(a);
    PolFree(b);
@@ -251,7 +243,7 @@ static void TestPolMul1(int fl)
    if ((a->Degree != 4) || (a->Data[0] != FF_ZERO) || (a->Data[1] != FfNeg(FF_ONE))
        || (a->Data[2] != FfNeg(FF_ONE)) || (a->Data[3] != FF_ONE)
        || (a->Data[4] != FF_ONE)) {
-      Error("Error in (x+1)(x^3-2)");
+      TST_FAIL("Error in (x+1)(x^3-2)");
    }
    PolFree(a);
    PolFree(b);
@@ -262,7 +254,6 @@ static void TestPolMul1(int fl)
 static void TestPolMul2(int fl)
 {
    int i;
-   MtxRandomInit(fl);
    for (i = 0; i < 20; ++i) {
       Poly_t *a, *b, *c, *ab, *ba;
       a = RndPol(fl,0,100);
@@ -273,12 +264,12 @@ static void TestPolMul2(int fl)
       PolMul(ab,b);
       ba = PolDup(b);
       PolMul(ba,a);
-      if (PolCompare(ab,ba) != 0) { Error("ab != ba"); }
+      if (PolCompare(ab,ba) != 0) { TST_FAIL("ab != ba"); }
 
       PolMul(ab,c);
       PolMul(b,c);
       PolMul(a,b);
-      if (PolCompare(a,ab) != 0) { Error("(ab)c != a(bc)"); }
+      if (PolCompare(a,ab) != 0) { TST_FAIL("(ab)c != a(bc)"); }
 
       PolFree(a);
       PolFree(b);
@@ -304,7 +295,6 @@ static void TestPolGcd1(int fl)
 {
    int n;
 
-   MtxRandomInit(fl);
    for (n = 100; n > 0; --n) {
       Poly_t *a, *b, *gcd, *result[3];
 
@@ -316,31 +306,31 @@ static void TestPolGcd1(int fl)
       /* Calculate the g.c.d.
          -------------------- */
       if ((gcd = PolGcd(a,b)) == NULL) {
-         Error("PolGcd");
+         TST_FAIL("PolGcd");
       }
       if (PolGcdEx(a,b,result) != 0) {
-         Error("PolGcdEx");
+         TST_FAIL("PolGcdEx");
       }
 
       /* Check the result
          ---------------- */
       if (PolCompare(gcd,result[0]) != 0) {
-         Error("PolGcd != PolGcdEx");
+         TST_FAIL("PolGcd != PolGcdEx");
       }
       PolMul(result[1],a);
       PolMul(result[2],b);
       PolAdd(result[1],result[2]);
       if (PolCompare(gcd,result[1]) != 0) {
-         Error("PolGcdEx coeffs");
+         TST_FAIL("PolGcdEx coeffs");
       }
       if (PolMod(a,gcd) == NULL) {
-         Error("PolMod");
+         TST_FAIL("PolMod");
       }
       if (PolMod(b,gcd) == NULL) {
-         Error("PolMod");
+         TST_FAIL("PolMod");
       }
       if ((a->Degree >= 0) || (b->Degree >= 0)) {
-         Error("gcd");
+         TST_FAIL("gcd");
       }
       PolFree(a);
       PolFree(b);

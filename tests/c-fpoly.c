@@ -13,25 +13,6 @@
 #include <stdio.h>
 #include <string.h>
 
-static int ErrorFlag = 0;
-
-////////////////////////////////////////////////////////////////////////////////////////////////////
-
-static void MyErrorHandler(const MtxErrorRecord_t *err)
-{
-   ErrorFlag = 1;
-   err = NULL;
-}
-
-////////////////////////////////////////////////////////////////////////////////////////////////////
-
-static int CheckError()
-{
-   int i = ErrorFlag;
-   ErrorFlag = 0;
-   return i;
-}
-
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 #define NPOLY 5
@@ -39,7 +20,6 @@ static int CheckError()
 test_F FactoredPolynomialAllocation()
 {
    FPoly_t *p[NPOLY];
-   MtxErrorHandler_t *old_err_handler;
    int i;
 
    for (i = 0; i < NPOLY; ++i) {
@@ -49,15 +29,10 @@ test_F FactoredPolynomialAllocation()
       FpIsValid(p[i]);
    }
    for (i = 0; i < NPOLY; ++i) {
-      if (FpFree(p[i]) != 0) {
-         Error("FpFree() failed");
-      }
+      ASSERT(FpFree(p[i]) == 0);
    }
-   old_err_handler = MtxSetErrorHandler(MyErrorHandler);
+   TstStartErrorChecking();
    for (i = 0; i < NPOLY; ++i) {
-      if (FpIsValid(p[i]) || !CheckError()) {
-         Error("FpIsValid() failed");
-      }
+      ASSERT(!FpIsValid(p[i]) && TstHasError());
    }
-   MtxSetErrorHandler(old_err_handler);
 }

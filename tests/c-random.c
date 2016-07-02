@@ -22,7 +22,7 @@ static void Test11(unsigned seed, const long *table)
       int k;
       long val = MtxRandom() & 0x7FFFFFFF;
       if (val != *table) {
-         Error("Got 0x%lx, expected 0x%lx",val,*table);
+         TST_FAIL2("Got 0x%lx, expected 0x%lx",val,*table);
       }
       for (k = 0; k < 61; ++k) {
          MtxRandom();
@@ -66,7 +66,7 @@ static void Test21(int n, int *count)
 
    for (i = 0; i < n; ++i) {
       if ((count[i] < min) || (count[i] > max)) {
-         Error("Value %d hit %d times, expected %d..%d",i,count[i],min,max);
+         TST_FAIL4("Value %d hit %d times, expected %d..%d",i,count[i],min,max);
       }
    }
 }

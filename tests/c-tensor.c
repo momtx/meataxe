@@ -39,7 +39,7 @@ static void TestMatTensor2(int fl, int dim)
                   FEL f2 = FfExtract(r2,k2);
                   FEL f3 = FfExtract(r3,k1 * noc2 + k2);
                   if (FfMul(f1,f2) != f3) {
-                     Error("Bad value at (%d,%d)x(%d,%d)",i1,k1,i2,k2);
+                     TST_FAIL4("Bad value at (%d,%d)x(%d,%d)",i1,k1,i2,k2);
                   }
                }
             }
@@ -65,7 +65,6 @@ static void TestMatTensor1(int fl)
 
 test_F TestMatTensor()
 {
-   MtxRandomInit(0);
    while (NextField() > 0) {
       TestMatTensor1(FfOrder);
    }

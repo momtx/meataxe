@@ -183,6 +183,9 @@ tmp/c-%.o: tests/c-%.c tests/check.h
 	${SILENT}mkdir -p tmp
 	${SILENT}$(CC) -c $(CFLAGS) -o "$@" "$<"
 
+zzztest: ${MTXBIN}/zzztest
+.PHONY: zzztest
+
 ${MTXBIN}/zzztest: $(TS_OBJS)
 	@echo "# LD $@"
 	${SILENT}mkdir -p "${MTXBIN}"

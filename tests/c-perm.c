@@ -78,13 +78,13 @@ test_F PermutationAlloc()
    }
    for (i = 0; i < NPERM; ++i) {
       if (PermFree(p[i]) != 0) {
-	  Error("PermFree() failed");
+	  TST_FAIL("PermFree() failed");
       }
    }
    old_err_handler = MtxSetErrorHandler(MyErrorHandler);
    for (i = 0; i < NPERM; ++i) {
       if (PermIsValid(p[i]) || !CheckError()) {
-	  Error("PermIsValid() failed");
+	  TST_FAIL("PermIsValid() failed");
       }
    }
    MtxSetErrorHandler(old_err_handler);
@@ -96,16 +96,11 @@ static void TestOrd(long *data, int order)
 {
    int deg;
    Perm_t *p;
-   int i;
 
-   for (deg = 0; data[deg] >= 0; ++deg) {
-   }
+   for (deg = 0; data[deg] >= 0; ++deg);
    p = PermAlloc(deg);
    memcpy(p->Data,data,sizeof(long) * deg);
-   i = PermOrder(p);
-   if (i != order) {
-      Error("PermOrder() returned %d, expected %d",i,order);
-   }
+   ASSERT_EQ_INT(PermOrder(p), order);
    PermFree(p);
 }
 
@@ -154,7 +149,7 @@ test_F PermutationMultiply()
    perm3 = MkPerm(p3);
    PermMul(perm1,perm2);
    if (PermCompare(perm1,perm3) != 0) {
-      Error("PermMul() failed");
+      TST_FAIL("PermMul() failed");
    }
    PermFree(perm1);
    PermFree(perm2);
@@ -178,7 +173,7 @@ test_F PermutationPower()
          PermMul(p2,p1);
       }
       if (PermCompare(p2,p3) != 0) {
-         Error("PermPwr() failed");
+         TST_FAIL("PermPwr() failed");
       }
       PermFree(p2);
       PermFree(p3);
@@ -198,7 +193,7 @@ test_F PermutationInverse()
       PermMul(p2,p1);
       for (k = 0; k < p2->Degree; ++k) {
          if (p2->Data[k] != k) {
-            Error("Inverse of permutation failed");
+            TST_FAIL("Inverse of permutation failed");
          }
       }
       PermFree(p1);

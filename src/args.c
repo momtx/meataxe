@@ -602,8 +602,7 @@ int AppGetArguments(MtxApplication_t *app, int min_argc, int max_argc)
 {
    int i;
 
-   /* Pruefen, ob alle Optionen abgearbeitet wurden.
-      ---------------------------------------------- */
+   // Check for unprocessed options
    for (i = 0; i < app->OptEnd; ++i) {
       int rc = CheckDone(app,i);
       if (rc < 0) {
@@ -614,8 +613,7 @@ int AppGetArguments(MtxApplication_t *app, int min_argc, int max_argc)
       }
    }
 
-   /* '--' ueberspringen, falls vorhanden.
-      ------------------------------------ */
+   // handle "--"
    if ((i == app->OptEnd) && (app->OptEnd < app->OrigArgC)) {
       ++i;
    }
@@ -623,8 +621,7 @@ int AppGetArguments(MtxApplication_t *app, int min_argc, int max_argc)
    app->ArgC = app->OrigArgC - i;
    app->ArgV = app->OrigArgV + i;
 
-   /* Pruefe, ob weitere Optionen folgen.
-      ----------------------------------- */
+   // check for options in argument list
    for (++i; i < app->OrigArgC; ++i) {
       if (app->IsDone[i] != 0) {
          MTX_ERROR1("Option '%s' following non-optional argument",
@@ -633,8 +630,7 @@ int AppGetArguments(MtxApplication_t *app, int min_argc, int max_argc)
       }
    }
 
-   /* Pruefe die Anzahl der Argumente.
-      -------------------------------- */
+   // check number of arguments
    if ((app->ArgC < min_argc) || (app->ArgC > max_argc)) {
       MTX_ERROR("Invalid number of arguments, try --help");
       return -1;
