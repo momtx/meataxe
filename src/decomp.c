@@ -291,6 +291,9 @@ int main(int argc, const char **argv)
 	    /* Append <partbas> to <bas>.
 	       -------------------------- */
 	    MatEchelonize(partbas);
+	    #ifdef PARANOID
+	    FfSetNoc(dim);
+	    #endif
 	    MatCopyRegion(bas,dim,0,partbas,0,0,-1,-1);
 	    dim += partbas->Nor;
 	}

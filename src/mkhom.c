@@ -1,7 +1,8 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // C MeatAxe - Calculate homomorphisms between modules
 //
-// (C) Copyright 1998-2015 Michael Ringe, Lehrstuhl D fuer Mathematik, RWTH Aachen
+// Original program written by Magdolna Szoke. 
+// (C) Copyright 1999-2015 Michael Ringe, Lehrstuhl D fuer Mathematik, RWTH Aachen
 //
 // This program is free software; see the file COPYING for details.
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -259,17 +260,22 @@ long independent(Matrix_t *bas[], Matrix_t *mat, int dim, int **piv_table,
     {
         if (bas[i] == NULL)
             continue;
+#ifdef PARANOID
+        FfSetNoc(mat->Noc);
+#endif
         basptr = MatGetPtr(bas[i],piv_table[i][0]);
         matptr = MatGetPtr(mat,piv_table[i][0]);
         f = FfExtract(matptr, piv_table[i][1]);
         f = FfDiv(f, FfExtract(basptr, piv_table[i][1]));
-        if (dep != NULL)
+        if (dep != NULL) {
 #ifdef PARANOID
             FfSetNoc(dim);
 #endif
             FfInsert(dep,i,f);
+	}
         MatAddMul(mat,bas[i],FfNeg(f));
     }
+    FfSetNoc(mat->Noc);
     piv_table[dim][0] = -1;
     if (nummodgens == -1 || big)
     {
@@ -1128,15 +1134,16 @@ int main(int argc, const char **argv)
                         return 1;
                     col = 0;
                     k = 0;
-                    for (m = 0; m <= numMgens; m++)
-                    {
+                    for (m = 0; m <= numMgens; m++) {
                         if ((mat = MatAlloc(FfOrder, dims[m], NRep->Gen[0]->Noc)) == NULL)
                             return 1;
                         MatMulScalar(mat, FF_ZERO);
                         for (ind = 0; ind < kerdim[m]; ind++)
                         {
-                            if ((f = FfExtract(resptr, col + ind)) != FF_ZERO)
-                            {
+#ifdef PARANOID
+			    FfSetNoc(result->Noc);
+#endif
+                            if ((f = FfExtract(resptr, col + ind)) != FF_ZERO) {
                                 MatAddMul(mat, posimages[m][ind], f);
                             }
                         }
