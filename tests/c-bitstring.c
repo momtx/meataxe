@@ -1,7 +1,7 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // C MeatAxe - Tests for bit strings
 //
-// (C) Copyright 1998-2015 Michael Ringe, Lehrstuhl D fuer Mathematik, RWTH Aachen
+// (C) Copyright 1998-2016 Michael Ringe, Lehrstuhl D fuer Mathematik, RWTH Aachen
 //
 // This program is free software; see the file COPYING for details.
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -12,27 +12,6 @@
 
 MTX_DEFINE_FILE_INFO
 
-static int ErrorFlag = 0;
-
-static void MyErrorHandler(const MtxErrorRecord_t *err)
-{
-   err = NULL;
-   ErrorFlag = 1;
-}
-
-
-#ifdef DEBUG
-
-static int CheckError()
-{
-   int i = ErrorFlag;
-   ErrorFlag = 0;
-   return i;
-}
-
-
-#endif
-
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 #define NMAT 5
@@ -40,8 +19,7 @@ static int CheckError()
 test_F BtStringAllocation()
 {
    static int bssize[NMAT] = { 0,1,10,100,1000 };
-   BitString_t  *m[NMAT];
-   MtxErrorHandler_t *old_err_handler;
+   BitString_t *m[NMAT];
    int i;
 
    for (i = 0; i < NMAT; ++i) {
@@ -58,12 +36,11 @@ test_F BtStringAllocation()
    for (i = 0; i < NMAT; ++i) {
       ASSERT_EQ_INT(BsFree(m[i]), 0);
    }
-   old_err_handler = MtxSetErrorHandler(MyErrorHandler);
-#ifdef DEBUG
+
+   TstStartErrorChecking();
    for (i = 0; i < NMAT; ++i) {
-      if (BsIsValid(m[i]) || !CheckError()) { Error("BsIsValid() failed"); }}
-#endif
-   MtxSetErrorHandler(old_err_handler);
+      ASSERT(!BsIsValid(m[i]) && TstHasError());
+   }
 }
 
 
@@ -122,19 +99,15 @@ static void TestCompare1(int size, BitString_t *a, BitString_t *b)
 {
    int i;
    for (i = 0; i < size; ++i) {
-      if (BsCompare(a,b) != 0) { Error("BsCompare(x,x) != 0"); }
+      ASSERT_EQ_INT(BsCompare(a,b),0);
       BsSet(a,i);
-      if (BsCompare(a,b) == 0) {
-         Error("BsCompare() did not detect difference in bit %d",i);
-      }
+      ASSERT(BsCompare(a,b) != 0);
       BsSet(b,i);
    }
    for (i = 0; i < size; ++i) {
-      if (BsCompare(a,b) != 0) { Error("BsCompare(x,x) != 0"); }
+      ASSERT_EQ_INT(BsCompare(a,b),0);
       BsClear(a,i);
-      if (BsCompare(a,b) == 0) {
-         Error("BsCompare() did not detect difference in bit %d",i);
-      }
+      ASSERT1(BsCompare(a,b) != 0,"difference in bit %d not found",i);
       BsClear(b,i);
    }
 }
@@ -219,9 +192,7 @@ static void CheckIo1(BitString_t **bs, int n)
    f = SysFopen(file_name,FM_READ);
    for (i = 0; i < n; ++i) {
       BitString_t *a = BsRead(f);
-      if (BsCompare(a,bs[i]) != 0) {
-         Error("Bitstring differs after write/read");
-      }
+      ASSERT_EQ_INT(BsCompare(a,bs[i]), 0);
    }
    fclose(f);
 }
@@ -234,7 +205,6 @@ test_F BitStringFileIo()
    BitString_t *a[10];
    int i;
 
-   MtxRandomInit(1235);
    a[0] = BsAlloc(0);
    for (i = 1; i < 10; ++i) {
       a[i] = RndBs(MtxRandomInt(100));
@@ -312,7 +282,6 @@ static void CheckCount1(int size, BitString_t *a, BitString_t *b)
 test_F BitStringIntersectionCount()
 {
    int i;
-   MtxRandomInit(42);
    for (i = 0; i < 100; ++i) {
       int size = MtxRandomInt(100);
       BitString_t *a = RndBs(size), *b = RndBs(size);
@@ -330,7 +299,6 @@ test_F BitStringIsSubset()
    int i;
    BitString_t *a, *b;
 
-   MtxRandomInit(42);
    for (i = 0; i < 150; ++i) {
       const int size = i;
       int k;

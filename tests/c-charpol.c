@@ -1,7 +1,7 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // C MeatAxe - Tests for characteristic polynomial
 //
-// (C) Copyright 1998-2015 Michael Ringe, Lehrstuhl D fuer Mathematik, RWTH Aachen
+// (C) Copyright 1998-2016 Michael Ringe, Lehrstuhl D fuer Mathematik, RWTH Aachen
 //
 // This program is free software; see the file COPYING for details.
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -19,11 +19,9 @@ static void CheckPoly(Poly_t *p, int degree, ...)
    int i;
    va_list al;
    va_start(al,degree);
-   if (p->Degree != degree) { Error("Bad degree"); }
+   ASSERT_EQ_INT(p->Degree,degree);
    for (i = 0; i <= degree; ++i) {
-      if (p->Data[i] != FfFromInt(va_arg(al,int))) {
-         Error("Bad polynomial");
-      }
+      ASSERT_EQ_INT(p->Data[i],FfFromInt(va_arg(al,int)));
    }
    va_end(al);
    PolFree(p);
@@ -48,6 +46,6 @@ test_F CharacteristicPolynomial()
    pf = CharPolFactor(NULL);
    CheckPoly(pf,1,1,1);
    pf = CharPolFactor(NULL);
-   if (pf != NULL) { Error("too many factors"); }
+   ASSERT(pf == NULL);
    MatFree(a);
 }

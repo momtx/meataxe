@@ -21,7 +21,7 @@ static void CheckMem(char *x, char val, int len)
       ++x;
    }
    if (len > 0) {
-      Error("CheckMem(val=%d, len=%d) failed",(int)val,len);
+      TST_FAIL2("CheckMem(val=%d, len=%d) failed",(int)val,len);
    }
 }
 
@@ -35,10 +35,10 @@ static void TestAlloc()
 
    for (i = 0; i < nblk; ++i) {
       if ((x[i] = SysMalloc(0)) == NULL) {
-         Error("SysMalloc(0) failed");
+         TST_FAIL("SysMalloc(0) failed");
       }
       if ((x[i] = SysRealloc(x[i],100)) == NULL) {
-         Error("SysRealloc(100) failed");
+         TST_FAIL("SysRealloc(100) failed");
       }
    }
    for (i = 0; i < nblk; ++i) {
@@ -49,7 +49,7 @@ static void TestAlloc()
    }
    for (i = 0; i < nblk; ++i) {
       if ((x[i] = SysRealloc(x[i],i * 20)) == NULL) {
-         Error("SysRealloc(100) failed");
+         TST_FAIL("SysRealloc(100) failed");
       }
    }
    for (i = 0; i < nblk; ++i) {
@@ -79,11 +79,11 @@ static void TestFiles()
 
    f = SysFopen("__@@$$xsk",FM_READ | FM_NOERROR);
    if (f != NULL) {
-      Error("Non-existent file opened successfully");
+      TST_FAIL("Non-existent file opened successfully");
    }
    f = SysFopen("check1",FM_CREATE);
    if (f == NULL) {
-      Error("Cannot create file");
+      TST_FAIL("Cannot create file");
    }
    fwrite(Text,1,10,f);
    SysFseek(f,5);
@@ -91,20 +91,20 @@ static void TestFiles()
    fclose(f);
    f = SysFopen("check1",FM_APPEND);
    if (f == NULL) {
-      Error("Cannot open file");
+      TST_FAIL("Cannot open file");
    }
    fwrite(Text + 10,1,26,f);
    fclose(f);
 
    f = SysFopen("check1",FM_READ);
    if (f == NULL) {
-      Error("Cannot open file");
+      TST_FAIL("Cannot open file");
    }
    fread(Text2,1,36,f);
    fclose(f);
 
    if (memcmp(Text1,Text2,sizeof(Text)) != 0) {
-      Error("Compare error");
+      TST_FAIL("Compare error");
    }
    remove("check1");
 }
@@ -135,7 +135,7 @@ static void TestIntIo1(long *buf, int bufsize, int safe)
       int n = (i <= bufsize - k) ? i : bufsize - k;
       int nwritten = SysWriteLong(f,buf + k,n);
       if (nwritten != n) {
-         Error("SysWriteLong(%d)=%d",n,nwritten);
+         TST_FAIL2("SysWriteLong(%d)=%d",n,nwritten);
       }
       k += n;
    }
@@ -147,17 +147,17 @@ static void TestIntIo1(long *buf, int bufsize, int safe)
          int to_read = (k + i >= bufsize + safe) ? bufsize + safe - k : i;
          int nr = SysReadLong(f,buf + k,to_read);
          if (nr < 0) {
-            Error("SysReadLong() failed");
+            TST_FAIL("SysReadLong() failed");
          }
          if (k + nr > bufsize) {
-            Error("Read %d bytes (max %d expected)",k + nr,bufsize);
+            TST_FAIL2("Read %d bytes (max %d expected)",k + nr,bufsize);
          }
          k += nr;
       }
       fclose(f);
       for (k = 0; k < bufsize; ++k) {
          if (buf[k] != VAL(k)) {
-            Error("Unexpected value %ld at position %d",buf[k],k);
+            TST_FAIL2("Unexpected value %ld at position %d",buf[k],k);
          }
       }
    }
@@ -178,20 +178,20 @@ static void TestIntIo2()
    fclose(f);
    f = SysFopen("check1",FM_READ);
    if (SysReadLong(f,rb,5) != 4) {
-      Error("Read error");
+      TST_FAIL("Read error");
    }
    fclose(f);
    if (rb[0] != 0x00000001) {
-      Error("Read %lx, expected 0x00000001",buf[0]);
+      TST_FAIL1("Read %lx, expected 0x00000001",buf[0]);
    }
    if (rb[1] != 0x00000200) {
-      Error("Read %lx, expected 0x00000200",buf[0]);
+      TST_FAIL1("Read %lx, expected 0x00000200",buf[0]);
    }
    if (rb[2] != 0x00030000) {
-      Error("Read %lx, expected 0x00030000",buf[0]);
+      TST_FAIL1("Read %lx, expected 0x00030000",buf[0]);
    }
    if (rb[3] != 0x04000000) {
-      Error("Read %lx, expected 0x04000000",buf[0]);
+      TST_FAIL1("Read %lx, expected 0x04000000",buf[0]);
    }
    remove("check1");
 }

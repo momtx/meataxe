@@ -1,7 +1,7 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // C MeatAxe - Check MatInsert()
 //
-// (C) Copyright 1998-2015 Michael Ringe, Lehrstuhl D fuer Mathematik, RWTH Aachen
+// (C) Copyright 1998-2016 Michael Ringe, Lehrstuhl D fuer Mathematik, RWTH Aachen
 //
 // This program is free software; see the file COPYING for details.
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -16,58 +16,45 @@
 
 static void TestMatInsert1()
 {
-   Matrix_t *mat, *a, *e, *z;
-   Poly_t *pol;
+   Matrix_t *a;
 
-   mat = MatAlloc(FfOrder,10,10);
-   e = MatId(FfOrder,10);
-   z = MatAlloc(FfOrder,10,10);
+   Matrix_t* const mat = RndMat(FfOrder,10,10);
+   Matrix_t* const zero = MatAlloc(FfOrder,10,10);
 
    /* Check p(x) = 0 */
-   pol = PolAlloc(FfOrder,-1);
-   a = MatInsert(mat,pol);
-   if (MatCompare(a,z) != 0) {
-      Error("p(A) != 0 for p(x)=0");
-   }
+   Poly_t* const zeroPoly = PolAlloc(FfOrder,-1);
+   a = MatInsert(mat,zeroPoly);
+   ASSERT_EQ_INT(MatCompare(a,zero),0);
    MatFree(a);
-   a = MatInsert_(MatDup(mat),pol);
-   if (MatCompare(a,z) != 0) {
-      Error("p(A) != 0 for p(x)=0");
-   }
+   a = MatInsert_(MatDup(mat),zeroPoly);
+   ASSERT_EQ_INT(MatCompare(a,zero),0);
    MatFree(a);
-   PolFree(pol);
+   PolFree(zeroPoly);
 
    /* Check p(x) = 1 */
-   pol = PolAlloc(FfOrder,0);
-   a = MatInsert(mat,pol);
-   if (MatCompare(a,e) != 0) {
-      Error("p(A) != 1 for p(x)=1");
-   }
+   Matrix_t* const identity = MatId(FfOrder,10);
+   Poly_t* const onePoly = PolAlloc(FfOrder,0);
+   a = MatInsert(mat,onePoly);
+   ASSERT_EQ_INT(MatCompare(a,identity),0);
    MatFree(a);
-   a = MatInsert_(MatDup(mat),pol);
-   if (MatCompare(a,e) != 0) {
-      Error("p(A) != 0 for p(x)=0");
-   }
+   a = MatInsert_(MatDup(mat),onePoly);
+   ASSERT_EQ_INT(MatCompare(a,identity),0);
    MatFree(a);
-   PolFree(pol);
+   PolFree(onePoly);
 
    /* Check p(x) = x */
-   pol = PolAlloc(FfOrder,1);
-   a = MatInsert(mat,pol);
-   if (MatCompare(a,mat) != 0) {
-      Error("p(A) != A for p(x)=x");
-   }
+   Poly_t *const idPoly = PolAlloc(FfOrder,1);
+   a = MatInsert(mat,idPoly);
+   ASSERT_EQ_INT(MatCompare(a,mat),0);
    MatFree(a);
-   a = MatInsert_(MatDup(mat),pol);
-   if (MatCompare(a,mat) != 0) {
-      Error("p(A) != 0 for p(x)=0");
-   }
+   a = MatInsert_(MatDup(mat),idPoly);
+   ASSERT_EQ_INT(MatCompare(a,mat),0);
    MatFree(a);
-   PolFree(pol);
+   PolFree(idPoly);
 
    MatFree(mat);
-   MatFree(e);
-   MatFree(z);
+   MatFree(identity);
+   MatFree(zero);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////

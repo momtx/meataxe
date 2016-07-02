@@ -1,7 +1,7 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-// C MeatAxe - Tests for the argument parser
+// C MeatAxe - Tests for the command line parser
 //
-// (C) Copyright 1998-2015 Michael Ringe, Lehrstuhl D fuer Mathematik, RWTH Aachen
+// (C) Copyright 1998-2016 Michael Ringe, Lehrstuhl D fuer Mathematik, RWTH Aachen
 //
 // This program is free software; see the file COPYING for details.
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -26,26 +26,15 @@ test_F CommandLineParsing1()
    int ArgC1 = (sizeof(ArgV1) / sizeof(ArgV1[0]));
 
    MtxApplication_t *App;
-   if ((App = AppAlloc(NULL,ArgC1,ArgV1)) == NULL) {
-      TST_FAIL("AppAlloc() failed");
-   }
+   ASSERT((App = AppAlloc(NULL,ArgC1,ArgV1)) != NULL);
 
-   if (AppGetOption(App,"--option11")) {
-      TST_FAIL("Option --option11 recognized");
-   }
-   if (!AppGetOption(App,"--option1") || TstHasError()) {
-      TST_FAIL("Option --option1 not recognized");
-   }
-   if (!AppGetOption(App,"-a --aaaa") || TstHasError()) {
-      TST_FAIL("Option -a not recognized");
-   }
-   if (AppGetOption(App,"-a --aaaa") || TstHasError()) {
-      TST_FAIL("Option -a repeated");
-   }
-   t = AppGetTextOption(App,"-b --option2",NULL);
-   if ((t == NULL) || strcmp(t,"optarg2") || TstHasError()) {
-      TST_FAIL("Text option not recognized");
-   }
+   ASSERT(!AppGetOption(App,"--option11") && !TstHasError());	// not present
+   ASSERT(AppGetOption(App,"--option1") && !TstHasError());
+   ASSERT(AppGetOption(App,"-a --aaaa") && !TstHasError());	// short and long name
+   ASSERT(!AppGetOption(App,"-a --aaaa") && !TstHasError());	// repeated
+   ASSERT((t = AppGetTextOption(App,"-b --option2",NULL)) != NULL);
+   ASSERT(!strcmp(t,"optarg2"));
+   ASSERT(!TstHasError());
 
    AppFree(App);
 }
@@ -61,19 +50,10 @@ test_F ArgumentCountChecking()
    int ArgC1 = (sizeof(ArgV1) / sizeof(ArgV1[0]));
 
    MtxApplication_t *App;
-   if ((App = AppAlloc(NULL,ArgC1,ArgV1)) == NULL) {
-      TST_FAIL("AppAlloc() failed");
-   }
-
-   if ((AppGetArguments(App,2,2) != 2) || TstHasError()) {
-      TST_FAIL("AppGetArguments() failed");
-   }
-   if ((AppGetArguments(App,1,1) != -1) || !TstHasError()) {
-      TST_FAIL("AppGetArguments(App,1,1) failed");
-   }
-   if ((AppGetArguments(App,3,3) != -1) || !TstHasError()) {
-      TST_FAIL("AppGetArguments(3,3) failed");
-   }
+   ASSERT((App = AppAlloc(NULL,ArgC1,ArgV1)) != NULL);
+   ASSERT(AppGetArguments(App,2,2) == 2 && !TstHasError());
+   ASSERT(AppGetArguments(App,1,1) == -1 && TstHasError());	// too many arguments
+   ASSERT(AppGetArguments(App,3,3) == -1 && TstHasError());	// too few arguments
    AppFree(App);
 }
 
@@ -82,19 +62,13 @@ test_F ArgumentCountChecking()
 test_F DetectUnknownOption()
 {
    TstStartErrorChecking();
-
-   static const char *ArgV1[] =
-   { "---", "-a", "--option1", "--option2" };
-   int ArgC1 = (sizeof(ArgV1) / sizeof(ArgV1[0]));
+   static const char *ArgV1[] = { "---", "-a", "--option1", "--option2" };
+   const int ArgC1 = (sizeof(ArgV1) / sizeof(ArgV1[0]));
    MtxApplication_t *App;
-   if ((App = AppAlloc(NULL,ArgC1,ArgV1)) == NULL) {
-      TST_FAIL("AppAlloc() failed");
-   }
+   ASSERT((App = AppAlloc(NULL,ArgC1,ArgV1)) != NULL);
    AppGetOption(App,"-a");
    AppGetOption(App,"--option1");
-   if ((AppGetArguments(App,0,100) != -1) || !TstHasError()) {
-      TST_FAIL("Unknown option not detected");
-   }
+   ASSERT(AppGetArguments(App,0,100) == -1 && TstHasError());
    AppFree(App);
 }
 
@@ -111,22 +85,12 @@ test_F DoubleDash()
    int ArgC1 = (sizeof(ArgV1) / sizeof(ArgV1[0]));
 
    MtxApplication_t *App;
-   if ((App = AppAlloc(NULL,ArgC1,ArgV1)) == NULL) {
-      TST_FAIL("AppAlloc() failed");
-   }
+   ASSERT((App = AppAlloc(NULL,ArgC1,ArgV1)) != NULL);
+   ASSERT(AppGetOption(App,"-a"));
+   ASSERT(!AppGetOption(App,"-b") && !TstHasError());	// -b is not an option
 
-   if (!AppGetOption(App,"-a")) {
-      TST_FAIL("Option -a not recognized");
-   }
-   if (AppGetOption(App,"-b") || TstHasError()) {
-      TST_FAIL("Option -b found after '--'");
-   }
-   if ((AppGetArguments(App,1,1) != 1) || TstHasError()) {
-      TST_FAIL("AppGetArguments() failed");
-   }
-   if (strcmp(App->ArgV[0],"-b")) {
-      TST_FAIL("Argument after '--' not found");
-   }
+   ASSERT(AppGetArguments(App,1,1) == 1 && !TstHasError());
+   ASSERT(!strcmp(App->ArgV[0],"-b"));
    AppFree(App);
 }
 
@@ -141,21 +105,11 @@ test_F IntegerOptions()
    int argc = (sizeof(argv) / sizeof(argv[0]));
 
    MtxApplication_t *App;
-   if ((App = AppAlloc(NULL,argc,argv)) == NULL) {
-      TST_FAIL("AppAlloc() failed");
-   }
-   if (AppGetIntOption(App,"-a",42,1,10) != 10) {
-      TST_FAIL("Option -a 10 not recognized");
-   }
-   if (AppGetIntOption(App,"-b --bbb",42,-20,-19) != -20) {
-      TST_FAIL("Option -bbb 20 not recognized");
-   }
-   if (AppGetIntOption(App,"-c",42,0,-1) != 3) {
-      TST_FAIL("Option -c 3 not recognized");
-   }
-   if (AppGetArguments(App,0,0) != 0) {
-      TST_FAIL("AppGetArguments() failed");
-   }
+   ASSERT((App = AppAlloc(NULL,argc,argv)) != NULL);
+   ASSERT(AppGetIntOption(App,"-a",42,1,10) == 10);
+   ASSERT(AppGetIntOption(App,"-b --bbb",42,-20,-19) == -20);
+   ASSERT(AppGetIntOption(App,"-c",42,0,-1) == 3);
+   ASSERT_EQ_INT(AppGetArguments(App,0,0), 0);
    AppFree(App);
 }
 
@@ -171,21 +125,11 @@ test_F IntegerOptionErrorHandling()
    int argc = (sizeof(argv) / sizeof(argv[0]));
 
    MtxApplication_t *App;
-   if ((App = AppAlloc(NULL,argc,argv)) == NULL) {
-      TST_FAIL("AppAlloc() failed");
-   }
-   if ((AppGetIntOption(App,"-a",42,1,0) != 42) || !TstHasError()) {
-      TST_FAIL("Error in option '-a 1x0' not found");
-   }
-   if ((AppGetIntOption(App,"-b --bbb",42,21,999) != 42) || !TstHasError()) {
-      TST_FAIL("Range check failed");
-   }
-   if ((AppGetIntOption(App,"-c",42,0,29) != 42) || !TstHasError()) {
-      TST_FAIL("Range check 2 failed");
-   }
-   if (AppGetArguments(App,0,0) != 0) {
-      TST_FAIL("AppGetArguments() failed");
-   }
+   ASSERT((App = AppAlloc(NULL,argc,argv)) != NULL);
+   ASSERT(AppGetIntOption(App,"-a",42,1,0) == 42 && TstHasError());	// malformed value
+   ASSERT(AppGetIntOption(App,"-b --bbb",42,21,999) == 42 && TstHasError()); // out of range
+   ASSERT(AppGetIntOption(App,"-c",42,0,29) == 42 && TstHasError());	// out of range
+   ASSERT(AppGetArguments(App,0,0) == 0);
    AppFree(App);
 }
 
@@ -199,18 +143,10 @@ test_F OptionAfterArgument()
    int argc = (sizeof(argv) / sizeof(argv[0]));
 
    MtxApplication_t *App;
-   if ((App = AppAlloc(NULL,argc,argv)) == NULL) {
-      TST_FAIL("AppAlloc() failed");
-   }
-   if (!AppGetOption(App,"-a") || TstHasError()) {
-      TST_FAIL("Option '-a' not recognized");
-   }
-   if (!AppGetOption(App,"-b") || TstHasError()) {
-      TST_FAIL("Option '-b' not recognized");
-   }
-   if ((AppGetArguments(App,0,110) == 0) || !TstHasError()) {
-      TST_FAIL("AppGetArguments())=0 on invalid data");
-   }
+   ASSERT((App = AppAlloc(NULL,argc,argv)) != NULL);
+   ASSERT(AppGetOption(App,"-a") && !TstHasError());
+   ASSERT(AppGetOption(App,"-b") && !TstHasError());
+   ASSERT(AppGetArguments(App,0,110) != 0 && TstHasError());
    AppFree(App);
 }
 
@@ -224,15 +160,9 @@ test_F CountedOption()
    int argc = (sizeof(argv) / sizeof(argv[0]));
 
    MtxApplication_t *App;
-   if ((App = AppAlloc(NULL,argc,argv)) == NULL) {
-      TST_FAIL("AppAlloc() failed");
-   }
-   if ((AppGetCountedOption(App,"-a --all") != 4) || TstHasError()) {
-      TST_FAIL("Option '--all' not recognized");
-   }
-   if ((AppGetCountedOption(App,"-b") != 3) || TstHasError()) {
-      TST_FAIL("Option '-b' not recognized");
-   }
+   ASSERT((App = AppAlloc(NULL,argc,argv)) != NULL);
+   ASSERT(AppGetCountedOption(App,"-a --all") == 4 && !TstHasError());
+   ASSERT(AppGetCountedOption(App,"-b") == 3 && !TstHasError());
    AppFree(App);
 }
 
@@ -246,21 +176,11 @@ test_F CommonOptions()
    int argc = (sizeof(argv) / sizeof(argv[0]));
 
    MtxApplication_t *App;
-   if ((App = AppAlloc(NULL,argc,argv)) == NULL) {
-      TST_FAIL("AppAlloc() failed");
-   }
-   if (MtxMessageLevel > -1000) {
-      TST_FAIL("Option --quiet not processed");
-   }
-   if (strcmp(MtxBinDir,"binbinbin")) {
-      TST_FAIL("Option -B not processed");
-   }
-   if (strcmp(MtxLibDir,"libliblib")) {
-      TST_FAIL("Option -L not processed");
-   }
-   if ((AppGetArguments(App,0,100) != 0) || TstHasError()) {
-      TST_FAIL("Common options missed");
-   }
+   ASSERT((App = AppAlloc(NULL,argc,argv)) != NULL);
+   ASSERT(MtxMessageLevel <= -1000);			// --quiet
+   ASSERT(!strcmp(MtxBinDir,"binbinbin"));		// -B
+   ASSERT(!strcmp(MtxLibDir,"libliblib"));		// -L
+   ASSERT(AppGetArguments(App,0,100) == 0 && !TstHasError());
    AppFree(App);
    strcpy(MtxBinDir,".");
    strcpy(MtxLibDir,".");
@@ -277,29 +197,14 @@ test_F CommonOptions2()
    int argc = (sizeof(argv) / sizeof(argv[0]));
 
    MtxApplication_t *App;
-   if ((App = AppAlloc(NULL,argc,argv)) == NULL) {
-      TST_FAIL("AppAlloc() failed");
-   }
-   if (MtxMessageLevel != 3) {
-      TST_FAIL("Option -V not processed correctly");
-   }
+   ASSERT((App = AppAlloc(NULL,argc,argv)) != NULL);
+   ASSERT_EQ_INT(MtxMessageLevel, 3);
    MtxMessageLevel = 0;
-   if (strcmp(MtxBinDir,"BINBIN")) {
-      TST_FAIL("Option --mtxbin not processed");
-   }
-   if (strcmp(MtxLibDir,"LIBLIB")) {
-      TST_FAIL("Option --mtxlib not processed");
-   }
-   if ((AppGetArguments(App,0,100) != 0) || TstHasError()) {
-      TST_FAIL("Common options missed");
-   }
+   ASSERT(!strcmp(MtxBinDir,"BINBIN"));
+   ASSERT(!strcmp(MtxLibDir,"LIBLIB"));
+   ASSERT(AppGetArguments(App,0,100) == 0 && !TstHasError());
    AppFree(App);
    strcpy(MtxBinDir,".");
    strcpy(MtxLibDir,".");
 }
 
-////////////////////////////////////////////////////////////////////////////////////////////////////
-
-test_F CommandLineProcessing()
-{
-}

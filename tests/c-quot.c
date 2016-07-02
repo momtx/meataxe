@@ -37,10 +37,10 @@ static void TestQuotProj1()
    MatEchelonize(prj[0]);
    MatEchelonize(prj[1]);
    if (MatCompare(prj[0],p1) != 0) {
-      Error("p1 different");
+      TST_FAIL("p1 different");
    }
    if (MatCompare(prj[1],p2) != 0) {
-      Error("p2 different");
+      TST_FAIL("p2 different");
    }
 
    MatFree(sub);
@@ -57,7 +57,6 @@ static void TestQuotProj1()
 static void TestQuotProj2()
 {
    int size;
-   MtxRandomInit(112);
    for (size = 1; size < 100; size += size / 5 + 1) {
       int k;
       Matrix_t *sub = RndMat(FfOrder,size / 2,size);
@@ -75,7 +74,7 @@ static void TestQuotProj2()
          proj = QProjection(sub,vec);
          MatEchelonize(proj);
          if (!IsSubspace(proj,quot,0) || (proj->Nor > quot->Nor)) {
-            Error("Wrong quotient");
+            TST_FAIL("Wrong quotient");
          }
          MatFree(vec);
          MatFree(proj);
@@ -112,16 +111,16 @@ static void TestQuotOp1()
 
    MatEchelonize(sub);
    if ((op[0] = QAction(sub,m1)) == NULL) {
-      Error("QOperation() failed");
+      TST_FAIL("QOperation() failed");
    }
    if ((op[1] = QAction(sub,m2)) == NULL) {
-      Error("QOperation() failed");
+      TST_FAIL("QOperation() failed");
    }
    if (MatCompare(op[0],op1) != 0) {
-      Error("op1 different");
+      TST_FAIL("op1 different");
    }
    if (MatCompare(op[1],op2) != 0) {
-      Error("op2 different");
+      TST_FAIL("op2 different");
    }
 
    MatFree(sub);

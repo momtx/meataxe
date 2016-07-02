@@ -28,39 +28,39 @@ test_F StructuredTextFile1()
    StfData *f;
 
    if ((f = StfOpen(file_name,FM_CREATE)) == NULL) {
-      Error("StfOpen() filed");
+      TST_FAIL("StfOpen() filed");
    }
    if (StfWriteValue(f,"StfTest","rec()") != 0) {
-      Error("StfWriteValue() failed");
+      TST_FAIL("StfWriteValue() failed");
    }
    if (StfWriteString(f,"StfTest.String1",string1) != 0) {
-      Error("StfWriteString() failed");
+      TST_FAIL("StfWriteString() failed");
    }
    if (StfWriteInt(f,"StfTest.Integer1",num1) != 0) {
-      Error("StfWriteInt() failed");
+      TST_FAIL("StfWriteInt() failed");
    }
    if (StfWriteVector(f,"StfTest.Vector1",10,vec1) != 0) {
-      Error("StfWriteVector() failed");
+      TST_FAIL("StfWriteVector() failed");
    }
    StfClose(f);
 
    if ((f = StfOpen(file_name,FM_READ)) == NULL) {
-      Error("StfOpen() filed");
+      TST_FAIL("StfOpen() filed");
    }
    if (StfReadLine(f) || strcmp(StfGetName(f),"StfTest")) {
-      Error("Header not found");
+      TST_FAIL("Header not found");
    }
    if (StfReadLine(f) || strcmp(StfGetName(f),"StfTest.String1")
        || StfGetString(f,string2,sizeof(string2)) || strcmp(string1,string2)) {
-      Error("Read string failed");
+      TST_FAIL("Read string failed");
    }
    if (StfReadLine(f) || strcmp(StfGetName(f),"StfTest.Integer1")
        || StfGetInt(f,&num2) || (num1 != num2)) {
-      Error("Read integer failed");
+      TST_FAIL("Read integer failed");
    }
    if (StfReadLine(f) || strcmp(StfGetName(f),"StfTest.Vector1")
        || StfGetVector(f,&vec2size,vec2) || memcmp(vec1,vec2,sizeof(vec1))) {
-      Error("Read vector failed");
+      TST_FAIL("Read vector failed");
    }
    StfClose(f);
 
@@ -82,19 +82,19 @@ test_F StructuredTextFile2()
       vec1[i] = i;
    }
    if ((f = StfOpen(file_name,FM_CREATE)) == NULL) {
-      Error("StfOpen() filed");
+      TST_FAIL("StfOpen() filed");
    }
    if (StfWriteVector(f,"StfTest.Vector1",1000,vec1) != 0) {
-      Error("StfWriteVector() failed");
+      TST_FAIL("StfWriteVector() failed");
    }
    StfClose(f);
 
    if ((f = StfOpen(file_name,FM_READ)) == NULL) {
-      Error("StfOpen() filed");
+      TST_FAIL("StfOpen() filed");
    }
    if (StfReadLine(f) || strcmp(StfGetName(f),"StfTest.Vector1")
        || StfGetVector(f,&vec2size,vec2) || memcmp(vec1,vec2,sizeof(vec1))) {
-      Error("Read vector failed");
+      TST_FAIL("Read vector failed");
    }
    StfClose(f);
 

@@ -35,16 +35,12 @@ static void TestMapRow1(PTR mat, PTR a, PTR b, int size)
       FfInsert(a,i,FF_ONE);
       FfMapRow(a,mat,size,b);
       for (k = 0; k < size; ++k) {
-         if ((FfExtract(b,k) != FF_ZERO) ^ (k == i)) {
-            Error("Error 1");
-         }
+         ASSERT((FfExtract(b,k) == FF_ZERO) ^ (k == i));
       }
 
       FfMapRow(a,mat,i,b);
       for (k = 0; k < size; ++k) {
-         if (FfExtract(b,k) != FF_ZERO) {
-            Error("Error 2");
-         }
+         ASSERT_EQ_INT(FfExtract(b,k), FF_ZERO);
       }
    }
 
@@ -53,9 +49,7 @@ static void TestMapRow1(PTR mat, PTR a, PTR b, int size)
    }
    FfMapRow(a,mat,size,b);
    for (i = 0; i < size; ++i) {
-      if (FfExtract(b,i) != FTab[i % FfOrder]) {
-         Error("Error 3");
-      }
+      ASSERT_EQ_INT(FfExtract(b,i), FTab[i % FfOrder]);
    }
 
 }
@@ -135,18 +129,10 @@ static void TestSumInter1()
    }
 
    FfSumAndIntersection(w1,&nor1,&nor2,w2,piv);
-
-   if (nor1 != FfNoc) {
-      Error("Sum has dimension %d, expected %d",nor1, FfNoc);
-   }
-   if (nor2 != (FfNoc - 1) / 3 + 1) {
-      Error("intersection has dimension %d, expected %d",nor2, (FfNoc - 1) / 3 + 1);
-   }
-
+   ASSERT_EQ_INT(nor1, FfNoc);	// whole space
+   ASSERT_EQ_INT(nor2, (FfNoc - 1) / 3 + 1);
    for (i = 0; i < nor2; ++i) {
-      if (piv[nor1 + i] % 3 != 0) {
-         Error("Wrong intersection");
-      }
+      ASSERT_EQ_INT(piv[nor1 + i] % 3, 0);
    }
 
    SysFree(w1);
@@ -194,7 +180,7 @@ static void CheckSubspace(PTR u, int udim, PTR v, int vdim)
          printrows(v,vdim);
          printf("u: (nor=%d)\n",udim);
          printrows(u,udim);
-         Error("CheckSubspace() failed");
+         TST_FAIL("CheckSubspace() failed");
          break;
       }
    }
@@ -270,7 +256,6 @@ static void TestSumInter2()
 
 test_F SumIntersection()
 {
-   MtxRandomInit(0);
    while (NextField() > 0) {
       int size;
 
