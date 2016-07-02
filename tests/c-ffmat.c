@@ -35,16 +35,12 @@ static void TestMapRow1(PTR mat, PTR a, PTR b, int size)
       FfInsert(a,i,FF_ONE);
       FfMapRow(a,mat,size,b);
       for (k = 0; k < size; ++k) {
-         if ((FfExtract(b,k) != FF_ZERO) ^ (k == i)) {
-            TST_FAIL("Error 1");
-         }
+         ASSERT((FfExtract(b,k) == FF_ZERO) ^ (k == i));
       }
 
       FfMapRow(a,mat,i,b);
       for (k = 0; k < size; ++k) {
-         if (FfExtract(b,k) != FF_ZERO) {
-            TST_FAIL("Error 2");
-         }
+         ASSERT_EQ_INT(FfExtract(b,k), FF_ZERO);
       }
    }
 

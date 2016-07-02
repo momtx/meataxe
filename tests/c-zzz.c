@@ -24,6 +24,19 @@ void test_Fail(const char *file, int line, const char *func, const char *msg, ..
     exit(1);
 }
 
+void test_AssertF(const char *file, int line, const char *func, int e, const char *estr,
+	          const char *msg, ...)
+{
+   if (e) return;
+   fprintf(stderr, "%s:%d:: error: TEST FAILED: %s\n", file, line, func);
+   fprintf(stderr, "assertion failed: %s\n", estr);
+   va_list args;
+   va_start(args, msg);
+   vfprintf(stderr, msg, args);
+   fprintf(stderr, "\n");
+   exit(1);
+}
+
 void test_Assert(const char *file, int line, const char *func, int e, const char *estr)
 {
    if (e) return;
@@ -69,9 +82,7 @@ void MakeFTab()
    FTab = NALLOC(FEL,FfOrder);
    for (i = 0; i < FfOrder; ++i) {
       FTab[i] = FfFromInt(i);
-      if (!ISFEL(FTab[i])) {
-         TST_FAIL2("FfFromInt(%d)=%d, illegal value",i,FTab[i]);
-      }
+      ASSERT2(ISFEL(FTab[i]),"FfFromInt(%d)=%d, illegal value",i,FTab[i]);
    }
 }
 

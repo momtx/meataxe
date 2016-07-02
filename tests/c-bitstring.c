@@ -39,9 +39,7 @@ test_F BtStringAllocation()
 
    TstStartErrorChecking();
    for (i = 0; i < NMAT; ++i) {
-      if (BsIsValid(m[i]) || !TstHasError()) {
-	  TST_FAIL("BsIsValid() failed");
-      }
+      ASSERT(!BsIsValid(m[i]) && TstHasError());
    }
 }
 
@@ -103,17 +101,13 @@ static void TestCompare1(int size, BitString_t *a, BitString_t *b)
    for (i = 0; i < size; ++i) {
       ASSERT_EQ_INT(BsCompare(a,b),0);
       BsSet(a,i);
-      if (BsCompare(a,b) == 0) {
-         TST_FAIL1("BsCompare() did not detect difference in bit %d",i);
-      }
+      ASSERT(BsCompare(a,b) != 0);
       BsSet(b,i);
    }
    for (i = 0; i < size; ++i) {
       ASSERT_EQ_INT(BsCompare(a,b),0);
       BsClear(a,i);
-      if (BsCompare(a,b) == 0) {
-         TST_FAIL1("BsCompare() did not detect difference in bit %d",i);
-      }
+      ASSERT1(BsCompare(a,b) != 0,"difference in bit %d not found",i);
       BsClear(b,i);
    }
 }
@@ -198,9 +192,7 @@ static void CheckIo1(BitString_t **bs, int n)
    f = SysFopen(file_name,FM_READ);
    for (i = 0; i < n; ++i) {
       BitString_t *a = BsRead(f);
-      if (BsCompare(a,bs[i]) != 0) {
-         TST_FAIL("Bitstring differs after write/read");
-      }
+      ASSERT_EQ_INT(BsCompare(a,bs[i]), 0);
    }
    fclose(f);
 }

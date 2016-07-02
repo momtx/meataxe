@@ -35,21 +35,15 @@ test_F FileIo()
    fclose(f);
 
    mat2 = MatLoad("check.ma1");
-   if (MatCompare(mat1,mat2) != 0) {
-      TST_FAIL("MatSave()/MatLoad() failed");
-   }
+   ASSERT_EQ_INT(MatCompare(mat1,mat2), 0);
    MatFree(mat2);
 
    pol2 = PolLoad("check.po1");
-   if (PolCompare(pol1,pol2) != 0) {
-      TST_FAIL("PolSave()/PolLoad() failed");
-   }
+   ASSERT_EQ_INT(PolCompare(pol1,pol2), 0);
    PolFree(pol2);
 
    perm2 = PermLoad("check.pe1");
-   if (PermCompare(perm1,perm2) != 0) {
-      TST_FAIL("PermSave()/PermLoad() failed");
-   }
+   ASSERT_EQ_INT(PermCompare(perm1,perm2), 0);
    PermFree(perm2);
 
    f = SysFopen("check.1",FM_READ);
@@ -58,17 +52,11 @@ test_F FileIo()
    perm2 = PermRead(f);
    fclose(f);
 
-   if (MatCompare(mat1,mat2) != 0) {
-      TST_FAIL("MatWrite()/MatWrite() failed");
-   }
+   ASSERT_EQ_INT(MatCompare(mat1,mat2), 0);
    pol2 = PolLoad("check.po1");
-   if (PolCompare(pol1,pol2) != 0) {
-      TST_FAIL("PolWrite()/PolRead() failed");
-   }
+   ASSERT_EQ_INT(PolCompare(pol1,pol2), 0);
    perm2 = PermLoad("check.pe1");
-   if (PermCompare(perm1,perm2) != 0) {
-      TST_FAIL("PermWrite()/PermRead() failed");
-   }
+   ASSERT_EQ_INT(PermCompare(perm1,perm2), 0);
 
    MatFree(mat1);
    PolFree(pol1);

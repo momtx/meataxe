@@ -73,30 +73,17 @@ test_F FiniteFieldArithmetic()
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static void TestGen1()
-{
-   FEL a, b;
-   int i;
-
-   a = FfGen;
-   b = a;
-   for (i = 1; i < (int)FfOrder - 1; ++i) {
-      if (b == FF_ONE) {
-         TST_FAIL1("Generator has order %d",i);
-      }
-      b = FfMul(a,b);
-   }
-   if (b != FF_ONE) {
-      TST_FAIL2("g^%d = %d, should be %d",b,FF_ONE);
-   }
-}
-
-////////////////////////////////////////////////////////////////////////////////////////////////////
-
 test_F FfGenerator()
 {
    while (NextField() > 0) {
-      TestGen1();
+      FEL b;
+      int i;
+      b = FfGen;
+      for (i = 1; i < FfOrder - 1; ++i) {
+	 ASSERT(b != FF_ONE);
+	 b = FfMul(b,FfGen);
+      }
+      ASSERT_EQ_INT(b, FF_ONE);
    }
 }
 
@@ -217,9 +204,7 @@ static void TestFelToInt1()
       FTab[l] = FfFromInt(l);
       ASSERT(ISFEL(FTab[l]));
       for (m = 0; m < l; ++m) {
-         if (FTab[m] == FTab[l]) {
-            TST_FAIL2("FfFromInt(%d) = zitof(%d)",m,l);
-         }
+         ASSERT2(FTab[m] != FTab[l], "FfFromInt(%d) = FfFromInt(%d)",m,l);
       }
       ASSERT_EQ_INT(FfToInt(FTab[l]),l);
    }

@@ -46,6 +46,6 @@ test_F CharacteristicPolynomial()
    pf = CharPolFactor(NULL);
    CheckPoly(pf,1,1,1);
    pf = CharPolFactor(NULL);
-   if (pf != NULL) { TST_FAIL("too many factors"); }
+   ASSERT(pf == NULL);
    MatFree(a);
 }

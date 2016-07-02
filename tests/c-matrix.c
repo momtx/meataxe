@@ -110,9 +110,7 @@ static void TestMatEchelonize1(Matrix_t *m, int size)
          FfInsert(p,k,FF_ONE);
       }
    }
-   if (MatEchelonize(m) != size) {
-      TST_FAIL("MatEchelonize() failed");
-   }
+   ASSERT_EQ_INT(MatEchelonize(m), size);
    ChkEch(m);
    for (i = 0; i < size; ++i) {
       PTR p = MatGetPtr(m,i);
@@ -142,9 +140,7 @@ static void TestMatEchelonize2(Matrix_t *m, int size)
          x = 69069 * x + 3;
       }
    }
-   if (MatEchelonize(m) < 5) {
-      TST_FAIL("Test 2: MatEchelonize() failed");
-   }
+   ASSERT(MatEchelonize(m) >= 5);
    ChkEch(m);
 }
 
@@ -166,20 +162,18 @@ test_F TestMatEchelonize()
 
 static void TestMatCompare1(Matrix_t *a, Matrix_t *b, int size)
 {
-   int i;
-
-   if (MatCompare(a,b) != 0) { TST_FAIL("a != b, should be ="); }
-   if (MatCompare(b,a) != 0) { TST_FAIL("b != a, should be ="); }
-   for (i = 0; i < size; ++i) {
+   ASSERT(MatCompare(a,b) == 0);
+   ASSERT(MatCompare(b,a) == 0);
+   for (int i = 0; i < size; ++i) {
       PTR pa = MatGetPtr(a,i);
       PTR pb = MatGetPtr(b,i);
       FfInsert(pa,0,FF_ONE);
-      if (MatCompare(a,b) <= 0) { TST_FAIL("a <= b, should be >"); }
-      if (MatCompare(b,a) >= 0) { TST_FAIL("b >= a, should be <"); }
+      ASSERT(MatCompare(a,b) > 0);
+      ASSERT(MatCompare(b,a) < 0);
 
       FfInsert(pb,0,FF_ONE);
-      if (MatCompare(a,b) != 0) { TST_FAIL("a != b, should be ="); }
-      if (MatCompare(b,a) != 0) { TST_FAIL("b != a, should be ="); }
+      ASSERT(MatCompare(a,b) == 0);
+      ASSERT(MatCompare(b,a) == 0);
    }
 }
 
@@ -191,12 +185,8 @@ static void Check2(int fld1, int nor1, int noc1, int fld2, int nor2,
    Matrix_t *a, *b;
    a = MatAlloc(fld1,nor1,noc1);
    b = MatAlloc(fld2,nor2,noc2);
-   if (MatCompare(a,b) >= 0) {
-      TST_FAIL("a >= b, should be <");
-   }
-   if (MatCompare(b,a) <= 0) {
-      TST_FAIL("b <= a, should be >");
-   }
+   ASSERT(MatCompare(a,b) < 0);
+   ASSERT(MatCompare(b,a) > 0);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////

@@ -35,12 +35,16 @@ typedef struct test_Definition {
 
 
 void test_Assert(const char *file, int line, const char *func, int e, const char *estr);
+MTX_PRINTF_ATTRIBUTE(6,7)
+void test_AssertF(const char *file, int line, const char *func, int e, const char *estr,
+	const char *msg, ...);
 #define ASSERT(e) test_Assert(__FILE__,__LINE__,__func__,e,#e)
+#define ASSERT1(e,msg,a1) test_AssertF(__FILE__,__LINE__,__func__,e,#e,msg,a1)
+#define ASSERT2(e,msg,a1,a2) test_AssertF(__FILE__,__LINE__,__func__,e,#e,msg,a1,a2)
+
 void test_EqInt(const char *file, int line, const char *func, int act, int exp,
 	        const char *actstr, const char *expstr);
 #define ASSERT_EQ_INT(act,exp) test_EqInt(__FILE__,__LINE__,__func__,act,exp,#act,#exp)
-void test_Nz(const char *file, int line, const char *func, int act, const char *actstr);
-#define ASSERT_NZ(act) test_Nz(__FILE__,__LINE__,__func__,act,#act)
 
 MTX_PRINTF_ATTRIBUTE(4,5)
 void test_Fail(const char *file, int line, const char *func, const char *msg, ...);

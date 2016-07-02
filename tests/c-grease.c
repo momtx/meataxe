@@ -27,9 +27,7 @@ static void TestGrMapRow1(Matrix_t *m, int gr_level)
       FfSetNoc(m->Noc);
       FfMapRow(vec,m->Data,m->Nor,res_std);
       GrMapRow(vec,gm,res_grease);
-      if (FfCmpRows(res_grease,res_std) != 0) {
-         TST_FAIL("FfMapRow() and GrMapRow() produce different results");
-      }
+      ASSERT_EQ_INT(FfCmpRows(res_grease,res_std), 0);
    }
    SysFree(res_std);
    SysFree(res_grease);

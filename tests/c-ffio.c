@@ -24,6 +24,7 @@ static void TestRowIo2(PTR row0, PTR row1, PTR buf)
    f = SysFopen(file_name,FM_CREATE);
    for (x = 0, i = 0; i < 100; ++i) {
       ASSERT_EQ_INT(FfWriteRows(f,(x & 0x1000) ? row0 : row1,1), 1);
+      x = x * 69069 + 1;
    }
    fclose(f);
 
@@ -33,6 +34,7 @@ static void TestRowIo2(PTR row0, PTR row1, PTR buf)
       if (FfCmpRows(buf,(x & 0x1000) ? row0 : row1) != 0) {
          TST_FAIL("Compare failed");
       }
+      x = x * 69069 + 1;
    }
    fclose(f);
 
@@ -176,9 +178,7 @@ static void TestSeek2(int noc, PTR buf1, PTR buf2, int nor)
    /* Write <buf1> into file
       ---------------------- */
    f = FfWriteHeader(file_name,FfOrder,nor,noc);
-   if (FfWriteRows(f,buf1,nor) != nor) {
-      TST_FAIL("Write failed");
-   }
+   ASSERT_EQ_INT(FfWriteRows(f,buf1,nor), nor);
    fclose(f);
 
    /* Read the rows in reverse order.
@@ -188,9 +188,7 @@ static void TestSeek2(int noc, PTR buf1, PTR buf2, int nor)
    for (i = nor - 1; i >= 0; --i) {
       PTR x = (PTR)((char *)buf2 + i * FfCurrentRowSize);
       FfSeekRow(f,i);
-      if (FfReadRows(f,x,1) != 1) {
-         TST_FAIL("Read failed");
-      }
+      ASSERT_EQ_INT(FfReadRows(f,x,1), 1);
    }
    fclose(f);
 
