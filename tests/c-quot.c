@@ -57,7 +57,6 @@ static void TestQuotProj1()
 static void TestQuotProj2()
 {
    int size;
-   MtxRandomInit(112);
    for (size = 1; size < 100; size += size / 5 + 1) {
       int k;
       Matrix_t *sub = RndMat(FfOrder,size / 2,size);

@@ -260,7 +260,6 @@ static void TestSumInter2()
 
 test_F SumIntersection()
 {
-   MtxRandomInit(0);
    while (NextField() > 0) {
       int size;
 

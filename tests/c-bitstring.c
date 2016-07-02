@@ -213,7 +213,6 @@ test_F BitStringFileIo()
    BitString_t *a[10];
    int i;
 
-   MtxRandomInit(1235);
    a[0] = BsAlloc(0);
    for (i = 1; i < 10; ++i) {
       a[i] = RndBs(MtxRandomInt(100));
@@ -291,7 +290,6 @@ static void CheckCount1(int size, BitString_t *a, BitString_t *b)
 test_F BitStringIntersectionCount()
 {
    int i;
-   MtxRandomInit(42);
    for (i = 0; i < 100; ++i) {
       int size = MtxRandomInt(100);
       BitString_t *a = RndBs(size), *b = RndBs(size);
@@ -309,7 +307,6 @@ test_F BitStringIsSubset()
    int i;
    BitString_t *a, *b;
 
-   MtxRandomInit(42);
    for (i = 0; i < 150; ++i) {
       const int size = i;
       int k;

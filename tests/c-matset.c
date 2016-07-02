@@ -49,7 +49,6 @@ static void TestMsClean1(MatrixSet_t *set)
 
 test_F MatrixSetClean()
 {
-   MtxRandomInit(0);
    while (NextField() > 0) {
       MatrixSet_t *set;
       set = MsAlloc();

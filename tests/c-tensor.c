@@ -65,7 +65,6 @@ static void TestMatTensor1(int fl)
 
 test_F TestMatTensor()
 {
-   MtxRandomInit(0);
    while (NextField() > 0) {
       TestMatTensor1(FfOrder);
    }

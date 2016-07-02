@@ -37,7 +37,6 @@ static void TestScalarProduct1(PTR a, PTR b, int size)
  
 test_F ScalarProduct()
 {
-   MtxRandomInit(1231);
    while (NextField() > 0) {
       int size;
       for (size = 0; size < 1000; size += size / 10 + 1) {

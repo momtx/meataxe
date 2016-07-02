@@ -41,7 +41,6 @@ static void TestGrMapRow1(Matrix_t *m, int gr_level)
 
 test_F GreasedMapRow()
 {
-   MtxRandomInit(1231);
    while (NextField() > 0) {
       int gr_level;
       int max_gr_level;

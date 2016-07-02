@@ -44,9 +44,10 @@ FEL *FTab = NULL;
 static MtxApplicationInfo_t AppInfo = {
    "mtxtest", "MeatAxe Library test program",
    "SYNTAX\n"
-   "    mtxtest " MTX_COMMON_OPTIONS_SYNTAX " [-t <Field>]\n"
+   "    mtxtest " MTX_COMMON_OPTIONS_SYNTAX " [-t <Field>] [<TestSpec>]\n"
    "\n"
    "ARGUMENTS\n"
+   "    <TestSpec> .............. Test(s) to be run (shell-style pattern)\n"
    "\n"
    "OPTIONS\n"
    "    -t <Field> .............. Print tables for GF(<Field>)\n"
@@ -226,10 +227,41 @@ int TstHasError()
 }
 
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
-/* --------------------------------------------------------------------------
-   main()
-   -------------------------------------------------------------------------- */
+static int strmatch(const char *s, const char *pattern)
+{
+    while (*pattern) {
+        if (*pattern == '?') {
+            if (*s == 0) return 1;
+            ++s;
+        } else if (*pattern == '*') {
+            while (1) {
+                if (!strmatch(s,pattern+1)) return 0;
+                if (*s == 0) return 1;
+                ++s;
+            }
+        } else {
+            if (*s != *pattern) return 1;
+            ++s;
+        }
+        ++pattern;
+    }
+    return *s == 0 ? 0 : 1;
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+static int testSelected(const char *name, int nsel, const char * const *sel)
+{
+   if (nsel == 0) return 1;	// no selection, run all tests
+   for (int i = 0; i < nsel; ++i) {
+      if (strmatch(name,sel[i]) == 0) return 1;
+   }
+   return 0;
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 int main(int argc, const char **argv)
 {
@@ -246,51 +278,15 @@ int main(int argc, const char **argv)
       exit(0);
    }
 
-#if 0
-   SelectField(2);
-   {
-      Matrix_t *mat = RndMat(2,1000,1000);
-      Matrix_t *a = RndMat(2,1,1000);
-      Matrix_t *b = RndMat(2,1,1000);
-      PTR mm = mat->Data, aa = a->Data, bb = b->Data;
-      for (i = 0; i < 50000; ++i) {
-         FfMapRow(aa,mm,1000,bb);
-      }
-      return 0;
-   }
-#endif
-
-#if 0
-   SelectField(2);
-   {
-      Matrix_t *mat = RndMat(2,1000,1000);
-      Matrix_t *a = RndMat(2,1,1000);
-      Matrix_t *b = RndMat(2,1,1000);
-      GreasedMatrix_t *gm = GrMatAlloc(mat,4);
-      PTR aa = a->Data, bb = b->Data;
-      for (i = 0; i < 50000; ++i) {
-         GrMapRow(aa,gm,bb);
-      }
-      return 0;
-   }
-#endif
-
-#if 0
-   {
-      Matrix_t *id = MatId(3,5);
-      GreasedMatrix_t *gm = GrMatAlloc(id,2);
-      MtxFile_t *f = MfCreate("greas.test",gm->Field,gm->NumVecs,gm->Noc);
-      MfWriteRows(f,gm->PrecalcData,gm->NumVecs);
-      MfClose(f);
-   }
-#endif
-
    printf("MeatAxe Version %s\n",MtxVersion);
-
+   const int nsel = AppGetArguments(app,0,1000);
+   const char * const * const sel = app->ArgV;
    for( i = 0; i < sizeof(test_AllTests)/sizeof(test_AllTests[0]); ++i) {
        const test_Definition * const td = test_AllTests + i;
+       if (!testSelected(td->name, nsel, sel)) continue;
        printf("+ %s\n", td->name);
        fflush(stdout);
+       MtxRandomInit(52134);
        test_AllTests[i].f();
        if (TstHasError()) {
           test_Fail(td->file,td->line,td->name,"Uncaught error");

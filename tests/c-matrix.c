@@ -324,7 +324,6 @@ static void TestMatDup1(int fl, int nor, int noc)
 test_F MatrixDuplication()
 {
    int nor, noc;
-   MtxRandomInit(123123);
    while (NextField() > 0) {
       for (nor = 0; nor < 10; ++nor) {
          for (noc = 0; noc < 10; ++noc) {
@@ -383,7 +382,6 @@ test_F NullSpace()
 {
    int nor;
 
-   MtxRandomInit(123);
    while (NextField() > 0) {
       for (nor = 0; nor < 10; ++nor) {
          TestNullSpace1(FfOrder,nor);
@@ -435,7 +433,6 @@ static void TestMatCut1(int fl)
    int anor = 10, anoc = 20;
    int i;
 
-   MtxRandomInit(31);
    a = RndMat(fl,anor,anoc);
 
    b = MatCut(a,0,0,-1,-1);
@@ -495,7 +492,6 @@ static void TestMatCopy1(int fl)
    int nor = 10, noc = 20;
    int i;
 
-   MtxRandomInit(32);
    a = RndMat(fl,nor,noc);
    b = MatAlloc(fl,nor,noc);
 
@@ -588,7 +584,6 @@ static void TestMatAddMul1(int fl)
 
 test_F MatrixMultiplyAdd()
 {
-   MtxRandomInit(1);
    while (NextField() > 0) {
       TestMatAddMul1(FfOrder);
    }

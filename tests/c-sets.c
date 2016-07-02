@@ -72,7 +72,6 @@ test_F SetBasicOperations()
    long d[100];
    int i;
 
-   MtxRandomInit(1213);
    memset(d,0,sizeof(d));
    for (i = 1; i <= 100; ++i) {
       int p;

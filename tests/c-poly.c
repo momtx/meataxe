@@ -254,7 +254,6 @@ static void TestPolMul1(int fl)
 static void TestPolMul2(int fl)
 {
    int i;
-   MtxRandomInit(fl);
    for (i = 0; i < 20; ++i) {
       Poly_t *a, *b, *c, *ab, *ba;
       a = RndPol(fl,0,100);
@@ -296,7 +295,6 @@ static void TestPolGcd1(int fl)
 {
    int n;
 
-   MtxRandomInit(fl);
    for (n = 100; n > 0; --n) {
       Poly_t *a, *b, *gcd, *result[3];
 
