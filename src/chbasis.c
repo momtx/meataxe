@@ -62,6 +62,9 @@ int MrChangeBasis(MatRep_t *rep, const Matrix_t *trans)
     for (i = 0; i < rep->NGen; ++i)
     {
 	Matrix_t *tmp = MatDup(trans);
+	if (tmp == NULL) {
+	    return -1;
+	}
 	MatMul(tmp,rep->Gen[i]);
 	MatMul(tmp,bi);
         MatFree(rep->Gen[i]);
