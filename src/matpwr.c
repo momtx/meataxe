@@ -98,8 +98,15 @@ Matrix_t *MatPower(const Matrix_t *mat, long n)
    FfSetField(mat->Field);
    FfSetNoc(mat->Noc);
    tmp = FfAlloc(FfNoc);
+   if (tmp == NULL) {
+       return NULL;
+   }
    memcpy(tmp,mat->Data,FfCurrentRowSize * FfNoc);
    tmp2 = FfAlloc(FfNoc);
+   if (tmp2 == NULL) {
+       SysFree(tmp);
+       return NULL;
+   }
    result = MatAlloc(mat->Field,mat->Nor,mat->Noc);
    if (result != NULL) {
       matpwr_(n,tmp,result->Data,tmp2);

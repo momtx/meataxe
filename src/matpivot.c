@@ -63,7 +63,6 @@ static int zmkpivot(PTR matrix, int nor, int noc, int *piv, int *ispiv)
 
 int MatPivotize(Matrix_t *mat)
 {
-   int rc;
    int *newtab;
    static int *is_pivot = NULL;
    static int maxnoc = -1;
@@ -93,9 +92,7 @@ int MatPivotize(Matrix_t *mat)
    // build the pivot table
    FfSetField(mat->Field);
    FfSetNoc(mat->Noc);
-   rc = zmkpivot(mat->Data,mat->Nor,mat->Noc,mat->PivotTable,is_pivot);
-
-   return rc;
+   return zmkpivot(mat->Data,mat->Nor,mat->Noc,mat->PivotTable,is_pivot);
 }
 
 

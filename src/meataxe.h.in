@@ -124,9 +124,8 @@ PTR FfAddRowPartial(PTR dest, PTR src, int first);
 PTR FfAlloc(int nor);
 int FfCmpRows(PTR p1, PTR p2);
 void FfCleanRow(PTR row, PTR matrix, int nor, const int *piv);
-void FfCleanRow2(PTR row, PTR matrix, int nor, const int *piv, PTR row2);
-void FfCleanRowAndRepeat(PTR row, PTR mat, int nor, const int *piv,
-                         PTR row2, PTR mat2);
+int FfCleanRow2(PTR row, PTR matrix, int nor, const int *piv, PTR row2);
+int FfCleanRowAndRepeat(PTR row, PTR mat, int nor, const int *piv, PTR row2, PTR mat2);
 void FfCopyRow(PTR dest, PTR src);
 FEL FfEmbed(FEL a, int subfield);
 FEL FfExtract(PTR row, int col);

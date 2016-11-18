@@ -28,12 +28,13 @@ MTX_DEFINE_FILE_INFO
 /// MatCut(mat,0,0,10,-1)
 /// @endcode
 /// @see MatCopyRegion MatCutRows
+///
 /// @param src Pointer to the matrix.
 /// @param row1 First row in region.
 /// @param col1 First column in region.
 /// @param nrows Number of rows to cut. -1 means as many rows as possible.
 /// @param ncols Number of columns to cut. -1 means as many columns as possible.
-/// @return Pointer to a new matrix containing the specified region, or 0 on error.
+/// @return Pointer to a new matrix containing the specified region, or NULL on error.
 
 Matrix_t *MatCut(const Matrix_t *src, int row1, int col1, int nrows, int ncols)
 {
@@ -76,11 +77,16 @@ Matrix_t *MatCut(const Matrix_t *src, int row1, int col1, int nrows, int ncols)
    /* Initialize pointers to the source and destination matrix
       -------------------------------------------------------- */
    s = MatGetPtr(src,row1);
+   if (s == NULL) {
+      return NULL;
+   }
    d = result->Data;
 
    /* Copy the requested data
       ----------------------- */
-   FfSetNoc(ncols);
+   if (FfSetNoc(ncols) != 0) {
+      return NULL;
+   }
    for (n = nrows; n > 0; --n) {
       if (col1 == 0) {
          FfCopyRow(d,s);
