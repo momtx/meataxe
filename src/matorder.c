@@ -1,7 +1,7 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // C MeatAxe - Order of a matrix
 //
-// (C) Copyright 1998-2015 Michael Ringe, Lehrstuhl D fuer Mathematik, RWTH Aachen
+// (C) Copyright 1998-2016 Michael Ringe, Lehrstuhl D fuer Mathematik, RWTH Aachen
 //
 // This program is free software; see the file COPYING for details.
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -25,47 +25,53 @@ MTX_DEFINE_FILE_INFO
 /// the order is greater than 1000000, or if the order on any cyclic
 /// subspace is greater than 1000.
 /// @param mat Pointer to the matrix.
-/// @return The order of @em mat, or 1 on error.
+/// @return The order of @em mat, or -1 on error.
 
 int MatOrder(const Matrix_t *mat)
 {
-   PTR m1, v1, v2, v3;
-   PTR basis, bend, bptr;
-   int *piv;
-   char *done;
-   int nor, dim;
-   int j1, i;
-   FEL f1;
-   int tord;
-   int ord;
-   int flag;
-
    // Check arguments
    if (!MatIsValid(mat)) {
       return -1;
    }
    if (mat->Nor != mat->Noc) {
-      return MTX_ERROR1("%E",MTX_ERR_NOTSQUARE), -1;
+      MTX_ERROR1("%E",MTX_ERR_NOTSQUARE);
+      return -1;
    }
 
    FfSetField(mat->Field);
    FfSetNoc(mat->Noc);
-   nor = mat->Nor;
-   m1 = FfAlloc(nor);
-   memcpy(m1,mat->Data,FfCurrentRowSize * nor);
-   bend = basis = FfAlloc(nor + 1);
+   const int nor = mat->Nor;
+   PTR const m1 = FfAlloc(nor);
+   PTR const basis = FfAlloc(nor + 1);
+   int * const piv = NALLOC(int,nor + 1);
+   char * const done = NALLOC(char,nor);
+   PTR const v1 = FfAlloc(1);
+   PTR const v2 = FfAlloc(1);
+   PTR const v3 = FfAlloc(1);
 
-   piv = NALLOC(int,nor + 1);
-   done = NALLOC(char,nor);
+   if (m1 == NULL || basis == NULL || piv == NULL || done == NULL
+       || v1 == NULL || v2 == NULL || v3 == NULL) {
+      if (m1 != NULL) SysFree(m1);
+      if (basis != NULL) SysFree(basis);
+      if (piv != NULL) SysFree(piv);
+      if (done != NULL) SysFree(done);
+      if (v1 != NULL) SysFree(v1);
+      if (v2 != NULL) SysFree(v2);
+      if (v3 != NULL) SysFree(v3);
+      return -1;
+   }
+   PTR bend = basis;
+   FEL f1;
+   int tord;
+   int ord;
+
+   memcpy(m1,mat->Data,FfCurrentRowSize * nor);
    memset(done,0,(size_t)nor);
-   v1 = FfAlloc(1);
-   v2 = FfAlloc(1);
-   v3 = FfAlloc(1);
    tord = ord = 1;
-   dim = 0;
-   j1 = 1;
+   int dim = 0;
    while (dim < nor && tord <= 1000 && ord <= 1000000) {
       // get next start vector
+      int j1;
       for (j1 = 0; j1 < nor && done[j1]; ++j1) {
       }
       if (j1 >= nor) {
@@ -76,18 +82,17 @@ int MatOrder(const Matrix_t *mat)
 
       // calculate order on cyclic subspace
       tord = 0;
-      flag = 1;
+      int flag = 1;
       FfCopyRow(v3,v1);
       do {
          FfCopyRow(v2,v3);
          if (flag) {
             FfCopyRow(bend,v3);
-            bptr = basis;
-            for (i = 0; i < dim; ++i) {
+            PTR bptr = basis;
+            for (int i = 0; i < dim; ++i) {
                f1 = FfExtract(bend,piv[i]);
                if (f1 != 0) {
-                  FfAddMulRow(bend,bptr,FfNeg(FfDiv(f1,
-                                                    FfExtract(bptr,piv[i]))));
+                  FfAddMulRow(bend,bptr,FfNeg(FfDiv(f1, FfExtract(bptr,piv[i]))));
                }
                FfStepPtr(&bptr);
             }

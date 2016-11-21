@@ -73,6 +73,9 @@ Matrix_t *MatInsert_(Matrix_t *mat, const Poly_t *pol)
    // Evaluate p(A)
    if (pol->Degree > 1) {
       x = MatDup(mat);
+      if (x == NULL) {
+	  return NULL;
+      }
    }
    if ((f = pol->Data[pol->Degree]) != FF_ONE) {
       for (l = nor, v = mat->Data; l > 0; --l, FfStepPtr(&v)) {
@@ -135,6 +138,9 @@ Matrix_t *MatInsert(const Matrix_t *mat, const Poly_t *pol)
    // Special case: deg(p) = 0
    if (pol->Degree == 0) {
       x = MatAlloc(mat->Field,nor,nor);
+      if (x == NULL) {
+	  return NULL;
+      }
       for (l = 0, v = x->Data; l < nor; ++l, FfStepPtr(&v)) {
          FfInsert(v,l,pol->Data[0]);
       }
@@ -143,6 +149,9 @@ Matrix_t *MatInsert(const Matrix_t *mat, const Poly_t *pol)
 
    // Evaluate p(A)
    x = MatDup(mat);
+   if (x == NULL) {
+      return NULL;
+   }
    if ((f = pol->Data[pol->Degree]) != FF_ONE) {
       for (l = nor, v = x->Data; l > 0; --l, FfStepPtr(&v)) {
          FfMulRow(v,f);

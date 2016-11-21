@@ -67,35 +67,34 @@ static void WriteWord(StfData *f, long w, Poly_t *p)
     StfPut(f,"]");
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
+/// Reads a word number and the associated polynomial.
+/// @return 0 on success, -1 on error
 
-static int ReadWord(StfData *f, long *w, Poly_t **p, char *fn)
+static int ReadWord(StfData *f, long *w, Poly_t **p, const char *fn)
 {
     int fl, deg;  
     int i;
 
-    if (StfMatch(f," ["))
-    {
+    if (StfMatch(f," [")) {
 	MTX_ERROR1("%s: missing '['",fn);
-	return 0;
+	return -1;
     }
     StfGetInt(f,&i);
     *w = i;
-    if (StfMatch(f,",")) 
-    {
+    if (StfMatch(f,",")) {
 	MTX_ERROR1("%s: missing ','",fn);
-	return 0;
+	return -1;
     }
     StfGetInt(f,&fl);
-    if (StfMatch(f,",")) 
-    {
+    if (StfMatch(f,",")) {
 	MTX_ERROR1("%s: missing ','",fn);
-	return 0;
+	return -1;
     }
     StfGetInt(f,&deg);
-    if (deg == -1)
+    if (deg == -1) {
 	*p = NULL;
-    else
-    {
+    } else {
         *p = PolAlloc(fl,deg);
     	for (i = 0; i <= deg; ++i)
     	{
@@ -103,18 +102,17 @@ static int ReadWord(StfData *f, long *w, Poly_t **p, char *fn)
             if (StfMatch(f,",")) 
 	    {
 		MTX_ERROR1("%s: missing ','",fn);
-		return 0;
+		return -1;
 	    }
 	    StfGetInt(f,&coeff);
 	    (*p)->Data[i] = FfFromInt(coeff);
     	}
     }
-    if (StfMatch(f,"]")) 
-    {
+    if (StfMatch(f,"]")) {
 	MTX_ERROR1("%s: missing ']'",fn);
-	return 0;
+	return -1;
     }
-    return 1;
+    return 0;
 }
 
 
@@ -135,7 +133,8 @@ static int ReadWord(StfData *f, long *w, Poly_t **p, char *fn)
 	    { MTX_ERROR("Error in cfinfo file: Missing ']'"); return -1; }\
 	}
 
-/// Read a Lattice Information File.
+////////////////////////////////////////////////////////////////////////////////////////////////////
+/// Reads a Lattice Information File.
 /// This funktion reads a .cfinfo file and stores the data into a Lat_Info structure.
 /// @param li Pointer to the data structure.
 /// @param basename Base name (without the trailing ".cfinfo").
@@ -207,7 +206,9 @@ int Lat_ReadInfo(Lat_Info *li, const char *basename)
 	    }
 	    for (i = 0; i < li->NCf; ++i)
 	    {
-		ReadWord(f,&(li->Cf[i].idword),&(li->Cf[i].idpol),fn);
+		if (ReadWord(f,&(li->Cf[i].idword),&(li->Cf[i].idpol),fn) != 0) {
+		    return -1;
+		}
 		if (StfMatch(f,i < li->NCf - 1 ? "," : "];") != 0)
 		{
 		    MTX_ERROR2("%s: %E",fn,MTX_ERR_FILEFMT);
@@ -224,7 +225,9 @@ int Lat_ReadInfo(Lat_Info *li, const char *basename)
 	    }
 	    for (i = 0; i < li->NCf; ++i)
 	    {
-		ReadWord(f,&(li->Cf[i].peakword),&(li->Cf[i].peakpol),fn);
+		if (ReadWord(f,&(li->Cf[i].peakword),&(li->Cf[i].peakpol),fn) != 0) {
+		    return -1;
+		}
 		if (StfMatch(f,i < li->NCf - 1 ? "," : "];") != 0)
 		{
 		    MTX_ERROR2("%s: %E",fn,MTX_ERR_FILEFMT);

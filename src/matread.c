@@ -40,6 +40,7 @@ Matrix_t *MatRead(FILE *f)
       return NULL;
    }
    if (FfReadRows(f,m->Data,m->Nor) != m->Nor) {
+      MTX_ERROR1("File format error: could not read %d rows", m->Nor);
       MatFree(m);
       return NULL;
    }

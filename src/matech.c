@@ -127,7 +127,6 @@ int MatEchelonize(Matrix_t *mat)
    return rank;
 }
 
-
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 /// Nullity of a matrix.
 /// This function calculates the dimension of the null-space of a matrix.
@@ -137,21 +136,28 @@ int MatEchelonize(Matrix_t *mat)
 
 long MatNullity(const Matrix_t *mat)
 {
+   if (mat == NULL) {
+      return -1;
+   }
    return MatNullity__(MatDup(mat));
 }
-
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 /// Nullity of a matrix.
 /// This function calculates the dimension of the null-space of a matrix
 /// and deletes the matrix.
 /// @param mat Pointer to the matrix.
-/// @return Nullity of @em mat, or -$ on error.
+/// @return Nullity of @em mat, or -1 on error.
 
 long MatNullity__(Matrix_t *mat)
 {
+   if (mat == NULL) {
+      return -1;
+   }
    long nul;
-   MatEchelonize(mat);
+   if (MatEchelonize(mat) < 0) {
+      return -1;
+   }
    nul = mat->Noc - mat->Nor;
    MatFree(mat);
    return nul;

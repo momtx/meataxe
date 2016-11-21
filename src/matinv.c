@@ -98,6 +98,9 @@ Matrix_t *MatInverse(const Matrix_t *mat)
 
    // Copy matrix into workspace
    tmp = FfAlloc(mat->Nor);
+   if (tmp == NULL) {
+      return NULL;
+   }
    memcpy(tmp,mat->Data,FfCurrentRowSize * mat->Nor);
 
    // Inversion

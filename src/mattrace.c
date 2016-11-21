@@ -16,7 +16,7 @@
 /// This function calculates the sum of all diagonal elements of a matrix.
 /// Note that the matrix need not be square.
 /// @param mat Pointer to the matrix.
-/// @return Trace of @a mat, @c FF_ZERO on error.
+/// @return Trace of @a mat, (FEL)-1 on error.
 
 FEL MatTrace(const Matrix_t *mat)
 {
@@ -29,7 +29,7 @@ FEL MatTrace(const Matrix_t *mat)
       ------------------ */
 #ifdef DEBUG
    if (!MatIsValid(mat)) {
-      return FF_ZERO;
+      return (FEL) -1;
    }
 #endif
 
