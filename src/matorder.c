@@ -51,13 +51,13 @@ int MatOrder(const Matrix_t *mat)
 
    if (m1 == NULL || basis == NULL || piv == NULL || done == NULL
        || v1 == NULL || v2 == NULL || v3 == NULL) {
-      SysFree(m1);
-      SysFree(basis);
-      SysFree(piv);
-      SysFree(done);
-      SysFree(v1);
-      SysFree(v2);
-      SysFree(v3);
+      if (m1 != NULL) SysFree(m1);
+      if (basis != NULL) SysFree(basis);
+      if (piv != NULL) SysFree(piv);
+      if (done != NULL) SysFree(done);
+      if (v1 != NULL) SysFree(v1);
+      if (v2 != NULL) SysFree(v2);
+      if (v3 != NULL) SysFree(v3);
       return -1;
    }
    PTR bend = basis;

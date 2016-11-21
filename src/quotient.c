@@ -39,7 +39,7 @@ MTX_DEFINE_FILE_INFO
 ///
 /// @param subspace The invariant subspace.
 /// @param vectors The vectors to project.
-/// @return Projection of @a vectors on the quotient by @a subspace, or 0 on error.
+/// @return Projection of @a vectors on the quotient by @a subspace, or NULL on error.
 
 Matrix_t *QProjection(const Matrix_t *subspace, const Matrix_t *vectors)
 {
@@ -48,8 +48,7 @@ Matrix_t *QProjection(const Matrix_t *subspace, const Matrix_t *vectors)
    Matrix_t *result;
    PTR tmp;
 
-   /* Check the arguments
-      ------------------- */
+   // Check the arguments
    if (!MatIsValid(subspace) || !MatIsValid(vectors)) {
       return NULL;
    }
@@ -62,20 +61,26 @@ Matrix_t *QProjection(const Matrix_t *subspace, const Matrix_t *vectors)
       return NULL;
    }
 
-   /* Initialize
-      ---------- */
+   // Initialize
    sdim = subspace->Nor;
    qdim = subspace->Noc - sdim;
    result = MatAlloc(subspace->Field,vectors->Nor,qdim);
+   if (result == NULL) {
+       return NULL;
+   }
 
-   /* Calculate the projection
-      ------------------------ */
+   // Calculate the projection
    FfSetNoc(subspace->Noc);
    tmp = FfAlloc(1);
+   if (tmp == NULL) {
+       MatFree(result);
+       return NULL;
+   }
    non_piv = subspace->PivotTable + subspace->Nor;
    for (i = 0; i < vectors->Nor; ++i) {
       int k;
       PTR q = MatGetPtr(result,i);
+      MTX_FAIL_IF_NOT(q != NULL);
       FfCopyRow(tmp,MatGetPtr(vectors,i));
       FfCleanRow(tmp,subspace->Data,sdim,subspace->PivotTable);
       for (k = 0; k < qdim; ++k) {
@@ -87,7 +92,7 @@ Matrix_t *QProjection(const Matrix_t *subspace, const Matrix_t *vectors)
    return result;
 }
 
-
+////////////////////////////////////////////////////////////////////////////////////////////////////
 /// Action on Quotient.
 /// Given a subspace U≤F<sup>n</sup> and a matrix A∊F<sup>n×n</sup> that maps
 /// U into U, this function calculates the action of the matrix on the
@@ -112,8 +117,6 @@ Matrix_t *QAction(const Matrix_t *subspace, const Matrix_t *gen)
    int k;
    int dim, sdim, qdim;
    int *piv, *non_piv;
-   PTR tmp;
-   Matrix_t *action;
 
    /* Check arguments.
       ---------------- */
@@ -134,14 +137,19 @@ Matrix_t *QAction(const Matrix_t *subspace, const Matrix_t *gen)
    dim = subspace->Noc;
    sdim = subspace->Nor;
    qdim = dim - sdim;
-   if ((action = MatAlloc(subspace->Field,qdim,qdim)) == NULL) {
+   Matrix_t *action = MatAlloc(subspace->Field,qdim,qdim);
+   if (action == NULL) {
       return NULL;
    }
 
    /* Calculate the action on the quotient
       ------------------------------------ */
    FfSetNoc(dim);
-   tmp = FfAlloc(1);
+   PTR tmp = FfAlloc(1);
+   if (tmp == NULL) {
+      MatFree(action);
+      return NULL;
+   }
    piv = subspace->PivotTable;
    non_piv = piv + subspace->Nor;
    for (k = 0; k < qdim; ++k) {

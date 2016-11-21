@@ -347,6 +347,7 @@ typedef void MtxErrorHandler_t (const MtxErrorRecord_t *);
 #define MTX_DEFINE_FILE_INFO \
    static MtxFileInfo_t Mtx_ThisFile = { __FILE__, NULL };
 
+void MtxFail(MtxFileInfo_t *fi, int line, const char *text, ...);
 int MtxError(MtxFileInfo_t *fi, int line, const char *text, ...);
 MtxErrorHandler_t *MtxSetErrorHandler(MtxErrorHandler_t *h);
 
@@ -363,6 +364,12 @@ MtxErrorHandler_t *MtxSetErrorHandler(MtxErrorHandler_t *h);
 
 #define MTX_VERIFY(e) ((void)((e) || \
                               MtxError(&Mtx_ThisFile,__LINE__,"Assertion failed: %s",# e)))
+
+// TODO: this should really be called MTX_ASSERT
+#define MTX_FAIL_IF_NOT(e) do { \
+   if (!(e)) MtxFail(&Mtx_ThisFile,__LINE__,"Assertion failed: %s",# e); \
+   } while (0)
+
 
 #ifdef _DEBUG
 #define DEBUG 1

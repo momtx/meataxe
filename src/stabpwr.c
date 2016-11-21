@@ -36,11 +36,7 @@ MTX_DEFINE_FILE_INFO
 
 int StablePower_(Matrix_t *mat, int *pwr, Matrix_t **ker)
 {
-   int p;                       /* Current power */
-   Matrix_t *k1, *k2;           /* Temporary matrices */
-
-   /* Check the arguments.
-      -------------------- */
+   // check the arguments.
    if (!MatIsValid(mat)) {
       MTX_ERROR1("mat: %E",MTX_ERR_BADARG);
       return -1;
@@ -50,23 +46,39 @@ int StablePower_(Matrix_t *mat, int *pwr, Matrix_t **ker)
       return -1;
    }
 
-   /* Calculate the stable power.
-      --------------------------- */
-   p = 1;
-   k1 = MatNullSpace(mat);
-   MatMul(mat,mat);
-   k2 = MatNullSpace(mat);
+   // calculate the stable power
+   int p = 1;
+   Matrix_t *k1 = MatNullSpace(mat);
+   if (k1 == NULL) {
+       return -1;
+   }
+   if (MatMul(mat,mat) == NULL) {
+       MatFree(k1);
+       return -1;
+   }
+   Matrix_t *k2 = MatNullSpace(mat);
+   if (k2 == NULL) {
+       MatFree(k1);
+       return -1;
+   }
+
    while (k2->Nor > k1->Nor) {
       p *= 2;
       MatFree(k1);
       k1 = k2;
-      MatMul(mat,mat);
+      if (MatMul(mat,mat) == NULL) {
+         MatFree(k1);
+         return -1;
+      }
       k2 = MatNullSpace(mat);
+      if (k2 == NULL) {
+         MatFree(k1);
+         return -1;
+      }
    }
    MatFree(k2);
 
-   /* Return the result.
-      ------------------ */
+   // return the result
    if (ker != NULL) {
       *ker = k1;
    } else {

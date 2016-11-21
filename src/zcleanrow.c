@@ -54,14 +54,14 @@ void FfCleanRow(PTR row, PTR matrix, int nor, const int *piv)
 /// @param nor Number of rows.
 /// @param piv Pivot table for @em matrix.
 /// @param row2 Pointer to row where the operations are recorded.
-/// @return 0 on success, -1 on error.
+/// @return 0 on success, -1 on error (if any of the pointer arguments is NULL).
 
 int FfCleanRow2(PTR row, PTR mat, int nor, const int *piv, PTR row2)
 {
    int i;
    PTR x;
 
-   if ((row2 == NULL) || (piv == NULL)) {
+   if (row == NULL || mat == NULL || row2 == NULL || piv == NULL) {
       MTX_ERROR1("%E",MTX_ERR_BADARG);
       return -1;
    }

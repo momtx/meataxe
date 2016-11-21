@@ -28,7 +28,7 @@ MTX_DEFINE_FILE_INFO
 /// @param vecs List of vectors.
 /// @param n Number of the vector to convert.
 /// @param noc Desired number of columns.
-/// @return 0 on success, -1 on error.
+/// @return The result matrix or NULL on error.
 
 Matrix_t *VectorToMatrix(Matrix_t *vecs, int n, int noc)
 {
@@ -55,6 +55,7 @@ Matrix_t *VectorToMatrix(Matrix_t *vecs, int n, int noc)
    for (i = 0; i < result->Nor; ++i) {
       if (MatCopyRegion(result,i,0, vecs,n,i * noc,1,noc) != 0) {
          MTX_ERROR("Copy failed");
+	 return NULL;
       }
    }
    return result;
