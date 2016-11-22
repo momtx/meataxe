@@ -30,6 +30,8 @@ MTX_DEFINE_FILE_INFO
 /// - |piv| contains a pivot table for the null space.
 /// If |flags| is nonzero, the null-space is not reduced to echelon form,
 /// and the contents of |piv| are undefined.
+///
+/// @return The dimension of the null-space, or -1 on error.
 
 static long znullsp(PTR matrix, long nor, int *piv, PTR nsp, int flags)
 {
@@ -40,7 +42,9 @@ static long znullsp(PTR matrix, long nor, int *piv, PTR nsp, int flags)
    FEL f;
 
    // initialize result with identity
-   FfSetNoc(nor);
+   if (FfSetNoc(nor) != 0) {
+      return -1;
+   }
    x = nsp;
    for (i = 0; i < nor; ++i) {
       piv[i] = -1;
@@ -57,7 +61,7 @@ static long znullsp(PTR matrix, long nor, int *piv, PTR nsp, int flags)
       long k, p;
 
       for (k = 0; k < i; ++k) {
-         FfSetNoc(noc);
+         FfSetNoc(noc); // not checked since we know noc is valid
          if (((p = piv[k]) >= 0) && ((f = FfExtract(x,p)) != FF_ZERO)) {
             f = FfNeg(FfDiv(f,FfExtract(xx,p)));
             FfSetNoc(noc);
@@ -113,9 +117,10 @@ static long znullsp(PTR matrix, long nor, int *piv, PTR nsp, int flags)
 /// This function calculates the null-space of a matrix. Unlike MatNullSpace(), this function
 /// modifies the orginal matrix, but uses less memory since no temporary workspace is allocated.
 /// The result is in echelon form.
+///
 /// @param mat Pointer to the matrix.
 /// @param flags If nonzero, the null-space is not reduced to echelon form.
-/// @return Pointer to the null-space of |mat|, or |NULL| on error.
+/// @return Pointer to the null-space, or NULL on error.
 
 Matrix_t *MatNullSpace_(Matrix_t *mat, int flags)
 {
@@ -128,15 +133,25 @@ Matrix_t *MatNullSpace_(Matrix_t *mat, int flags)
    }
 
    // allocate workspace
-   nsp = MatAlloc(mat->Field,mat->Nor,mat->Nor);        // worst case
+   nsp = MatAlloc(mat->Field,mat->Nor,mat->Nor);
    if (nsp == NULL) {
       return NULL;
    }
    nsp->PivotTable = NREALLOC(nsp->PivotTable,int,mat->Nor);
+   if (nsp->PivotTable == NULL)
+   {
+       MatFree(nsp);
+       return NULL;
+   }
 
    // calculate the null-space
    FfSetNoc(mat->Noc);
    dim = znullsp(mat->Data,mat->Nor,nsp->PivotTable,nsp->Data,flags);
+   if (dim == -1)
+   {
+      MatFree(nsp);
+      return NULL;
+   }
    if (flags) {
       SysFree(nsp->PivotTable);
       nsp->PivotTable = NULL;

@@ -58,6 +58,8 @@
 /// Note that you must not assume that MTX_ERROR terminates the program. In fact
 /// MTX_ERROR may return if a user-defined error handler has been installed.
 
+typedef void ErrorHandler_t(const MtxErrorRecord_t *err);
+
 static void (*ErrorHandler)(const MtxErrorRecord_t *err) = NULL;
 static FILE *LogFile = NULL;
 
@@ -96,19 +98,8 @@ MtxErrorHandler_t *MtxSetErrorHandler(MtxErrorHandler_t *h)
 
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-/// Signal an error.
-/// This function is mainly used internally by the {\MeatAxe} library to
-/// report errors. If an application error handler has been installed, it
-/// is executed. Otherwise an error message is written to the error log
-/// file (stderr by default) and the program is terminated.
-/// The error message, |msg|, is formatted with |MtxFormatMessage()|.
-/// @param fi Pointer to a file information structure.
-/// @param line Line number where the error occured.
-/// @param text Error description.
-/// @param ...  Optional arguments to be inserted into the error description.
-/// @return The return value is always 0.
 
-int MtxError(MtxFileInfo_t *fi, int line, const char *text, ...)
+static void handleError(ErrorHandler_t *eh, MtxFileInfo_t *fi, int line, const char *text, ...)
 {
    va_list al;
    MtxErrorRecord_t err;
@@ -133,13 +124,47 @@ int MtxError(MtxFileInfo_t *fi, int line, const char *text, ...)
    MtxFormatMessage(txtbuf,sizeof(txtbuf),text,al);
    va_end(al);
 
-   // call the error handler
-   if (ErrorHandler != NULL) {
-      ErrorHandler(&err);
-   } else {
-      DefaultHandler(&err);
-   }
+   eh(&err);
+}
 
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+/// Terminate the program with an error message.
+/// @param fi Source file where the error occurred.
+/// @param line Line number where the error occured.
+/// @param text Error description. Formatted with MtxFormatMessage().
+/// @param ...  Optional arguments to be inserted into the error description.
+/// @return The return value is always 0.
+
+void MtxFail(MtxFileInfo_t *fi, int line, const char *text, ...)
+{
+   va_list al;
+   va_start(al,text);
+   handleError( &DefaultHandler, fi, line, text, al);
+   va_end(al);
+   exit(1);
+}
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+/// Signal an error.
+/// This function is mainly used internally by the {\MeatAxe} library to
+/// report errors. If an application error handler has been installed, it
+/// is executed. Otherwise an error message is written to the error log
+/// file (stderr by default) and the program is terminated.
+/// The error message, |msg|, is formatted with |MtxFormatMessage()|.
+/// @param fi Pointer to a file information structure.
+/// @param line Line number where the error occured.
+/// @param text Error description.
+/// @param ...  Optional arguments to be inserted into the error description.
+/// @return The return value is always 0.
+
+int MtxError(MtxFileInfo_t *fi, int line, const char *text, ...)
+{
+   va_list al;
+   va_start(al,text);
+   handleError( ErrorHandler ? ErrorHandler : &DefaultHandler, fi, line, text, al);
+   va_end(al);
    return 0;
 }
 

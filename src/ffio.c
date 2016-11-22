@@ -12,11 +12,11 @@
 
 MTX_DEFINE_FILE_INFO
 
-////////////////////////////////////////////////////////////////////////////////////////////////////
 
 /// @addtogroup ff
 /// @{
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
 /// Read Rows
 /// This function reads 1 or more rows from a file.
 /// The row size must have been set before.
@@ -30,62 +30,59 @@ int FfReadRows(FILE *f, PTR buf, int n)
    int i;
    register char *b = (char *) buf;
 
-   /* Handle special case <FfNoc> = 0
-      ------------------------------- */
+   // handle special case: NOC=0
    if (FfNoc == 0) {
       return n;
    }
 
-   /* Read rows one by one
-      -------------------- */
+   // read rows one by one
    for (i = 0; i < n; ++i) {
-      if (fread(b,FfTrueRowSize(FfNoc),1,f) != 1) { break; }
+      if (fread(b,FfTrueRowSize(FfNoc),1,f) != 1) {
+	  break;
+      }
       b += FfCurrentRowSize;
    }
    if (ferror(f)) {
       MTX_ERROR("Read failed: %S");
+      return -1;
    }
    return i;
 }
 
-
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-
 /// Write rows
 /// This function writes 1 or more rows to a file.
 /// The row size must have been set before.
 /// @param f Pointer to File.
 /// @param buf Pointer to data buffer.
 /// @param n Number of rows to write.
-/// @return The number of rows that were successully written.
-/// A return value different from |n| indicates an error.
+/// @return The number of rows (n), or -1 on error.
 
 int FfWriteRows(FILE *f, PTR buf, int n)
 {
    int i;
    register char *b = (char *) buf;
 
-   /* Handle special case <FfNoc> = 0
-      ------------------------------- */
+   // handle special case: NOC=0
    if (FfNoc == 0) {
       return n;
    }
 
-   /* Write rows one by one
-      --------------------- */
+   // write rows one by one
    for (i = 0; i < n; ++i) {
-      if (fwrite(b,FfTrueRowSize(FfNoc),1,f) != 1) { break; }
+      if (fwrite(b,FfTrueRowSize(FfNoc),1,f) != 1) {
+	  break;
+      }
       b += FfCurrentRowSize;
    }
    if (ferror(f)) {
       MTX_ERROR("Write failed: %S");
+      return -1;
    }
    return i;
 }
 
-
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-
 /// Move to a Row.
 /// This function sets the read/write pointer of file @em f to position
 /// @em pos. I.e., the next FfReadRows() or FfWriteRows() will start
@@ -116,9 +113,7 @@ int FfSeekRow(FILE *f, int pos)
    return 0;
 }
 
-
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-
 /// Open File and Read Header.
 /// This function opens a data file for input and reads the file header (3 integers).
 /// The exact meaning of the header values depends on the file type.
@@ -169,7 +164,6 @@ FILE *FfReadHeader(const char *name, int *field, int *nor, int *noc)
 
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-
 /// Open file and write header.
 /// This function opens a data file for input and writes the the file header.
 /// If the file does not exist, a new file is created. If the file exists it

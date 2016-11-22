@@ -48,8 +48,7 @@ int FfSumAndIntersection(PTR wrk1, int *nor1, int *nor2, PTR wrk2, int *piv)
     PTR x1, x2, y1, y2, sec;
 
 
-    /* Check the arguments.
-       -------------------- */
+    // Check the arguments.
     if (wrk1 == NULL || nor1 == NULL || nor2== NULL
 	|| wrk2 == NULL || piv == NULL)
     {
@@ -57,15 +56,13 @@ int FfSumAndIntersection(PTR wrk1, int *nor1, int *nor2, PTR wrk2, int *piv)
 	return -1;
     }
 
-    /* Set up the workspace 2. Initially, it contains a copy of V1.
-       ------------------------------------------------------------ */
-    for (x2 = wrk2, i = 0; i < dim1 + dim2; ++i, FfStepPtr(&x2))
-	FfMulRow(x2,FF_ZERO);
+    // Set up the workspace 2. Initially, it contains a copy of V1
+    for (x2 = wrk2, i = 0; i < dim1 + dim2; ++i, FfStepPtr(&x2)) {
+      FfMulRow(x2,FF_ZERO);
+    }
     memcpy(wrk2,wrk1,dim1 * FfCurrentRowSize);
 
-    /* Step 1: Echelonize workspace 1, repeating 
-       all operations on workspace 2.
-       ----------------------------------------- */
+    // Step 1: Echelonize workspace 1, repeating all operations on workspace 2.
     x1 = y1 = wrk1;
     x2 = y2 = wrk2;
     k = 0;
@@ -73,9 +70,11 @@ int FfSumAndIntersection(PTR wrk1, int *nor1, int *nor2, PTR wrk2, int *piv)
     {
 	FEL f;
 	int p;
-	FfCleanRowAndRepeat(x1,wrk1,k,piv,x2,wrk2);
+	if (FfCleanRowAndRepeat(x1,wrk1,k,piv,x2,wrk2)) {
+	   return -1;
+	}
 	if ((p = FfFindPivot(x1,&f)) < 0)
-	    continue;	/* Null row - ignore */
+	   continue;	/* Null row - ignore */
 	if (k < i)
 	{
 	    FfSwapRows(y1,x1);
@@ -85,10 +84,9 @@ int FfSumAndIntersection(PTR wrk1, int *nor1, int *nor2, PTR wrk2, int *piv)
 	FfStepPtr(&y1);
 	FfStepPtr(&y2);
     }
-    sumdim = k;	/* Dimension of V + W */
+    sumdim = k;	// Dimension of V + W
 
-    /* Step 2: Echelonize the basis of the intersection.
-       ------------------------------------------------- */
+    // Step 2: Echelonize the basis of the intersection.
     sec = x2 = y2;
     for (i = sumdim; i < dim1 + dim2; ++i, FfStepPtr(&x2))
     {
@@ -103,8 +101,8 @@ int FfSumAndIntersection(PTR wrk1, int *nor1, int *nor2, PTR wrk2, int *piv)
 	FfStepPtr(&y2);
     }
 
-    *nor1 = sumdim;	    /* Dimension of U + W */
-    *nor2 = k - sumdim;	    /* Dimension of the intersection */
+    *nor1 = sumdim;	    // Dimension of U + W
+    *nor2 = k - sumdim;	    // Dimension of the intersection
 
     return 0;
 }

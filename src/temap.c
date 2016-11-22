@@ -29,11 +29,8 @@ MTX_DEFINE_FILE_INFO
 
 Matrix_t *TensorMap(Matrix_t *vec, const Matrix_t *a, const Matrix_t *b)
 {
-   Matrix_t *result;
-   int i;
 
-   /* Check the arguments.
-      -------------------- */
+   // Check the arguments
    if (!MatIsValid(vec)) {
       MTX_ERROR1("vec: %E",MTX_ERR_BADARG);
       return NULL;
@@ -52,24 +49,33 @@ Matrix_t *TensorMap(Matrix_t *vec, const Matrix_t *a, const Matrix_t *b)
       return NULL;
    }
 
-   /* Calculate the result.
-      --------------------- */
-   result = MatAlloc(vec->Field,vec->Nor,a->Noc * b->Noc);
+   // Calculate the result
+   Matrix_t *result = MatAlloc(vec->Field,vec->Nor,a->Noc * b->Noc);
    if (result == NULL) {
       return NULL;
    }
-   for (i = 0; i < vec->Nor; ++i) {
+   for (int i = 0; i < vec->Nor; ++i) {
       Matrix_t *tmp = MatTransposed(a);
+      if (tmp == NULL) {
+         MatFree(result);
+         return NULL;
+      }
+
       Matrix_t *v = VectorToMatrix(vec,i,b->Nor);
       if (v == NULL) {
          MTX_ERROR("Conversion failed");
-         break;
+         MatFree(result);
+         return NULL;
       }
-      MatMul(tmp,v);
+      if (MatMul(tmp,v) == NULL) {
+         MatFree(result);
+         return NULL;
+      }
       MatFree(v);
-      MatMul(tmp,b);
-      if (MatrixToVector(tmp,result,i)) {
+      if (MatMul(tmp,b) == NULL || MatrixToVector(tmp,result,i) != 0) {
+         MatFree(result);
          MTX_ERROR("Conversion failed");
+         return NULL;
       }
       MatFree(tmp);
    }

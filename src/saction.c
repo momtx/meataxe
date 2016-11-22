@@ -9,22 +9,18 @@
 #include <meataxe.h>
 #include <stdlib.h>
 
-
-
-MTX_DEFINE_FILE_INFO 
+MTX_DEFINE_FILE_INFO
 
 /// @addtogroup spinup
 /// @{
 
-
-
 /// Action on a subspace.
-/// Given a subspace U≤F<sup>n</sup> and a matrix A∊F<sup>n×n</sup> that maps 
+/// Given a subspace U≤F<sup>n</sup> and a matrix A∊F<sup>n×n</sup> that maps
 /// U into U, this function calculates the action of the matrix on the subspace.
 /// As input, the function expects a basis of the subspace in @a subspace,
 /// which must be in chelon form, and the matrix operating on the
-/// subspace in @a gen. The result is a square matrix with dim(U) rows 
-/// containing the image of the basis vectors under A, expressed in the 
+/// subspace in @a gen. The result is a square matrix with dim(U) rows
+/// containing the image of the basis vectors under A, expressed in the
 /// given basis.
 ///
 /// Before calculating the action, SAction() checks if the arguments
@@ -38,60 +34,60 @@ MTX_DEFINE_FILE_INFO
 
 Matrix_t *SAction(const Matrix_t *subspace, const Matrix_t *gen)
 {
-    int dim, sdim, i;
-    PTR tmp;
-    Matrix_t *action;
+   // check arguments
+   if (!MatIsValid(subspace) || !MatIsValid(gen)) {
+      return NULL;
+   }
+   if (subspace->Noc != gen->Nor) {
+      MTX_ERROR1("subspace and gen: %E",MTX_ERR_INCOMPAT);
+      return NULL;
+   }
+   if (gen->Nor != gen->Noc) {
+      MTX_ERROR1("gen: %E",MTX_ERR_NOTSQUARE);
+      return NULL;
+   }
 
-   /* Check arguments.
-      ---------------- */
-    if (!MatIsValid(subspace) || !MatIsValid(gen))
-	return NULL;
-    if (subspace->Noc != gen->Nor)
-    {
-	MTX_ERROR1("subspace and gen: %E",MTX_ERR_INCOMPAT);
-	return NULL;
-    }
-    if (gen->Nor != gen->Noc)
-    {
-	MTX_ERROR1("gen: %E",MTX_ERR_NOTSQUARE);
-	return NULL;
-    }
+   // set up internal variables
+   const int dim = subspace->Noc;
+   const int sdim = subspace->Nor;
+   FfSetField(subspace->Field);
+   Matrix_t *action = MatAlloc(FfOrder,sdim,sdim);
+   if (action == NULL) {
+      return NULL;
+   }
+   FfSetNoc(dim);
+   PTR tmp = FfAlloc(1);
+   if (tmp == NULL) {
+      MatFree(action);
+      return NULL;
+   }
 
-   /* Set up internal variables.
-      -------------------------- */
-    dim = subspace->Noc;
-    sdim = subspace->Nor;
-    FfSetField(subspace->Field);
-    action = MatAlloc(FfOrder,sdim,sdim);
-    FfSetNoc(dim);
-    tmp = FfAlloc(1);
+   // calculate the action
+   for (int i = 0; i < subspace->Nor; ++i) {
+      PTR xi = MatGetPtr(subspace,i);
+      MTX_FAIL_IF_NOT(xi != NULL);
+      PTR yi = MatGetPtr(action,i);
+      MTX_FAIL_IF_NOT(yi != NULL);
+      FEL f;
 
-    /* Calaculate the action.
-       ---------------------- */
-    for (i = 0; i < subspace->Nor; ++i)
-    {
-	PTR xi = MatGetPtr(subspace,i);
-	PTR yi = MatGetPtr(action,i);
-	FEL f;
+      // calculate the image of the <i>-th row of <subspace>
+      FfMapRow(xi,gen->Data,dim,tmp);
 
-	/* Calculate the image of the <i>-th row of <subspace>.
-	   ---------------------------------------------------- */
-	FfMapRow(xi,gen->Data,dim,tmp);
+      // clean the image with the subspace and store coefficients
+      int rc = FfCleanRow2(tmp,subspace->Data,sdim,subspace->PivotTable,yi);
+      MTX_FAIL_IF_NOT(rc == 0);
+      if (FfFindPivot(tmp,&f) >= 0) {
+         MTX_ERROR("Split(): Subspace not invariant");
+	 SysFree(tmp);
+	 MatFree(action);
+	 return NULL;
+      }
+   }
 
-	/* Clean the image with the subspace and store coefficients.
-	   --------------------------------------------------------- */
-	FfCleanRow2(tmp,subspace->Data,sdim,subspace->PivotTable,yi);
-	if (FfFindPivot(tmp,&f) >= 0)
-	    MTX_ERROR("Split(): Subspace not invariant");
-    }
-
-    /* Clean up and return the result.
-       ------------------------------- */
-    SysFree(tmp);
-    return action;
+   // Clean up and return the result.
+   SysFree(tmp);
+   return action;
 }
 
 
-
 /// @}
-

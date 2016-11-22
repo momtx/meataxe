@@ -92,10 +92,11 @@ int MatIsValid(const Matrix_t *mat)
 /// This function creates a new matrix with given dimensions over a given field.
 /// @attention
 /// To destroy a matrix, use MatFree(), not SysFree().
+///
 /// @param field Field order.
 /// @param nor Number of rows.
 /// @param noc Number of columns.
-/// @return Pointer to the new matrix or 0 on error.
+/// @return Pointer to the new matrix or NULL on error.
 
 Matrix_t *MatAlloc(int field, int nor, int noc)
 {
@@ -105,22 +106,23 @@ Matrix_t *MatAlloc(int field, int nor, int noc)
    MTX_VERIFY(nor >= 0);
    MTX_VERIFY(noc >= 0);
 
-   /* Allocate a new Matrix_t structure
-      --------------------------------- */
+   // Initialize the data structure
+   if (FfSetField(field) != 0) {
+      MTX_ERROR1("Cannot select field GF(%d)",field);
+      return NULL;
+   }
+   if (FfSetNoc(noc) != 0) {
+       return NULL;
+   }
+
+   // Allocate a new Matrix_t structure
    m = ALLOC(Matrix_t);
    if (m == NULL) {
       MTX_ERROR("Cannot allocate Matrix_t structure");
       return NULL;
    }
 
-   /* Initialize the data structure
-      ----------------------------- */
-   if (FfSetField(field) != 0) {
-      MTX_ERROR1("Cannot select field GF(%d)",field);
-      SysFree(m);
-      return NULL;
-   }
-   FfSetNoc(noc);
+   // Initialize the data structure
    m->Magic = MAT_MAGIC;
    m->Field = field;
    m->Nor = nor;

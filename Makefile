@@ -171,7 +171,7 @@ test: tmp/zzztest.done $(TESTS:%=tmp/test-%.done)
 
 # meataxe library tests
 
-TS_OBJS1=c-args c-bitstring c-charpol\
+TS_OBJS1=c-args c-bitstring c-cfinfo c-charpol\
 	c-ffio c-fileio c-ffmat c-ffrow c-fpoly \
 	c-grease c-kernel c-matins c-matrix c-matset\
 	c-os c-perm c-poly c-pseed c-quot c-random \

@@ -225,6 +225,7 @@ static FILE *OpenTableFile(int fl)
       ---------------------- */
    if (FfMakeTables(fl) != 0) {
       MTX_ERROR("Unable to build arithmetic tables");
+      return NULL;
    }
    fd = SysFopen(fn,FM_READ | FM_LIB);
    return fd;
@@ -276,10 +277,9 @@ static int ReadTableFile(FILE *fd, int field)
       return -1;
    }
    FfOrder = field;
-   FfSetNoc(FfOrder);
+   FfSetNoc(0);		// old row sizes may be invalid for new field
    return 0;
 }
-
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 /// Sets the field order.
@@ -305,7 +305,6 @@ int FfSetField(int field)
    fclose(fd);
    return result;
 }
-
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 /// Set the row length.
@@ -372,7 +371,7 @@ size_t FfTrueRowSize(int noc)
 /// Embed a subfield.
 /// @param a Element of the subfield field.
 /// @param subfield Subfield order. Must be a divisor of the current field order.
-/// @return @em a, embedded into the current field.
+/// @return @em a, embedded into the current field. (FEL)255 on error.
 
 FEL FfEmbed(FEL a, int subfield)
 {
@@ -383,11 +382,15 @@ FEL FfEmbed(FEL a, int subfield)
    }
    for (i = 0; i < 4; ++i) {
       if (mtx_embedord[i] == subfield) {
+         if (a >= subfield) {
+	    MTX_ERROR2("Invalid field element %d in GF(%d)",(int) a, (int)subfield);
+	    return (FEL) 255;
+	 }
          return mtx_embed[i][a];
       }
    }
    MTX_ERROR2("Cannot embed GF(%d) into GF(%d)",(int)subfield,(int)FfOrder);
-   return FF_ZERO;
+   return (FEL) 255;
 }
 
 
@@ -415,7 +418,7 @@ FEL FfRestrict(FEL a, int subfield)
       }
    }
    MTX_ERROR2("Cannot restrict GF(%d) to GF(%d)",(int)FfOrder, (int)subfield);
-   return FF_ZERO;
+   return (FEL) 255;
 }
 
 

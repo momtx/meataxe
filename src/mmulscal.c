@@ -16,9 +16,10 @@
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 /// Multiply a Matrix by a Constant.
+///
 /// @param dest Pointer to the matrix.
 /// @param coeff Value to multiply with.
-/// @return The function returns @a dest.
+/// @return The function returns @a dest or NULL on error.
 
 Matrix_t *MatMulScalar(Matrix_t *dest, FEL coeff)
 {
