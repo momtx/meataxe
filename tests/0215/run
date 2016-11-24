@@ -22,9 +22,9 @@ chop -Q y
 chop -Q z
 pwkond -Qt x y z
 
-fgrep -q '[[17,2,1,1,1],[307,2,1,1,1]]' x.cfinfo || error "Peak words of x"
-fgrep -q '[[73,2,1,0,1],[17,2,1,1,1]]' y.cfinfo || error "Peak words of y"
-fgrep -q '[[73,2,1,0,1],[17,2,1,1,1]]' z.cfinfo || error "Peak words of z"
+fgrep '[[17,2,1,1,1],[307,2,1,1,1]]' x.cfinfo >/dev/null || error "Peak words of x"
+fgrep '[[73,2,1,0,1],[17,2,1,1,1]]' y.cfinfo >/dev/null || error "Peak words of y"
+fgrep '[[73,2,1,0,1],[17,2,1,1,1]]' z.cfinfo >/dev/null || error "Peak words of z"
 
 
 # Clean up

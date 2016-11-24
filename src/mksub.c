@@ -212,7 +212,7 @@ static void init(const char *basename)
 	    return;
 	}
 	xmdim[i] = mdim;
-	while (getc(f) != '\n')	/* Skip class */
+	while (fgetc(f) != '\n')	/* Skip class */
 	{
 	    if (ferror(f) || feof(f))
 	    {
@@ -449,7 +449,7 @@ static int printbs(FILE *f, BitString_t *b)
     if (bnmount < 100)
     {
 	for (k = 0; k < bnmount;  ++k)
-	    putc(BsTest(b,k) ? '+' : '.',f);
+	    fputc(BsTest(b,k) ? '+' : '.',f);
 	len = bnmount;
     }
     else
@@ -466,7 +466,7 @@ static int printbs(FILE *f, BitString_t *b)
 	    k2 = k-1;
 	    if (flag)
 	    {
-		putc(',',f);
+		fputc(',',f);
 		++len;
 	    }
 	    else
@@ -591,16 +591,16 @@ void writeresult()
 	    int *lp;
 
 	    fprintf(f,"    %-6d%-5ld",i,subdim[i]);
-	    putc(ismount[i] ? 'M' : ' ',f);
-	    putc(israd[i] ? 'R' : ' ',f);
-	    putc(issoc[i] ? 'S' : ' ',f);
+	    fputc(ismount[i] ? 'M' : ' ',f);
+	    fputc(israd[i] ? 'R' : ' ',f);
+	    fputc(issoc[i] ? 'S' : ' ',f);
 	    fprintf(f,"    ");
 	    k = printbs(f,sub[i]);
-	    for (; k < 30; ++k) putc(' ',f);
+	    for (; k < 30; ++k) fputc(' ',f);
 	    fprintf(f,"  ");
 	    for (lp = max[i]; *lp >= 0; lp += 2)
 	    {
-		if (lp != max[i]) putc(',',f);
+		if (lp != max[i]) fputc(',',f);
 		fprintf(f,"%d",*lp);
 	    }
 	    fprintf(f,"\n");
@@ -733,9 +733,9 @@ void writeresult()
 	{
 	int *lp;
 
-	putc(ismount[i] ? 'm' : '.',f);
-	putc(israd[i] ? 'r' : '.',f);
-	putc(issoc[i] ? 's' : '.',f);
+	fputc(ismount[i] ? 'm' : '.',f);
+	fputc(israd[i] ? 'r' : '.',f);
+	fputc(issoc[i] ? 's' : '.',f);
 	for (k = 0, lp = max[i]; *lp >= 0; lp += 2, ++k);
 	fprintf(f," %2d",k);
 	for (lp = max[i]; *lp >= 0; lp += 2)
@@ -1296,4 +1296,3 @@ Each letter corresponds to a certain piece of output:
   Socle series.
 
 **/
-
