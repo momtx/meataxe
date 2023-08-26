@@ -1,18 +1,13 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // C MeatAxe - Transpose a matrix
-//
-// (C) Copyright 1998-2015 Michael Ringe, Lehrstuhl D fuer Mathematik, RWTH Aachen
-//
-// This program is free software; see the file COPYING for details.
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#include <meataxe.h>
+#include "meataxe.h"
 #include <stdlib.h>
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // Local data
 
-MTX_DEFINE_FILE_INFO
 
 /// @addtogroup mat
 /// @{
@@ -21,21 +16,16 @@ MTX_DEFINE_FILE_INFO
 /// @param src Pointer to the matrix.
 /// @return Pointer to the transposed matrix or 0 on error.
 
-Matrix_t *MatTransposed(const Matrix_t *src)
+Matrix_t *matTransposed(const Matrix_t *src)
 {
    PTR s, d;
    long i;
    Matrix_t *dest;
 
-#ifdef DEBUG
-   if (!MatIsValid(src)) {
-      MTX_ERROR1("src: %E",MTX_ERR_BADARG);
-      return NULL;
-   }
-#endif
-   dest = MatAlloc(src->Field,src->Noc,src->Nor);
+   matValidate(MTX_HERE, src);
+   dest = matAlloc(src->Field,src->Noc,src->Nor);
    if (dest == NULL) {
-      MTX_ERROR("Cannot allocate result");
+      mtxAbort(MTX_HERE,"Cannot allocate result");
       return NULL;
    }
    d = dest->Data;
@@ -43,18 +33,18 @@ Matrix_t *MatTransposed(const Matrix_t *src)
       int k;
       s = src->Data;
       for (k = 0; k < src->Nor; ++k) {
-#if defined(DEBUG) && defined(PARANOID)
+#if defined(MTX_DEBUG) && defined(PARANOID)
          FEL f;
-         FfSetNoc(src->Noc);
-         f = FfExtract(s,i);
-         FfSetNoc(src->Nor);
-         FfInsert(d,k,f);
+         ffSetNoc(src->Noc);
+         f = ffExtract(s,i);
+         ffSetNoc(src->Nor);
+         ffInsert(d,k,f);
 #else
-         FfInsert(d,k,FfExtract(s,i));
+         ffInsert(d,k,ffExtract(s,i));
 #endif
          s = (PTR)((char*) s + src->RowSize);
       }
-      /*d = FfGetPtr(d,1,dest->Noc);*/
+      /*d = ffGetPtr(d,1,dest->Noc);*/
       d = (PTR)((char*) d + dest->RowSize);
 
    }
@@ -63,3 +53,4 @@ Matrix_t *MatTransposed(const Matrix_t *src)
 
 
 /// @}
+// vim:fileencoding=utf8:sw=3:ts=8:et:cin

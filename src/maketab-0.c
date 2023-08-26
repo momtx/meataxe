@@ -1,13 +1,9 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // C MeatAxe - Calculate arithmetic tables
-//
-// (C) Copyright 1998-2015 Michael Ringe, Lehrstuhl D fuer Mathematik, RWTH Aachen
-//
-// This program is free software; see the file COPYING for details.
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
-#include <meataxe.h>
+#include "meataxe.h"
 #include <string.h>
 #include <stdlib.h>
 
@@ -25,7 +21,6 @@ typedef unsigned char POLY[MAXGRAD+1];
    Global data
    ----------------------------------------------------------------- */
 
-MTX_DEFINE_FILE_INFO
 
 BYTE
     mtx_tmult[256][256],
@@ -185,7 +180,7 @@ static void testprim()
        	if(a[i] != 1)
 	{
 	    fprintf(stderr,"*** a[%d]=%d.",i,a[i]);
-	    MTX_ERROR("Polynome is not primitive.");
+	    mtxAbort(MTX_HERE,"Polynome is not primitive.");
 	}
 }
 
@@ -318,11 +313,11 @@ static void writeheader()
     int i, j;
 
     sprintf(filename,"p%3.3ld.zzz",Q);
-    fd = SysFopen(filename,FM_CREATE);
+    fd = sysFopen(filename,"wb::lib");
     if (fd == NULL)
     {
 	perror(filename);
-	MTX_ERROR("Cannot open table file");
+	mtxAbort(MTX_HERE,"Cannot open table file");
     }
     for (CPM=1,maxmem=Q; (long)maxmem * Q <= 256L; ++CPM, maxmem *= Q);
     for (i = 0; irrednrs[i] != (int) Q && irrednrs[i] != 0; ++i);
@@ -454,7 +449,7 @@ static void mkembed()
 	if ((Q-1) % (q-1) != 0)
 	{
 	    fprintf(stderr,"*** q=%ld, Q=%ld.",q,Q);
-	    MTX_ERROR("Internal error.");
+	    mtxAbort(MTX_HERE,"Internal error.");
 	}
 
 	/* Calculate a generator for the subfield
@@ -466,7 +461,7 @@ static void mkembed()
 	/* Look up the polynomial
 	   ---------------------- */
 	for (k = 0; irrednrs[k] != 0 && irrednrs[k] != q; ++k);
-	if (irrednrs[k] == 0) MTX_ERROR("Internal error.");
+	if (irrednrs[k] == 0) mtxAbort(MTX_HERE,"Internal error.");
        	for (i = 0; i <= MAXGRAD; i++)
             subirred[i] = irreducibles[k][MAXGRAD-i];
 
@@ -511,10 +506,10 @@ static int Init(int field)
 }
 
 /* -----------------------------------------------------------------
-   FfMakeTables() - Build meataxe arithmetic tables
+   ffMakeTables() - Build meataxe arithmetic tables
    ----------------------------------------------------------------- */
 
-int FfMakeTables(int field)
+int ffMakeTables(int field)
 {
     int i, j, k;
     short flag;
@@ -621,8 +616,8 @@ int FfMakeTables(int field)
 
     MESSAGE(1,("Writing tables to %s\n",filename));
     if (
-      SysWriteLong(fd,info,4) != 4 ||
-      SysWriteLong(fd,&ver,1) != 1 ||
+      sysWriteLong32(fd,info,4) != 4 ||
+      sysWriteLong32(fd,&ver,1) != 1 ||
       fwrite(mtx_tmult,4,0x4000,fd) != 0x4000 ||
       fwrite(mtx_tadd,4,0x4000,fd) != 0x4000 ||
       fwrite(mtx_tffirst,1,sizeof(mtx_tffirst),fd) != sizeof(mtx_tffirst) ||
@@ -631,15 +626,16 @@ int FfMakeTables(int field)
       fwrite(mtx_tmultinv,1,sizeof(mtx_tmultinv),fd)!= sizeof(mtx_tmultinv) ||
       fwrite(mtx_tnull,1,sizeof(mtx_tnull),fd) != sizeof(mtx_tnull) ||
       fwrite(mtx_tinsert,1,sizeof(mtx_tinsert),fd) != sizeof(mtx_tinsert) ||
-      SysWriteLong(fd,mtx_embedord,MAXSUBFIELDS) != MAXSUBFIELDS ||
+      sysWriteLong32(fd,mtx_embedord,MAXSUBFIELDS) != MAXSUBFIELDS ||
       fwrite(mtx_embed,MAXSUBFIELDORD,MAXSUBFIELDS,fd) != MAXSUBFIELDS ||
       fwrite(mtx_restrict,256,MAXSUBFIELDS,fd) != MAXSUBFIELDS
       )
     {
 	perror(filename);
-	MTX_ERROR("Error writing table file");
+	mtxAbort(MTX_HERE,"Error writing table file");
     }
     fclose(fd);
     return(0);
 }
 
+// vim:fileencoding=utf8:sw=3:ts=8:et:cin

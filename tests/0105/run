@@ -1,50 +1,35 @@
-# Test ZCF
-# 
-# Create a data file containing matrices and permutations (f1).
-# Convert to text with ZPR (f2) and back to binary with ZCV (f3).
-# Verify f1 = f3.
+echo "0105 - ZCF"
 
 . ../tests/common.sh
 
-zcf -Q 2 ../tests/data/Perm1 tmp.$$.x1
-zcf -Q 67 ../tests/data/Perm2 tmp.$$.x2
-checksum tmp.$$.x1 72.1727940686 || exit 1
-checksum tmp.$$.x2 412.4152666678 || exit 1
+# testMatrix <mat> <field> <field2>
+# Convert to <field2> and back to <field>. Compare with original matrix.
+testMatrix()
+{
+   mat="$1"
+   field1="$2"
+   field2="$3"
+   zcf -Q "$field2" "${MTX_TEST_DATA_DIR}/$mat" tmp.$$.a
+   zcf -Q "$field1" tmp.$$.a tmp.$$.b
+   cmp tmp.$$.b "${MTX_TEST_DATA_DIR}/$mat"
+}
 
-zcf -Q 4 ../tests/data/Mat2 tmp.$$.x1
-zcf -Q 8 ../tests/data/Mat2 tmp.$$.x2
-zcf -Q 64 ../tests/data/Mat2 tmp.$$.x3
-zcf -Q 256 ../tests/data/Mat2 tmp.$$.x4
-zcf -Q 16 tmp.$$.x4 tmp.$$.x5
-zcf -Q 256 tmp.$$.x5 tmp.$$.x6
-checksum tmp.$$.x1 156.3077623386 || exit 1
-checksum tmp.$$.x2 300.3489847350 || exit 1
-checksum tmp.$$.x3 588.2290345317 || exit 1
-checksum tmp.$$.x4 588.1118762231 || exit 1
-checksum tmp.$$.x5 300.739250189  || exit 1
-checksum tmp.$$.x6 588.1118762231 || exit 1
+testMatrix Mat2 2 4
+testMatrix Mat2 2 8
+testMatrix Mat256 256 16
+testMatrix Mat5 5 25
+testMatrix Mat5 5 125
+testMatrix Mat9 9 3
 
-zcf -Q 3 ../tests/data/Mat9 tmp.$$.x1
-zcf -Q 9 tmp.$$.x1 tmp.$$.x2
-zcf -Q 27 tmp.$$.x1 tmp.$$.x3
-zcf -Q 81 tmp.$$.x1 tmp.$$.x4
-zcf -Q 81 tmp.$$.x2 tmp.$$.x5
-checksum tmp.$$.x1 132.3443676712 || exit 1
-checksum tmp.$$.x2 300.2657099669 || exit 1
-checksum tmp.$$.x3 588.3386682308 || exit 1
-checksum tmp.$$.x4 588.1829269091 || exit 1
-checksum tmp.$$.x5 588.1829269091 || exit 1
 
-zcf -Q 25 ../tests/data/Mat5 tmp.$$.x1
-zcf -Q 5 tmp.$$.x1 tmp.$$.x2
-zcf -Q 125 ../tests/data/Mat5 tmp.$$.x3
-zcf -Q 5 tmp.$$.x3 tmp.$$.x4
-checksum tmp.$$.x1 588.2136374774 || exit 1
-checksum tmp.$$.x2 204.283667245  || exit 1
-checksum tmp.$$.x3 588.310971162  || exit 1
-checksum tmp.$$.x4 204.283667245  || exit 1
+zcf -Q 2 "${MTX_TEST_DATA_DIR}/Perm1" tmp.$$.Perm1_2
+zpr tmp.$$.Perm1_2 tmp.$$.Perm1_2.txt
+cmp tmp.$$.Perm1_2.txt "${MTX_TESTCASE_DIR}/Perm1_2.txt.expected"
+
+zcf -Q 67 "${MTX_TEST_DATA_DIR}/Perm1" tmp.$$.Perm1_67
+zpr tmp.$$.Perm1_67 tmp.$$.Perm1_67.txt
+cmp tmp.$$.Perm1_67.txt "${MTX_TESTCASE_DIR}/Perm1_67.txt.expected"
+
 
 # Clean up
-# --------
 rm -f tmp.$$.*
-

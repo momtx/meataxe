@@ -1,17 +1,12 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // C MeatAxe - Bit Strings, difference
-//
-// (C) Copyright 1998-2014 Michael Ringe, Lehrstuhl D fuer Mathematik, RWTH Aachen
-//
-// This program is free software; see the file COPYING for details.
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#include <meataxe.h>
+#include "meataxe.h"
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // Local data
 
-MTX_DEFINE_FILE_INFO
 
 /// @addtogroup bs
 /// @{
@@ -24,23 +19,17 @@ MTX_DEFINE_FILE_INFO
 /// The arguments must be bit strings of the same size.
 /// @return 0 on success, -1 on error.
 
-int BsMinus(BitString_t *dest, const BitString_t *src)
+int bsMinus(BitString_t *dest, const BitString_t *src)
 {
    register int i;
    register unsigned long *dp;
    register const unsigned long *sp;
 
    // check arguments
-   if (!BsIsValid(dest)) {
-      MTX_ERROR1("dest: %E",MTX_ERR_BADARG);
-      return -1;
-   }
-   if (!BsIsValid(src)) {
-      MTX_ERROR1("src: %E",MTX_ERR_BADARG);
-      return -1;
-   }
+   bsValidate(MTX_HERE, src);
+   bsValidate(MTX_HERE, dest);
    if (dest->Size != src->Size) {
-      MTX_ERROR1("%E",MTX_ERR_INCOMPAT);
+      mtxAbort(MTX_HERE,"%s",MTX_ERR_INCOMPAT);
       return -1;
    }
 
@@ -56,3 +45,4 @@ int BsMinus(BitString_t *dest, const BitString_t *src)
 
 
 /// @}
+// vim:fileencoding=utf8:sw=3:ts=8:et:cin

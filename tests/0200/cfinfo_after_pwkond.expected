@@ -1,0 +1,17 @@
+CFInfo := rec();
+CFInfo.NGen := 2;
+CFInfo.Field := 2;
+CFInfo.NCF := 3;
+CFInfo.ConstituentNames := ["1a","10a","44a"];
+CFInfo.Dimension := [1,10,44];
+CFInfo.Number := [0,0,0];
+CFInfo.Multiplicity := [4,2,2];
+CFInfo.SplittingField := [1,1,1];
+CFInfo.NMountains := [0,0,0];
+CFInfo.NDottedLines := [0,0,0];
+CFInfo.PeakWord := [[73,2,1,0,1],[17,2,1,1,1],[307,2,1,1,1]];
+CFInfo.IdWord := [[2,2,1,0,1],[2,2,1,0,1],[1,2,1,0,1]];
+CFInfo.NSocles := 0;
+CFInfo.Socles := [];
+CFInfo.NHeads := 0;
+CFInfo.Heads := [];

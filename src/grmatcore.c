@@ -1,18 +1,13 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // C MeatAxe - Basic greased matrix functions
-//
-// (C) Copyright 1998-2015 Michael Ringe, Lehrstuhl D fuer Mathematik, RWTH Aachen
-//
-// This program is free software; see the file COPYING for details.
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#include <meataxe.h>
+#include "meataxe.h"
 #include <string.h>
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // Local data
 
-MTX_DEFINE_FILE_INFO
 
 #define GMAT_MAGIC 0x52068001
 
@@ -45,12 +40,12 @@ MTX_DEFINE_FILE_INFO
 int GrMatIsValid(const GreasedMatrix_t *mat)
 {
    if (mat == NULL) {
-      MTX_ERROR("NULL matrix");
+      mtxAbort(MTX_HERE,"NULL matrix");
       return 0;
    }
    if ((mat->Magic != GMAT_MAGIC) || (mat->Field < 2) || (mat->Nor < 0) ||
        (mat->Noc < 0)) {
-      MTX_ERROR3("Invalid greased matrix (field=%d, nor=%d, noc=%d)",
+      mtxAbort(MTX_HERE,"Invalid greased matrix (field=%d, nor=%d, noc=%d)",
                  mat->Field,mat->Nor,mat->Noc);
       return 0;
    }
@@ -74,10 +69,10 @@ int GrMatFree(GreasedMatrix_t *mat)
       return -1;
    }
    if (mat->PrecalcData != NULL) {
-      SysFree(mat->PrecalcData);
+      sysFree(mat->PrecalcData);
    }
    memset(mat,0,sizeof(Matrix_t));
-   SysFree(mat);
+   sysFree(mat);
    return 0;
 }
 
@@ -119,15 +114,15 @@ GreasedMatrix_t *GrMatAlloc(const Matrix_t *M, int gr_rows)
    res->Nor = M->Nor;
    res->GrRows = gr_rows;
 
-   FfSetField(M->Field);
-   FfSetNoc(M->Noc);
+   ffSetField(M->Field);
+   ffSetNoc(M->Noc);
 
    /* special case of greasing switched off: */
    if (gr_rows == 0) {
       res->GrBlockSize = 1;
-      res->PrecalcData = FfAlloc(M->Nor);
+      res->PrecalcData = ffAlloc(M->Nor, M->Noc);
       res->NumVecs = M->Nor;
-      memcpy(res->PrecalcData,M->Data,FfCurrentRowSize * M->Nor);
+      memcpy(res->PrecalcData,M->Data,ffSize(M->Nor, M->Noc));
       res->ExtrTab = NULL;
       res->Magic = GMAT_MAGIC;
       return res;
@@ -141,10 +136,10 @@ GreasedMatrix_t *GrMatAlloc(const Matrix_t *M, int gr_rows)
 
    nrvecs = nrvecs * (M->Nor / gr_rows) + M->Nor % gr_rows;
    res->NumVecs = nrvecs;
-   if ((res->PrecalcData = FfAlloc(nrvecs)) == NULL) {
+   if ((res->PrecalcData = ffAlloc(nrvecs, M->Noc)) == NULL) {
       return NULL;
    }
-   v = FfAlloc(1);
+   v = ffAlloc(1, M->Noc);
 
    /* Now we calculate all linear combinations necessary: */
    p = res->PrecalcData;
@@ -156,31 +151,32 @@ GreasedMatrix_t *GrMatAlloc(const Matrix_t *M, int gr_rows)
       /* now for all vectors in the block: */
       for (j = gr_rows; j > 0; j--) { /* all vectors in block */
          for (k = 1; k < M->Field; k++) { /* all field elements */
-            FfCopyRow(v,q);
-            FfMulRow(v,FfFromInt(k));
-            FfCopyRow(p,v); /* copy the new multiple */
-            FfStepPtr(&p);
+            ffCopyRow(v,q);
+            ffMulRow(v,ffFromInt(k));
+            ffCopyRow(p,v); /* copy the new multiple */
+            MTX_ASSERT(ffNoc == M->Noc, NULL);
+            ffStepPtr(&p, M->Noc);
 
             r = bs;  /* start from the beginning of the current block */
             for (l = rows; l > 0; l--) { /* for all vectors so far */
-               FfCopyRow(p,r);
-               FfStepPtr(&r);
-               FfAddRow(p,v);
-               FfStepPtr(&p);
+               ffCopyRow(p,r);
+               ffStepPtr(&r, M->Noc);
+               ffAddRow(p,v);
+               ffStepPtr(&p, M->Noc);
             }
          }
-         FfStepPtr(&q); /* take a new row of the original matrix */
+         ffStepPtr(&q, M->Noc); /* take a new row of the original matrix */
          rows = (rows + 1) * M->Field - 1; /* the null vector is not there */
       }
    }
 
    for (i = M->Nor % gr_rows; i > 0; i--) { /* the rest of the vectors */
-      FfCopyRow(p,q);
-      FfStepPtr(&p);
-      FfStepPtr(&q);
+      ffCopyRow(p,q);
+      ffStepPtr(&p, M->Noc);
+      ffStepPtr(&q, M->Noc);
    }
    res->ExtrTab = GrGetExtractionTable(M->Field,gr_rows);
-   SysFree(v);
+   sysFree(v);
 
    res->Magic = GMAT_MAGIC;
    return res;
@@ -188,3 +184,4 @@ GreasedMatrix_t *GrMatAlloc(const Matrix_t *M, int gr_rows)
 
 
 /// @}
+// vim:fileencoding=utf8:sw=3:ts=8:et:cin

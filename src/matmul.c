@@ -1,17 +1,12 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // C MeatAxe - Matrix multiplication
-//
-// (C) Copyright 1998-2015 Michael Ringe, Lehrstuhl D fuer Mathematik, RWTH Aachen
-//
-// This program is free software; see the file COPYING for details.
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#include <meataxe.h>
+#include "meataxe.h"
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // Local data
 
-MTX_DEFINE_FILE_INFO
 
 /// @addtogroup mat
 /// @{
@@ -24,54 +19,47 @@ MTX_DEFINE_FILE_INFO
 /// number of rows of @em src.
 /// The result of the multiplication is stored in @em dest, overwriting the
 /// original contents.
-/// @see MatPower()
+/// @see matPower()
 /// @param dest Left factor and result.
 /// @param src Right factor.
-/// @return The function returns @em dest, or 0 on error.
+/// @return The function returns @em dest.
 
-Matrix_t *MatMul(Matrix_t *dest, const Matrix_t *src)
+Matrix_t *matMul(Matrix_t *dest, const Matrix_t *src)
 {
    PTR x, tmp, result;
    long i;
 
    // check arguments
-#ifdef DEBUG
-   if (!MatIsValid(src) || !MatIsValid(dest)) {
-      MTX_ERROR1("%E",MTX_ERR_BADARG);
-      return NULL;
-   }
+#ifdef MTX_DEBUG
+   matValidate(MTX_HERE, src);
+   matValidate(MTX_HERE, dest);
    if ((src->Field != dest->Field) || (src->Nor != dest->Noc)) {
-      MTX_ERROR7("Can't multiply %dx%d/GF(%d) by %dx%d/GF(%d): %E",
+      mtxAbort(MTX_HERE,"Can't multiply %dx%d/GF(%d) by %dx%d/GF(%d): %s",
                  dest->Nor,dest->Noc,dest->Field,src->Nor,src->Noc,src->Field,
                  MTX_ERR_INCOMPAT);
-      return NULL;
    }
 #endif
 
    // matrix multiplication
-   FfSetField(src->Field);
-   FfSetNoc(src->Noc);
-   result = tmp = FfAlloc(dest->Nor);
-   if (result == NULL) {
-      MTX_ERROR("MatMul(): Cannot allocate product");
-      return NULL;
-   }
+   ffSetField(src->Field);
+   ffSetNoc(src->Noc);
+   result = tmp = ffAlloc(dest->Nor, src->Noc);
    x = dest->Data;
    for (i = 0; i < dest->Nor; ++i) {
-      FfMapRow(x,src->Data,src->Nor,tmp);
-      FfStepPtr(&tmp);
-/*	x = FfGetPtr(x,1,dest->Noc);*/
+      ffMapRow(x,src->Data,src->Nor,tmp);
+      ffStepPtr(&tmp, src->Noc);
+/*	x = ffGetPtr(x,1,dest->Noc);*/
       x = (PTR)((char*) x + dest->RowSize);
    }
-   SysFree(dest->Data);
+   sysFree(dest->Data);
    dest->Data = result;
    dest->Noc = src->Noc;
-   dest->RowSize = FfCurrentRowSize;
+   dest->RowSize = ffRowSize(src->Noc);
 
-   Mat_DeletePivotTable(dest);
+   mat_DeletePivotTable(dest);
 
    return dest;
 }
 
-
 /// @}
+// vim:fileencoding=utf8:sw=3:ts=8:et:cin

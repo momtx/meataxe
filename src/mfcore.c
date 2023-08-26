@@ -1,18 +1,13 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // C MeatAxe - MeatAxe file objects: basic functions
-//
-// (C) Copyright 1998-2015 Michael Ringe, Lehrstuhl D fuer Mathematik, RWTH Aachen
-//
-// This program is free software; see the file COPYING for details.
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#include <meataxe.h>
+#include "meataxe.h"
 #include <string.h>
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // Local data
 
-MTX_DEFINE_FILE_INFO
 
 #define MF_MAGIC 0x229AE77B
 
@@ -31,14 +26,14 @@ MTX_DEFINE_FILE_INFO
 /// @param file Pointer to the file.
 /// @return 1 if @a file points to a valid file object, 0 otherwise.
 
-int MfIsValid(const MtxFile_t *file)
+int mfIsValid(const MtxFile_t *file)
 {
    if (file == NULL) {
-      MTX_ERROR("NULL file");
+      mtxAbort(MTX_HERE,"NULL file");
       return 0;
    }
    if (file->Magic != MF_MAGIC) {
-      MTX_ERROR("Invalid file");
+      mtxAbort(MTX_HERE,"Invalid file");
       return 0;
    }
    return 1;
@@ -53,8 +48,8 @@ static MtxFile_t *Mf_Alloc(const char *name)
       return NULL;
    }
    memset(f,0,sizeof(*f));
-   if ((f->Name = SysMalloc(strlen(name) + 1)) == NULL) {
-      SysFree(f);
+   if ((f->Name = sysMalloc(strlen(name) + 1)) == NULL) {
+      sysFree(f);
       return NULL;
    }
    strcpy(f->Name,name);
@@ -68,16 +63,16 @@ static void Mf_Free(MtxFile_t *f)
       fclose(f->File);
    }
    if (f->Name != NULL) {
-      SysFree(f->Name);
+      sysFree(f->Name);
    }
    memset(f,0,sizeof(*f));
-   SysFree(f);
+   sysFree(f);
 }
 
 
 /// Open a File for Reading.
 
-MtxFile_t *MfOpen(const char *name)
+MtxFile_t *mfOpen(const char *name)
 {
    MtxFile_t *f;
    long header[3];
@@ -85,16 +80,16 @@ MtxFile_t *MfOpen(const char *name)
    if ((f = Mf_Alloc(name)) == NULL) {
       return NULL;
    }
-   if ((f->File = SysFopen(name,FM_READ)) == NULL) {
+   if ((f->File = sysFopen(name,"rb")) == NULL) {
       Mf_Free(f);
       return NULL;
    }
 
    /* Read the file header.
       --------------------- */
-   if (SysReadLong(f->File,header,3) != 3) {
+   if (sysReadLong32(f->File,header,3) != 3) {
       Mf_Free(f);
-      MTX_ERROR1("%s: Error reading file header",name);
+      mtxAbort(MTX_HERE,"%s: Error reading file header",name);
       return NULL;
    }
    f->Field = (int) header[0];
@@ -103,8 +98,14 @@ MtxFile_t *MfOpen(const char *name)
 
    /* Check header
       ------------ */
-   if ((f->Field > 256) || (f->Nor < 0) || (f->Noc < 0)) {
-      MTX_ERROR1("%s: Invalid header, possibly non-MeatAxe file",name);
+   #if MTXZZZ == 0
+      #define MTX_MAX_Q 256
+   #elif MTXZZZ == 1
+      #define MTX_MAX_Q 63001
+   #endif
+
+   if ((f->Field > MTX_MAX_Q) || (f->Nor < 0) || (f->Noc < 0)) {
+      mtxAbort(MTX_HERE,"%s: Invalid header, possibly non-MeatAxe file",name);
       Mf_Free(f);
       return NULL;
    }
@@ -118,7 +119,7 @@ MtxFile_t *MfOpen(const char *name)
 /// This functions creates a new file or truncates an existing file. The file is opened
 /// for writing, and a MeatAxe file header is written to the file.
 
-MtxFile_t *MfCreate(const char *name, int field, int nor, int noc)
+MtxFile_t *mfCreate(const char *name, int field, int nor, int noc)
 {
    MtxFile_t *f;
    long header[3];
@@ -126,7 +127,7 @@ MtxFile_t *MfCreate(const char *name, int field, int nor, int noc)
    if ((f = Mf_Alloc(name)) == NULL) {
       return NULL;
    }
-   if ((f->File = SysFopen(name,FM_CREATE)) == NULL) {
+   if ((f->File = sysFopen(name,"wb")) == NULL) {
       Mf_Free(f);
       return NULL;
    }
@@ -136,8 +137,8 @@ MtxFile_t *MfCreate(const char *name, int field, int nor, int noc)
    header[0] = f->Field = field;
    header[1] = f->Nor = nor;
    header[2] = f->Noc = noc;
-   if (SysWriteLong(f->File,header,3) != 3) {
-      MTX_ERROR1("%s: Error writing file header",name);
+   if (sysWriteLong32(f->File,header,3) != 3) {
+      mtxAbort(MTX_HERE,"%s: Error writing file header",name);
       Mf_Free(f);
       return NULL;
    }
@@ -149,9 +150,9 @@ MtxFile_t *MfCreate(const char *name, int field, int nor, int noc)
 
 /// Close a File.
 
-int MfClose(MtxFile_t *file)
+int mfClose(MtxFile_t *file)
 {
-   if (!MfIsValid(file)) {
+   if (!mfIsValid(file)) {
       return -1;
    }
    Mf_Free(file);
@@ -160,3 +161,4 @@ int MfClose(MtxFile_t *file)
 
 
 /// @}
+// vim:fileencoding=utf8:sw=3:ts=8:et:cin

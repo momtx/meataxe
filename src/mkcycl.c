@@ -1,13 +1,9 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // C MeatAxe - Calculate a representative for each cyclic submodule of the condensed modules.
-//
-// (C) Copyright 1998-2015 Michael Ringe, Lehrstuhl D fuer Mathematik, RWTH Aachen
-//
-// This program is free software; see the file COPYING for details.
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
-#include <meataxe.h>
+#include "meataxe.h"
 #include <string.h>
 #include <stdlib.h>
 
@@ -17,7 +13,6 @@
    Global data
    -------------------------------------------------------------------------- */
 
-MTX_DEFINE_FILE_INFO
 
 static MtxApplicationInfo_t AppInfo = { 
 "mkcycl", "Find Cyclic Submodules",
@@ -60,10 +55,10 @@ Lat_Info LI;			/* Data from .cfinfo file */
 
 static int ParseCommandLine()
 {
-    opt_G = AppGetOption(App,"-G --gap");
+    opt_G = appGetOption(App,"-G --gap");
     if (opt_G) 
 	MtxMessageLevel = -100;
-    if (AppGetArguments(App,1,1) != 1)
+    if (appGetArguments(App,1,1) != 1)
 	return -1;
     return 0;
 }
@@ -76,25 +71,24 @@ static int ParseCommandLine()
    This function initializes all global variables.
    -------------------------------------------------------------------------- */
 
-static int Init(int argc, const char **argv)
-
+static int Init(int argc, char **argv)
 {
     /* Parse command line
        ------------------ */
-    if ((App = AppAlloc(&AppInfo,argc,argv)) == NULL)
+    if ((App = appAlloc(&AppInfo,argc,argv)) == NULL)
 	return -1;
     if (ParseCommandLine() != 0)
     {
-	MTX_ERROR("Error in command line");
+	mtxAbort(MTX_HERE,"Error in command line");
 	return -1;
     }
 
     /* Read the .cfinfo file
        --------------------- */
     MESSAGE(0,("\n*** FIND CYCLIC SUBMODULES ***\n\n"));
-    if (Lat_ReadInfo(&LI,App->ArgV[0]) != 0)
+    if (latReadInfo(&LI,App->ArgV[0]) != 0)
     {
-	MTX_ERROR1("Error reading %s",App->ArgV[0]);
+	mtxAbort(MTX_HERE,"Error reading %s",App->ArgV[0]);
 	return -1;
     }
     return 0;
@@ -122,18 +116,18 @@ static void Spinup(Matrix_t *seed)
 	int issub = IsSubspace(sub,Cyclic[i],1);
 	if (issub == -1)
 	{
-	    MTX_ERROR("Subspace comparison failed");
+	    mtxAbort(MTX_HERE,"Subspace comparison failed");
 	    return;
 	}
 	if (issub && sub->Nor == Cyclic[i]->Nor)
 	{
-	    MatFree(sub);	/* Module already in list */
+	    matFree(sub);	/* Module already in list */
 	    return;
 	}
     }
     if (NCyclic >= MAXCYCL)
     {
-	MTX_ERROR1("Too many cyclic submodules (maximum = %d)",MAXCYCL);
+	mtxAbort(MTX_HERE,"Too many cyclic submodules (maximum = %d)",MAXCYCL);
 	return;
     }
     Cyclic[NCyclic] = sub;
@@ -152,16 +146,16 @@ void WriteResult(int cf, int cond_dim)
 
 {
     int i;
-    char fn[100];
+    char fn[200];
     Matrix_t *result;
 
-    result = MatAlloc(FfOrder,NCyclic,cond_dim);
+    result = matAlloc(ffOrder,NCyclic,cond_dim);
     for (i = 0; i < NCyclic; ++i)
-	MatCopyRegion(result,i,0,Cyclic[i],0,0,1,-1);
-    sprintf(fn,"%s%s.v",LI.BaseName,Lat_CfName(&LI,cf));
+	matCopyRegion(result,i,0,Cyclic[i],0,0,1,-1);
+    sprintf(fn,"%s%s.v",LI.BaseName,latCfName(&LI,cf));
     MESSAGE(1,("Writing %s\n",fn));
-    MatSave(result,fn);
-    MatFree(result);
+    matSave(result,fn);
+    matFree(result);
 }
 
 
@@ -200,17 +194,17 @@ void FindCyclic(int cf)
 
     /* Read the generators and the condensed peak words
        ------------------------------------------------ */
-    sprintf(fn,"%s%s.%%dk",LI.BaseName,Lat_CfName(&LI,cf));
-    MESSAGE(1,("Loading generators for %s%s\n",LI.BaseName,Lat_CfName(&LI,cf)));
-    Rep = MrLoad(fn,LI.NGen);
-    sprintf(fn,"%s%s.np",LI.BaseName,Lat_CfName(&LI,cf));
-    MrAddGenerator(Rep,MatLoad(fn),0);
+    sprintf(fn,"%s%s.%%dk",LI.BaseName,latCfName(&LI,cf));
+    MESSAGE(1,("Loading generators for %s%s\n",LI.BaseName,latCfName(&LI,cf)));
+    Rep = mrLoad(fn,LI.NGen);
+    sprintf(fn,"%s%s.np",LI.BaseName,latCfName(&LI,cf));
+    mrAddGenerator(Rep,matLoad(fn),0);
 
     /* Spin up all seed vectors
        ------------------------ */
     cond_dim = Rep->Gen[0]->Nor;
-    seed = MatAlloc(FfOrder,1,cond_dim);
-    seed_basis = MatId(FfOrder,cond_dim);
+    seed = matAlloc(ffOrder,1,cond_dim);
+    seed_basis = matId(ffOrder,cond_dim);
     NCyclic = 0;
     count = 0;
     vec_no = 0;
@@ -225,17 +219,17 @@ void FindCyclic(int cf)
     /* Write the result and clean up
        ----------------------------- */
     MESSAGE(0,("%s%s: %d cyclic submodule%s (%d vectors tried)\n",
-	LI.BaseName,Lat_CfName(&LI,cf),NCyclic,NCyclic == 1 ? " " : "s",
+	LI.BaseName,latCfName(&LI,cf),NCyclic,NCyclic == 1 ? " " : "s",
 	count));
     WriteResult(cf,cond_dim);
-    MatFree(seed);
-    MatFree(seed_basis);
+    matFree(seed);
+    matFree(seed_basis);
 
     /* Clean up
        -------- */
     for (i = 0; i < NCyclic; ++i)
-	MatFree(Cyclic[i]);
-    MrFree(Rep);
+	matFree(Cyclic[i]);
+    mrFree(Rep);
 }
 
 
@@ -245,13 +239,13 @@ int main(int argc, char *argv[])
 {
     int i;
 
-    if (Init(argc,(const char **)argv) != 0)
+    if (Init(argc, argv) != 0)
 	return -1;
     for (i = 0; i < LI.NCf; ++i)
 	FindCyclic(i);
     if (MtxMessageLevel >= 0)
         printf("\n");
-    AppFree(App);
+    appFree(App);
     return 0;
 }
 
@@ -310,3 +304,4 @@ has an option to exclude one or more specified peak words from the search.
 So, if the peak word turns out to be "bad", you can try another one.
 **/
 
+// vim:fileencoding=utf8:sw=3:ts=8:et:cin

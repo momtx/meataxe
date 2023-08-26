@@ -1,19 +1,14 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // C MeatAxe - Projection on quotient
-//
-// (C) Copyright 1998-2015 Michael Ringe, Lehrstuhl D fuer Mathematik, RWTH Aachen
-//
-// This program is free software; see the file COPYING for details.
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#include <meataxe.h>
+#include "meataxe.h"
 #include <string.h>
 #include <stdlib.h>
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // Local data
 
-MTX_DEFINE_FILE_INFO
 
 /// @addtogroup spinup
 /// @{
@@ -49,45 +44,43 @@ Matrix_t *QProjection(const Matrix_t *subspace, const Matrix_t *vectors)
    PTR tmp;
 
    // Check the arguments
-   if (!MatIsValid(subspace) || !MatIsValid(vectors)) {
-      return NULL;
-   }
+   matValidate(MTX_HERE, subspace);
+   matValidate(MTX_HERE, vectors);
    if ((subspace->Field != vectors->Field) || (subspace->Noc != vectors->Noc)) {
-      MTX_ERROR1("%E",MTX_ERR_INCOMPAT);
-      return NULL;
+      mtxAbort(MTX_HERE,"%s",MTX_ERR_INCOMPAT);
    }
    if (subspace->PivotTable == NULL) {
-      MTX_ERROR1("%E",MTX_ERR_NOTECH);
-      return NULL;
+      mtxAbort(MTX_HERE,"%s",MTX_ERR_NOTECH);
    }
 
    // Initialize
    sdim = subspace->Nor;
    qdim = subspace->Noc - sdim;
-   result = MatAlloc(subspace->Field,vectors->Nor,qdim);
+   result = matAlloc(subspace->Field,vectors->Nor,qdim);
    if (result == NULL) {
        return NULL;
    }
 
    // Calculate the projection
-   FfSetNoc(subspace->Noc);
-   tmp = FfAlloc(1);
+   ffSetNoc(subspace->Noc);
+   tmp = ffAlloc(1, subspace->Noc);
    if (tmp == NULL) {
-       MatFree(result);
+       matFree(result);
        return NULL;
    }
    non_piv = subspace->PivotTable + subspace->Nor;
    for (i = 0; i < vectors->Nor; ++i) {
       int k;
-      PTR q = MatGetPtr(result,i);
-      MTX_FAIL_IF_NOT(q != NULL);
-      FfCopyRow(tmp,MatGetPtr(vectors,i));
-      FfCleanRow(tmp,subspace->Data,sdim,subspace->PivotTable);
+      PTR q = matGetPtr(result,i);
+      MTX_ASSERT(q != NULL, NULL);
+      ffCopyRow(tmp,matGetPtr(vectors,i));
+      MTX_ASSERT(ffNoc == subspace->Noc, NULL);
+      ffCleanRow(tmp,subspace->Data,sdim,subspace->Noc, subspace->PivotTable);
       for (k = 0; k < qdim; ++k) {
-         FfInsert(q,k,FfExtract(tmp,non_piv[k]));
+         ffInsert(q,k,ffExtract(tmp,non_piv[k]));
       }
    }
-   SysFree(tmp);
+   sysFree(tmp);
 
    return result;
 }
@@ -120,16 +113,13 @@ Matrix_t *QAction(const Matrix_t *subspace, const Matrix_t *gen)
 
    /* Check arguments.
       ---------------- */
-   if (!MatIsValid(subspace) || !MatIsValid(gen)) {
-      return NULL;
-   }
+   matValidate(MTX_HERE, subspace);
+   matValidate(MTX_HERE, gen);
    if (subspace->Noc != gen->Nor) {
-      MTX_ERROR1("subspace and gen: %E",MTX_ERR_INCOMPAT);
-      return NULL;
+      mtxAbort(MTX_HERE,"subspace and gen: %s",MTX_ERR_INCOMPAT);
    }
    if (gen->Nor != gen->Noc) {
-      MTX_ERROR1("gen: %E",MTX_ERR_NOTSQUARE);
-      return NULL;
+      mtxAbort(MTX_HERE,"gen: %s",MTX_ERR_NOTSQUARE);
    }
 
    /* Initialize
@@ -137,34 +127,36 @@ Matrix_t *QAction(const Matrix_t *subspace, const Matrix_t *gen)
    dim = subspace->Noc;
    sdim = subspace->Nor;
    qdim = dim - sdim;
-   Matrix_t *action = MatAlloc(subspace->Field,qdim,qdim);
+   Matrix_t *action = matAlloc(subspace->Field,qdim,qdim);
    if (action == NULL) {
       return NULL;
    }
 
    /* Calculate the action on the quotient
       ------------------------------------ */
-   FfSetNoc(dim);
-   PTR tmp = FfAlloc(1);
+   ffSetNoc(dim);
+   PTR tmp = ffAlloc(1, dim);
    if (tmp == NULL) {
-      MatFree(action);
+      matFree(action);
       return NULL;
    }
    piv = subspace->PivotTable;
    non_piv = piv + subspace->Nor;
    for (k = 0; k < qdim; ++k) {
       int l;
-      PTR qx = MatGetPtr(action,k);
-      FfCopyRow(tmp,MatGetPtr(gen,non_piv[k]));
-      FfCleanRow(tmp,subspace->Data,sdim,piv);
+      PTR qx = matGetPtr(action,k);
+      ffCopyRow(tmp,matGetPtr(gen,non_piv[k]));
+      MTX_ASSERT(ffNoc == dim, NULL);
+      ffCleanRow(tmp,subspace->Data,sdim,dim, piv);
       for (l = 0; l < qdim; ++l) {
-         FfInsert(qx,l,FfExtract(tmp,non_piv[l]));
+         ffInsert(qx,l,ffExtract(tmp,non_piv[l]));
       }
    }
-   SysFree(tmp);
+   sysFree(tmp);
 
    return action;
 }
 
 
 /// @}
+// vim:fileencoding=utf8:sw=3:ts=8:et:cin

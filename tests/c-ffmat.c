@@ -1,13 +1,9 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // C MeatAxe - Tests for matrix functions
-//
-// (C) Copyright 1998-2015 Michael Ringe, Lehrstuhl D fuer Mathematik, RWTH Aachen
-//
-// This program is free software; see the file COPYING for details.
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 #include "meataxe.h"
-#include "check.h"
+#include "testing.h"
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -15,183 +11,183 @@
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static void TestMapRow1(PTR mat, PTR a, PTR b, int size)
+static int TestMapRow1(PTR mat, PTR a, PTR b, int noc)
 {
    int i;
 
    /* Make <mat> the unit matrix.
       --------------------------- */
-   for (i = 0; i < size; ++i) {
-      PTR m = (PTR)((char *)mat + i * FfCurrentRowSize);
-      FfInsert(m,i,FF_ONE);
+   for (i = 0; i < noc; ++i) {
+      PTR m = (PTR)((char *)mat + ffSize(i, noc));
+      ffInsert(m,i,FF_ONE);
    }
 
-   for (i = 0; i < size; ++i) {
+   for (i = 0; i < noc; ++i) {
       int k;
 
       /* Check that the i-th basis vector is mapped on itself.
          ----------------------------------------------------- */
-      FfMulRow(a,FF_ZERO);
-      FfInsert(a,i,FF_ONE);
-      FfMapRow(a,mat,size,b);
-      for (k = 0; k < size; ++k) {
-         ASSERT((FfExtract(b,k) == FF_ZERO) ^ (k == i));
+      ffMulRow(a,FF_ZERO);
+      ffInsert(a,i,FF_ONE);
+      ffMapRow(a,mat,noc,b);
+      for (k = 0; k < noc; ++k) {
+         ASSERT((ffExtract(b,k) == FF_ZERO) ^ (k == i));
       }
 
-      FfMapRow(a,mat,i,b);
-      for (k = 0; k < size; ++k) {
-         ASSERT_EQ_INT(FfExtract(b,k), FF_ZERO);
+      ffMapRow(a,mat,i,b);
+      for (k = 0; k < noc; ++k) {
+         ASSERT_EQ_INT(ffExtract(b,k), FF_ZERO);
       }
    }
 
-   for (i = 0; i < size; ++i) {
-      FfInsert(a,i,FTab[i % FfOrder]);
+   for (i = 0; i < noc; ++i) {
+      ffInsert(a,i,FTab[i % ffOrder]);
    }
-   FfMapRow(a,mat,size,b);
-   for (i = 0; i < size; ++i) {
-      ASSERT_EQ_INT(FfExtract(b,i), FTab[i % FfOrder]);
+   ffMapRow(a,mat,noc,b);
+   for (i = 0; i < noc; ++i) {
+      ASSERT_EQ_INT(ffExtract(b,i), FTab[i % ffOrder]);
    }
-
+   return 0;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-test_F MapRow()
+TstResult Kernel_MapRow(int q)
 {
    int size = 10;
 
-   while (NextField() > 0) {
-      PTR mat, a, b;
-      FfSetNoc(size);
-      mat = FfAlloc(size);
-      a = FfAlloc(1);
-      b = FfAlloc(1);
-      TestMapRow1(mat,a,b,size);
-      SysFree(mat);
-      SysFree(a);
-      SysFree(b);
-   }
+   PTR mat, a, b;
+   ffSetNoc(size);
+   mat = ffAlloc(size, size);
+   a = ffAlloc(1, size);
+   b = ffAlloc(1, size);
+   int result = TestMapRow1(mat,a,b,size);
+   sysFree(mat);
+   sysFree(a);
+   sysFree(b);
+   return result;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static void printrows(PTR x, int n)
-{
-   for (; n > 0; --n) {
-      int k;
-      for (k = 0; k < FfNoc; ++k) {
-         printf("%d",FfExtract(x,k));
-      }
-      printf("\n");
-      FfStepPtr(&x);
-   }
-}
-
-
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static void TestSumInter1()
+static int TestSumInter1(int noc)
 {
    PTR w1, w2;
    int *piv;
    int nor1, nor2;
    int i, k;
 
-   nor1 = nor2 = FfNoc;
-   w1 = FfAlloc(nor1 + nor2);
-   w2 = FfAlloc(nor1 + nor2);
+   ffSetNoc(noc);
+   //printf("GF(%d) nor=%d\n", ffOrder, ffNoc);
+   nor1 = nor2 = noc;
+   w1 = ffAlloc(nor1 + nor2, noc);
+   w2 = ffAlloc(nor1 + nor2, noc);
    piv = NALLOC(int,nor1 + nor2);
    k = 0;
    for (i = 0; i < nor1; ++i) {
-      PTR x = FfGetPtr(w1,i);
-      FfInsert(x,k,FF_ONE);
+      PTR x = ffGetPtr(w1,i,noc);
+      ffInsert(x,k,FF_ONE);
       if (k % 3 == 0) {
          ++k;
       } else {
          k += 2;
       }
-      if (k >= FfNoc) {
+      if (k >= noc) {
          k = 0;
       }
    }
    k = 0;
    for (i = nor1; i < nor1 + nor2; ++i) {
-      PTR x = FfGetPtr(w1,i);
-      FfInsert(x,k,FF_ONE);
+      PTR x = ffGetPtr(w1,i,noc);
+      ffInsert(x,k,FF_ONE);
       if (k % 3 == 0) {
          k += 2;
       } else {
          ++k;
       }
-      if (k >= FfNoc) {
+      if (k >= noc) {
          k = 0;
       }
    }
 
-   FfSumAndIntersection(w1,&nor1,&nor2,w2,piv);
-   ASSERT_EQ_INT(nor1, FfNoc);	// whole space
-   ASSERT_EQ_INT(nor2, (FfNoc - 1) / 3 + 1);
+   //printrows("v", w1,nor1);
+   //printrows("w", ffGetPtr(w1,nor1),nor2);
+
+   ffSumAndIntersection(noc, w1,&nor1,&nor2,w2,piv);
+
+   //printrows("sum", w1,nor1);
+   //printrows("intersection", ffGetPtr(w2,nor1), nor2);
+
+   ASSERT_EQ_INT(nor1, ffNoc);	// whole space
+   ASSERT_EQ_INT(nor2, (ffNoc - 1) / 3 + 1);
    for (i = 0; i < nor2; ++i) {
       ASSERT_EQ_INT(piv[nor1 + i] % 3, 0);
    }
 
-   SysFree(w1);
-   SysFree(w2);
-   SysFree(piv);
+   sysFree(w1);
+   sysFree(w2);
+   sysFree(piv);
+   return 0;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static void CheckSubspace(PTR u, int udim, PTR v, int vdim)
+// Checks that u is a subspace of v. As a side effect,
+// - v is echelonized 
+// - u is cleared (all rows set to zero).
+static int CheckIsSubspace(int noc, PTR u, int udim, PTR v, int vdim)
 {
    int *piv = NALLOC(int,vdim);
    int i, vrank;
    PTR x, y, row;
 
+   //printf("CheckIsSubspace\n");
+   //printrows("u",u,udim);
+   //printrows("v",v,vdim);
+
+
    /* Echelonize v.
       ------------- */
    y = v;
    vrank = 0;
-   for (i = 0, x = v; i < vdim; ++i, FfStepPtr(&x)) {
+   for (i = 0, x = v; i < vdim; ++i, ffStepPtr(&x, noc)) {
       FEL f;
       int p;
-      FfCleanRow(x,v,vrank,piv);
-      p = FfFindPivot(x,&f);
+      ffCleanRow(x,v,vrank,noc,piv);
+      p = ffFindPivot(x,&f);
       if (p < 0) {
          continue;
       }
       if (i > vrank) {
-         FfCopyRow(y,x);
+         ffCopyRow(y,x);
       }
       piv[vrank++] = p;
-      FfStepPtr(&y);
+      ffStepPtr(&y,noc);
    }
+   //printrows("v chelonized", v, vrank);
+   //printf("rank(v)=%d, cleaning u\n", vrank);
 
    /* Clean u with v.
       --------------- */
-   row = FfAlloc(1);
-   for (i = 0, x = u; i < udim; ++i, FfStepPtr(&x)) {
+   row = ffAlloc(1, noc);
+   for (i = 0, x = u; i < udim; ++i, ffStepPtr(&x,noc)) {
       FEL f;
-      FfCopyRow(row,x);
-      FfCleanRow(row,v,vrank,piv);
-      if (FfFindPivot(row,&f) >= 0) {
-         printf("Error at %d/%d, Noc=%d\n",i,udim,FfNoc);
-         printf("v: (nor=%d, rank=%d)\n",vdim,vrank);
-         printrows(v,vdim);
-         printf("u: (nor=%d)\n",udim);
-         printrows(u,udim);
-         TST_FAIL("CheckSubspace() failed");
-         break;
-      }
+      ffCopyRow(row,x);
+      ffCleanRow(row,v,vrank,noc,piv);
+      ASSERT(ffFindPivot(row,&f) < 0);
    }
-   SysFree(row);
-   SysFree(piv);
+   sysFree(row);
+   sysFree(piv);
+   //printf("CheckIsSubspace ok\n");
+   return 0;
 }
 
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static void TestSumInter2()
+static int TestSumInter2(int noc)
 {
    PTR v, w, wrk1, wrk2, x;
    int *piv;
@@ -201,68 +197,68 @@ static void TestSumInter2()
 
    /* Allocate buffers.
       ----------------- */
-   vdim = nor1 = MtxRandomInt(FfNoc + 1);
-   wdim = nor2 = MtxRandomInt(FfNoc + 1);
-   v = FfAlloc(vdim);
-   w = FfAlloc(wdim);
-   wrk1 = FfAlloc(nor1 + nor2);
-   wrk2 = FfAlloc(nor1 + nor2);
+   vdim = nor1 = mtxRandomInt(noc + 1);
+   wdim = nor2 = mtxRandomInt(noc + 1);
+   v = ffAlloc(vdim, noc);
+   w = ffAlloc(wdim, noc);
+   ffSetNoc(noc);
+   wrk1 = ffAlloc(nor1 + nor2, noc);
+   wrk2 = ffAlloc(nor1 + nor2, noc);
    piv = NALLOC(int,nor1 + nor2);
+
+   MESSAGE(2,("TestSumInter2: q=%d, noc=%d, vnor=%d wnor=%d\n",
+	       ffOrder, noc, vdim, wdim));
 
    /* Fill with random values.
       ------------------------ */
-   for (i = 0, x = v; i < nor1; ++i, FfStepPtr(&x)) {
-      for (k = 0; k < FfNoc; ++k) {
-         FfInsert(x,k,FTab[MtxRandomInt(FfOrder)]);
+   for (i = 0, x = v; i < nor1; ++i, ffStepPtr(&x, noc)) {
+      for (k = 0; k < noc; ++k) {
+         ffInsert(x,k,FTab[mtxRandomInt(ffOrder)]);
       }
    }
-   for (i = 0, x = w; i < nor2; ++i, FfStepPtr(&x)) {
-      for (k = 0; k < FfNoc; ++k) {
-         FfInsert(x,k,FTab[MtxRandomInt(FfOrder)]);
+   for (i = 0, x = w; i < nor2; ++i, ffStepPtr(&x, noc)) {
+      for (k = 0; k < noc; ++k) {
+         ffInsert(x,k,FTab[mtxRandomInt(ffOrder)]);
       }
    }
-   memcpy(wrk1,v,nor1 * FfCurrentRowSize);
-   memcpy(FfGetPtr(wrk1,nor1),w,nor2 * FfCurrentRowSize);
+   //printrows("v",v,vdim);
+   //printrows("w",w,wdim);
 
-   FfSumAndIntersection(wrk1,&nor1,&nor2,wrk2,piv);
+   memcpy(wrk1,v,ffSize(nor1, noc));
+   memcpy(ffGetPtr(wrk1,nor1,noc),w,ffSize(nor2,noc));
+   ffSumAndIntersection(noc,wrk1,&nor1,&nor2,wrk2,piv);
 
-   /*
-      printf("v:\n");
-      printrows(v,vdim);
-      printf("w:\n");
-      printrows(w,wdim);
-      printf("sum:\n");
-      printrows(wrk1,nor1);
-      printf("int:\n");
-      printrows(FfGetPtr(wrk2,nor1),nor2);
-    */
+   //printrows("sum", wrk1, nor1);
+   //printrows("intersection", ffGetPtr(wrk2, nor1), nor2);
+  
 
    /* Check relations between V, W, V+w, and VW.
       ------------------------------------------ */
-   CheckSubspace(v,vdim,wrk1,nor1);
-   CheckSubspace(w,wdim,wrk1,nor1);
-   CheckSubspace(FfGetPtr(wrk2,nor1),nor2,v,vdim);
-   CheckSubspace(FfGetPtr(wrk2,nor1),nor2,w,wdim);
+   int result = 0;
+   result |= CheckIsSubspace(noc, v,vdim,wrk1,nor1);
+   result |= CheckIsSubspace(noc, w,wdim,wrk1,nor1);
+   result |= CheckIsSubspace(noc, ffGetPtr(wrk2,nor1,noc),nor2,v,vdim);
+   result |= CheckIsSubspace(noc, ffGetPtr(wrk2,nor1,noc),nor2,w,wdim);
 
-   SysFree(wrk1);
-   SysFree(wrk2);
-   SysFree(v);
-   SysFree(w);
-   SysFree(piv);
+   sysFree(wrk1);
+   sysFree(wrk2);
+   sysFree(v);
+   sysFree(w);
+   sysFree(piv);
+   return result;
 }
 
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-test_F SumIntersection()
+TstResult Matrix_SumIntersection(int q)
 {
-   while (NextField() > 0) {
-      int size;
-
-      for (size = 1; size < 100; size += size / 10 + 1) {
-         FfSetNoc(size);
-         TestSumInter1();
-         TestSumInter2();
-      }
-   }
+    int result = 0;
+    for (int noc = 1; result == 0 && noc < 100; noc += noc / 10 + 1) {
+	result |= TestSumInter1(noc);
+	result |= TestSumInter2(noc);
+    }
+    return result;
 }
+
+// vim:fileencoding=utf8:sw=3:ts=8:et:cin

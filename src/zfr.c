@@ -1,20 +1,15 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // C MeatAxe - Apply the Frobenius automorphism to a matrix.
-//
-// (C) Copyright 1998-2015 Michael Ringe, Lehrstuhl D fuer Mathematik, RWTH Aachen
-//
-// This program is free software; see the file COPYING for details.
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
-#include <meataxe.h>
+#include "meataxe.h"
 
 
 /* ------------------------------------------------------------------
    Global data
    ------------------------------------------------------------------ */
 
-MTX_DEFINE_FILE_INFO
 
 static MtxApplicationInfo_t AppInfo = { 
 "zfr", "Frobenius Automorphism",
@@ -40,14 +35,14 @@ static PTR m1;				/* Workspace, one row */
 
 
 
-static int Init(int argc, const char **argv)
+static int Init(int argc, char **argv)
 
 {
     /* Parse command line
        ------------------ */
-    if ((App = AppAlloc(&AppInfo,argc,argv)) == NULL)
+    if ((App = appAlloc(&AppInfo,argc,argv)) == NULL)
 	return -1;
-    if (AppGetArguments(App,2,2) < 0)
+    if (appGetArguments(App,2,2) < 0)
 	return -1;
     iname = App->ArgV[0];
     oname = App->ArgV[1];
@@ -58,29 +53,28 @@ static int Init(int argc, const char **argv)
 
 
 static int OpenFiles()
-
 {
     /* Open the input file
        ------------------- */
-    if ((ifile = MfOpen(iname)) == NULL)
+    if ((ifile = mfOpen(iname)) == NULL)
 	return -1;
     if (ifile->Field < 2) 
     {
-	MTX_ERROR2("%s: %E",iname,MTX_ERR_NOTMATRIX);
+	mtxAbort(MTX_HERE,"%s: %s",iname,MTX_ERR_NOTMATRIX);
 	return -1;
     }
-    FfSetField(ifile->Field); 
-    FfSetNoc(ifile->Noc);
-    MESSAGE(0,("Characteristic is %d\n",FfChar));
+    ffSetField(ifile->Field); 
+    ffSetNoc(ifile->Noc);
+    MESSAGE(0,("Characteristic is %d\n",ffChar));
 
     /* Open output file, allocate memory.
        ---------------------------------- */
-    if ((ofile = MfCreate(oname,ifile->Field,ifile->Nor,ifile->Noc)) == NULL)
+    if ((ofile = mfCreate(oname,ifile->Field,ifile->Nor,ifile->Noc)) == NULL)
     {
-	MTX_ERROR("Cannot create output file");
+	mtxAbort(MTX_HERE,"Cannot create output file");
 	return -1;
     }
-    m1 = FfAlloc(1);
+    m1 = ffAlloc(1, ifile->Noc);
     if (m1 == NULL)
 	return -1;
     return 0;
@@ -92,12 +86,12 @@ static void Cleanup()
 
 {
     if (ifile != NULL)
-	MfClose(ifile);
+	mfClose(ifile);
     if (ofile != NULL)
-	MfClose(ofile);
-    SysFree(m1);
+	mfClose(ofile);
+    sysFree(m1);
     if (App != NULL)
-	AppFree(App);
+	appFree(App);
 }
 
 
@@ -111,23 +105,23 @@ static int FrobeniusMap()
     for (i = 0; i < ifile->Nor; ++i)
     {
 	int k;
-	if (MfReadRows(ifile,m1,1) != 1)
+	if (mfReadRows(ifile,m1,1) != 1)
 	{
-	    MTX_ERROR1("Error reading %s",iname);
+	    mtxAbort(MTX_HERE,"Error reading %s",iname);
 	    return 1;
 	}
-	for (k = 0; k < FfNoc; ++k)
+	for (k = 0; k < ffNoc; ++k)
 	{
-	    FEL f1 = FfExtract(m1,k);
+	    FEL f1 = ffExtract(m1,k);
 	    FEL f2 = f1;
 	    int n;
-	    for (n = FfChar - 1; n != 0; --n)
-		f2 = FfMul(f1,f2);
-	    FfInsert(m1,k,f2);
+	    for (n = ffChar - 1; n != 0; --n)
+		f2 = ffMul(f1,f2);
+	    ffInsert(m1,k,f2);
 	}
-	if (MfWriteRows(ofile,m1,1) != 1)
+	if (mfWriteRows(ofile,m1,1) != 1)
 	{
-	    MTX_ERROR1("Error writing %s",oname);
+	    mtxAbort(MTX_HERE,"Error writing %s",oname);
 	    return 1;
 	}
     }
@@ -141,12 +135,12 @@ static int FrobeniusMap()
    main()
    ------------------------------------------------------------------ */
 
-int main(int argc, const char **argv)
+int main(int argc, char **argv)
 
 {
     if (Init(argc,argv) != 0)
     {
-	MTX_ERROR("Initialization failed");
+	mtxAbort(MTX_HERE,"Initialization failed");
 	return 1;
     }
     if (OpenFiles() != 0)
@@ -187,3 +181,4 @@ This program reads a matrix, applies the Frobenius automorphism
 x↦x<sup>p</sup>, where p is the characteristic of the field, 
 to each entry and writes out the result. 
 */
+// vim:fileencoding=utf8:sw=3:ts=8:et:cin

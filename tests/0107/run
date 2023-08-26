@@ -1,20 +1,20 @@
-# Test ZTR.
+echo "0107 - ZTR"
 
 . ../tests/common.sh
 
-ztr ../tests/data/Mat2 tmp.$$.x2
-ztr ../tests/data/Mat5 tmp.$$.x5
-ztr ../tests/data/Mat25 tmp.$$.x25
-ztr ../tests/data/Mat67 tmp.$$.x67
-ztr ../tests/data/ac.1 ac
+testTranspose()
+{
+   ztr "${MTX_TEST_DATA_DIR}/$1" tmp.$$.$1_tr
+   zpr tmp.$$.$1_tr tmp.$$.$1_tr.txt
+   cmp tmp.$$.$1_tr.txt "${MTX_TESTCASE_DIR}/$1_tr.txt.expected"
+}
 
-checksum tmp.$$.x2 84.1963892729 || exit 1
-checksum tmp.$$.x5 204.3745149098 || exit 1
-checksum tmp.$$.x25 588.499337148 || exit 1
-checksum tmp.$$.x67 588.2460095492 || exit 1
-checksum ac 5690.872810896 || exit 1
+testTranspose Mat2
+testTranspose Mat25
+testTranspose Mat125
+if [ "$MTX_ZZZ" -eq 1 ]; then
+   testTranspose Mat625
+fi
 
 # Clean up
-# --------
 rm -f tmp.$$.*
-

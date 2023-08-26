@@ -1,13 +1,9 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // C MeatAxe - Uncondense vectors
-//
-// (C) Copyright 1998-2015 Michael Ringe, Lehrstuhl D fuer Mathematik, RWTH Aachen
-//
-// This program is free software; see the file COPYING for details.
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
-#include <meataxe.h>
+#include "meataxe.h"
 #include <stdlib.h>
 #include <string.h>
 
@@ -16,7 +12,6 @@
    Global data
    ------------------------------------------------------------------ */
 
-MTX_DEFINE_FILE_INFO
 
 
 static MtxApplicationInfo_t AppInfo = { 
@@ -59,31 +54,31 @@ static int uncondense()
     {
 	long k;
 
-	if (MfReadRows(InputFile,InputBuffer,1) != 1)
+	if (mfReadRows(InputFile,InputBuffer,1) != 1)
 	{
-	    MTX_ERROR1("Error reading vector from %s",InputFile->Name);
+	    mtxAbort(MTX_HERE,"Error reading vector from %s",InputFile->Name);
 	    return -1;
 	}
 
-	FfSetNoc(Degree);
-	FfMulRow(OutputBuffer,FF_ZERO);
+	ffSetNoc(Degree);
+	ffMulRow(OutputBuffer,FF_ZERO);
 
 	for (k = 0; k < NOrbits; ++k)
 	{
 	    int l;
-	    FEL f = FfExtract(InputBuffer,k);
+	    FEL f = ffExtract(InputBuffer,k);
 	    int count = OrbitSizes->Data[k];
 	    for (l = 0; count > 0 && l < Degree; ++l)
 	    {
 		if (Orbits->Data[l] == k)
 		{
-		    FfInsert(OutputBuffer,l,f);
+		    ffInsert(OutputBuffer,l,f);
 		    --count;
 		}
 	    }
 	}
 	
-	if (MfWriteRows(OutputFile,OutputBuffer,1) != 1)
+	if (mfWriteRows(OutputFile,OutputBuffer,1) != 1)
 	    return -1;
     }
     return 0;
@@ -101,18 +96,18 @@ static int ReadOrbits()
     FILE *orbfile;
 
     MESSAGE(1,("Reading orbits from %s",orbname));
-    if ((orbfile = SysFopen(orbname,FM_READ)) == NULL)
+    if ((orbfile = sysFopen(orbname,"rb")) == NULL)
 	return -1;
-    Orbits = ImatRead(orbfile);
+    Orbits = imatRead(orbfile);
     if (Orbits == NULL)
     {
-	MTX_ERROR1("Error reading orbit table from %s",orbname);
+	mtxAbort(MTX_HERE,"Error reading orbit table from %s",orbname);
 	return -1;
     }
-    OrbitSizes = ImatRead(orbfile);
+    OrbitSizes = imatRead(orbfile);
     if (OrbitSizes == NULL)
     {
-	MTX_ERROR1("Error reading orbit sizes table from %s",orbname);
+	mtxAbort(MTX_HERE,"Error reading orbit sizes table from %s",orbname);
 	return -1;
     }
     Degree = Orbits->Noc;
@@ -132,30 +127,30 @@ static int OpenFiles()
 {
     /* Open the vector file and allocate row buffer.
        --------------------------------------------- */
-    if ((InputFile = MfOpen(vecname)) == NULL)
+    if ((InputFile = mfOpen(vecname)) == NULL)
 	return -1;
     if (InputFile->Field < 2)
     {
-	MTX_ERROR2("%s: %E",vecname,MTX_ERR_NOTMATRIX);
+	mtxAbort(MTX_HERE,"%s: %s",vecname,MTX_ERR_NOTMATRIX);
 	return -1;
     }
     if (InputFile->Noc != NOrbits)
     {
-	MTX_ERROR3("%s and %s: %E",vecname,orbname,MTX_ERR_INCOMPAT);
+	mtxAbort(MTX_HERE,"%s and %s: %s",vecname,orbname,MTX_ERR_INCOMPAT);
 	return -1;
     }
-    FfSetField(InputFile->Field);
-    FfSetNoc(NOrbits);
-    InputBuffer = FfAlloc(1);
+    ffSetField(InputFile->Field);
+    ffSetNoc(NOrbits);
+    InputBuffer = ffAlloc(1, NOrbits);
 
     /* Open the output file and allocate output buffer.
        ------------------------------------------------ */
     MESSAGE(0,("Output is %d x %d\n",InputFile->Nor,Degree));
-    OutputFile = MfCreate(resname,FfOrder,InputFile->Nor,Degree);
+    OutputFile = mfCreate(resname,ffOrder,InputFile->Nor,Degree);
     if (OutputFile == NULL)
 	return -1;
-    FfSetNoc(Degree);
-    OutputBuffer = FfAlloc(1);
+    ffSetNoc(Degree);
+    OutputBuffer = ffAlloc(1, Degree);
 
     return 0;
 }
@@ -165,13 +160,13 @@ static int OpenFiles()
    Init() - Program initialization.
    ------------------------------------------------------------------ */
 
-static int Init(int argc, const char **argv)
+static int Init(int argc, char **argv)
 
 {
-    App = AppAlloc(&AppInfo,argc,argv);
+    App = appAlloc(&AppInfo,argc,argv);
     if (App == NULL)
 	return -1;
-    if (AppGetArguments(App,3,3) < 0)
+    if (appGetArguments(App,3,3) < 0)
 	return -1;
     vecname = App->ArgV[0];
     orbname = App->ArgV[1];
@@ -179,12 +174,12 @@ static int Init(int argc, const char **argv)
 
     if (ReadOrbits() != 0)
     {
-	MTX_ERROR("Error reading orbits");
+	mtxAbort(MTX_HERE,"Error reading orbits");
 	return -1;
     }
     if (OpenFiles() != 0)
     {
-	MTX_ERROR("Error opening files");
+	mtxAbort(MTX_HERE,"Error opening files");
 	return -1;
     }
     return 0;
@@ -195,11 +190,11 @@ static int Init(int argc, const char **argv)
 static void Cleanup()
 
 {
-    if (InputFile != NULL) MfClose(InputFile);
-    if (OutputFile != NULL) MfClose(OutputFile);
-    if (Orbits != NULL) ImatFree(Orbits);
-    if (OrbitSizes != NULL) ImatFree(OrbitSizes);
-    AppFree(App);
+    if (InputFile != NULL) mfClose(InputFile);
+    if (OutputFile != NULL) mfClose(OutputFile);
+    if (Orbits != NULL) imatFree(Orbits);
+    if (OrbitSizes != NULL) imatFree(OrbitSizes);
+    appFree(App);
 }
 
 
@@ -207,13 +202,13 @@ static void Cleanup()
    main()
    ------------------------------------------------------------------ */
 
-int main(int argc, const char **argv)
+int main(int argc, char **argv)
 
 {
     int rc;
     if (Init(argc,argv) != 0)
     {
-	MTX_ERROR("Initialization failed");
+	mtxAbort(MTX_HERE,"Initialization failed");
 	return 1;
     }
     rc = uncondense();
@@ -271,3 +266,4 @@ Result = 1 1 3 3 3 3 2 2 2
 </pre>
 */
 
+// vim:fileencoding=utf8:sw=3:ts=8:et:cin

@@ -1,12 +1,8 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // C MeatAxe - Cut file.
-//
-// (C) Copyright 1998-2015 Michael Ringe, Lehrstuhl D fuer Mathematik, RWTH Aachen
-//
-// This program is free software; see the file COPYING for details.
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#include <meataxe.h>
+#include "meataxe.h"
 
 #include <ctype.h>
 #include <string.h>
@@ -20,7 +16,6 @@
    Variables
    ------------------------------------------------------------------ */
 
-MTX_DEFINE_FILE_INFO
 
 static MtxApplicationInfo_t AppInfo = { 
 "zct", "Cut Matrices Or Permutations",
@@ -101,7 +96,7 @@ static int list(long x[MAXPIECES][2], const char *c)
 	{	++c;
 		if (!isdigit(*c))
 		{
-    	    	    MTX_ERROR("Invalid range (missing number after '-')");
+    	    	    mtxAbort(MTX_HERE,"Invalid range (missing number after '-')");
 		    return -1;
 		}
 		x[n][1] = atol(c);
@@ -129,7 +124,7 @@ static int parseargs()
 {
     const char *c;
 
-    if (AppGetArguments(App,3,3) < 0)
+    if (appGetArguments(App,3,3) < 0)
 	return -1;
 
     /* Process the <Range> argument
@@ -141,7 +136,7 @@ static int parseargs()
     {
         if (*c != ':' && *c != ';')
 	{
-	    MTX_ERROR("Invalid range (':' or ';' expected)");
+	    mtxAbort(MTX_HERE,"Invalid range (':' or ';' expected)");
 	    return -1;
 	}
         ++c;
@@ -167,7 +162,7 @@ static int init()
 {
     int i;
 	
-    if ((InputFile = FfReadHeader(ifilename,&fl,&nor,&noc)) == NULL)
+    if ((InputFile = ffReadHeader(ifilename,&fl,&nor,&noc)) == NULL)
 	return -1;
     if (fl == -1)	/* Is it a permutation? */
     {	
@@ -206,10 +201,10 @@ static int init()
 
 
 
-static int Init(int argc, const char **argv)
+static int Init(int argc, char **argv)
 
 {
-    if ((App = AppAlloc(&AppInfo,argc,argv)) == NULL)
+    if ((App = appAlloc(&AppInfo,argc,argv)) == NULL)
 	return -1;
     if (parseargs() != 0)
 	return -1;
@@ -243,10 +238,10 @@ static int cutperm()
     for (i = 0; i < nrows; ++i)
     {
 	int n = nor * (rowlist[i][1]-rowlist[i][0]+1);
-	SysFseek(InputFile,12 + (rowlist[i][0] - 1)*nor*4);
-	if (SysReadLong(InputFile,y,n) != n)
+	sysFseek(InputFile,12 + (rowlist[i][0] - 1)*nor*4);
+	if (sysReadLong32(InputFile,y,n) != n)
 	{
-	    MTX_ERROR1("Cannot read from %s",ifilename);
+	    mtxAbort(MTX_HERE,"Cannot read from %s",ifilename);
 	    return -1;
 	}
 	y += n;
@@ -254,9 +249,9 @@ static int cutperm()
 
     /* Write output
        ------------ */
-    if ((OutputFile = FfWriteHeader(ofilename,(long)-1,nor,onor)) == NULL)
+    if ((OutputFile = ffWriteHeader(ofilename,(long)-1,nor,onor)) == NULL)
 	return -1;
-    if (SysWriteLong(OutputFile,x,onor*nor) != onor*nor)
+    if (sysWriteLong32(OutputFile,x,onor*nor) != onor*nor)
 	return -1;
     return 0;
 }
@@ -274,41 +269,41 @@ static int cutmatrix()
 
     if (rowlist[nrows-1][1] > nor) err('o');
     if (collist[ncols-1][1] > noc) err('o');
-    FfSetField(fl);
-    FfSetNoc(noc);
-    row = FfAlloc(1);
-    FfSetNoc(onoc);
-    x = FfAlloc(onor);
+    ffSetField(fl);
+    ffSetNoc(noc);
+    row = ffAlloc(1, noc);
+    ffSetNoc(onoc);
+    x = ffAlloc(onor, onoc);
     y = x;
     for (i = 0; i < nrows; ++i)
     {	
-	FfSetNoc(noc);
-	FfSeekRow(InputFile,rowlist[i][0]-1);
+	ffSetNoc(noc);
+	ffSeekRow(InputFile,rowlist[i][0]-1);
 	for (k = 0; k <= rowlist[i][1]-rowlist[i][0]; ++k)
 	{   
-	    FfSetNoc(noc);
-	    FfReadRows(InputFile,row,1);
+	    ffSetNoc(noc);
+	    ffReadRows(InputFile,row,1, noc);
 	    pos = 0;
-	    FfSetNoc(onoc);
-	    FfMulRow(y,FF_ZERO);
+	    ffSetNoc(onoc);
+	    ffMulRow(y,FF_ZERO);
 	    for (ii = 0; ii < ncols; ++ii)
 	    {
 		for (kk = collist[ii][0]-1; kk < collist[ii][1]; ++kk)
-		{   FEL f = FfExtract(row,kk);
-		    FfInsert(y,pos,f);
+		{   FEL f = ffExtract(row,kk);
+		    ffInsert(y,pos,f);
 		    ++pos;
 		}
 	    }
-	    FfStepPtr(&y);
+	    ffStepPtr(&y, onoc);
 	}
     }
 
     /* Write output
        ------------ */
-    FfSetNoc(onoc);
-    if ((OutputFile = FfWriteHeader(ofilename,fl,onor,onoc)) == NULL)
+    ffSetNoc(onoc);
+    if ((OutputFile = ffWriteHeader(ofilename,fl,onor,onoc)) == NULL)
 	return -1;
-    if (FfWriteRows(OutputFile,x,onor) != onor)
+    if (ffWriteRows(OutputFile,x,onor, onoc) != onor)
 	return -1;
     return 0;
 }
@@ -320,18 +315,18 @@ static void Cleanup()
 	fclose(OutputFile);
     if (InputFile != NULL)
 	fclose(InputFile);
-    AppFree(App);
+    appFree(App);
 }
 
 
-int main(int argc, const char **argv)
+int main(int argc, char **argv)
 
 {
     int rc;
 
     if (Init(argc,argv) != 0)
     {
-	MTX_ERROR("Initialization failed");
+	mtxAbort(MTX_HERE,"Initialization failed");
 	return -1;
     }
     if (fl == -1)
@@ -446,3 +441,4 @@ memory.
 
 
 */
+// vim:fileencoding=utf8:sw=3:ts=8:et:cin

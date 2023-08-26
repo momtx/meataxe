@@ -1,13 +1,9 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // C MeatAxe - Sum of matrices.
-//
-// (C) Copyright 1998-2015 Michael Ringe, Lehrstuhl D fuer Mathematik, RWTH Aachen
-//
-// This program is free software; see the file COPYING for details.
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
-#include <meataxe.h>
+#include "meataxe.h"
 #include <string.h>
 
 
@@ -34,7 +30,6 @@ MTX_COMMON_OPTIONS_DESCRIPTION
 
 static MtxApplication_t *App = NULL;
 
-MTX_DEFINE_FILE_INFO
 
 #define MTX_MAX_INPUT 20
 int NInput;			    /* Number of input matrices */
@@ -52,7 +47,7 @@ static int CheckHeader(const char *fn, int fl, int nor, int noc)
 
     if (fl < 2) 
     {
-	MTX_ERROR2("%s: %E",fn,MTX_ERR_NOTMATRIX);
+	mtxAbort(MTX_HERE,"%s: %s",fn,MTX_ERR_NOTMATRIX);
 	return -1;
     }
     if (Nor == -1)
@@ -64,7 +59,7 @@ static int CheckHeader(const char *fn, int fl, int nor, int noc)
     }
     else if (fl != Field || nor != Nor || noc != Noc)
     {
-	MTX_ERROR3("%s and %s: %E",fn0,fn,MTX_ERR_INCOMPAT);
+	mtxAbort(MTX_HERE,"%s and %s: %s",fn0,fn,MTX_ERR_INCOMPAT);
 	return -1;
     }
     return 0;
@@ -76,17 +71,17 @@ static int CheckHeader(const char *fn, int fl, int nor, int noc)
    Init()
    ------------------------------------------------------------------ */
 
-static int Init(int argc, const char **argv)
+static int Init(int argc, char **argv)
 
 {
     int i;
 
-    if ((App = AppAlloc(&AppInfo,argc,argv)) == NULL)
+    if ((App = appAlloc(&AppInfo,argc,argv)) == NULL)
 	return -1;
 
     /* Parse command line.
        ------------------- */
-    if (AppGetArguments(App,3,MTX_MAX_INPUT + 1) < 0)
+    if (appGetArguments(App,3,MTX_MAX_INPUT + 1) < 0)
 	return -1;
     NInput = App->ArgC - 1;
 
@@ -99,7 +94,7 @@ static int Init(int argc, const char **argv)
 	Subtract[i] = *file_name == '-';
 	if (*file_name == '-' || *file_name == '+')
 	    ++file_name;
-	Input[i] = FfReadHeader(file_name,&fl2,&nor2,&noc2);
+	Input[i] = ffReadHeader(file_name,&fl2,&nor2,&noc2);
 	if (Input[i] == NULL)
 	    return -1;
 	if (CheckHeader(file_name,fl2,nor2,noc2) != 0)
@@ -108,16 +103,16 @@ static int Init(int argc, const char **argv)
 
     /* Open the output file.
        --------------------- */
-    Output = FfWriteHeader(App->ArgV[App->ArgC - 1],Field,Nor,Noc);
+    Output = ffWriteHeader(App->ArgV[App->ArgC - 1],Field,Nor,Noc);
     if (Output == NULL)
 	return -1;
 
     /* Allocate workspace
        ------------------ */
-    FfSetField(Field);
-    FfSetNoc(Noc);
-    Buf1 = FfAlloc(1);
-    Buf2 = FfAlloc(1);
+    ffSetField(Field);
+    ffSetNoc(Noc);
+    Buf1 = ffAlloc(1, Noc);
+    Buf2 = ffAlloc(1, Noc);
     if (Buf1 == NULL || Buf2 == NULL)
 	return -1;
 
@@ -148,18 +143,17 @@ static void CleanUp()
  
     /* Free workspace.
        --------------- */
-    if (Buf1 != NULL) SysFree(Buf1);
-    if (Buf2 != NULL) SysFree(Buf2);
-    if (App != NULL) AppFree(App);
+    if (Buf1 != NULL) sysFree(Buf1);
+    if (Buf2 != NULL) sysFree(Buf2);
+    if (App != NULL) appFree(App);
 }
 
 
 
 static int AddMatrices()
-
 {
     int i;
-    FEL MinusOne = FfNeg(FF_ONE);
+    FEL MinusOne = ffNeg(FF_ONE);
 
     /* Process the matrices row by row.
        -------------------------------- */
@@ -169,37 +163,37 @@ static int AddMatrices()
 
 	/* Read a row from the first matrix.
 	   --------------------------------- */
-	FfReadRows(Input[0],Buf1,1);
+	ffReadRows(Input[0],Buf1,1, Noc);
 	if (Subtract[0])
-	    FfMulRow(Buf1,MinusOne);
+	    ffMulRow(Buf1,MinusOne);
 
 	/* Add or subtract rows from the other matrices.
 	   --------------------------------------------- */
 	for (k = 1; k < NInput; ++k)
 	{
-	    FfReadRows(Input[k],Buf2,1);
+	    ffReadRows(Input[k],Buf2,1, Noc);
 	    if (Subtract[k])
-		FfAddMulRow(Buf1,Buf2,MinusOne);
+		ffAddMulRow(Buf1,Buf2,MinusOne);
 	    else
-		FfAddRow(Buf1,Buf2);
+		ffAddRow(Buf1,Buf2);
 	}
 
 	/* Write the result to the output file.
 	   ------------------------------------ */
-	FfWriteRows(Output,Buf1,1);
+	ffWriteRows(Output,Buf1,1, Noc);
     }
     return 0;
 }
 
 
 
-int main(int argc, const char **argv)
+int main(int argc, char **argv)
 
 {
     int rc;
     if (Init(argc, argv) != 0)
     {
-	MTX_ERROR("Initialization failed");
+	mtxAbort(MTX_HERE,"Initialization failed");
 	return 1;
     }
     rc = AddMatrices();
@@ -266,3 +260,4 @@ zad A --B C
 </pre>
 
 */
+// vim:fileencoding=utf8:sw=3:ts=8:et:cin

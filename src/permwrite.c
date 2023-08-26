@@ -1,17 +1,12 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // C MeatAxe - Write a permutation
-//
-// (C) Copyright 1998-2015 Michael Ringe, Lehrstuhl D fuer Mathematik, RWTH Aachen
-//
-// This program is free software; see the file COPYING for details.
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#include <meataxe.h>
+#include "meataxe.h"
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // Local data
 
-MTX_DEFINE_FILE_INFO
 
 /// @addtogroup perm
 /// @{
@@ -25,22 +20,20 @@ MTX_DEFINE_FILE_INFO
 /// @param f File to write to.
 /// @return The function returns 0 on success and -1 on error.
 
-int PermWrite(const Perm_t *perm, FILE *f)
+int permWrite(const Perm_t *perm, FILE *f)
 {
    long hdr[3];
 
-   if (!PermIsValid(perm)) {
-      return -1;
-   }
+   permValidate(MTX_HERE, perm);
    hdr[0] = -1;
    hdr[1] = perm->Degree;
    hdr[2] = 1;
-   if (SysWriteLong(f,hdr,3) != 3) {
-      MTX_ERROR("Cannot write header");
+   if (sysWriteLong32(f,hdr,3) != 3) {
+      mtxAbort(MTX_HERE,"Cannot write header");
       return -1;
    }
-   if (SysWriteLong(f,perm->Data,hdr[1]) != (int) hdr[1]) {
-      MTX_ERROR("Cannot write data");
+   if (sysWriteLong32(f,perm->Data,hdr[1]) != (int) hdr[1]) {
+      mtxAbort(MTX_HERE,"Cannot write data");
       return -1;
    }
    return 0;
@@ -57,22 +50,20 @@ int PermWrite(const Perm_t *perm, FILE *f)
 /// @param fn File name.
 /// @return The function returns 0 on success and -1 on error.
 
-int PermSave(const Perm_t *perm, const char *fn)
+int permSave(const Perm_t *perm, const char *fn)
 {
    FILE *f;
    int result;
 
-   if (!PermIsValid(perm)) {
+   permValidate(MTX_HERE, perm);
+   if ((f = sysFopen(fn,"wb")) == NULL) {
+      mtxAbort(MTX_HERE,"Cannot open %s",fn);
       return -1;
    }
-   if ((f = SysFopen(fn,FM_CREATE)) == NULL) {
-      MTX_ERROR1("Cannot open %s",fn);
-      return -1;
-   }
-   result = PermWrite(perm,f);
+   result = permWrite(perm,f);
    fclose(f);
    if (result != 0) {
-      MTX_ERROR1("Cannot write permutation to %s",fn);
+      mtxAbort(MTX_HERE,"Cannot write permutation to %s",fn);
       return -1;
    }
    return 0;
@@ -80,3 +71,4 @@ int PermSave(const Perm_t *perm, const char *fn)
 
 
 /// @}
+// vim:fileencoding=utf8:sw=3:ts=8:et:cin

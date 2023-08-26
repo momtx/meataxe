@@ -1,70 +1,64 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // C MeatAxe - Matrix inversion
-//
-// (C) Copyright 1998-2015 Michael Ringe, Lehrstuhl D fuer Mathematik, RWTH Aachen
-//
-// This program is free software; see the file COPYING for details.
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#include <meataxe.h>
+#include "meataxe.h"
 #include <string.h>
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // Local data
 
-MTX_DEFINE_FILE_INFO
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static int zmatinv(PTR mat, PTR result)
+static void zmatinv(PTR mat, PTR result, int noc)
 {
    PTR xj1, xj2, xk1, xk2;
    FEL f1 = FF_ZERO, f2;
    long j, k;
 
+   MTX_ASSERT(ffNoc == noc, );
    // initialize result with identity matrix
-   for (j = 0, xj1 = result; j < FfNoc; ++j, FfStepPtr(&xj1)) {
-      FfMulRow(xj1,FF_ZERO);
-      FfInsert(xj1,j,FF_ONE);
+   for (j = 0, xj1 = result; j < noc; ++j, ffStepPtr(&xj1, noc)) {
+      ffMulRow(xj1,FF_ZERO);
+      ffInsert(xj1,j,FF_ONE);
    }
 
    // matrix inversion
    xj1 = mat;
    xj2 = result;
-   for (j = 0; j < FfNoc; ++j) {
+   for (j = 0; j < noc; ++j) {
 
       for (xk1 = xj1, k = j;
-           k < FfNoc && (f1 = FfExtract(xk1,j)) == FF_ZERO;
-           ++k, FfStepPtr(&xk1)) {
+           k < ffNoc && (f1 = ffExtract(xk1,j)) == FF_ZERO;
+           ++k, ffStepPtr(&xk1, noc)) {
       }
       if (f1 == FF_ZERO) {
-         MTX_ERROR1("%E",MTX_ERR_DIV0);
-         return -1;
+         mtxAbort(MTX_HERE,"%s",MTX_ERR_DIV0);
       }
       if (k > j) {      /* Swap rows */
-         FfSwapRows(xk1,xj1);
-/*	    xk2 = FfGetPtr(xj2,k-j,FfNoc);*/
-         xk2 = (PTR)((char *)xj2 + (k - j) * FfCurrentRowSize);
-         FfSwapRows(xk2,xj2);
+         ffSwapRows(xk1,xj1);
+/*	    xk2 = ffGetPtr(xj2,k-j,noc);*/
+         xk2 = (PTR)((char *)xj2 + (k - j) * ffRowSize(noc));
+         ffSwapRows(xk2,xj2);
       }
-      f2 = FfInv(f1);
-      FfMulRow(xj1,f2);
-      FfMulRow(xj2,f2);
+      f2 = ffInv(f1);
+      ffMulRow(xj1,f2);
+      ffMulRow(xj2,f2);
       xk1 = mat;
       xk2 = result;
-      for (k = 0; k < FfNoc; ++k) {
+      for (k = 0; k < ffNoc; ++k) {
          if (k != j) {
-            f1 = FfNeg(FfExtract(xk1,j));
-            FfAddMulRow(xk1,xj1,f1);
-            FfAddMulRow(xk2,xj2,f1);
+            f1 = ffNeg(ffExtract(xk1,j));
+            ffAddMulRow(xk1,xj1,f1);
+            ffAddMulRow(xk2,xj2,f1);
          }
-         FfStepPtr(&xk1);
-         FfStepPtr(&xk2);
+         ffStepPtr(&xk1, noc);
+         ffStepPtr(&xk2, noc);
       }
-      FfStepPtr(&xj1);
-      FfStepPtr(&xj2);
+      ffStepPtr(&xj1, noc);
+      ffStepPtr(&xj2, noc);
    }
-   return 0;
 }
 
 
@@ -72,44 +66,30 @@ static int zmatinv(PTR mat, PTR result)
 /// @{
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-/// Inverse of a matrix
-/// This function calculates the inverse of a matrix. @em mat must be a
-/// non-singular square matrix. The inverse matrix is returned in a newly
-/// allocated Matrix_t structure, and the original matrix remains unchanged.
-/// @param mat Pointer to the matrix.
-/// @return Inverse matrix or 0 on error.
+/// Calculates and returns the inverse of a matrix. @a mat must be a non-singular square matrix,
+/// otherwise the program is aborted with an error message.
+/// The return value is a independent matrix, the original matrix remains unchanged.
 
-Matrix_t *MatInverse(const Matrix_t *mat)
+Matrix_t *matInverse(const Matrix_t *mat)
 {
    PTR tmp = NULL;      // workspace
-   Matrix_t *dest;
 
-   if (!MatIsValid(mat)) {
-      return NULL;
-   }
+   matValidate(MTX_HERE, mat);
    if (mat->Nor != mat->Noc) {
-      MTX_ERROR1("%E",MTX_ERR_NOTSQUARE);
-      return NULL;
+      mtxAbort(MTX_HERE,"%s",MTX_ERR_NOTSQUARE);
    }
-   dest = MatId(mat->Field,mat->Nor);
-   if (dest == NULL) {
-      return NULL;
-   }
+   const int dim = mat->Nor;
+   Matrix_t *dest = matId(mat->Field, dim);
 
    // Copy matrix into workspace
-   tmp = FfAlloc(mat->Nor);
-   if (tmp == NULL) {
-      return NULL;
-   }
-   memcpy(tmp,mat->Data,FfCurrentRowSize * mat->Nor);
+   tmp = ffAlloc(dim, dim);
+   memcpy(tmp,mat->Data,ffSize(dim, dim));
 
    // Inversion
-   if (zmatinv(tmp,dest->Data) != 0) {
-      MatFree(dest);
-      return NULL;
-   }
+   zmatinv(tmp,dest->Data, dim);
    return dest;
 }
 
-
 /// @}
+
+// vim:fileencoding=utf8:sw=3:ts=8:et:cin

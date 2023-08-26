@@ -1,14 +1,10 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // C MeatAxe - Vector permute (make permutations from matrices)
-//
-// (C) Copyright 1998-2015 Michael Ringe, Lehrstuhl D fuer Mathematik, RWTH Aachen
-//
-// This program is free software; see the file COPYING for details.
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 #include <stdlib.h>
 #include <string.h>
-#include <meataxe.h>
+#include "meataxe.h"
 
 #define MAXVEC 100000   /* Default value for maxvec */
 
@@ -17,7 +13,6 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // Global data
 
-MTX_DEFINE_FILE_INFO
 
 static MtxApplicationInfo_t AppInfo = {
    "zvp", "Vector Permute",
@@ -102,7 +97,7 @@ static void InitHash()
    if (hasp < 100) {
       hasm = 3;
    } else {
-      if (FfChar % 83 == 0) {
+      if (ffChar % 83 == 0) {
          hasm = 89;
       } else {
          hasm = 83;
@@ -116,16 +111,16 @@ static void InitHash()
 static int ParseCommandLine()
 {
    // options
-   noout = AppGetOption(App,"-n");
-   vecout = AppGetOption(App,"-v");
-   proj = AppGetOption(App,"-p");
-   NGen = AppGetIntOption(App,"-g",2,1,MAX_GENERATORS);
-   maxvec = AppGetIntOption(App,"-l",MAXVEC,0,-1);
-   Generate = AppGetOption(App,"-m");
-   SeedStart = AppGetIntOption(App,"-s",1,1,10000000) - 1;
+   noout = appGetOption(App,"-n");
+   vecout = appGetOption(App,"-v");
+   proj = appGetOption(App,"-p");
+   NGen = appGetIntOption(App,"-g",2,1,MAX_GENERATORS);
+   maxvec = appGetIntOption(App,"-l",MAXVEC,0,-1);
+   Generate = appGetOption(App,"-m");
+   SeedStart = appGetIntOption(App,"-s",1,1,10000000) - 1;
 
    // arguments
-   if (AppGetArguments(App,3,4) < 0) {
+   if (appGetArguments(App,3,4) < 0) {
       return -1;
    }
    MatName = App->ArgV[0];
@@ -147,26 +142,26 @@ static int ReadFiles()
    for (i = 0; i < NGen; ++i) {
       char fn[200];
       sprintf(fn,"%s.%d",MatName,i + 1);
-      if ((Gen[i] = MatLoad(fn)) == NULL) {
+      if ((Gen[i] = matLoad(fn)) == NULL) {
          return -1;
       }
       if (Gen[i]->Nor != Gen[i]->Noc) {
-         MTX_ERROR2("%s: %E",fn,MTX_ERR_NOTSQUARE);
+         mtxAbort(MTX_HERE,"%s: %s",fn,MTX_ERR_NOTSQUARE);
          return -1;
       }
       if ((i > 0) && ((Gen[i]->Field != Gen[0]->Field)
                       || (Gen[i]->Nor != Gen[0]->Nor))) {
-         MTX_ERROR4("%s and %s.%d: %E",fn,MatName,i + 1,MTX_ERR_INCOMPAT);
+         mtxAbort(MTX_HERE,"%s and %s.%d: %s",fn,MatName,i + 1,MTX_ERR_INCOMPAT);
          return -1;
       }
    }
 
    // read seed space
-   if ((Seed = MatLoad(SeedName)) == NULL) {
+   if ((Seed = matLoad(SeedName)) == NULL) {
       return -1;
    }
    if ((Seed->Field != Gen[0]->Field) || (Seed->Noc != Gen[0]->Nor)) {
-      MTX_ERROR3("%s and %s.0: %E",SeedName,MatName,MTX_ERR_INCOMPAT);
+      mtxAbort(MTX_HERE,"%s and %s.0: %s",SeedName,MatName,MTX_ERR_INCOMPAT);
       return -1;
    }
 
@@ -182,15 +177,16 @@ static int AllocateTables()
 
    tabsize = maxvec + maxvec / 10 + 1;
    MESSAGE(1,("Allocating tables (size=%d)\n",tabsize));
-   vtable = FfAlloc(tabsize + 1);
-   tmp = FfAlloc(1);
+   MTX_ASSERT(ffNoc == Seed->Noc, -1);
+   vtable = ffAlloc(tabsize + 1, Seed->Noc);
+   tmp = ffAlloc(1, Seed->Noc);
    vecpos = NALLOC(int,tabsize + 1);
    vecno = NALLOC(int,tabsize + 1);
    isfree = NALLOC(char,tabsize + 1);
    for (i = 0; i < NGen; ++i) {
       perm[i] = NALLOC(long,maxvec + 1);
       if (perm[i] == NULL) {
-         MTX_ERROR("Error allocationg permutation");
+         mtxAbort(MTX_HERE,"Error allocationg permutation");
          return -1;
       }
    }
@@ -201,9 +197,9 @@ static int AllocateTables()
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static int Init(int argc, const char **argv)
+static int Init(int argc, char **argv)
 {
-   App = AppAlloc(&AppInfo,argc,argv);
+   App = appAlloc(&AppInfo,argc,argv);
    if (App == NULL) {
       return -1;
    }
@@ -228,8 +224,8 @@ static void Normalize(PTR row)
 {
    FEL f;
 
-   FfFindPivot(row,&f);
-   FfMulRow(row,FfInv(f));
+   ffFindPivot(row,&f);
+   ffMulRow(row,ffInv(f));
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -247,7 +243,7 @@ static int MakeNextSeedVector()
       if ((int) iseed >= Seed->Nor) {
          return -1;
       }
-      FfCopyRow(tmp,MatGetPtr(Seed,(int)iseed));
+      ffCopyRow(tmp,matGetPtr(Seed,(int)iseed));
       ++iseed;
    }
    if (proj) {
@@ -265,7 +261,7 @@ static int hash(PTR row)
    register int pos = 0, i;
 
    for (i = 0; i < neh; ++i) {
-      pos = (pos * hasm + FfToInt(FfExtract(row,i))) % hasp;
+      pos = (pos * hasm + ffToInt(ffExtract(row,i))) % hasp;
    }
    return pos;
 }
@@ -286,8 +282,8 @@ static void InitTables()
    nvec = 1;
    nfinished = 0;
    pos = hash(tmp);
-   x = FfGetPtr(vtable,pos);
-   FfCopyRow(x,tmp);
+   x = ffGetPtr(vtable,pos,Seed->Noc);
+   ffCopyRow(x,tmp);
    isfree[pos] = 0;
    vecpos[0] = pos;
    vecno[pos] = 0;
@@ -304,29 +300,29 @@ static int MakeOrbit()
 
    while (nfinished < nvec && nvec <= maxvec) {
       MESSAGE(3,("Vec[%d] * Gen[%d] = ",nfinished,igen));
-      x = FfGetPtr(vtable,vecpos[nfinished]);
-      FfMapRow(x,Gen[igen]->Data,FfNoc,tmp);
+      x = ffGetPtr(vtable,vecpos[nfinished],Seed->Noc);
+      ffMapRow(x,Gen[igen]->Data,ffNoc,tmp);
       if (proj) {
          Normalize(tmp);
       }
 
       // Look up the vector in the hash table.
       pos1 = pos = hash(tmp);
-      x = FfGetPtr(vtable,pos);
-      while (!isfree[pos] && FfCmpRows(tmp,x)) {
+      x = ffGetPtr(vtable,pos,Seed->Noc);
+      while (!isfree[pos] && ffCmpRows(tmp,x)) {
          if (++pos == tabsize) {
             pos = 0;
             x = vtable;
          } else {
-            FfStepPtr(&x);
+            ffStepPtr(&x,Seed->Noc);
          }
          // always true since the hash table is always larger than maxvec
-         MTX_VERIFY(pos != pos1);
+         MTX_ASSERT(pos != pos1, -1);
       }
 
       if (isfree[pos]) {        // new vector
          MESSAGE(3,("%d (new)\n",nvec));
-         FfCopyRow(x,tmp);
+         ffCopyRow(x,tmp);
          im = nvec;
          isfree[pos] = 0;
          vecpos[nvec] = pos;
@@ -358,7 +354,7 @@ static int MakeOrbit()
 
 static void Cleanup()
 {
-   AppFree(App);
+   appFree(App);
 }
 
 
@@ -381,15 +377,16 @@ static int WriteOutput()
       int i;
 
       MESSAGE(1,("Writing orbit to %s\n",OrbName));
-      if ((f = MfCreate(OrbName,FfOrder,nvec,FfNoc)) == 0) {
-         MTX_ERROR1("Cannot open %s",OrbName);
+      MTX_ASSERT(ffNoc == Seed->Noc,-1);
+      if ((f = mfCreate(OrbName,ffOrder,nvec,Seed->Noc)) == 0) {
+         mtxAbort(MTX_HERE,"Cannot open %s",OrbName);
          rc = -1;
       }
       for (i = 0; i < nvec; ++i) {
-         PTR x = FfGetPtr(vtable,vecpos[i]);
-         MfWriteRows(f,x,1);
+         PTR x = ffGetPtr(vtable,vecpos[i],Seed->Noc);
+         mfWriteRows(f,x,1);
       }
-      MfClose(f);
+      mfClose(f);
    }
 
    /* Write permutations
@@ -398,18 +395,18 @@ static int WriteOutput()
    for (i = 0; i < NGen; ++i) {
       MtxFile_t *f;
       sprintf(fn,"%s.%d",PermName,i + 1);
-      /* if ((f = MfCreate(OrbName,-1,nvec,1)) != NULL) */
-      if ((f = MfCreate(fn,-1,nvec,1)) == NULL) {
-         MTX_ERROR1("Cannot open %s",fn);
+      /* if ((f = mfCreate(OrbName,-1,nvec,1)) != NULL) */
+      if ((f = mfCreate(fn,-1,nvec,1)) == NULL) {
+         mtxAbort(MTX_HERE,"Cannot open %s",fn);
          rc = -1;
          continue;
       }
-      if (MfWriteLong(f,perm[i],nvec) != nvec) {
-         MTX_ERROR("Cannot write data");
+      if (mfWriteLong(f,perm[i],nvec) != nvec) {
+         mtxAbort(MTX_HERE,"Cannot write data");
          rc = -1;
          continue;
       }
-      MfClose(f);
+      mfClose(f);
    }
    return rc;
 }
@@ -417,12 +414,12 @@ static int WriteOutput()
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-int main(int argc, const char **argv)
+int main(int argc, char **argv)
 {
    int rc = 1;
 
    if (Init(argc,argv) != 0) {
-      MTX_ERROR("Initialization failed");
+      mtxAbort(MTX_HERE,"Initialization failed");
       return 1;
    }
 
@@ -430,7 +427,7 @@ int main(int argc, const char **argv)
       --------- */
    while (1) {
       if (MakeNextSeedVector() != 0) {
-         MTX_ERROR("No nore seed vectors");
+         mtxAbort(MTX_HERE,"No nore seed vectors");
          break;
       }
       InitTables();
@@ -541,3 +538,4 @@ The matrices, seed vectors, and all vectors in the orbit must fit
 into memory.
 
  **/
+// vim:fileencoding=utf8:sw=3:ts=8:et:cin

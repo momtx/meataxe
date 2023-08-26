@@ -1,19 +1,14 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // C MeatAxe - This program uncondenses one or more vectors in (M x N)e.
-//
-// (C) Copyright 1998-2015 Michael Ringe, Lehrstuhl D fuer Mathematik, RWTH Aachen
-//
-// This program is free software; see the file COPYING for details.
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#include <meataxe.h>
+#include "meataxe.h"
 #include <string.h>
 
 /* --------------------------------------------------------------------------
    Global data
    -------------------------------------------------------------------------- */
 
-MTX_DEFINE_FILE_INFO
 
 const char *TkiName;		    /* Base name for .tki file */
 TkData_t TkInfo;		    /* Data from .tki file */
@@ -78,7 +73,7 @@ static void AllocateResult()
     for (i = 0; i < InfoN.NCf; ++i)
 	DimN += InfoN.Cf[i].dim * InfoN.Cf[i].mult;
 
-    UncondMat = MatAlloc(CondMat->Field,CondMat->Nor,DimM * DimN);
+    UncondMat = matAlloc(CondMat->Field,CondMat->Nor,DimM * DimN);
 }
 
 
@@ -97,7 +92,7 @@ static void ReadQMatrices()
     {
 	sprintf(fn,"%s.q.%d",TkiName,i+1);
 	MESSAGE(1,("Reading %s\n",fn));
-	QMat[i] = MatLoad(fn);
+	QMat[i] = matLoad(fn);
     }
 }
 
@@ -117,25 +112,25 @@ static void ReadQMatrices()
      0 = ok, -1 = error
    -------------------------------------------------------------------------- */
 
-static int Init(int argc, const char **argv)
+static int Init(int argc, char **argv)
 
 {
     /* Initialize the MeatAxe library, process command line
        ---------------------------------------------------- */
-    if ((App = AppAlloc(&AppInfo,argc,argv)) == NULL)
+    if ((App = appAlloc(&AppInfo,argc,argv)) == NULL)
 	return -1;
-    if (AppGetArguments(App,3,3) != 3)
+    if (appGetArguments(App,3,3) != 3)
 	return -1;
 
     /* Read input files
        ---------------- */
     TkiName = App->ArgV[0];
-    if (TK_ReadInfo(&TkInfo,TkiName) != 0)
+    if (tkReadInfo(&TkInfo,TkiName) != 0)
 	return -1;
-    if (Lat_ReadInfo(&InfoM,TkInfo.NameM) != 0 ||
-        Lat_ReadInfo(&InfoN,TkInfo.NameN) != 0)
+    if (latReadInfo(&InfoM,TkInfo.NameM) != 0 ||
+        latReadInfo(&InfoN,TkInfo.NameN) != 0)
 	return -1;
-    CondMat = MatLoad(App->ArgV[1]);
+    CondMat = matLoad(App->ArgV[1]);
     if (CondMat == NULL)
 	return -1;
 
@@ -179,9 +174,9 @@ static void CalculatePositions(int cf, int num_m, int num_n, int *condpos,
     int startm = 0, startn = 0;
     int i;
 
-    MTX_VERIFY(cfm >= 0 && cfm <= InfoM.NCf);
-    MTX_VERIFY(cfn >= 0 && cfn <= InfoN.NCf);
-    MTX_VERIFY(InfoM.Cf[cfm].dim == InfoN.Cf[cfn].dim);
+    MTX_ASSERT(cfm >= 0 && cfm <= InfoM.NCf,);
+    MTX_ASSERT(cfn >= 0 && cfn <= InfoN.NCf,);
+    MTX_ASSERT(InfoM.Cf[cfm].dim == InfoN.Cf[cfn].dim,);
 
 
     /* Calculate starting position in M x N.
@@ -222,8 +217,8 @@ static void UncondenseCf(int row, int cf)
     int i;
     int cfm, cfn, mult_m, mult_n, cf_dim;
 
-    MTX_VERIFY(row >= 0);
-    MTX_VERIFY(cf >= 0 && cf < TkInfo.NCf);
+    MTX_ASSERT(row >= 0, );
+    MTX_ASSERT(cf >= 0 && cf < TkInfo.NCf, );
 
     cfm = TkInfo.CfIndex[0][cf];    /* Constituent index in M */
     cfn = TkInfo.CfIndex[1][cf];    /* Constituent index in N */
@@ -241,17 +236,17 @@ static void UncondenseCf(int row, int cf)
 	    int pos, condpos, uncondpos;
 
 	    CalculatePositions(cf,i,j,&condpos,&uncondpos);
-	    condvec = MatCut(CondMat,row,condpos,1,QMat[cf]->Nor);
-	    MatMul(condvec,QMat[cf]);
+	    condvec = matCut(CondMat,row,condpos,1,QMat[cf]->Nor);
+	    matMul(condvec,QMat[cf]);
 	    pos = 0;
 	    for (k = 1; k <= InfoM.Cf[cfm].dim; ++k)
 	    {
-		MatCopyRegion(UncondMat,row,uncondpos,condvec,0,pos,1,
+		matCopyRegion(UncondMat,row,uncondpos,condvec,0,pos,1,
 		    cf_dim);
 		uncondpos += DimN;
 		pos += cf_dim;
 	    }
-	    MatFree(condvec);
+	    matFree(condvec);
 	}
     }
 }
@@ -286,21 +281,21 @@ static void Uncondense(int row)
    main() - Program entry point
    -------------------------------------------------------------------------- */
 
-int main(int argc, const char **argv)
+int main(int argc, char **argv)
 
 {
     int row;
 
     if (Init(argc,argv) != 0)
     {
-	MTX_ERROR("Initialization failed");
+	mtxAbort(MTX_HERE,"Initialization failed");
 	return 1;
     }
     for (row = 0; row < CondMat->Nor; ++row)
 	Uncondense(row);
-    MatSave(UncondMat,UncondName);
+    matSave(UncondMat,UncondName);
     if (App != NULL)
-	AppFree(App);
+	appFree(App);
     return 0;
 }
 
@@ -356,3 +351,4 @@ calculated with respect to the semisimplicity basis produced by PWKOND.
 
 */
 
+// vim:fileencoding=utf8:sw=3:ts=8:et:cin

@@ -1,15 +1,11 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // C MeatAxe - Sum and intersection of two subspaces.
-//
-// (C) Copyright 1998-2015 Michael Ringe, Lehrstuhl D fuer Mathematik, RWTH Aachen
-//
-// This program is free software; see the file COPYING for details.
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
 #include <stdlib.h>
 #include <string.h>
-#include <meataxe.h>
+#include "meataxe.h"
 
 
 
@@ -17,9 +13,9 @@
    Global data
    ------------------------------------------------------------------ */
 
-MTX_DEFINE_FILE_INFO
 
 static int NorA, NorB;
+static int Noc;
 static int *Piv;
 static PTR Wrk1, Wrk2;
 static const char *aname, *bname, *sumname, *intname;
@@ -49,24 +45,23 @@ static MtxApplication_t *App = NULL;
    ------------------------------------------------------------------ */
 
 static int WriteFiles()
-
 {	
     MtxFile_t *of;
     
     MESSAGE(0,("Sum %d, Intersection %d\n",NorA,NorB));
     MESSAGE(1,("Writing sum to %s\n",sumname));
-    if ((of = MfCreate(sumname,FfOrder,NorA,FfNoc)) == NULL)
+    if ((of = mfCreate(sumname,ffOrder,NorA,ffNoc)) == NULL)
 	return -1;
-    if (MfWriteRows(of,Wrk1,NorA) != NorA)
+    if (mfWriteRows(of,Wrk1,NorA) != NorA)
 	return -1;
-    MfClose(of);
+    mfClose(of);
 
     MESSAGE(1,("Writing intersection to %s\n",intname));
-    if ((of = MfCreate(intname,FfOrder,NorB,FfNoc)) == NULL)
+    if ((of = mfCreate(intname,ffOrder,NorB,ffNoc)) == NULL)
 	return -1;
-    if (MfWriteRows(of,FfGetPtr(Wrk2,NorA),NorB) != NorB)
+    if (mfWriteRows(of,ffGetPtr(Wrk2,NorA,Noc),NorB) != NorB)
 	return -1;
-    MfClose(of);
+    mfClose(of);
 
     return 0;
 }
@@ -78,36 +73,36 @@ static int WriteFiles()
    ------------------------------------------------------------------ */
 
 static int ReadFiles()
-
 {
     MtxFile_t *af, *bf;
 
     /* Open files and check headers.
        ----------------------------- */
-    if ((af = MfOpen(aname)) == NULL || (bf = MfOpen(bname)) == NULL)
+    if ((af = mfOpen(aname)) == NULL || (bf = mfOpen(bname)) == NULL)
     {
-	MTX_ERROR("Cannot open input file");
+	mtxAbort(MTX_HERE,"Cannot open input file");
 	return -1;
     }
     if (af->Field < 2)
     {
-	MTX_ERROR2("%s: %E",aname,MTX_ERR_NOTMATRIX);
+	mtxAbort(MTX_HERE,"%s: %s",aname,MTX_ERR_NOTMATRIX);
 	return -1;
     }
     if (af->Field != bf->Field || af->Noc != bf->Noc)
     {
-	MTX_ERROR3("%s and %s: %E",aname,bname,MTX_ERR_INCOMPAT);
+	mtxAbort(MTX_HERE,"%s and %s: %s",aname,bname,MTX_ERR_INCOMPAT);
 	return -1;
     }
     
     /* Allocate work space.
        -------------------- */
-    FfSetField(af->Field);
-    FfSetNoc(af->Noc);
+    ffSetField(af->Field);
+    Noc = af->Noc;
+    ffSetNoc(Noc);
     NorA = af->Nor;
     NorB = bf->Nor;
-    Wrk1 = FfAlloc(NorA + NorB);
-    Wrk2 = FfAlloc(NorA + NorB);
+    Wrk1 = ffAlloc(NorA + NorB, Noc);
+    Wrk2 = ffAlloc(NorA + NorB, Noc);
     Piv = NALLOC(int,NorA+NorB);
     if (Wrk1 == NULL || Wrk2 == NULL || Piv == NULL)
 	return -1;
@@ -115,28 +110,28 @@ static int ReadFiles()
     /* Read files.
        ----------- */
     MESSAGE(1,("Reading input files\n"));
-    if (MfReadRows(af,Wrk1,NorA) != NorA ||
-	MfReadRows(bf,FfGetPtr(Wrk1,NorA),NorB) != NorB)
+    if (mfReadRows(af,Wrk1,NorA) != NorA ||
+	mfReadRows(bf,ffGetPtr(Wrk1,NorA,Noc),NorB) != NorB)
     {
-	MTX_ERROR("Error reading input file");
+	mtxAbort(MTX_HERE,"Error reading input file");
 	return -1;
     }
 
-    MfClose(af);
-    MfClose(bf);
+    mfClose(af);
+    mfClose(bf);
     return 0;
 }
 
 
 
-static int Init(int argc, const char **argv)
+static int Init(int argc, char **argv)
 
 {
     /* Parse command line
        ------------------ */
-    if ((App = AppAlloc(&AppInfo,argc,argv)) == NULL)
+    if ((App = appAlloc(&AppInfo,argc,argv)) == NULL)
 	return -1;
-    if (AppGetArguments(App,4,4) < 0)
+    if (appGetArguments(App,4,4) < 0)
 	return -1;
     aname = App->ArgV[0];
     bname = App->ArgV[1];
@@ -153,29 +148,28 @@ static int Init(int argc, const char **argv)
 static void Cleanup()
 
 {
-    AppFree(App);
+    appFree(App);
 }
 
 /* ------------------------------------------------------------------
    main()
    ------------------------------------------------------------------ */
 
-int main(int argc, const char **argv)
-
+int main(int argc, char **argv)
 {
 
     if (Init(argc,argv) != 0)
     {
-	MTX_ERROR("Initialization failed");
+	mtxAbort(MTX_HERE,"Initialization failed");
 	return 1;
     }
-    if (FfSumAndIntersection(Wrk1,&NorA,&NorB,Wrk2,Piv) != 0)
+    if (ffSumAndIntersection(Noc, Wrk1,&NorA,&NorB,Wrk2,Piv) != 0)
     {
-	MTX_ERROR("Internal error");
+	mtxAbort(MTX_HERE,"Internal error");
 	return 1;
     }
     if (WriteFiles() != 0)
-	MTX_ERROR("Error writing output files");
+	mtxAbort(MTX_HERE,"Error writing output files");
     Cleanup();
     return 0;
 }
@@ -224,3 +218,4 @@ same number of columns. They need not be in echelon form.
 There must be enough memory to hold two copies of each of the two 
 spaces at the same time. 
 **/
+// vim:fileencoding=utf8:sw=3:ts=8:et:cin

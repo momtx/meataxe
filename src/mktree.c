@@ -1,13 +1,9 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // C MeatAxe - Calculate an element tree of a group
-//
-// (C) Copyright 1998-2015 Michael Ringe, Lehrstuhl D fuer Mathematik, RWTH Aachen
-//
-// This program is free software; see the file COPYING for details.
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
-#include <meataxe.h>
+#include "meataxe.h"
 
 #include <ctype.h>
 #include <stdarg.h>
@@ -22,7 +18,6 @@
    Global data
    -------------------------------------------------------------------------- */
 
-MTX_DEFINE_FILE_INFO
 
 
 /**
@@ -90,7 +85,7 @@ static int IsInList(Matrix_t *mat)
 
     for (i = 0; i < NElms; i++)
     {
-	if (MatCompare(mat,Elms[i].Matrix) == 0)
+	if (matCompare(mat,Elms[i].Matrix) == 0)
 	    return 1;
     }
     return 0;
@@ -109,28 +104,28 @@ static int IsInList(Matrix_t *mat)
 	 <argv>: Argument list.
    -------------------------------------------------------------------------- */
 
-static int Init(int argc, const char **argv)
+static int Init(int argc, char **argv)
 
 {
     int ngen;
 
-    if ((App = AppAlloc(&AppInfo,argc,argv)) == NULL)
+    if ((App = appAlloc(&AppInfo,argc,argv)) == NULL)
 	return -1;
 
     /* Command line options.
        --------------------- */
-    NoOutput = AppGetOption(App,"-n --no-output");
-    ngen = AppGetIntOption(App,"-g",2,1,1000);
+    NoOutput = appGetOption(App,"-n --no-output");
+    ngen = appGetIntOption(App,"-g",2,1,1000);
 
     /* Arguments.
        ---------- */
-    if (AppGetArguments(App,1,1) < 0)
+    if (appGetArguments(App,1,1) < 0)
 	return -1;
     Name = App->ArgV[0];
 
     /* Load the generators.
        -------------------- */
-    Rep = MrLoad(Name,ngen);
+    Rep = mrLoad(Name,ngen);
     if (Rep == NULL)
 	return -1;
 
@@ -139,7 +134,7 @@ static int Init(int argc, const char **argv)
     MaxNElms = Rep->NGen + 10;
     if ((Elms = NALLOC(Entry_t,MaxNElms)) == NULL)
     {
-	MTX_ERROR("Cannot allocate lement list");
+	mtxAbort(MTX_HERE,"Cannot allocate lement list");
 	return -1;
     }
     NElms = 0;
@@ -178,7 +173,7 @@ static int AddToList(Matrix_t *mat, int src, int gen)
 	Entry_t *newlist = NREALLOC(Elms,Entry_t,newmax);
 	if (newlist == NULL)
 	{
-	    MTX_ERROR1("Cannot extend element list, req size=%d",newmax);
+	    mtxAbort(MTX_HERE,"Cannot extend element list, req size=%d",newmax);
 	    return -1;
 	}
 	Elms = newlist;
@@ -198,7 +193,7 @@ static int MakeTree()
     int rc = 0;
     int src;
 
-    if (AddToList(MatId(FfOrder,FfNoc),-1,-1) != 0)
+    if (AddToList(matId(ffOrder,ffNoc),-1,-1) != 0)
 	return -1;
 
     /* Calculate all elements
@@ -210,14 +205,14 @@ static int MakeTree()
 	{
 	    /* Calculate next element
 	       ---------------------- */
-	    Matrix_t *newelem = MatDup(Elms[src].Matrix);
-	    MatMul(newelem,Rep->Gen[g]);
+	    Matrix_t *newelem = matDup(Elms[src].Matrix);
+	    matMul(newelem,Rep->Gen[g]);
 
 	    /* If it is new, add to tree, else discard
 	       --------------------------------------- */
 	    if (IsInList(newelem))
 	    {
-		MatFree(newelem);
+		matFree(newelem);
 		if (src == 0)
 		    MESSAGE(0,("Warning: generator %d is redundant\n",g+1));
 	    }
@@ -247,7 +242,7 @@ static void WriteOutput()
 
     sprintf(fn,"%s.elt",Name);
     MESSAGE(1,("Writing %s\n",fn));
-    mat = ImatAlloc(NElms,2);
+    mat = imatAlloc(NElms,2);
     if (mat == NULL)
 	return;
     for (i = 0; i < NElms; ++i)
@@ -255,8 +250,8 @@ static void WriteOutput()
 	mat->Data[2*i] = Elms[i].Source;
 	mat->Data[2*i + 1] = Elms[i].Gen;
     }
-    ImatSave(mat,fn);
-    ImatFree(mat);
+    imatSave(mat,fn);
+    imatFree(mat);
 }
 
 
@@ -264,7 +259,7 @@ static void WriteOutput()
 static void Cleanup()
 
 {
-    AppFree(App);
+    appFree(App);
 }
 
 /* --------------------------------------------------------------------------
@@ -272,14 +267,14 @@ static void Cleanup()
    -------------------------------------------------------------------------- */
 
 
-int main(int argc, const char **argv)
+int main(int argc, char **argv)
 
 {
     int rc = 0;
 
     if (Init(argc,argv) != 0)
     {
-	MTX_ERROR("Initialization failed");
+	mtxAbort(MTX_HERE,"Initialization failed");
 	return 1;
     }
 
@@ -367,3 +362,4 @@ The program holds all group elements in memory. This limits the application
 of the program to fairly small groups and representations of small degree.
 **/
 
+// vim:fileencoding=utf8:sw=3:ts=8:et:cin

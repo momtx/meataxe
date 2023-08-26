@@ -1,158 +1,162 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // C MeatAxe - Tests for bit strings
-//
-// (C) Copyright 1998-2016 Michael Ringe, Lehrstuhl D fuer Mathematik, RWTH Aachen
-//
-// This program is free software; see the file COPYING for details.
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#include "check.h"
+#include "testing.h"
 
 #include <string.h>
 
-MTX_DEFINE_FILE_INFO
-
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#define NMAT 5
-
-test_F BtStringAllocation()
+TstResult BitString_AllocFree()
 {
-   static int bssize[NMAT] = { 0,1,10,100,1000 };
-   BitString_t *m[NMAT];
+#define N 5
+   static int bssize[N] = { 0,1,10,100,1000 };
+   BitString_t *m[N];
    int i;
 
-   for (i = 0; i < NMAT; ++i) {
-      m[i] = BsAlloc(bssize[i]);
+   for (i = 0; i < N; ++i) {
+      m[i] = bsAlloc(bssize[i]);
    }
-   for (i = 0; i < NMAT; ++i) {
+   for (i = 0; i < N; ++i) {
       int k;
-      BsIsValid(m[i]);
-      MTX_VERIFY(m[i]->Size == bssize[i]);
+      ASSERT(bsIsValid(m[i]));
+      ASSERT(m[i]->Size == bssize[i]);
       for (k = 0; k < bssize[i]; ++k) {
-         ASSERT(!BsTest(m[i],k));
+         ASSERT(!bsTest(m[i],k));
       }
    }
-   for (i = 0; i < NMAT; ++i) {
-      ASSERT_EQ_INT(BsFree(m[i]), 0);
+   for (i = 0; i < N; ++i) {
+      ASSERT_EQ_INT(bsFree(m[i]), 0);
    }
-
-   TstStartErrorChecking();
-   for (i = 0; i < NMAT; ++i) {
-      ASSERT(!BsIsValid(m[i]) && TstHasError());
-   }
+   return 0;
 }
-
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static void TestSetClear(int size, BitString_t *a)
+TstResult BitString_AbortsOnDoubleFree()
+{
+   BitString_t *bs = bsAlloc(100);
+   ASSERT(bsIsValid(bs));
+   bsFree(bs);
+   ASSERT(!bsIsValid(bs));
+   ASSERT_ABORT(bsFree(bs));
+   return 0;
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+static int TestSetClear(int size, BitString_t *a)
 {
    int i;
 
    for (i = 0; i < size; ++i) {
       int k;
       for (k = 0; k < i; ++k) {
-         ASSERT(BsTest(a,k));
+         ASSERT(bsTest(a,k));
       }
       for (; k < size; ++k) {
-         ASSERT(!BsTest(a,k));
+         ASSERT(!bsTest(a,k));
       }
-      BsSet(a,i);
+      bsSet(a,i);
    }
    for (i = 0; i < size; ++i) {
       int k;
       for (k = 0; k < i; ++k) {
-         ASSERT(!BsTest(a,k));
+         ASSERT(!bsTest(a,k));
       }
       for (; k < size; ++k) {
-         ASSERT(BsTest(a,k));
+         ASSERT(bsTest(a,k));
       }
-      BsClear(a,i);
+      bsClear(a,i);
    }
 
    for (i = 0; i < size; ++i) {
-      BsSet(a,i);
+      bsSet(a,i);
    }
-   ASSERT_EQ_INT(BsClearAll(a), 0);
+   ASSERT_EQ_INT(bsClearAll(a), 0);
    for (i = 0; i < size; ++i) {
-      ASSERT(!BsTest(a,i));
+      ASSERT(!bsTest(a,i));
    }
+   return 0;
 }
-
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-test_F BitStringBasicOperations()
+TstResult BitString_SetClear()
 {
    const int size = 50;
    BitString_t *a;
-   a = BsAlloc(size);
-   TestSetClear(size,a);
-   BsFree(a);
+   a = bsAlloc(size);
+   int result = TestSetClear(size,a);
+   bsFree(a);
+   return result;
 }
-
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static void TestCompare1(int size, BitString_t *a, BitString_t *b)
+static int TestCompare1(int size, BitString_t *a, BitString_t *b)
 {
    int i;
    for (i = 0; i < size; ++i) {
-      ASSERT_EQ_INT(BsCompare(a,b),0);
-      BsSet(a,i);
-      ASSERT(BsCompare(a,b) != 0);
-      BsSet(b,i);
+      ASSERT_EQ_INT(bsCompare(a,b),0);
+      bsSet(a,i);
+      ASSERT(bsCompare(a,b) != 0);
+      bsSet(b,i);
    }
    for (i = 0; i < size; ++i) {
-      ASSERT_EQ_INT(BsCompare(a,b),0);
-      BsClear(a,i);
-      ASSERT1(BsCompare(a,b) != 0,"difference in bit %d not found",i);
-      BsClear(b,i);
+      ASSERT_EQ_INT(bsCompare(a,b),0);
+      bsClear(a,i);
+      ASSERT(bsCompare(a,b) != 0);
+      bsClear(b,i);
    }
+   return 0;
 }
 
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-test_F BitSringCompare()
+TstResult BitString_Compare()
 {
    const int size = 50;
    BitString_t *a, *b;
-   a = BsAlloc(size);
-   b = BsAlloc(size);
-   TestCompare1(size,a,b);
-   BsFree(b);
-   BsFree(a);
+   a = bsAlloc(size);
+   b = bsAlloc(size);
+   int result = TestCompare1(size,a,b);
+   bsFree(b);
+   bsFree(a);
+   return result;
 }
 
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static void TestCopy1(int size, BitString_t *a, BitString_t *b)
+static int TestCopy1(int size, BitString_t *a, BitString_t *b)
 {
    for (int i = 0; i < size; i += 5) {
-      BsSet(a,i);
+      bsSet(a,i);
    }
-   BsCopy(b,a);
-   ASSERT(!BsCompare(a,b));
-   BitString_t *c = BsDup(a);
-   ASSERT(!BsCompare(a,c));
-   BsFree(c);
+   bsCopy(b,a);
+   ASSERT(!bsCompare(a,b));
+   BitString_t *c = bsDup(a);
+   ASSERT(!bsCompare(a,c));
+   bsFree(c);
+   return 0;
 }
 
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-test_F BitStringCopy()
+TstResult BitString_Copy()
 {
    const int size = 49;
    BitString_t *a, *b;
-   a = BsAlloc(size);
-   b = BsAlloc(size);
-   TestCopy1(size,a,b);
-   BsFree(b);
-   BsFree(a);
+   a = bsAlloc(size);
+   b = bsAlloc(size);
+   int result = TestCopy1(size,a,b);
+   bsFree(b);
+   bsFree(a);
+   return result;
 }
 
 
@@ -161,10 +165,10 @@ test_F BitStringCopy()
 static BitString_t *RndBs(int size)
 {
    int i;
-   BitString_t *bs = BsAlloc(size);
+   BitString_t *bs = bsAlloc(size);
    for (i = 0; i < size; ++i) {
-      if (MtxRandomInt(2) != 0) {
-         BsSet(bs,i);
+      if (mtxRandomInt(2) != 0) {
+         bsSet(bs,i);
       }
    }
    return bs;
@@ -173,152 +177,153 @@ static BitString_t *RndBs(int size)
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static void CheckIo1(BitString_t **bs, int n)
+static int CheckIo1(FILE*f, BitString_t **bs, int n)
 {
-   const char file_name[] = "check.1";
-   FILE *f;
-   int i;
-
-   /* Write bit strings
-      ----------------- */
-   f = SysFopen(file_name,FM_CREATE);
-   for (i = 0; i < n; ++i) {
-      BsWrite(bs[i],f);
+   // Write bit strings
+   for (int i = 0; i < n; ++i) {
+      bsWrite(bs[i],f);
    }
-   fclose(f);
 
-   /* Read bit strings
-      ---------------- */
-   f = SysFopen(file_name,FM_READ);
-   for (i = 0; i < n; ++i) {
-      BitString_t *a = BsRead(f);
-      ASSERT_EQ_INT(BsCompare(a,bs[i]), 0);
+   // Read bit strings
+   rewind(f);
+   for (int i = 0; i < n; ++i) {
+      BitString_t *a = bsRead(f);
+      ASSERT_EQ_INT(bsCompare(a,bs[i]), 0);
    }
-   fclose(f);
+   return 0;
 }
 
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-test_F BitStringFileIo()
+TstResult BitStringFileIo()
 {
    BitString_t *a[10];
    int i;
 
-   a[0] = BsAlloc(0);
+   a[0] = bsAlloc(0);
    for (i = 1; i < 10; ++i) {
-      a[i] = RndBs(MtxRandomInt(100));
+      a[i] = RndBs(mtxRandomInt(100));
    }
-   CheckIo1(a,10);
+   const char file_name[] = "check.1";
+   FILE* f = fopen(file_name,"w+");
+   int result = CheckIo1(f, a,10);
+   fclose(f);
    for (i = 1; i < 10; ++i) {
-      BsFree(a[i]);
+      bsFree(a[i]);
    }
+   return result;
 }
 
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static void TestAndOr1(int size)
+static int TestAndOr1(int size, BitString_t* a, BitString_t* b)
 {
-   BitString_t *a = BsAlloc(size);
-   BitString_t *b = BsAlloc(size);
    BitString_t *bsor, *bsand, *bsminus;
    int i;
 
    for (i = 0; i < size; ++i) {
-      if (i % 3 == 0) { BsSet(a,i); }
-      if (i % 5 == 1) { BsSet(b,i); }
+      if (i % 3 == 0) { bsSet(a,i); }
+      if (i % 5 == 1) { bsSet(b,i); }
    }
 
-   bsor = BsDup(a);
-   BsOr(bsor,b);
-   bsand = BsDup(a);
-   BsAnd(bsand,b);
-   bsminus = BsDup(a);
-   BsMinus(bsminus,b);
+   bsor = bsDup(a);
+   bsOr(bsor,b);
+   bsand = bsDup(a);
+   bsAnd(bsand,b);
+   bsminus = bsDup(a);
+   bsMinus(bsminus,b);
 
    for (i = 0; i < size; ++i) {
-      ASSERT_EQ_INT(BsTest(bsor,i), i % 3 == 0 || i % 5 == 1);
-      ASSERT_EQ_INT(BsTest(bsand,i), i % 3 == 0 && i % 5 == 1);
-      ASSERT_EQ_INT(BsTest(bsminus,i), i % 3 == 0 && i % 5 != 1);
+      ASSERT_EQ_INT(bsTest(bsor,i), i % 3 == 0 || i % 5 == 1);
+      ASSERT_EQ_INT(bsTest(bsand,i), i % 3 == 0 && i % 5 == 1);
+      ASSERT_EQ_INT(bsTest(bsminus,i), i % 3 == 0 && i % 5 != 1);
    }
 
-   BsFree(bsor);
-   BsFree(bsand);
-   BsFree(bsminus);
-   BsFree(b);
-   BsFree(a);
+   bsFree(bsor);
+   bsFree(bsand);
+   bsFree(bsminus);
+   return 0;
 }
 
-
-////////////////////////////////////////////////////////////////////////////////////////////////////
-
-test_F BitSTringAndOrMinus()
+TstResult BitStringAndOrMinus()
 {
-   for (int i = 0; i < 150; ++i) {
-      TestAndOr1(i);
+   int result = 0;
+   for (int size = 0; size < 150; ++size) {
+      BitString_t *a = bsAlloc(size);
+      BitString_t *b = bsAlloc(size);
+      result |= TestAndOr1(size, a, b);
+      bsFree(b);
+      bsFree(a);
    }
+   return result;
 }
-
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static void CheckCount1(int size, BitString_t *a, BitString_t *b)
+static int CheckCount1(int size, BitString_t *a, BitString_t *b)
 {
    int i;
    int count;
 
    for (count = 0, i = 0; i < size; ++i) {
-      if (BsTest(a,i) && BsTest(b,i)) {
+      if (bsTest(a,i) && bsTest(b,i)) {
          ++count;
       }
    }
-   ASSERT_EQ_INT(BsIntersectionCount(a,b), count);
+   ASSERT_EQ_INT(bsIntersectionCount(a,b), count);
+   return 0;
 }
 
-
-////////////////////////////////////////////////////////////////////////////////////////////////////
-
-test_F BitStringIntersectionCount()
+TstResult BitString_IntersectionCount()
 {
-   int i;
-   for (i = 0; i < 100; ++i) {
-      int size = MtxRandomInt(100);
+   int result = 0;
+   for (int i = 0; result == 0 && i < 100; ++i) {
+      int size = mtxRandomInt(100);
       BitString_t *a = RndBs(size), *b = RndBs(size);
-      CheckCount1(size,a,b);
-      BsFree(a);
-      BsFree(b);
+      result |= CheckCount1(size,a,b);
+      bsFree(a);
+      bsFree(b);
    }
+   return result;
 }
-
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-test_F BitStringIsSubset()
+static int testIsSubset(BitString_t *a, BitString_t *b, int size)
+{
+   ASSERT(bsIsSub(b,a));
+   bsCopy(b,a);
+   ASSERT(bsIsSub(b,a));
+   for (int k = 0; k < size; ++k) {
+      if (!bsTest(a,k)) {
+         bsSet(b,k);
+         ASSERT(!bsIsSub(b,a));
+         bsClear(b,k);
+      }
+   }
+   for (int k = 0; k < size; ++k) {
+      bsClear(b,k);
+      ASSERT(bsIsSub(b,a));
+   }
+   return 0;
+}
+
+TstResult BitString_IsSubset()
 {
    int i;
    BitString_t *a, *b;
 
-   for (i = 0; i < 150; ++i) {
-      const int size = i;
-      int k;
+   int result = 0;
+   for (int size = 0; result == 0 && i < 150; ++i) {
       a = RndBs(size);
-      b = BsAlloc(size);
-      ASSERT(BsIsSub(b,a));
-      BsCopy(b,a);
-      ASSERT(BsIsSub(b,a));
-      for (k = 0; k < size; ++k) {
-         if (!BsTest(a,k)) {
-            BsSet(b,k);
-            ASSERT(!BsIsSub(b,a));
-            BsClear(b,k);
-         }
-      }
-      for (k = 0; k < size; ++k) {
-         BsClear(b,k);
-         ASSERT(BsIsSub(b,a));
-      }
-      BsFree(a);
-      BsFree(b);
+      b = bsAlloc(size);
+      result = testIsSubset(a,b,size);
+      bsFree(a);
+      bsFree(b);
    }
+   return result;
 }
+
+// vim:fileencoding=utf8:sw=3:ts=8:et:cin

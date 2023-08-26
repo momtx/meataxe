@@ -1,17 +1,12 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // C MeatAxe - Identity matrix
-//
-// (C) Copyright 1998-2015 Michael Ringe, Lehrstuhl D fuer Mathematik, RWTH Aachen
-//
-// This program is free software; see the file COPYING for details.
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#include <meataxe.h>
+#include "meataxe.h"
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // Local data
 
-MTX_DEFINE_FILE_INFO
 
 /// @addtogroup mat
 /// @{
@@ -22,9 +17,9 @@ MTX_DEFINE_FILE_INFO
 /// @param fl Field order.
 /// @param nor Number of rows.
 /// @return Pointer to the matrix, or 0 on error.
-/// @see MatAlloc
+/// @see matAlloc
 
-Matrix_t *MatId(int fl, int nor)
+Matrix_t *matId(int fl, int nor)
 {
    Matrix_t *m;
    PTR x;
@@ -32,19 +27,19 @@ Matrix_t *MatId(int fl, int nor)
 
    // check arguments
    if ((fl < 2) || (nor < 0)) {
-      MTX_ERROR3("Matid(%d,%d): %E",fl,nor,MTX_ERR_BADARG);
+      mtxAbort(MTX_HERE,"Matid(%d,%d): %s",fl,nor,MTX_ERR_BADARG);
       return NULL;
    }
 
    // Allocate an empty matrix
-   m = MatAlloc(fl,nor,nor);
+   m = matAlloc(fl,nor,nor);
    if (m == NULL) {
       return NULL;
    }
 
    // Set diagonal elements to 1
-   for (i = 0, x = m->Data; i < nor; ++i, FfStepPtr(&x)) {
-      FfInsert(x,i,FF_ONE);
+   for (i = 0, x = m->Data; i < nor; ++i, ffStepPtr(&x, nor)) {
+      ffInsert(x,i,FF_ONE);
    }
 
    return m;
@@ -52,3 +47,4 @@ Matrix_t *MatId(int fl, int nor)
 
 
 /// @}
+// vim:fileencoding=utf8:sw=3:ts=8:et:cin

@@ -1,12 +1,8 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // C MeatAxe - Basic matrix functions
-//
-// (C) Copyright 1998-2014 Michael Ringe, Lehrstuhl D fuer Mathematik, RWTH Aachen
-//
-// This program is free software; see the file COPYING for details.
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#include <meataxe.h>
+#include "meataxe.h"
 #include <string.h>
 
 /// @defgroup mat Matrices over Finite Fields
@@ -14,11 +10,11 @@
 /// @details
 /// In the MeatAxe, a matrix over a finite field is represented by a Matrix_t structure.
 /// Matrices can be created in many ways, for example
-/// - by calling MatAlloc(),
-/// - by making a copy of an existing matrix with MatDup(), or
-/// - by reading a matrix from a data file with MatRead() or MatLoad().
+/// - by calling matAlloc(),
+/// - by making a copy of an existing matrix with matDup(), or
+/// - by reading a matrix from a data file with matRead() or matLoad().
 ///
-/// Matrices that no longer needed must be deleted by calling MatFree(). Matrices can consume
+/// Matrices that no longer needed must be deleted by calling matFree(). Matrices can consume
 /// large amounts of memory, so it always a good idea to delete a matrix as early as possible.
 ///
 /// As with row vectors, row and column indexs are zero-based. For example, in a 3 by 5 matrix
@@ -58,32 +54,34 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // Local data
 
-MTX_DEFINE_FILE_INFO;
 
 #define MAT_MAGIC 0x6233af91
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-/// Check if the matrix is valid.
-/// This function checks if the argument is a pointer to a valid matrix. If the matrix is o.k.,
-/// the function returns 1.  Otherwise, an error is signalled and, if the error handler does not
-/// terminate the program, the function returns 0.
-/// @param mat Matrix to check.
-/// @return 1 if the matrix is valid, 0 otherwise.
 
-int MatIsValid(const Matrix_t *mat)
+/// Returns true if the given matrix is valid.
+
+int matIsValid(const Matrix_t *mat)
 {
-   if (mat == NULL) {
-      MTX_ERROR("NULL matrix");
-      return 0;
-   }
-   if ((mat->Magic != MAT_MAGIC) || (mat->Field < 2) || (mat->Nor < 0) ||
-       (mat->Noc < 0)) {
-      MTX_ERROR3("Invalid matrix (field=%d, nor=%d, noc=%d)",mat->Field,
-                 mat->Nor,mat->Noc);
-      return 0;
-   }
-   return 1;
+   return mat != NULL
+      && mat->Magic == MAT_MAGIC 
+      && mat->Field >= 2 
+      && mat->Nor >= 0 
+      && mat->Noc >= 0;
+}
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+/// Checks whether the given matrix is valid.
+/// If it is not, the program is aborted with an error message.
+
+void matValidate(const struct MtxSourceLocation* src, const Matrix_t *mat)
+{
+   if (mat == NULL)
+      mtxAbort(src,"NULL matrix");
+   if (mat->Magic != MAT_MAGIC || mat->Field < 2 || mat->Nor < 0 || mat->Noc < 0) {
+      mtxAbort(src,"Invalid matrix (field=%d, nor=%d, noc=%d)",mat->Field, mat->Nor,mat->Noc);
+   }
 }
 
 
@@ -91,34 +89,32 @@ int MatIsValid(const Matrix_t *mat)
 /// Create a new matrix.
 /// This function creates a new matrix with given dimensions over a given field.
 /// @attention
-/// To destroy a matrix, use MatFree(), not SysFree().
+/// To destroy a matrix, use matFree(), not sysFree().
 ///
 /// @param field Field order.
 /// @param nor Number of rows.
 /// @param noc Number of columns.
 /// @return Pointer to the new matrix or NULL on error.
 
-Matrix_t *MatAlloc(int field, int nor, int noc)
+Matrix_t *matAlloc(int field, int nor, int noc)
 {
    Matrix_t *m;
 
-   MTX_VERIFY(field >= 2);
-   MTX_VERIFY(nor >= 0);
-   MTX_VERIFY(noc >= 0);
+   MTX_ASSERT(field >= 2, NULL);
+   MTX_ASSERT(nor >= 0, NULL);
+   MTX_ASSERT(noc >= 0, NULL);
 
    // Initialize the data structure
-   if (FfSetField(field) != 0) {
-      MTX_ERROR1("Cannot select field GF(%d)",field);
+   if (ffSetField(field) != 0) {
+      mtxAbort(MTX_HERE,"Cannot select field GF(%d)",field);
       return NULL;
    }
-   if (FfSetNoc(noc) != 0) {
-       return NULL;
-   }
+   ffSetNoc(noc);
 
    // Allocate a new Matrix_t structure
    m = ALLOC(Matrix_t);
    if (m == NULL) {
-      MTX_ERROR("Cannot allocate Matrix_t structure");
+      mtxAbort(MTX_HERE,"Cannot allocate Matrix_t structure");
       return NULL;
    }
 
@@ -128,11 +124,11 @@ Matrix_t *MatAlloc(int field, int nor, int noc)
    m->Nor = nor;
    m->Noc = noc;
    m->PivotTable = NULL;
-   m->Data = FfAlloc(nor);
-   m->RowSize = FfCurrentRowSize;
+   m->Data = ffAlloc(nor, noc);
+   m->RowSize = ffRowSize(noc);
    if (m->Data == NULL) {
-      SysFree(m);
-      MTX_ERROR("Cannot allocate matrix data");
+      sysFree(m);
+      mtxAbort(MTX_HERE,"Cannot allocate matrix data");
       return NULL;
    }
    return m;
@@ -147,19 +143,17 @@ Matrix_t *MatAlloc(int field, int nor, int noc)
 /// @param row Row index.
 /// @return Pointer to the selected row or 0 on error.
 
-PTR MatGetPtr(const Matrix_t *mat, int row)
+PTR matGetPtr(const Matrix_t *mat, int row)
 {
-#ifdef DEBUG
-   if (!MatIsValid(mat)) {
-      return NULL;
-   }
+#ifdef MTX_DEBUG
+   matValidate(MTX_HERE, mat);
 #ifdef PARANOID
    if ((row < 0) || (row >= mat->Nor))
 #else
    if ((row < 0) || (row > mat->Nor + 5))
 #endif
    {
-      MTX_ERROR2("row=%d: %E",row,MTX_ERR_BADARG);
+      mtxAbort(MTX_HERE,"row=%d: %s",row,MTX_ERR_BADARG);
       return NULL;
    }
 #endif
@@ -174,10 +168,10 @@ PTR MatGetPtr(const Matrix_t *mat, int row)
 /// @param mat Pointer to the matrix.
 ////
 
-void Mat_DeletePivotTable(Matrix_t *mat)
+void mat_DeletePivotTable(Matrix_t *mat)
 {
    if (mat->PivotTable != NULL) {
-      SysFree(mat->PivotTable);
+      sysFree(mat->PivotTable);
       mat->PivotTable = NULL;
    }
 }
@@ -185,24 +179,23 @@ void Mat_DeletePivotTable(Matrix_t *mat)
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 /// Delete a matrix.
-/// This function frees a matrix which has beed created by MatAlloc(). Freeing includes the
+/// This function frees a matrix which has beed created by matAlloc(). Freeing includes the
 /// internal data buffers as well as the Matrix_t structure itself.
 /// @param mat Pointer to the matrix.
 /// @return 0 on success, -1 on error.
 
-int MatFree(Matrix_t *mat)
+int matFree(Matrix_t *mat)
 {
-   if (!MatIsValid(mat)) {
-      return -1;
-   }
-   Mat_DeletePivotTable(mat);
+   matValidate(MTX_HERE, mat);
+   mat_DeletePivotTable(mat);
    if (mat->Data != NULL) {
-      SysFree(mat->Data);
+      sysFree(mat->Data);
    }
    memset(mat,0,sizeof(Matrix_t));
-   SysFree(mat);
+   sysFree(mat);
    return 0;
 }
 
 
 /// @}
+// vim:fileencoding=utf8:sw=3:ts=8:et:cin

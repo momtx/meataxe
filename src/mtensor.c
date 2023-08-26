@@ -1,18 +1,13 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // C MeatAxe - Kronecker product of two matrices
-//
-// (C) Copyright 1998-2015 Michael Ringe, Lehrstuhl D fuer Mathematik, RWTH Aachen
-//
-// This program is free software; see the file COPYING for details.
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#include <meataxe.h>
+#include "meataxe.h"
 #include <stdlib.h>
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // Local data
 
-MTX_DEFINE_FILE_INFO
 
 /// @defgroup tp Tensor Products
 /// @{
@@ -27,7 +22,7 @@ MTX_DEFINE_FILE_INFO
 /// @param m2 Pointer to the second matrix.
 /// @return The tensor product of @a m1 and @a m2, or NULL on error.
 
-Matrix_t *MatTensor(const Matrix_t *m1, const Matrix_t *m2)
+Matrix_t *matTensor(const Matrix_t *m1, const Matrix_t *m2)
 {
    Matrix_t *temat;         /* The result */
    PTR x2;                  /* Row pointer for m2 */
@@ -35,18 +30,12 @@ Matrix_t *MatTensor(const Matrix_t *m1, const Matrix_t *m2)
    FEL *rowbuf;             /* Holds one row of <m2> in unpacked form */
 
    // Check arguments
-#ifdef DEBUG
-   if (!MatIsValid(m1) || !MatIsValid(m2)) {
-      return NULL;
-   }
-#endif
-   if (m1->Field != m2->Field) {
-      MTX_ERROR1("%E",MTX_ERR_INCOMPAT);
-      return NULL;
-   }
+   matValidate(MTX_HERE, m1);
+   matValidate(MTX_HERE, m2);
+   MTX_ASSERT(m1->Field == m2->Field,NULL);
 
    // Allocate the result matrix and workspace
-   temat = MatAlloc(m1->Field,m1->Nor * m2->Nor,m1->Noc * m2->Noc);
+   temat = matAlloc(m1->Field,m1->Nor * m2->Nor,m1->Noc * m2->Noc);
    if (temat == NULL) {
       return NULL;
    }
@@ -55,7 +44,7 @@ Matrix_t *MatTensor(const Matrix_t *m1, const Matrix_t *m2)
    }
    rowbuf = NALLOC(FEL,m2->Noc);
    if (rowbuf == NULL) {
-      MatFree(temat);
+      matFree(temat);
       return NULL;
    }
 
@@ -68,14 +57,14 @@ Matrix_t *MatTensor(const Matrix_t *m1, const Matrix_t *m2)
 
       // Unpack the row
       for (k = 0; k < m2->Noc; ++k) {
-         rowbuf[k] = FfExtract(x2,k);
+         rowbuf[k] = ffExtract(x2,k);
       }
 
       // Initialize everything for the inner loop
       x1 = m1->Data;
-      x3 = MatGetPtr(temat,i2);
-      MTX_FAIL_IF_NOT(x3 != NULL);
-      FfSetNoc(temat->Noc);
+      x3 = matGetPtr(temat,i2);
+      MTX_ASSERT(x3 != NULL, NULL);
+      ffSetNoc(temat->Noc);
 
       // Loop through all rows of <m1>
       for (i1 = 0; i1 < m1->Nor; ++i1) {
@@ -84,21 +73,21 @@ Matrix_t *MatTensor(const Matrix_t *m1, const Matrix_t *m2)
          // Loop through all columns of <m1>
          for (k1 = k3 = 0; k1 < m1->Noc; ++k1) {
             int k2;
-            FEL f = FfExtract(x1,k1);
+            FEL f = ffExtract(x1,k1);
             if (f == FF_ZERO) {
                k3 += m2->Noc;
             } else if (f == FF_ONE) {
                register FEL *rp = rowbuf;
                for (k2 = 0; k2 < m2->Noc; ++k2, ++k3, ++rp) {
                   if (*rp != FF_ZERO) {
-                     FfInsert(x3,k3,*rp);
+                     ffInsert(x3,k3,*rp);
                   }
                }
             } else {
                register FEL *rp = rowbuf;
                for (k2 = 0; k2 < m2->Noc; ++k2, ++k3, ++rp) {
                   if (*rp != FF_ZERO) {
-                     FfInsert(x3,k3,FfMul(f,*rp));
+                     ffInsert(x3,k3,ffMul(f,*rp));
                   }
                }
             }
@@ -120,3 +109,4 @@ Matrix_t *MatTensor(const Matrix_t *m1, const Matrix_t *m2)
 
 
 /// @}
+// vim:fileencoding=utf8:sw=3:ts=8:et:cin

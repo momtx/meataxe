@@ -1,13 +1,9 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // C MeatAxe - Trace of a matrix or permutation.
-//
-// (C) Copyright 1998-2015 Michael Ringe, Lehrstuhl D fuer Mathematik, RWTH Aachen
-//
-// This program is free software; see the file COPYING for details.
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
-#include <meataxe.h>
+#include "meataxe.h"
 #include <stdlib.h>
 
 
@@ -16,7 +12,6 @@
    Global data
    ------------------------------------------------------------------ */
 
-MTX_DEFINE_FILE_INFO
 
 static int opt_G = 0;		/* GAP output */
 static MtxFile_t *InputFile = NULL;
@@ -48,31 +43,30 @@ static MtxApplication_t *App = NULL;
    ------------------------------------------------------------------ */
 
 static int trmat()
-
 {
     FEL tr;
     int i, max;
     PTR m1;
 
-    FfSetField(InputFile->Field); 
-    FfSetNoc(InputFile->Noc);
-    m1 = FfAlloc(1);
+    ffSetField(InputFile->Field); 
+    ffSetNoc(InputFile->Noc);
+    m1 = ffAlloc(1, InputFile->Noc);
     tr = FF_ZERO;
     if ((max = InputFile->Nor) > InputFile->Noc) 
 	max = InputFile->Noc;
     for (i = 0; i < max; ++i)
     {
-	if (MfReadRows(InputFile,m1,1) != 1)
+	if (mfReadRows(InputFile,m1,1) != 1)
 	{
-	    MTX_ERROR("Cannot read ipnut file");
+	    mtxAbort(MTX_HERE,"Cannot read ipnut file");
 	    return -1;
 	}
-	tr = FfAdd(tr,FfExtract(m1,i));
+	tr = ffAdd(tr,ffExtract(m1,i));
     }
     if (!opt_G)		/* Standard output */
-	printf("Trace is %d\n",FfToInt(tr));
+	printf("Trace is %d\n",ffToInt(tr));
     else		/* GAP output */
-        printf("MeatAxe.Trace := %s;\n",FfToGap(tr));
+        printf("MeatAxe.Trace := %s;\n",ffToGap(tr));
     return 0;
 }
 
@@ -92,9 +86,9 @@ static int trperm()
     if (m1 == NULL) 
 	return -1;
 
-    if (MfReadLong(InputFile,m1,degree) != degree)
+    if (mfReadLong(InputFile,m1,degree) != degree)
     {
-	MTX_ERROR("Error reading permutation");
+	mtxAbort(MTX_HERE,"Error reading permutation");
 	return -1;
     }
 
@@ -113,24 +107,24 @@ static int trperm()
 }
 
 
-static int Init(int argc, const char **argv)
+static int Init(int argc, char **argv)
 
 {
     /* Process command line options and arguments.
        ------------------------------------------- */
-    if ((App = AppAlloc(&AppInfo,argc,argv)) == NULL)
+    if ((App = appAlloc(&AppInfo,argc,argv)) == NULL)
 	return -1;
-    opt_G = AppGetOption(App,"-G --gap");
+    opt_G = appGetOption(App,"-G --gap");
     if (opt_G) MtxMessageLevel = -100;
-    if (AppGetArguments(App,1,1) != 1)
+    if (appGetArguments(App,1,1) != 1)
 	return -1;
     inpname = App->ArgV[0];
 
     /* Open the input file.
        -------------------- */
-    if ((InputFile = MfOpen(inpname)) == NULL)
+    if ((InputFile = mfOpen(inpname)) == NULL)
     {
-	MTX_ERROR("Error opening input file");
+	mtxAbort(MTX_HERE,"Error opening input file");
 	return -1;
     }
     if (InputFile->Field >= 2)
@@ -144,7 +138,7 @@ static int Init(int argc, const char **argv)
     }
     else
     {
-	MTX_ERROR2("%s: Unknown type %d",inpname,InputFile->Field);
+	mtxAbort(MTX_HERE,"%s: Unknown type %d",inpname,InputFile->Field);
 	return -1;
     }
 
@@ -156,9 +150,9 @@ static void Cleanup()
 
 {
     if (App != NULL)
-	AppFree(App);
+	appFree(App);
     if (InputFile != NULL)
-	MfClose(InputFile);
+	mfClose(InputFile);
 }
 
 
@@ -166,7 +160,7 @@ static void Cleanup()
    main()
    ------------------------------------------------------------------ */
 
-int main(int argc, const char **argv)
+int main(int argc, char **argv)
 
 
 {
@@ -174,7 +168,7 @@ int main(int argc, const char **argv)
 
     if (Init(argc,argv) != 0)
     {
-	MTX_ERROR("Initialization failed");
+	mtxAbort(MTX_HERE,"Initialization failed");
 	return 1;
     }
     if (InputFile->Field == -1) 
@@ -217,3 +211,4 @@ Trace is N
 </pre>
 For permutations, the trace is calculated as the number of fixed points.
 */
+// vim:fileencoding=utf8:sw=3:ts=8:et:cin

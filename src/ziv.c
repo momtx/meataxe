@@ -1,15 +1,11 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // C MeatAxe - Invert a matrix or permutation.
-//
-// (C) Copyright 1998-2015 Michael Ringe, Lehrstuhl D fuer Mathematik, RWTH Aachen
-//
-// This program is free software; see the file COPYING for details.
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
 
 #include <stdlib.h>
-#include <meataxe.h>
+#include "meataxe.h"
 
 
 
@@ -17,7 +13,6 @@
    Global data
    ------------------------------------------------------------------ */
 
-MTX_DEFINE_FILE_INFO
 
 static const char *iname, *oname;
 
@@ -50,14 +45,14 @@ static MtxApplication_t *App = NULL;
 
 
 
-static int Init(int argc, const char **argv)
+static int Init(int argc, char **argv)
 
 {
     /* Process command line options and arguments.
        ------------------------------------------- */
-    if ((App = AppAlloc(&AppInfo,argc,argv)) == NULL)
+    if ((App = appAlloc(&AppInfo,argc,argv)) == NULL)
 	return -1;
-    if (AppGetArguments(App,2,2) != 2)
+    if (appGetArguments(App,2,2) != 2)
 	return -1;
     iname = App->ArgV[0];
     oname = App->ArgV[1];
@@ -70,21 +65,21 @@ static void Cleanup()
 
 {
     if (App != NULL)
-	AppFree(App);
+	appFree(App);
 }
 
 
 
 
 
-int main(int argc, const char **argv)
+int main(int argc, char **argv)
 {
     void *x, *y;
     int rc = 0;
 
     if (Init(argc,argv) != 0)
     {
-	MTX_ERROR("Initialization failed");
+	mtxAbort(MTX_HERE,"Initialization failed");
 	return -1;
     }
     x = XLoad(iname);
@@ -129,3 +124,4 @@ ziv @em Options @em Input @em Result
 @section ziv_desc Description
 This program inverts a matrix or permutation.
 **/
+// vim:fileencoding=utf8:sw=3:ts=8:et:cin

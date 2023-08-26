@@ -1,17 +1,12 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // C MeatAxe - Calculation of extraction tables for greasing
-//
-// (C) Copyright 1998-2015 Michael Ringe, Lehrstuhl D fuer Mathematik, RWTH Aachen
-//
-// This program is free software; see the file COPYING for details.
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#include <meataxe.h>
+#include "meataxe.h"
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // Local data
 
-MTX_DEFINE_FILE_INFO
 
 /// @addtogroup grmat
 /// @{
@@ -33,16 +28,17 @@ static GrExtractionTable_t *BuildExtractionTable(int fl,int grrows)
    static const char no_mem[] = "Not enough memory for extraction table";
 
    if ((t = ALLOC(GrExtractionTable_t)) == NULL) {
-      MTX_ERROR(no_mem);
+      mtxAbort(MTX_HERE,no_mem);
       return NULL;
    }
 
    /* Note that sizeof(long)*2*8*5*3 will be divisable by MPB*sizeof(long)*2,
       so a vector of this length will completely use all zsize(..) bytes.
       We need the *2 because of possible MMX modifications. */
-   FfSetField(fl);
-   FfSetNoc(sizeof(long) * 2 * 8 * 5 * 3);
-   MPB = sizeof(long) * 2 * 8 * 5 * 3 / FfCurrentRowSize;
+   ffSetField(fl);
+   int noc = sizeof(long) * 2 * 8 * 5 * 3;
+   ffSetNoc(noc);
+   MPB = noc / ffRowSize(noc);
 
    /* Allocate memory.
       ---------------- */
@@ -51,7 +47,7 @@ static GrExtractionTable_t *BuildExtractionTable(int fl,int grrows)
    t->tabs = NALLOC(long **,l);
    t->nrvals = NALLOC(int,l);
    if ((t->tabs == NULL) || (t->nrvals == NULL)) {
-      MTX_ERROR(no_mem);
+      mtxAbort(MTX_HERE,no_mem);
       return NULL;
    }
    /* calculate flpowtab: */
@@ -61,7 +57,7 @@ static GrExtractionTable_t *BuildExtractionTable(int fl,int grrows)
 
    for (l = 0; l < t->nrtabs; l++) {
       if ((t->tabs[l] = NALLOC(long*,256)) == NULL) {
-         MTX_ERROR(no_mem);
+         mtxAbort(MTX_HERE,no_mem);
          return NULL;
       }
 
@@ -82,15 +78,15 @@ static GrExtractionTable_t *BuildExtractionTable(int fl,int grrows)
       for (i = 0; i < flpowtab[MPB]; i++) {
          *c = 0;
          for (j = 1,k = i; j <= MPB; j++) {
-            FfInsert((PTR)c,j - 1,FfFromInt(k % fl));
+            ffInsert((PTR)c,j - 1,ffFromInt(k % fl));
             k /= fl;
          }
 
          if ((l < 0) || (l > t->nrtabs)) {
-            MTX_ERROR1("Invalid table number %d",l);
+            mtxAbort(MTX_HERE,"Invalid table number %d",l);
          }
          if ((t->tabs[l][*c] = NALLOC(long,nrvals + 1)) == NULL) {
-            MTX_ERROR(no_mem);
+            mtxAbort(MTX_HERE,no_mem);
             return NULL;
          }
 
@@ -100,7 +96,7 @@ static GrExtractionTable_t *BuildExtractionTable(int fl,int grrows)
          /* first (perhaps) a value that already begun in the previous byte: */
          if (restbits > 0) { /* one value to complete: */
             if (w - t->tabs[l][*c] > nrvals + 1) {
-               MTX_ERROR("Table overflow");
+               mtxAbort(MTX_HERE,"Table overflow");
             }
             if (restbits <= MPB) {
                /* is completed within this byte! */
@@ -115,7 +111,7 @@ static GrExtractionTable_t *BuildExtractionTable(int fl,int grrows)
          /* Now all the values fully within the byte: */
          for (j = (MPB - restbits) / grrows; j > 0; j--) {
             if (w - t->tabs[l][*c] > nrvals + 1) {
-               MTX_ERROR("Table overflow");
+               mtxAbort(MTX_HERE,"Table overflow");
             }
             *w++ = k % flpowtab[grrows];
             k /= flpowtab[grrows];
@@ -123,12 +119,12 @@ static GrExtractionTable_t *BuildExtractionTable(int fl,int grrows)
          /* Now (perhaps) a value that is only begun: */
          if (((l + 1) * MPB) % grrows > 0) { /* one additional part-value */
             if (w - t->tabs[l][*c] > nrvals + 1) {
-               MTX_ERROR("Table overflow");
+               mtxAbort(MTX_HERE,"Table overflow");
             }
             *w++ = k;
          } else {
             if (w - t->tabs[l][*c] > nrvals + 1) {
-               MTX_ERROR("Table overflow");
+               mtxAbort(MTX_HERE,"Table overflow");
             }
             *w++ = 0;
          }
@@ -153,11 +149,11 @@ const GrExtractionTable_t *GrGetExtractionTable(int fl,int grrows)
    static GrExtractionTable_t *cache[257][17] = {{0}};
 
    if ((fl < 2) || (fl > 256)) {
-      MTX_ERROR1("Invalid field order %d",fl);
+      mtxAbort(MTX_HERE,"Invalid field order %d",fl);
       return NULL;
    }
    if ((grrows < 1) || (grrows > 16)) {
-      MTX_ERROR1("Invalid grease level %d",grrows);
+      mtxAbort(MTX_HERE,"Invalid grease level %d",grrows);
       return NULL;
    }
 
@@ -170,3 +166,4 @@ const GrExtractionTable_t *GrGetExtractionTable(int fl,int grrows)
 
 
 /// @}
+// vim:fileencoding=utf8:sw=3:ts=8:et:cin

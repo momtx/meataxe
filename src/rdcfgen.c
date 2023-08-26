@@ -1,14 +1,9 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // C MeatAxe - Read generators for constituents.
-//
-// (C) Copyright 1998-2015 Michael Ringe, Lehrstuhl D fuer Mathematik, RWTH Aachen
-//
-// This program is free software; see the file COPYING for details.
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#include <meataxe.h>
+#include "meataxe.h"
 
-MTX_DEFINE_FILE_INFO
 
 /// @addtogroup cfinfo
 /// @{
@@ -29,7 +24,7 @@ MTX_DEFINE_FILE_INFO
 /// @return Pointer to a matrix representation of the specified constituent,
 /// or 0 on error.
 
-MatRep_t *Lat_ReadCfGens(Lat_Info *info, int cf, int flags)
+MatRep_t *latReadCfGens(Lat_Info *info, int cf, int flags)
 {
     MatRep_t *rep;
     char fn[sizeof(info->BaseName) + 20];
@@ -39,25 +34,25 @@ MatRep_t *Lat_ReadCfGens(Lat_Info *info, int cf, int flags)
        ------------------- */
     if (info == NULL)
     {
-	MTX_ERROR1("info: %E",MTX_ERR_BADARG);
+	mtxAbort(MTX_HERE,"info: %s",MTX_ERR_BADARG);
 	return NULL;
     }
     if (cf < 0 || cf >= info->NCf)
     {
-	MTX_ERROR1("cf: %E",MTX_ERR_BADARG);
+	mtxAbort(MTX_HERE,"cf: %s",MTX_ERR_BADARG);
 	return NULL;
     }
 
     /* Make file name
        -------------- */
     if (flags & LAT_RG_STD)
-	sprintf(fn,"%s%s.std.%%d",info->BaseName,Lat_CfName(info,cf));
+	sprintf(fn,"%s%s.std.%%d",info->BaseName,latCfName(info,cf));
     else
-	sprintf(fn,"%s%s.%%d",info->BaseName,Lat_CfName(info,cf));
+	sprintf(fn,"%s%s.%%d",info->BaseName,latCfName(info,cf));
 
     /* Load the representation
        ----------------------- */
-    rep = MrLoad(fn,info->NGen);
+    rep = mrLoad(fn,info->NGen);
     if (rep == NULL)
 	return NULL;
 
@@ -67,26 +62,26 @@ MatRep_t *Lat_ReadCfGens(Lat_Info *info, int cf, int flags)
     {
 	if (flags & LAT_RG_INVERT)
 	{
-	    Matrix_t *mat2 = MatInverse(rep->Gen[i]);
+	    Matrix_t *mat2 = matInverse(rep->Gen[i]);
 	    if (mat2 == NULL)
 	    {
-		MTX_ERROR1("Cannot transpose generator %d",i);
-		MrFree(rep);
+		mtxAbort(MTX_HERE,"Cannot transpose generator %d",i);
+		mrFree(rep);
 		return NULL;
 	    }
-	    MatFree(rep->Gen[i]);
+	    matFree(rep->Gen[i]);
 	    rep->Gen[i] = mat2;
 	}
 	if (flags & LAT_RG_TRANSPOSE)
 	{
-	    Matrix_t *mat2 = MatTransposed(rep->Gen[i]);
+	    Matrix_t *mat2 = matTransposed(rep->Gen[i]);
 	    if (mat2 == NULL)
 	    {
-		MTX_ERROR1("Cannot invert generator %d",i);
-		MrFree(rep);
+		mtxAbort(MTX_HERE,"Cannot invert generator %d",i);
+		mrFree(rep);
 		return NULL;
 	    }
-	    MatFree(rep->Gen[i]);
+	    matFree(rep->Gen[i]);
 	    rep->Gen[i] = mat2;
 	}
     }
@@ -94,3 +89,4 @@ MatRep_t *Lat_ReadCfGens(Lat_Info *info, int cf, int flags)
 }
 
 /// @}
+// vim:fileencoding=utf8:sw=3:ts=8:et:cin

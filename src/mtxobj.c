@@ -1,18 +1,13 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // C MeatAxe - Polymorphic objects
-//
-// (C) Copyright 1998-2015 Michael Ringe, Lehrstuhl D fuer Mathematik, RWTH Aachen
-//
-// This program is free software; see the file COPYING for details.
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#include <meataxe.h>
+#include "meataxe.h"
 #include <string.h>
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // Local data
 
-MTX_DEFINE_FILE_INFO
 
 #define MAT_MAGIC 0x6233af91    /* HACK: Duplicated from  matcore.c */
 #define IS_MATRIX(x) (((Matrix_t *)(x))->Magic == MAT_MAGIC)
@@ -23,15 +18,15 @@ static void *XRead(FILE *f)
 {
    long fl;
 
-   if (SysReadLong(f,&fl,1) != 1) {
-      MTX_ERROR("Error reading file header: %S");
+   if (sysReadLong32(f,&fl,1) != 1) {
+      mtxAbort(MTX_HERE,"Error reading file header: %S");
       return NULL;
    }
-   SysFseek(f,0);
+   sysFseek(f,0);
    if (fl >= 2) {
-      return (void *)MatRead(f);
+      return (void *)matRead(f);
    } else {
-      return (void *)PermRead(f);
+      return (void *)permRead(f);
    }
 }
 
@@ -48,9 +43,9 @@ void *XLoad(const char *fn)
    FILE *f;
    void *x;
 
-   f = SysFopen(fn,FM_READ);
+   f = sysFopen(fn,"rb");
    if (f == NULL) {
-      MTX_ERROR1("Cannot open %s: %S",fn);
+      mtxAbort(MTX_HERE,"Cannot open %s: %S",fn);
       return NULL;
    }
    x = XRead(f);
@@ -69,9 +64,9 @@ void *XLoad(const char *fn)
 int XSave(void *a, const char *fn)
 {
    if (IS_MATRIX(a)) {
-      return MatSave((Matrix_t *)a,fn);
+      return matSave((Matrix_t *)a,fn);
    }
-   return PermSave((Perm_t *)a,fn);
+   return permSave((Perm_t *)a,fn);
 }
 
 
@@ -85,9 +80,9 @@ int XSave(void *a, const char *fn)
 void XMul(void *a, void *b)
 {
    if (IS_MATRIX(a)) {
-      MatMul((Matrix_t *)a,(Matrix_t *)b);
+      matMul((Matrix_t *)a,(Matrix_t *)b);
    } else {
-      PermMul((Perm_t *)a,(Perm_t *)b);
+      permMul((Perm_t *)a,(Perm_t *)b);
    }
 }
 
@@ -101,9 +96,9 @@ void XMul(void *a, void *b)
 long XOrder(void *a)
 {
    if (IS_MATRIX(a)) {
-      return MatOrder((Matrix_t *)a);
+      return matOrder((Matrix_t *)a);
    } else {
-      return PermOrder((Perm_t *)a);
+      return permOrder((Perm_t *)a);
    }
 }
 
@@ -140,7 +135,7 @@ int XIsCompatible(void *a, void *b)
 
 void *XDup(void *a)
 {
-   return IS_MATRIX(a) ? (void *) MatDup(a) : (void *)PermDup(a);
+   return IS_MATRIX(a) ? (void *) matDup(a) : (void *)permDup(a);
 }
 
 
@@ -151,7 +146,7 @@ void *XDup(void *a)
 
 void *XInverse(void *a)
 {
-   return IS_MATRIX(a) ? (void *) MatInverse(a) : (void *)PermInverse(a);
+   return IS_MATRIX(a) ? (void *) matInverse(a) : (void *)permInverse(a);
 }
 
 
@@ -162,9 +157,9 @@ void *XInverse(void *a)
 void XFree(void *a)
 {
    if (IS_MATRIX(a)) {
-      MatFree((Matrix_t *)a);
+      matFree((Matrix_t *)a);
    } else {
-      PermFree((Perm_t *)a);
+      permFree((Perm_t *)a);
    }
 }
 
@@ -192,12 +187,13 @@ void *XPower(void *a, int n)
    }
 
    if (IS_MATRIX(a)) {
-      b = (void *) MatPower((Matrix_t *) a,n);
+      b = (void *) matPower((Matrix_t *) a,n);
    } else {
-      b = (void *) PermPower((Perm_t *) a,n);
+      b = (void *) permPower((Perm_t *) a,n);
    }
    if (neg) {
       XFree(a);
    }
    return b;
 }
+// vim:fileencoding=utf8:sw=3:ts=8:et:cin

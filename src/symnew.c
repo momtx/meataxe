@@ -1,11 +1,40 @@
-#include <meataxe.h>
+#include "meataxe.h"
 #include <stdlib.h>
 #include <string.h>
 
-MTX_DEFINE_FILE_INFO
 
 #define MAX_DEGREE 5
 #define MAX_NPERMS 10
+
+static MtxApplicationInfo_t AppInfo = { 
+"zsy", "Symmetrized Tensor Product",
+"SYNTAX\n"
+"    zsy " MTX_COMMON_OPTIONS_SYNTAX " [-G] <Mode> <Inp> <Out>\n"
+"\n"
+"ARGUMENTS\n"
+"    <Mode> .................. Symmetrization mode: e2, e3, e4, s2, or m3\n"
+"    <Inp> ................... Input matrix\n"
+"    <Out> ................... Output matrix\n"
+"\n"
+"OPTIONS\n"
+MTX_COMMON_OPTIONS_DESCRIPTION
+"    -G ...................... GAP output (implies -Q)\n"
+};
+
+static MtxApplication_t *App = NULL;
+
+
+static int opt_G = 0;		/* GAP output */
+static const char *iname, *oname;	/* File names */
+static enum {M_E2,M_E3,M_E4,M_S2,M_M3} mode;
+static long fl;			/* Field */
+static long nor, noc;		/* Input sizes */
+static PTR m1;			/* Input */
+static PTR *row;		/* Pointers to the rows of the input matrix */
+
+
+
+
 
 /// @todo **/
 
@@ -59,10 +88,10 @@ static void MakeOmega(const Symmetrizer_t *s)
     FEL f;
     int i;
     OmegaLen = s->NPerms;
-    f = FfFromInt(s->Nominator);
+    f = ffFromInt(s->Nominator);
     for (i = 0; i < OmegaLen; ++i)
     {
-	OmegaFactor[i] = FfDiv(FfFromInt(s->Fp[i].Factor),f);
+	OmegaFactor[i] = ffDiv(ffFromInt(s->Fp[i].Factor),f);
 	OmegaPerm[i] = s->Fp[i].Perm;
     }
 }
@@ -72,7 +101,7 @@ static void MakeOmega(const Symmetrizer_t *s)
 static void NumToTuple(int num, int *tuple)
 {
     int i;
-    MTX_ASSERT(num >= 0 && num < WDim);
+    MTX_ASSERT(num >= 0 && num < WDim,);
     for (i = Degree - 1; i >= 0; --i)
     {
 	tuple[i] = num % VDim;
@@ -89,7 +118,7 @@ static int TupleToNum(const int *base)
 	num = num * VDim + *base;
 	++base;
     }
-    MTX_ASSERT(num >= 0 && num < WDim);
+    MTX_ASSERT(num >= 0 && num < WDim, 0);
     return num;
 }
 /*-----------------------------------------------------------*/
@@ -120,8 +149,8 @@ SvVector_t *SvAlloc(int size)
 
 int SvFree(SvVector_t *vec)
 {
-    SysFree(vec->V);
-    SysFree(vec);
+    sysFree(vec->V);
+    sysFree(vec);
     return 0;
 }
 
@@ -143,7 +172,7 @@ void SvAddEntry(SvVector_t *vec, int n, FEL f)
 	return;
     if (SvFind(vec,n,&pos) == 0)
     {
-	vec->V[pos].Coeff = FfAdd(vec->V[pos].Coeff,f);
+	vec->V[pos].Coeff = ffAdd(vec->V[pos].Coeff,f);
 	if (vec->V[pos].Coeff == FF_ZERO)
 	{
 	    int k;
@@ -179,7 +208,7 @@ void SvPrint(const SvVector_t *vec)
 	NumToTuple(vec->V[i].Num,tuple);
 	if (i > 0)
 	    printf("+");
-	printf("%dv[",FfToInt(vec->V[i].Coeff));
+	printf("%dv[",ffToInt(vec->V[i].Coeff));
 	for (k = 0; k < Degree; ++k)
 	    printf(k == 0 ? "%d" : ",%d",tuple[k]);
 	printf("]");
@@ -192,7 +221,7 @@ void SvAddMul(SvVector_t *vec, const SvVector_t *b, FEL f)
     if (f == FF_ZERO)
 	return;
     for (i = 0; i < b->Size; ++i)
-	SvAddEntry(vec,b->V[i].Num,FfMul(b->V[i].Coeff,f));
+	SvAddEntry(vec,b->V[i].Num,ffMul(b->V[i].Coeff,f));
 }
 
 
@@ -200,7 +229,7 @@ void SvClean2(SvVector_t *vec, const SvVector_t **basis, int dim, PTR op)
 {
     int i;
     if (op != NULL)
-	FfMulRow(op,FF_ZERO);
+	ffMulRow(op,FF_ZERO);
     for (i = 0; i < dim; ++i)
     {
 	FEL f;
@@ -208,10 +237,10 @@ void SvClean2(SvVector_t *vec, const SvVector_t **basis, int dim, PTR op)
 	int pos;
     	if (SvFind(vec,num,&pos) != 0)
 	    continue;
-	f =  FfDiv(vec->V[pos].Coeff,basis[i]->V[0].Coeff);
-	SvAddMul(vec,basis[i],FfNeg(f));
+	f =  ffDiv(vec->V[pos].Coeff,basis[i]->V[0].Coeff);
+	SvAddMul(vec,basis[i],ffNeg(f));
     	if (op != NULL)
-	    FfInsert(op,i,f);
+	    ffInsert(op,i,f);
     }	
 }
 
@@ -248,9 +277,9 @@ static void MapBasisVector(int n, SvVector_t *x)
 static void PrintRow(PTR row)
 {
     int i;
-    const char *fmt = (FfOrder < 10) ? "%d" : " %d";
-    for (i = 0; i < FfNoc; ++i)
-	printf(fmt,FfExtract(row,i));
+    const char *fmt = (ffOrder < 10) ? "%d" : " %d";
+    for (i = 0; i < ffNoc; ++i)
+	printf(fmt,ffExtract(row,i));
 }	
 #endif
 
@@ -305,26 +334,25 @@ static void BuildTables(const Symmetrizer_t *s, int dim_v)
 
 MtxFile_t *OutputFile;
 
-static void MapTuple(int t[], int s[], int start, FEL f, PTR mat,
-	SvVector_t *result)
+static void MapTuple(int t[], int s[], int start, FEL f, PTR mat, int noc, SvVector_t *result)
 {
     int i;
-    PTR row = FfGetPtr(mat,t[start]);
+    PTR row = ffGetPtr(mat,t[start], noc);
 #if 0
     printf("Start=%d Row[%d]=",start,t[start]); PrintRow(row); printf("\n");
 #endif
     for (i = 0; i < VDim; ++i)
     {
-	FEL g = FfExtract(row,i);
+	FEL g = ffExtract(row,i);
 	if (g == FF_ZERO)
 	    continue;
 	s[start] = i;
     	if (start < Degree - 1)
-	    MapTuple(t,s,start+1,FfMul(f,g),mat,result);
+	    MapTuple(t,s,start+1,ffMul(f,g),mat,noc,result);
 	else
 	{
 	    int n = TupleToNum(s);
-	    SvAddEntry(result,n,FfMul(f,g));
+	    SvAddEntry(result,n,ffMul(f,g));
 	}
     }
 }
@@ -334,14 +362,14 @@ static void MapVector(int n, PTR mat, SvVector_t *result)
 {
     int i;
     result->Size = 0;
-    FfSetNoc(VDim);
+    ffSetNoc(VDim);
 
     for (i = 0; i < SBasis[n]->Size; ++i)
     {
 	int tuple[MAX_NPERMS];
 	int imgtuple[MAX_NPERMS];
     	NumToTuple(SBasis[n]->V[i].Num,tuple);
-	MapTuple(tuple,imgtuple,0,SBasis[n]->V[i].Coeff,mat,result);
+	MapTuple(tuple,imgtuple,0,SBasis[n]->V[i].Coeff,mat,VDim,result);
     }
 }
 
@@ -350,49 +378,21 @@ static void CalculateSAction(PTR mat)
     int n;
     PTR img;
     SvVector_t *v = SvAlloc(100);
-    img = FfAlloc(1);
+
+    MTX_ASSERT(ffNoc == noc, );
+    img = ffAlloc(1, noc);
     for (n = 0; n < SDim; ++n)
     {
 	MapVector(n,mat,v);
-    	FfSetNoc(SDim);
+    	ffSetNoc(SDim);
 	fprintf(stderr,".");
 	SvClean2(v,(const SvVector_t **)SBasis,SDim,img);
-	MfWriteRows(OutputFile,img,1);
+	mfWriteRows(OutputFile,img,1);
     }
-    SysFree(img);
+    sysFree(img);
 }
 
 
-
-
-
-
-
-static MtxApplicationInfo_t AppInfo = { 
-"zsy", "Symmetrized Tensor Product",
-"SYNTAX\n"
-"    zsy " MTX_COMMON_OPTIONS_SYNTAX " [-G] <Mode> <Inp> <Out>\n"
-"\n"
-"ARGUMENTS\n"
-"    <Mode> .................. Symmetrization mode: e2, e3, e4, s2, or m3\n"
-"    <Inp> ................... Input matrix\n"
-"    <Out> ................... Output matrix\n"
-"\n"
-"OPTIONS\n"
-MTX_COMMON_OPTIONS_DESCRIPTION
-"    -G ...................... GAP output (implies -Q)\n"
-};
-
-static MtxApplication_t *App = NULL;
-
-
-static int opt_G = 0;		/* GAP output */
-static const char *iname, *oname;	/* File names */
-static enum {M_E2,M_E3,M_E4,M_S2,M_M3} mode;
-static long fl;			/* Field */
-static long nor, noc;		/* Input sizes */
-static PTR m1;			/* Input */
-static PTR *row;		/* Pointers to the rows of the input matrix */
 
 
 
@@ -404,48 +404,47 @@ static PTR *row;		/* Pointers to the rows of the input matrix */
    ------------------------------------------------------------------ */
 
 static int Prepare()
-
 {
     long i;
     MtxFile_t *f;
 
     /* Open the input file and check the header.
        ----------------------------------------- */
-    if ((f = MfOpen(iname)) == NULL)
+    if ((f = mfOpen(iname)) == NULL)
     {
-	MTX_ERROR("Error opening input file");
+	mtxAbort(MTX_HERE,"Error opening input file");
 	return 1;
     }
     if (f->Field < 2)
     {
-	MTX_ERROR2("%s: %E",iname,MTX_ERR_NOTMATRIX);
+	mtxAbort(MTX_HERE,"%s: %s",iname,MTX_ERR_NOTMATRIX);
 	return 1;
     }
     if (f->Nor != f->Noc)
     {
-	MTX_ERROR2("%s: %E",iname,MTX_ERR_NOTSQUARE);
+	mtxAbort(MTX_HERE,"%s: %s",iname,MTX_ERR_NOTSQUARE);
 	return 1;
     }
     fl = f->Field;
     nor = f->Nor;
     noc = f->Noc;
 
-	FfSetField(fl); 
-	FfSetNoc(noc);
-	m1 = FfAlloc(nor);
-	MfReadRows(f,m1,nor);
+    ffSetField(fl); 
+    ffSetNoc(noc);
+    m1 = ffAlloc(nor, noc);
+    mfReadRows(f,m1,nor);
 
-	/* Set up pointers to the rows of the input matrix
-   	   ----------------------------------------------- */
-	row = NALLOC(PTR,nor);
-	if (row == NULL)
-	    return -1;
-	for (i = 0; i < nor; ++i)
-	{	
-	    row[i] = m1;
-	    FfStepPtr(&m1);
-	}
-    MfClose(f);
+    /* Set up pointers to the rows of the input matrix
+       ----------------------------------------------- */
+    row = NALLOC(PTR,nor);
+    if (row == NULL)
+       return -1;
+    for (i = 0; i < nor; ++i)
+    {	
+       row[i] = m1;
+       ffStepPtr(&m1, noc);
+    }
+    mfClose(f);
 
     /*BuildTables(&M3,nor);
     BuildTables(&S2,nor);
@@ -456,8 +455,8 @@ static int Prepare()
     /* Allocate the output buffer
        -------------------------- */
     MESSAGE(0,("Output is %d x %d\n",SDim,SDim));
-    FfSetNoc(SDim);
-    OutputFile = MfCreate(oname,fl,SDim,SDim);
+    ffSetNoc(SDim);
+    OutputFile = mfCreate(oname,fl,SDim,SDim);
 
 
     return 0;
@@ -465,23 +464,22 @@ static int Prepare()
 
 
 
-static int Init(int argc, const char **argv)
-
+static int Init(int argc, char **argv)
 {
     const char *arg3;
 
     /* Process command line options.
        ----------------------------- */
-    App = AppAlloc(&AppInfo,argc,argv);
+    App = appAlloc(&AppInfo,argc,argv);
     if (App == NULL)
 	return -1;
-    opt_G = AppGetOption(App,"-G --gap");
+    opt_G = appGetOption(App,"-G --gap");
     if (opt_G)
 	MtxMessageLevel = -100;
 
     /* Process arguments.
        ------------------ */
-    if (AppGetArguments(App,3,3) < 0)
+    if (appGetArguments(App,3,3) < 0)
 	return -1;
     iname = App->ArgV[1];
     oname = App->ArgV[2];
@@ -493,7 +491,7 @@ static int Init(int argc, const char **argv)
     else if (!strcmp(arg3,"m3")) mode = M_M3;
     else 
     {
-	MTX_ERROR1("Unknown mode '%s'",arg3);
+	mtxAbort(MTX_HERE,"Unknown mode '%s'",arg3);
 	return -1;
     }
     return 0;
@@ -510,21 +508,20 @@ static int Init(int argc, const char **argv)
    main()
    ------------------------------------------------------------------ */
 
-int main(int argc, const char **argv)
-
+int main(int argc, char **argv)
 {
-
     if (Init(argc,argv) != 0)
     {
-	MTX_ERROR("Initialization failed");
+	mtxAbort(MTX_HERE,"Initialization failed");
 	return 1;
     }
     if (Prepare() != 0)
 	return 1;
     CalculateSAction(row[0]);
-    MfClose(OutputFile);
-    AppFree(App);
+    mfClose(OutputFile);
+    appFree(App);
     return EXIT_OK;
 }
 
 
+// vim:fileencoding=utf8:sw=3:ts=8:et:cin

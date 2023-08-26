@@ -1,0 +1,10 @@
+echo "0020 - Arithmetic tables"
+
+. ../tests/common.sh
+
+fieldOrders="2 3 5 7 13 25 49 64 97 243 251"
+for q in $fieldOrders; do
+   zzztest -t $q > tmp.$$.tables.$q
+   cmp tmp.$$.tables.$q "${MTX_TESTCASE_DIR}/tables.$q.expected"
+done
+

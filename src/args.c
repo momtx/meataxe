@@ -1,12 +1,8 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // C MeatAxe - Command line handling and application utilities
-//
-// (C) Copyright 1998-2016 Michael Ringe, Lehrstuhl D fuer Mathematik, RWTH Aachen
-//
-// This program is free software; see the file COPYING for details.
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#include <meataxe.h>
+#include "meataxe.h"
 #include <ctype.h>
 #include <string.h>
 #include <stdlib.h>
@@ -14,19 +10,10 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 /// Global data
 
-#if !defined(MTXBIN)
-#error MTXBIN undefined
-#endif
-#if !defined(MTXLIB)
-#error MTXLIB undefined
-#endif
-
 #define MTX_MAX_ARGS 150
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 /// Local data
-
-MTX_DEFINE_FILE_INFO
 
 #define IS_DONE(app,i) (app->IsDone[i] == 0xFFFFFFFF)
 #define IS_DONE_1(app,i,k) ((app->IsDone[i] & (1 << (k))) != 0)
@@ -42,13 +29,13 @@ MTX_DEFINE_FILE_INFO
 /// on-line help and automatic processing of some common options like "-V".
 /// Typically, a MeatAxe application's @c main() function should perform
 /// the following steps:
-/// - Create an application object using AppAlloc().
+/// - Create an application object using appAlloc().
 /// - Process all command line options.
 /// - Process simple options without arguments.
 /// - Process options that take an argument. Options taking an integer
-///   argument can be handeled with |AppGetIntOption()|. Other option
+///   argument can be handeled with |appGetIntOption()|. Other option
 ///   arguments must be processed by the application.
-/// - Call |AppGetArgs()| to process the remaining command line arguments.
+/// - Call |appGetArgs()| to process the remaining command line arguments.
 /// - Do whatever the application is supposed to do.
 ///
 /// Here is a short example:
@@ -63,14 +50,14 @@ MTX_DEFINE_FILE_INFO
 ///
 /// int main(int argc, char *argv[])
 /// {
-///     App = AppAlloc(&AppInfo,argc,argv);
-///     DoAll = AppGetOption(App,"-a --all");
-///     Level = AppGetIntOption(App,"-l --level",42,0,100);
-///     AppGetArguments(App,2,2);
+///     App = appAlloc(&AppInfo,argc,argv);
+///     DoAll = appGetOption(App,"-a --all");
+///     Level = appGetIntOption(App,"-l --level",42,0,100);
+///     appGetArguments(App,2,2);
 ///     Input = App->ArgV[0];
 ///     Output = App->ArgV[1];
 ///     DoIt();
-///     AppFree(App);
+///     appFree(App);
 ///     return 0;
 /// }
 /// @endcode
@@ -79,57 +66,30 @@ MTX_DEFINE_FILE_INFO
 /// of @a level must be between 0 and 100. If not specified by the user,
 /// a default value of 42 is used.
 ///
-/// @par Temporary Directories  TODO: move to AppCreateTempDir()
+/// @par Temporary Directories  TODO: move to appCreateTempDir()
 /// If an application needs a temporary directory to store interdediate files,
-/// it can use AppCreateTempDir(). This function creates a new directory and
+/// it can use appCreateTempDir(). This function creates a new directory and
 /// returns its name. The directory will be removed when the application object
-/// is destroyed, i.e., in |AppFree()|. Note that the application must not leave
+/// is destroyed, i.e., in |appFree()|. Note that the application must not leave
 /// any file in the temporary directory. Otherwise, a run-time error is generated
-/// when AppFree() tries to remove the directory.
-/// The following code example shows how to use AppCreateTempDir():
+/// when appFree() tries to remove the directory.
+/// The following code example shows how to use appCreateTempDir():
 /// @code
 /// int main(int argc, char **argv)
 /// {
-///     MtxApplication_t *app = AppAlloc(argc,argv,&appinfo);
-///     const char *tmpdir = AppCreateTempDir(app);
+///     MtxApplication_t *app = appAlloc(argc,argv,&appinfo);
+///     const char *tmpdir = appCreateTempDir(app);
 ///     ...
 ///
 ///     sprintf(file_name,"%s/%s",tempdir,"test");
-///     MatSave(mat,fn);
+///     matSave(mat,fn);
 ///     ...
-///     SysRemoveFile(fn);
+///     sysRemoveFile(fn);
 ///
-///     AppFree(app);
+///     appFree(app);
 ///     return 0;
 /// }
 /// @endcode
-
-////////////////////////////////////////////////////////////////////////////////////////////////////
-/// MeatAxe Binary Directory.
-/// This variable contains the name of the MeatAxe binary directory. This directory
-/// is used, for example, to find the @ref prog_maketab "maketab" program for automatic
-/// arithmetic table generation. The value of MtxBinDir can be set on the command line
-/// with the "-B" option. Otherwise, the value of the environment variable
-/// MTXBIN is used. If neither "-B" nor MTXBIN are defined, the default
-/// directory, which was selected when building the MeatAxe, is used.
-
-#define MKSTR1(s) # s
-#define MKSTR(s) MKSTR1(s)
-char MtxBinDir[250] = MKSTR(MTXBIN);
-
-////////////////////////////////////////////////////////////////////////////////////////////////////
-/// MeatAxe Library Directory.
-/// This variable contains the name of the MeatAxe library directory.
-/// Arithmetic table files are searched in this directory. The value of
-/// MtxLibDir can be set on the command line with the "-L" option. Otherwise,
-/// the value of the environment variable MTXLIB is used. If neither "-L" nor
-/// MTXLIB are defined, the default directory, which was selected when
-/// building the MeatAxe, is used.
-/// @see  MtxBinDir
-
-char MtxLibDir[250] = MKSTR(MTXLIB);
-#undef MKSTR
-#undef MKSTR1
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -160,8 +120,7 @@ static int CheckForShortOption(MtxApplication_t *app, int i, char short_name, in
          continue;
       }
       if (needs_arg && ((k > 0) || (tab[k + 1] != 0))) {
-         MTX_ERROR1("Option '-%c' cannot be combined with other options",
-                    short_name);
+         mtxAbort(NULL,"Option '-%c' cannot be combined with other options", short_name);
          MARK_DONE(app,i);
          return -1;
       }
@@ -177,7 +136,7 @@ static int CheckForShortOption(MtxApplication_t *app, int i, char short_name, in
 static int GetArg(MtxApplication_t *app, int i)
 {
    if ((i >= app->OptEnd - 1) || (app->IsDone[i + 1] != 0)) {
-      MTX_ERROR1("Missing argument after '%s'",app->OrigArgV[i]);
+      mtxAbort(NULL,"Missing argument after '%s'",app->OrigArgV[i]);
       return -1;
    }
    app->OptArg = app->OrigArgV[i + 1];
@@ -232,7 +191,7 @@ static int FindSpec(MtxApplication_t *app, const char *spec, int needs_arg)
    for (c = spec; *c != 0 && isspace((unsigned char)*c); ++c) {
    }
    if (*c != '-') {
-      MTX_ERROR(err_text);
+      mtxAbort(MTX_HERE,err_text);
       return -1;
    }
    if (c[1] != '-') {
@@ -246,7 +205,7 @@ static int FindSpec(MtxApplication_t *app, const char *spec, int needs_arg)
    }
    if (*c != 0) {
       if ((c[0] != '-') || (c[1] != '-')) {
-         MTX_ERROR(err_text);
+         mtxAbort(MTX_HERE,err_text);
          return -1;
       }
       long_name = c + 2;
@@ -254,7 +213,7 @@ static int FindSpec(MtxApplication_t *app, const char *spec, int needs_arg)
          ++c;
       }
       if (*c != 0) {
-         MTX_ERROR(err_text);
+         mtxAbort(MTX_HERE,err_text);
          return -1;
       }
    }
@@ -284,6 +243,14 @@ static void PrintHelp(const MtxApplicationInfo_t *ai)
    }
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// Print the version info.
+
+static void PrintVersion(const MtxApplicationInfo_t *ai)
+{
+   printf("%s\n",MtxVersion);
+}
+
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 /// Initialize the application.
@@ -293,12 +260,12 @@ static void PrintHelp(const MtxApplicationInfo_t *ai)
 /// that have been passed to |main()|. |ai|, if not NULL, must point to an
 /// initialized application information structure.
 ///
-/// %AppAlloc() performs the following actions:
-/// - It evaluates the MTXLIB and MTXBIN environment variables. If set,
-///   these variables overwrite the default directories.
+/// %appAlloc() performs the following actions:
+/// - It evaluates the MTXLIB environment variable. If set,
+///   these variable overwrites the default library directory.
 /// - It calls MtxInitLibrary() to initialize the MeatAxe library.
 /// - It parses the command line and initializes internal data structures
-///   for use with AppGetOption() and related functions.
+///   for use with appGetOption() and related functions.
 /// - Common options such as "-V" (see @ref prog_stdopts) are immediately evaluated.
 ///   These options are not visible to the application.
 /// @param ai Application information.
@@ -306,7 +273,7 @@ static void PrintHelp(const MtxApplicationInfo_t *ai)
 /// @param argv List of command line arguments.
 /// @return Pointer to the application object, or 0 on error.
 
-MtxApplication_t *AppAlloc(MtxApplicationInfo_t const *ai, int argc, const char **argv)
+MtxApplication_t *appAlloc(MtxApplicationInfo_t const *ai, int argc, char **argv)
 {
    MtxApplication_t *a;
    const char *c;
@@ -335,42 +302,31 @@ MtxApplication_t *AppAlloc(MtxApplicationInfo_t const *ai, int argc, const char 
       }
    }
 
-   /* Process environment variables
-      ----------------------------- */
-   if ((c = getenv("MTXBIN")) != NULL) {
-      snprintf(MtxBinDir, sizeof(MtxBinDir), "%s", c);
-   }
-   if ((c = getenv("MTXLIB")) != NULL) {
-      snprintf(MtxLibDir, sizeof(MtxLibDir), "%s", c);
-   }
+   MtxMessageLevel = appGetCountedOption(a,"-V --verbose");
+   MtxMessageLevel -= appGetCountedOption(a,"-Q --quiet");
 
    /* Initialize the library
       ---------------------- */
-   MtxInitLibrary();
+   MtxInitLibrary(argv[0]);
+   if ((c = appGetTextOption(a,"-L --mtxlib",NULL)) != NULL) {
+      mtxSetLibraryDirectory(c);
+   }
+   MtxOpt_UseOldWordGenerator = appGetOption(a,"--old-word-generator");
+   if ((time_limit = appGetIntOption(a,"-T --lime-limit",0,0,1000000)) > 0) {
+      sysSetTimeLimit(time_limit);
+   }
 
    /* Display help text
       ----------------- */
-   if (AppGetOption(a,"-h --help")) {
+   if (appGetOption(a,"-h --help")) {
       PrintHelp(ai);
       exit(0);
    }
-
-   /* Check for common options
-      ------------------------ */
-   MtxMessageLevel = AppGetCountedOption(a,"-V --verbose");
-   if (AppGetOption(a,"-Q --quiet")) {
-      MtxMessageLevel = -1000;
+   if (appGetOption(a,"--version")) {
+      PrintVersion(ai);
+      exit(0);
    }
-   if ((c = AppGetTextOption(a,"-B --mtxbin",NULL)) != NULL) {
-      snprintf(MtxBinDir, sizeof(MtxBinDir), "%s", c);
-   }
-   if ((c = AppGetTextOption(a,"-L --mtxlib",NULL)) != NULL) {
-      snprintf(MtxLibDir, sizeof(MtxLibDir), "%s", c);
-   }
-   MtxOpt_UseOldWordGenerator = AppGetOption(a,"--old-word-generator");
-   if ((time_limit = AppGetIntOption(a,"-T --lime-limit",0,0,1000000)) > 0) {
-      SysSetTimeLimit(time_limit);
-   }
+  
 
    return a;
 }
@@ -379,25 +335,25 @@ MtxApplication_t *AppAlloc(MtxApplicationInfo_t const *ai, int argc, const char 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 /// End an application.
 /// This function terminates a MeatAxe application. It should be called
-/// immediately before the |main()| function exits. |AppFree()| removes
-/// any temporary directory created with |AppCreateTempDir()|. If the
+/// immediately before the |main()| function exits. |appFree()| removes
+/// any temporary directory created with |appCreateTempDir()|. If the
 /// directory is not empty at this point, a run-time error will result.
 /// @return 0 on success, -1 on error.
 
-int AppFree(MtxApplication_t *a)
+int appFree(MtxApplication_t *a)
 {
-   long t = SysTimeUsed();
+   long t = sysTimeUsed();
 
    /* Remove the temporary directory.
       ------------------------------- */
    if (a->TempDirName[0] != 0) {
-      SysRemoveDirectory(a->TempDirName);
+      sysRemoveDirectory(a->TempDirName);
    }
 
    MESSAGE(1,("%s: %ld.%ld seconds\n",a->AppInfo != NULL ?
               a->AppInfo->Name : "meataxe",t / 10,t % 10));
    MtxCleanupLibrary();
-   SysFree(a);
+   sysFree(a);
    return 0;
 }
 
@@ -405,7 +361,7 @@ int AppFree(MtxApplication_t *a)
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 /// Check for command line option.
 /// This function checks if an option is present on the command line. Before
-/// using AppGetOption() you must call AppAlloc() to initialize
+/// using appGetOption() you must call appAlloc() to initialize
 /// the command line parser. Only simple options, i.e., options without an
 /// argument can be recognized by this function. The return value is 1, if
 /// the option is present and 0 otherwise.
@@ -416,27 +372,27 @@ int AppFree(MtxApplication_t *a)
 /// leading "-" must always be included in the name. Typically an option has
 /// only one or two names, as in the following example:
 /// @code
-/// int PrintAll = AppGetOption(App,"-a --all");
+/// int PrintAll = appGetOption(App,"-a --all");
 /// @endcode
 /// Here, the user may specify either '-a' or '--all' on the command line.
 ///
-/// Each call of AppGetOption() consumes at most one command line option.
+/// Each call of appGetOption() consumes at most one command line option.
 /// If the user specifies the same option multiple times, only the first option
 /// is recognized. Since this is usually not intended, an
 /// appropriate error message will be generated when the application calls
-/// AppGetArguments(). If an option can be repeated on the command line
+/// appGetArguments(). If an option can be repeated on the command line
 /// the application must make sure that all options are processed:
 /// @code
-/// while (AppGetOption(App,"-a --all"))
+/// while (appGetOption(App,"-a --all"))
 /// { ... }
 /// @endcode
-/// The same remark applies to AppGetIntOption() and AppGetTextOption().
-/// You may also use AppGetCountedOption() to achieve a similar behaviour.
+/// The same remark applies to appGetIntOption() and appGetTextOption().
+/// You may also use appGetCountedOption() to achieve a similar behaviour.
 /// @param app Pointer to the application object.
 /// @param spec The option name(s), see below.
 /// @return 1 if the option is present, 0 otherwise.
 
-int AppGetOption(MtxApplication_t *app, const char *spec)
+int appGetOption(MtxApplication_t *app, const char *spec)
 {
    return FindSpec(app,spec,0) == 0;
 }
@@ -450,7 +406,7 @@ int AppGetOption(MtxApplication_t *app, const char *spec)
 /// sample -a -a -aa input output
 /// @endcode
 /// then MtxGetCountedOption("-a") returns 4. As with all command line
-/// processing functions, you must call AppAlloc() before
+/// processing functions, you must call appAlloc() before
 /// using this function.
 ///
 /// Note: This function is included for compatibility reasons only.
@@ -459,7 +415,7 @@ int AppGetOption(MtxApplication_t *app, const char *spec)
 /// @param spec The option name(s), see below.
 /// @return Number of times the option is present on the command line.
 
-int AppGetCountedOption(MtxApplication_t *app, const char *spec)
+int appGetCountedOption(MtxApplication_t *app, const char *spec)
 {
    int count = 0;
 
@@ -479,11 +435,11 @@ int AppGetCountedOption(MtxApplication_t *app, const char *spec)
 /// appropriate error message is generated. If the option is not present
 /// on the command line, the function returns @a dflt as a default value.
 /// @param app Pointer to the application object.
-/// @param spec A list of names for the option, separated by spaces. See AppGetOption().
+/// @param spec A list of names for the option, separated by spaces. See appGetOption().
 /// @param dflt Default value.
 /// @return Value of the option, or @a dflt if the option is not present.
 
-const char *AppGetTextOption(MtxApplication_t *app, const char *spec, const char *dflt)
+const char *appGetTextOption(MtxApplication_t *app, const char *spec, const char *dflt)
 {
    if (FindSpec(app,spec,1) != 0) {
       return dflt;
@@ -523,29 +479,29 @@ static int IsInteger(const char *c)
 /// and  @a max, an error message is generated. However, if @a min is
 /// greater than @a max, no range check is performed.
 /// @param app Pointer to the application object.
-/// @param spec A list of names for the option, separated by spaces. See AppGetOption().
+/// @param spec A list of names for the option, separated by spaces. See appGetOption().
 /// @param dflt Default value.
 /// @param min Minimum value of the option.
 /// @param max Maximum value of the option.
 /// @return Value of the option, or @a dflt if the option is not present.
 
-int AppGetIntOption(MtxApplication_t *app, const char *spec, int dflt,
+int appGetIntOption(MtxApplication_t *app, const char *spec, int dflt,
                     int min, int max)
 {
    const char *txt;
    int i;
 
-   txt = AppGetTextOption(app,spec,NULL);
+   txt = appGetTextOption(app,spec,NULL);
    if (txt == NULL) {
       return dflt;
    }
    if (!IsInteger(txt)) {
-      MTX_ERROR1("Invalid number after '%s'",app->OrigArgV[app->OptInd]);
+      mtxAbort(NULL,"Invalid number after '%s'",app->OrigArgV[app->OptInd]);
       return dflt;
    }
    i = atoi(txt);
    if ((min <= max) && ((i < min) || (i > max))) {
-      MTX_ERROR3("Value after '%s' is out of range (%d..%d)",
+      mtxAbort(NULL,"Value after '%s' is out of range (%d..%d)",
                  app->OrigArgV[app->OptInd],min,max);
       return dflt;
    }
@@ -565,7 +521,7 @@ static int CheckDone(MtxApplication_t *app, int i)
    }
    if (c[1] == '-') {
       if (app->IsDone[i] != 0xFFFFFFFF) {
-         MTX_ERROR1("Unknown option '%s', try --help",c);
+         mtxAbort(NULL,"Unknown option '%s', try --help",c);
          return -1;             /* -1 = Nicht ausgewertete Option */
       }
    } else {
@@ -576,7 +532,7 @@ static int CheckDone(MtxApplication_t *app, int i)
             char tmp[2];
             tmp[0] = c[k];
             tmp[1] = 0;
-            MTX_ERROR1("Unknown option '-%s', try --help",tmp);
+            mtxAbort(NULL,"Unknown option '-%s', try --help",tmp);
             return -1;                  /* -1 = Nicht ausgewertete Option */
          }
       }
@@ -587,7 +543,7 @@ static int CheckDone(MtxApplication_t *app, int i)
 
 /// Get command line arguments.
 /// This function must be called after all command line options have been
-/// processed (see, for example, AppGetOption()). The remaining words on
+/// processed (see, for example, appGetOption()). The remaining words on
 /// the command line are treated as non-optional arguments, the global variable
 /// @c ArgV is set to the first argument and the number of arguments is
 /// stored in @c |ArgC. An error message is generated, if there are unprocessed
@@ -598,7 +554,7 @@ static int CheckDone(MtxApplication_t *app, int i)
 /// @param max_argc Maximum number of arguments expected.
 /// @return Number of arguments, or -1 on error.
 
-int AppGetArguments(MtxApplication_t *app, int min_argc, int max_argc)
+int appGetArguments(MtxApplication_t *app, int min_argc, int max_argc)
 {
    int i;
 
@@ -624,15 +580,14 @@ int AppGetArguments(MtxApplication_t *app, int min_argc, int max_argc)
    // check for options in argument list
    for (++i; i < app->OrigArgC; ++i) {
       if (app->IsDone[i] != 0) {
-         MTX_ERROR1("Option '%s' following non-optional argument",
-                    app->OrigArgV[i]);
+         mtxAbort(NULL,"Option '%s' following non-optional argument", app->OrigArgV[i]);
          return -1;
       }
    }
 
    // check number of arguments
    if ((app->ArgC < min_argc) || (app->ArgC > max_argc)) {
-      MTX_ERROR("Invalid number of arguments, try --help");
+      mtxAbort(NULL,"Invalid number of arguments, try --help");
       return -1;
    }
    return app->ArgC;
@@ -649,13 +604,13 @@ int AppGetArguments(MtxApplication_t *app, int min_argc, int max_argc)
 /// which must not be modified by the application. If the directory cannot be
 /// created for some reason, the return value is 0.
 ///
-/// If the application calls %AppCreateTempDir() more than once, only the
+/// If the application calls %appCreateTempDir() more than once, only the
 /// first call actually creates a directory. The later calls just return the
 /// name of the directory already created.
 /// @param app Pointer to the application object.
 /// @return Directory name or 0 on error.
 
-const char *AppCreateTempDir(MtxApplication_t *app)
+const char *appCreateTempDir(MtxApplication_t *app)
 {
    /* Check if we have already created a temporary directory.
       ------------------------------------------------------- */
@@ -665,9 +620,9 @@ const char *AppCreateTempDir(MtxApplication_t *app)
 
    /* Make the directory.
       ------------------- */
-   sprintf(app->TempDirName,"mtxtmp.%5.5d",SysGetPid());
-   if (SysCreateDirectory(app->TempDirName) != 0) {
-      MTX_ERROR("Cannot create temporary directory");
+   sprintf(app->TempDirName,"mtxtmp.%5.5d",sysGetPid());
+   if (sysCreateDirectory(app->TempDirName) != 0) {
+      mtxAbort(MTX_HERE,"Cannot create temporary directory");
       app->TempDirName[0] = 0;
       return NULL;
    }
@@ -677,3 +632,5 @@ const char *AppCreateTempDir(MtxApplication_t *app)
 
 
 /// @}
+
+// vim:fileencoding=utf8:sw=3:ts=8:et:cin

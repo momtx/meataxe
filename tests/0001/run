@@ -1,0 +1,6 @@
+echo "0001 - Library tests"
+
+. ../tests/common.sh
+
+zzztest
+

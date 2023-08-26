@@ -1,12 +1,8 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // C MeatAxe - Spinup, split, and standard basis
-//
-// (C) Copyright 1998-2015 Michael Ringe, Lehrstuhl D fuer Mathematik, RWTH Aachen
-//
-// This program is free software; see the file COPYING for details.
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#include <meataxe.h>
+#include "meataxe.h"
 
 #include <string.h>
 #include <stdlib.h>
@@ -17,7 +13,6 @@
    Global data
    -------------------------------------------------------------------------- */
 
-MTX_DEFINE_FILE_INFO
 
 static Matrix_t *Seed = NULL;		/* Seed vectors */
 static MatRep_t *Rep = NULL;		/* Generators */
@@ -100,37 +95,37 @@ static int ReadGenerators()
     int i;
     MtxFile_t *f;
 
-    f = MfOpen(GenName[0]);
+    f = mfOpen(GenName[0]);
     Permutations = f->Field == -1;
-    MfClose(f);
+    mfClose(f);
 
     if (Permutations)
     {
 	if (SubName != NULL || QuotName != NULL)
 	{
-	    MTX_ERROR("'-s' and '-q' are not supported for permutations");
+	    mtxAbort(MTX_HERE,"'-s' and '-q' are not supported for permutations");
 	    return -1;
 	}
 	for (i = 0; i < ngen; ++i)
 	{
-	    Perm[i] = PermLoad(GenName[i]);
+	    Perm[i] = permLoad(GenName[i]);
 	    if (Perm[i] == NULL)
 		return -1;
 	}
     }
     else
     {
-	if ((Rep = MrAlloc(0,NULL,0)) == NULL)
+	if ((Rep = mrAlloc(0,NULL,0)) == NULL)
 	    return -1;
 	for (i = 0; i < ngen; ++i)
 	{
 	    Matrix_t *gen;
-	    gen = MatLoad(GenName[i]);
+	    gen = matLoad(GenName[i]);
 	    if (gen == NULL)
 		return -1;
-	    if (MrAddGenerator(Rep,gen,0) != 0)
+	    if (mrAddGenerator(Rep,gen,0) != 0)
 	    {
-		MTX_ERROR1("%s: cannot load generator",GenName[i]);
+		mtxAbort(MTX_HERE,"%s: cannot load generator",GenName[i]);
 		return -1;
 	    }
 	}
@@ -152,39 +147,39 @@ static int ReadSeed()
     int skip = 0;
     int num_seed;
 
-    if ((sf = MfOpen(SeedName)) == NULL)
+    if ((sf = mfOpen(SeedName)) == NULL)
 	return -1;
     if (sf->Field < 2) 
     {
-	MTX_ERROR2("%s: %E",SeedName,MTX_ERR_NOTMATRIX);
+	mtxAbort(MTX_HERE,"%s: %s",SeedName,MTX_ERR_NOTMATRIX);
 	return -1;
     }
     if (Permutations)
     {
-	FfSetField(sf->Field);
-	FfSetNoc(sf->Noc);
+	ffSetField(sf->Field);
+	ffSetNoc(sf->Noc);
     }
-    if (sf->Noc != FfNoc || sf->Field != FfOrder)
+    if (sf->Noc != ffNoc || sf->Field != ffOrder)
     {
-	MTX_ERROR3("%s and %s: %E",GenName[0],SeedName,MTX_ERR_INCOMPAT);
+	mtxAbort(MTX_HERE,"%s and %s: %s",GenName[0],SeedName,MTX_ERR_INCOMPAT);
 	return -1;
     }
     if (!TryLinearCombinations && SeedVecNo > 0)
 	skip = SeedVecNo - 1;
-    FfSeekRow(sf->File,skip);
+    ffSeekRow(sf->File,skip);
     if (TryOneVector)
 	num_seed = 1;
     else
 	num_seed = sf->Nor - skip;
-    Seed = MatAlloc(FfOrder,num_seed,FfNoc);
+    Seed = matAlloc(ffOrder,num_seed,ffNoc);
     if (Seed == NULL)
 	return -1;
-    if (MfReadRows(sf,Seed->Data,Seed->Nor) != Seed->Nor)
+    if (mfReadRows(sf,Seed->Data,Seed->Nor) != Seed->Nor)
     {
-	MTX_ERROR("Error reading seed vectors");
+	mtxAbort(MTX_HERE,"Error reading seed vectors");
 	return -1;
     }
-    MfClose(sf);
+    mfClose(sf);
     return 0;
 }
 
@@ -201,26 +196,26 @@ static int init_args()
 {
     int i;
 
-    SubspaceName = AppGetTextOption(App,"-b --basis",NULL);
-    SubName = AppGetTextOption(App,"-s --subspace-action",NULL);
-    QuotName = AppGetTextOption(App,"-q --quotient-action",NULL);
-    OpName = AppGetTextOption(App,"-o --script",NULL);
+    SubspaceName = appGetTextOption(App,"-b --basis",NULL);
+    SubName = appGetTextOption(App,"-s --subspace-action",NULL);
+    QuotName = appGetTextOption(App,"-q --quotient-action",NULL);
+    OpName = appGetTextOption(App,"-o --script",NULL);
 
-    MaxDim = AppGetIntOption(App,"-d --dimension-limit",-1,1,100000000);
-    MaxTries = AppGetIntOption(App,"-x --max-tries",-1,1,1000);
-    TryOneVector = AppGetOption(App,"-1 --single-shot");
-    TryLinearCombinations = AppGetOption(App,"-m --seed-generate");
-    FindCyclicVector = AppGetOption(App,"-e --find-cyclic-vector");
-    FindClosure = AppGetOption(App,"-c --combine");
-    Standard = AppGetOption(App,"-t --standard-basis");
+    MaxDim = appGetIntOption(App,"-d --dimension-limit",-1,1,100000000);
+    MaxTries = appGetIntOption(App,"-x --max-tries",-1,1,1000);
+    TryOneVector = appGetOption(App,"-1 --single-shot");
+    TryLinearCombinations = appGetOption(App,"-m --seed-generate");
+    FindCyclicVector = appGetOption(App,"-e --find-cyclic-vector");
+    FindClosure = appGetOption(App,"-c --combine");
+    Standard = appGetOption(App,"-t --standard-basis");
 
-    opt_G = AppGetOption(App,"-G --gap");
-    ngen = AppGetIntOption(App,"-g",-1,1,MAXGEN);
-    SeedVecNo = AppGetIntOption(App,"-n",0,1,10000000);
+    opt_G = appGetOption(App,"-G --gap");
+    ngen = appGetIntOption(App,"-g",-1,1,MAXGEN);
+    SeedVecNo = appGetIntOption(App,"-n",0,1,10000000);
 
     if (MaxDim != -1 && (FindClosure || FindCyclicVector))
     {
-	MTX_ERROR("'-d' cannot be used together with '-c' or '-e'");
+	mtxAbort(MTX_HERE,"'-d' cannot be used together with '-c' or '-e'");
 	return -1;
     }
 
@@ -229,19 +224,19 @@ static int init_args()
 	)
     if (FindCyclicVector && FindClosure)
     {
-	MTX_ERROR("'-c' cannot be combined with any of '-e', '-1', '-m'");
+	mtxAbort(MTX_HERE,"'-c' cannot be combined with any of '-e', '-1', '-m'");
 	return -1;
     }
 
 
     if (TryLinearCombinations && TryOneVector)
     {
-	MTX_ERROR("Options '-n' and '-1' cannot be used together");
+	mtxAbort(MTX_HERE,"Options '-n' and '-1' cannot be used together");
 	return -1;
     }
     if (TryLinearCombinations && SeedVecNo > 0)
     {
-	MTX_ERROR("Options '-m' and '-n' cannot be used together");
+	mtxAbort(MTX_HERE,"Options '-m' and '-n' cannot be used together");
 	return -1;
     }
 
@@ -254,7 +249,7 @@ static int init_args()
     if (ngen == -1)
     {
 	ngen = 2;
-	if (AppGetArguments(App,3,3) < 0)
+	if (appGetArguments(App,3,3) < 0)
 	    return -1;
 	GenName[0] = App->ArgV[0];
 	GenName[1] = App->ArgV[1];
@@ -263,14 +258,14 @@ static int init_args()
     else
     {
 	char buf[200];
-	if (AppGetArguments(App,2,2) < 0)
+	if (appGetArguments(App,2,2) < 0)
 	    return -1;
 	SeedName =  App->ArgV[1];
 	for (i = 0; i < ngen; ++i)
 	{
 	    char *c;
 	    sprintf(buf,"%s.%d",App->ArgV[0],i+1);
-	    GenName[i] = c = SysMalloc(strlen(buf)+1);
+	    GenName[i] = c = sysMalloc(strlen(buf)+1);
 	    strcpy(c,buf);
 	}
     }
@@ -289,18 +284,18 @@ static int WriteAction()
 
     if (Split(Span,Rep,subp,quotp) != 0)
     {
-	MTX_ERROR("Split failed");
+	mtxAbort(MTX_HERE,"Split failed");
 	return -1;
     }
     if (SubName != NULL)
     {
-	MrSave(sub,SubName);
-	MrFree(sub);
+	mrSave(sub,SubName);
+	mrFree(sub);
     }
     if (QuotName != NULL)
     {
-	MrSave(quot,QuotName);
-	MrFree(quot);
+	mrSave(quot,QuotName);
+	mrFree(quot);
     }
     return 0;
 }
@@ -309,9 +304,9 @@ static int WriteAction()
 static int WriteResult()
 
 {
-    if (Span->Nor < FfNoc && (Standard || FindCyclicVector))
-	MESSAGE(0,("ZSP: Warning: Span is only %d of %d\n",Span->Nor,FfNoc));
-    else if (Span->Nor == FfNoc && TryLinearCombinations)
+    if (Span->Nor < ffNoc && (Standard || FindCyclicVector))
+	MESSAGE(0,("ZSP: Warning: Span is only %d of %d\n",Span->Nor,ffNoc));
+    else if (Span->Nor == ffNoc && TryLinearCombinations)
 	MESSAGE(0,("ZSP: Warning: No invariant subspace found\n"));
     else
     {
@@ -322,12 +317,12 @@ static int WriteResult()
     /* Write the invariant subspace.
        ----------------------------- */
     if (SubspaceName != NULL)
-	MatSave(Span,SubspaceName);
+	matSave(Span,SubspaceName);
     
     /* Write <Op> file
        --------------- */
     if (OpName != NULL)
-	ImatSave(OpTable,OpName);
+	imatSave(OpTable,OpName);
 
     /* Write the action on the subspace and/or quotient.
        ------------------------------------------------- */
@@ -340,10 +335,10 @@ static int WriteResult()
 
 
 
-static int Init(int argc, const char **argv)
+static int Init(int argc, char **argv)
 
 {
-    if ((App = AppAlloc(&AppInfo,argc,argv)) == NULL)
+    if ((App = appAlloc(&AppInfo,argc,argv)) == NULL)
 	return -1;
     if (init_args() != 0)
 	return -1;
@@ -358,7 +353,7 @@ static int Init(int argc, const char **argv)
 static void Cleanup()
 
 {
-    AppFree(App);
+    appFree(App);
 }
 
 
@@ -368,7 +363,7 @@ static void Cleanup()
    ------------------------------------------------------------------ */
 
 
-int main(int argc, const char **argv)
+int main(int argc, char **argv)
 
 {
     IntMatrix_t **optab = NULL;
@@ -377,7 +372,7 @@ int main(int argc, const char **argv)
 
     if (Init(argc,argv) != 0)
     {
-	MTX_ERROR("Initialization failed");
+	mtxAbort(MTX_HERE,"Initialization failed");
 	return 1;
     }
 
@@ -421,7 +416,7 @@ int main(int argc, const char **argv)
 	Span = SpinUpWithPermutations(Seed,ngen,Perm,flags,optab,&SpInfo);
     if (Span == NULL)
     {
-	MTX_ERROR("Spin-up failed");
+	mtxAbort(MTX_HERE,"Spin-up failed");
 	return -1;
     }
     if (WriteResult() != 0)
@@ -651,3 +646,4 @@ dimension has been restricted with "-d". In standard basis mode,
 an additional matrix of the same size as the generators is allocated.
 
 **/
+// vim:fileencoding=utf8:sw=3:ts=8:et:cin

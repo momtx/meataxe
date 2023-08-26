@@ -1,18 +1,13 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // C MeatAxe - Basic factored polynomial functions
-//
-// (C) Copyright 1998-2015 Michael Ringe, Lehrstuhl D fuer Mathematik, RWTH Aachen
-//
-// This program is free software; see the file COPYING for details.
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#include <meataxe.h>
+#include "meataxe.h"
 #include <string.h>
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // Local data
 
-MTX_DEFINE_FILE_INFO
 
 #define FP_MAGIC 0x17B69244
 
@@ -30,71 +25,69 @@ MTX_DEFINE_FILE_INFO
 /// @param p The polynomial.
 /// @return 1 if @em p is a valid factored polynomial, 0 otherwise.
 
-int FpIsValid(const FPoly_t *p)
+int fpIsValid(const FPoly_t *p)
 {
    int i;
    if (p == NULL) {
-      MTX_ERROR("NULL polynomial");
       return 0;
    }
    if ((p->Magic != FP_MAGIC) || (p->NFactors < 0) || (p->BufSize < p->NFactors)) {
-      MTX_ERROR3("Invalid FPoly_t: Magic=%d, NFactors=%d, MaxLen=%d",
-                 (int)p->Magic,p->NFactors,p->BufSize);
       return 0;
    }
    if ((p->Factor == NULL) || (p->Mult == NULL)) {
-      MTX_ERROR2("Invalid FPoly_t: Factor:%s, Mult:%s",
-                 p->Factor == 0 ? "NULL" : "ok",
-                 p->Mult == 0 ? "NULL" : "ok");
       return 0;
    }
    for (i = 0; i < p->NFactors; ++i) {
-      if (!PolIsValid(p->Factor[i])) {
-         MTX_ERROR("Invalid factor");
+      if (!polIsValid(p->Factor[i]))
          return 0;
-      }
       if (p->Mult[i] < 0) {
-         MTX_ERROR1("Invalid multiplicity %d",p->Mult[i]);
          return 0;
       }
       if ((i > 0) && (p->Factor[i]->Field != p->Factor[0]->Field)) {
-         MTX_ERROR("Factors over different fields");
          return 0;
       }
    }
    return 1;
 }
 
+void fpValidate(const struct MtxSourceLocation* src, const FPoly_t *p)
+{
+   int i;
+   if (p == NULL) {
+      mtxAbort(src,"NULL polynomial");
+   }
+   if ((p->Magic != FP_MAGIC) || (p->NFactors < 0) || (p->BufSize < p->NFactors)) {
+      mtxAbort(src,"Invalid FPoly_t: Magic=%d, NFactors=%d, MaxLen=%d",
+                 (int)p->Magic,p->NFactors,p->BufSize);
+   }
+   if ((p->Factor == NULL) || (p->Mult == NULL)) {
+      mtxAbort(src,"Invalid FPoly_t: Factor:%s, Mult:%s",
+                 p->Factor == 0 ? "NULL" : "ok",
+                 p->Mult == 0 ? "NULL" : "ok");
+   }
+   for (i = 0; i < p->NFactors; ++i) {
+      polValidate(src, p->Factor[i]);
+      if (p->Mult[i] < 0) {
+         mtxAbort(src,"Invalid multiplicity %d",p->Mult[i]);
+      }
+      if ((i > 0) && (p->Factor[i]->Field != p->Factor[0]->Field)) {
+         mtxAbort(src,"Factors over different fields");
+      }
+   }
+}
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 /// Allocate a factored polynomial.
 /// This function creates a new Fpoly_t structure.
 /// The new polynomial is empty, i.e., it has no factors.
-/// @return Pointer to the new FPoly_t structure or 0 on error.
+/// @return Pointer to the new FPoly_t structure.
 
-FPoly_t *FpAlloc()
+FPoly_t *fpAlloc()
 {
-   FPoly_t *x;
-
-   x = ALLOC(FPoly_t);
-   if (x == NULL) {
-      MTX_ERROR1("%E",MTX_ERR_NOMEM);
-      return NULL;
-   }
+   FPoly_t* x = ALLOC(FPoly_t);
    x->BufSize = 5;
    x->Factor = NALLOC(Poly_t *,x->BufSize);
-   if (x->Factor == NULL) {
-      SysFree(x);
-      MTX_ERROR1("%E",MTX_ERR_NOMEM);
-      return NULL;
-   }
    x->Mult = NALLOC(int,x->BufSize);
-   if (x->Mult == NULL) {
-      SysFree(x->Factor);
-      SysFree(x);
-      MTX_ERROR1("%E",MTX_ERR_NOMEM);
-      return NULL;
-   }
    x->NFactors = 0;
    x->Magic = FP_MAGIC;
    return x;
@@ -106,30 +99,29 @@ FPoly_t *FpAlloc()
 /// @return 0 on success, -1 on error.
 /// @see FPoly_t FpAlloc
 
-int FpFree(FPoly_t *x)
+int fpFree(FPoly_t *x)
 {
    int i;
 
    /* Check the argument
       ------------------ */
-   if (!FpIsValid(x)) {
-      return -1;
-   }
+   fpValidate(MTX_HERE, x);
 
    /* Free all factors
       ---------------- */
    for (i = 0; i < x->NFactors; ++i) {
-      PolFree(x->Factor[i]);
+      polFree(x->Factor[i]);
    }
 
    /* Free the <FPoly_t> structure
       ---------------------------- */
-   SysFree(x->Factor);
-   SysFree(x->Mult);
+   sysFree(x->Factor);
+   sysFree(x->Mult);
    memset(x,0,sizeof(FPoly_t));
-   SysFree(x);
+   sysFree(x);
    return 0;
 }
 
 
 /// @}
+// vim:fileencoding=utf8:sw=3:ts=8:et:cin

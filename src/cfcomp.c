@@ -1,20 +1,14 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // C MeatAxe - Compare irreducibe constituents
-//
-// (C) Copyright 1998-2015 Michael Ringe, Lehrstuhl D fuer Mathematik, RWTH Aachen
-//
-// This program is free software; see the file COPYING for details.
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#include <meataxe.h>
+#include "meataxe.h"
 #include <string.h>
 #include <stdlib.h>
 
 /* ------------------------------------------------------------------
    Global variables
    ------------------------------------------------------------------ */
-
-MTX_DEFINE_FILE_INFO
 
 static MtxApplicationInfo_t AppInfo = {
    "cfcomp", "Compare irreducible constituents",
@@ -39,25 +33,25 @@ static MatRep_t *GenB;
    init ()
    ------------------------------------------------------------------ */
 
-static int Init(int argc, const char **argv)
+static int Init(int argc, char **argv)
 {
    char fn[100];
    int i;
 
-   App = AppAlloc(&AppInfo,argc,argv);
-   if (AppGetArguments(App,2,2000) < 0) {
+   App = appAlloc(&AppInfo,argc,argv);
+   if (appGetArguments(App,2,2000) < 0) {
       return -1;
    }
-   if (Lat_ReadInfo(&InfoA,App->ArgV[0]) != 0) {
+   if (latReadInfo(&InfoA,App->ArgV[0]) != 0) {
       return -1;
    }
 
    /* Read the generators for each composition factor
       ----------------------------------------------- */
    for (i = 0; i < InfoA.NCf; ++i) {
-      sprintf(fn,"%s%s",InfoA.BaseName,Lat_CfName(&InfoA,i));
+      sprintf(fn,"%s%s",InfoA.BaseName,latCfName(&InfoA,i));
       MESSAGE(1,("Reading %s\n",fn));
-      if ((CfGenA[i] = MrLoad(fn,InfoA.NGen)) == NULL) {
+      if ((CfGenA[i] = mrLoad(fn,InfoA.NGen)) == NULL) {
          return -1;
       }
    }
@@ -69,21 +63,21 @@ static void Cleanup()
 {
    int i;
    for (i = 0; i < InfoA.NCf; ++i) {
-      MrFree(CfGenA[i]);
+      mrFree(CfGenA[i]);
    }
-   AppFree(App);
+   appFree(App);
 }
 
 
 void ReadGens(const char *name)
 {
-   GenB = MrLoad(name,InfoA.NGen);
+   GenB = mrLoad(name,InfoA.NGen);
 }
 
 
 void FreeGens(void)
 {
-   MrFree(GenB);
+   mrFree(GenB);
 }
 
 
@@ -103,7 +97,7 @@ static void FindEquiv(const char *name)
 
       /* Check for equivalence. */
       if (IsIsomorphic(CfGenA[i],InfoA.Cf + i,GenB,NULL,0)) {
-         MESSAGE(0,("%s = %s%s\n",name,InfoA.BaseName,Lat_CfName(&InfoA,i)));
+         MESSAGE(0,("%s = %s%s\n",name,InfoA.BaseName,latCfName(&InfoA,i)));
          return;
       }
    }
@@ -127,12 +121,13 @@ static void Compare(const char *name)
    main()
    ------------------------------------------------------------------ */
 
-int main(int argc, const char *argv[])
+
+int main(int argc, char *argv[])
 {
    int i;
 
    if (Init(argc,argv) != 0) {
-      MTX_ERROR("Initialization failed");
+      mtxAbort(MTX_HERE, "Initialization failed");
       return -1;
    }
    for (i = 1; i < App->ArgC; ++i) {
@@ -176,3 +171,5 @@ int main(int argc, const char *argv[])
    constituents of @em Module.
 
  **/
+
+// vim:fileencoding=utf8:sw=3:ts=8:et:cin

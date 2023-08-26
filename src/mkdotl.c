@@ -1,13 +1,9 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // C MeatAxe - Calculate the dotted-lines.
-//
-// (C) Copyright 1998-2015 Michael Ringe, Lehrstuhl D fuer Mathematik, RWTH Aachen
-//
-// This program is free software; see the file COPYING for details.
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
-#include <meataxe.h>
+#include "meataxe.h"
 #include <string.h>
 #include <stdlib.h>
 
@@ -16,7 +12,6 @@
    Global data
    -------------------------------------------------------------------------- */
 
-MTX_DEFINE_FILE_INFO
 
 MatRep_t *Rep;			/* Generators of the current constituent */
 Matrix_t *cycl = NULL;		/* List of cyclic submodules */
@@ -90,9 +85,9 @@ static void ReadFiles(const char *basename)
     char fn[200];
     int i;
 
-    if (Lat_ReadInfo(&LI,basename) != 0)
+    if (latReadInfo(&LI,basename) != 0)
     {
-	MTX_ERROR1("Error reading %s.cfinfo",basename);
+	mtxAbort(MTX_HERE,"Error reading %s.cfinfo",basename);
 	return;
     }
 
@@ -103,23 +98,23 @@ static void ReadFiles(const char *basename)
     /* Read the incidence matrix
        ------------------------- */
     sprintf(fn,"%s.inc",LI.BaseName);
-    f = SysFopen(fn,FM_READ);
+    f = sysFopen(fn,"rb");
     if (f == NULL) 
     {
-	MTX_ERROR1("Cannot open %s",fn);
+	mtxAbort(MTX_HERE,"Cannot open %s",fn);
 	return;
     }
-    SysReadLong(f,&nmountains,1);
+    sysReadLong32(f,&nmountains,1);
     if (nmountains != cfstart[LI.NCf]) 
     {
-	MTX_ERROR("Bad number of mountains in .inc file");
+	mtxAbort(MTX_HERE,"Bad number of mountains in .inc file");
 	return;
     }
     MESSAGE(1,("Reading incidence matrix (%ld mountains)\n",
 	nmountains));
     fflush(stdout);
     for (i = 0; i < (int) nmountains; ++i)
-	subof[i] = BsRead(f);
+	subof[i] = bsRead(f);
     fclose(f);
 
     for (i = 0; i < (int) nmountains; ++i)
@@ -132,10 +127,10 @@ static void ReadFiles(const char *basename)
        ------------ */
     sprintf(fn,"%s.mnt",LI.BaseName);
     MESSAGE(1,("Reading classes (%s)\n",fn));
-    f = SysFopen(fn,FM_READ);
+    f = sysFopen(fn,"r");
     if (f == NULL) 
     {
-	MTX_ERROR1("Cannot open %s",fn);
+	mtxAbort(MTX_HERE,"Cannot open %s",fn);
 	return;
     }
     for (i = 0; i < nmountains; ++i)
@@ -145,7 +140,7 @@ static void ReadFiles(const char *basename)
 	if (fscanf(f,"%ld%ld%ld",&mno,&mdim,&nvec) != 3 ||
 	    mno != i || nvec < 1  || mdim < 1)
 	{
-	    MTX_ERROR("Invalid .mnt file");
+	    mtxAbort(MTX_HERE,"Invalid .mnt file");
 	    return;
 	}
 	p = class[i] = NALLOC(long,nvec+2);
@@ -154,13 +149,13 @@ static void ReadFiles(const char *basename)
 	{
 	    if (fscanf(f,"%ld",p) != 1 || *p < 1)
 	    {
-		MTX_ERROR("Invalid .mnt file");
+		mtxAbort(MTX_HERE,"Invalid .mnt file");
 		return;
 	    }
 	}
 	if (fscanf(f,"%ld",p) != 1 || *p != -1)
 	{
-	    MTX_ERROR("Invalid .mnt file");
+	    mtxAbort(MTX_HERE,"Invalid .mnt file");
 	    return;
 	}
     }
@@ -174,34 +169,34 @@ static void ReadFiles(const char *basename)
    ----------------------------------------------------------------- */
 
 static void mkmount(int i)
-
 {
     Matrix_t *seed;
     PTR x, y;
     long *p;
 
-    seed = MatAlloc(cycl->Field,class[i][0],cycl->Noc);
+    seed = matAlloc(cycl->Field,class[i][0],cycl->Noc);
     x = seed->Data;
-    FfSetNoc(cycl->Noc);
+    ffSetNoc(cycl->Noc);
     for (p = class[i] + 1; *p > 0; ++p)
     {
 	if (*p < 1 || *p > cycl->Nor)
 	{
-	    MTX_ERROR("BAD VECTOR IN CLASS");
+	    mtxAbort(MTX_HERE,"BAD VECTOR IN CLASS");
 	    return;
 	}
-	y = MatGetPtr(cycl,*p - 1);
-	FfCopyRow(x,y);
-	FfStepPtr(&x);
+	y = matGetPtr(cycl,*p - 1);
+	ffCopyRow(x,y);
+        MTX_ASSERT(ffNoc == cycl->Noc,);
+	ffStepPtr(&x, cycl->Noc);
     }
 
     mountlist[i] = SpinUp(seed,Rep,SF_EACH|SF_COMBINE,NULL,NULL);
     if (mountlist[i] == NULL)
     {
-	MTX_ERROR("Cannot spin up mountain");
+	mtxAbort(MTX_HERE,"Cannot spin up mountain");
 	return;
     }
-    MatFree(seed);
+    matFree(seed);
 }
 
 
@@ -219,20 +214,20 @@ static void nextcf(int cf)
 
     /* Read the generators of the condensed module
        ------------------------------------------- */
-    sprintf(fn,"%s%s.%%dk",LI.BaseName,Lat_CfName(&LI,cf));
-    Rep = MrLoad(fn,LI.NGen);
+    sprintf(fn,"%s%s.%%dk",LI.BaseName,latCfName(&LI,cf));
+    Rep = mrLoad(fn,LI.NGen);
 
     /* Read generating vectors for the cyclic submodules
        ------------------------------------------------- */
-    sprintf(fn,"%s%s.v",LI.BaseName,Lat_CfName(&LI,cf));
-    cycl = MatLoad(fn);
+    sprintf(fn,"%s%s.v",LI.BaseName,latCfName(&LI,cf));
+    cycl = matLoad(fn);
 
     /* Calculate the length of dotted-lines. This is always 
        Q + 1 where Q is the splitting field order.
        ---------------------------------------------------- */
-    dotlen = FfOrder;
+    dotlen = ffOrder;
     for (j = LI.Cf[cf].spl - 1; j > 0; --j)
-    	dotlen *= FfOrder;
+    	dotlen *= ffOrder;
     ++dotlen;
     MESSAGE(1,("Length of dotted-lines is %d\n",dotlen));
 
@@ -250,8 +245,8 @@ static void nextcf(int cf)
 static void CleanupCf()
 
 {
-    MatFree(cycl);
-    MrFree(Rep);
+    matFree(cycl);
+    mrFree(Rep);
 }
 
 
@@ -268,18 +263,18 @@ static Matrix_t *sum(int i, int k)
     dim_i = mountlist[i]->Nor;
     dim_k = mountlist[k]->Nor;
 
-    s = MatAlloc(FfOrder,dim_i + dim_k,mountlist[i]->Noc);
+    s = matAlloc(ffOrder,dim_i + dim_k,mountlist[i]->Noc);
 
-    MatCopyRegion(s,0,0,mountlist[i],0,0,dim_i,-1);
-    MatCopyRegion(s,dim_i,0,mountlist[k],0,0,dim_k,-1);
+    matCopyRegion(s,0,0,mountlist[i],0,0,dim_i,-1);
+    matCopyRegion(s,dim_i,0,mountlist[k],0,0,dim_k,-1);
 
     /* OLD:
-    memcpy(s->Data,mountlist[i]->Data,FfCurrentRowSize * mountlist[i]->Nor);
-    x = FfGetPtr(s->Data,mountlist[i]->Nor,FfNoc);
-    memcpy(x,mountlist[k]->Data,FfCurrentRowSize * mountlist[k]->Nor);
+    memcpy(s->Data,mountlist[i]->Data,ffCurrentRowSize * mountlist[i]->Nor);
+    x = ffGetPtr(s->Data,mountlist[i]->Nor,ffNoc);
+    memcpy(x,mountlist[k]->Data,ffCurrentRowSize * mountlist[k]->Nor);
     */
 
-    MatEchelonize(s);
+    matEchelonize(s);
 
     /* Remember the dimension of the sum. We use this information 
        later to avoid unnecessary recalculations.
@@ -303,17 +298,17 @@ static void lock(int i, char *c)
     memset(c,0,sizeof(lck));
     for (m = firstm; m < nextm; ++m)
     {	
-	if (BsTest(subof[i],m) || BsTest(subof[m],i))
+	if (bsTest(subof[i],m) || bsTest(subof[m],i))
 	    c[m] = 1;
     }
     for (l = firstdotl; l < ndotl; ++l)
     {	
 	b = dotl[l];
-	if (!BsTest(b,i))
+	if (!bsTest(b,i))
 	    continue;
 	for (m = firstm; m < nextm; ++m)
 	{
-	    if (BsTest(b,m))
+	    if (bsTest(b,m))
 		c[m] = 1;
 	}
     }
@@ -326,26 +321,26 @@ static void FindMaxMountains(Matrix_t *span, BitString_t *bs)
 {
     int m;
 
-    BsClearAll(bs);
+    bsClearAll(bs);
     for (m = firstm; m < nextm; ++m)
     {
-	Matrix_t *tmp = MatDup(mountlist[m]);
-	MatClean(tmp,span);
+	Matrix_t *tmp = matDup(mountlist[m]);
+	matClean(tmp,span);
 	if (tmp->Nor == 0)	    /* Mountain is countained in <span> */
-	    BsSet(bs,m);
-	MatFree(tmp);
+	    bsSet(bs,m);
+	matFree(tmp);
     }
 
     /* Remove non-maximal mountains */
     for (m = firstm; m < nextm; ++m)
     {
 	int k;
-	if (!BsTest(bs,m))
+	if (!bsTest(bs,m))
 	    continue;
 	for (k = firstm; k < nextm; ++k)
 	{
-	    if (k != m && BsTest(subof[k],m))
-		BsClear(bs,k);
+	    if (k != m && bsTest(subof[k],m))
+		bsClear(bs,k);
 	}
     }
 }
@@ -373,14 +368,14 @@ static void trydot(int i, int k, int beg, int next)
 
     for (l = 0; l < ndotl; ++l)
     {
-	if (BsTest(MaxMountains[l],i) && BsTest(MaxMountains[l],k))
+	if (bsTest(MaxMountains[l],i) && bsTest(MaxMountains[l],k))
 	    return;
     }
 */
     lock(k,lck2);
-    dot = BsAlloc(nmountains);
-    BsSet(dot,i);
-    BsSet(dot,k);
+    dot = bsAlloc(nmountains);
+    bsSet(dot,i);
+    bsSet(dot,k);
     span = sum(i,k);
     count = 2;
     for (l = beg; l < next && count < dotlen; ++l)
@@ -390,7 +385,7 @@ static void trydot(int i, int k, int beg, int next)
 	    continue;
 	for (m = i; !abort && m < l; ++m)
 	{
-	    if (!BsTest(dot,m)) 
+	    if (!bsTest(dot,m)) 
 		continue;
 	    if (sumdim[l][m] != 0 && sumdim[l][m] != span->Nor)
 	    	abort = 1;
@@ -398,12 +393,12 @@ static void trydot(int i, int k, int beg, int next)
 	    {	
 		sp = sum(l,m);
 		abort = (sp->Nor != span->Nor) || !IsSubspace(span,sp,0);
-		MatFree(sp);
+		matFree(sp);
 	    }
 	}
 	if (!abort)
 	{	
-	    BsSet(dot,l);
+	    bsSet(dot,l);
 	    ++count;
 	    lck[l] = 1;
 	}
@@ -415,23 +410,23 @@ static void trydot(int i, int k, int beg, int next)
 	MESSAGE(1,("New dotted line: %d+%d\n",i,k));
 	if (ndotl >= MAXDOTL)
 	{
-	    MTX_ERROR1("Too many dotted lines (max %d)",MAXDOTL);
+	    mtxAbort(MTX_HERE,"Too many dotted lines (max %d)",MAXDOTL);
 	    return;
 	}
 	dotl[ndotl] = dot;
 	if (Opt_FindDuplicates)
 	{
-	    MaxMountains[ndotl] = BsDup(dot);
+	    MaxMountains[ndotl] = bsDup(dot);
 	    FindMaxMountains(span,MaxMountains[ndotl]);
 	    for (d = 0; d < ndotl; ++d)
 	    {
-		if (BsCompare(MaxMountains[ndotl],MaxMountains[d]) == 0)
+		if (bsCompare(MaxMountains[ndotl],MaxMountains[d]) == 0)
 		    break;
 	    }
 	    if (d < ndotl)
 	    {
-		BsFree(dot);
-		BsFree(MaxMountains[ndotl]);
+		bsFree(dot);
+		bsFree(MaxMountains[ndotl]);
 		MESSAGE(2,("Discarding %d+%d (= dl %d)\n",i,k,d));
 	    }
 	    else
@@ -443,7 +438,7 @@ static void trydot(int i, int k, int beg, int next)
     }
     else
 	free(dot);
-    MatFree(span);
+    matFree(span);
 }
 
 
@@ -496,18 +491,18 @@ static void WriteResult()
     strcat(strcpy(fn,LI.BaseName),".dot");
     MESSAGE(1,("Writing %s (%d dotted line%s)\n",
 	fn,ndotl,ndotl!=1 ? "s" : ""));
-    f = SysFopen(fn,FM_CREATE);
+    f = sysFopen(fn,"wb");
     if (f == NULL) 
     {
-	MTX_ERROR1("Cannot open %s",fn);
+	mtxAbort(MTX_HERE,"Cannot open %s",fn);
 	return;
     }
     l = (long) ndotl;
-    SysWriteLong(f,&l,1);
+    sysWriteLong32(f,&l,1);
     for (i = 0; i < ndotl; ++i)
-	BsWrite(dotl[i],f);
+	bsWrite(dotl[i],f);
     fclose(f);
-    Lat_WriteInfo(&LI);
+    latWriteInfo(&LI);
 }
 
 
@@ -526,7 +521,7 @@ static void WriteResultGAP()
 	printf( "BlistList([" );
 	for (j = 0 ; j < nmountains ; j++)
         printf( j < (nmountains - 1) ? "%s," : "%s], [1])" , 
-	       BsTest(dotl[i],j) ? "1" : "0" );
+	       bsTest(dotl[i],j) ? "1" : "0" );
         printf( ",\n" );
     }
     printf( "];\n" );
@@ -539,19 +534,18 @@ static void WriteResultGAP()
    Init() - Program initialization
    ------------------------------------------------------------------------- */
 
-static int Init(int argc, const char **argv)
-
+static int Init(int argc, char **argv)
 {
-    if ((App = AppAlloc(&AppInfo,argc,argv)) == NULL)
+    if ((App = appAlloc(&AppInfo,argc,argv)) == NULL)
 	return -1;
 
     /* Parse command line
        ------------------ */
-    opt_G = AppGetOption(App,"-G --gap");
-    Opt_FindDuplicates = AppGetOption(App,"--nodup");
+    opt_G = appGetOption(App,"-G --gap");
+    Opt_FindDuplicates = appGetOption(App,"--nodup");
     if (opt_G) 
 	MtxMessageLevel = -100;
-    if (AppGetArguments(App,1,1) != 1)
+    if (appGetArguments(App,1,1) != 1)
 	return -1;
     MESSAGE(0,("*** DOTTED LINES ***\n\n"));
 
@@ -571,7 +565,7 @@ int main(int argc, char *argv[])
 {
     int i, nn = 0;
 
-    if (Init(argc,(const char **)argv) != 0)
+    if (Init(argc,argv) != 0)
 	return -1;
     for (i = 0; i < LI.NCf; ++i)
     {
@@ -579,7 +573,7 @@ int main(int argc, char *argv[])
 	mkdot(i);
 	LI.Cf[i].ndotl = ndotl - nn;
 	MESSAGE(0,("%s%s: %d vectors, %ld mountains, %ld dotted line%s\n",
-	    LI.BaseName,Lat_CfName(&LI,i),  cycl->Nor,LI.Cf[i].nmount,
+	    LI.BaseName,latCfName(&LI,i),  cycl->Nor,LI.Cf[i].nmount,
 	    LI.Cf[i].ndotl, LI.Cf[i].ndotl != 1 ? "s": ""));
 	nn = ndotl;
 	CleanupCf();
@@ -591,18 +585,18 @@ int main(int argc, char *argv[])
 	int k;
 	printf("%3d:",i);
 	for (k = 0; k < nmountains; ++k)
-	    putc(BsTest(dotl[i],k) ? 'x' : '.',stdout);
+	    putc(bsTest(dotl[i],k) ? 'x' : '.',stdout);
 	printf("\n");
 	printf("    ");
 	for (k = 0; k < nmountains; ++k)
-	    putc(BsTest(MaxMountains[i],k) ? 'x' : '.',stdout);
+	    putc(bsTest(MaxMountains[i],k) ? 'x' : '.',stdout);
 	printf("\n");
     }
 */
     WriteResult();
     if (opt_G)
          WriteResultGAP();
-    AppFree(App);
+    appFree(App);
     return 0;
 }
 
@@ -669,3 +663,4 @@ will benefit from a reduction of the number of dotted-lines.
 
 **/
 
+// vim:fileencoding=utf8:sw=3:ts=8:et:cin

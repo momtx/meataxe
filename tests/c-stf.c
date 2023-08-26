@@ -1,13 +1,9 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-// C MeatAxe - Check StfXXX()
-//
-// (C) Copyright 1998-2015 Michael Ringe, Lehrstuhl D fuer Mathematik, RWTH Aachen
-//
-// This program is free software; see the file COPYING for details.
+// C MeatAxe - Check stfXXX()
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 #include "meataxe.h"
-#include "check.h"
+#include "testing.h"
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -15,7 +11,7 @@
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-test_F StructuredTextFile1()
+TstResult StructuredTextFile1()
 {
    const char *file_name = "check.tmp";
    const char *string1 = "\t this is a\r\tst\a\bri\"ng\f\n   ";
@@ -27,49 +23,41 @@ test_F StructuredTextFile1()
    int vec2size = 10;
    StfData *f;
 
-   if ((f = StfOpen(file_name,FM_CREATE)) == NULL) {
-      TST_FAIL("StfOpen() filed");
-   }
-   if (StfWriteValue(f,"StfTest","rec()") != 0) {
-      TST_FAIL("StfWriteValue() failed");
-   }
-   if (StfWriteString(f,"StfTest.String1",string1) != 0) {
-      TST_FAIL("StfWriteString() failed");
-   }
-   if (StfWriteInt(f,"StfTest.Integer1",num1) != 0) {
-      TST_FAIL("StfWriteInt() failed");
-   }
-   if (StfWriteVector(f,"StfTest.Vector1",10,vec1) != 0) {
-      TST_FAIL("StfWriteVector() failed");
-   }
-   StfClose(f);
+   ASSERT((f = stfOpen(file_name,"w")) != NULL);
+   ASSERT(stfWriteValue(f,"StfTest","rec()") == 0);
+   ASSERT(stfWriteString(f,"StfTest.String1",string1) == 0);
 
-   if ((f = StfOpen(file_name,FM_READ)) == NULL) {
-      TST_FAIL("StfOpen() filed");
-   }
-   if (StfReadLine(f) || strcmp(StfGetName(f),"StfTest")) {
-      TST_FAIL("Header not found");
-   }
-   if (StfReadLine(f) || strcmp(StfGetName(f),"StfTest.String1")
-       || StfGetString(f,string2,sizeof(string2)) || strcmp(string1,string2)) {
-      TST_FAIL("Read string failed");
-   }
-   if (StfReadLine(f) || strcmp(StfGetName(f),"StfTest.Integer1")
-       || StfGetInt(f,&num2) || (num1 != num2)) {
-      TST_FAIL("Read integer failed");
-   }
-   if (StfReadLine(f) || strcmp(StfGetName(f),"StfTest.Vector1")
-       || StfGetVector(f,&vec2size,vec2) || memcmp(vec1,vec2,sizeof(vec1))) {
-      TST_FAIL("Read vector failed");
-   }
-   StfClose(f);
+   ASSERT(stfWriteInt(f,"StfTest.Integer1",num1) == 0);
+   ASSERT(stfWriteVector(f,"StfTest.Vector1",10,vec1) == 0);
+   stfClose(f);
+
+   ASSERT((f = stfOpen(file_name,"rb")) != NULL);
+   ASSERT(stfReadLine(f) == 0);
+   ASSERT(strcmp(stfGetName(f),"StfTest") == 0);
+      
+   ASSERT(stfReadLine(f) == 0);
+   ASSERT(strcmp(stfGetName(f),"StfTest.String1") == 0);
+   ASSERT(stfGetString(f,string2,sizeof(string2)) == 0);
+   ASSERT(strcmp(string1,string2) == 0);
+   
+   ASSERT(stfReadLine(f) == 0);
+   ASSERT(strcmp(stfGetName(f),"StfTest.Integer1") == 0);
+   ASSERT(stfGetInt(f,&num2) == 0);
+   ASSERT(num1 == num2);
+   
+   ASSERT(!stfReadLine(f));
+   ASSERT(strcmp(stfGetName(f),"StfTest.Vector1") == 0);
+   ASSERT(stfGetVector(f,&vec2size,vec2) == 0);
+   ASSERT(memcmp(vec1,vec2,sizeof(vec1)) == 0);
+   stfClose(f);
 
    remove(file_name);
+   return 0;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-test_F StructuredTextFile2()
+TstResult StructuredTextFile2()
 {
    const char *file_name = "check.tmp";
    int vec1[1000];
@@ -81,22 +69,19 @@ test_F StructuredTextFile2()
    for (i = 0; i < 1000; ++i) {
       vec1[i] = i;
    }
-   if ((f = StfOpen(file_name,FM_CREATE)) == NULL) {
-      TST_FAIL("StfOpen() filed");
-   }
-   if (StfWriteVector(f,"StfTest.Vector1",1000,vec1) != 0) {
-      TST_FAIL("StfWriteVector() failed");
-   }
-   StfClose(f);
+   ASSERT((f = stfOpen(file_name,"w")) != NULL);
+   ASSERT(stfWriteVector(f,"StfTest.Vector1",1000,vec1) == 0);
+   stfClose(f);
 
-   if ((f = StfOpen(file_name,FM_READ)) == NULL) {
-      TST_FAIL("StfOpen() filed");
-   }
-   if (StfReadLine(f) || strcmp(StfGetName(f),"StfTest.Vector1")
-       || StfGetVector(f,&vec2size,vec2) || memcmp(vec1,vec2,sizeof(vec1))) {
-      TST_FAIL("Read vector failed");
-   }
-   StfClose(f);
+   ASSERT((f = stfOpen(file_name,"rb")) != NULL);
+   ASSERT(stfReadLine(f) == 0);
+   ASSERT(strcmp(stfGetName(f),"StfTest.Vector1") == 0);
+   ASSERT(stfGetVector(f,&vec2size,vec2) == 0);
+   ASSERT(memcmp(vec1,vec2,sizeof(vec1)) == 0);
+   stfClose(f);
 
    remove(file_name);
+   return 0;
 }
+
+// vim:fileencoding=utf8:sw=3:ts=8:et:cin

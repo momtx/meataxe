@@ -1,18 +1,13 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // C MeatAxe - Permutation order
-//
-// (C) Copyright 1998-2015 Michael Ringe, Lehrstuhl D fuer Mathematik, RWTH Aachen
-//
-// This program is free software; see the file COPYING for details.
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#include <meataxe.h>
+#include "meataxe.h"
 #include <string.h>
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // Local data
 
-MTX_DEFINE_FILE_INFO
 
 /// @addtogroup perm
 /// @{
@@ -22,7 +17,7 @@ MTX_DEFINE_FILE_INFO
 /// @param perm Pointer to the permutation.
 /// @return The order of 0, or -1 on error.
 
-int PermOrder(const Perm_t *perm)
+int permOrder(const Perm_t *perm)
 {
    long ord = 1, tord;
    int deg;
@@ -31,10 +26,7 @@ int PermOrder(const Perm_t *perm)
    register long *seed, *x;
 
    // Check arguments
-   if (!PermIsValid(perm)) {
-      MTX_ERROR1("%E",MTX_ERR_BADARG);
-      return 1;
-   }
+   permValidate(MTX_HERE, perm);
 
    if (perm->Degree < 2) {
       return 1;
@@ -67,7 +59,7 @@ int PermOrder(const Perm_t *perm)
          x = p + tmp;
          ++tord;
       }
-      MTX_ASSERT(tord > 0);
+      MTX_ASSERT(tord > 0, 0);
 
       // Calculate the l.c.m of all orbit sizes
       ord = ord / gcd(ord,tord) * tord;
@@ -83,3 +75,4 @@ int PermOrder(const Perm_t *perm)
 
 
 /// @}
+// vim:fileencoding=utf8:sw=3:ts=8:et:cin

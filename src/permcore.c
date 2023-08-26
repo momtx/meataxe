@@ -1,18 +1,13 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // C MeatAxe - Basic permutation functions
-//
-// (C) Copyright 1998-2015 Michael Ringe, Lehrstuhl D fuer Mathematik, RWTH Aachen
-//
-// This program is free software; see the file COPYING for details.
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#include <meataxe.h>
+#include "meataxe.h"
 #include <string.h>
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // Local data
 
-MTX_DEFINE_FILE_INFO
 
 #define PERM_MAGIC 0x30f8326b
 
@@ -20,19 +15,19 @@ MTX_DEFINE_FILE_INFO
 /// @details
 /// In the MeatAxe, a permutation of degree n operates on {0,1,...,n-1} and is represented
 /// by a Perm_t structure.
-/// However, in the textual representation produced by PermPrint() or by the
+/// However, in the textual representation produced by permPrint() or by the
 /// @ref prog_zpr "zpr" program, the points are numbered from 1...n.
 ///
 /// Only permutations of equal degree can be multiplied. This can be confusing
-/// because the textual representation produced by PermPrint() does not include the
+/// because the textual representation produced by permPrint() does not include the
 /// degree, and fixed points are always suppressed. For example "(3 4)(5 6 7)" could
 /// be interpreted as a permutation of degree 8 or any higher degree. All these permutations
 /// are in some natural way equal to each other, but they are different and incompatible
 /// in the MeatAxe.
 ///
-/// Permutations are usually created with PermAlloc() or read from a file with PermRead().
+/// Permutations are usually created with permAlloc() or read from a file with permRead().
 /// When a permutation is no longer used, the application must release the associated memory
-/// by calling PermFree().
+/// by calling permFree().
 /// @{
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -51,30 +46,40 @@ MTX_DEFINE_FILE_INFO
 /// terminate the program, the function returns 0.
 /// @return 1 if @a p is a valid permutation, 0 otherwise.
 
-int PermIsValid(const Perm_t *p)
+int permIsValid(const Perm_t *p)
 {
-   int i, deg;
-   long *x;
-
    if (p == NULL) {
-      MTX_ERROR("NULL permutation");
       return 0;
    }
-   deg = p->Degree;
-   if ((p->Magic != PERM_MAGIC) || (deg < 0) || (p->Data == NULL)) {
-      MTX_ERROR2("Invalid permutation (magic=%d, deg=%d)",
-                 p->Magic,deg);
+   if (p->Magic != PERM_MAGIC || p->Degree < 0 || p->Data == NULL) {
       return 0;
    }
-   for (i = p->Degree, x = p->Data; i > 0; --i, ++x) {
-      if ((*x < 0) || (*x >= deg)) {
-         MTX_ERROR2("Invalid value %d in permutation (deg = %d)",
-                    (int) *x,deg);
+   for (int i = 0; i < p->Degree; ++i) {
+      if (p->Data[i] < 0 || p->Data[i] >= p->Degree) {
          return 0;
       }
    }
 
    return 1;
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+/// Checks if the given permuation is valid and abort the program if the test fails.
+
+void permValidate(const struct MtxSourceLocation* src, const Perm_t *p)
+{
+   if (p == NULL) {
+      mtxAbort(src,"NULL permutation");
+   }
+   if (p->Magic != PERM_MAGIC || p->Degree < 0 || p->Data == NULL) {
+      mtxAbort(src,"Invalid permutation (magic=%d, deg=%d)", p->Magic, p->Degree);
+   }
+   for (int i = 0; i < p->Degree; ++i) {
+      if (p->Data[i] < 0 || p->Data[i] >= p->Degree) {
+         mtxAbort(src,"Invalid value %d in permutation (deg = %d)", (int) p->Data[i], p->Degree);
+      }
+   }
 }
 
 
@@ -85,27 +90,27 @@ int PermIsValid(const Perm_t *p)
 /// @param deg Degree.
 /// @return Pointer to the new permutation, or 0 on error.
 
-Perm_t *PermAlloc(int deg)
+Perm_t *permAlloc(int deg)
 {
    Perm_t *p;
    int i;
 
    if (deg < 0) {
-      MTX_ERROR2("deg=%d: %E",deg,MTX_ERR_BADARG);
+      mtxAbort(MTX_HERE,"deg=%d: %s",deg,MTX_ERR_BADARG);
       return NULL;
    }
 
    p = ALLOC(Perm_t);
    if (p == NULL) {
-      MTX_ERROR("Cannot allocate Perm_t structure");
+      mtxAbort(MTX_HERE,"Cannot allocate Perm_t structure");
       return NULL;
    }
    p->Magic = PERM_MAGIC;
    p->Degree = deg;
    p->Data = NALLOC(long,deg);
    if (p->Data == NULL) {
-      SysFree(p);
-      MTX_ERROR("Cannot allocate permutation data");
+      sysFree(p);
+      mtxAbort(MTX_HERE,"Cannot allocate permutation data");
       return NULL;
    }
    for (i = 0; i < deg; ++i) {
@@ -118,23 +123,21 @@ Perm_t *PermAlloc(int deg)
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 /// Free a permutation.
 /// This function deletes a permutation and returns the memory to the
-/// system. Do not use SysFree() on permutations because this would only
+/// system. Do not use sysFree() on permutations because this would only
 /// free the Perm_t structure but not the data buffer.
 /// @param p Pointer to the permutation.
 /// @return 0 on success, -1 on error.
 
-int PermFree(Perm_t *p)
+int permFree(Perm_t *p)
 {
-   // check arguments
-   if (!PermIsValid(p)) {
-      return -1;
-   }
+   permValidate(MTX_HERE, p);
 
-   SysFree(p->Data);
+   sysFree(p->Data);
    memset(p,0,sizeof(Perm_t));
-   SysFree(p);
+   sysFree(p);
    return 0;
 }
 
 
 /// @}
+// vim:fileencoding=utf8:sw=3:ts=8:et:cin

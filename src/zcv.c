@@ -1,14 +1,10 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // C MeatAxe - Convert a matrix or permutation from ASCII (readable)
-//
-// (C) Copyright 1998-2015 Michael Ringe, Lehrstuhl D fuer Mathematik, RWTH Aachen
-//
-// This program is free software; see the file COPYING for details.
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 #define MAXLINE 4000    // max. input line size
 
-#include <meataxe.h>
+#include "meataxe.h"
 #include <ctype.h>
 #include <string.h>
 #include <stdlib.h>
@@ -16,7 +12,6 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 /// Global data
 
-MTX_DEFINE_FILE_INFO
 
 static int GrpLibFormat = 0;    /* File is in Group Library Format */
 static int fl;
@@ -60,7 +55,7 @@ static int readline()
       if (feof(src)) { return 1; }
       fgets(lbuf,sizeof(lbuf),src);
       if (ferror(src)) {
-         MTX_ERROR("Unexpected end of input file");
+         mtxAbort(MTX_HERE,"Unexpected end of input file");
          return -1;
       }
       for (c = lbuf; *c != 0 && *c != '#'; ++c) {
@@ -86,14 +81,14 @@ static long readlong()
       }
       if (*lptr == 0) {
          if (readline()) {
-            MTX_ERROR("Unexpected end of input file");
+            mtxAbort(MTX_HERE,"Unexpected end of input file");
             return -1;
          }
       }
    }
    if (*lptr == '-') { minus = 1; ++lptr; }
    if (!isdigit(*lptr)) {
-      MTX_ERROR1("%s: Bad file format",inpname);
+      mtxAbort(MTX_HERE,"%s: Bad file format",inpname);
       return -1;
    }
    for (l = 0; isdigit(*lptr); ) {
@@ -135,8 +130,8 @@ static void WriteHeader(long a, long b, long c)
    hdr[0] = a;
    hdr[1] = b;
    hdr[2] = c;
-   if (SysWriteLong(out,hdr,3) != 3) {
-      MTX_ERROR("Cannot write header");
+   if (sysWriteLong32(out,hdr,3) != 3) {
+      mtxAbort(MTX_HERE,"Cannot write header");
    }
 }
 
@@ -152,16 +147,16 @@ static void convmatrix()
    int inp;
 
    if (fl > 9) {
-      MTX_ERROR1("Mode 1 not allowed for GF(%d)",fl);
+      mtxAbort(MTX_HERE,"Mode 1 not allowed for GF(%d)",fl);
       return;
    }
-   FfSetField(fl);
-   FfSetNoc(noc);
-   m1 = FfAlloc(1);
+   ffSetField(fl);
+   ffSetNoc(noc);
+   m1 = ffAlloc(1,noc);
    WriteHeader(fl,nor,noc);
    MESSAGE(0,("%dx%d matrix over GF(%d)\n",nor,noc,fl));
    for (i = 1; i <= nor; ++i) {
-      FfMulRow(m1,FF_ZERO);
+      ffMulRow(m1,FF_ZERO);
       inp = 81;
       for (j = 0; j < noc; ++j) {
          if (inp >= 80) {       /* read next line */
@@ -183,14 +178,15 @@ static void convmatrix()
             case '7': val = 7; break;
             case '8': val = 8; break;
             default:
-               MTX_ERROR1("%s: Bad file format (Digit expected)",inpname);
+               mtxAbort(MTX_HERE,"%s: Bad file format (Digit expected)",inpname);
          }
          if (val > fl) {
-            MTX_ERROR1("%s: Bad file format",inpname);
+            mtxAbort(MTX_HERE,"%s: Bad file format",inpname);
          }
-         FfInsert(m1,j,FfFromInt(val));
+         ffInsert(m1,j,ffFromInt(val));
       }
-      FfWriteRows(out,m1,1);
+      MTX_ASSERT(ffNoc == noc,);
+      ffWriteRows(out,m1,1, noc);
    }
 }
 
@@ -205,21 +201,21 @@ static void conv3456()
    long val;
 
    MESSAGE(0,("%dx%d matrix over GF(%d)\n",nor,noc,fl));
-   FfSetField(fl);
-   FfSetNoc(noc);
-   m1 = FfAlloc((long)1);
+   ffSetField(fl);
+   ffSetNoc(noc);
+   m1 = ffAlloc(1, noc);
    WriteHeader(fl,nor,noc);
    for (i = 1; i <= nor; ++i) {
-      FfMulRow(m1,FF_ZERO);
+      ffMulRow(m1,FF_ZERO);
       for (j = 0; j < noc; ++j) {
          val = readlong();
          if (mod == 5) {
-            val %= FfChar;
-            if (val < 0) { val += FfChar; }
+            val %= ffChar;
+            if (val < 0) { val += ffChar; }
          }
-         FfInsert(m1,j,FfFromInt(val));
+         ffInsert(m1,j,ffFromInt(val));
       }
-      FfWriteRows(out,m1,1);
+      ffWriteRows(out, m1, 1, noc);
    }
 }
 
@@ -234,17 +230,17 @@ static void ConvertMatrix()
    long val;
 
    MESSAGE(0,("%dx%d matrix over GF(%d)\n",nor,noc,fl));
-   FfSetField(fl);
-   FfSetNoc(noc);
-   m1 = FfAlloc((long)1);
+   ffSetField(fl);
+   ffSetNoc(noc);
+   m1 = ffAlloc(1, noc);
    WriteHeader(fl,nor,noc);
    for (i = 1; i <= nor; ++i) {
-      FfMulRow(m1,FF_ZERO);
+      ffMulRow(m1,FF_ZERO);
       for (j = 0; j < noc; ++j) {
          val = readlong();
-         FfInsert(m1,j,FfFromInt(val));
+         ffInsert(m1,j,ffFromInt(val));
       }
-      FfWriteRows(out,m1,1);
+      ffWriteRows(out, m1, 1, noc);
    }
 }
 
@@ -264,7 +260,7 @@ static void ConvertIntMatrix()
       for (j = 0; j < noc; ++j) {
          x[j] = readlong();
       }
-      SysWriteLong(out,x,noc);
+      sysWriteLong32(out,x,noc);
    }
    free(x);
 }
@@ -282,7 +278,7 @@ static void ConvertPermutation()
    MESSAGE(0,("Permutation on %d points\n",nor));
    buf = NALLOC(long,nor);
    if (buf == NULL) {
-      MTX_ERROR("Cannot allocate permutation: %S");
+      mtxAbort(MTX_HERE,"Cannot allocate permutation: %S");
    }
    WriteHeader(-1,nor,1);
 
@@ -290,12 +286,12 @@ static void ConvertPermutation()
       kk = readlong();
       buf[i] = kk - 1;
       if ((kk < 1) || (kk > nor)) {
-         MTX_ERROR3("%s: Invalid point %d in permutation of degree %d",
+         mtxAbort(MTX_HERE,"%s: Invalid point %d in permutation of degree %d",
                     inpname,(int)kk,nor);
       }
    }
-   if (SysWriteLong(out,buf,nor) != nor) {
-      MTX_ERROR1("Cannot write to %s",outname);
+   if (sysWriteLong32(out,buf,nor) != nor) {
+      mtxAbort(MTX_HERE,"Cannot write to %s",outname);
    }
 }
 
@@ -309,16 +305,16 @@ static void ConvertPolynomial()
    Poly_t *p;
 
    MESSAGE(0,("Polynomial of degree %d over GF(%d)\n",nor,fl));
-   FfSetNoc(fl);
-   p = PolAlloc(fl,nor);
-   if ((out = SysFopen(outname,FM_CREATE)) == NULL) {
-      MTX_ERROR1("Cannot open %s: %S",outname);
+   ffSetNoc(fl);
+   p = polAlloc(fl,nor);
+   if ((out = sysFopen(outname,"wb")) == NULL) {
+      mtxAbort(MTX_HERE,"Cannot open %s: %S",outname);
    }
    for (i = 0; i <= nor; ++i) {
       long kk = readlong();
-      p->Data[i] = FfFromInt(kk);
+      p->Data[i] = ffFromInt(kk);
    }
-   PolWrite(p,out);
+   polWrite(p,out);
 }
 
 
@@ -331,15 +327,15 @@ void convperm()
    PTR m1;
 
    MESSAGE(0,("%dx%d permutation matrix over GF(%d)\n",nor,noc,fl));
-   FfSetField(fl);
-   FfSetNoc(noc);
-   m1 = FfAlloc((long)1);
+   ffSetField(fl);
+   ffSetNoc(noc);
+   m1 = ffAlloc(1, noc);
    WriteHeader(fl,nor,noc);
    for (i = 1; i <= nor; ++i) {
       val = readlong();
-      FfMulRow(m1,FF_ZERO);
-      FfInsert(m1,val - 1,FF_ONE);
-      FfWriteRows(out,m1,1);
+      ffMulRow(m1,FF_ZERO);
+      ffInsert(m1,val - 1,FF_ONE);
+      ffWriteRows(out, m1, 1, noc);
    }
 }
 
@@ -356,7 +352,7 @@ void conv1213()
    MESSAGE(0,("Permutation on %d points\n",nor));
    buf = NALLOC(long,nor);
    if (buf == NULL) {
-      MTX_ERROR("Cannot allocate permutation: %S");
+      mtxAbort(MTX_HERE,"Cannot allocate permutation: %S");
       return;
    }
    WriteHeader(-fl,nor,noc);
@@ -374,8 +370,8 @@ void conv1213()
          }
          buf[i] = kk;
       }
-      if (SysWriteLong(out,buf,nor) != nor) {
-         MTX_ERROR1("Cannot write %s: %S",outname);
+      if (sysWriteLong32(out,buf,nor) != nor) {
+         mtxAbort(MTX_HERE,"Cannot write %s: %S",outname);
       }
    }
 }
@@ -409,7 +405,7 @@ static void Convert(void)
       for (c += 15; *c != 0 && *c != '"'; ++c) {
       }
       if (*c != '"') {
-         MTX_ERROR1("%s: Bad file format",inpname);
+         mtxAbort(MTX_HERE,"%s: Bad file format",inpname);
       }
       for (++c; *c != '"' && *c != 0; ++c) {
          *d++ = *c;
@@ -430,9 +426,9 @@ static void Convert(void)
             noc = atol(c + 4);
          } else if (!strncmp(c,"cols=",5)) {
             noc = atol(c + 5);
-         } else { MTX_ERROR1("%s: Bad file format",inpname); }
+         } else { mtxAbort(MTX_HERE,"%s: Bad file format",inpname); }
       }
-      if ((nor == -1) || (noc == -1) || (fl == -1)) { MTX_ERROR1("%s: Bad file format",inpname); }
+      if ((nor == -1) || (noc == -1) || (fl == -1)) { mtxAbort(MTX_HERE,"%s: Bad file format",inpname); }
       readline();
       ConvertMatrix();
       return;
@@ -448,9 +444,9 @@ static void Convert(void)
             noc = atol(c + 4);
          } else if (!strncmp(c,"cols=",5)) {
             noc = atol(c + 5);
-         } else { MTX_ERROR1("%s: Bad file format",inpname); }
+         } else { mtxAbort(MTX_HERE,"%s: Bad file format",inpname); }
       }
-      if ((nor == -1) || (noc == -1)) { MTX_ERROR1("%s: Bad header format",inpname); }
+      if ((nor == -1) || (noc == -1)) { mtxAbort(MTX_HERE,"%s: Bad header format",inpname); }
       readline();
       ConvertIntMatrix();
       return;
@@ -461,9 +457,9 @@ static void Convert(void)
       for (c = strtok(lbuf + 11," \t\n"); c != NULL; c = strtok(NULL," \t\n")) {
          if (!strncmp(c,"degree=",7)) { nor = atol(c + 7); } else if (!strncmp(c,"deg=",4)) {
             nor = atol(c + 4);
-         } else { MTX_ERROR1("%s: Bad header format",inpname); }
+         } else { mtxAbort(MTX_HERE,"%s: Bad header format",inpname); }
       }
-      if (nor == -1) { MTX_ERROR1("%s: Bad header format",inpname); }
+      if (nor == -1) { mtxAbort(MTX_HERE,"%s: Bad header format",inpname); }
       readline();
       ConvertPermutation();
       return;
@@ -476,10 +472,10 @@ static void Convert(void)
             nor = atol(c + 4);
          } else if (!strncmp(c,"field=",6)) {
             fl = atol(c + 6);
-         } else { MTX_ERROR1("%s: Bad polynomial header format",inpname); }
+         } else { mtxAbort(MTX_HERE,"%s: Bad polynomial header format",inpname); }
       }
       if ((nor < 0) || (fl < 2)) {
-         MTX_ERROR3("%s: Bad header: fl=%d, deg=%d",inpname,fl,nor);
+         mtxAbort(MTX_HERE,"%s: Bad header: fl=%d, deg=%d",inpname,fl,nor);
       }
       readline();
       ConvertPolynomial();
@@ -522,28 +518,28 @@ static void Convert(void)
          conv1213();
          break;
       default:
-         MTX_ERROR2("%s: Unknown mode %d",inpname,mod);
+         mtxAbort(MTX_HERE,"%s: Unknown mode %d",inpname,mod);
    }
 }
 
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static int Init(int argc, const char **argv)
+static int Init(int argc, char **argv)
 {
-   if ((App = AppAlloc(&AppInfo,argc,argv)) == NULL) {
+   if ((App = appAlloc(&AppInfo,argc,argv)) == NULL) {
       return -1;
    }
-   if (AppGetArguments(App,2,2) < 0) {
+   if (appGetArguments(App,2,2) < 0) {
       return -1;
    }
 
    // input file
    inpname = App->ArgV[0];
    if (strcmp(inpname,"-")) {
-      src = SysFopen(inpname, FM_READ | FM_TEXT | FM_LIB);
+      src = sysFopen(inpname, "r::lib");
       if (src == NULL) {
-         MTX_ERROR1("Cannot open %s",inpname);
+         mtxAbort(MTX_HERE,"Cannot open %s",inpname);
          return -1;
       }
    } else {
@@ -552,9 +548,9 @@ static int Init(int argc, const char **argv)
 
    // output file
    outname = App->ArgV[1];
-   out = SysFopen(outname,FM_CREATE);
+   out = sysFopen(outname,"wb");
    if (out == NULL) {
-      MTX_ERROR1("Cannot open %s for output",outname);
+      mtxAbort(MTX_HERE,"Cannot open %s for output",outname);
       return -1;
    }
 
@@ -567,13 +563,13 @@ static int Init(int argc, const char **argv)
 static void Cleanup()
 {
    fclose(out);
-   if (App != NULL) { AppFree(App); }
+   if (App != NULL) { appFree(App); }
 }
 
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////
 
-int main(int argc, const char **argv)
+int main(int argc, char **argv)
 {
    if (Init(argc,argv) != 0) {
       return 0;
@@ -653,3 +649,4 @@ the data part consists of a sequence of integers in free format, separated
 by any combination of blanks, tabs, or newlines.
 
 */
+// vim:fileencoding=utf8:sw=3:ts=8:et:cin

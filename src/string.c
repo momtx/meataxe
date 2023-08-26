@@ -1,19 +1,14 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // C MeatAxe - String functions.
-//
-// (C) Copyright 1998-2015 Michael Ringe, Lehrstuhl D fuer Mathematik, RWTH Aachen
-//
-// This program is free software; see the file COPYING for details.
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#include <meataxe.h>
+#include "meataxe.h"
 #include <string.h>
 #include <stdarg.h>
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 //   Local data
 
-MTX_DEFINE_FILE_INFO
 static size_t const EMPTY[4] = {0,0,0,0};
 
 /// @defgroup str Dynamic Strings
@@ -23,7 +18,7 @@ static size_t const EMPTY[4] = {0,0,0,0};
 /// text.
 /// Note however, that dynamic strings use their own memory management
 /// which cannot be mixed with the standard C library memory functions.
-/// Unused strings must be freed with StrFree(), and you must never use
+/// Unused strings must be freed with strFree(), and you must never use
 /// free() or realloc() on a dynamic string.
 
 #define REP(s) ((size_t *)(s) - 3)
@@ -37,7 +32,6 @@ static size_t const EMPTY[4] = {0,0,0,0};
 
 static void safe_strcpy(char *d, const char *s, size_t len)
 {
-   (void) Mtx_ThisFile;
    if (len > 0) {
       if (s) { memcpy(d,s,len); }
       d[len] = 0;
@@ -49,9 +43,9 @@ static void safe_strcpy(char *d, const char *s, size_t len)
 
 static char *mkrep(const char *s, size_t len, size_t cap)
 {
-   MTX_ASSERT(len <= cap);
+   MTX_ASSERT(len <= cap, NULL);
    if ((len == 0) && (cap == 0)) { return TXT(EMPTY); }
-   size_t *rep = (size_t *) SysMalloc(cap + 1 + 3 * sizeof(size_t));
+   size_t *rep = (size_t *) sysMalloc(cap + 1 + 3 * sizeof(size_t));
    rep[0] = 1;
    rep[1] = cap;
    rep[2] = len;
@@ -67,7 +61,7 @@ static void delref(char *s)
 {
    size_t * const r = REP(s);
    if ((r[0] != 0) && (--r[0] == 0)) {
-      SysFree(r);
+      sysFree(r);
    }
 }
 
@@ -93,7 +87,7 @@ static void excl(char **s, unsigned cap)
       delref(old_s);
    } else if (cap > CAP(*s)) {                  /* Vergrößern? */
       size_t *rep = REP(*s);
-      rep = (size_t *) SysRealloc(rep,3 * sizeof(size_t) + cap + 1);
+      rep = (size_t *) sysRealloc(rep,3 * sizeof(size_t) + cap + 1);
       rep[1] = cap;
       *s = TXT(rep);
    }
@@ -112,11 +106,11 @@ static void reserve(char **s, size_t min_avail)
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 /// Create a string.
 /// This function creates an empty string.
-/// @see StrFree()
+/// @see strFree()
 /// @param initial_capacity Number of bytes to reserve on allocation.
 /// @return The new string.
 
-String StrAlloc(size_t initial_capacity)
+String strAlloc(size_t initial_capacity)
 {
    String s;
    s.S = (initial_capacity > 0) ? mkrep(0,0,initial_capacity) : TXT(EMPTY);
@@ -127,9 +121,9 @@ String StrAlloc(size_t initial_capacity)
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 /// Free a string.
 /// This function frees a dynamic string.
-/// @see StrAlloc()
+/// @see strAlloc()
 
-void StrFree(String *s)
+void strFree(String *s)
 {
    delref(s->S);
    s->S = 0;
@@ -140,7 +134,7 @@ void StrFree(String *s)
 
 static void append(String *s, const char *src, size_t len)
 {
-   MTX_ASSERT(s->S != 0);
+   MTX_ASSERT(s->S != 0,);
    size_t const my_len = LEN(s->S);
    if ((src >= s->S) && (src <= s->S + my_len)) {
       /* Note: excl() may reallocate the buffer, adjust src accordingly. */
@@ -163,7 +157,7 @@ static void append(String *s, const char *src, size_t len)
 /// @param s The string to be modified.
 /// @param text Text to append.
 
-void StrAppend(String *s, const char *text)
+void strAppend(String *s, const char *text)
 {
    return append(s, text, strlen(text));
 }
@@ -201,7 +195,7 @@ void StrVAppendF(String *s, const char *fmt, va_list args)
 /// snprintf() replacement.
 /// Works like StrVAppendF() but expects a variable argument list.
 
-void StrAppendF(String *s, const char *fmt, ...)
+void strAppendF(String *s, const char *fmt, ...)
 {
    va_list al;
    va_start(al,fmt);
@@ -249,3 +243,4 @@ void StrPrintF(String *s, const char *fmt, ...)
 
 
 /// @}
+// vim:fileencoding=utf8:sw=3:ts=8:et:cin

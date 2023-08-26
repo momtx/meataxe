@@ -1,0 +1,19 @@
+CFInfo := rec();
+CFInfo.NGen := 2;
+CFInfo.Field := 3;
+CFInfo.NCF := 9;
+CFInfo.ConstituentNames := ["1a","1b","6a","6b","13a","13b","15a","15b","20a"];
+CFInfo.Dimension := [1,1,6,6,13,13,15,15,20];
+CFInfo.Number := [0,1,0,1,0,1,0,1,0];
+CFInfo.Multiplicity := [3,4,1,1,3,3,1,1,2];
+CFInfo.SplittingField := [1,1,1,1,1,1,1,1,1];
+CFInfo.NMountains := [13,16,1,1,7,7,1,1,4];
+CFInfo.NDottedLines := [13,14,0,0,2,2,0,0,1];
+CFInfo.PeakWord := [[40,3,1,0,1],[16,3,1,2,1],[306,3,1,2,1],[4,3,1,1,1],[155,3,1
+	,2,1],[30,3,1,0,1],[38,3,1,2,1],[111,3,1,0,1],[22,3,1,1,1]];
+CFInfo.IdWord := [[1,3,1,0,1],[1,3,1,1,1],[1,3,1,0,1],[1,3,1,1,1],[4,3,1,2,1],[3
+	,3,1,0,1],[2,3,1,0,1],[2,3,1,0,1],[2,3,1,0,1]];
+CFInfo.NSocles := 0;
+CFInfo.Socles := [];
+CFInfo.NHeads := 0;
+CFInfo.Heads := [];

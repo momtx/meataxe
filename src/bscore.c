@@ -1,12 +1,8 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // C MeatAxe - Bit Strings, core functions
-//
-// (C) Copyright 1998-2014 Michael Ringe, Lehrstuhl D fuer Mathematik, RWTH Aachen
-//
-// This program is free software; see the file COPYING for details.
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#include <meataxe.h>
+#include "meataxe.h"
 #include <string.h>
 
 /// @defgroup bs Bit Strings
@@ -31,66 +27,64 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // Local data
 
-MTX_DEFINE_FILE_INFO
 
 #define BS_MAGIC 0x3ff92541
 
 #define BS(size) (((size) + sizeof(long) - 1) / sizeof(long))
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-/// Check if a bit string is valid.
-/// This function checks if its argument, is a pointer to a valid
-/// bit string.
-/// If the bit string is o.k., the function returns 1.
-/// Otherwise, an error is signaled and, if the error handler does not
-/// terminate the program, the function returns 0.
-/// @param bs Bit string to check.
-/// @return 1 if \p bs is a valid bit string, 0 otherwise.
 
-int BsIsValid(const BitString_t *bs)
+/// Returns 1 if the given bit string is valid and 0 otherwise.
+
+int bsIsValid(const BitString_t *bs)
 {
-   if (bs == NULL) {
-      MTX_ERROR("NULL bit string");
-      return 0;
-   }
-   if ((bs->Magic != BS_MAGIC) || (bs->Size < 0)) {
-      MTX_ERROR2("Invalid bit string (magic=%d, size=%d)",
-                 (int)bs->Magic,bs->Size);
-      return 0;
-   }
-   if (bs->BufSize != (int) BS(bs->Size)) {
-      MTX_ERROR2("Inconsistent bit string size %d, %d)",
-                 bs->Size,(int) BS(bs->Size));
-      return 0;
-   }
-   return 1;
+   return bs != NULL && bs->Magic == BS_MAGIC && bs->Size >= 0
+         && bs->BufSize == (int) BS(bs->Size);
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+/// Checks if a bit string is valid and aborts the progam if the test fails.
+
+void bsValidate(const struct MtxSourceLocation* src, const BitString_t *bs)
+{
+   if (bs == NULL) {
+      mtxAbort(MTX_HERE,"NULL bit string");
+   }
+   if ((bs->Magic != BS_MAGIC) || (bs->Size < 0)) {
+      mtxAbort(MTX_HERE,"Invalid bit string (magic=%d, size=%d)",
+                 (int)bs->Magic,bs->Size);
+   }
+   if (bs->BufSize != (int) BS(bs->Size)) {
+      mtxAbort(MTX_HERE,"Inconsistent bit string size %d, %d)",
+                 bs->Size,(int) BS(bs->Size));
+   }
+}
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 /// Create a bit string.
 /// This function creates a new bit string of the specified size. The new bit string is
 /// filled with zeros.
-/// @see BsFree()
+/// @see bsFree()
 /// @param size Size of the bit string.
 /// @return Pointer to the new bit string, or  NULL on error.
 
-BitString_t *BsAlloc(int size)
+BitString_t *bsAlloc(int size)
 {
    BitString_t *n;
    int bufsize;         /* Number of long integers in data buffer */
 
    if (size < 0) {
-      MTX_ERROR1("Illegal size %d",size);
+      mtxAbort(MTX_HERE,"Illegal size %d",size);
       return NULL;
    }
 
    // allocate data buffer
    bufsize = BS(size);
-   n = (BitString_t *) SysMalloc(sizeof(BitString_t) +
+   n = (BitString_t *) sysMalloc(sizeof(BitString_t) +
                                  (bufsize == 0 ? 0 : bufsize - 1) * sizeof(long));
    if (n == NULL) {
-      MTX_ERROR("Cannot allocate bit string");
+      mtxAbort(MTX_HERE,"Cannot allocate bit string");
       return NULL;
    }
 
@@ -107,17 +101,16 @@ BitString_t *BsAlloc(int size)
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 /// Free a bit string.
 /// This function frees a bit string, releasing all associated memory.
-/// @see BsAlloc()
+/// @see bsAlloc()
 
-int BsFree(BitString_t *bs)
+int bsFree(BitString_t *bs)
 {
-   if (!BsIsValid(bs)) {
-      return -1;
-   }
+   bsValidate(MTX_HERE, bs);
    memset(bs,0,sizeof(BitString_t));
-   SysFree(bs);
+   sysFree(bs);
    return 0;
 }
 
 
 /// @}
+// vim:fileencoding=utf8:sw=3:ts=8:et:cin

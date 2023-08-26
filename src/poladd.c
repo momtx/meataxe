@@ -1,17 +1,12 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // C MeatAxe - Add two polynomials
-//
-// (C) Copyright 1998-2015 Michael Ringe, Lehrstuhl D fuer Mathematik, RWTH Aachen
-//
-// This program is free software; see the file COPYING for details.
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#include <meataxe.h>
+#include "meataxe.h"
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // Local data
 
-MTX_DEFINE_FILE_INFO
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 /// Extend buffer.
@@ -25,7 +20,7 @@ static int resize(Poly_t *p, int newdeg)
       if (p->BufSize < newdeg + 1) {    // Allocate new buffer
          x = NREALLOC(p->Data,FEL,newdeg + 1);
          if (x == NULL) {
-            MTX_ERROR("Cannot extend polynomial");
+            mtxAbort(MTX_HERE,"Cannot extend polynomial");
             return 1;
          }
          p->Data = x;
@@ -41,6 +36,8 @@ static int resize(Poly_t *p, int newdeg)
 
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
+/// @addtogroup poly
+/// @{
 /// Add polynomials.
 /// This function adds @em src to @em dest.
 /// The polynomials must be over the same field.
@@ -48,31 +45,30 @@ static int resize(Poly_t *p, int newdeg)
 /// @param src Second polynomial.
 /// @return @em dest, or 0 on error.
 
-Poly_t *PolAdd(Poly_t *dest, const Poly_t *src)
+Poly_t *polAdd(Poly_t *dest, const Poly_t *src)
 {
    FEL *s, *d;
    int i;
 
-   if (!PolIsValid(src) || !PolIsValid(dest)) {
-      return NULL;
-   }
+   polValidate(MTX_HERE, src);
+   polValidate(MTX_HERE, dest);
    if (dest->Field != src->Field) {
-      MTX_ERROR1("%E",MTX_ERR_INCOMPAT);
+      mtxAbort(MTX_HERE,"%s",MTX_ERR_INCOMPAT);
       return NULL;
    }
    if ((i = src->Degree) == -1) {
       return dest;      // src = 0 
 
    }
-   FfSetField(src->Field);
+   ffSetField(src->Field);
    if (resize(dest,i)) {
-      MTX_ERROR("Cannot resize: %S");
+      mtxAbort(MTX_HERE,"Cannot resize: %S");
       return NULL;
    }
    s = src->Data;
    d = dest->Data;
    for (; i >= 0; --i) {
-      *d = FfAdd(*d,*s++);
+      *d = ffAdd(*d,*s++);
       ++d;
    }
    Pol_Normalize(dest);
@@ -81,3 +77,4 @@ Poly_t *PolAdd(Poly_t *dest, const Poly_t *src)
 
 
 /// @}
+// vim:fileencoding=utf8:sw=3:ts=8:et:cin

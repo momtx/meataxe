@@ -1,13 +1,9 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // C MeatAxe - Multiply matrices or permutations.
-//
-// (C) Copyright 1998-2015 Michael Ringe, Lehrstuhl D fuer Mathematik, RWTH Aachen
-//
-// This program is free software; see the file COPYING for details.
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
-#include <meataxe.h>
+#include "meataxe.h"
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
@@ -19,7 +15,6 @@
    Global data
    -------------------------------------------------------------------------- */
 
-MTX_DEFINE_FILE_INFO
 
 static MtxApplicationInfo_t AppInfo = { 
 "zmu", "Multiply", 
@@ -72,50 +67,50 @@ static int multpm(void)
 
     if (nor1 != nor2) 
     {
-	MTX_ERROR3("%s and %s: %E",aname,bname,MTX_ERR_INCOMPAT);
+	mtxAbort(MTX_HERE,"%s and %s: %s",aname,bname,MTX_ERR_INCOMPAT);
 	return -1;
     }
 
     /* Read the permutation (A).
        ------------------------- */
-    SysFseek(afile,0);
-    perm = PermRead(afile);
+    sysFseek(afile,0);
+    perm = permRead(afile);
     if (perm == NULL)
     {
-	MTX_ERROR1("Cannot read permutation from %s",aname);
+	mtxAbort(MTX_HERE,"Cannot read permutation from %s",aname);
 	return -1;
     }
 
     /* Allocate workspace (one row of <B>).
        ------------------------------------ */
-    row = MatAlloc(fl2,1,noc2);
+    row = matAlloc(fl2,1,noc2);
 
     /* Open the output file.
        --------------------- */
-    if ((cfile = FfWriteHeader(cname,fl2,nor2,noc2)) == NULL)
+    if ((cfile = ffWriteHeader(cname,fl2,nor2,noc2)) == NULL)
 	return -1;
 
     /* Write out the rows of <B> in the order defined by <A>.
        ------------------------------------------------------ */
     for (i = 0; i < nor1; ++i)
     {	
-	FfSeekRow(bfile,perm->Data[i]);
-	if (FfReadRows(bfile,row->Data,1) != 1)
+	ffSeekRow(bfile,perm->Data[i]);
+	if (ffReadRows(bfile,row->Data, 1, noc2) != 1)
 	{
-	    MTX_ERROR1("Cannot read from %s",bname);
+	    mtxAbort(MTX_HERE,"Cannot read from %s",bname);
 	    return -1;
 	}
-	if (FfWriteRows(cfile,row->Data,1) != 1)
+	if (ffWriteRows(cfile,row->Data,1, noc2) != 1)
 	{
-	    MTX_ERROR1("Cannot write to %s",cname);
+	    mtxAbort(MTX_HERE,"Cannot write to %s",cname);
 	    return -1;
 	}
     }
 
     /* Clean up.
        --------- */
-    MatFree(row);
-    PermFree(perm);
+    matFree(row);
+    permFree(perm);
     return 0;
 }
 
@@ -134,29 +129,29 @@ static int multmp(void)
 
     if (noc1 != nor2) 
     {
-	MTX_ERROR3("%s and %s: %E",aname,bname,MTX_ERR_INCOMPAT);
+	mtxAbort(MTX_HERE,"%s and %s: %s",aname,bname,MTX_ERR_INCOMPAT);
 	return -1;
     }
 
     /* Read the permutation (B).
        ------------------------- */
-    SysFseek(bfile,0);
-    perm = PermRead(bfile);
+    sysFseek(bfile,0);
+    perm = permRead(bfile);
     if (perm == NULL)
     {
-	MTX_ERROR1("Cannot read permutation from %s",bname);
+	mtxAbort(MTX_HERE,"Cannot read permutation from %s",bname);
 	return -1;
     }
 
     /* Allocate workspace (two rows of A).
        ----------------------------------- */
-    buffer = MatAlloc(fl1,2,noc1);
-    row_in = MatGetPtr(buffer,0);
-    row_out = MatGetPtr(buffer,1);
+    buffer = matAlloc(fl1,2,noc1);
+    row_in = matGetPtr(buffer,0);
+    row_out = matGetPtr(buffer,1);
 
     /* Create the output file.
        ----------------------- */
-    if ((cfile = FfWriteHeader(cname,fl1,nor1,noc1)) == NULL)
+    if ((cfile = ffWriteHeader(cname,fl1,nor1,noc1)) == NULL)
 	return -1;
 
     /* Process A row by row. Permute the 
@@ -164,23 +159,23 @@ static int multmp(void)
        ---------------------------------- */
     for (i = 0; i < nor1; ++i)
     {
-        if (FfReadRows(afile,row_in,1) != 1)
+        if (ffReadRows(afile,row_in,1, noc1) != 1)
 	{
-	    MTX_ERROR1("Cannot read from %s",aname);
+	    mtxAbort(MTX_HERE,"Cannot read from %s",aname);
 	    return -1;
 	}
-	FfPermRow(row_in,perm->Data,row_out);
-	if (FfWriteRows(cfile,row_out,1) != 1)
+	ffPermRow(row_in,perm->Data,row_out);
+	if (ffWriteRows(cfile,row_out,1, noc1) != 1)
 	{
-	    MTX_ERROR1("Cannot write to %s",cname);
+	    mtxAbort(MTX_HERE,"Cannot write to %s",cname);
 	    return -1;
 	}
     }
 
     /* Clean up.
        --------- */
-    MatFree(buffer);
-    PermFree(perm);
+    matFree(buffer);
+    permFree(perm);
     return 0;
 }
 
@@ -190,38 +185,34 @@ static int multmp(void)
    multsm() - Multiply scalar with matrix
    ------------------------------------------------------------------ */
 
-static int multsm(FILE *s, FILE *m, int nor3, int noc3)
+static int multsm(FILE *s, FILE *m, int norM, int nocM)
 
 {
-    PTR ms, mm;
-    FEL f;
-    int i;
-
-    FfSetField(fl1);
-    FfSetNoc(1);
-    ms = FfAlloc(1);
-    FfReadRows(s,ms,1);
-    f = FfExtract(ms,0);
-    FfSetNoc(noc3);
-    mm = FfAlloc(1);
+    ffSetField(fl1);
+    ffSetNoc(1);
+    PTR ms = ffAlloc(1,1);
+    ffReadRows(s,ms,1,1);
+    const FEL f = ffExtract(ms,0);
+    ffSetNoc(nocM);
+    PTR mm = ffAlloc(1, nocM);
 	
-    if ((cfile = FfWriteHeader(cname,fl1,nor3,noc3)) == NULL)
+    if ((cfile = ffWriteHeader(cname,fl1,norM,nocM)) == NULL)
 	return -1;
-    for (i = 0; i < nor3; ++i)
+    for (int i = 0; i < norM; ++i)
     {	
-	if (FfReadRows(m,mm,1) != 1)
+	if (ffReadRows(m,mm,1, nocM) != 1)
 	{
-	    MTX_ERROR("Cannot read from input file");
+	    mtxAbort(MTX_HERE,"Cannot read from input file");
 	    return -1;
 	}
-	FfMulRow(mm,f);
-	if (FfWriteRows(cfile,mm,1) != 1)
+	ffMulRow(mm,f);
+	if (ffWriteRows(cfile,mm,1, nocM) != 1)
 	{
-	    MTX_ERROR1("Cannot write to %s",cname);
+	    mtxAbort(MTX_HERE,"Cannot write to %s",cname);
 	    return -1;
 	}
     }
-    SysFree(mm);
+    sysFree(mm);
     return 0;
 }
 
@@ -232,7 +223,6 @@ static int multsm(FILE *s, FILE *m, int nor3, int noc3)
    ------------------------------------------------------------------ */
 
 static int multmm(void)
-
 {
     PTR m1, m2, tmp, out;
     int row1, row2;	/* Range of rows */
@@ -241,25 +231,16 @@ static int multmm(void)
     int diffsize;
 
     if (fl1 != fl2)
-    {
-	MTX_ERROR3("%s and %s: %E (different fields)",aname,bname,
-	    MTX_ERR_INCOMPAT);
-	return -1;
-    }
+	mtxAbort(MTX_HERE,"%s and %s: %s (different fields)",aname,bname, MTX_ERR_INCOMPAT);
 
     if (noc1 == 1 && nor1 == 1)
 	return multsm(afile,bfile,nor2,noc2);
     else if (noc2 == 1 && nor2 == 1)
 	return multsm(bfile,afile,nor1,noc1);
     if (noc1 != nor2) 
-    {
-	MTX_ERROR3("%s and %s: %E",aname,bname,MTX_ERR_INCOMPAT);
-	return -1;
-    }
+	mtxAbort(MTX_HERE,"%s and %s: %s",aname,bname,MTX_ERR_INCOMPAT);
     if ((long) nrows > nor1 || (long) ncols > noc2) 
-    {
-	MTX_ERROR("Matrix too small");
-    }
+	mtxAbort(MTX_HERE,"Matrix too small");
     row1 = (nor1 / nrows) * (thisrow - 1);
     row2 = (nor1 / nrows) * thisrow - 1;
     col1 = (noc2 / ncols) * (thiscol - 1);
@@ -267,55 +248,57 @@ static int multmm(void)
 
     /* First matrix
        ------------ */
-    FfSetField(fl1);
-    FfSetNoc(noc1);
-    m1 = FfAlloc(1);
-    FfSeekRow(afile,row1);
+    ffSetField(fl1);
+    ffSetNoc(noc1);
+    m1 = ffAlloc(1, noc1);
+    ffSeekRow(afile,row1);
 
     /* Read second matrix
        ------------------ */
-    FfSetNoc(noc2);
-    tmp = FfAlloc(1);
-    FfSetNoc(col2-col1+1);
-    diffsize = FfCurrentRowSize;
-    m2 = FfAlloc(nor2);
-    out = FfAlloc(1);
-    if (col2 - col1 + 1 < noc2)
+    ffSetNoc(noc2);
+    tmp = ffAlloc(1, noc2);
+    const int colspan = col2 - col1 + 1;
+    ffSetNoc(colspan);
+    diffsize = ffRowSize(colspan);
+    m2 = ffAlloc(nor2, colspan);
+    out = ffAlloc(1, colspan);
+    if (colspan < noc2)
     {
 	PTR x = m2;
-	FfSetNoc(noc2);
+	ffSetNoc(noc2);
 	for (i = 1; i <= nor2; ++i)
 	{
-	    FfReadRows(bfile,tmp,(long)1);
+	    ffReadRows(bfile, tmp, 1, noc2);
 	    for (k = col1; k <= col2; ++k)
-		FfInsert(x,k - col1,FfExtract(tmp,k));
+		ffInsert(x,k - col1,ffExtract(tmp,k));
 	    x = (PTR)((char *)x + diffsize);
 	}
     }
     else
     {
-	FfSetNoc(noc2);
-	FfReadRows(bfile,m2,nor2);
+	ffSetNoc(noc2);
+	ffReadRows(bfile,m2,nor2, noc2);
     }
 
     /* Multiply and write result
        ------------------------- */
-    if ((cfile = FfWriteHeader(cname,fl1,row2-row1+1,col2-col1+1)) == NULL)
+    if ((cfile = ffWriteHeader(cname,fl1,row2-row1+1,col2-col1+1)) == NULL)
 	return -1;
 
+    const int nocOut = col2 - col1 + 1;
     for (i = 0; i < row2 - row1 + 1; ++i)
     {
-        FfSetNoc(noc1);
-        if (FfReadRows(afile,m1,1) != 1)
+        ffSetNoc(noc1);
+        if (ffReadRows(afile,m1,1, noc1) != 1)
 	{
-	    MTX_ERROR1("Cannot read from %s",aname);
+	    mtxAbort(MTX_HERE,"Cannot read from %s",aname);
 	    return -1;
 	}
-	FfSetNoc(col2-col1+1);
-	FfMapRow(m1,m2,nor2,out);
-	if (FfWriteRows(cfile,out,1) != 1)
+	ffSetNoc(nocOut);
+	ffMapRow(m1, m2, nor2, out);
+	if (ffWriteRows(cfile,out,1, nocOut) != 1)
 	{
-	    MTX_ERROR1("Cannot write to %s",cname);
+	    mtxAbort(MTX_HERE,"Cannot write to %s",cname);
 	    return -1;
 	}
     }
@@ -335,45 +318,45 @@ static int multpp(void)
 
     if (fl1 != fl2) 
     {
-	MTX_ERROR3("%s and %s: %E",aname,bname,MTX_ERR_INCOMPAT);
+	mtxAbort(MTX_HERE,"%s and %s: %s",aname,bname,MTX_ERR_INCOMPAT);
 	return -1;
     }
     if (fl1 != -1) 
     {
-	MTX_ERROR("Monomials are not supported");
+	mtxAbort(MTX_HERE,"Monomials are not supported");
 	return -1;
     }
 
     /* Read the permutations.
        ---------------------- */
-    SysFseek(afile,0);
-    a = PermRead(afile);
+    sysFseek(afile,0);
+    a = permRead(afile);
     if (a == NULL)
     {
-	MTX_ERROR1("Cannot read permutation from %s",aname);
+	mtxAbort(MTX_HERE,"Cannot read permutation from %s",aname);
 	return -1;
     }
-    SysFseek(bfile,0);
-    b = PermRead(bfile);
+    sysFseek(bfile,0);
+    b = permRead(bfile);
     if (b == NULL)
     {
-	MTX_ERROR1("Cannot read permutation from %s",bname);
+	mtxAbort(MTX_HERE,"Cannot read permutation from %s",bname);
 	return -1;
     }
 
     /* Multiply and write.
        ------------------- */
-    PermMul(a,b);
-    if (PermSave(a,cname) != 0)
+    permMul(a,b);
+    if (permSave(a,cname) != 0)
     {
-	MTX_ERROR1("Cannot write to %s",cname);
+	mtxAbort(MTX_HERE,"Cannot write to %s",cname);
 	return -1;
     }
 
     /* Clean up.
        --------- */
-    PermFree(a);
-    PermFree(b);
+    permFree(a);
+    permFree(b);
     return 0;    
 }
 
@@ -391,29 +374,28 @@ static int ParseSpec(const char *spec, const char *name, int *pos, int *size)
 
     if (*pos < 1 || *pos > *size)
     {
-	MTX_ERROR1("Invalid %s specification",name);
+	mtxAbort(MTX_HERE,"Invalid %s specification",name);
 	return -1;
     }
     return 0;
 }
 
 
-static int Init(int argc, const char **argv)
-
+static int Init(int argc, char **argv)
 {
     const char *c;
 
-    App = AppAlloc(&AppInfo,argc,argv);
+    App = appAlloc(&AppInfo,argc,argv);
     if (App == NULL)
 	return -1;
 
     /* Command line options.
        --------------------- */
-    if ((c = AppGetTextOption(App,"-c",NULL)) != NULL)
+    if ((c = appGetTextOption(App,"-c",NULL)) != NULL)
 	ParseSpec(c,"column",&thiscol,&ncols);
-    if ((c = AppGetTextOption(App,"-r",NULL)) != NULL)
+    if ((c = appGetTextOption(App,"-r",NULL)) != NULL)
 	ParseSpec(c,"row",&thisrow,&nrows);
-    if (AppGetArguments(App,3,3) < 0)
+    if (appGetArguments(App,3,3) < 0)
 	return -1;
 
     /* Command line arguments.
@@ -423,7 +405,7 @@ static int Init(int argc, const char **argv)
     cname = App->ArgV[2];
     if (!strcmp(aname,cname) || !strcmp(bname,cname))
     {
-	MTX_ERROR("Identical file names not allowed");
+	mtxAbort(MTX_HERE,"Identical file names not allowed");
 	return -1;
     }
 
@@ -435,10 +417,10 @@ static int Init(int argc, const char **argv)
 static int OpenFiles()
 
 {
-    afile = FfReadHeader(aname,&fl1,&nor1,&noc1);
+    afile = ffReadHeader(aname,&fl1,&nor1,&noc1);
     if (afile == NULL) 
 	return -1;
-    bfile = FfReadHeader(bname,&fl2,&nor2,&noc2);
+    bfile = ffReadHeader(bname,&fl2,&nor2,&noc2);
     if (bfile == NULL) 
 	return -1;
     return 0;
@@ -455,11 +437,11 @@ static void Cleanup()
         fclose(bfile);
     if (cfile != NULL)
 	fclose(cfile);
-    AppFree(App);
+    appFree(App);
 }
 
 
-int main(int argc, const char **argv)
+int main(int argc, char **argv)
 {   
     int result;
 
@@ -481,7 +463,7 @@ int main(int argc, const char **argv)
 	result = multpm(); 
     else
     {
-	MTX_ERROR3("%s and %s: %E",aname,bname,MTX_ERR_INCOMPAT);
+	mtxAbort(MTX_HERE,"%s and %s: %s",aname,bname,MTX_ERR_INCOMPAT);
 	result = 1;
     }
 
@@ -610,3 +592,4 @@ means to cut @em A horizontally into five slices and use the third
 slice for multiplication. The number of slice must not be greater
 than the number of rows.
 */
+// vim:fileencoding=utf8:sw=3:ts=8:et:cin

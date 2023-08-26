@@ -1,21 +1,22 @@
-# Test ZPR -G
+echo "0116 - ZPR -G"
 
 . ../tests/common.sh
 
+zpr -G "${MTX_TEST_DATA_DIR}/Perm1" tmp.$$.p1
+compareWithReference p1
 
-zpr -G ../tests/data/Perm1 tmp.$$.p1
-zpr -G ../tests/data/Perm2 tmp.$$.p2
-checksum tmp.$$.p1 89.1843631757 || exit 1
-checksum tmp.$$.p2 89.844334804 || exit 1
+zpr -G "${MTX_TEST_DATA_DIR}/Perm2" tmp.$$.p2
+compareWithReference p2
 
-zpr -G ../tests/data/Mat2 tmp.$$.x2
-zpr -G ../tests/data/Mat25 tmp.$$.x25
-zpr -G ../tests/data/Mat67 tmp.$$.x67
-checksum tmp.$$.x2 1251.4048248722 || exit 1
-checksum tmp.$$.x25 5111.3837421290 || exit 1
-checksum tmp.$$.x67 1578.4086279539 || exit 1
+zpr -G "${MTX_TEST_DATA_DIR}/Mat2" tmp.$$.x2
+compareWithReference x2
+
+zpr -G "${MTX_TEST_DATA_DIR}/Mat25" tmp.$$.x25
+compareWithReference x25
+
+zpr -G "${MTX_TEST_DATA_DIR}/Mat67" tmp.$$.x67
+compareWithReference x67
 
 
 # Clean up
-# --------
 rm -f tmp.$$.*

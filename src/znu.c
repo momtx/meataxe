@@ -1,14 +1,10 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // C MeatAxe - This program calculates the null space of a matrix.
-//
-// (C) Copyright 1998-2015 Michael Ringe, Lehrstuhl D fuer Mathematik, RWTH Aachen
-//
-// This program is free software; see the file COPYING for details.
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
 
-#include <meataxe.h>
+#include "meataxe.h"
 #include <stdlib.h>
 
 
@@ -17,7 +13,6 @@
    Variables
    ------------------------------------------------------------------ */
 
-MTX_DEFINE_FILE_INFO
 
 static MtxApplicationInfo_t AppInfo = { 
 "znu", "Matrix Null-Space", 
@@ -43,21 +38,21 @@ static Matrix_t *Matrix = NULL;
 
 
 
-static int Init(int argc, const char **argv)
+static int Init(int argc, char **argv)
 {
     /* Process command line options.
        ----------------------------- */
-    App = AppAlloc(&AppInfo,argc,argv);
+    App = appAlloc(&AppInfo,argc,argv);
     if (App == NULL)
 	return -1;
-    opt_G = AppGetOption(App,"-G --gap");
-    opt_n = AppGetOption(App,"-n --no-echelon");
+    opt_G = appGetOption(App,"-G --gap");
+    opt_n = appGetOption(App,"-n --no-echelon");
     if (opt_G)
 	MtxMessageLevel = -100;
 
     /* Process arguments.
        ------------------ */
-    if (AppGetArguments(App,1,2) < 0)
+    if (appGetArguments(App,1,2) < 0)
 	return -1;
     matname = App->ArgV[0];
     if (App->ArgC > 1)
@@ -66,7 +61,7 @@ static int Init(int argc, const char **argv)
     /* Read the matrix.
        ---------------- */
     MESSAGE(1,("Reading %s\n",matname));
-    Matrix = MatLoad(matname);
+    Matrix = matLoad(matname);
     if (Matrix == NULL)
 	return 1;
 
@@ -79,30 +74,30 @@ static int Init(int argc, const char **argv)
    main()
    ------------------------------------------------------------------ */
 
-int main(int argc, const char **argv)
+int main(int argc, char **argv)
 
 {   
     int nspdim;
 
     if (Init(argc,argv) != 0)
     {
-	MTX_ERROR("Initialization failed");
+	mtxAbort(MTX_HERE,"Initialization failed");
 	return 1;
     }
 
     if (nspname != NULL)
     {
-	Matrix_t *null_space = MatNullSpace_(Matrix,opt_n ? 1 : 0);
+	Matrix_t *null_space = matNullSpace_(Matrix,opt_n ? 1 : 0);
 	if (null_space == NULL)
 	    return 1;
         MESSAGE(1,("Writing null-space to %s\n",nspname));
-	MatSave(null_space,nspname);
+	matSave(null_space,nspname);
 	nspdim = null_space->Nor;
     }
     else
     {
 	int old_nor = Matrix->Nor;
-	MatEchelonize(Matrix);
+	matEchelonize(Matrix);
 	nspdim = old_nor - Matrix->Nor;
     }
 
@@ -116,7 +111,7 @@ int main(int argc, const char **argv)
         MESSAGE(0,("NULLITY %d\n",nspdim));
 
 
-    AppFree(App);
+    appFree(App);
     return 0;
 }
 
@@ -165,3 +160,4 @@ becomes zero, the corresponding row of the other matrix is marked for output.
 The null-space is always reduced to echelon form.
 */
 
+// vim:fileencoding=utf8:sw=3:ts=8:et:cin

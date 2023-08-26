@@ -1,12 +1,8 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // C MeatAxe - Projection on quotient.
-//
-// (C) Copyright 1998-2015 Michael Ringe, Lehrstuhl D fuer Mathematik, RWTH Aachen
-//
-// This program is free software; see the file COPYING for details.
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#include <meataxe.h>
+#include "meataxe.h"
 #include <string.h>
 #include <stdlib.h>
 
@@ -17,7 +13,6 @@
    Global data
    ------------------------------------------------------------------ */
 
-MTX_DEFINE_FILE_INFO
 
 static MtxApplicationInfo_t AppInfo = { 
 "zqt", "Clean And Quotient", 
@@ -53,14 +48,14 @@ static int QuotientDim;
    ------------------------------------------------------------------ */
 
 
-static int Init(int argc, const char **argv)
+static int Init(int argc, char **argv)
 
 {
-    App = AppAlloc(&AppInfo,argc,argv);
+    App = appAlloc(&AppInfo,argc,argv);
     if (App == NULL)
 	return -1;
-    opt_i = AppGetOption(App,"-i");
-    if (AppGetArguments(App,3,3) < 0)
+    opt_i = appGetOption(App,"-i");
+    if (appGetArguments(App,3,3) < 0)
 	return -1;
     sname = App->ArgV[0];
     mname = App->ArgV[1];
@@ -80,39 +75,40 @@ static int ReadFiles()
 {
     /* Read the subspace, and build the pivot table.
        --------------------------------------------- */
-    Subspace = MatLoad(sname);
+    Subspace = matLoad(sname);
     if (Subspace == NULL)
 	return 1;
-    if (MatPivotize(Subspace) < 0)
+    if (matPivotize(Subspace) < 0)
     {
-	MTX_ERROR2("%s: %E",mname,MTX_ERR_NOTECH);
+	mtxAbort(MTX_HERE,"%s: %s",mname,MTX_ERR_NOTECH);
 	return 1;
     }
 
     /* Open the input file, check compatibility, and allocate buffer.
        -------------------------------------------------------------- */
-    InputFile = MfOpen(mname);
+    InputFile = mfOpen(mname);
     if (InputFile == NULL)
 	return 1;
     if (InputFile->Field != Subspace->Field || InputFile->Noc != Subspace->Noc)
     {
-	MTX_ERROR3("%s and %S: %E",sname,mname,MTX_ERR_INCOMPAT);
+	mtxAbort(MTX_HERE,"%s and %S: %s",sname,mname,MTX_ERR_INCOMPAT);
 	return 1;
     }
     if (opt_i && InputFile->Nor != InputFile->Noc) 
     {
-	MTX_ERROR2("%s: %E",mname,MTX_ERR_NOTSQUARE);
+	mtxAbort(MTX_HERE,"%s: %s",mname,MTX_ERR_NOTSQUARE);
 	return 1;
     }
-    FfSetNoc(InputFile->Noc);
-    InputBuffer = FfAlloc(1);
+    ffSetNoc(InputFile->Noc);
+    InputBuffer = ffAlloc(1, InputFile->Noc);
     QuotientDim = Subspace->Noc - Subspace->Nor;
 
     /* Open the output file and allocate buffer.
        ----------------------------------------- */
-    OutputFile = MfCreate(oname,FfOrder,opt_i ? QuotientDim : InputFile->Nor,
+    OutputFile = mfCreate(oname,ffOrder,opt_i ? QuotientDim : InputFile->Nor,
 	QuotientDim);
-    OutputBuffer = FfAlloc(1);
+    MTX_ASSERT(ffNoc == InputFile->Noc, 1);
+    OutputBuffer = ffAlloc(1, InputFile->Noc);
 
     return 0;
 }
@@ -158,9 +154,9 @@ static int doit()
 
 	/* Read one row from the input file.
 	   --------------------------------- */
-	if (MfReadRows(InputFile,InputBuffer,1) != 1)
+	if (mfReadRows(InputFile,InputBuffer,1) != 1)
 	{
-	    MTX_ERROR("Error reading vector");
+	    mtxAbort(MTX_HERE,"Error reading vector");
 	    return 1;
 	}
 
@@ -171,18 +167,17 @@ static int doit()
 
 	/* Clean and extract insignificant columns.
 	   ---------------------------------------- */
-	FfCleanRow(InputBuffer,Subspace->Data,Subspace->Nor,
-	    Subspace->PivotTable);
-	FfSetNoc(QuotientDim);
-	FfMulRow(OutputBuffer,FF_ZERO);
+	ffCleanRow(InputBuffer,Subspace->Data,Subspace->Nor,Subspace->Noc,Subspace->PivotTable);
+	ffSetNoc(QuotientDim);
+	ffMulRow(OutputBuffer,FF_ZERO);
 	for (k = 0; k < QuotientDim; ++k)
-	    FfInsert(OutputBuffer,k,FfExtract(InputBuffer,non_pivot[k]));
+	    ffInsert(OutputBuffer,k,ffExtract(InputBuffer,non_pivot[k]));
 
 	/* Write the output row.
 	   --------------------- */
-	if (MfWriteRows(OutputFile,OutputBuffer,1) != 1)
+	if (mfWriteRows(OutputFile,OutputBuffer,1) != 1)
 	{
-	    MTX_ERROR("Error writing vector");
+	    mtxAbort(MTX_HERE,"Error writing vector");
 	    return 1;
 	}
 
@@ -197,12 +192,12 @@ static void Cleanup()
 
 {
     if (Subspace != NULL)
-	MatFree(Subspace);
+	matFree(Subspace);
     if (InputFile != NULL)
-	MfClose(InputFile);
+	mfClose(InputFile);
     if (OutputFile != NULL)
-	MfClose(OutputFile);
-    AppFree(App);
+	mfClose(OutputFile);
+    appFree(App);
 }
 
 
@@ -210,18 +205,18 @@ static void Cleanup()
    main()
    ------------------------------------------------------------------ */
 
-int main(int argc, const char **argv)
+int main(int argc, char **argv)
 
 {
     int rc;
     if (Init(argc,argv) != 0)
     {
-	MTX_ERROR("Initialization failed");
+	mtxAbort(MTX_HERE,"Initialization failed");
 	return 1;
     }
     if (ReadFiles() != 0)
     {
-	MTX_ERROR("Error reading files");
+	mtxAbort(MTX_HERE,"Error reading files");
 	return 1;
     }
     rc = doit();
@@ -312,3 +307,4 @@ It is not completely checked that @em Subsp is in echelon form.
 The Subspace and one row of both @em Matrix and @em Subsp must fit into memory.
 **/
 
+// vim:fileencoding=utf8:sw=3:ts=8:et:cin

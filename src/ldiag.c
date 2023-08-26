@@ -1,18 +1,13 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // C MeatAxe - Functions for drawing lattices
-//
-// (C) Copyright 1998-2015 Michael Ringe, Lehrstuhl D fuer Mathematik, RWTH Aachen
-//
-// This program is free software; see the file COPYING for details.
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#include <meataxe.h>
+#include "meataxe.h"
 #include <string.h>
 
-MTX_DEFINE_FILE_INFO
 
 
-/// @definesection ldiag Lattice drawing
+/// @defgroup ldiag Lattice drawing
 /// @{
 /// @details
 /// The lattice drawing functions can be used to draw a modular lattice. The 
@@ -46,15 +41,15 @@ MTX_DEFINE_FILE_INFO
 /// This function allocates and initializes a new LdLattice structure 
 /// with a given number of nodes. The number of nodes of an existing 
 /// LdLattice structure cannot be changed. When it is no longer needed, 
-/// the data structure must be freed with LdFree(). 
+/// the data structure must be freed with ldFree(). 
 ///
 /// Initially the lattice has no incidences. Before node positions are
-/// calculated with LdSetPositions(), all incidences must be entered
-/// using LdAddIncidence().
+/// calculated with ldSetPositions(), all incidences must be entered
+/// using ldAddIncidence().
 /// @param num_nodes Number of nodes in the lattice.
 /// @return Lattice data structure or NULL on error.
 
-LdLattice_t *LdAlloc(int num_nodes)
+LdLattice_t *ldAlloc(int num_nodes)
 {
     LdLattice_t *x;
 
@@ -63,22 +58,22 @@ LdLattice_t *LdAlloc(int num_nodes)
     x = ALLOC(LdLattice_t);
     if (x == NULL)
     {
-	MTX_ERROR("Cannot allocate lattice structure");
+	mtxAbort(MTX_HERE,"Cannot allocate lattice structure");
 	return NULL;
     }
     x->Nodes = NALLOC(LdNode_t,num_nodes);
     if (x->Nodes == NULL)
     {
-	SysFree(x);
-	MTX_ERROR("Cannot allocate <Nodes>");
+	sysFree(x);
+	mtxAbort(MTX_HERE,"Cannot allocate <Nodes>");
 	return NULL;
     }
     x->IsSub = NALLOC(int,num_nodes * num_nodes);
     if (x->IsSub == NULL)
     {
-	SysFree(x->Nodes);
-	SysFree(x);
-	MTX_ERROR("Cannot allocate <IsSub>");
+	sysFree(x->Nodes);
+	sysFree(x);
+	mtxAbort(MTX_HERE,"Cannot allocate <IsSub>");
 	return NULL;
     }
 
@@ -100,20 +95,20 @@ LdLattice_t *LdAlloc(int num_nodes)
 /// This function frees an |LdLattice| structure including any internally
 /// allocated memory.
 
-int LdFree(LdLattice_t *l)
+int ldFree(LdLattice_t *l)
 {
     if (l->Nodes != NULL)
     {
         memset(l->Nodes,0,sizeof(LdNode_t) * l->NNodes);
-	SysFree(l->Nodes);
+	sysFree(l->Nodes);
     }
     if (l->IsSub != NULL)
     {
-	SysFree(l->IsSub);
+	sysFree(l->IsSub);
         memset(l->IsSub,0,sizeof(int) * l->NNodes * l->NNodes);
     }
     memset(l,0,sizeof(*l));
-    SysFree(l);
+    sysFree(l);
     return 0;
 }
 
@@ -128,16 +123,16 @@ int LdFree(LdLattice_t *l)
 /// @param sup Number of the `upper' node (containing @a sub).
 /// @return 0 on success, -1 on error.
 
-int LdAddIncidence(LdLattice_t *lat, int sub, int sup)
+int ldAddIncidence(LdLattice_t *lat, int sub, int sup)
 {
     if (sub < 0 || sub >= lat->NNodes)
     {
-	MTX_ERROR2("sub = %d: %E",sub,MTX_ERR_BADARG);
+	mtxAbort(MTX_HERE,"sub = %d: %s",sub,MTX_ERR_BADARG);
 	return -1;
     }
     if (sup < 0 || sup >= lat->NNodes)
     {
-	MTX_ERROR2("sup = %d: %E",sup,MTX_ERR_BADARG);
+	mtxAbort(MTX_HERE,"sup = %d: %s",sup,MTX_ERR_BADARG);
 	return -1;
     }
     LD_ISSUB(lat,sub,sup) = 1;
@@ -146,7 +141,7 @@ int LdAddIncidence(LdLattice_t *lat, int sub, int sup)
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-LdLattice_t *LdFactor(LdLattice_t *l, int min, int max)
+LdLattice_t *ldFactor(LdLattice_t *l, int min, int max)
 {
     min = max = 0;
     return l;
@@ -195,7 +190,7 @@ static int FindLayers(LdLattice_t *l)
     i = FindBottom(l);
     if (i < 0)
     {
-	MTX_ERROR("Cannot find bottom node");
+	mtxAbort(MTX_HERE,"Cannot find bottom node");
 	return -1;
     }
     l->Nodes[i].Layer = 0;
@@ -216,7 +211,7 @@ static int FindLayers(LdLattice_t *l)
 		if (LD_ISSUB(l,k,m))
 		{
 		    if (l->Nodes[m].Layer >= 0 && l->Nodes[m].Layer != i + 1)
-			MTX_ERROR("Inconsistent layer numbers - "
+			mtxAbort(MTX_HERE,"Inconsistent layer numbers - "
 			    "lattice is not modular!");
 		    finished = 0;
 		    l->Nodes[m].Layer = i + 1;
@@ -232,7 +227,7 @@ static int FindLayers(LdLattice_t *l)
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 /* Set all y positions */
 
-static int SetYPositions(LdLattice_t *l)
+static int setYPositions(LdLattice_t *l)
 
 {
     int i;
@@ -262,7 +257,7 @@ static int SetYPositions(LdLattice_t *l)
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 /// Set all x positions initially. Places nodes of one layer at equidistant x positons.
 
-static int SetInitialXPositions(LdLattice_t *l)
+static int setInitialXPositions(LdLattice_t *l)
 {
     int layer;
 
@@ -280,7 +275,7 @@ static int SetInitialXPositions(LdLattice_t *l)
 	}
 	if (nnodes == 0)
 	{
-	    MTX_ERROR1("No nodes in layer %d - invalid lattice",layer);
+	    mtxAbort(MTX_HERE,"No nodes in layer %d - invalid lattice",layer);
 	    return -1;
 	}
 	step = 1.0 / nnodes;
@@ -372,7 +367,7 @@ static int ReOrder(LdLattice_t *l)
 		continue;
 	    if (((score_k < score_i && pos_k > pos_i) ||
 	        (score_k > score_i && pos_k < pos_i))
-		&& MtxRandomInt(100) > 50
+		&& mtxRandomInt(100) > 50
 
 		)
 	    {
@@ -401,20 +396,20 @@ printf("        %d(pos=%.2f, score=%.2f)      %d(pos=%.2f, score=%.2f)\n",
 
 
 /* --------------------------------------------------------------------------
-   SetXPositions() - Set all X positions
+   setXPositions() - Set all X positions
 
    This function calculates the x positions of all nodes. We repeat the 
    basic step - calculate scores, then reorder - until the configuration is
    stable or up to 150 times.
    -------------------------------------------------------------------------- */
 
-static int SetXPositions(LdLattice_t *l)
+static int setXPositions(LdLattice_t *l)
 
 {
     int num_changes = 1;
     int count = 0;
 
-    if (SetInitialXPositions(l) != 0)
+    if (setInitialXPositions(l) != 0)
 	return -1;
     for (count = 0; count < 150 && num_changes > 0; ++count)
     {
@@ -433,29 +428,33 @@ printf("Round %d: %d changes\n",count,num_changes);
 /// Calculate node positions.
 /// This function calculates the x and y coordinates for a lattice drawing.
 /// |l| is a pointer to a lattice drawing data structure. All incidences of
-/// the lattice must have been defined using |LdAddIncidence()|. On successful
+/// the lattice must have been defined using |ldAddIncidence()|. On successful
 /// return (return value $0$) the node positions are stored in the |PosX| and
 /// |PosY| fields of the |LdNode_t| structures contained in |l|.
 /// Both x and y coordinates are normalized to the interval $[0,1]$.
 /// @param l Pointer to the lattice data structure.
 /// @return $0$ on success, $-1$ on error.
 
-int LdSetPositions(LdLattice_t *l)
+int ldSetPositions(LdLattice_t *l)
 {
     if (FindLayers(l) != 0)
     {
-	MTX_ERROR("Cannot set layers");
+	mtxAbort(MTX_HERE,"Cannot set layers");
 	return -1;
     }
-    if (SetYPositions(l))
+    if (setYPositions(l))
     {
-	MTX_ERROR("Error setting x positions");
+	mtxAbort(MTX_HERE,"Error setting x positions");
 	return -1;
     }
-    if (SetXPositions(l))
+    if (setXPositions(l))
     {
-	MTX_ERROR("Error setting y positions");
+	mtxAbort(MTX_HERE,"Error setting y positions");
 	return -1;
     }
     return 0;
 }
+
+/// @}
+
+// vim:fileencoding=utf8:sw=3:ts=8:et:cin

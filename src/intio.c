@@ -1,15 +1,12 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // C MeatAxe - Input/output of integers
-//
-// (C) Copyright 1998-2015 Michael Ringe, Lehrstuhl D fuer Mathematik, RWTH Aachen
-//
-// This program is free software; see the file COPYING for details.
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
-#include <meataxe.h>
+#include "meataxe.h"
 
-MTX_DEFINE_FILE_INFO
+static const long test = 1;
+static const int IS_X86 = (sizeof(long) == 4 && *(char *)&test == 1);
 
 /// @addtogroup os
 /// @{
@@ -23,7 +20,7 @@ MTX_DEFINE_FILE_INFO
 /// @a n because the end of file was encountered while reading. A negative
 /// return value indicates a file i/o error.
 /// 
-/// %SysReadLong32() expects that the numbers in the file are 4-byte integers 
+/// %sysReadLong32() expects that the numbers in the file are 4-byte integers 
 /// in little-endian format, i.e. the least significant byte first.
 /// Using a machine-independent data format makes MeatAxe data files 
 /// more portable, but there are also some disadvantages:
@@ -35,7 +32,7 @@ MTX_DEFINE_FILE_INFO
 /// @param n Number of integers to read.
 /// @return Number of integers that were actually read, or $/1$ on error.
 
-int SysReadLong32(FILE *f, long *buf, int n)
+int sysReadLong32(FILE *f, long *buf, int n)
 {
     int nread;
 
@@ -43,19 +40,16 @@ int SysReadLong32(FILE *f, long *buf, int n)
        ------------------- */
     if (f == NULL || buf == NULL || n < 0)
     {
-	MTX_ERROR3("Invalid arguments (f:%s,buf:%s,n=%d)",f ? "ok" : "NULL",
+	mtxAbort(MTX_HERE,"Invalid arguments (f:%s,buf:%s,n=%d)",f ? "ok" : "NULL",
 		buf ? "ok" : "NULL",n);
 	return -1;
     }
 
     /* Read <n> long integers
        ---------------------- */
-    if (Mtx_IsX86)
+    if (IS_X86)
     {
 	nread = (int)fread((char *)buf,sizeof(long),(size_t)n,f);
-	/* printf("nread=%d, error=%d, eof=%d, GetLastError()=%d\n",
-	   nread,ferror(f),feof(f),GetLastError());
-	*/
     }
     else
     {
@@ -73,7 +67,7 @@ int SysReadLong32(FILE *f, long *buf, int n)
        ---------------- */
     if (ferror(f) && !feof(f))
     {
-	MTX_ERROR("Read failed: %S");
+	mtxAbort(MTX_HERE,"Read failed: %S");
 	return -1;
     }
     return nread;
@@ -85,18 +79,18 @@ int SysReadLong32(FILE *f, long *buf, int n)
 /// This function writes @a n long integers from the the array @a buf to the 
 /// file @a f. @a buf must point to a memory area of at least n*sizeof(long) 
 /// bytes and @a f must be open for writing. The numbers are written in a 
-/// machine-independent format which can be read by SysReadLong().
+/// machine-independent format which can be read by sysReadLong().
 /// @param f File to write to.
 /// @param buf Pointer to buffer.
 /// @param n Number of integers to write.
 /// @return Number of integers that were written, or $-1$ on error.
 
-int SysWriteLong32(FILE *f, const long *buf, int n)
+int sysWriteLong32(FILE *f, const long *buf, int n)
 {
     unsigned char a[4];
     int nwritten;
 
-    if (Mtx_IsX86)
+    if (IS_X86)
 	nwritten = fwrite((char *)buf,sizeof(long),n,f);
     else
     {
@@ -113,85 +107,87 @@ int SysWriteLong32(FILE *f, const long *buf, int n)
     return nwritten;
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#if MTX_CONFIG_BIG_ENDIAN
 static void Swap(long *dest, const long *src, int n)
 {
-    for (; n > 0; --n)
-    {
-	register unsigned long x = (unsigned long) *src++;
-#if MTX_CONFIG_LONG32
-	*dest++ =
-	      (x << 24)
-	    + ((x << 8) & 0x00FF0000L)
-	    + ((x >> 8) & 0x0000FF00L)
-	    + (x >> 24);
-#elif MTX_CONFIG_LONG64
-	*dest++ =
-	      (x << 56)
-	    + ((x << 40) & 0x00FF000000000000L)
-	    + ((x << 24) & 0x0000FF0000000000L)
-	    + ((x <<  8) & 0x000000FF00000000L)
-	    + ((x >>  8) & 0x00000000FF000000L)
-	    + ((x >> 24) & 0x0000000000FF0000L)
-	    + ((x >> 40) & 0x000000000000FF00L)
-	    + (x >> 56);
-#else
-#error "sizeof(long) not known - check config.h"
-#endif
-    }
+   for (; n > 0; --n)
+   {
+      register unsigned long x = (unsigned long) *src++;
+      if (sizeof(long int) == 4) {
+         *dest++ =
+            (x << 24)
+            + ((x << 8) & 0x00FF0000L)
+            + ((x >> 8) & 0x0000FF00L)
+            + (x >> 24);
+      } else if (sizeof(long int) == 8) {
+         *dest++ =
+            (x << 56)
+            + ((x << 40) & 0x00FF000000000000L)
+            + ((x << 24) & 0x0000FF0000000000L)
+            + ((x <<  8) & 0x000000FF00000000L)
+            + ((x >>  8) & 0x00000000FF000000L)
+            + ((x >> 24) & 0x0000000000FF0000L)
+            + ((x >> 40) & 0x000000000000FF00L)
+            + (x >> 56);
+      } else
+         mtxAbort(MTX_HERE,"sizeof(long)=%u not supported", sizeof(long));
+   }
 }
-#endif
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 #define BLK_SIZE 4096  // must be a multiple of sizeof(long)!
 
-int SysReadLongX(FILE *f, long *buf, int n_bytes)
+int sysReadLongX(FILE *f, long *buf, int n_bytes)
 {
-    int n_read = 0;		/* Bytes read so far */
-#if MTX_CONFIG_BIG_ENDIAN
-    long tmp[BLK_SIZE];
-    while (n_read < n_bytes)
-    {
-       int n_blk = sizeof(tmp);
-       if (n_bytes - n_read < sizeof(tmp)) {
-          n_blk = n_bytes - n_read;
-          tmp[n_blk / sizeof(long)] = 0;        // zero pad
-       }
-       if (fread(tmp,1,n_blk,f) != n_blk) {
-          break;
-       }
-       Swap(buf + n_read / sizeof(long),tmp,(n_blk - 1)/sizeof(long) + 1);
-       n_read += n_blk;
-    }
-#else
-    n_read = fread(buf,1,n_bytes,f);
-#endif
-    return n_read;
+   int n_read = 0;		/* Bytes read so far */
+   if (Mtx_IsBigEndian) {
+
+      long tmp[BLK_SIZE];
+      while (n_read < n_bytes)
+      {
+         int n_blk = sizeof(tmp);
+         if (n_bytes - n_read < sizeof(tmp)) {
+            n_blk = n_bytes - n_read;
+            tmp[n_blk / sizeof(long)] = 0;        // zero pad
+         }
+         if (fread(tmp,1,n_blk,f) != n_blk) {
+            break;
+         }
+         Swap(buf + n_read / sizeof(long),tmp,(n_blk - 1)/sizeof(long) + 1);
+         n_read += n_blk;
+      }
+   } else {
+      n_read = fread(buf,1,n_bytes,f);
+   }
+   return n_read;
 }
 
 
-int SysWriteLongX(FILE *f, const long *buf, int n_bytes)
+int sysWriteLongX(FILE *f, const long *buf, int n_bytes)
 {
-    int n_written = 0;
-#if MTX_CONFIG_BIG_ENDIAN
-    long tmp[BLK_SIZE];
-    while (n_written < n_bytes)
-    {
-	int n_blk = sizeof(tmp);
-	if (n_written + n_blk > n_bytes) {
-	    n_blk = n_bytes - n_written;
-        }
-	Swap(tmp,buf + n_written / sizeof(long),(n_blk - 1) / sizeof(long) + 1);
-	if (fwrite(tmp,1,n_blk,f) != n_blk)
-	    break;
-	n_written += n_blk;
-    }
-#else
-    n_written = fwrite(buf,1,n_bytes,f);
-#endif
-    return n_written;
+   int n_written = 0;
+   if (Mtx_IsBigEndian) {
+      long tmp[BLK_SIZE];
+      while (n_written < n_bytes)
+      {
+         int n_blk = sizeof(tmp);
+         if (n_written + n_blk > n_bytes) {
+            n_blk = n_bytes - n_written;
+         }
+         Swap(tmp,buf + n_written / sizeof(long),(n_blk - 1) / sizeof(long) + 1);
+         if (fwrite(tmp,1,n_blk,f) != n_blk)
+            break;
+         n_written += n_blk;
+      }
+   }
+   else {
+      n_written = fwrite(buf,1,n_bytes,f);
+   }
+   return n_written;
 }
 
 /// @}
 
-// vim:sw=3:et
+// vim:fileencoding=utf8:sw=3:ts=8:et:cin

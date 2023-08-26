@@ -1,12 +1,8 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // C MeatAxe - Trace of a matrix
-//
-// (C) Copyright 1998-2015 Michael Ringe, Lehrstuhl D fuer Mathematik, RWTH Aachen
-//
-// This program is free software; see the file COPYING for details.
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#include <meataxe.h>
+#include "meataxe.h"
 
 /// @addtogroup mat
 /// @{
@@ -18,29 +14,20 @@
 /// @param mat Pointer to the matrix.
 /// @return Trace of @a mat, (FEL)-1 on error.
 
-FEL MatTrace(const Matrix_t *mat)
+FEL matTrace(const Matrix_t *mat)
 {
-   int i;
-   PTR x;
-   int maxi;
+   matValidate(MTX_HERE, mat);
+   ffSetField(mat->Field);
+   ffSetNoc(mat->Noc);
    FEL trace = FF_ZERO;
-
-   /* Check the argument
-      ------------------ */
-#ifdef DEBUG
-   if (!MatIsValid(mat)) {
-      return (FEL) -1;
-   }
-#endif
-
-   maxi = mat->Nor > mat->Noc ? mat->Noc : mat->Nor;
-   FfSetField(mat->Field);
-   FfSetNoc(mat->Noc);
-   for (i = 0, x = mat->Data; i < maxi; ++i, FfStepPtr(&x)) {
-      trace = FfAdd(trace,FfExtract(x,i));
+   PTR x = mat->Data;
+   const int maxi = mat->Nor > mat->Noc ? mat->Noc : mat->Nor;
+   for (int i = 0; i < maxi; ++i) {
+      trace = ffAdd(trace,ffExtract(x,i));
+      ffStepPtr(&x, mat->Noc);
    }
    return trace;
 }
 
-
 /// @}
+// vim:fileencoding=utf8:sw=3:ts=8:et:cin

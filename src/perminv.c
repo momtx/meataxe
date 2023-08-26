@@ -1,18 +1,13 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // C MeatAxe - Inverse of a permutation
-//
-// (C) Copyright 1998-2015 Michael Ringe, Lehrstuhl D fuer Mathematik, RWTH Aachen
-//
-// This program is free software; see the file COPYING for details.
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#include <meataxe.h>
+#include "meataxe.h"
 #include <string.h>
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // Local data
 
-MTX_DEFINE_FILE_INFO
 
 /// @addtogroup perm
 /// @{
@@ -23,21 +18,19 @@ MTX_DEFINE_FILE_INFO
 /// @param src Pointer to the permutation.
 /// @return The inverse of @em src, or 0 on error.
 
-Perm_t *PermInverse(const Perm_t *src)
+Perm_t *permInverse(const Perm_t *src)
 {
    register long i;
    register long *d, *s;
    Perm_t *inv;
 
    // Check arguments
-   if (!PermIsValid(src)) {
-      return NULL;
-   }
+   permValidate(MTX_HERE, src);
 
    // Allocate a new permutation
-   inv = PermAlloc(src->Degree);
+   inv = permAlloc(src->Degree);
    if (inv == NULL) {
-      MTX_ERROR("Cannot allocate result buffer");
+      mtxAbort(MTX_HERE,"Cannot allocate result buffer");
       return NULL;
    }
    d = inv->Data;
@@ -53,3 +46,4 @@ Perm_t *PermInverse(const Perm_t *src)
 
 
 /// @}
+// vim:fileencoding=utf8:sw=3:ts=8:et:cin

@@ -1,13 +1,10 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // C MeatAxe - Initialization and clean up
-//
-// (C) Copyright 1998-2015 Michael Ringe, Lehrstuhl D fuer Mathematik, RWTH Aachen
-//
-// This program is free software; see the file COPYING for details.
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#include <meataxe.h>
+#include "meataxe.h"
 #include <string.h>
+#include <limits.h>
 #include <stdlib.h>
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -20,56 +17,106 @@
 
 int Mtx_IsInitialized = 0;
 
-////////////////////////////////////////////////////////////////////////////////////////////////////
-/// Internal data format flag
-/// This variable indicates if the internal representation of integers 
-/// corresponds to the MeatAxe file format, i.e., 32-bit, little-endian.
-/// It is set to 1 or 0 by MtxInitLibrary(). Some file i/o functions
-/// like SysReadLong() can operate more effectively if this flag is set.
-/// Mtx_IsX86 is intended for internal purposes only. Applications 
-/// should not use this variable.
+int Mtx_IsBigEndian = 0;
 
-int Mtx_IsX86 = 0;
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+char MtxLibDir[250] = "";
 
 int MtxOpt_UseOldWordGenerator = 0;
 
+char MtxVersion[200] = "undefined";
+
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-/// Initialize the library.
-///
-/// This function initializes the MeatAxe library including finite field
-/// arithmetic and file i/o functions. It must be called before any other 
-/// MeatAxe library function. \verb"MtxInitLibrary()" returns a version 
-/// number which is different for each implementation of the arithmetic. 
-///
-/// It is legal to call MtxInitLibrary() multiple times. Only the first
-/// call will actually do anything. An application that uses 
-/// MtxInitApplication() need not call this function.
-///
-/// @return MeatAxe version number, or -1 on error.
 
-int MtxInitLibrary()
+static void deriveDirectoryName(
+      char *buf, size_t bufSize, const char *argv0, int strip, const char *suffix)
 {
-    int long_size = sizeof(long);
-    long test = 1;
+   if (argv0 != NULL && *argv0 == '/') {
+      const char *end = argv0 + strlen(argv0);
+      for (; strip > 0; --strip) {
+         while (end > argv0 && end[-1] != '/')
+            --end;
+         if (end > argv0) --end;
+      }
+      if (strip == 0) {
+         if (suffix != NULL && *suffix != 0)
+             snprintf(buf, bufSize, "%.*s/%s", (int)(end - argv0), argv0, suffix);
+         else
+             snprintf(buf, bufSize, "%.*s", (int)(end - argv0), argv0);
+         return;
+      }
+   }
 
-    if (!Mtx_IsInitialized)
-    {
-	Mtx_IsInitialized = 1;
-	Mtx_IsX86 = (long_size == 4 && *(char *)&test == 1);
-	SysInit();
-    }
+   // Fallback to current directory.
+   snprintf(buf, bufSize, ".");
+}
 
-    return (ZZZVERSION);
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+static void setDirectories(char* argv0)
+{
+   char* c;
+   if ((c = getenv("MTXLIB")) != NULL) {
+      snprintf(MtxLibDir, sizeof(MtxLibDir), "%s", c);
+      return;
+   } 
+
+   char* path = realpath(argv0, NULL);
+   if (MtxLibDir[0] == 0) {
+      deriveDirectoryName(MtxLibDir, sizeof(MtxLibDir), path, 2, "lib");
+   }
+   free(path);
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+int MtxInitLibrary(char* argv0)
+{
+   if (Mtx_IsInitialized)
+      return ZZZVERSION;
+   Mtx_IsInitialized = 1;
+
+   setDirectories(argv0);
+
+   union {
+      unsigned char c[sizeof(int)];
+      unsigned u;
+   } x;
+   x.u = 1;
+   Mtx_IsBigEndian = (x.c[0] == 0);
+
+   sysInit();
+
+   char *v = MtxVersion;
+   char *vEnd = MtxVersion + sizeof(MtxVersion);
+   v += snprintf(v, vEnd - v,"%s ", MTX_VERSION);
+   if (sizeof(long) == 8) v += snprintf(v, vEnd - v, " L64");
+   v += snprintf(v, vEnd - v, " %s", Mtx_IsBigEndian ? "BE" : "LE");
+   v += snprintf(v, vEnd - v, " ZZZ=%d ZZZVERSION=0x%x", MTXZZZ, ZZZVERSION);
+
+
+
+   return ZZZVERSION;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 /// Terminate the library.
 /// This function terminates the MeatAxe library. An application that uses
-/// AppFree() need not call this function.
+/// appFree() need not call this function.
 
 void MtxCleanupLibrary()
 {
 }
 
 
+void mtxSetLibraryDirectory(const char *dir)
+{
+   snprintf(MtxLibDir, sizeof(MtxLibDir), "%s", dir);
+}
+
+
 /// @}
+
+// vim:fileencoding=utf8:sw=3:ts=8:et:cin

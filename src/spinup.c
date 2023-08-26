@@ -1,12 +1,8 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // C MeatAxe - Spin-up
-//
-// (C) Copyright 1998-2014 Michael Ringe, Lehrstuhl D fuer Mathematik, RWTH Aachen
-//
-// This program is free software; see the file COPYING for details.
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#include <meataxe.h>
+#include "meataxe.h"
 #include <string.h>
 
 /// @defgroup spinup Spin-Up and Split
@@ -50,7 +46,6 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // Local data
 
-MTX_DEFINE_FILE_INFO
 static int Dim = 0;			/* Dimension of the whole space */
 static int *Piv = NULL;			/* Pivot table */
 static const Matrix_t *Seed = NULL;	/* Seed space */
@@ -102,32 +97,33 @@ static int Spin1(PTR seed, int seedno, const SpinUpInfo_t *info)
 
     /* Initialize <get> and <put> to point to the first free row in <Span>
        ------------------------------------------------------------------- */
-    get = MatGetPtr(Span,SpanDim);
+    get = matGetPtr(Span,SpanDim);
     iget = SpanDim;
     put = get;
     if (Flags & SF_STD)
     {
-	stdget = MatGetPtr(StdSpan,SpanDim);
+	stdget = matGetPtr(StdSpan,SpanDim);
 	stdput = stdget;
     }
 
     /* Copy the seed vector to <put>, extending the pivot table
        -------------------------------------------------------- */
-    FfCopyRow(put,seed);
-    FfCleanRow(put,Span->Data,SpanDim,Piv);
+    ffCopyRow(put,seed);
+    MTX_ASSERT(ffNoc == Span->Noc, -1);
+    ffCleanRow(put,Span->Data,SpanDim,Span->Noc, Piv);
     if (Script != NULL)
     {
 	OPVEC(SpanDim) = seedno;
 	OPGEN(SpanDim) = -1;	/* -1 means it's a seed vector */
     }
-    if ((Piv[SpanDim] = FfFindPivot(put,&f)) >= 0)
+    if ((Piv[SpanDim] = ffFindPivot(put,&f)) >= 0)
     {
 	++SpanDim;
-	FfStepPtr(&put);
+	ffStepPtr(&put, Dim);
 	if (Flags & SF_STD)
 	{
-    	    FfCopyRow(stdput,seed);
-	    FfStepPtr(&stdput);
+    	    ffCopyRow(stdput,seed);
+	    ffStepPtr(&stdput, Dim);
 	}
     }
 
@@ -144,17 +140,17 @@ static int Spin1(PTR seed, int seedno, const SpinUpInfo_t *info)
 	if (Flags & SF_STD)
 	{
 	    if (Gen != NULL)
-		FfMapRow(stdget,Gen[igen]->Data,Dim,stdput);
+		ffMapRow(stdget,Gen[igen]->Data,Dim,stdput);
 	    else
-		FfPermRow(stdget,GenP[igen]->Data,stdput);
-	    FfCopyRow(put,stdput);
+		ffPermRow(stdget,GenP[igen]->Data,stdput);
+	    ffCopyRow(put,stdput);
 	}
 	else
 	{
 	    if (Gen != NULL)
-		FfMapRow(get,Gen[igen]->Data,Dim,put);
+		ffMapRow(get,Gen[igen]->Data,Dim,put);
 	    else
-		FfPermRow(get,GenP[igen]->Data,put);
+		ffPermRow(get,GenP[igen]->Data,put);
 	}
     	if (Script != NULL)
     	{
@@ -165,8 +161,8 @@ static int Spin1(PTR seed, int seedno, const SpinUpInfo_t *info)
 	{
 	    ++num_tries;
 	    igen = 0;
-	    FfStepPtr(&get);
-	    FfStepPtr(&stdget);
+	    ffStepPtr(&get, Dim);
+	    ffStepPtr(&stdget, Dim);
 	    ++iget;
 	    if (MSG4 || (MSG3 && SpanDim % 50 == 0))
             	printf("SpinUp(): dim=%d, stack=%d\n", SpanDim,SpanDim - iget);
@@ -174,13 +170,14 @@ static int Spin1(PTR seed, int seedno, const SpinUpInfo_t *info)
 
 	/* Clean the result with the existing basis
 	   ---------------------------------------- */
-	FfCleanRow(put,Span->Data,SpanDim,Piv);
-	if ((Piv[SpanDim] = FfFindPivot(put,&f)) >= 0)
+        MTX_ASSERT(ffNoc == Span->Noc, -1);
+	ffCleanRow(put,Span->Data,SpanDim,Span->Noc, Piv);
+	if ((Piv[SpanDim] = ffFindPivot(put,&f)) >= 0)
 	{
 	    num_tries = 0;
 	    ++SpanDim;
-	    FfStepPtr(&put);
-	    FfStepPtr(&stdput);
+	    ffStepPtr(&put, Dim);
+	    ffStepPtr(&stdput, Dim);
 	}
     }
 
@@ -197,7 +194,7 @@ static int Spin1(PTR seed, int seedno, const SpinUpInfo_t *info)
 	case SF_COMBINE:
 	    return SpanDim < Dim ? 1 : 0;
     }
-    MTX_ERROR1("Invalid search mode %d",Flags & SF_MODE_MASK);
+    mtxAbort(MTX_HERE,"Invalid search mode %d",Flags & SF_MODE_MASK);
     return -1;
 }
 
@@ -208,18 +205,11 @@ static int Spin1(PTR seed, int seedno, const SpinUpInfo_t *info)
 
 static int CheckArgs0(const Matrix_t *seed, int flags)
 {
-    if (!MatIsValid(seed))
-	return -1;
+    matValidate(MTX_HERE, seed);
     if (seed->Nor < 1) 
-    {
-	MTX_ERROR("Empty seed space");
-	return -1;
-    }
+	mtxAbort(MTX_HERE,"Empty seed space");
     if (flags == -1)
-    {
-	MTX_ERROR("Invalid flags");
-	return -1;
-    }
+	mtxAbort(MTX_HERE,"Invalid flags");
     return 0;
 }
 
@@ -231,18 +221,18 @@ static int CheckArgs(const Matrix_t *seed, const MatRep_t *rep, int flags)
 {
     if (CheckArgs0(seed,flags) != 0)
 	return -1;
-    if (!MrIsValid(rep))
+    if (!mrIsValid(rep))
 	return -1;
     if (rep->NGen < 0)
     {
-	MTX_ERROR1("Invalid number of generators (%d)",rep->NGen);
+	mtxAbort(MTX_HERE,"Invalid number of generators (%d)",rep->NGen);
 	return -1;
     }
     if (rep->NGen > 0)
     {
 	if (rep->Gen[0]->Noc != seed->Noc || rep->Gen[0]->Field != seed->Field)
 	{
-	    MTX_ERROR1("%E",MTX_ERR_INCOMPAT);
+	    mtxAbort(MTX_HERE,"%s",MTX_ERR_INCOMPAT);
 	    return -1;
 	}
     }
@@ -259,16 +249,15 @@ static int CheckArgsP(const Matrix_t *seed, int ngen, const Perm_t **gen, int fl
 	return -1;
     if (ngen < 0)
     {
-	MTX_ERROR1("Invalid number of generators (%d)",ngen);
+	mtxAbort(MTX_HERE,"Invalid number of generators (%d)",ngen);
 	return -1;
     }
     for (i = 0; i < ngen; ++i)
     {
-	if (!PermIsValid(gen[i]))
-	    return -1;
+       permValidate(MTX_HERE, gen[i]);
 	if (gen[i]->Degree != seed->Noc)
 	{
-	    MTX_ERROR3("Gen=%d, seed=%d: %E",gen[i]->Degree,seed->Noc,
+	    mtxAbort(MTX_HERE,"Gen=%d, seed=%d: %s",gen[i]->Degree,seed->Noc,
 		MTX_ERR_INCOMPAT);
 	    return -1;
 	}
@@ -284,8 +273,8 @@ static int Init0(const Matrix_t *seed, int flags, IntMatrix_t **script,
      const SpinUpInfo_t *info)
 {
     int ws_size;
-    FfSetField(seed->Field);
-    FfSetNoc(seed->Noc);
+    ffSetField(seed->Field);
+    ffSetNoc(seed->Noc);
     Flags = flags;
     Dim = seed->Noc;
     Seed = seed;
@@ -296,10 +285,10 @@ static int Init0(const Matrix_t *seed, int flags, IntMatrix_t **script,
     	ws_size = info->MaxSubspaceDimension + 1;
     else
 	ws_size = Dim + 1;
-    Span = MatAlloc(seed->Field,ws_size,Dim);
+    Span = matAlloc(seed->Field,ws_size,Dim);
     if (Span == NULL)
     {
-	MTX_ERROR("Cannot allocate result buffer");
+	mtxAbort(MTX_HERE,"Cannot allocate result buffer");
 	return -1;
     }
 
@@ -308,7 +297,7 @@ static int Init0(const Matrix_t *seed, int flags, IntMatrix_t **script,
     Piv = NREALLOC(Piv,int,Dim+2);
     if (Piv == NULL)
     {
-	MTX_ERROR("Cannot allocate pivot table");
+	mtxAbort(MTX_HERE,"Cannot allocate pivot table");
 	return -1;
     }
     if (script != NULL)
@@ -316,14 +305,14 @@ static int Init0(const Matrix_t *seed, int flags, IntMatrix_t **script,
 	if (*script != NULL && 
 	    ((*script)->Noc != 2 || (*script)->Nor < Dim + 1))
 	{
-	    ImatFree(*script);
+	    imatFree(*script);
 	    *script = NULL;
 	}
 	if (*script == NULL)
-	    *script = ImatAlloc(Dim+1,2);
+	    *script = imatAlloc(Dim+1,2);
 	if (*script == NULL)
 	{
-	    MTX_ERROR("Cannot allocate script");
+	    mtxAbort(MTX_HERE,"Cannot allocate script");
 	    return -1;
 	}
 	Script = (*script)->Data;
@@ -333,11 +322,11 @@ static int Init0(const Matrix_t *seed, int flags, IntMatrix_t **script,
 
     if (Flags & SF_STD)
     {
-	StdSpan = MatAlloc(seed->Field,Dim+1,Dim);
+	StdSpan = matAlloc(seed->Field,Dim+1,Dim);
 	if (StdSpan == NULL)
 	{
-	    MatFree(Span);
-	    MTX_ERROR("Cannot allocate workspace");
+	    matFree(Span);
+	    mtxAbort(MTX_HERE,"Cannot allocate workspace");
 	    return -1;
 	}
     }
@@ -379,7 +368,7 @@ static int InitP(const Matrix_t *seed, int ngen, const Perm_t **gen, int flags,
 /// Spin up
 /// @return 0 = Ok, 1 = Not found, -1 = Error
 
-int DoSpinup(const SpinUpInfo_t *info)
+static int DoSpinup(const SpinUpInfo_t *info)
 {
     long n;
     int result;
@@ -395,7 +384,7 @@ int DoSpinup(const SpinUpInfo_t *info)
     	case SF_EACH:
 	    /* Try each seed vector until successful
 	       ------------------------------------- */
-	    for (seed = Seed->Data, n = 1; n <= Seed->Nor; FfStepPtr(&seed),++n)
+	    for (seed = Seed->Data, n = 1; n <= Seed->Nor; ffStepPtr(&seed, Dim),++n)
 	    {
 	    	if (Spin1(seed,n,info) == 0)
 		    return 0;
@@ -405,9 +394,9 @@ int DoSpinup(const SpinUpInfo_t *info)
     	case SF_MAKE:
 	    /* Try each 1-dimensional subspace until successfull
 	       ------------------------------------------------- */
-	    if ((seed = FfAlloc(1)) == NULL) 
+	    if ((seed = ffAlloc(1, Dim)) == NULL) 
 	    {
-		MTX_ERROR("Cannot allocate seed vector");
+		mtxAbort(MTX_HERE,"Cannot allocate seed vector");
 		return -1;
 	    }
 	    result = 1;
@@ -416,11 +405,11 @@ int DoSpinup(const SpinUpInfo_t *info)
 	    	if (Spin1(seed,n,info) == 0)
 		    result = 0;
 	    }
-	    SysFree(seed);
+	    sysFree(seed);
 	    return result;
    
 	default:
-	    MTX_ERROR("Invalid seed mode");
+	    mtxAbort(MTX_HERE,"Invalid seed mode");
     }
     return -1;
 }
@@ -435,10 +424,10 @@ static Matrix_t *DoIt(IntMatrix_t **script, SpinUpInfo_t *info)
 
     if (rc < 0)
     {
-	MatFree(Span);
+	matFree(Span);
 	if (Flags & SF_STD)
-	    MatFree(StdSpan);
-	MTX_ERROR("Spin-up failed");
+	    matFree(StdSpan);
+	mtxAbort(MTX_HERE,"Spin-up failed");
 	return NULL;
     }
 
@@ -446,15 +435,15 @@ static Matrix_t *DoIt(IntMatrix_t **script, SpinUpInfo_t *info)
        ----------------------- */
     if (Flags & SF_STD)
     {
-	MatFree(Span);
+	matFree(Span);
 	Span = StdSpan;
     }
     else
     {
-	MatEchelonize(Span);
+	matEchelonize(Span);
     }
     Span->Nor = SpanDim;
-    Span->Data = (PTR) SysRealloc(Span->Data,FfCurrentRowSize * SpanDim);
+    Span->Data = (PTR) sysRealloc(Span->Data,ffSize(SpanDim, Seed->Noc));
     if (script != NULL)
     {
 	(*script)->Data = NREALLOC((*script)->Data,long,2 * SpanDim);
@@ -463,7 +452,6 @@ static Matrix_t *DoIt(IntMatrix_t **script, SpinUpInfo_t *info)
 
     return Span;
 }
-
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 /// Spin up.
@@ -476,78 +464,67 @@ static Matrix_t *DoIt(IntMatrix_t **script, SpinUpInfo_t *info)
 /// @a flags and @a info. @a flags must be a combination of the following
 /// values:
 /// - @c SF_FIRST: Only the first row of @a seed is taken as seed vector.
-/// - @c SF_EACH:  Each row of @a seed is taken as seed vector.
-/// - @c SF_MAKE:  One vector from each 1-dimensional subspace of the row space of @a seed
-///     is taken as seed vector.
-/// - @c SF_SUB: Find a submodule: spin up seed vectors one-by-one until a seed
-///     vector generates a proper submodule.
-/// - @c SF_CYCLIC: Find a cyclic vector: spin up vectors one-by-one until a seed
-///     vector generates the whole space.
-/// - @c SF_COMBINE: Calculate the submodule generated by the set of all seed vectors.
-///     This ist typically used with @c SF_EACH to calculate the submodule
-///     generate by the row space of @a seed.
-/// - @c SF_STD: Create the standard basis. This increases both computation time and
-///     memory usage.
+/// - @c SF_EACH: Each row of @a seed is taken as seed vector.
+/// - @c SF_MAKE: One vector from each 1-dimensional subspace of the row space of @a seed is taken
+///      as seed vector.
+/// - @c SF_SUB: Find a submodule: spin up seed vectors one-by-one until a seed vector generates a
+///      proper submodule.
+/// - @c SF_CYCLIC: Find a cyclic vector: spin up vectors one-by-one until a seed vector generates
+///      the whole space.
+/// - @c SF_COMBINE: Calculate the submodule generated by the set of all seed vectors. This ist
+///      typically used with @c SF_EACH to calculate the submodule generate by the row space of
+///      @a seed.
+/// - @c SF_STD: Create the standard basis. This increases both computation time and memory usage.
 ///
-/// The seed modes, @c SF_FIRST, @c SF_EACH and @c SF_MAKE, and the
-/// search modes, @c SF_SUB, @c SF_CYCLIC, @c SF_COMBINE, are mutually exclusive.
-/// If, in mode @c SF_SUB or @c SF_CYCLIC, no seed vector generates a proper
-/// submodule or the whole space, respectively, this is not considered
-/// an error, and the return value is not @c NULL. The rows of the matrix
-/// returned by SpinUp() always form a basis of an invariant subspace,
-/// but you must examine the number of rows of that matrix to find out if it
-/// is a proper subspace, or null, or the whole space.
+/// The seed modes, @c SF_FIRST, @c SF_EACH and @c SF_MAKE, and the search modes, @c SF_SUB,
+/// @c SF_CYCLIC, @c SF_COMBINE, are mutually exclusive. If, in mode @c SF_SUB or @c SF_CYCLIC, no
+/// seed vector generates a proper submodule or the whole space, respectively, this is not
+/// considered an error, and the return value is not @c NULL. The rows of the matrix returned by
+/// SpinUp() always form a basis of an invariant subspace, but you must examine the number of rows
+/// of that matrix to find out if it is a proper subspace, or null, or the whole space.
 ///
-/// The subspace returned by SpinUp() is always in echelon form, if @c SF_STD
-/// is not used. With @c SF_STD however, the subspace is not necessarily in
-/// echelon form.
+/// The subspace returned by SpinUp() is always in echelon form, if @c SF_STD is not used. With
+/// @c SF_STD however, the subspace is not necessarily in echelon form.
 ///
-/// SpinUp() can record the operations that led to the invariant subspace
-/// in a "spin-up script". You can use the script as input to
-/// SpinUpWithScript() to repeat the spin-up with a different seed
-/// vector. Typically, a spin-up script is created together with @em SF_STD,
-/// and then used to reconstruct the standard basis in a different
-/// representation.
-/// In order to create a spin-up script, @a script must point to a variable
-/// of type IntMatrix_t*. This variable must either be 0 or contain
-/// a valid pointer. In the second case, the buffer pointed to by @a script
-/// is first deallocated before a new script is created. After SpinUp()
-/// returns, the variable contains a pointer to the script. If no spinup
-/// script is needed, pass 0 as 4th parameter.
+/// SpinUp() can record the operations that led to the invariant subspace in a "spin-up script".
+/// You can use the script as input to SpinUpWithScript() to repeat the spin-up with a different
+/// seed vector. Typically, a spin-up script is created together with @em SF_STD, and then used to
+/// reconstruct the standard basis in a different representation.
+/// In order to create a spin-up script, @a script must point to a variable of type IntMatrix_t*.
+/// This variable must either be 0 or contain a valid pointer. In the second case, the buffer
+/// pointed to by @a script is first deallocated before a new script is created. After SpinUp()
+/// returns, the variable contains a pointer to the script. If no spinup script is needed, pass NULL
+/// as 4th parameter.
 ///
-/// The format of the spinup script is a matrix with 2 columns and one row
-/// for each basis vector. A row (n,-1) means that the corresponding basis
-/// vector is the n-th seed vector. Seed vector numbers start from 1.
-/// An entry (n,g) with g≥0 means
-/// that the corresponding basis vector was obtained by multiplying the n-th
-/// basis vector by the g-th generator.  Basis vector number and generator
-/// number start from 0.
+/// The format of the spinup script is a matrix with 2 columns and one row for each basis vector.
+/// A row (n,-1) means that the corresponding basis vector is the n-th seed vector. Seed vector
+/// numbers start from 1. An entry (n,g) with g≥0 means that the corresponding basis vector was
+/// obtained by multiplying the n-th basis vector by the g-th generator. Basis vector number and
+/// generator number start from 0.
 ///
-/// Additional parameters can be passed via the @a info argument. To be
-/// compatible with future versions of SpinUpInfo_t, you should always
-/// initialize the parameter structure with SpinUpinfoInit().
+/// Additional parameters can be passed via the @a info argument. To be compatible with future
+/// versions of SpinUpInfo_t, you should always initialize the parameter structure with
+/// SpinUpinfoInit().
 ///
 /// @param seed Matrix with seed vectors.
 /// @param rep Pointer to a MatRep_t structure with generators.
 /// @param flags Flags, a combination of @c SF_XXXX constants (see description).
-/// @param script Pointer to a variable where the spinup script will be stored (see
-/// description). May be 0.
-/// @param info Pointer to a data structure with additional parameters, or 0.
-/// @return Span of the seed vector(s) under the action of the generators, or 0
-/// on error.
-////
+/// @param script Pointer to a variable where the spinup script will be stored (see description).
+///    May be NULL if the script is not needed.
+/// @param info Pointer to a data structure with additional parameters, or NULL.
+/// @return Span of the seed vector(s) under the action of the generators, or NULL on error.
 
 Matrix_t *SpinUp(const Matrix_t *seed, const MatRep_t *rep, int flags,
     IntMatrix_t **script, SpinUpInfo_t *info)
 {
     if (CheckArgs(seed,rep,flags) != 0)
     {
-	MTX_ERROR1("%E",MTX_ERR_BADARG);
+	mtxAbort(MTX_HERE,"%s",MTX_ERR_BADARG);
 	return NULL;
     }
     if (Init(seed,rep,flags,script,info) != 0)
     {
-	MTX_ERROR("Initialization failed");
+	mtxAbort(MTX_HERE,"Initialization failed");
 	return NULL;
     }
     return DoIt(script,info);
@@ -561,16 +538,15 @@ Matrix_t *SpinUp(const Matrix_t *seed, const MatRep_t *rep, int flags,
 
 Matrix_t *SpinUpWithPermutations(const Matrix_t *seed, int ngen, 
     const Perm_t **gen, int flags, IntMatrix_t **script, SpinUpInfo_t *info)
-
 {
     if (CheckArgsP(seed, ngen, gen, flags) != 0)
     {
-	MTX_ERROR1("%E",MTX_ERR_BADARG);
+	mtxAbort(MTX_HERE,"%s",MTX_ERR_BADARG);
 	return NULL;
     }
-    if (InitP(seed,ngen,gen,flags,script,info) != 0)
+    if (InitP(seed, ngen, gen, flags, script, info) != 0)
     {
-	MTX_ERROR("Initialization failed");
+	mtxAbort(MTX_HERE,"Initialization failed");
 	return NULL;
     }
     return DoIt(script,info);
@@ -589,3 +565,4 @@ int SpinUpInfoInit(SpinUpInfo_t *info)
 }
 
 /// @}
+// vim:fileencoding=utf8:sw=3:ts=8:et:cin

@@ -1,17 +1,12 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // C MeatAxe - Insert an element into a set
-//
-// (C) Copyright 1998-2015 Michael Ringe, Lehrstuhl D fuer Mathematik, RWTH Aachen
-//
-// This program is free software; see the file COPYING for details.
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#include <meataxe.h>
+#include "meataxe.h"
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // Local data
 
-MTX_DEFINE_FILE_INFO
 
 const int BlockSize = 5;    /* Allocation unit */
 
@@ -24,15 +19,12 @@ const int BlockSize = 5;    /* Allocation unit */
 /// @param elem Number to insert.
 /// @return 0 on success, -1 on error.
 
-int SetInsert(Set_t *set, long elem)
+int setInsert(Set_t *set, long elem)
 {
    register int i, k;
    register long *d;
 
-   if (!SetIsValid(set)) {
-      MTX_ERROR1("set: %E",MTX_ERR_BADARG);
-      return -1;
-   }
+   setValidate(MTX_HERE, set);
 
    // Find the position of <elem> in the data buffer.
    // If <elem> is already containd in the set, exit.
@@ -49,7 +41,7 @@ int SetInsert(Set_t *set, long elem)
       int newmax = set->BufSize + BlockSize;
       long *newbuf = NREALLOC(set->Data,long,newmax);
       if (newbuf == NULL) {
-         MTX_ERROR("Cannot grow set");
+         mtxAbort(MTX_HERE,"Cannot grow set");
          return -1;
       }
       set->BufSize = newmax;
@@ -68,3 +60,4 @@ int SetInsert(Set_t *set, long elem)
 
 
 /// @}
+// vim:fileencoding=utf8:sw=3:ts=8:et:cin

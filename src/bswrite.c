@@ -1,17 +1,12 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // C MeatAxe - Bit Strings, file output
-//
-// (C) Copyright 1998-2014 Michael Ringe, Lehrstuhl D fuer Mathematik, RWTH Aachen
-//
-// This program is free software; see the file COPYING for details.
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#include <meataxe.h>
+#include "meataxe.h"
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // Local data
 
-MTX_DEFINE_FILE_INFO
 
 /// @addtogroup bs
 /// @{
@@ -22,17 +17,14 @@ MTX_DEFINE_FILE_INFO
 /// @param f File to write to. Must be open for writing.
 /// @return 0 on success, -1 on error.
 
-int BsWrite(BitString_t *bs, FILE *f)
+int bsWrite(BitString_t *bs, FILE *f)
 {
    long file_header[3];
 
    // check arguments
-   if (!BsIsValid(bs)) {
-      MTX_ERROR1("bs: %E",MTX_ERR_BADARG);
-      return -1;
-   }
+   bsValidate(MTX_HERE, bs);
    if (f == NULL) {
-      MTX_ERROR1("f: %E",MTX_ERR_BADARG);
+      mtxAbort(MTX_HERE,"f: %s",MTX_ERR_BADARG);
       return -1;
    }
 
@@ -40,14 +32,14 @@ int BsWrite(BitString_t *bs, FILE *f)
    file_header[0] = -3;
    file_header[1] = bs->Size;
    file_header[2] = 0;
-   if (SysWriteLong32(f,file_header,3) != 3) {
-      MTX_ERROR("Cannot write bit string header");
+   if (sysWriteLong32(f,file_header,3) != 3) {
+      mtxAbort(MTX_HERE,"Cannot write bit string header");
       return -1;
    }
 
    // write data
-   if (SysWriteLongX(f,bs->Data,(bs->Size + 7) / 8) != (bs->Size + 7) / 8) {
-      MTX_ERROR("Cannot write bit string data");
+   if (sysWriteLongX(f,bs->Data,(bs->Size + 7) / 8) != (bs->Size + 7) / 8) {
+      mtxAbort(MTX_HERE,"Cannot write bit string data");
       return -1;
    }
 
@@ -56,3 +48,4 @@ int BsWrite(BitString_t *bs, FILE *f)
 
 
 /// @}
+// vim:fileencoding=utf8:sw=3:ts=8:et:cin

@@ -1,71 +1,59 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // C MeatAxe - Check tensor product.
-//
-// (C) Copyright 1998-2015 Michael Ringe, Lehrstuhl D fuer Mathematik, RWTH Aachen
-//
-// This program is free software; see the file COPYING for details.
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 #include "meataxe.h"
-#include "check.h"
+#include "testing.h"
 
 #include <stdlib.h>
 #include <stdio.h>
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static void TestMatTensor2(int fl, int dim)
+static int TestMatTensor2(int dim)
 {
    int i;
-
    for (i = 0; i < 10; ++i) {
       int i1, i2, k1, k2;
-      int nor1 = MtxRandomInt(dim);
-      int nor2 = MtxRandomInt(dim);
-      int noc1 = MtxRandomInt(dim);
-      int noc2 = MtxRandomInt(dim);
-      Matrix_t *m1 = RndMat(fl,nor1,noc1);
-      Matrix_t *m2 = RndMat(fl,nor2,noc2);
-      Matrix_t *m3 = MatTensor(m1,m2);
-      FfSetNoc(m3->Noc + m1->Noc + m2->Noc);    /* Avoid errors */
+      int nor1 = mtxRandomInt(dim);
+      int nor2 = mtxRandomInt(dim);
+      int noc1 = mtxRandomInt(dim);
+      int noc2 = mtxRandomInt(dim);
+      Matrix_t *m1 = RndMat(ffOrder,nor1,noc1);
+      Matrix_t *m2 = RndMat(ffOrder,nor2,noc2);
+      Matrix_t *m3 = matTensor(m1,m2);
+      ffSetNoc(m3->Noc + m1->Noc + m2->Noc);
       for (i1 = 0; i1 < nor1; ++i1) {
-         PTR r1 = MatGetPtr(m1,i1);
+         PTR r1 = matGetPtr(m1,i1);
          for (i2 = 0; i2 < nor2; ++i2) {
-            PTR r2 = MatGetPtr(m2,i2);
-            PTR r3 = MatGetPtr(m3,i1 * nor2 + i2);
+            PTR r2 = matGetPtr(m2,i2);
+            PTR r3 = matGetPtr(m3,i1 * nor2 + i2);
             for (k1 = 0; k1 < noc1; ++k1) {
-               FEL f1 = FfExtract(r1,k1);
+               FEL f1 = ffExtract(r1,k1);
                for (k2 = 0; k2 < noc2; ++k2) {
-                  FEL f2 = FfExtract(r2,k2);
-                  FEL f3 = FfExtract(r3,k1 * noc2 + k2);
-                  if (FfMul(f1,f2) != f3) {
-                     TST_FAIL4("Bad value at (%d,%d)x(%d,%d)",i1,k1,i2,k2);
-                  }
+                  FEL f2 = ffExtract(r2,k2);
+                  FEL f3 = ffExtract(r3,k1 * noc2 + k2);
+                  ASSERT_EQ_INT (ffMul(f1,f2), f3);
                }
             }
          }
       }
-      MatFree(m1);
-      MatFree(m2);
-      MatFree(m3);
+      matFree(m1);
+      matFree(m2);
+      matFree(m3);
    }
+   return 0;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static void TestMatTensor1(int fl)
+TstResult Matrix_Tensor(int q)
 {
-   int dim;
-   for (dim = 1; dim < 50; dim += dim / 3 + 1) {
-      TestMatTensor2(fl,dim);
-   }
+    int result = 0;
+    for (int dim = 1; result == 0 && dim < 50; dim += dim / 3 + 1) {
+	result |= TestMatTensor2(dim);
+    }
+    return result;
 }
 
-////////////////////////////////////////////////////////////////////////////////////////////////////
-
-test_F TestMatTensor()
-{
-   while (NextField() > 0) {
-      TestMatTensor1(FfOrder);
-   }
-}
+// vim:fileencoding=utf8:sw=3:ts=8:et:cin

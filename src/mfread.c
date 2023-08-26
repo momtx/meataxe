@@ -1,18 +1,13 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // C MeatAxe - Read rows from a file
-//
-// (C) Copyright 1998-2015 Michael Ringe, Lehrstuhl D fuer Mathematik, RWTH Aachen
-//
-// This program is free software; see the file COPYING for details.
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#include <meataxe.h>
+#include "meataxe.h"
 #include <string.h>
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // Local data
 
-MTX_DEFINE_FILE_INFO
 
 /// @addtogroup mf
 /// @{
@@ -20,42 +15,43 @@ MTX_DEFINE_FILE_INFO
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 /// Read row vectors from a file.
 /// This function reads @a nrows rows from a data file into a buffer.
-/// Unlike FfReadRows(), this function changes the current row size to
+/// Unlike ffReadRows(), this function changes the current row size to
 /// the appropriate value, which is stored in the MtxFile_t object.
 /// @param f Pointer to the file.
 /// @param buf Data buffer.
 /// @param nrows Number of rows to read.
 /// @return Number of rows that were actually read. Any value other than count indicates an error.
 
-int MfReadRows(MtxFile_t *f, PTR buf, int nrows)
+int mfReadRows(MtxFile_t *f, PTR buf, int nrows)
 {
    int i;
    register char *b = (char *) buf;
 
-   if (!MfIsValid(f)) {
+   if (!mfIsValid(f)) {
       return -1;
    }
-   if (FfNoc != f->Noc) {
-      FfSetNoc(f->Noc);
+   if (ffNoc != f->Noc) {
+      ffSetNoc(f->Noc);
    }
 
-   /* Handle special case <FfNoc> = 0
+   /* Handle special case <ffNoc> = 0
       ------------------------------- */
-   if (FfNoc == 0) {
+   if (f->Noc == 0) {
       return nrows;
    }
 
    /* Read rows one by one
       -------------------- */
    for (i = 0; i < nrows; ++i) {
-      if (fread(b,FfTrueRowSize(FfNoc),1,f->File) != 1) { break; }
-      b += FfCurrentRowSize;
+      if (fread(b,ffTrueRowSize(f->Noc),1,f->File) != 1) { break; }
+      b += ffRowSize(f->Noc);
    }
    if (ferror(f->File)) {
-      MTX_ERROR1("%s: Read failed: %S",f->Name);
+      mtxAbort(MTX_HERE,"%s: Read failed: %S",f->Name);
    }
    return i;
 }
 
 
 /// @}
+// vim:fileencoding=utf8:sw=3:ts=8:et:cin

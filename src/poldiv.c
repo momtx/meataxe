@@ -1,18 +1,13 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // C MeatAxe - Polynomial division
-//
-// (C) Copyright 1998-2015 Michael Ringe, Lehrstuhl D fuer Mathematik, RWTH Aachen
-//
-// This program is free software; see the file COPYING for details.
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#include <meataxe.h>
+#include "meataxe.h"
 #include <string.h>
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // Local data
 
-MTX_DEFINE_FILE_INFO
 
 /// @addtogroup poly
 /// @{
@@ -20,7 +15,7 @@ MTX_DEFINE_FILE_INFO
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 /// Polynomial division.
 /// This function performs a polynomial division. Given two polynomials a and
-/// b≠0 over the same field, %PolDivMod() finds two  polynomials q and r such
+/// b≠0 over the same field, %polDivMod() finds two  polynomials q and r such
 /// that a=qb+r, and deg(r)<deg(b).
 ///
 /// The quotient q is returned as the function result. This is a newly
@@ -28,52 +23,51 @@ MTX_DEFINE_FILE_INFO
 /// when it no longer needed.
 ///
 /// The remainder r, is stored in @em a and replaces the original value. If you
-/// need to preserve the value of @em a you must make a copy using PolDup() before
-/// calling %PolDivMod(). @em b is not changed.
-/// @see PolMod()
+/// need to preserve the value of @em a you must make a copy using polDup() before
+/// calling %polDivMod(). @em b is not changed.
+/// @see polMod()
 /// @param a First polynomial (numerator) on call, remainder on return.
 /// @param b Second polynomial (denominator).
 /// @return The quotient or 0 on error.
 
-Poly_t *PolDivMod(Poly_t *a, const Poly_t *b)
+Poly_t *polDivMod(Poly_t *a, const Poly_t *b)
 {
    Poly_t *q;
 
    // check arguments
-   if (!PolIsValid(a) || !PolIsValid(b)) {
-      return NULL;
-   }
+   polValidate(MTX_HERE, a);
+   polValidate(MTX_HERE, b);
    if (a->Field != b->Field) {
-      MTX_ERROR1("%E",MTX_ERR_INCOMPAT);
+      mtxAbort(MTX_HERE,"%s",MTX_ERR_INCOMPAT);
       return NULL;
    }
-   FfSetField(a->Field);
+   ffSetField(a->Field);
    if (b->Degree <= -1) {
-      MTX_ERROR1("%E",MTX_ERR_DIV0);
+      mtxAbort(MTX_HERE,"%s",MTX_ERR_DIV0);
       return NULL;
    }
    if (a->Degree < b->Degree) {
-      q = PolAlloc(a->Field,-1);        // trivial case: Quotient = 0
+      q = polAlloc(a->Field,-1);        // trivial case: Quotient = 0
    } else {
       FEL lead = b->Data[b->Degree];
       int i, k;
 
       if (lead == FF_ZERO) {
-         MTX_ERROR1("%E",MTX_ERR_DIV0);
+         mtxAbort(MTX_HERE,"%s",MTX_ERR_DIV0);
          return NULL;
       }
-      q = PolAlloc(FfOrder,a->Degree - b->Degree);
+      q = polAlloc(ffOrder,a->Degree - b->Degree);
       if (q == NULL) {
-         MTX_ERROR("Cannot allocate result");
+         mtxAbort(MTX_HERE,"Cannot allocate result");
          return NULL;
       }
       for (i = a->Degree; i >= b->Degree; --i) {
-         FEL qq = FfNeg(FfDiv(a->Data[i],lead));
+         FEL qq = ffNeg(ffDiv(a->Data[i],lead));
          for (k = 0; k <= b->Degree; ++k) {
-            a->Data[i - k] = FfAdd(a->Data[i - k],
-                                   FfMul(qq,b->Data[b->Degree - k]));
+            a->Data[i - k] = ffAdd(a->Data[i - k],
+                                   ffMul(qq,b->Data[b->Degree - k]));
          }
-         q->Data[i - b->Degree] = FfNeg(qq);
+         q->Data[i - b->Degree] = ffNeg(qq);
       }
       Pol_Normalize(a);
    }
@@ -84,25 +78,24 @@ Poly_t *PolDivMod(Poly_t *a, const Poly_t *b)
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 /// Polynomial division.
 /// This function replaces @em a with the remainder of the division of @em a by @em b.
-/// @see PolDivMod()
+/// @see polDivMod()
 /// @param a First polynomial (numerator) on call, remainder on return.
 /// @param b Second polynomial (denominator).
-/// @return @em a or 0 on error.
+/// @return @em a or NULL on error.
 
-Poly_t *PolMod(Poly_t *a, const Poly_t *b)
+Poly_t *polMod(Poly_t *a, const Poly_t *b)
 {
    // check arguments
-   if (!PolIsValid(a) || !PolIsValid(b)) {
-      return NULL;
-   }
+   polValidate(MTX_HERE,a);
+   polValidate(MTX_HERE,b);
    if (a->Field != b->Field) {
-      MTX_ERROR1("%E",MTX_ERR_INCOMPAT);
+      mtxAbort(MTX_HERE,"%s",MTX_ERR_INCOMPAT);
       return NULL;
    }
 
-   FfSetField(a->Field);
+   ffSetField(a->Field);
    if (b->Degree <= -1) {
-      MTX_ERROR1("%E",MTX_ERR_DIV0);
+      mtxAbort(MTX_HERE,"%s",MTX_ERR_DIV0);
       return NULL;
    }
    if (a->Degree >= b->Degree) {
@@ -110,14 +103,15 @@ Poly_t *PolMod(Poly_t *a, const Poly_t *b)
       int i, k;
 
       if (lead == FF_ZERO) {
-         MTX_ERROR1("%E",MTX_ERR_DIV0);
+         mtxAbort(MTX_HERE,"%s",MTX_ERR_DIV0);
          return NULL;
       }
       for (i = a->Degree; i >= b->Degree; --i) {
-         FEL qq = FfNeg(FfDiv(a->Data[i],lead));
+         FEL qq = ffNeg(ffDiv(a->Data[i],lead));
          for (k = 0; k <= b->Degree; ++k) {
-            a->Data[i - k] = FfAdd(a->Data[i - k], FfMul(qq,b->Data[b->Degree - k]));
+            a->Data[i - k] = ffAdd(a->Data[i - k], ffMul(qq,b->Data[b->Degree - k]));
          }
+	 MTX_ASSERT(a->Data[i] == FF_ZERO, NULL);
       }
       Pol_Normalize(a);
    }
@@ -126,3 +120,4 @@ Poly_t *PolMod(Poly_t *a, const Poly_t *b)
 
 
 /// @}
+// vim:fileencoding=utf8:sw=3:ts=8:et:cin

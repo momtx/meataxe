@@ -1,12 +1,8 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // C MeatAxe - Print a matrix or permutaion.
-//
-// (C) Copyright 1998-2015 Michael Ringe, Lehrstuhl D fuer Mathematik, RWTH Aachen
-//
-// This program is free software; see the file COPYING for details.
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#include <meataxe.h>
+#include "meataxe.h"
 #include <ctype.h>
 #include <stdlib.h>
 #include <string.h>
@@ -16,7 +12,6 @@
    Global data
    ------------------------------------------------------------------ */
 
-MTX_DEFINE_FILE_INFO
 
 static long HdrPos;
 static long hdr[3];
@@ -30,13 +25,12 @@ static int Summary = 0;		/* -s (summary) */
 
 static MtxApplicationInfo_t AppInfo = { 
 "zpr", "Print Permutations Or Matrices", 
-"\n"
 "SYNTAX\n"
 "    zpr [-G] [-s] <Binfile> [<Textfile>]\n"
 "\n"
 "OPTIONS\n"
 "    -G   GAP output\n"
-"    -s   Print summary only\n\n"
+"    -s   Print summary only\n"
 "\n"
 "FILES\n"
 "    <Binfile>   i  A matrix or permutation in binary format\n"
@@ -69,10 +63,9 @@ static void PrString(char *c)
 
 
 static void PrLong(long l)
-
 {
-    char tmp[20];
-    sprintf(tmp,"%ld",l);
+    char tmp[50];
+    snprintf(tmp, sizeof(tmp), "%ld",l);
     PrString(tmp);
 }
 
@@ -82,16 +75,15 @@ static void PrLong(long l)
    ------------------------------------------------------------------ */
 
 static void prmatrix()
-
 {
     PTR m1;
     FEL f1;
     long loop1, j1;
     int md, mx, iv;
 
-    FfSetField(hdr[0]);
-    FfSetNoc(hdr[2]);
-    m1 = FfAlloc(1);
+    ffSetField(hdr[0]);
+    ffSetNoc(hdr[2]);
+    m1 = ffAlloc(1, hdr[2]);
 
     if (hdr[0] < 10) {md = 1; mx = 80;}
     else if (hdr[0] < 100) {md = 3; mx = 25;}
@@ -102,22 +94,20 @@ static void prmatrix()
     fprintf(dest,"matrix field=%ld rows=%ld cols=%ld\n",hdr[0],hdr[1],hdr[2]);
     for (loop1 = 1; loop1 <= hdr[1]; ++loop1)
     {	
-	if (FfReadRows(inpfile,m1,1) != 1)
-	{
-	    MTX_ERROR1("Cannot read %s",inpname);
-	    return;
-	}
+       MTX_ASSERT(ffNoc == hdr[2],);
+	if (ffReadRows(inpfile, m1, 1, hdr[2]) != 1)
+	    mtxAbort(MTX_HERE,"Cannot read %s",inpname);
 	iv = 1;
 	for (j1 = 0; j1 < hdr[2]; ++j1)
 	{
-	    f1 = FfExtract(m1,j1);
+	    f1 = ffExtract(m1,j1);
 	    switch (md)
-	    {	case 1: fprintf(dest,"%1d",FfToInt(f1)); break;
-		case 2: fprintf(dest,"%2d",FfToInt(f1)); break;
-		case 3: fprintf(dest,"%3d",FfToInt(f1)); break;
-		case 4: fprintf(dest,"%4d",FfToInt(f1)); break;
-		case 5: fprintf(dest,"%5d",FfToInt(f1)); break;
-		case 6: fprintf(dest,"%6d",FfToInt(f1)); break;
+	    {	case 1: fprintf(dest,"%1d",ffToInt(f1)); break;
+		case 2: fprintf(dest,"%2d",ffToInt(f1)); break;
+		case 3: fprintf(dest,"%3d",ffToInt(f1)); break;
+		case 4: fprintf(dest,"%4d",ffToInt(f1)); break;
+		case 5: fprintf(dest,"%5d",ffToInt(f1)); break;
+		case 6: fprintf(dest,"%6d",ffToInt(f1)); break;
 	    }
 	    if (iv++ >= mx)
 	    {	fprintf(dest,"\n");
@@ -135,76 +125,76 @@ static void prmatrix()
    ------------------------------------------------------------------ */
 
 static void prgapmat()
-
 {   PTR m1;
-    FEL f1;
-    FEL gen;
-    long loop1, j1;
-    int cnt, isprimefield;
+   FEL f1;
+   FEL gen;
+   long loop1, j1;
+   int cnt, isprimefield;
 
 
-    FfSetField(hdr[0]);
-    FfSetNoc(hdr[2]);
-    gen = FfGen;		/* Generator */
-    isprimefield = (FfChar == FfOrder);
+   ffSetField(hdr[0]);
+   ffSetNoc(hdr[2]);
+   gen = ffGen;		/* Generator */
+   isprimefield = (ffChar == ffOrder);
 
-    m1 = FfAlloc((long)1);
-    PrString("MeatAxe.Matrix := [\n");
-    for (loop1 = 1; loop1 <= hdr[1]; ++loop1)
-    {	
-	if (FfReadRows(inpfile,m1,1) != 1) 
-	    MTX_ERROR1("Cannot read %s",inpname);
-	cnt = 0;
-	fprintf(dest,"[");
-	for (j1 = 0; j1 < hdr[2]; ++j1)
-	{   if (cnt > 75)
-	    {	fprintf(dest,"\n ");
-		cnt = 0;
-	    }
-	    f1 = FfExtract(m1,j1);
-	    if (isprimefield)
-	    {   FEL f2=FF_ZERO;
-	   	long k=0;
-	    	while (f2 != f1)
-	    	{   f2 = FfAdd(f2,gen);
-		    ++k;
-		}
-		fprintf(dest,"%ld",k);
-		cnt += k>9999?5:k>999?4:k>99?3:k>9?2:1;
-	    }
-	    else
-	    {   if (f1 == FF_ZERO)
-	    	{   fprintf(dest,"0*Z(%ld)",hdr[0]);
-		    cnt += 5;
-		    cnt += hdr[0]>9999?5:hdr[0]>999?4:hdr[0]>99?3:hdr[0]>9?2:1;
-		}
-		else
-		{   FEL f2 = gen;
-		    long k = 1;
-		    while (f2 != f1)
-		    {   f2 = FfMul(f2,gen);
-			++k;
-		    }
-		    fprintf(dest,"Z(%ld)^%ld",hdr[0],k);
-		    cnt += 4;
-		    cnt += hdr[0]>9999?5:hdr[0]>999?4:hdr[0]>99?3:hdr[0]>9?2:1;
-		    cnt += k>9999?5:k>999?4:k>99?3:k>9?2:1;
-		}
-	    }
-	    if (j1 < hdr[2]-1)
-	    {	fprintf(dest,",");
-		++cnt;
-	    }
-	}
-	fprintf(dest,"]");
-	if (loop1 < hdr[1])
-	    fprintf(dest,",");
-	fprintf(dest,"\n");
-    }
-    fprintf(dest,"]");
-    if (isprimefield)
-	fprintf(dest,"*Z(%ld)",hdr[0]);
-    fprintf(dest,";\n");
+   m1 = ffAlloc(1, hdr[2]);
+   PrString("MeatAxe.Matrix := [\n");
+   for (loop1 = 1; loop1 <= hdr[1]; ++loop1)
+   {	
+      MTX_ASSERT(ffNoc == hdr[2],);
+      if (ffReadRows(inpfile,m1,1, hdr[2]) != 1) 
+         mtxAbort(MTX_HERE,"Cannot read %s",inpname);
+      cnt = 0;
+      fprintf(dest,"[");
+      for (j1 = 0; j1 < hdr[2]; ++j1)
+      {   if (cnt > 75)
+         {	fprintf(dest,"\n ");
+            cnt = 0;
+         }
+         f1 = ffExtract(m1,j1);
+         if (isprimefield)
+         {   FEL f2=FF_ZERO;
+            long k=0;
+            while (f2 != f1)
+            {   f2 = ffAdd(f2,gen);
+               ++k;
+            }
+            fprintf(dest,"%ld",k);
+            cnt += k>9999?5:k>999?4:k>99?3:k>9?2:1;
+         }
+         else
+         {   if (f1 == FF_ZERO)
+            {   fprintf(dest,"0*Z(%ld)",hdr[0]);
+               cnt += 5;
+               cnt += hdr[0]>9999?5:hdr[0]>999?4:hdr[0]>99?3:hdr[0]>9?2:1;
+            }
+            else
+            {   FEL f2 = gen;
+               long k = 1;
+               while (f2 != f1)
+               {   f2 = ffMul(f2,gen);
+                  ++k;
+               }
+               fprintf(dest,"Z(%ld)^%ld",hdr[0],k);
+               cnt += 4;
+               cnt += hdr[0]>9999?5:hdr[0]>999?4:hdr[0]>99?3:hdr[0]>9?2:1;
+               cnt += k>9999?5:k>999?4:k>99?3:k>9?2:1;
+            }
+         }
+         if (j1 < hdr[2]-1)
+         {	fprintf(dest,",");
+            ++cnt;
+         }
+      }
+      fprintf(dest,"]");
+      if (loop1 < hdr[1])
+         fprintf(dest,",");
+      fprintf(dest,"\n");
+   }
+   fprintf(dest,"]");
+   if (isprimefield)
+      fprintf(dest,"*Z(%ld)",hdr[0]);
+   fprintf(dest,";\n");
 }
 
 
@@ -224,8 +214,8 @@ static void prgapimat()
     PrString("MeatAxe.Matrix := [\n");
     for (loop1 = 1; loop1 <= hdr[1]; ++loop1)
     {	
-	if (SysReadLong(inpfile,row,hdr[2]) != hdr[2]) 
-	    MTX_ERROR1("Cannot read %s",inpname);
+	if (sysReadLong32(inpfile,row,hdr[2]) != hdr[2]) 
+	    mtxAbort(MTX_HERE,"Cannot read %s",inpname);
 	cnt = 0;
 	fprintf(dest,"[");
 	for (j1 = 0; j1 < hdr[2]; ++j1)
@@ -256,7 +246,6 @@ static void prgapimat()
    ------------------------------------------------------------------ */
 
 static void prgapperm()
-
 {
     long i, pos;
     long *perm;
@@ -265,15 +254,15 @@ static void prgapperm()
       ------------------------------------ */
     perm = NALLOC(long,hdr[1]);
     if (perm == NULL) 
-	MTX_ERROR("Cannot allocate work space");
+	mtxAbort(MTX_HERE,"Cannot allocate work space");
 
     PrString("MeatAxe.Perms := [\n");
     for (pos = 1; pos <= hdr[2]; ++pos)
     {
     	/* Read the next permutation
 	   ------------------------- */
-	if (SysReadLong(inpfile,perm,hdr[1]) != (int) hdr[1])
-	    MTX_ERROR1("Cannot read %s",inpname);
+	if (sysReadLong32(inpfile,perm,hdr[1]) != (int) hdr[1])
+	    mtxAbort(MTX_HERE,"Cannot read %s",inpname);
 
 	/* Print it
 	   -------- */
@@ -307,7 +296,7 @@ static void prgap()
     else if (hdr[0] >= 2)
 	prgapmat();
     else
-	MTX_ERROR1("Cannot print type %d in GAP format",(int)hdr[0]);
+	mtxAbort(MTX_HERE,"Cannot print type %d in GAP format",(int)hdr[0]);
 }
 
 
@@ -322,15 +311,15 @@ static void prpol()
     int i;
     Poly_t *p;
     
-    SysFseek(inpfile,HdrPos);
-    if ((p = PolRead(inpfile)) == NULL)
-	MTX_ERROR1("Cannot read %s",inpname);
+    sysFseek(inpfile,HdrPos);
+    if ((p = polRead(inpfile)) == NULL)
+	mtxAbort(MTX_HERE,"Cannot read %s",inpname);
     
 
     fprintf(dest,"polynomial field=%ld degree=%ld\n",hdr[1],hdr[2]);
     for (i = 0; i <= p->Degree; ++i)
     {
-	PrLong(FfToInt(p->Data[i]));
+	PrLong(ffToInt(p->Data[i]));
 	PrString(" ");
     }
     PrString("\n");
@@ -347,10 +336,10 @@ static int prperm()
     Perm_t *perm;
     long f1, i;
 
-    SysFseekRelative(inpfile,-3 * 4);
-    if ((perm = PermRead(inpfile)) == NULL)
+    sysFseekRelative(inpfile,-3 * 4);
+    if ((perm = permRead(inpfile)) == NULL)
     {
-	MTX_ERROR("%s: Cannot read permutation\n");
+	mtxAbort(MTX_HERE,"%s: Cannot read permutation\n");
 	return -1;
     }
     
@@ -377,14 +366,14 @@ static void primat()
 
     row = NALLOC(long,hdr[2]);
     if (row == NULL) 
-	MTX_ERROR("Cannot allocate work space");
+	mtxAbort(MTX_HERE,"Cannot allocate work space");
 
     fprintf(dest,"integer-matrix rows=%ld cols=%ld\n",hdr[1],
 	hdr[2]);
     for (i = 0; i < hdr[1]; ++i)
     {
-	if (SysReadLong(inpfile,row,hdr[2]) != (int) hdr[2])
-	    MTX_ERROR1("Cannot read %s: %E",inpname);
+	if (sysReadLong32(inpfile,row,hdr[2]) != (int) hdr[2])
+	    mtxAbort(MTX_HERE,"Cannot read %s: %s",inpname);
     	for (k = 0; k < hdr[2]; ++k)
     	{
     	    PrLong(row[k]);
@@ -412,7 +401,7 @@ static void prmtx()
     else if (hdr[0] == -8)
 	primat();
     else
-	MTX_ERROR1("Cannot print type %d in Mtx format",(int)hdr[0]);
+	mtxAbort(MTX_HERE,"Cannot print type %d in Mtx format",(int)hdr[0]);
 }
 
 
@@ -479,31 +468,31 @@ static void PrintSummary()
     if (hdr[0] == -1)
     {
 	PrintPermutationSummary();
-	SysFseek(inpfile,ftell(inpfile) + hdr[1]*hdr[2]*4);
+	sysFseek(inpfile,ftell(inpfile) + hdr[1]*hdr[2]*4);
     }
     else if (hdr[0] >= 2)
     {
 	PTR x;
 	long l;
 	PrintMatrixSummary();
-	FfSetField(hdr[0]);
-	FfSetNoc(hdr[2]);
-	x = FfAlloc(1);
+	ffSetField(hdr[0]);
+	ffSetNoc(hdr[2]);
+	x = ffAlloc(1, hdr[2]);
 	for (l = hdr[1]; l > 0; --l)
-	    FfReadRows(inpfile,x,1);
+	    ffReadRows(inpfile,x,1,hdr[2]);
 	free(x);
     }
     else if (hdr[0] == -2)
     {
 	PrintPolySummary();
-	FfSetField(hdr[1]);
-	FfSetNoc(hdr[2]+1);
-	SysFseek(inpfile,ftell(inpfile) + FfCurrentRowSize);
+	ffSetField(hdr[1]);
+	ffSetNoc(hdr[2]+1);
+	sysFseek(inpfile,ftell(inpfile) + ffRowSize(hdr[2]+1));
     }
     else if (hdr[0] == -8)
     {
 	PrintImatSummary();
-	SysFseek(inpfile,ftell(inpfile)+hdr[1]*hdr[2]*4);
+	sysFseek(inpfile,ftell(inpfile)+hdr[1]*hdr[2]*4);
     }
     else
 	printf("Unknown file format (%ld,%ld,%ld).\n",hdr[0],hdr[1],hdr[2]);
@@ -523,12 +512,12 @@ static int ReadHeader(void)
 {
     HdrPos = ftell(inpfile);
     if (feof(inpfile)) return 0;
-    if (SysReadLong(inpfile,hdr,3) != 3) 
+    if (sysReadLong32(inpfile,hdr,3) != 3) 
 	return 0;
     /* Check the header */
     if (hdr[0] > 65536 || hdr[0] < -20 || hdr[1] < 0 || hdr[2] < 0)
     {
-	MTX_ERROR5("%s: %E (%d %d %d)\n",inpname,MTX_ERR_FILEFMT,
+	mtxAbort(MTX_HERE, "%s: %s (%d %d %d)\n",inpname,MTX_ERR_FILEFMT,
 	    (int)hdr[0],(int)hdr[1],(int)hdr[2]);
     }
     return 1;
@@ -536,29 +525,29 @@ static int ReadHeader(void)
 
 
 
-static int Init(int argc, const char **argv)
+static int Init(int argc, char **argv)
 {
-    if ((App = AppAlloc(&AppInfo,argc,argv)) == NULL)
+    if ((App = appAlloc(&AppInfo,argc,argv)) == NULL)
 	return -1;
 
     /* Process command line options
        ---------------------------- */
-    Gap = AppGetOption(App,"-G --gap");
-    Summary = AppGetOption(App,"-s --summary");
+    Gap = appGetOption(App,"-G --gap");
+    Summary = appGetOption(App,"-s --summary");
     if (Gap)
 	MtxMessageLevel = -100;	/* Suppress messages in GAP mode */
 
     /* Process arguments, open files
        ----------------------------- */
-    if (AppGetArguments(App,1,2) < 0)
+    if (appGetArguments(App,1,2) < 0)
 	return -1;
     inpname = App->ArgV[0];
-    inpfile = SysFopen(inpname,FM_READ);
+    inpfile = sysFopen(inpname,"rb");
     if (inpfile == NULL)
 	return -1;
     if (App->ArgC >= 2)
     {  
-	dest = SysFopen(App->ArgV[1],FM_CREATE|FM_TEXT);
+	dest = sysFopen(App->ArgV[1],"w");
 	if (dest == NULL)
 	    return -1;
     }
@@ -572,12 +561,12 @@ static int Init(int argc, const char **argv)
    main()
    ------------------------------------------------------------------ */
 
-int main(int argc, const char **argv)
+int main(int argc, char **argv)
 
 {
     if (Init(argc,argv) != 0)
     {
-	MTX_ERROR("Initialization failed");
+	mtxAbort(MTX_HERE,"Initialization failed");
 	return 1;
     }
 
@@ -637,3 +626,4 @@ A second argument, if present, is taken as the output file name.
 To find out the contents of a MeatAxe file, use the -s option. To generate
 output readble by GAP, use -G. Both options can be combined.
 */
+// vim:fileencoding=utf8:sw=3:ts=8:et:cin

@@ -1,17 +1,12 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // C MeatAxe - Power of a permutation
-//
-// (C) Copyright 1998-2015 Michael Ringe, Lehrstuhl D fuer Mathematik, RWTH Aachen
-//
-// This program is free software; see the file COPYING for details.
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#include <meataxe.h>
+#include "meataxe.h"
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // Local data
 
-MTX_DEFINE_FILE_INFO
 
 /// @addtogroup perm
 /// @{
@@ -26,7 +21,7 @@ MTX_DEFINE_FILE_INFO
 /// @param n Exponent. Must be greather than or equal to 0.
 /// @return @em n-th power of @em p or 0 on error.
 
-Perm_t *PermPower(const Perm_t *p, int n)
+Perm_t *permPower(const Perm_t *p, int n)
 {
    Perm_t *q;
    long *xp;
@@ -34,16 +29,14 @@ Perm_t *PermPower(const Perm_t *p, int n)
    long i, k, l;
 
    // check arguments
-   if (!PermIsValid(p)) {
-      return NULL;
-   }
+   permValidate(MTX_HERE, p);
    if (n < 0) {
-      MTX_ERROR1("Invalid exponent %d < 0",n);
+      mtxAbort(MTX_HERE,"Invalid exponent %d < 0",n);
       return NULL;
    }
 
    // allocate a new permutation for the result
-   q = PermAlloc(p->Degree);
+   q = permAlloc(p->Degree);
    if (q == NULL) {
       return NULL;
    }
@@ -62,3 +55,4 @@ Perm_t *PermPower(const Perm_t *p, int n)
 
 
 /// @}
+// vim:fileencoding=utf8:sw=3:ts=8:et:cin

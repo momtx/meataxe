@@ -1,19 +1,14 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // C MeatAxe - Seed vector generator
-//
-// (C) Copyright 1998-2014 Michael Ringe, Lehrstuhl D fuer Mathematik, RWTH Aachen
-//
-// This program is free software; see the file COPYING for details.
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#include <meataxe.h>
+#include "meataxe.h"
 #include <limits.h>
 #include <stdlib.h>
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 /// Local data
 
-MTX_DEFINE_FILE_INFO
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 /// @defgroup pseed The seed vector generator
@@ -24,7 +19,7 @@ MTX_DEFINE_FILE_INFO
 ///
 /// Once a basis b<sub>1</sub>,...b<sub>n</sub> for the seed space is fixed, each vector
 /// v=λ<sub>1</sub>b<sub>1</sub>+...+λ<sub>n</sub>b<sub>n</sub> can be identified by a natural
-/// number by mapping coefficients to natural numbers in the usual way (see FfToInt() for details)
+/// number by mapping coefficients to natural numbers in the usual way (see ffToInt() for details)
 /// and calculating λ<sub>1</sub>q<sup>0</sup>+...λ<sub>n</sub>q<sup>n-1</sup>.
 /// Seed vectors are those vectors where the leading coefficient is 1.
 
@@ -41,7 +36,7 @@ MTX_DEFINE_FILE_INFO
 /// seed space is exhausted. Here is s short example:
 /// @code
 /// long v;
-/// PTR vec = FfAlloc(1);
+/// PTR vec = ffAlloc(1);
 /// v = MakeSeedVector(basis,0,ptr);
 /// while (v > 0)
 /// {
@@ -60,30 +55,28 @@ long MakeSeedVector(const Matrix_t *basis, long lastno, PTR vec)
    long nextno, x, i;
    int j;
 
-   if (!MatIsValid(basis)) {
-      return -1;
-   }
+   matValidate(MTX_HERE, basis);
    if ((vec == NULL) || (lastno < 0)) {
-      MTX_ERROR1("%E",MTX_ERR_BADARG);
+      mtxAbort(MTX_HERE,"%s",MTX_ERR_BADARG);
       return -1;
    }
 
    // Find the next seed vector number
    nextno = lastno + 1;
-   for (x = 1; (i = nextno / x) >= FfOrder; x *= FfOrder) {
+   for (x = 1; (i = nextno / x) >= ffOrder; x *= ffOrder) {
    }
    if (i != 1) {
-      nextno = x * FfOrder;
+      nextno = x * ffOrder;
    }
 
    // Make the seed vector
-   FfSetField(basis->Field);
-   FfSetNoc(basis->Noc);
-   FfMulRow(vec,FF_ZERO);
-   for (j = 0, x = nextno; x != 0 && j < basis->Nor; ++j, x /= FfOrder) {
-      FEL co = FfFromInt(x % FfOrder);
+   ffSetField(basis->Field);
+   ffSetNoc(basis->Noc);
+   ffMulRow(vec,FF_ZERO);
+   for (j = 0, x = nextno; x != 0 && j < basis->Nor; ++j, x /= ffOrder) {
+      FEL co = ffFromInt(x % ffOrder);
       if (co != FF_ZERO) {
-         FfAddMulRow(vec,MatGetPtr(basis,j),co);
+         ffAddMulRow(vec,matGetPtr(basis,j),co);
       }
    }
 
@@ -94,3 +87,4 @@ long MakeSeedVector(const Matrix_t *basis, long lastno, PTR vec)
 
    return nextno;
 }
+// vim:fileencoding=utf8:sw=3:ts=8:et:cin

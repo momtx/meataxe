@@ -1,17 +1,12 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // C MeatAxe - Read a polynomial from a file
-//
-// (C) Copyright 1998-2015 Michael Ringe, Lehrstuhl D fuer Mathematik, RWTH Aachen
-//
-// This program is free software; see the file COPYING for details.
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#include <meataxe.h>
+#include "meataxe.h"
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // Local data
 
-MTX_DEFINE_FILE_INFO
 
 static long tmpfl = 0;
 static long tmpdeg = 0;
@@ -22,11 +17,13 @@ static PTR tmpvec = NULL;
 
 static void mktmp(long fl, long deg)
 {
-   FfSetField(fl);
-   if (deg > 0) { FfSetNoc(deg + 1); }
-   if ((tmpfl != fl) || (tmpdeg < deg)) {
-      if (tmpvec != NULL) { SysFree(tmpvec); }
-      tmpvec = FfAlloc(1);
+   ffSetField(fl);
+   if (deg > 0) {
+      ffSetNoc(deg + 1);
+   }
+   if (tmpfl != fl || tmpdeg < deg) {
+      if (tmpvec != NULL) { sysFree(tmpvec); }
+      tmpvec = ffAlloc(1, deg + 1);
       tmpdeg = deg;
       tmpfl = fl;
    }
@@ -40,38 +37,35 @@ static void mktmp(long fl, long deg)
 /// Read a polynomial from a file.
 /// This function reads a polynomial from a file. If successful, the return
 /// value is a pointer to a new Poly_t object. The caller is responsible
-/// for deleting this polynomial with PolFree() when it is no longer needed.
-/// @see PolLoad()
+/// for deleting this polynomial with polFree() when it is no longer needed.
+/// @see polLoad()
 /// @param f File to read from.
 /// @return Pointer to the polynomial, or 0 on error.
 
-Poly_t *PolRead(FILE *f)
+Poly_t *polRead(FILE *f)
 {
    Poly_t *p;
    long hdr[3];
 
-   if (SysReadLong(f,hdr,3) != 3) {
-      MTX_ERROR("Cannot read header");
+   if (sysReadLong32(f,hdr,3) != 3) {
+      mtxAbort(MTX_HERE,"Cannot read header");
       return NULL;
    }
    if (hdr[0] != -2) {
-      MTX_ERROR1("No polynomial (type=%d)",(int)hdr[0]);
+      mtxAbort(MTX_HERE,"No polynomial (type=%d)",(int)hdr[0]);
       return NULL;
    }
    mktmp(hdr[1],hdr[2]);
-   if ((p = PolAlloc(hdr[1],hdr[2])) == NULL) {
-      MTX_ERROR("Cannot create polynomial");
-      return NULL;
-   }
+   p = polAlloc(hdr[1],hdr[2]);
    if (p->Degree > 0) {
       int i;
-      if (FfReadRows(f,tmpvec,1) != 1) {
-         PolFree(p);
-         MTX_ERROR("Cannot read data");
+      if (ffReadRows(f,tmpvec,1, p->Degree + 1) != 1) {
+         polFree(p);
+         mtxAbort(MTX_HERE,"Cannot read data");
          return NULL;
       }
       for (i = 0; i <= p->Degree; ++i) {
-         p->Data[i] = FfExtract(tmpvec,i);
+         p->Data[i] = ffExtract(tmpvec,i);
       }
    }
    return p;
@@ -87,23 +81,23 @@ Poly_t *PolRead(FILE *f)
 /// If a polynomial was successfully read, the function returns a pointer to
 /// a newly created Poly_t object. The caller is responsible for deleting
 /// this object as soon as it no longer needed.
-/// @see PolRead()
+/// @see polRead()
 /// @param fn File name.
 /// @return Pointer to the polynomial read from the file, or 0 on error.
 
-Poly_t *PolLoad(const char *fn)
+Poly_t *polLoad(const char *fn)
 {
    FILE *f;
    Poly_t *p;
 
-   if ((f = SysFopen(fn,FM_READ)) == NULL) {
-      MTX_ERROR1("Cannot open %s",fn);
+   if ((f = sysFopen(fn,"rb")) == NULL) {
+      mtxAbort(MTX_HERE,"Cannot open %s",fn);
       return NULL;
    }
-   p = PolRead(f);
+   p = polRead(f);
    fclose(f);
    if (p == NULL) {
-      MTX_ERROR1("Cannot read polynomial from %s",fn);
+      mtxAbort(MTX_HERE,"Cannot read polynomial from %s",fn);
       return NULL;
    }
    return p;
@@ -111,3 +105,4 @@ Poly_t *PolLoad(const char *fn)
 
 
 /// @}
+// vim:fileencoding=utf8:sw=3:ts=8:et:cin

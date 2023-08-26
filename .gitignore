@@ -1,13 +1,16 @@
 *.unc-backup.md5~
 *.unc-backup~
 .*.swp
+/.vimrc
 /Makefile.conf
 /bin/
 /doc/
 /include
 /lib
+/notes.txt
 /push
 /push_doc
 /ssh_
 /tags
 /tmp/
+p*.zzz

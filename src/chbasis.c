@@ -1,15 +1,10 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // C MeatAxe - Change basis.
-//
-// (C) Copyright 1998-2015 Michael Ringe, Lehrstuhl D fuer Mathematik, RWTH Aachen
-//
-// This program is free software; see the file COPYING for details.
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
-#include <meataxe.h>
+#include "meataxe.h"
 
-MTX_DEFINE_FILE_INFO
 
 
 /// @addtogroup mrep 
@@ -24,53 +19,50 @@ MTX_DEFINE_FILE_INFO
 ///    the rows of the matrix are the new basis vectors
 /// @return 0 on success, -1 on error.
 
-int MrChangeBasis(MatRep_t *rep, const Matrix_t *trans)
+int mrChangeBasis(MatRep_t *rep, const Matrix_t *trans)
 {
     Matrix_t *bi;
     int i;
 
     /* Check arguments
        --------------- */
-    if (!MrIsValid(rep))
+    if (!mrIsValid(rep))
     {
-	MTX_ERROR1("rep: %E",MTX_ERR_BADARG);
+	mtxAbort(MTX_HERE,"rep: %s",MTX_ERR_BADARG);
 	return -1;
     }
-    if (!MatIsValid(trans))
-    {
-	MTX_ERROR1("trans: %E",MTX_ERR_BADARG);
-	return -1;
-    }
+    matValidate(MTX_HERE, trans);
+
     if (rep->NGen <= 0)
 	return 0;
     if (trans->Field != rep->Gen[0]->Field || 
 	trans->Nor != rep->Gen[0]->Nor ||
 	trans->Noc != rep->Gen[0]->Noc)
     {
-	MTX_ERROR1("%E",MTX_ERR_INCOMPAT);
+	mtxAbort(MTX_HERE,"%s",MTX_ERR_INCOMPAT);
 	return -1;
     }
 
 
     /* Basis transformation
        -------------------- */
-    if ((bi = MatInverse(trans)) == NULL) 
+    if ((bi = matInverse(trans)) == NULL) 
     {
-	MTX_ERROR("Basis transformation is singular");
+	mtxAbort(MTX_HERE,"Basis transformation is singular");
 	return -1;
     }
     for (i = 0; i < rep->NGen; ++i)
     {
-	Matrix_t *tmp = MatDup(trans);
+	Matrix_t *tmp = matDup(trans);
 	if (tmp == NULL) {
 	    return -1;
 	}
-	MatMul(tmp,rep->Gen[i]);
-	MatMul(tmp,bi);
-        MatFree(rep->Gen[i]);
+	matMul(tmp,rep->Gen[i]);
+	matMul(tmp,bi);
+        matFree(rep->Gen[i]);
 	rep->Gen[i] = tmp;
     }
-    MatFree(bi);
+    matFree(bi);
     return 0;
 }
 
@@ -78,31 +70,30 @@ int MrChangeBasis(MatRep_t *rep, const Matrix_t *trans)
 
 int ChangeBasisOLD(const Matrix_t *M, int ngen, const Matrix_t *gen[],
 	Matrix_t *newgen[])
-
 {
     Matrix_t *bi, *tmp;
     int i;
 
-    MTX_VERIFY(ngen >= 0);
-    if (!MatIsValid(M))
-	return -1;
-    if ((bi = MatInverse(M)) == NULL) 
+    MTX_ASSERT(ngen >= 0, -1);
+    matValidate(MTX_HERE, M);
+    if ((bi = matInverse(M)) == NULL) 
     {
-	MTX_ERROR("Matrix is singular");
+	mtxAbort(MTX_HERE,"Matrix is singular");
 	return -1;
     }
     for (i = 0; i < ngen; ++i)
     {
-	tmp = MatDup(M);
-	MatMul(tmp,gen[i]);
-	MatMul(tmp,bi);
+	tmp = matDup(M);
+	matMul(tmp,gen[i]);
+	matMul(tmp,bi);
 	if ((const Matrix_t **)newgen == gen)
-	    MatFree(newgen[i]);
+	    matFree(newgen[i]);
 	newgen[i] = tmp;
     }
-    MatFree(bi);
+    matFree(bi);
     return 0;
 }
 
 /// @}
 
+// vim:fileencoding=utf8:sw=3:ts=8:et:cin

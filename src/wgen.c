@@ -1,18 +1,13 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // C MeatAxe - Word generator.
-//
-// (C) Copyright 1998-2015 Michael Ringe, Lehrstuhl D fuer Mathematik, RWTH Aachen
-//
-// This program is free software; see the file COPYING for details.
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#include <meataxe.h>
+#include "meataxe.h"
 #include <string.h>
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 //   Local data
 
-MTX_DEFINE_FILE_INFO
 
 /// @defgroup wgen The Word Generator
 /// @{
@@ -25,11 +20,11 @@ MTX_DEFINE_FILE_INFO
 /// @code
 /// MatRep_t *rep;
 /// ...
-/// WgData_t *wg = WgAlloc(rep);
-/// Matrix_t *word = WgMakeWord(wg,1833);
-/// long nul = MatNullity__(word);
+/// WgData_t *wg = wgAlloc(rep);
+/// Matrix_t *word = wgMakeWord(wg,1833);
+/// long nul = matNullity__(word);
 /// printf("Word 1833 has nullity %ld\n",nul);
-/// WgFree(wg);
+/// wgFree(wg);
 /// @endcode
 ///
 /// The generator produces words in blocks of 238, i.e.,
@@ -221,17 +216,17 @@ static void GenBasis(WgData_t *b, int n2, int pos)
    Matrix_t *buf = NULL;
 
    if (b->Basis[pos] != NULL) {
-      MatFree(b->Basis[pos]);
+      matFree(b->Basis[pos]);
    }
    for (x = B(n2,pos,b->Rep->NGen); *x >= 0; ++x) {
-      MTX_ASSERT(*x >= 0 && *x < b->Rep->NGen);
+      MTX_ASSERT(*x >= 0 && *x < b->Rep->NGen, );
       if (buf == NULL) {
-         buf = MatDup(b->Rep->Gen[*x]);
+         buf = matDup(b->Rep->Gen[*x]);
       } else {
-         MatMul(buf,b->Rep->Gen[*x]);
+         matMul(buf,b->Rep->Gen[*x]);
       }
    }
-   MTX_VERIFY(buf != NULL);
+   MTX_ASSERT(buf != NULL,);
    b->Basis[pos] = buf;
    b->N2[pos] = n2;
 }
@@ -247,14 +242,14 @@ static void GenBasis(WgData_t *b, int n2, int pos)
 /// @param n Word number.
 /// @return Symbolic name of the word.
 
-const char *WgSymbolicName(WgData_t *b, long n)
+const char *wgSymbolicName(WgData_t *b, long n)
 {
    static char name[8 * (MAXLEN + 1) + 1];
    char *c = name;
 
-   MTX_VERIFY(n > 0);
+   MTX_ASSERT(n > 0, NULL);
 
-   WgDescribeWord(b,n);
+   wgDescribeWord(b,n);
    int *x;
    for (x = b->Description; *x != -1; ) {
       if (x != b->Description) { *c++ = '+'; }
@@ -282,8 +277,8 @@ static void AppendDescription(WgData_t *b, int *pos, int x)
       capacity += 32;
       const size_t size = capacity * sizeof(int) + 1;
       b->Description = b->Description == 0 ?
-                       (int*) SysMalloc(size) + 1 :
-                       (int*) SysRealloc(b->Description - 1, size) + 1;
+                       (int*) sysMalloc(size) + 1 :
+                       (int*) sysRealloc(b->Description - 1, size) + 1;
       b->Description[-1] = capacity;
    }
    b->Description[*pos] = x;
@@ -325,13 +320,13 @@ static void DescribeMonomial(WgData_t *b, int *pos, long n2, int i)
 /// @param b Word generator.
 /// @param n Wird number.
 
-int *WgDescribeWord(WgData_t *b, long n)
+int *wgDescribeWord(WgData_t *b, long n)
 {
    int i;
    int pos = 0;
    long n1, n2;
 
-   MTX_VERIFY(n > 0);
+   MTX_ASSERT(n > 0, NULL);
    --n;
    n1 = BitTab[(int)(n % 238)];
    n2 = (int)(n / 238);
@@ -350,18 +345,18 @@ int *WgDescribeWord(WgData_t *b, long n)
 /// Calculates a word.
 /// This function calculates an element in a matrix algebra, given its number.
 /// Generators for the algebra are specified when the WgData_t structure is
-/// allocated with WgAlloc().
+/// allocated with wgAlloc().
 /// @param b Pointer to word generator data.
 /// @param n Word number.
 /// @return Matrix representation of the word or 0 on error.
 
-Matrix_t *WgMakeWord(WgData_t *b, long n)
+Matrix_t *wgMakeWord(WgData_t *b, long n)
 {
    Matrix_t *w = NULL;
    int n1, n2;
    int i;
 
-   MTX_VERIFY(n > 0);
+   MTX_ASSERT(n > 0, NULL);
    --n;
    n1 = BitTab[(int)(n % 238)];
    n2 = (int)(n / 238);
@@ -373,9 +368,9 @@ Matrix_t *WgMakeWord(WgData_t *b, long n)
          GenBasis(b,n2,i);
       }
       if (w == NULL) {
-         w = MatDup(b->Basis[i]);
+         w = matDup(b->Basis[i]);
       } else {
-         MatAdd(w,b->Basis[i]);
+         matAdd(w,b->Basis[i]);
       }
    }
    return w;
@@ -386,12 +381,12 @@ Matrix_t *WgMakeWord(WgData_t *b, long n)
 
 static int CheckArgs(const MatRep_t *rep)
 {
-   if (!MrIsValid(rep)) {
-      MTX_ERROR1("rep: %E",MTX_ERR_BADARG);
+   if (!mrIsValid(rep)) {
+      mtxAbort(MTX_HERE,"rep: %s",MTX_ERR_BADARG);
       return -1;
    }
    if (rep->NGen < 1) {
-      MTX_ERROR1("Invalid number of generators (%d)",rep->NGen);
+      mtxAbort(MTX_HERE,"Invalid number of generators (%d)",rep->NGen);
       return -1;
    }
    return 0;
@@ -402,9 +397,9 @@ static int CheckArgs(const MatRep_t *rep)
 /// Initialize the word generator.
 /// This function initializes the word generator for a given matrix
 /// representation @a rep. There must be at least one generator.
-/// On success, WgAlloc() returns a pointer to an internal data
-/// structure which can be used in subsequent calls to WgMakeWord()
-/// and WgFree(). If an error occurs, the return value is 0.
+/// On success, wgAlloc() returns a pointer to an internal data
+/// structure which can be used in subsequent calls to wgMakeWord()
+/// and wgFree(). If an error occurs, the return value is 0.
 ///
 /// Note that the word generator does not create internal copies of the
 /// generators. The caller must assure that the generators are not deleted
@@ -413,7 +408,7 @@ static int CheckArgs(const MatRep_t *rep)
 /// @param rep Pointer to the matrix representation.
 /// @return Pointer to a new word generator data structure or 0 on error.
 
-WgData_t *WgAlloc(const MatRep_t *rep)
+WgData_t *wgAlloc(const MatRep_t *rep)
 {
    int k;
    WgData_t *b;
@@ -427,7 +422,7 @@ WgData_t *WgAlloc(const MatRep_t *rep)
    /* Create a new data structure
       ---------------------------  */
    if ((b = ALLOC(WgData_t)) == NULL) {
-      MTX_ERROR("Cannot allocate word generator data: %S");
+      mtxAbort(MTX_HERE,"Cannot allocate word generator data: %S");
       return NULL;
    }
 
@@ -449,16 +444,16 @@ WgData_t *WgAlloc(const MatRep_t *rep)
 /// @param b Pointer to word generator data.
 /// @return 0 on success, -1 on error.
 /// This function terminates the word generator and cleans up internal data structures.
-/// Note that the generators that were passed to WgAlloc() are not freed.
+/// Note that the generators that were passed to wgAlloc() are not freed.
 
-int WgFree(WgData_t *b)
+int wgFree(WgData_t *b)
 {
    int k;
 
    /* Check the handle
       ---------------- */
    if (b == NULL) {
-      MTX_ERROR1("%E",MTX_ERR_BADARG);
+      mtxAbort(MTX_HERE,"%s",MTX_ERR_BADARG);
       return -1;
    }
 
@@ -466,14 +461,14 @@ int WgFree(WgData_t *b)
       ----------------------- */
    for (k = 0; k < 8; ++k) {
       if (b->Basis[k] != NULL) {
-         MatFree(b->Basis[k]);
+         matFree(b->Basis[k]);
       }
    }
    if (b->Description != 0) {
-      SysFree(b->Description - 1);
+      sysFree(b->Description - 1);
    }
    memset(b,0,sizeof(WgData_t));
-   SysFree(b);
+   sysFree(b);
    return 0;
 }
 
@@ -485,13 +480,14 @@ int WgFree(WgData_t *b)
 /// @param b Word generator data.
 /// @param fp Buffer for the finger print (6 numbers).
 
-void WgMakeFingerPrint(WgData_t *b, int fp[6])
+void wgMakeFingerPrint(WgData_t *b, int fp[6])
 {
    int i;
    for (i = 1; i <= 6; ++i) {
-      fp[i - 1] = MatNullity__(WgMakeWord(b,i));
+      fp[i - 1] = matNullity__(wgMakeWord(b,i));
    }
 }
 
 
 /// @}
+// vim:fileencoding=utf8:sw=3:ts=8:et:cin

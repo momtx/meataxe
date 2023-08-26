@@ -1,12 +1,8 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // C MeatAxe - Bit Strings, printing
-//
-// (C) Copyright 1998-2014 Michael Ringe, Lehrstuhl D fuer Mathematik, RWTH Aachen
-//
-// This program is free software; see the file COPYING for details.
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#include <meataxe.h>
+#include "meataxe.h"
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // Local data
@@ -25,15 +21,16 @@
 /// @param name Name to print before the matrix, or 0.
 /// @param bs The bit string.
 
-void BsPrint(const char *name, const BitString_t *bs)
+void bsPrint(const char *name, const BitString_t *bs)
 {
    int i;
    if (name != NULL) { printf("%s=\n",name); }
    for (i = 0; i < bs->Size; ++i) {
-      printf("%d",BsTest(bs,i));
+      printf("%d",bsTest(bs,i));
    }
    printf("\n");
 }
 
 
 /// @}
+// vim:fileencoding=utf8:sw=3:ts=8:et:cin

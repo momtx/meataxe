@@ -1,17 +1,12 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // C MeatAxe - Cut a rectangular piece out of a matrix.
-//
-// (C) Copyright 1998-2015 Michael Ringe, Lehrstuhl D fuer Mathematik, RWTH Aachen
-//
-// This program is free software; see the file COPYING for details.
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#include <meataxe.h>
+#include "meataxe.h"
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // Local data
 
-MTX_DEFINE_FILE_INFO
 
 /// @addtogroup mat
 /// @{
@@ -25,7 +20,7 @@ MTX_DEFINE_FILE_INFO
 /// to extract the first 10 rows from a matrix independently of the number of columns,
 /// you could say
 /// @code
-/// MatCut(mat,0,0,10,-1)
+/// matCut(mat,0,0,10,-1)
 /// @endcode
 /// @see MatCopyRegion MatCutRows
 ///
@@ -36,7 +31,7 @@ MTX_DEFINE_FILE_INFO
 /// @param ncols Number of columns to cut. -1 means as many columns as possible.
 /// @return Pointer to a new matrix containing the specified region, or NULL on error.
 
-Matrix_t *MatCut(const Matrix_t *src, int row1, int col1, int nrows, int ncols)
+Matrix_t *matCut(const Matrix_t *src, int row1, int col1, int nrows, int ncols)
 {
    Matrix_t *result;
    PTR s, d;
@@ -44,11 +39,7 @@ Matrix_t *MatCut(const Matrix_t *src, int row1, int col1, int nrows, int ncols)
 
    /* Check arguments
       --------------- */
-#ifdef DEBUG
-   if (!MatIsValid(src)) {
-      return NULL;
-   }
-#endif
+   matValidate(MTX_HERE, src);
    if (nrows == -1) {
       nrows = src->Nor - row1;
    }
@@ -56,17 +47,17 @@ Matrix_t *MatCut(const Matrix_t *src, int row1, int col1, int nrows, int ncols)
       ncols = src->Noc - col1;
    }
    if ((row1 < 0) || (nrows < 0) || (row1 + nrows > src->Nor)) {
-      MTX_ERROR("Source row index out of bounds");
+      mtxAbort(MTX_HERE,"Source row index out of bounds");
       return NULL;
    }
    if ((col1 < 0) || (ncols < 0) || (col1 + ncols > src->Noc)) {
-      MTX_ERROR("Source column index out of bounds");
+      mtxAbort(MTX_HERE,"Source column index out of bounds");
       return NULL;
    }
 
    /* Allocate a new matrix for the result
       ------------------------------------ */
-   result = MatAlloc(src->Field,nrows,ncols);
+   result = matAlloc(src->Field,nrows,ncols);
    if (result == NULL) {
       return NULL;
    }
@@ -76,7 +67,7 @@ Matrix_t *MatCut(const Matrix_t *src, int row1, int col1, int nrows, int ncols)
 
    /* Initialize pointers to the source and destination matrix
       -------------------------------------------------------- */
-   s = MatGetPtr(src,row1);
+   s = matGetPtr(src,row1);
    if (s == NULL) {
       return NULL;
    }
@@ -84,27 +75,25 @@ Matrix_t *MatCut(const Matrix_t *src, int row1, int col1, int nrows, int ncols)
 
    /* Copy the requested data
       ----------------------- */
-   if (FfSetNoc(ncols) != 0) {
-      return NULL;
-   }
+   ffSetNoc(ncols);
    for (n = nrows; n > 0; --n) {
       if (col1 == 0) {
-         FfCopyRow(d,s);
+         ffCopyRow(d,s);
       } else {
          register int k;
          for (k = 0; k < ncols; ++k) {
 #ifdef PARANOID
             FEL f;
-            FfSetNoc(src->Noc);
-            f = FfExtract(s,col1 + k);
-            FfSetNoc(ncols);
-            FfInsert(d,k,f);
+            ffSetNoc(src->Noc);
+            f = ffExtract(s,col1 + k);
+            ffSetNoc(ncols);
+            ffInsert(d,k,f);
 #else
-            FfInsert(d,k,FfExtract(s,col1 + k));
+            ffInsert(d,k,ffExtract(s,col1 + k));
 #endif
          }
       }
-      FfStepPtr(&d);
+      ffStepPtr(&d, ncols);
       s = (PTR)((char *)s + src->RowSize);
    }
 
@@ -123,12 +112,12 @@ Matrix_t *MatCut(const Matrix_t *src, int row1, int col1, int nrows, int ncols)
 /// @param nrows Number of rows to cut. -1 means as many rows as possible.
 /// @return A new matrix containing the specified rows of @em src, or 0 on error.
 
-Matrix_t *MatCutRows(const Matrix_t *src, int row1, int nrows)
+Matrix_t *matCutRows(const Matrix_t *src, int row1, int nrows)
 {
-   return MatCut(src,row1,0,nrows,-1);
+   return matCut(src,row1,0,nrows,-1);
 }
 
 
 /// @}
 
-// vim:sw=3:et
+// vim:fileencoding=utf8:sw=3:ts=8:et:cin

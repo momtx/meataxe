@@ -1,38 +1,32 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // C MeatAxe - Tests for the pseudorandom number generator
-//
-// (C) Copyright 1998-2015 Michael Ringe, Lehrstuhl D fuer Mathematik, RWTH Aachen
-//
-// This program is free software; see the file COPYING for details.
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 #include "meataxe.h"
-#include "check.h"
+#include "testing.h"
 
 #include <string.h>
 
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static void Test11(unsigned seed, const long *table)
+static int Test11(unsigned seed, const long *table)
 {
    int i;
 
-   MtxRandomInit(seed);
+   mtxRandomInit(seed);
    for (i = 0; i < 10; ++i, ++table) {
       int k;
-      long val = MtxRandom() & 0x7FFFFFFF;
-      if (val != *table) {
-         TST_FAIL2("Got 0x%lx, expected 0x%lx",val,*table);
-      }
+      long val = mtxRandom() & 0x7FFFFFFF;
+      ASSERT(val == *table);
       for (k = 0; k < 61; ++k) {
-         MtxRandom();
+         mtxRandom();
       }
    }
+   return 0;
 }
 
-////////////////////////////////////////////////////////////////////////////////////////////////////
-
-static void Test1()
+TstResult RandomNumberGenerator1()
 {
    static long Table0[10] = {
       826837439, 1433481918, 1807203728, 1251143873,
@@ -42,50 +36,38 @@ static void Test1()
       269167349, 1677366103,1597714250, 970290675,
       436236141, 2108708678, 89648197, 1313827126, 514978688, 628812726
    };
-   Test11(0,Table0);
-   Test11(1,Table1);
-   Test11(0,Table0);
+   int result = 0;
+   result |= Test11(0,Table0);
+   result |= Test11(1,Table1);
+   result |= Test11(0,Table0);
+   return result;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
+
 /// Check if the random numbers are sufficiently equally distributed
 
-static void Test21(int n, int *count)
-{
-   const int loop = 1500;
-   const int min = loop - loop / 10;
-   const int max = loop + loop / 10;
-
-   int i;
-   for (i = 0; i < n; ++i) {
-      count[i] = 0;
-   }
-   for (i = 0; i < loop * n; ++i) {
-      ++count[MtxRandomInt(n)];
-   }
-
-   for (i = 0; i < n; ++i) {
-      if ((count[i] < min) || (count[i] > max)) {
-         TST_FAIL4("Value %d hit %d times, expected %d..%d",i,count[i],min,max);
-      }
-   }
-}
-
-////////////////////////////////////////////////////////////////////////////////////////////////////
-
-static void Test2()
+TstResult RandomNumberGenerator2()
 {
    int count[100];
    int n;
    for (n = 10; n < 100; ++n) {
-      Test21(n,count);
+
+       const int loop = 1550;
+       const int min = loop - loop / 10;
+       const int max = loop + loop / 10;
+
+       memset(count, 0, sizeof(count));
+       for (int i = 0; i < loop * n; ++i) {
+	   ++count[mtxRandomInt(n)];
+       }
+
+       for (int i = 0; i < n; ++i) {
+	   ASSERT(count[i] >= min && count[i] <= max);
+       }
+
    }
+   return 0;
 }
 
-////////////////////////////////////////////////////////////////////////////////////////////////////
-
-test_F RandomNumberGenerator()
-{
-   Test1();
-   Test2();
-}
+// vim:fileencoding=utf8:sw=3:ts=8:et:cin

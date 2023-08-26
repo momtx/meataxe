@@ -1,18 +1,13 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // C MeatAxe - Read rows from a file
-//
-// (C) Copyright 1998-2015 Michael Ringe, Lehrstuhl D fuer Mathematik, RWTH Aachen
-//
-// This program is free software; see the file COPYING for details.
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#include <meataxe.h>
+#include "meataxe.h"
 #include <string.h>
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // Local data
 
-MTX_DEFINE_FILE_INFO
 
 /// @addtogroup mf
 /// @{
@@ -20,7 +15,7 @@ MTX_DEFINE_FILE_INFO
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 /// Write row vectors to a file.
 /// This function writes |nrows| rows from a data file into a buffer.
-/// Unlike |FfWriteRows()|, this function changes the current row size to
+/// Unlike |ffWriteRows()|, this function changes the current row size to
 /// the appropriate value, which is stored in the |MtxFile_t| object.
 /// @param f Pointer to the file.
 /// @param buf Data buffer.
@@ -28,37 +23,38 @@ MTX_DEFINE_FILE_INFO
 /// @return Number of rows that were actually written. Any value other than count
 ///    indicates an error.
 
-int MfWriteRows(MtxFile_t *f, PTR buf, int nrows)
+int mfWriteRows(MtxFile_t *f, PTR buf, int nrows)
 {
    int i;
    register char *b = (char *) buf;
 
-   if (!MfIsValid(f)) {
+   if (!mfIsValid(f)) {
       return -1;
    }
-   if (FfNoc != f->Noc) {
-      FfSetNoc(f->Noc);
+   if (ffNoc != f->Noc) {
+      ffSetNoc(f->Noc);
    }
 
-   /* Handle special case <FfNoc> = 0.
+   /* Handle special case <ffNoc> = 0.
       -------------------------------- */
-   if (FfNoc == 0) {
+   if (f->Noc == 0) {
       return nrows;
    }
 
    /* Write rows one by one
       --------------------- */
    for (i = 0; i < nrows; ++i) {
-      if (fwrite(b,FfTrueRowSize(FfNoc),1,f->File) != 1) {
+      if (fwrite(b,ffTrueRowSize(f->Noc),1,f->File) != 1) {
          break;
       }
-      b += FfCurrentRowSize;
+      b += ffRowSize(f->Noc);
    }
    if (ferror(f->File)) {
-      MTX_ERROR1("%s: Write failed: %S",f->Name);
+      mtxAbort(MTX_HERE,"%s: Write failed: %S",f->Name);
    }
    return i;
 }
 
 
 /// @}
+// vim:fileencoding=utf8:sw=3:ts=8:et:cin

@@ -1,13 +1,9 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // C MeatAxe - Calculate eigenvalues and multiplitcities.
-//
-// (C) Copyright 1998-2015 Michael Ringe, Lehrstuhl D fuer Mathematik, RWTH Aachen
-//
-// This program is free software; see the file COPYING for details.
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
-#include <meataxe.h>
+#include "meataxe.h"
 #include <string.h>
 #include <stdlib.h>
 
@@ -21,7 +17,6 @@
    Global data
    ------------------------------------------------------------------ */
 
-MTX_DEFINE_FILE_INFO
 
 static FILE *src = NULL; 		/* Input file */
 static Matrix_t *Matrix;		/* Matrix A */
@@ -66,16 +61,16 @@ static MtxApplication_t *App = NULL;
    init() - Initialze everything
    ------------------------------------------------------------------ */
 
-static int Init(int argc, const char **argv)
+static int Init(int argc, char **argv)
 
 {
     /* Parse command line
        ------------------ */
-    if ((App = AppAlloc(&AppInfo,argc,argv)) == NULL)
+    if ((App = appAlloc(&AppInfo,argc,argv)) == NULL)
 	return -1;
-    opt_G = AppGetOption(App,"-G --gap");
+    opt_G = appGetOption(App,"-G --gap");
     if (opt_G) MtxMessageLevel = -100;
-    if (AppGetArguments(App,1,3) < 0)
+    if (appGetArguments(App,1,3) < 0)
 	return -1;
     switch (App->ArgC)
     {
@@ -85,7 +80,7 @@ static int Init(int argc, const char **argv)
 	case 2:
 	    if (strcmp(App->ArgV[1],"-"))
 	    {
-		src = SysFopen(App->ArgV[1],FM_READ);
+		src = sysFopen(App->ArgV[1],"rb");
 		if (src == NULL)
 		    return -1;
 	    }
@@ -94,15 +89,15 @@ static int Init(int argc, const char **argv)
 	    break;
     }
     matname = App->ArgV[0];
-    if ((Matrix = MatLoad(matname)) == NULL)
+    if ((Matrix = matLoad(matname)) == NULL)
 	return -1;
     if (Matrix->Nor != Matrix->Noc)
     {
-	MTX_ERROR2("%s: %E",matname,MTX_ERR_NOTSQUARE);
+	mtxAbort(MTX_HERE,"%s: %s",matname,MTX_ERR_NOTSQUARE);
 	return -1;
     }
-    FfSetField(Matrix->Field);
-    FfSetNoc(Matrix->Noc);
+    ffSetField(Matrix->Field);
+    ffSetNoc(Matrix->Noc);
     return 0;
 }
 
@@ -118,7 +113,7 @@ void Gauss(void)
 
 {
     static int first = 1;
-    int nullity = MatNullity__(W);
+    int nullity = matNullity__(W);
     if (opt_G)	/* GAP output */
     {	
 	int mult = nullity / deg;
@@ -203,9 +198,9 @@ int getnextpol(void)
     for (deg = 0; (c = strtok(NULL," \t")) != NULL; ++deg)
     {	
 	if (!strcmp(c,"-1"))
-	    f = FfNeg(FF_ONE);
+	    f = ffNeg(FF_ONE);
 	else
-	    f = FfFromInt(atoi(c));
+	    f = ffFromInt(atoi(c));
 	coeff[deg] = f;
     }
     --deg;
@@ -213,8 +208,8 @@ int getnextpol(void)
 	poly[deg-i] = coeff[i];
 
     if (Poly != NULL)
-	PolFree(Poly);
-    Poly = PolAlloc(FfOrder,deg);
+	polFree(Poly);
+    Poly = polAlloc(ffOrder,deg);
     for (i = 0; i <= deg; ++i)
 	Poly->Data[i] = poly[i];
 
@@ -228,21 +223,21 @@ int getnextpol(void)
    main()
    ------------------------------------------------------------------ */
 
-int main(int argc, const char **argv)
+int main(int argc, char **argv)
 
 {
     if (Init(argc,argv) != 0)
     {
-	MTX_ERROR("Initialization failed");
+	mtxAbort(MTX_HERE,"Initialization failed");
 	return 1;
     }
     while (getnextpol())
     {
-	W = MatInsert(Matrix,Poly);
+	W = matInsert(Matrix,Poly);
 	Gauss();
     }
     if (opt_G) printf(";\n");
-    AppFree(App);
+    appFree(App);
     return 0;
 }
 
@@ -381,3 +376,4 @@ TAB characters at the beginning of a line are not interpreted
 as space.
 
 */
+// vim:fileencoding=utf8:sw=3:ts=8:et:cin

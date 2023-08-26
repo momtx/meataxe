@@ -1,13 +1,9 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // C MeatAxe - Tests for the command line parser
-//
-// (C) Copyright 1998-2016 Michael Ringe, Lehrstuhl D fuer Mathematik, RWTH Aachen
-//
-// This program is free software; see the file COPYING for details.
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#include "meataxe.h"
-#include "check.h"
+#include <meataxe.h>
+#include "testing.h"
 
 #include <string.h>
 
@@ -16,195 +12,191 @@
 
 /// Command line parsing
 
-test_F CommandLineParsing1()
+static int testOptions(MtxApplication_t *app)
 {
-   TstStartErrorChecking();
+   ASSERT(!appGetOption(app,"--option11"));	// not present
+   ASSERT(appGetOption(app,"--option1"));
+   ASSERT(appGetOption(app,"-a --aaaa"));	// short and long name
+   ASSERT(!appGetOption(app,"-a --aaaa"));	// repeated
 
    const char *t;
-   static const char *ArgV1[] =
+   ASSERT((t = appGetTextOption(app,"-b --option2",NULL)) != NULL);
+   ASSERT(!strcmp(t,"optarg2"));
+   return 0;
+}
+
+TstResult App_CommandLineParser()
+{
+    int result = 0;
+
+   static char *ArgV1[] =
    { "---", "-a", "--option1", "--option2", "optarg2", "arg1", "arg2" };
    int ArgC1 = (sizeof(ArgV1) / sizeof(ArgV1[0]));
-
-   MtxApplication_t *App;
-   ASSERT((App = AppAlloc(NULL,ArgC1,ArgV1)) != NULL);
-
-   ASSERT(!AppGetOption(App,"--option11") && !TstHasError());	// not present
-   ASSERT(AppGetOption(App,"--option1") && !TstHasError());
-   ASSERT(AppGetOption(App,"-a --aaaa") && !TstHasError());	// short and long name
-   ASSERT(!AppGetOption(App,"-a --aaaa") && !TstHasError());	// repeated
-   ASSERT((t = AppGetTextOption(App,"-b --option2",NULL)) != NULL);
-   ASSERT(!strcmp(t,"optarg2"));
-   ASSERT(!TstHasError());
-
-   AppFree(App);
+   MtxApplication_t *App = appAlloc(NULL, ArgC1, ArgV1);
+   result |= testOptions(App);
+   appFree(App);
+   return result;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-test_F ArgumentCountChecking()
+TstResult App_CanCheckArgumentCount()
 {
-   TstStartErrorChecking();
-
-   static const char *ArgV1[] =
+   static char *ArgV1[] =
    { "---", "arg1", "arg2" };
    int ArgC1 = (sizeof(ArgV1) / sizeof(ArgV1[0]));
 
    MtxApplication_t *App;
-   ASSERT((App = AppAlloc(NULL,ArgC1,ArgV1)) != NULL);
-   ASSERT(AppGetArguments(App,2,2) == 2 && !TstHasError());
-   ASSERT(AppGetArguments(App,1,1) == -1 && TstHasError());	// too many arguments
-   ASSERT(AppGetArguments(App,3,3) == -1 && TstHasError());	// too few arguments
-   AppFree(App);
+   ASSERT((App = appAlloc(NULL,ArgC1, ArgV1)) != NULL);
+   ASSERT(appGetArguments(App,2,2) == 2);
+   ASSERT_ABORT(appGetArguments(App,1,1));	// too many arguments
+   ASSERT_ABORT(appGetArguments(App,3,3));	// too few arguments
+   appFree(App);
+   return 0;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-test_F DetectUnknownOption()
+TstResult App_DetectUnknownOption()
 {
-   TstStartErrorChecking();
-   static const char *ArgV1[] = { "---", "-a", "--option1", "--option2" };
+   static char *ArgV1[] = { "---", "-a", "--option1", "--option2" };
    const int ArgC1 = (sizeof(ArgV1) / sizeof(ArgV1[0]));
    MtxApplication_t *App;
-   ASSERT((App = AppAlloc(NULL,ArgC1,ArgV1)) != NULL);
-   AppGetOption(App,"-a");
-   AppGetOption(App,"--option1");
-   ASSERT(AppGetArguments(App,0,100) == -1 && TstHasError());
-   AppFree(App);
+   ASSERT((App = appAlloc(NULL,ArgC1,ArgV1)) != NULL);
+   appGetOption(App,"-a");
+   appGetOption(App,"--option1");
+   ASSERT_ABORT(appGetArguments(App,0,100));
+   appFree(App);
+   return 0;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 /// Using "--" to designate the end of options
 
-test_F DoubleDash()
+TstResult App_DoubleDash()
 {
-   TstStartErrorChecking();
-
-   static const char *ArgV1[] =
+   static char *ArgV1[] =
    { "---", "-a", "--", "-b" };
    int ArgC1 = (sizeof(ArgV1) / sizeof(ArgV1[0]));
 
    MtxApplication_t *App;
-   ASSERT((App = AppAlloc(NULL,ArgC1,ArgV1)) != NULL);
-   ASSERT(AppGetOption(App,"-a"));
-   ASSERT(!AppGetOption(App,"-b") && !TstHasError());	// -b is not an option
+   ASSERT((App = appAlloc(NULL,ArgC1,ArgV1)) != NULL);
+   ASSERT(appGetOption(App,"-a"));
+   ASSERT(!appGetOption(App,"-b"));	// -b is not an option
 
-   ASSERT(AppGetArguments(App,1,1) == 1 && !TstHasError());
+   ASSERT(appGetArguments(App,1,1) == 1);
    ASSERT(!strcmp(App->ArgV[0],"-b"));
-   AppFree(App);
+   appFree(App);
+   return 0;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-test_F IntegerOptions()
+TstResult App_IntegerOptions()
 {
-   TstStartErrorChecking();
-
-   static const char *argv[] =
+   static char *argv[] =
    { "-", "-a", "10", "--bbb", "-20", "-c", "3" };
    int argc = (sizeof(argv) / sizeof(argv[0]));
 
    MtxApplication_t *App;
-   ASSERT((App = AppAlloc(NULL,argc,argv)) != NULL);
-   ASSERT(AppGetIntOption(App,"-a",42,1,10) == 10);
-   ASSERT(AppGetIntOption(App,"-b --bbb",42,-20,-19) == -20);
-   ASSERT(AppGetIntOption(App,"-c",42,0,-1) == 3);
-   ASSERT_EQ_INT(AppGetArguments(App,0,0), 0);
-   AppFree(App);
+   ASSERT((App = appAlloc(NULL,argc,argv)) != NULL);
+   ASSERT(appGetIntOption(App,"-a",42,1,10) == 10);
+   ASSERT(appGetIntOption(App,"-b --bbb",42,-20,-19) == -20);
+   ASSERT(appGetIntOption(App,"-c",42,0,-1) == 3);
+   ASSERT_EQ_INT(appGetArguments(App,0,0), 0);
+   appFree(App);
+   return 0;
 }
 
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 /* Test 4: Integer option errors */
 
-test_F IntegerOptionErrorHandling()
+TstResult App_IntegerOptionErrorHandling()
 {
-   TstStartErrorChecking();
-   static const char *argv[] =
+   static char *argv[] =
    { "-", "-a", "1x0", "--bbb", "20", "-c", "30" };
    int argc = (sizeof(argv) / sizeof(argv[0]));
 
    MtxApplication_t *App;
-   ASSERT((App = AppAlloc(NULL,argc,argv)) != NULL);
-   ASSERT(AppGetIntOption(App,"-a",42,1,0) == 42 && TstHasError());	// malformed value
-   ASSERT(AppGetIntOption(App,"-b --bbb",42,21,999) == 42 && TstHasError()); // out of range
-   ASSERT(AppGetIntOption(App,"-c",42,0,29) == 42 && TstHasError());	// out of range
-   ASSERT(AppGetArguments(App,0,0) == 0);
-   AppFree(App);
+   ASSERT((App = appAlloc(NULL,argc,argv)) != NULL);
+   ASSERT_ABORT(appGetIntOption(App,"-a",42,1,0));	// malformed value
+   ASSERT_ABORT(appGetIntOption(App,"-b --bbb",42,21,999)); // out of range
+   ASSERT_ABORT(appGetIntOption(App,"-c",42,0,29));	// out of range
+   ASSERT(appGetArguments(App,0,0) == 0);
+   appFree(App);
+   return 0;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-test_F OptionAfterArgument()
+TstResult App_OptionAfterArgument()
 {
-   TstStartErrorChecking();
-   static const char *argv[] =
+   static char *argv[] =
    { "-", "-a", "xxx", "-b", "yyy" };
    int argc = (sizeof(argv) / sizeof(argv[0]));
 
    MtxApplication_t *App;
-   ASSERT((App = AppAlloc(NULL,argc,argv)) != NULL);
-   ASSERT(AppGetOption(App,"-a") && !TstHasError());
-   ASSERT(AppGetOption(App,"-b") && !TstHasError());
-   ASSERT(AppGetArguments(App,0,110) != 0 && TstHasError());
-   AppFree(App);
+   ASSERT((App = appAlloc(NULL,argc,argv)) != NULL);
+   ASSERT(appGetOption(App,"-a"));
+   ASSERT(appGetOption(App,"-b"));
+   ASSERT_ABORT(appGetArguments(App,0,110));
+   appFree(App);
+   return 0;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-test_F CountedOption()
+TstResult App_CountedOption()
 {
-   TstStartErrorChecking();
-   static const char *argv[] =
+   static char *argv[] =
    { "-", "-a", "-b", "-a", "-bb", "--all", "-ca" };
    int argc = (sizeof(argv) / sizeof(argv[0]));
 
    MtxApplication_t *App;
-   ASSERT((App = AppAlloc(NULL,argc,argv)) != NULL);
-   ASSERT(AppGetCountedOption(App,"-a --all") == 4 && !TstHasError());
-   ASSERT(AppGetCountedOption(App,"-b") == 3 && !TstHasError());
-   AppFree(App);
+   ASSERT((App = appAlloc(NULL,argc,argv)) != NULL);
+   ASSERT(appGetCountedOption(App,"-a --all") == 4);
+   ASSERT(appGetCountedOption(App,"-b") == 3);
+   appFree(App);
+   return 0;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-test_F CommonOptions()
+TstResult App_CommonOptions()
 {
-   TstStartErrorChecking();
-   static const char *argv[] =
-   { "-", "--quiet", "-B", "binbinbin", "-L", "libliblib" };
+   static char *argv[] =
+   { "-", "--quiet", "-L", "libliblib" };
    int argc = (sizeof(argv) / sizeof(argv[0]));
 
    MtxApplication_t *App;
-   ASSERT((App = AppAlloc(NULL,argc,argv)) != NULL);
-   ASSERT(MtxMessageLevel <= -1000);			// --quiet
-   ASSERT(!strcmp(MtxBinDir,"binbinbin"));		// -B
+   ASSERT((App = appAlloc(NULL,argc,argv)) != NULL);
+   ASSERT(MtxMessageLevel == -1);			// --quiet
    ASSERT(!strcmp(MtxLibDir,"libliblib"));		// -L
-   ASSERT(AppGetArguments(App,0,100) == 0 && !TstHasError());
-   AppFree(App);
-   strcpy(MtxBinDir,".");
+   ASSERT(appGetArguments(App,0,100) == 0);
+   appFree(App);
    strcpy(MtxLibDir,".");
+   return 0;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-test_F CommonOptions2()
+TstResult CommonOptions2()
 {
-   TstStartErrorChecking();
-
-   static const char *argv[] =
-   { "-", "-V", "-VV", "--mtxlib", "LIBLIB", "--mtxbin", "BINBIN" };
+   static char *argv[] =
+   { "-", "-V", "-VV", "--mtxlib", "LIBLIB" };
    int argc = (sizeof(argv) / sizeof(argv[0]));
 
    MtxApplication_t *App;
-   ASSERT((App = AppAlloc(NULL,argc,argv)) != NULL);
+   ASSERT((App = appAlloc(NULL,argc,argv)) != NULL);
    ASSERT_EQ_INT(MtxMessageLevel, 3);
    MtxMessageLevel = 0;
-   ASSERT(!strcmp(MtxBinDir,"BINBIN"));
    ASSERT(!strcmp(MtxLibDir,"LIBLIB"));
-   ASSERT(AppGetArguments(App,0,100) == 0 && !TstHasError());
-   AppFree(App);
-   strcpy(MtxBinDir,".");
+   ASSERT(appGetArguments(App,0,100) == 0);
+   appFree(App);
    strcpy(MtxLibDir,".");
+   return 0;
 }
 
+// vim:fileencoding=utf8:sw=3:ts=8:et:cin

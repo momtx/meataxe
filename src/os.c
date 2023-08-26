@@ -1,9 +1,5 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // C MeatAxe - OS dependent stuff
-//
-// (C) Copyright 1998-2015 Michael Ringe, Lehrstuhl D fuer Mathematik, RWTH Aachen
-//
-// This program is free software; see the file COPYING for details.
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 /// @defgroup os Operating System Interface
@@ -12,7 +8,7 @@
 /// The MeatAxe is written for a UNIX-like operating environment and uses many functions of
 /// the standard C library. To make the MeatAxe more portable between different operating
 /// systems, some C library and system calls are accessed through wrapper functions. These
-/// wrapper functions have names that begin with 'Sys'. For example @c SysFree() is the wrapper
+/// wrapper functions have names that begin with 'Sys'. For example @c sysFree() is the wrapper
 /// function for @c free().
 
 /* --------------------------------------------------------------------------
@@ -27,7 +23,7 @@
    Include files
    -------------------------------------------------------------------------- */
 
-#include <meataxe.h>
+#include "meataxe.h"
 
 #if defined (_WIN32)
 
@@ -61,13 +57,6 @@
 time_t zinittime = 0;           /**< Start time of this process. */
 #endif
 
-MTX_DEFINE_FILE_INFO
-
-/* ------------------------------------------------------------------
-   fopen() modes
-   ------------------------------------------------------------------ */
-
-static char *fmodes[7] = { NULL,"rt","wt","at","rb","wb","ab" };
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -75,7 +64,7 @@ static char *fmodes[7] = { NULL,"rt","wt","at","rb","wb","ab" };
 /// This function is called during library initialization. It performs any OS-specific
 /// actions. Applications should never call this function directly. Use MtxInit() instead.
 
-void SysInit()
+void sysInit()
 {
 #if defined(OS_NO_CPU_TIME)
    zinittime = time(NULL);
@@ -87,10 +76,10 @@ void SysInit()
 
 /// CPU time.
 /// This function returns the CPU time used by the calling process in units of 1/10 seconds.
-/// @see SysSetTimeLimit()
+/// @see sysSetTimeLimit()
 /// @return CPU time used.
 
-long SysTimeUsed(void)
+long sysTimeUsed(void)
 {
 #if defined(_WIN32)
 
@@ -129,7 +118,7 @@ long SysTimeUsed(void)
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 ///
-/// @fn SysSetTimeLimit(long)
+/// @fn sysSetTimeLimit(long)
 /// Set CPU time limit.
 /// This function sets a CPU time limit for the calling process. When the limit is exceeded
 /// the process is killed.
@@ -142,12 +131,12 @@ DWORD CALLBACK Killer(void *x)
 {
    DWORD ms = (long) x;
    Sleep(ms);
-   MTX_ERROR1("%E",MTX_ERR_GAME_OVER);
+   mtxAbort(MTX_HERE,"%s",MTX_ERR_GAME_OVER);
    return 0;
 }
 
 
-void SysSetTimeLimit(long nsecs)
+void sysSetTimeLimit(long nsecs)
 {
    DWORD id;
    CreateThread(NULL,0,Killer,(void *)(nsecs * 1000),0,&id);
@@ -158,11 +147,11 @@ void SysSetTimeLimit(long nsecs)
 
 void vtalarm(int i)
 {
-   MTX_ERROR1("%E",MTX_ERR_GAME_OVER);
+   mtxAbort(MTX_HERE,"%s",MTX_ERR_GAME_OVER);
 }
 
 
-void SysSetTimeLimit(long nsecs)
+void sysSetTimeLimit(long nsecs)
 {
    struct itimerval tv;
 
@@ -177,7 +166,7 @@ void SysSetTimeLimit(long nsecs)
 
 #else /* No interval timer, sorry... */
 
-void SysSetTimeLimit(long nsecs)
+void sysSetTimeLimit(long nsecs)
 {
 }
 
@@ -186,57 +175,65 @@ void SysSetTimeLimit(long nsecs)
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-/// Open a file.
-/// This function opens a file, like @c fopen(). The second argument, must be one of the
-/// predfined constants FM_READ (open for reading), FM_CREAT (create a new file and open for
-/// writing, or FM_APPEND (append to existing file or create a new file).
-/// Additional flags may be or'ed to the mode:
-/// @par FM_LIB
-/// If the file does not exist in the current directory, look in the library directory.
-/// The library directory is defined (in order of decreasng priority):
-/// * by the -L command line option,
-/// * by the MTXLIB environment variable, or
-/// * at compile-time by defining MTXLIB in the Makefile.
-/// @par FM_TEXT
-/// Open in text mode. This flag must be used on some systems (e.g., MS-DOS) to open text files.
-/// By default, files are assumed to contain binary data.
-/// @par FM_NOERROR
-/// Do not generate an error if the file does not exist.
-/// @see FfReadHeader() FfWriteHeader()
+/// Opens a file. 
+/// This function works like fopen() with the following differences:
+/// * If the operation fails an error is raised, which normally aborts the program. If the
+///   application has defined an error handler that doe snot abort, sysFopen() returns NULL on
+///   error.
+/// * The «mode» string can be extended by appending "//«Flags»", where «Flags» is
+///   a colon-separated list of any of the following items:
+///   * "lib" - Try to open the file in the library directory (see @ref MtxLibDir) first, unless
+///     «name» starts with '/'. It this fails, try again using the file name as it is.
+///     No errors are reported if the first attempt fails and the second attempt succeeds.
+///   * "noerror" - Do not raise an error if the file cannot be opened, just return NULL.
+///
 /// @return A pointer to the open file or NULL on error.
 
-FILE *SysFopen(const char *name, int mode)
+FILE *sysFopen(const char *name, const char* mode)
 {
-   char buf[300];
-   int m;
-   FILE *f;
+   char sysMode[20];
+   const char* mtxExt = strstr(mode, "::");
+   int useLibDir = 0;
+   int raiseError = 1;
+   if (mtxExt != NULL) {
+      snprintf(sysMode, sizeof(sysMode), "%.*s", (int)(mtxExt - mode), mode);
+      const char* c = mtxExt + 2;
+      while (1) {
+         if (!strncmp(c, "lib", 3) != 0) {
+            useLibDir = 1;
+            c += 3;
+         }
+         else if (!strncmp(c, "noerror", 7) != 0) {
+            raiseError = 0;
+            c += 7;
+         } else {
+            break;
+         }
+         if (*c != ':') break;
+         ++c;
+      }
+      if (*c != 0) {
+         mtxAbort(MTX_HERE,"Invalid file mode %s", mode);
+         return NULL;
+      }
+   } else {
+      snprintf(sysMode, sizeof(sysMode), "%s", mode);
+   }
 
-   m = mode & 0x0F;                     // append, read or create
-   if ((mode & FM_TEXT) == 0) {
-      m += 3;                           // binary mode
+   FILE *f = NULL;
+   if (useLibDir && MtxLibDir[0] != 0 && *name != '/') {
+      char buf[300];
+      snprintf(buf,sizeof(buf),"%s/%s", MtxLibDir, name);
+      f = fopen(buf,sysMode);
    }
-   if ((m < 1) || (m > 6) || ((mode & 0x0F) == 0)) {
-      MTX_ERROR1("Invalid file mode %d",mode);
-      return NULL;
-   }
-   f = fopen(name,fmodes[m]);
-   if (f != NULL) {
-      return f;
+   if (f == NULL)
+   {
+      f = fopen(name,sysMode);
    }
 
-   // Search in the library directory if requested
-   if (((mode & FM_LIB) != 0) && (MtxLibDir[ 0 ] != 0)) {
-      strcpy(buf,MtxLibDir);
-      strcat(buf,"/");
-      strcat(buf,name);
-      f = fopen(buf,fmodes[m]);
+   if (f == NULL && raiseError) {
+      mtxAbort(MTX_HERE,"%s (mode=%s): %S",name, sysMode);
    }
-
-   // Error handling
-   if ((f == NULL) && ((mode & FM_NOERROR) == 0)) {
-      MTX_ERROR1("%s: %S",name);
-   }
-
    return f;
 }
 
@@ -247,12 +244,12 @@ FILE *SysFopen(const char *name, int mode)
 /// This function sets the file pointer to a given position. If pos is greater than or equal to
 /// zero, it is interpreted as an absolute position (relative to start of file). If @c pos is
 /// negative, the file pointer is moved to the end of file.
-/// @see SysFseekRelative(), FfSeekRow()
+/// @see sysFseekRelative(), ffSeekRow()
 /// @param file File handle.
 /// @param pos New position of file pointer.
 /// @return 0 on success, nonzero otherwise.
 
-int SysFseek(FILE *file, long pos)
+int sysFseek(FILE *file, long pos)
 {
    if (pos < 0) {
       return fseek(file,(long) 0,SEEK_END);
@@ -265,14 +262,14 @@ int SysFseek(FILE *file, long pos)
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 /// Remove a file
-/// This function deletes a file. On a UNIX system, SysRemoveFile() just calls remove().
+/// This function deletes a file. On a UNIX system, sysRemoveFile() just calls remove().
 /// If the file to be deleted does not exist or cannot be removed for some other reason,
 /// run-time error error is generated.
 
-int SysRemoveFile(const char *name)
+int sysRemoveFile(const char *name)
 {
    if (remove(name) != 0) {
-      MTX_ERROR1("Cannot remove file '%s'",name);
+      mtxAbort(MTX_HERE,"Cannot remove file '%s'",name);
       return -1;
    }
    return 0;
@@ -282,14 +279,14 @@ int SysRemoveFile(const char *name)
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 /// Removes a directory (which must be empty).
-/// @see SysCreateDirectory().
+/// @see sysCreateDirectory().
 /// @param name Name of the directory to be removed.
 /// @return 0 on success, -1 on error.
 
-int SysRemoveDirectory(const char *name)
+int sysRemoveDirectory(const char *name)
 {
    if (rmdir(name) != 0) {
-      MTX_ERROR1("Cannot remove directory '%s'",name);
+      mtxAbort(MTX_HERE,"Cannot remove directory '%s'",name);
       return -1;
    }
    return 0;
@@ -301,11 +298,11 @@ int SysRemoveDirectory(const char *name)
 /// Create a directory.
 /// This function creates a new directory. If the directory cannot be created for some reason,
 /// a run-time error is generated and the function returns -1.
-/// @see SysRemoveDirectory()
+/// @see sysRemoveDirectory()
 /// @param name Name of the directory.
 /// @return 0 on success, -1 on error.
 
-int SysCreateDirectory(const char *name)
+int sysCreateDirectory(const char *name)
 {
 #ifdef _WIN32
    if (mkdir(name) != 0)
@@ -313,7 +310,7 @@ int SysCreateDirectory(const char *name)
    if (mkdir(name,0755) != 0)
 #endif
    {
-      MTX_ERROR1("Cannot create directory '%s'",name);
+      mtxAbort(MTX_HERE,"Cannot create directory '%s'",name);
       return -1;
    }
    return 0;
@@ -328,9 +325,9 @@ int SysCreateDirectory(const char *name)
 /// @param file The file handle.
 /// @param distance The number of bytes by which the file pointer shall be moved.
 /// @return 0 on success, nonzero on error.
-/// @see SysFseek(), FfSeekRow()
+/// @see sysFseek(), ffSeekRow()
 
-int SysFseekRelative(FILE *file, long distance)
+int sysFseekRelative(FILE *file, long distance)
 {
    return fseek(file,distance,SEEK_CUR);
 }
@@ -339,21 +336,19 @@ int SysFseekRelative(FILE *file, long distance)
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 /// Allocate memory.
-/// This function works like @c malloc(), but the return value is never 0, even when the function
-/// was called with a 0 argument.
+/// This function works like @c malloc(), but the return value is never NULL, even if @a nbytes is
+/// 0. The allocated memory region is initialized with zeroes.
 /// @param nbytes Size of memory block to allocate.
-/// @return Pointer to memory block or NULL on error.
+/// @return Pointer to memory block.
 
-void *SysMalloc(size_t nbytes)
+void *sysMalloc(size_t nbytes)
 {
-   void *x;
-
    if (nbytes == 0) {
-      nbytes = 1;
+      nbytes = 1;       // avoid NULL return
    }
-   x = malloc(nbytes);
+   void* x = calloc(1, nbytes);
    if (x == NULL) {
-      MTX_ERROR1("Cannot allocate %l bytes: %S",(long int) nbytes);
+      mtxAbort(MTX_HERE,"Cannot allocate %lu bytes",(unsigned long) nbytes);
    }
    return x;
 }
@@ -368,7 +363,7 @@ void *SysMalloc(size_t nbytes)
 /// @param nbytes Desired new size.
 /// @return  Pointer to resized memory block or NULL on error.
 
-void *SysRealloc(void *buf, size_t nbytes)
+void *sysRealloc(void *buf, size_t nbytes)
 {
    void *x;
    if (nbytes == 0) {
@@ -376,24 +371,21 @@ void *SysRealloc(void *buf, size_t nbytes)
    }
    x = realloc(buf,nbytes);
    if (x == NULL) {
-      MTX_ERROR1("Cannot reallocate %l bytes: %S",(long) nbytes);
+      mtxAbort(MTX_HERE,"Cannot reallocate %l bytes: %S",(long) nbytes);
    }
+   //printf("realloc(0x%p, %lu)=0x%p\n", buf, (unsigned long) nbytes, x);
    return x;
 }
 
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-/// Free memory block.
-/// This function works like @c free() but checks if the argument is not NULL. Otherwise, an
-/// appropriate error message is generated.
-/// @param x Pointer to the memory block.
+/// This function works like @c free().
 
-void SysFree(void *x)
+void sysFree(void *x)
 {
-   if (x == NULL) {
-      MTX_ERROR("Attempt to free() NULL pointer");
-   } else {
+   //printf("free(0x%p)\n", x);
+   if (x != NULL) {
       free(x);
    }
 }
@@ -407,7 +399,7 @@ void SysFree(void *x)
 /// environment, it is the process id (PID).
 /// @return Process id.
 
-int SysGetPid()
+int sysGetPid()
 {
    int pid;
 #ifdef _WIN32
@@ -420,3 +412,4 @@ int SysGetPid()
 
 
 /// @}
+// vim:fileencoding=utf8:sw=3:ts=8:et:cin

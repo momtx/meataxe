@@ -1,18 +1,13 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // C MeatAxe - Polynomial derivation
-//
-// (C) Copyright 1998-2015 Michael Ringe, Lehrstuhl D fuer Mathematik, RWTH Aachen
-//
-// This program is free software; see the file COPYING for details.
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#include <meataxe.h>
+#include "meataxe.h"
 #include <string.h>
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // Local data
 
-MTX_DEFINE_FILE_INFO
 
 /// @addtogroup poly
 /// @{
@@ -26,28 +21,25 @@ MTX_DEFINE_FILE_INFO
 /// @code
 /// Poly_t *pol, *der;
 /// ...
-/// der = PolDerive(PolDup(pol));
+/// der = polDerive(polDup(pol));
 /// @endcode
 /// @param pol Pointer to the polynomial.
 /// @return @em pol.
 
-Poly_t *PolDerive(Poly_t *pol)
+Poly_t *polDerive(Poly_t *pol)
 {
    int i, maxdeg = -1;
    register FEL *buf;
    FEL f = FF_ZERO;
 
    // check argument
-   if (!PolIsValid(pol)) {
-      MTX_ERROR1("%E",MTX_ERR_BADARG);
-      return NULL;
-   }
+   polValidate(MTX_HERE, pol);
 
    buf = pol->Data;
-   FfSetField(pol->Field);
+   ffSetField(pol->Field);
    for (i = 0; i < pol->Degree; ++i) {
-      f = FfAdd(f,FF_ONE);
-      buf[i] = FfMul(buf[i + 1],f);
+      f = ffAdd(f,FF_ONE);
+      buf[i] = ffMul(buf[i + 1],f);
       if (buf[i] != FF_ZERO) {
          maxdeg = i;
       }
@@ -58,3 +50,4 @@ Poly_t *PolDerive(Poly_t *pol)
 
 
 /// @}
+// vim:fileencoding=utf8:sw=3:ts=8:et:cin

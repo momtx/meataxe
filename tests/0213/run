@@ -1,14 +1,19 @@
-# Decomposition
+echo "0213 - Endomorphisms of m11 (dim = 112)"
 
 . ../tests/common.sh
 
-
-cp ../tests/data/m11.1 tmp.$$.m11.1
-cp ../tests/data/m11.2 tmp.$$.m11.2
+cp "${MTX_TEST_DATA_DIR}/m11.1" tmp.$$.m11.1
+cp "${MTX_TEST_DATA_DIR}/m11.2" tmp.$$.m11.2
 chop -Q -g 2 tmp.$$.m11 || error "CHOP failed"
 pwkond -Qt tmp.$$.m11 || error "PWKOND failed"
 mkhom -Qts tmp.$$.m11 tmp.$$.m11 tmp.$$.end ||  error "MKHOM failed"
 if [ ! -r tmp.$$.end.4 -o -r tmp.$$.end.5 ]; then error "Wrong number of endomorphisms"; fi
+
+compareBinaryWithReference end.1
+compareBinaryWithReference end.2
+compareBinaryWithReference end.3
+compareBinaryWithReference end.4
+
 for g in 1 2; do
    for e in 1 2 3 4; do
        zmu tmp.$$.m11.std.$g tmp.$$.end.$e tmp.$$.a

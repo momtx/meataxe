@@ -1,34 +1,24 @@
-# Test soc (A5 regular module)
+echo "0212 - soc (A5 regular GF(2)-module)"
 
 . ../tests/common.sh
 
-cp ../tests/data/a5reg.1 tmp.$$.a5reg.1
-cp ../tests/data/a5reg.2 tmp.$$.a5reg.2
+cp "${MTX_TEST_DATA_DIR}/a5reg.1" tmp.$$.a5reg.1
+cp "${MTX_TEST_DATA_DIR}/a5reg.2" tmp.$$.a5reg.2
 chop -Q -g 2 tmp.$$.a5reg || error "CHOP failed"
 pwkond -Qt tmp.$$.a5reg || error "PWKOND failed"
 mkhom -Q -l tmp.$$.a5reg tmp.$$.a5reg tmp.$$.end ||  error "MKHOM failed"
 
-chop -Qi tmp.$$.end.lrr  || error "CHOP failed"    
+chop -Q -i tmp.$$.end.lrr  || error "CHOP failed"    
 pwkond -Qt tmp.$$.end.lrr  || error "PWKOND failed"    
 soc -Q -l 1 tmp.$$.end.lrr  || error "SOC failed"    
 decomp -Q -a tmp.$$.a5reg tmp.$$.end || error "decomp failed"    
 
-checksum tmp.$$.end.lrr.cfinfo 507.712879925
-checksum tmp.$$.a5reg.comp12a1.1 36.4289437673
-checksum tmp.$$.a5reg.comp12a1.2 36.2290504175
-checksum tmp.$$.a5reg.comp16a1.1 44.3256391980
-checksum tmp.$$.a5reg.comp16a1.2 44.2032778887
-checksum tmp.$$.a5reg.comp16a2.1 44.2288145160
-checksum tmp.$$.a5reg.comp16a2.2 44.4237690308
-checksum tmp.$$.a5reg.comp4a1.1 16.4076977373
-checksum tmp.$$.a5reg.comp4a1.2 16.3232049052
-checksum tmp.$$.a5reg.comp4a2.1 16.4076977373
-checksum tmp.$$.a5reg.comp4a2.2 16.3232049052
-checksum tmp.$$.a5reg.comp4a3.1 16.4076977373
-checksum tmp.$$.a5reg.comp4a3.2 16.3232049052
-checksum tmp.$$.a5reg.comp4a4.1 16.4076977373
-checksum tmp.$$.a5reg.comp4a4.2 16.3232049052
+cmp tmp.$$.a5reg.cfinfo "${MTX_TESTCASE_DIR}/a5reg.cfinfo.expected"
+cmp tmp.$$.end.lrr.cfinfo "${MTX_TESTCASE_DIR}/end.lrr.cfinfo.expected"
+
+compareBinaryWithReference end.gens.1
+compareBinaryWithReference end.gens.2
+compareBinaryWithReference end.gens.3
 
 # Clean up
-# --------
 rm -f tmp.$$.*

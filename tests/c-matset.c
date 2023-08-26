@@ -1,13 +1,9 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // C MeatAxe - Test functions for matrix sets.
-//
-// (C) Copyright 1998-2015 Michael Ringe, Lehrstuhl D fuer Mathematik, RWTH Aachen
-//
-// This program is free software; see the file COPYING for details.
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 #include "meataxe.h"
-#include "check.h"
+#include "testing.h"
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -15,60 +11,55 @@
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static void TestMsClean1(MatrixSet_t *set)
+TstResult MatrixSet_Clean(int q)
 {
-   Matrix_t *zero;
-   const int nor = 5;
-   const int noc = 4;
-   int i;
+    MatrixSet_t *set;
+    set = msAlloc();
 
-   for (i = 0; i < nor * noc; ++i) {
-      int k;
-      Matrix_t *m = MatAlloc(FfOrder,nor,noc);
-      for (k = 0; k <= i; ++k) {
-         FfInsert(MatGetPtr(m,k / noc),k % noc,FTab[k % (FfOrder - 1) + 1]);
-      }
-      ASSERT_EQ_INT(MsCleanAndAppend(set,m), 0);
-   }
+    Matrix_t *zero;
+    const int nor = 5;
+    const int noc = 4;
+    int i;
 
-   zero = MatAlloc(FfOrder,nor,noc);
-   for (i = 0; i < nor * noc; ++i) {
-      Matrix_t *m = RndMat(FfOrder,nor,noc);
-      MsClean(set,m);
-      ASSERT_EQ_INT(MatCompare(m,zero), 0);
-      MatFree(m);
-   }
-   MatFree(zero);
+    for (i = 0; i < nor * noc; ++i) {
+	int k;
+	Matrix_t *m = matAlloc(ffOrder,nor,noc);
+	for (k = 0; k <= i; ++k) {
+	    ffInsert(matGetPtr(m,k / noc),k % noc,FTab[k % (ffOrder - 1) + 1]);
+	}
+	ASSERT_EQ_INT(msCleanAndAppend(set,m), 0);
+    }
+
+    zero = matAlloc(ffOrder,nor,noc);
+    for (i = 0; i < nor * noc; ++i) {
+	Matrix_t *m = RndMat(ffOrder,nor,noc);
+	msClean(set,m);
+	ASSERT_EQ_INT(matCompare(m,zero), 0);
+	matFree(m);
+    }
+    matFree(zero);
+
+    msFree(set);
+    return 0;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-test_F MatrixSetClean()
+TstResult MatrixSet_Allocation(int q)
 {
-   while (NextField() > 0) {
-      MatrixSet_t *set;
-      set = MsAlloc();
-      TestMsClean1(set);
-      MsFree(set);
-   }
+    Matrix_t *m1, *m2;
+    unsigned long magic;
+    MatrixSet_t *set = msAlloc();
+    ASSERT(set != NULL);
+    m1 = RndMat(ffOrder,10,20);
+    m2 = RndMat(ffOrder,10,20);
+    magic = m1->Magic;
+    ASSERT(msCleanAndAppend(set,m1) == 0);
+    ASSERT(msCleanAndAppend(set,m2) == 0);
+    ASSERT(msFree(set) == 0);
+    ASSERT(m1->Magic != magic);
+    ASSERT(m2->Magic != magic);
+    return 0;
 }
 
-////////////////////////////////////////////////////////////////////////////////////////////////////
-
-test_F MatrixSetAllocation()
-{
-   while (NextField() > 0) {
-      Matrix_t *m1, *m2;
-      unsigned long magic;
-      MatrixSet_t *set = MsAlloc();
-      ASSERT(set != NULL);
-      m1 = RndMat(FfOrder,10,20);
-      m2 = RndMat(FfOrder,10,20);
-      magic = m1->Magic;
-      ASSERT(MsCleanAndAppend(set,m1) == 0);
-      ASSERT(MsCleanAndAppend(set,m2) == 0);
-      ASSERT(MsFree(set) == 0);
-      ASSERT(m1->Magic != magic);
-      ASSERT(m2->Magic != magic);
-   }
-}
+// vim:fileencoding=utf8:sw=3:ts=8:et:cin

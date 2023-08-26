@@ -1,19 +1,14 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // C MeatAxe - Matrix set core functions
-//
-// (C) Copyright 1998-2015 Michael Ringe, Lehrstuhl D fuer Mathematik, RWTH Aachen
-//
-// This program is free software; see the file COPYING for details.
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#include <meataxe.h>
+#include "meataxe.h"
 #include <string.h>
 
    
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // Local data
 
-MTX_DEFINE_FILE_INFO
 #define MS_MAGIC 0x6263659B
    
 
@@ -33,16 +28,16 @@ MTX_DEFINE_FILE_INFO
 ///
 /// There is only one way to create a matrix set: the application first
 /// allocates a MatrixSet_t structure, and then adds matrices to the 
-/// set with MsCleanAndAppend(). The latter function guarantees that
+/// set with msCleanAndAppend(). The latter function guarantees that
 /// the matrix set remains linearly independent --- it will not add a 
 /// matrix which is already in the span of the set.
-/// A second function, MsClean(), can be used to determine if a
+/// A second function, msClean(), can be used to determine if a
 /// matrix is in the span of a matrix set without modifying the set.
 ///
 /// Once a matrix has been added to a matrix set, the set takes the
 /// ownership of that matrix. The application must not modify of free 
 /// a matrix after it has een added to a matrix set. When the matrix 
-/// set is freed with MsFree(), all matrices in  the set are freed, 
+/// set is freed with msFree(), all matrices in  the set are freed, 
 /// too.
 
 
@@ -55,7 +50,7 @@ MTX_DEFINE_FILE_INFO
 /// @param set Pointer to the matrix set.
 /// @return 1 if @a set points to a valid matrix set, 0 otherwise.
 
-int MsIsValid(const MatrixSet_t *set)
+int msIsValid(const MatrixSet_t *set)
 {
 #ifdef PARANOID
     int i;
@@ -65,26 +60,26 @@ int MsIsValid(const MatrixSet_t *set)
 
     if (set == NULL || set->Magic != MS_MAGIC)
     {
-	MTX_ERROR1("Invalid matrix set at 0x%lx",(long) set);
+	mtxAbort(MTX_HERE,"Invalid matrix set at 0x%lx",(long) set);
 	return 0;
     }
     if (set->Len < 0)
     {
-	MTX_ERROR1("Invalid matrix set: len=%d",set->Len);
+	mtxAbort(MTX_HERE,"Invalid matrix set: len=%d",set->Len);
 	return 0;
     }
     if (set->Len > 0 && set->List == NULL)
     {
-	MTX_ERROR("Invalid matrix set: list=NULL");
+	mtxAbort(MTX_HERE,"Invalid matrix set: list=NULL");
 	return 0;
     }
 
 #ifdef PARANOID
     for (i = 0, l = set->List; i < set->Len; ++i, ++l)
     {
-	if (!MatIsValid(l->Matrix))
+	if (!matValidate(MTX_HERE, l->Matrix))
 	{
-	    MTX_ERROR1("Matrix %d is invalid",i);
+	    mtxAbort(MTX_HERE,"Matrix %d is invalid",i);
 	    return 0;
 	}
 	if (i == 0)
@@ -96,18 +91,18 @@ int MsIsValid(const MatrixSet_t *set)
 	else if (field != l->Matrix->Field ||
 	    nor != l->Matrix->Nor || noc != l->Matrix->Noc)
 	{
-	    MTX_ERROR3("Invalid matrix set: Matrix %d and %d: %E",
+	    mtxAbort(MTX_HERE,"Invalid matrix set: Matrix %d and %d: %s",
 		i,i-1,MTX_ERR_INCOMPAT);
 	    return 0;
 	}
 	if (l->PivRow < 0 || l->PivRow >= nor)
 	{
-	    MTX_ERROR2("Invalid pivot row %d, nor=%d",l->PivRow,nor);
+	    mtxAbort(MTX_HERE,"Invalid pivot row %d, nor=%d",l->PivRow,nor);
 	    return 0;
 	}
 	if (l->PivCol < 0 || l->PivCol >= noc)
 	{
-	    MTX_ERROR2("Invalid pivot column %d, noc=%d",l->PivRow,noc);
+	    mtxAbort(MTX_HERE,"Invalid pivot column %d, noc=%d",l->PivRow,noc);
 	    return 0;
 	}
     }
@@ -121,17 +116,17 @@ int MsIsValid(const MatrixSet_t *set)
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 /// Allocate a matrix set.
 /// This function allocates a new matrix set. The set is initially empty.
-/// When the set is no longer needed, if must be freed with MsFree().
+/// When the set is no longer needed, if must be freed with msFree().
 /// @return Pointer to the new matrix set, or 0 on error.
 
-MatrixSet_t *MsAlloc()
+MatrixSet_t *msAlloc()
 {
     MatrixSet_t *x;
 
     x = ALLOC(MatrixSet_t);
     if (x == NULL)
     {
-	MTX_ERROR("Cannot allocate matrix set");
+	mtxAbort(MTX_HERE,"Cannot allocate matrix set");
 	return NULL;
     }
     memset(x,0,sizeof(*x));
@@ -148,14 +143,14 @@ MatrixSet_t *MsAlloc()
 /// @param set Pointer to the matrix set.
 /// @return 0 on success, -1 on error.
 
-int MsFree(MatrixSet_t *set)
+int msFree(MatrixSet_t *set)
 {
     int i;
-    if (!MsIsValid(set))
+    if (!msIsValid(set))
 	return -1;
     for (i = 0; i < set->Len; ++i)
-	MatFree(set->List[i].Matrix);
-    SysFree(set->List);
+	matFree(set->List[i].Matrix);
+    sysFree(set->List);
     memset(set,0,sizeof(*set));
     return 0;
 }
@@ -163,3 +158,4 @@ int MsFree(MatrixSet_t *set)
 
 /// @}
 
+// vim:fileencoding=utf8:sw=3:ts=8:et:cin

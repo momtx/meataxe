@@ -1,12 +1,8 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // C MeatAxe - Power of a matrix or permutation.
-//
-// (C) Copyright 1998-2015 Michael Ringe, Lehrstuhl D fuer Mathematik, RWTH Aachen
-//
-// This program is free software; see the file COPYING for details.
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#include <meataxe.h>
+#include "meataxe.h"
 
 #include <ctype.h>
 #include <stdarg.h>
@@ -20,7 +16,6 @@
    Global data
    ------------------------------------------------------------------ */
 
-MTX_DEFINE_FILE_INFO
 
 static int Power;
 
@@ -51,18 +46,18 @@ static MtxApplication_t *App = NULL;
    init() - Process command line options and arguments
    ------------------------------------------------------------------ */
 
-static int Init(int argc, const char **argv)
+static int Init(int argc, char **argv)
 
 {
     /* Process command line options.
        ----------------------------- */
-    App = AppAlloc(&AppInfo,argc,argv);
+    App = appAlloc(&AppInfo,argc,argv);
     if (App == NULL)
 	return -1;
 
     /* Process arguments.
        ------------------ */
-    if (AppGetArguments(App,3,3) < 0)
+    if (appGetArguments(App,3,3) < 0)
 	return -1;
     if (!strncmp(App->ArgV[1],"pwr",3))
         Power = atoi(App->ArgV[1] + 3);		/* ZSM compatibility (pwrN) */
@@ -78,7 +73,7 @@ static int Init(int argc, const char **argv)
 static void Cleanup()
 
 {
-    AppFree(App);
+    appFree(App);
 }
 
 
@@ -109,11 +104,11 @@ static int CalcPower()
    main()
    ------------------------------------------------------------------ */
 
-int main(int argc, const char **argv)
+int main(int argc, char **argv)
 {
     if (Init(argc,argv) != 0)
     {
-	MTX_ERROR("Initialization failed");
+	mtxAbort(MTX_HERE,"Initialization failed");
 	return 1;
     }
     CalcPower();
@@ -158,3 +153,4 @@ zpo matrix pwr69 result
 </pre>
 **/
 
+// vim:fileencoding=utf8:sw=3:ts=8:et:cin

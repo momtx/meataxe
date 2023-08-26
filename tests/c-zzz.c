@@ -1,69 +1,106 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // C MeatAxe - Test the arithmetic module.
-//
-// (C) Copyright 1998-2015 Michael Ringe, Lehrstuhl D fuer Mathematik, RWTH Aachen
-//
-// This program is free software; see the file COPYING for details.
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 #include "meataxe.h"
-#include "check.h"
+#include "testing.h"
 
+#include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
 
 #include <test_table.c>
 
-void test_Fail(const char *file, int line, const char *func, const char *msg, ...)
+
+void tstPrintRows(const char *name, PTR x, int nor, int noc)
+{
+   printf("---\n%s (%dx%d):\n", name, nor, noc);
+   for (int n = nor; n > 0; --n) {
+      for (int col = 0; col < ffNoc; ++col) {
+         printf(" %5d",ffToInt(ffExtract(x,col)));
+      }
+      printf("\n");
+      x = (PTR)((char*) x + ffRowSize(noc));
+   }
+}
+
+
+static const char* tstCurrent = "";
+static int tstFailCalled = 0;
+static int tstMessageThreshold = 0;
+
+
+static void tstVprintf(int level, const char *msg, va_list args)
+{
+   if (level <= tstMessageThreshold)
+      vfprintf(stdout, msg, args);
+}
+
+MTX_PRINTF_ATTRIBUTE(2,3)
+static void tstPrintf(int level, const char *msg, ...)
+{
+   va_list args;
+   va_start(args, msg);
+   tstVprintf(level, msg, args);
+   va_end(args);
+}
+
+
+void tstFail(const char *file, int line, const char *func, const char *msg, ...)
 {
     va_list args;
     va_start(args, msg);
-    fprintf(stderr, "%s:%d:: error: TEST FAILED: %s\n", file, line, func);
-    vfprintf(stderr, msg, args);
-    fprintf(stderr, "\n");
-    exit(1);
+    if (strcmp(tstCurrent, func) == 0) {
+       tstPrintf(-1,"%s:%d:: error: TEST FAILED: %s\n", file, line, tstCurrent);
+    } else {
+       tstPrintf(-1,"%s:%d:: error: TEST FAILED: %s (%s)\n", file, line, tstCurrent, func);
+    }
+    tstVprintf(-1,msg, args);
+    tstPrintf(-1,"\n");
+    tstFailCalled = 1;
 }
 
-void test_AssertF(const char *file, int line, const char *func, int e, const char *estr,
-	          const char *msg, ...)
+int tstAssert(const char *file, int line, const char *func, int e, const char *estr)
 {
-   if (e) return;
-   fprintf(stderr, "%s:%d:: error: TEST FAILED: %s\n", file, line, func);
-   fprintf(stderr, "assertion failed: %s\n", estr);
-   va_list args;
-   va_start(args, msg);
-   vfprintf(stderr, msg, args);
-   fprintf(stderr, "\n");
-   exit(1);
+   if (e) return 0;
+   tstFail(file, line, func, "assertion failed: %s", estr);
+   return 1;
 }
 
-void test_Assert(const char *file, int line, const char *func, int e, const char *estr)
-{
-   if (e) return;
-   test_Fail(file, line, func, "assertion failed: %s", estr);
-}
-
-void test_EqInt(const char *file, int line, const char *func, int act, int exp,
+int tstAssertEqInt(const char *file, int line, const char *func, int act, int exp,
 	        const char *actstr, const char *expstr)
 {
-   if (act == exp) return;  
-   test_Fail(file, line, func, "value of %s:\nactual:   %d\nexpected: %d (%s)\n",
+   if (act == exp) return 0;  
+   tstFail(file, line, func, "value of %s:\nactual:   %d\nexpected: %d (%s)\n",
 	     actstr, act, exp, expstr);
+   return 1;
 }
 
-static int Fields[] = {2,3,4,5,16,67,125,256,-1};
-static int NextFieldIndex = 0;
+static const int DEFAULT_FIELDS[] = {2,3,4,5,16,67,125,256,
+#if MTXZZZ == 1
+    59049, // = 3 ^ 10
+#endif
+    -1};
+
+static const int* SelectedFields = DEFAULT_FIELDS;
+static const int* CurrentField = NULL;
+static int defaultField = 243;
+
+
+
 FEL *FTab = NULL;
 static MtxApplicationInfo_t AppInfo = {
    "mtxtest", "MeatAxe Library test program",
    "SYNTAX\n"
-   "    mtxtest " MTX_COMMON_OPTIONS_SYNTAX " [-t <Field>] [<TestSpec>]\n"
+   "    mtxtest " MTX_COMMON_OPTIONS_SYNTAX " [-l] [-t <Field>] [-f <Field>] [<TestSpec>]\n"
    "\n"
    "ARGUMENTS\n"
    "    <TestSpec> .............. Test(s) to be run (shell-style pattern)\n"
    "\n"
    "OPTIONS\n"
-   "    -t <Field> .............. Print tables for GF(<Field>)\n"
+   "    -t, --print-tables ...... Print tables for GF(<Field>)\n"
+   "    -f, --field ............. Execute tests only for a single field.\n"
+   "    -l, --list-tests ........ List all avaliable tests and exit\n"
    MTX_COMMON_OPTIONS_DESCRIPTION
 };
 
@@ -74,43 +111,90 @@ static MtxApplicationInfo_t AppInfo = {
 
 void MakeFTab()
 {
-   int i;
-
-   if (FTab != NULL) {
-      free(FTab);
-   }
-   FTab = NALLOC(FEL,FfOrder);
-   for (i = 0; i < FfOrder; ++i) {
-      FTab[i] = FfFromInt(i);
-      ASSERT2(ISFEL(FTab[i]),"FfFromInt(%d)=%d, illegal value",i,FTab[i]);
+   free(FTab);
+   FTab = NALLOC(FEL, ffOrder);
+   for (int i = 0; i < ffOrder; ++i) {
+      FTab[i] = ffFromInt(i);
    }
 }
 
 
-/* --------------------------------------------------------------------------
-   NextField() - Set the next field
-   -------------------------------------------------------------------------- */
-
-int NextField()
-{
-   int f = Fields[NextFieldIndex];
-   if (f > 0) {
-      ++NextFieldIndex;
-      FfSetField(f);
-      MakeFTab();
-   }
-   return f;
-}
-
-
-/* --------------------------------------------------------------------------
-   SelectField() - Set a specific field
-   -------------------------------------------------------------------------- */
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void SelectField(int f)
 {
-   FfSetField(f);
+   ffSetField(f);
    MakeFTab();
+   RngReset();
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+int NextField()
+{
+   if (CurrentField == NULL)
+      CurrentField = SelectedFields;
+   else if (*CurrentField != -1)
+      ++CurrentField;
+   if (*CurrentField == -1)
+      return 0;
+   SelectField(*CurrentField);
+   ffSetField(*CurrentField);
+   MakeFTab();
+   return 1;
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+static void UseFixedField(int field)
+{
+   static int fixedField[2];
+   fixedField[0] = field;
+   fixedField[1] = -1;
+   ffSetNoc(field);
+   SelectedFields = fixedField;
+   defaultField = field;
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+static uint32_t rng = 0;
+void RngReset()
+{
+    rng = 0;
+}
+
+static uint32_t RngNext()
+{
+    rng = rng * 69069U + 107U;
+    return rng;
+}
+
+FEL RandomFieldElement()
+{
+    return FTab[RngNext() % ffOrder];
+}
+
+FEL RandomNonzeroFieldElement()
+{
+    while (1) {
+	FEL x = FTab[RngNext() % ffOrder];
+	if (x != FF_ZERO)
+	    return x;
+    }
+}
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void ForEachField(const char *testName, void (*testFunction)())
+{
+   for (const int *optr = SelectedFields; *optr > 0; ++optr) {
+      printf("+ %s - GF(%d)\n", testName, *optr);
+      SelectField(*optr);
+      RngReset();
+      testFunction();
+   }
 }
 
 
@@ -125,16 +209,16 @@ Matrix_t *MkMat(int nor, int noc, ...)
    va_list al;
    va_start(al,noc);
 
-   m = MatAlloc(FfOrder,nor,noc);
+   m = matAlloc(ffOrder,nor,noc);
    for (i = 0; i < nor; ++i) {
-      PTR x = MatGetPtr(m,i);
+      PTR x = matGetPtr(m,i);
       int k;
       for (k = 0; k < noc; ++k) {
          int a = va_arg(al,int);
          if (a >= 0) {
-            FfInsert(x,k,FTab[a % FfChar]);
+            ffInsert(x,k,FTab[a % ffChar]);
          } else {
-            FfInsert(x,k,FfNeg(FTab[-a % FfChar]));
+            ffInsert(x,k,ffNeg(FTab[-a % ffChar]));
          }
       }
    }
@@ -152,29 +236,32 @@ static int prtables(int field)
 {
    int a, b;
 
-   FfSetField(field);
-   printf(" + ");
-   for (a = 0; a < FfOrder; ++a) {
-      printf("%3d", a);
+   int width = field <= 256 ? 3 : 6;
+
+   ffSetField(field);
+   printf("%*s + ", width - 3, "");
+   for (a = 0; a < ffOrder; ++a) {
+      printf("%*d", width, a);
    }
    printf("\n");
-   for (a = 0; a < FfOrder; ++a) {
-      printf("%3d",a);
-      for (b = 0; b < FfOrder; ++b) {
-         printf("%3d",FfToInt(FfAdd(FfFromInt(a),FfFromInt(b))));
+   for (a = 0; a < ffOrder; ++a) {
+      printf("%*d", width,a);
+      for (b = 0; b < ffOrder; ++b) {
+         printf("%*d", width,ffToInt(ffAdd(ffFromInt(a),ffFromInt(b))));
       }
       printf("\n");
    }
 
-   printf("\n * ");
-   for (a = 0; a < FfOrder; ++a) {
-      printf("%3d", a);
+   printf("\n");
+   printf("%*s * ", width - 3, "");
+   for (a = 0; a < ffOrder; ++a) {
+      printf("%*d", width, a);
    }
    printf("\n");
-   for (a = 0; a < FfOrder; ++a) {
-      printf("%3d",a);
-      for (b = 0; b < FfOrder; ++b) {
-         printf("%3d",FfToInt(FfMul(FfFromInt(a),FfFromInt(b))));
+   for (a = 0; a < ffOrder; ++a) {
+      printf("%*d", width,a);
+      for (b = 0; b < ffOrder; ++b) {
+         printf("%*d",width, ffToInt(ffMul(ffFromInt(a),ffFromInt(b))));
       }
       printf("\n");
    }
@@ -184,59 +271,38 @@ static int prtables(int field)
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static int TstErrorHandlerActive = 0;
-static int TstErrorCode = 0;
+struct TstAbortState tstAbortState = {0};
 
-////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static void TstErrorHandler(const MtxErrorRecord_t *err)
+static void CatchAbortHandler(const struct MtxErrorInfo *err)
 {
-   TstErrorCode = (err != NULL) ? 1 : 0;
-}
-
-////////////////////////////////////////////////////////////////////////////////////////////////////
-
-void TstClearError()
-{
-   TstErrorCode = 0;
-}
-
-////////////////////////////////////////////////////////////////////////////////////////////////////
-
-void TstStartErrorChecking()
-{
-   if (TstErrorHandlerActive) {
-       TST_FAIL("TstStartErrorChecking(): already started");
+   if (tstAbortState.enabled) {
+      longjmp(tstAbortState.jumpTarget, 112);
    }
-   if (MtxSetErrorHandler(TstErrorHandler)) {
-       TST_FAIL("TstStartErrorChecking(): other handler is set");
-   }
-   TstErrorHandlerActive = 1;
-   TstClearError();
+   tstFail(__FILE__, __LINE__, __func__, "UNEXPECTED ABORT\nabort reason: %s\nCANNOT CONTINUE TESTS, EXITING",
+         err->message);
+   exit(2);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void TstStopErrorChecking()
+void tstPrepareCatchAbort(const char *file, int line, const char *func, const char *estr)
 {
-   if (TstErrorHandlerActive) {
-      TstClearError();
-      MtxSetErrorHandler(NULL);
-      TstErrorHandlerActive = 0;
-   }
+   tstAbortState.file = file;
+   tstAbortState.line = line;
+   tstAbortState.func = func;
+   tstAbortState.expr = estr;
+   tstAbortState.enabled = 1;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-/// Returns and clears the error status.
-
-int TstHasError()
+void tstMissingAbort()
 {
-   const int ec = TstErrorCode;
-   TstErrorCode = 0;
-   return ec != 0;
+   tstAbortState.enabled = 0;
+   tstFail(tstAbortState.file, tstAbortState.line, tstAbortState.func,
+         "Did not abort as expected\nexpr: %s", tstAbortState.expr);
 }
-
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -274,37 +340,135 @@ static int testSelected(const char *name, int nsel, const char * const *sel)
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-int main(int argc, const char **argv)
+typedef TstResult (*SimpleTestFunction)(void);
+typedef TstResult (*FieldDependentTestFunction)(int q);
+
+static int executeTest(const struct TstFoundTest* test, int field)
+{
+   mtxRandomInit(52134);
+   TstResult result = 0;
+   tstFailCalled = 0;
+
+   MtxSetErrorHandler(CatchAbortHandler);
+   tstAbortState.enabled = 0;
+   tstCurrent = test->name;
+
+   if (field > 0) {
+      tstPrintf(0,"+ %s - GF(%d)\n", test->name, field);
+      SelectField(field);
+      FieldDependentTestFunction tf = (FieldDependentTestFunction) test->f;
+      result = tf(field);
+   } else {
+      tstPrintf(0,"+ %s\n", test->name);
+      SelectField(defaultField);
+      SimpleTestFunction tf = (SimpleTestFunction) test->f;
+      result = tf();
+   }
+   if (result != 0 && !tstFailCalled)
+      tstFail(__FILE__, __LINE__, __func__, "Test failed with no error message");
+   return result;
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+static void listTests(int nsel, const char* const* sel)
+{
+   for (struct TstFoundTest* t = foundTests; t->f != NULL; ++t) {
+      if (!testSelected(t->name, nsel, sel)) continue;
+      printf("%s%s\n", t->name, (t->flags & TST_FLAG_PER_FIELD) ? "(q)" : "");
+   }
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+static int cmpTests(const void* a, const void* b)
+{
+   const struct TstFoundTest* ta = (const struct TstFoundTest*)a;
+   const struct TstFoundTest* tb = (const struct TstFoundTest*)b;
+   return strcmp(ta->name, tb->name);
+}
+
+static void sortTests()
+{
+   qsort(foundTests, sizeof(foundTests) / sizeof(foundTests[0]) - 1,
+         sizeof(foundTests[0]), cmpTests);
+}
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+int main(int argc, char **argv)
 {
    MtxApplication_t *app;
-   int i;
-   int field;
 
-   if ((app = AppAlloc(&AppInfo,argc,argv)) == NULL) {
+   if ((app = appAlloc(&AppInfo,argc,argv)) == NULL) {
       return -1;
    }
-   field = AppGetIntOption(app,"-t --print-tables",-1,2,256);
+   #if MTXZZZ == 1
+   static const int MTX_MAX_Q = 65535;
+   #elif MTXZZZ == 0
+   static const int MTX_MAX_Q = 256;
+   #else
+   #error MTXZZZ undefined
+   #endif
+
+   int field = appGetIntOption(app,"-t --print-tables",-1, 2, MTX_MAX_Q);
    if (field > 0) {
       prtables(field);
       exit(0);
    }
 
-   printf("MeatAxe Version %s\n",MtxVersion);
-   const int nsel = AppGetArguments(app,0,1000);
-   const char * const * const sel = app->ArgV;
-   for( i = 0; i < sizeof(test_AllTests)/sizeof(test_AllTests[0]); ++i) {
-       const test_Definition * const td = test_AllTests + i;
-       if (!testSelected(td->name, nsel, sel)) continue;
-       printf("+ %s\n", td->name);
-       fflush(stdout);
-       MtxRandomInit(52134);
-       test_AllTests[i].f();
-       if (TstHasError()) {
-          test_Fail(td->file,td->line,td->name,"Uncaught error");
-       }
-       TstStopErrorChecking();
-       NextFieldIndex = 0;
+   if ((field = appGetIntOption(app,"-f --field",-1, 2, MTX_MAX_Q)) >= 0) {
+      UseFixedField(field);
    }
-   printf("All tests passed\n");
-   return 0;
+   const int listOnly = appGetOption(app,"-l --list-tests" );
+   tstMessageThreshold = MtxMessageLevel;
+   MtxMessageLevel = 0;
+
+   const int nsel = appGetArguments(app,0,1000);
+   const char * const * const sel = (const char* const*)app->ArgV;
+
+   sortTests();
+
+   if (listOnly) {
+      listTests(nsel, sel);
+      return 0;
+   }
+   
+   tstPrintf(0,"MeatAxe Version %s\n",MtxVersion);
+
+   int nAvailable = 0;
+   int nSelected = 0;
+   int nFailed = 0;
+
+   // Execute field-dependent tests
+   for (const int* currentField = SelectedFields; *currentField > 1; ++currentField) {
+      for (const struct TstFoundTest* t = foundTests; t->f != NULL; ++t) {
+         if ((t->flags & TST_FLAG_PER_FIELD) == 0) continue;
+         ++nAvailable;
+         if (!testSelected(t->name, nsel, sel)) continue;
+         ++nSelected;
+         if (executeTest(t, *currentField) != 0)
+            ++nFailed;
+      }
+   }
+
+   // Execute field-independent tests
+   for (struct TstFoundTest* t = foundTests; t->f != NULL; ++t) {
+      if ((t->flags & TST_FLAG_PER_FIELD) != 0) continue;
+      ++nAvailable;
+      if (!testSelected(t->name, nsel, sel)) continue;
+      ++nSelected;
+      if (executeTest(t, -1) != 0)
+         ++nFailed;
+   }
+   
+   tstPrintf(-2,"\nTest results: %d total, %d selected", nAvailable, nSelected);
+   if (nFailed == 0)
+      tstPrintf(-2, " -- no failures\n");
+   else
+      tstPrintf(-2, ", %d FAILED\n", nFailed);
+   return nFailed > 0 ? 1 : 0;
 }
+
+// vim:fileencoding=utf8:sw=3:ts=8:et:cin

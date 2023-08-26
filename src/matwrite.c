@@ -1,18 +1,13 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // C MeatAxe - Write a matrix into a file
-//
-// (C) Copyright 1998-2015 Michael Ringe, Lehrstuhl D fuer Mathematik, RWTH Aachen
-//
-// This program is free software; see the file COPYING for details.
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#include <meataxe.h>
+#include "meataxe.h"
 #include <stdlib.h>
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // Local data
 
-MTX_DEFINE_FILE_INFO
 
 /// @addtogroup mat
 /// @{
@@ -24,24 +19,22 @@ MTX_DEFINE_FILE_INFO
 /// @param f Pointer to the file.
 /// @return 0 on success, -1 on error.
 
-int MatWrite(const Matrix_t *mat, FILE *f)
+int matWrite(const Matrix_t *mat, FILE *f)
 {
    long hdr[3];
 
-   if (!MatIsValid(mat)) {
-      return -1;
-   }
+   matValidate(MTX_HERE, mat);
    hdr[0] = mat->Field;
    hdr[1] = mat->Nor;
    hdr[2] = mat->Noc;
-   if (SysWriteLong(f,hdr,3) != 3) {
-      MTX_ERROR("Cannot write header");
+   if (sysWriteLong32(f,hdr,3) != 3) {
+      mtxAbort(MTX_HERE,"Cannot write header");
       return -1;
    }
-   FfSetField(mat->Field);
-   FfSetNoc(mat->Noc);
-   if (FfWriteRows(f,mat->Data,mat->Nor) != mat->Nor) {
-      MTX_ERROR("Cannot write rows");
+   ffSetField(mat->Field);
+   ffSetNoc(mat->Noc);
+   if (ffWriteRows(f,mat->Data,mat->Nor, mat->Noc) != mat->Nor) {
+      mtxAbort(MTX_HERE,"Cannot write rows");
       return -1;
    }
    return 0;
@@ -53,25 +46,23 @@ int MatWrite(const Matrix_t *mat, FILE *f)
 /// This function opens a file, writes a matrix to the file, and closes the
 /// file. If a file with the specified name already exists, the old contents
 /// of the file are destroyd.
-/// To write more than one matrix to a file, use MatWrite().
+/// To write more than one matrix to a file, use matWrite().
 /// @param mat Pointer to the matrix.
 /// @param fn File name.
 /// @return 0 on success, -1 on error.
 
-int MatSave(const Matrix_t *mat, const char *fn)
+int matSave(const Matrix_t *mat, const char *fn)
 {
-   if (!MatIsValid(mat)) {
-      return -1;
-   }
+   matValidate(MTX_HERE, mat);
    FILE *f;
-   if ((f = SysFopen(fn,FM_CREATE)) == NULL) {
-      MTX_ERROR1("Cannot open %s: %S",fn);
+   if ((f = sysFopen(fn,"wb")) == NULL) {
+      mtxAbort(MTX_HERE,"Cannot open %s: %S",fn);
       return -1;
    }
-   const int i = MatWrite(mat,f);
+   const int i = matWrite(mat,f);
    fclose(f);
    if (i != 0) {
-      MTX_ERROR1("Cannot write matrix to %s",fn);
+      mtxAbort(MTX_HERE,"Cannot write matrix to %s",fn);
       return -1;
    }
    return 0;
@@ -79,3 +70,4 @@ int MatSave(const Matrix_t *mat, const char *fn)
 
 
 /// @}
+// vim:fileencoding=utf8:sw=3:ts=8:et:cin

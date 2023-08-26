@@ -1,12 +1,8 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // C MeatAxe - Functions for reading and writing the .cfinfo file
-//
-// (C) Copyright 1998-2014 Michael Ringe, Lehrstuhl D fuer Mathematik, RWTH Aachen
-//
-// This program is free software; see the file COPYING for details.
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#include <meataxe.h>
+#include "meataxe.h"
 
 #include <string.h>
 #include <stdlib.h>
@@ -15,7 +11,6 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 /// Local data
 
-MTX_DEFINE_FILE_INFO
 
 
 /// @defgroup cfinfo Module Structure
@@ -46,25 +41,25 @@ static void WriteWord(StfData *f, long w, Poly_t *p)
 {
     int i;
 
-    StfPut(f,"[");
-    StfPutInt(f,w);
-    StfPut(f,",");
-    StfPutInt(f,FfOrder);
+    stfPut(f,"[");
+    stfPutInt(f,w);
+    stfPut(f,",");
+    stfPutInt(f,ffOrder);
     if (p == NULL)
     {
-	StfPut(f,",-1");
+	stfPut(f,",-1");
     }
     else
     {
-	StfPut(f,",");
-	StfPutInt(f,p->Degree);
+	stfPut(f,",");
+	stfPutInt(f,p->Degree);
 	for (i = 0; i <= p->Degree; ++i)
 	{
-	    StfPut(f,",");
-	    StfPutInt(f,FfToInt(p->Data[i]));
+	    stfPut(f,",");
+	    stfPutInt(f,ffToInt(p->Data[i]));
 	}
     }
-    StfPut(f,"]");
+    stfPut(f,"]");
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -76,40 +71,40 @@ static int ReadWord(StfData *f, long *w, Poly_t **p, const char *fn)
     int fl, deg;  
     int i;
 
-    if (StfMatch(f," [")) {
-	MTX_ERROR1("%s: missing '['",fn);
+    if (stfMatch(f," [")) {
+	mtxAbort(MTX_HERE,"%s: missing '['",fn);
 	return -1;
     }
-    StfGetInt(f,&i);
+    stfGetInt(f,&i);
     *w = i;
-    if (StfMatch(f,",")) {
-	MTX_ERROR1("%s: missing ','",fn);
+    if (stfMatch(f,",")) {
+	mtxAbort(MTX_HERE,"%s: missing ','",fn);
 	return -1;
     }
-    StfGetInt(f,&fl);
-    if (StfMatch(f,",")) {
-	MTX_ERROR1("%s: missing ','",fn);
+    stfGetInt(f,&fl);
+    if (stfMatch(f,",")) {
+	mtxAbort(MTX_HERE,"%s: missing ','",fn);
 	return -1;
     }
-    StfGetInt(f,&deg);
+    stfGetInt(f,&deg);
     if (deg == -1) {
 	*p = NULL;
     } else {
-        *p = PolAlloc(fl,deg);
+        *p = polAlloc(fl,deg);
     	for (i = 0; i <= deg; ++i)
     	{
 	    int coeff;
-            if (StfMatch(f,",")) 
+            if (stfMatch(f,",")) 
 	    {
-		MTX_ERROR1("%s: missing ','",fn);
+		mtxAbort(MTX_HERE,"%s: missing ','",fn);
 		return -1;
 	    }
-	    StfGetInt(f,&coeff);
-	    (*p)->Data[i] = FfFromInt(coeff);
+	    stfGetInt(f,&coeff);
+	    (*p)->Data[i] = ffFromInt(coeff);
     	}
     }
-    if (StfMatch(f,"]")) {
-	MTX_ERROR1("%s: missing ']'",fn);
+    if (stfMatch(f,"]")) {
+	mtxAbort(MTX_HERE,"%s: missing ']'",fn);
 	return -1;
     }
     return 0;
@@ -119,78 +114,48 @@ static int ReadWord(StfData *f, long *w, Poly_t **p, const char *fn)
 #define RDVEC(name,fld)\
 	else if (!strcmp(c,name))\
 	{\
-	    if (StfMatch(f," ["))\
-	    { MTX_ERROR("Error in cfinfo file: Missing '['"); return -1; }\
-	    for (i = 0; i < li->NCf; ++i) \
+	    if (stfMatch(f," ["))\
+	    { mtxAbort(MTX_HERE,"Error in cfinfo file: Missing '['"); return -1; }\
+	    for (int i = 0; i < li->NCf; ++i) \
 	    {\
 		int val = 0;\
 		if (i > 0)\
-		    StfMatch(f,",");\
-		StfGetInt(f,&val);\
+		    stfMatch(f,",");\
+		stfGetInt(f,&val);\
 		li->Cf[i].fld = val;\
 	    }\
-	    if (StfMatch(f,"]"))\
-	    { MTX_ERROR("Error in cfinfo file: Missing ']'"); return -1; }\
+	    if (stfMatch(f,"]"))\
+	    { mtxAbort(MTX_HERE,"Error in cfinfo file: Missing ']'"); return -1; }\
 	}
 
-////////////////////////////////////////////////////////////////////////////////////////////////////
-/// Reads a Lattice Information File.
-/// This funktion reads a .cfinfo file and stores the data into a Lat_Info structure.
-/// @param li Pointer to the data structure.
-/// @param basename Base name (without the trailing ".cfinfo").
-/// @return 0 on success, -1 on error.
 
-int Lat_ReadInfo(Lat_Info *li, const char *basename)
+static int readCfFile(StfData* f, const char* fn, Lat_Info* li)
 {
-    int i;
-    StfData *f;
-    char fn[LAT_MAXBASENAME + 20];
-
-    /* Check arguments
-       --------------- */
-    MTX_VERIFY(li != NULL);
-    MTX_VERIFY(basename != NULL);
-    MTX_VERIFY(strlen(basename) < LAT_MAXBASENAME - 1);
-
-    /* Initialize the data structure
-       ----------------------------- */
-    memset(li,0,sizeof(Lat_Info));
-    strcpy(li->BaseName,basename);
-    li->NGen = 2;
-
-    /* Open the file
-       ------------- */
-    sprintf(fn,"%s.cfinfo",basename);
-    if ((f = StfOpen(fn,FM_READ)) == NULL)
-    {
-	MTX_ERROR1("Cannot open %s",fn);
-	return -1;
-    }
 
     /* Read header
        ----------- */
-    if (StfReadLine(f) || strcmp(StfGetName(f),"CFInfo"))
+    if (stfReadLine(f) || strcmp(stfGetName(f),"CFInfo"))
     {
-	MTX_ERROR2("%s: %E",fn,MTX_ERR_FILEFMT);
+	mtxAbort(MTX_HERE,"%s: %s",fn,MTX_ERR_FILEFMT);
 	return -1;
     }
 
     /* Read data
        --------- */
-    while (StfReadLine(f) == 0)
+    while (stfReadLine(f) == 0)
     {
-	const char *c = StfGetName(f);
+	const char *c = stfGetName(f);
 	if (!strcmp(c,"CFInfo.NCF"))
-	    StfGetInt(f,&li->NCf);
+	    stfGetInt(f,&li->NCf);
 	else if (!strcmp(c,"CFInfo.ConstituentNames"))
 	    ;	/* Ignore */
 	else if (!strcmp(c,"CFInfo.Field"))
 	{   
-	    StfGetInt(f,&li->Field);
-	    FfSetField(li->Field);
+	    stfGetInt(f,&li->Field);
+	    ffSetField(li->Field);
 	}
 	else if (!strcmp(c,"CFInfo.NGen"))
-	    StfGetInt(f,&li->NGen);
+	    stfGetInt(f,&li->NGen);
 	RDVEC("CFInfo.Dimension",dim)
 	RDVEC("CFInfo.Number",num)
 	RDVEC("CFInfo.Multiplicity",mult)
@@ -199,38 +164,38 @@ int Lat_ReadInfo(Lat_Info *li, const char *basename)
 	RDVEC("CFInfo.NDottedLines",ndotl)
 	else if (!strcmp(c,"CFInfo.IdWord"))
 	{
-	    if (StfMatch(f," [") != 0) 
+	    if (stfMatch(f," [") != 0) 
 	    {
-		MTX_ERROR1("%s: Missing '['",fn);
+		mtxAbort(MTX_HERE,"%s: Missing '['",fn);
 		return -1;
 	    }
-	    for (i = 0; i < li->NCf; ++i)
+	    for (int i = 0; i < li->NCf; ++i)
 	    {
 		if (ReadWord(f,&(li->Cf[i].idword),&(li->Cf[i].idpol),fn) != 0) {
 		    return -1;
 		}
-		if (StfMatch(f,i < li->NCf - 1 ? "," : "];") != 0)
+		if (stfMatch(f,i < li->NCf - 1 ? "," : "];") != 0)
 		{
-		    MTX_ERROR2("%s: %E",fn,MTX_ERR_FILEFMT);
+		    mtxAbort(MTX_HERE,"%s: %s",fn,MTX_ERR_FILEFMT);
 		    return -1;
 		}
 	    }
 	}
 	else if (!strcmp(c,"CFInfo.PeakWord"))
 	{
-	    if (StfMatch(f," [") != 0) 
+	    if (stfMatch(f," [") != 0) 
 	    {
-		MTX_ERROR2("%s: %E",fn,MTX_ERR_FILEFMT);
+		mtxAbort(MTX_HERE,"%s: %s",fn,MTX_ERR_FILEFMT);
 		return -1;
 	    }
-	    for (i = 0; i < li->NCf; ++i)
+	    for (int i = 0; i < li->NCf; ++i)
 	    {
 		if (ReadWord(f,&(li->Cf[i].peakword),&(li->Cf[i].peakpol),fn) != 0) {
 		    return -1;
 		}
-		if (StfMatch(f,i < li->NCf - 1 ? "," : "];") != 0)
+		if (stfMatch(f,i < li->NCf - 1 ? "," : "];") != 0)
 		{
-		    MTX_ERROR2("%s: %E",fn,MTX_ERR_FILEFMT);
+		    mtxAbort(MTX_HERE,"%s: %s",fn,MTX_ERR_FILEFMT);
 		    return -1;
 		}
 	    }
@@ -241,57 +206,91 @@ int Lat_ReadInfo(Lat_Info *li, const char *basename)
 	    ;	/* Is set when reading "CFInfo.Socles" */
 	else if (!strcmp(c,"CFInfo.Socles"))
 	{
-	    if (StfMatch(f," [") != 0) 
+	    if (stfMatch(f," [") != 0) 
 	    {
-		MTX_ERROR2("%s: %E",fn,MTX_ERR_FILEFMT);
+		mtxAbort(MTX_HERE,"%s: %s",fn,MTX_ERR_FILEFMT);
 		return -1;
 	    }
-	    for (i = 0; StfMatch(f,"];"); ++i)
+	    for (int i = 0; stfMatch(f,"];"); ++i)
 	    {
 		int mult[LAT_MAXCF];
 		int count = LAT_MAXCF;
-		if (i > 0) StfMatch(f,",");
-		StfGetVector(f,&count,mult);
+		if (i > 0) stfMatch(f,",");
+		stfGetVector(f,&count,mult);
 		if (count != li->NCf)
 		{
-		    MTX_ERROR2("%s: %E",fn,MTX_ERR_FILEFMT);
+		    mtxAbort(MTX_HERE,"%s: %s",fn,MTX_ERR_FILEFMT);
 		    return -1;
 		}
-		Lat_AddSocle(li,mult);
+		latAddSocle(li,mult);
 	    }
 	}
 	else if (!strcmp(c,"CFInfo.NHeads"))
 	    ;	/* Is set when reading "CFInfo.Heads" */
 	else if (!strcmp(c,"CFInfo.Heads"))
 	{
-	    if (StfMatch(f," [") != 0) 
+	    if (stfMatch(f," [") != 0) 
 	    {
-		MTX_ERROR2("%s: %E",fn,MTX_ERR_FILEFMT);
+		mtxAbort(MTX_HERE,"%s: %s",fn,MTX_ERR_FILEFMT);
 		return -1;
 	    }
-	    for (i = 0; StfMatch(f,"];"); ++i)
+	    for (int i = 0; stfMatch(f,"];"); ++i)
 	    {
 		int mult[LAT_MAXCF];
 		int count = LAT_MAXCF;
-		if (i > 0) StfMatch(f,",");
-		StfGetVector(f,&count,mult);
+		if (i > 0) stfMatch(f,",");
+		stfGetVector(f,&count,mult);
 		if (count != li->NCf)
 		{
-		    MTX_ERROR2("%s: %E",fn,MTX_ERR_FILEFMT);
+		    mtxAbort(MTX_HERE,"%s: %s",fn,MTX_ERR_FILEFMT);
 		    return -1;
 		}
-		Lat_AddHead(li,mult);
+		latAddHead(li,mult);
 	    }
 	}
 	else
 	{
-	    MTX_ERROR2("%s: %E",fn,MTX_ERR_FILEFMT);
+	    mtxAbort(MTX_HERE,"%s: %s",fn,MTX_ERR_FILEFMT);
 	    return -1;
 	}
     }
-    StfClose(f);
-    MESSAGE(1,("Read %s: %d composition factors\n",fn,li->NCf));
     return 0;
+}
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+/// Reads a Lattice Information File.
+/// This funktion reads a .cfinfo file and stores the data into a Lat_Info structure.
+/// @param li Pointer to the data structure.
+/// @param basename Base name (without the trailing ".cfinfo").
+/// @return 0 on success, -1 on error.
+
+int latReadInfo(Lat_Info *li, const char *basename)
+{
+    MTX_ASSERT(li != NULL, -1);
+    MTX_ASSERT(basename != NULL, -1);
+    MTX_ASSERT(strlen(basename) < LAT_MAXBASENAME - 1, -1);
+
+    // Initialize the data structure.
+    memset(li,0,sizeof(Lat_Info));
+    strcpy(li->BaseName,basename);
+    li->NGen = 2;
+
+    // Open the file and read
+    char fn[LAT_MAXBASENAME + 20];
+    sprintf(fn,"%s.cfinfo",basename);
+    int result = 0;
+    StfData *f = stfOpen(fn,"r");
+    if (f == NULL) {
+	mtxAbort(MTX_HERE,"Cannot open %s",fn);
+	result = -1;
+    } else {
+       result = readCfFile(f, fn, li);
+    }
+    stfClose(f);
+    if (result == 0)
+       mtxMessage(1,"Read %s: %d composition factors",fn,li->NCf);
+    return result;
 }
 
 
@@ -303,47 +302,45 @@ int Lat_ReadInfo(Lat_Info *li, const char *basename)
 /// @param li Pointer to the data structure.
 /// @return 0 on success, -1 on error.
 
-int Lat_WriteInfo(const Lat_Info *li)
+int latWriteInfo(const Lat_Info *li)
 {
     StfData *f;
     int i;
     int tmp[LAT_MAXCF];
     char fn[LAT_MAXBASENAME + 20];
 
-    /* Check arguments
-       --------------- */
-    MTX_VERIFY(li != NULL);
+    MTX_ASSERT(li != NULL, -1);
 
     /* Open the file
        ------------- */
     strcpy(fn,li->BaseName);
     strcat(fn,".cfinfo");
-    f = StfOpen(fn,FM_CREATE);
+    f = stfOpen(fn,"w");
     if (f == NULL)
 	return -1;
 
     /* Write data
        ---------- */
-    StfWriteValue(f,"CFInfo","rec()");
-    StfWriteInt(f,"CFInfo.NGen",li->NGen);
-    StfWriteInt(f,"CFInfo.Field",li->Field);
-    StfWriteInt(f,"CFInfo.NCF",li->NCf);
+    stfWriteValue(f,"CFInfo","rec()");
+    stfWriteInt(f,"CFInfo.NGen",li->NGen);
+    stfWriteInt(f,"CFInfo.Field",li->Field);
+    stfWriteInt(f,"CFInfo.NCF",li->NCf);
 
 
-    StfBeginEntry(f,"CFInfo.ConstituentNames");
-    StfPut(f,"[");
+    stfBeginEntry(f,"CFInfo.ConstituentNames");
+    stfPut(f,"[");
     for (i = 0; i < li->NCf; ++i)
     {
-	StfPutString(f,Lat_CfName(li,i));
-	if (i < li->NCf-1) StfPut(f,",");
+	stfPutString(f,latCfName(li,i));
+	if (i < li->NCf-1) stfPut(f,",");
     }
-    StfPut(f,"]");
-    StfEndEntry(f);
+    stfPut(f,"]");
+    stfEndEntry(f);
 
 #define WRVEC(name,field)\
     for (i = 0; i < li->NCf; ++i)\
         tmp[i] = li->Cf[i].field;\
-    StfWriteVector(f,"CFInfo." #name,li->NCf,tmp);
+    stfWriteVector(f,"CFInfo." #name,li->NCf,tmp);
 
     WRVEC(Dimension,dim);
     WRVEC(Number,num);
@@ -352,49 +349,49 @@ int Lat_WriteInfo(const Lat_Info *li)
     WRVEC(NMountains,nmount);
     WRVEC(NDottedLines,ndotl);
 
-    StfBeginEntry(f,"CFInfo.PeakWord");
-    StfPut(f,"[");
+    stfBeginEntry(f,"CFInfo.PeakWord");
+    stfPut(f,"[");
     for (i = 0; i < li->NCf; ++i)
     {
         WriteWord(f,li->Cf[i].peakword,li->Cf[i].peakpol);
-	if (i < li->NCf-1) StfPut(f,",");
+	if (i < li->NCf-1) stfPut(f,",");
     }
-    StfPut(f,"]");
-    StfEndEntry(f);
+    stfPut(f,"]");
+    stfEndEntry(f);
 
-    StfBeginEntry(f,"CFInfo.IdWord");
-    StfPut(f,"[");
+    stfBeginEntry(f,"CFInfo.IdWord");
+    stfPut(f,"[");
     for (i = 0; i < li->NCf; ++i)
     {
         WriteWord(f,li->Cf[i].idword,li->Cf[i].idpol);
-	if (i < li->NCf-1) StfPut(f,",");
+	if (i < li->NCf-1) stfPut(f,",");
     }
-    StfPut(f,"]");
-    StfEndEntry(f);
+    stfPut(f,"]");
+    stfEndEntry(f);
 
-    StfWriteInt(f,"CFInfo.NSocles",li->NSocles);
-    StfBeginEntry(f,"CFInfo.Socles");
-    StfPut(f,"[");
+    stfWriteInt(f,"CFInfo.NSocles",li->NSocles);
+    stfBeginEntry(f,"CFInfo.Socles");
+    stfPut(f,"[");
     for (i = 0; i < li->NSocles; ++i)
     {
-	if (i > 0) StfPut(f,",");
-	StfPutVector(f,li->NCf,li->Socle + i * li->NCf);
+	if (i > 0) stfPut(f,",");
+	stfPutVector(f,li->NCf,li->Socle + i * li->NCf);
     }
-    StfPut(f,"]");
-    StfEndEntry(f);
+    stfPut(f,"]");
+    stfEndEntry(f);
 
-    StfWriteInt(f,"CFInfo.NHeads",li->NHeads);
-    StfBeginEntry(f,"CFInfo.Heads");
-    StfPut(f,"[");
+    stfWriteInt(f,"CFInfo.NHeads",li->NHeads);
+    stfBeginEntry(f,"CFInfo.Heads");
+    stfPut(f,"[");
     for (i = 0; i < li->NHeads; ++i)
     {
-	if (i > 0) StfPut(f,",");
-	StfPutVector(f,li->NCf,li->Head + i * li->NCf);
+	if (i > 0) stfPut(f,",");
+	stfPutVector(f,li->NCf,li->Head + i * li->NCf);
     }
-    StfPut(f,"]");
-    StfEndEntry(f);
+    stfPut(f,"]");
+    stfEndEntry(f);
 
-    StfClose(f);
+    stfClose(f);
     MESSAGE(1,("Wrote %s: %d composition factors\n",fn,li->NCf));
     return 0;
 }
@@ -417,15 +414,14 @@ int Lat_WriteInfo(const Lat_Info *li)
 /// @param cf Index of the constituent.
 /// @return Pointer to the constituent name (without base name).
 
-const char *Lat_CfName(const Lat_Info *li, int cf)
+const char *latCfName(const Lat_Info *li, int cf)
 {
     static char buf[20];
     int num, dim;
 
-    /* Check arguments
-       --------------- */
-    MTX_VERIFY(li != NULL);
-    MTX_VERIFY(cf >= 0 && cf < li->NCf);
+    buf[0] = 0;
+    MTX_ASSERT(li != NULL, buf);
+    MTX_ASSERT(cf >= 0 && cf < li->NCf, buf);
 
     /* Get dimension and number of the constituent
        ------------------------------------------- */
@@ -447,7 +443,7 @@ const char *Lat_CfName(const Lat_Info *li, int cf)
 
 /// Add a Layer to the Socle Series.
 
-int Lat_AddSocle(Lat_Info *li, int *mult)
+int latAddSocle(Lat_Info *li, int *mult)
 {
     int i;
     int *ptr;
@@ -463,7 +459,7 @@ int Lat_AddSocle(Lat_Info *li, int *mult)
 
 /// Add a Layer to the Radical Series.
 
-int Lat_AddHead(Lat_Info *li, int *mult)
+int latAddHead(Lat_Info *li, int *mult)
 {
     int i;
     int *ptr;
@@ -477,3 +473,4 @@ int Lat_AddHead(Lat_Info *li, int *mult)
 }
 
 /// @}
+// vim:fileencoding=utf8:sw=3:ts=8:et:cin

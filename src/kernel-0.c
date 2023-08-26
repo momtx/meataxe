@@ -11,13 +11,14 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 #include <string.h>
+#include <stdint.h>
 #include <stdlib.h>
-#include <meataxe.h>
+
+#include "meataxe.h"
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // Gobal data
 
-MTX_DEFINE_FILE_INFO
 
 typedef unsigned char BYTE;
 static int MPB = 0;             /* No. of marks per byte */
@@ -26,7 +27,8 @@ static int LPR = 0;             /* Long ints per row */
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // Argument checking (for debbugging)
 
-#if defined(_DEBUG)
+// TODO: eliminate
+#if defined(MTX_DEBUG)
 #define CHECKRANGE(x,lo,hi) if ((x) < (lo) || (x) > (hi)) { \
       MtxError(&Mtx_ThisFile,__LINE__, \
                "ZZZ RANGE CHECK ERROR: %d <= %d <= %d ?\n", \
@@ -34,9 +36,10 @@ static int LPR = 0;             /* Long ints per row */
 #else
 #define CHECKRANGE(x,lo,hi)
 #endif
+#define CHECKCOL(x)  CHECKRANGE(x,1,ffNoc)
 
-#define CHECKFEL(x) CHECKRANGE(x,0,FfOrder - 1)
-#define CHECKCOL(x)  CHECKRANGE(x,1,FfNoc)
+static int isFel(FEL x) { return (unsigned int) x < (unsigned int) ffOrder; }
+
 
 /// @defgroup ff Finite Fields
 ///
@@ -55,11 +58,13 @@ static int LPR = 0;             /* Long ints per row */
 /// The field is defined by its Conway polynomial p(x)∈ℤₚ[x], where q=pⁿ (see [@ref HEBA05]).
 /// Thus, we have a one-to-one correspondence of field elements a∈GF(q)
 /// and polynomials fₐ(x)∈ℤₚ[x] of degree less than n.
-/// By treating ℤₚ as a subset of ℤ — actually, on the computer, elements of ℤₚ are represented
-/// by integers — this is also a polynomial over *ℤ. Now, calculate f_a(p) giving the number of
+/// By treating fₐ(x) as a polynomial over ℤ we can calculate f_a(p), giving the number of
 /// the field element a. It follows that the elements of the prime field are represented by
-/// 0,1,...p-1. The number 0 represents the zero element, and 1 represents the unit element.<br>
-/// Packed rows....
+/// 0,1,...p-1. The number 0 represents the zero element, and 1 represents the unit element.
+/// <br>
+/// For small fields (q <= 16), rows of matrices are compressed by packing two or more elements
+/// in a byte. For example, if q=5, three elements (a,b,c) are combined into a single byte as
+/// a + 5*b + 25*c.
 ///
 /// @par 'Big' Kernel (q≤65536)
 /// The big version stores field elements in 16-bit integers, i.e., each field element
@@ -78,7 +83,7 @@ static int LPR = 0;             /* Long ints per row */
 ///   of the field is intended. Instead you should use the FF_ZERO
 ///   and FF_ONE constants define in |meataxe.h|.
 /// - Do not cast an integer to FEL or vice versa. Use
-///   FfFromInt() and FfToInt() instead.
+///   ffFromInt() and ffToInt() instead.
 ///
 /// @par FEL and PTR
 /// The kernel defines two basic data types:
@@ -94,13 +99,13 @@ static int LPR = 0;             /* Long ints per row */
 /// @par Embedding of subfields
 /// In the MeatAxe there is a `standard' generator for each finite
 /// field. The generator for the field currently in use is available in
-/// the FfGen variable. Thus, if a and a' are the MeatAxe
+/// the ffGen variable. Thus, if a and a' are the MeatAxe
 /// generators of GF(q) and GF(q'), respectively, and q'=qⁿ, there
 /// is a standard embedding of GF(q) into GF(q') defined by
 /// $a↪a'ⁿ. However, field elements which are identified
 /// under this embedding are usually not represented by the same number.
-/// For this reason there are two functions, FfEmbed() and
-/// FfRestrict(), which provide the embedding of subfields into the
+/// For this reason there are two functions, ffEmbed() and
+/// ffRestrict(), which provide the embedding of subfields into the
 /// current field. Note that the MeatAxe is not well suited for
 /// calculations involving different fields at the same time because the
 /// arithmetic uses lookup tables which are specific to each field
@@ -113,10 +118,10 @@ static int LPR = 0;             /* Long ints per row */
 /// PTR row1, row2;
 /// FEL buf[10];
 /// ...
-/// FfSetField(10);
-/// for (i = 0; i &lt; 10; ++i) buf[i] = FfExtract(row1,i);
-/// FfSetField(27);
-/// for (i = 0; i &lt; 10; ++i) FfInsert(row2,i,FfEmbed(buf[i],3));
+/// ffSetField(10);
+/// for (i = 0; i &lt; 10; ++i) buf[i] = ffExtract(row1,i);
+/// ffSetField(27);
+/// for (i = 0; i &lt; 10; ++i) ffInsert(row2,i,ffEmbed(buf[i],3));
 /// @endcode
 
 /// @addtogroup ff
@@ -127,7 +132,7 @@ static int LPR = 0;             /* Long ints per row */
 /// byte. However, the size is always a multiple of sizeof(long).
 /// Unused bytes at the end of a row (and even the unused bits in partially
 /// used bytes) must always be filled with zeroes.
-/// Otherwise, some functions as  FfCmpRows() may produce wrong results.
+/// Otherwise, some functions as  ffCmpRows() may produce wrong results.
 /// <br>
 /// Packing of field elements is used for field orders less than 17. Let q be
 /// the field order and m the largest natural number with q<sup>m</sup>≤256.
@@ -139,17 +144,17 @@ static int LPR = 0;             /* Long ints per row */
 /// Because of packing you cannot access the marks of a row with the usual bracket notation.
 /// Instead, the MeatAxe library provides functions which store and extract marks.
 /// <br>
-/// Packed rows must be initialized before they are used. FfInsert()
+/// Packed rows must be initialized before they are used. ffInsert()
 /// (and many other row operations) will produce strange results if used
 /// with uninitialized rows. Memory is initialized automatically in the
-/// following cases: allocation with FfAlloc(), copying a row with
-/// FfCopyRow(), reading a row from a file. A row can be initialized
-/// manually by multiplication with zero: FfMulRow(ptr,FF_ZERO).
+/// following cases: allocation with ffAlloc(), copying a row with
+/// ffCopyRow(), reading a row from a file. A row can be initialized
+/// manually by multiplication with zero: ffMulRow(ptr,FF_ZERO).
 /// The latter works even if no field has been selected.
 /// <br>
 /// All row operations at kernel level use a global row size which can be
-/// set with FfSetNoc(). The current row size is available in the global
-/// variable FfNoc.
+/// set with ffSetNoc(). The current row size is available in the global
+/// variable ffNoc.
 ///
 /// @par Matrices
 /// A matrix is stored as a sequence of rows with no extra space between them.
@@ -158,53 +163,53 @@ static int LPR = 0;             /* Long ints per row */
 /// padding each mark of the vector will occupy a long int.
 
 
-/// @fn FfAdd(FEL,FEL)
+/// @fn ffAdd(FEL,FEL)
 /// Finite field addition.
-/// This function returns the sum of two field elements. Before calling FfAdd(), the
-/// field must have been selected with FfSetField(). The arguments are not checked. If either
+/// This function returns the sum of two field elements. Before calling ffAdd(), the
+/// field must have been selected with ffSetField(). The arguments are not checked. If either
 /// argument is not in the allowed range the result is undefined and the program may crash.
-/// FfAdd() may be implemented as a macro. In this case, it is guaranteed that both arguments
+/// ffAdd() may be implemented as a macro. In this case, it is guaranteed that both arguments
 /// are evaluated exactly once.
 
-/// @fn FfSub(FEL,FEL)
+/// @fn ffSub(FEL,FEL)
 /// Finite field subtraction.
-/// This function returns the difference of two field elements. Before calling FfSub(), the
-/// field must have been selected with FfSetField(). The arguments are not checked. If either
+/// This function returns the difference of two field elements. Before calling ffSub(), the
+/// field must have been selected with ffSetField(). The arguments are not checked. If either
 /// argument is not in the allowed range the result is undefined and the program may crash.
-/// FfSub() may be implemented as a macro. In this case, it is guaranteed that both arguments
+/// ffSub() may be implemented as a macro. In this case, it is guaranteed that both arguments
 /// are evaluated exactly once.
 
-/// @fn FfMul(FEL,FEL)
+/// @fn ffMul(FEL,FEL)
 /// Finite field multiplication.
-/// This function returns the product of two field elements. Before calling FfMul(), the
-/// field must have been selected with FfSetField(). The arguments are not checked. If either
+/// This function returns the product of two field elements. Before calling ffMul(), the
+/// field must have been selected with ffSetField(). The arguments are not checked. If either
 /// argument is not in the allowed range the result is undefined and the program may crash.
-/// FfMul() may be implemented as a macro. In this case, it is guaranteed that both arguments
+/// ffMul() may be implemented as a macro. In this case, it is guaranteed that both arguments
 /// are evaluated exactly once.
 
-/// @fn FfDiv(FEL,FEL)
+/// @fn ffDiv(FEL,FEL)
 /// Finite field division.
-/// This function returns the quotient of two field elements. Before calling FfDiv(), the
-/// field must have been selected with FfSetField(). The arguments are not checked. If either
+/// This function returns the quotient of two field elements. Before calling ffDiv(), the
+/// field must have been selected with ffSetField(). The arguments are not checked. If either
 /// argument is not in the allowed range or if the denominator is zero, the result is undefined
 /// and the program may crash.
-/// FfDiv() may be implemented as a macro. In this case, it is guaranteed that both arguments
+/// ffDiv() may be implemented as a macro. In this case, it is guaranteed that both arguments
 /// are evaluated exactly once.
 
-/// @fn FfNeg(FEL)
+/// @fn ffNeg(FEL)
 /// Finite field negative.
-/// This function returns the additive inverse a field element. Before calling FfInv(), the
-/// field must have been selected with FfSetField(). The argument is not checked. If you pass
+/// This function returns the additive inverse a field element. Before calling ffInv(), the
+/// field must have been selected with ffSetField(). The argument is not checked. If you pass
 /// an invalid value, the result is undefined and the program may crash.
-/// FfNeg() may be implemented as a macro. In this case, it is guaranteed that the argument
+/// ffNeg() may be implemented as a macro. In this case, it is guaranteed that the argument
 /// is evaluated exactly once.
 
-/// @fn FfInv(FEL)
+/// @fn ffInv(FEL)
 /// Finite field inversion.
-/// This function returns the multiplicative inverse a field element. Before calling FfInv(), the
-/// field must have been selected with FfSetField(). The argument is not checked. If you pass
+/// This function returns the multiplicative inverse a field element. Before calling ffInv(), the
+/// field must have been selected with ffSetField(). The argument is not checked. If you pass
 /// an invalid value or zero, the result is undefined and the program may crash.
-/// FfInv() may be implemented as a macro. In this case, it is guaranteed that the argument
+/// ffInv() may be implemented as a macro. In this case, it is guaranteed that the argument
 /// is evaluated exactly once.
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -217,17 +222,17 @@ static FILE *OpenTableFile(int fl)
    /* Try to open the table file
       -------------------------- */
    sprintf(fn,"p%3.3d.zzz",fl);
-   if ((fd = SysFopen(fn,FM_READ | FM_LIB | FM_NOERROR)) != NULL) {
+   if ((fd = sysFopen(fn,"rb::lib:noerror")) != NULL) {
       return fd;
    }
 
    /* Create the table file.
       ---------------------- */
-   if (FfMakeTables(fl) != 0) {
-      MTX_ERROR("Unable to build arithmetic tables");
+   if (ffMakeTables(fl) != 0) {
+      mtxAbort(MTX_HERE,"Unable to build arithmetic tables");
       return NULL;
    }
-   fd = SysFopen(fn,FM_READ | FM_LIB);
+   fd = sysFopen(fn,"rb::lib");
    return fd;
 }
 
@@ -240,20 +245,20 @@ static int ReadTableFile(FILE *fd, int field)
 
    /* Read header, perform some checks
       -------------------------------- */
-   if (SysReadLong(fd,hdr,5) != 5) {
-      MTX_ERROR("Cannot read table file header");
+   if (sysReadLong32(fd,hdr,5) != 5) {
+      mtxAbort(MTX_HERE,"Cannot read table file header");
       return -1;
    }
    if ((hdr[2] != field) || (hdr[1] < 0) || (hdr[1] > field) ||
        (hdr[0] <= 1) || (hdr[2] % hdr[0] != 0) || (hdr[3] < 1) || (hdr[3] > 8)) {
-      MTX_ERROR("Table file is corrupted");
+      mtxAbort(MTX_HERE,"Table file is corrupted");
       return -1;
    }
-   FfChar = hdr[0];
-   FfGen = (FEL) hdr[1];
+   ffChar = hdr[0];
+   ffGen = (FEL) hdr[1];
    MPB = hdr[3];
    if (hdr[4] != (long) ZZZVERSION) {
-      MTX_ERROR2("Bad table file version: expected %d, found %d",
+      mtxAbort(MTX_HERE,"Bad table file version: expected %d, found %d",
                  (int)ZZZVERSION,(int)hdr[4]);
       fclose(fd);
       return -1;
@@ -269,15 +274,15 @@ static int ReadTableFile(FILE *fd, int field)
        (fread(mtx_tmultinv,1,sizeof(mtx_tmultinv),fd) != sizeof(mtx_tmultinv)) ||
        (fread(mtx_tnull,1,sizeof(mtx_tnull),fd) != sizeof(mtx_tnull)) ||
        (fread(mtx_tinsert,1,sizeof(mtx_tinsert),fd) != sizeof(mtx_tinsert)) ||
-       (SysReadLong(fd,mtx_embedord,4) != 4) ||
+       (sysReadLong32(fd,mtx_embedord,4) != 4) ||
        (fread(mtx_embed,16,4,fd) != 4) ||
        (fread(mtx_restrict,256,4,fd) != 4)
        ) {
-      MTX_ERROR("Error reading table file");
+      mtxAbort(MTX_HERE,"Error reading table file");
       return -1;
    }
-   FfOrder = field;
-   FfSetNoc(0);		// old row sizes may be invalid for new field
+   ffOrder = field;
+   ffSetNoc(0);		// old row sizes may be invalid for new field
    return 0;
 }
 
@@ -288,17 +293,17 @@ static int ReadTableFile(FILE *fd, int field)
 /// @param field Field order.
 /// @return 0 on success, -1 otherwise.
 
-int FfSetField(int field)
+int ffSetField(int field)
 {
    FILE *fd;
    int result;
 
-   if ((field == FfOrder) || (field < 2)) {
+   if ((field == ffOrder) || (field < 2)) {
       return 0;
    }
    fd = OpenTableFile(field);
    if (fd == NULL) {
-      MTX_ERROR1("Cannot open table file for GF(%d)",(int)field);
+      mtxAbort(MTX_HERE,"Cannot open table file for GF(%d)",(int)field);
       return -1;
    }
    result = ReadTableFile(fd,field);
@@ -307,20 +312,13 @@ int FfSetField(int field)
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-/// Set the row length.
-/// This function sets the current row size, which is used for low-level row operations
-/// such as FfAddRow().
-/// @param noc Number of columns.
-/// @return 0 on success, -1 otherwise.
 
-int FfSetNoc(int noc)
+void ffSetNoc(int noc)
 {
-   MTX_ASSERT(noc >= 0);
-   FfNoc = noc;
+   MTX_ASSERT(noc >= 0,);
+   ffNoc = noc;
    if (noc == 0) {
       LPR = 0;
-      FfCurrentRowSize = 0;
-      FfCurrentRowSizeIo = 0;
    } else {
       LPR = (noc - 1) / (MPB * sizeof(long)) + 1;       /* long's per row */
 #ifdef ASM_MMX
@@ -328,12 +326,8 @@ int FfSetNoc(int noc)
          ++LPR;
       }
 #endif
-      FfCurrentRowSize = LPR * sizeof(long);
-      FfCurrentRowSizeIo = (noc - 1) / MPB + 1;
    }
-   return 0;
 }
-
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 /// Calculate row size.
@@ -341,55 +335,65 @@ int FfSetNoc(int noc)
 /// The row size is always a multiple of <tt>sizeof(long)</tt>. Depending on the number of
 /// columns there may be unused padding bytes at the end of the row.
 
-size_t FfRowSize(int noc)
+size_t ffRowSize(int noc)
 {
    if (noc == 0) {
       return 0;
    }
-   MTX_ASSERT(noc > 0);
+   MTX_ASSERT(noc > 0, 0);
    return ((noc - 1) / (MPB * sizeof(long)) + 1) * sizeof(long);
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+/// Returns the number of bytes occupied in memory by @a nor rows of @a noc elements.
+/// @a nor may be negative, resulting in a negative return value such that
+/// <tt>ffSize(nor,-noc) == -ffSize(nor,noc)</tt>. Thus, @c ffSize() can be used to calculate
+/// row pointer differences in both directions.
+/// @a noc must be greater than or equal to zero.
+
+ssize_t ffSize(int nor, int noc)
+{
+   return nor == 0 ? 0 : nor * ffRowSize(noc);
+}
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 /// Number of used bytes in a row.
 /// This function returns the number of bytes that are actually used by a row of @em noc Elements,
 /// i.e., without counting the padding bytes. This number is less than or equal to
-/// <tt>FfRowSize(noc)</tt>.
+/// <tt>ffRowSize(noc)</tt>.
 
-size_t FfTrueRowSize(int noc)
+// TODO: rename to ffRowSizeWithoutPadding(?)
+
+size_t ffTrueRowSize(int noc)
 {
    if (noc == 0) {
       return 0;
    }
-   MTX_ASSERT(noc > 0);
+   MTX_ASSERT(noc > 0, 0);
    return (noc - 1) / MPB + 1;
 }
 
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-/// Embed a subfield.
-/// @param a Element of the subfield field.
-/// @param subfield Subfield order. Must be a divisor of the current field order.
-/// @return @em a, embedded into the current field. (FEL)255 on error.
 
-FEL FfEmbed(FEL a, int subfield)
+FEL ffEmbed(FEL a, int subfield)
 {
    int i;
 
-   if (subfield == FfOrder) {
+   if (subfield == ffOrder) {
       return a;
    }
    for (i = 0; i < 4; ++i) {
       if (mtx_embedord[i] == subfield) {
          if (a >= subfield) {
-	    MTX_ERROR2("Invalid field element %d in GF(%d)",(int) a, (int)subfield);
+	    mtxAbort(MTX_HERE,"Invalid field element %d in GF(%d)",(int) a, (int)subfield);
 	    return (FEL) 255;
 	 }
          return mtx_embed[i][a];
       }
    }
-   MTX_ERROR2("Cannot embed GF(%d) into GF(%d)",(int)subfield,(int)FfOrder);
+   mtxAbort(MTX_HERE,"Cannot embed GF(%d) into GF(%d)",(int)subfield,(int)ffOrder);
    return (FEL) 255;
 }
 
@@ -401,15 +405,15 @@ FEL FfEmbed(FEL a, int subfield)
 /// the element has a different integer representation in the subfield. Consequently, you cannot
 /// use the return value for field arithmetic until you change to the subfield with
 /// Of course, the argument must be an element of the subfield. Otherwise the result is undefined.
-/// <tt>FfSetField(subfield)</tt>.
+/// <tt>ffSetField(subfield)</tt>.
 /// @param a Element of the current field.
 /// @param subfield Subfield order. Must be a divisor of the current field order.
 
-FEL FfRestrict(FEL a, int subfield)
+FEL ffRestrict(FEL a, int subfield)
 {
    int i;
 
-   if (subfield == FfOrder) {
+   if (subfield == ffOrder) {
       return a;
    }
    for (i = 0; i < 4; ++i) {
@@ -417,7 +421,7 @@ FEL FfRestrict(FEL a, int subfield)
          return mtx_restrict[i][a];
       }
    }
-   MTX_ERROR2("Cannot restrict GF(%d) to GF(%d)",(int)FfOrder, (int)subfield);
+   mtxAbort(MTX_HERE,"Cannot restrict GF(%d) to GF(%d)",(int)ffOrder, (int)subfield);
    return (FEL) 255;
 }
 
@@ -456,17 +460,12 @@ static void __inline__ FastXor(void *dest, const void *src)
 #endif
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-/// Add two rows.
-/// This function adds src to dest. Field order and row size must have been set before.
-/// @param dest The row to add to.
-/// @param src The row to add.
-/// @return Always returns dest.
 
-PTR FfAddRow(PTR dest, PTR src)
+PTR ffAddRow(PTR dest, PTR src)
 {
    register int i;
 
-   if (FfChar == 2) {   /* characteristic 2 is simple... */
+   if (ffChar == 2) {   /* characteristic 2 is simple... */
 #ifdef ASM_MMX
       /* This assumes Intel with 4 bytes per long, but MMX implies Intel anyway.*/
       __asm__(
@@ -523,7 +522,7 @@ PTR FfAddRow(PTR dest, PTR src)
 #else
       register BYTE *p1 = dest;
       register BYTE *p2 = src;
-      for (i = FfCurrentRowSizeIo; i != 0; --i) {
+      for (i = ffRowSize(ffNoc); i != 0; --i) {
          register int x = *p2++;
          if (x != 0) { *p1 = mtx_tadd[*p1][x]; }
          p1++;
@@ -536,7 +535,7 @@ PTR FfAddRow(PTR dest, PTR src)
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 /// Add a part two rows.
-/// This works like FfAddRow(), but the function is allowed to skip up to @a first columns.
+/// This works like ffAddRow(), but the function is allowed to skip up to @a first columns.
 /// In other words, the operation is guaranteed to be performed only from the given column
 /// until the last column.
 /// @param dest The row to add to.
@@ -544,12 +543,12 @@ PTR FfAddRow(PTR dest, PTR src)
 /// @param first First column to add
 /// @return Always returns dest.
 
-PTR FfAddRowPartial(PTR dest, PTR src, int first)
+PTR ffAddRowPartial(PTR dest, PTR src, int first)
 {
-   MTX_VERIFY(first < FfNoc);
+   MTX_ASSERT(first < ffNoc, NULL);
    register long i;
 
-   if (FfChar == 2)     /* characteristic 2 is simple... */
+   if (ffChar == 2)     /* characteristic 2 is simple... */
 #ifdef ASM_MMX
    { XXXXXX_TODO(); }
    {
@@ -589,7 +588,7 @@ PTR FfAddRowPartial(PTR dest, PTR src, int first)
    else {               /* any other characteristic */
       register BYTE *p1 = dest + first / MPB;
       register BYTE *p2 = src + first / MPB;
-      for (i = FfCurrentRowSizeIo - first / MPB; i != 0; --i) {
+      for (i = ffRowSize(ffNoc) - first / MPB; i != 0; --i) {
          register int x = *p2++;
          *p1 = mtx_tadd[*p1][x];
          p1++;
@@ -600,54 +599,48 @@ PTR FfAddRowPartial(PTR dest, PTR src, int first)
 
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-/// Multiply a row by a coefficient.
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+/// Multiply a vector by a field element.
 /// This function multiplies each element of @a row by @a mark.
 /// The row size and field order must have been set before.
-/// Multiplying a row with zero (FF_ZERO) initializes all elements to zero
-/// and is permitted even if @em row points into uninitialized memory.
+///
+/// Multiplying a row with zero (FF_ZERO) initializes all elements to zero and is permitted even if
+/// @a row points to uninitialized memory. Furthermore, multiplying with FF_ZERO fills unused bytes
+/// at the end of the row with zeroes (which may be different from FF_ERO.
 
-void FfMulRow(PTR row, FEL mark)
+void ffMulRow(PTR row, FEL mark)
 {
-   register BYTE *m;
-   register BYTE *multab;
-   register int i;
-
-   CHECKFEL(mark);
+   MTX_ASSERT_DEBUG(isFel(mark),);
    if (mark == FF_ZERO) {
-      register long *l = (long *)row;
-      for (i = LPR; i > 0; --i) {
-         *l++ = 0;
-      }
+      memset(row, 0, LPR * sizeof(long));
    } else if (mark != FF_ONE) {
-      multab = mtx_tmult[mark];
-      m = row;
-      for (i = FfCurrentRowSizeIo; i != 0; --i) {
-         register int x = *m;
-         if (x != 0) { *m = multab[x]; }
+      const uint8_t* const multab = mtx_tmult[mark];
+      uint8_t* m = row;
+      for (int i = ffRowSize(ffNoc); i != 0; --i) {
+         if (*m != 0) 
+            *m = multab[*m];
          ++m;
       }
    }
 }
 
-
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-/// Add a multiple of a row.
-/// This function adds a multiple of @em src to @em dest.
 
-void FfAddMulRow(PTR dest, PTR src, FEL f)
+void ffAddMulRow(PTR dest, PTR src, FEL f)
 {
-   CHECKFEL(f);
+   MTX_ASSERT_DEBUG(isFel(f),);
    if (f == FF_ZERO) {
       return;
    }
    if (f == FF_ONE) {
-      FfAddRow(dest,src);
+      ffAddRow(dest,src);
       return;
    }
-   register BYTE *multab = mtx_tmult[f];
-   register BYTE *p1 = dest;
-   register BYTE *p2 = src;
-   for (register int i = FfCurrentRowSizeIo; i != 0; --i) {
+   uint8_t *multab = mtx_tmult[f];
+   uint8_t *p1 = dest;
+   uint8_t *p2 = src;
+   for (int i = ffRowSize(ffNoc); i != 0; --i) {
       if (*p2 != 0) {
          *p1 = mtx_tadd[*p1][multab[*p2]];
       }
@@ -656,11 +649,10 @@ void FfAddMulRow(PTR dest, PTR src, FEL f)
    }
 }
 
-
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 ///
 /// Add a multiple of a part of a row.
-/// This works like FfAddMulRow(), but the function is allowed to skip up to @a first columns.
+/// This works like ffAddMulRow(), but the function is allowed to skip up to @a first columns.
 /// In other words, the operation is guaranteed to be performed only from the given column until
 /// the last column.
 /// @param dest The row to add to.
@@ -668,22 +660,22 @@ void FfAddMulRow(PTR dest, PTR src, FEL f)
 /// @param f The multiplier
 /// @param firstcol First column to add
 
-void FfAddMulRowPartial(PTR dest, PTR src, FEL f, int firstcol)
+void ffAddMulRowPartial(PTR dest, PTR src, FEL f, int firstcol)
 {
-   CHECKFEL(f);
-   MTX_VERIFY(firstcol < FfNoc);
+   MTX_ASSERT_DEBUG(isFel(f),);
+   MTX_ASSERT_DEBUG(firstcol >= 0 && firstcol < ffNoc,);
 
    if (f == FF_ZERO) {
       return;
    }
    if (f == FF_ONE) {
-      FfAddRowPartial(dest, src, firstcol);
+      ffAddRowPartial(dest, src, firstcol);
       return;
    }
    BYTE * const multab = mtx_tmult[f];
    BYTE *p1 = dest + firstcol / MPB;
    BYTE *p2 = src + firstcol / MPB;
-   for (int i = FfCurrentRowSizeIo - firstcol / MPB; i != 0; --i) {
+   for (int i = ffRowSize(ffNoc) - firstcol / MPB; i != 0; --i) {
       if (*p2 != 0) {
          *p1 = mtx_tadd[*p1][multab[*p2]];
       }
@@ -692,63 +684,35 @@ void FfAddMulRowPartial(PTR dest, PTR src, FEL f, int firstcol)
    }
 }
 
-
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-/// Convert integer to field element.
-/// This function converts an integer to a field element using the same mapping as explained
-/// under FfToInt(). Both functions are inverse in the sense that the expression
-/// <tt>f == FfFromInt(FfToInt(f))</tt> is always true for valid field elements.
-/// FfFromInt() should be used whenever field elements are to be read with scanf().
 
-FEL FfFromInt(int l)
+FEL ffFromInt(int l)
 {
    register int f;
-   f = l % FfOrder;
-   if (f < 0) { f += FfOrder; }
+   f = l % ffOrder;
+   if (f < 0) { f += ffOrder; }
    return (FEL) f;
 }
 
-
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-/// Convert field element to integer.
-/// This function converts a field element to an integer, using a "canonical" representation
-/// of field elements as integers which may be different from the internal representation.
-/// In particular, the prime field is mapped on {0,...p-1} with 0 representing the zero element
-/// and 1 the unit element. FfToInt() should be used whenever field elements are to be written
-/// with printf().
 
-int FfToInt(FEL f)
+int ffToInt(FEL f)
 {
    return (int) f;
 }
 
 
-////////////////////////////////////////////////////////////////////////////////////////////////////
-/// Multiply a vector by a matrix.
-/// This function multiplies the vector @em row from the right by the matrix @em mat and
-/// stores the result into @em result.
-/// The number of columns in both @em mat and @em result is determined by the current row size.
-/// (see FfNoc()).
-/// @attention @em result and @em row must not overlap. Otherwise the result is
-/// undefined.
-/// @param row The source vector (FfNoc columns).
-/// @param matrix The matrix (nor by FfNoc).
-/// @param nor number of rows in the matrix.
-/// @param[out] result The resulting vector (@em nor columns).
 
-void FfMapRow(PTR row, PTR matrix, int nor, PTR result)
+void ffMapRow(PTR row, PTR matrix, int nor, PTR result)
 {
    register int i;
    register FEL f;
    BYTE *m = (BYTE *) matrix;
    register long *l = (long *)result;
 
-#ifdef DEBUG
-   if ((result >= row) && (result < row + FfRowSize(nor))) {
-      MTX_ERROR("row and result overlap: undefined result!");
-   }
-   if ((row >= result) && (row < result + FfCurrentRowSize)) {
-      MTX_ERROR("row and result overlap: undefined result!");
+#ifdef MTX_DEBUG
+   if ((result >= row) && (result < row + ffRowSize(nor))) {
+      mtxAbort(MTX_HERE,"row and result overlap: undefined result!");
    }
 #endif
 
@@ -758,7 +722,7 @@ void FfMapRow(PTR row, PTR matrix, int nor, PTR result)
       *l++ = 0;
    }
 
-   if (FfOrder == 2) {      /* GF(2) is a special case */
+   if (ffOrder == 2) {      /* GF(2) is a special case */
       register long *x1 = (long *) matrix;
       register BYTE *r = (BYTE *) row;
 
@@ -813,9 +777,9 @@ void FfMapRow(PTR row, PTR matrix, int nor, PTR result)
          }
       }
    } else {             /* Any other field */
+      const size_t rowSize = ffRowSize(ffNoc);
       register BYTE *brow = (BYTE *) row;
       register int pos = 0;
-
       for (i = nor; i > 0; --i) {
          f = mtx_textract[pos][*brow];
          if (++pos == (int) MPB) {
@@ -825,7 +789,7 @@ void FfMapRow(PTR row, PTR matrix, int nor, PTR result)
          if (f != FF_ZERO) {
             register BYTE *v = m;
             register BYTE *r = result;
-            register int k = FfCurrentRowSizeIo;
+            register int k = ffRowSize(ffNoc);
             if (f == FF_ONE) {
                for (; k != 0; --k) {
                   if (*v != 0) {
@@ -845,7 +809,7 @@ void FfMapRow(PTR row, PTR matrix, int nor, PTR result)
                }
             }
          }
-         m += FfCurrentRowSize;                 /* next row */
+         m += rowSize;                 /* next row */
       }
    }
 }
@@ -859,26 +823,26 @@ void FfMapRow(PTR row, PTR matrix, int nor, PTR result)
 /// @param b The second vector.
 /// @return Scalar product of the two vectors.
 
-FEL FfScalarProduct(PTR a, PTR b)
+FEL ffScalarProduct(PTR a, PTR b)
 {
    register unsigned char *ap = (unsigned char *) a;
    register unsigned char *bp = (unsigned char *) b;
    register int i;
    FEL f = FF_ZERO;
 
-   for (i = FfNoc - 1; i >= MPB; i -= MPB) {
+   for (i = ffNoc - 1; i >= MPB; i -= MPB) {
 
       register int k;
       if ((*ap != 0) && (*bp != 0)) {
          for (k = 0; k < MPB; ++k) {
-            f = FfAdd(f,FfMul(mtx_textract[k][*ap],mtx_textract[k][*bp]));
+            f = ffAdd(f,ffMul(mtx_textract[k][*ap],mtx_textract[k][*bp]));
          }
       }
       ++ap;
       ++bp;
    }
    for (; i >= 0; --i) {
-      f = FfAdd(f,FfMul(mtx_textract[i][*ap],mtx_textract[i][*bp]));
+      f = ffAdd(f,ffMul(mtx_textract[i][*ap],mtx_textract[i][*bp]));
    }
 
    return f;
@@ -888,7 +852,7 @@ FEL FfScalarProduct(PTR a, PTR b)
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 /// Extract one column of a matrix.
 /// This function extracts one column out of a matrix and converts it into a row vector.
-/// The number of columns of the matrix must have been set with FfSetNoc(), and the number of rows
+/// The number of columns of the matrix must have been set with ffSetNoc(), and the number of rows
 /// must be passed in the call. The result is a row with @a nor entries, and the output buffer,
 /// @a result, must be large enough to store a vector of this size.
 /// @a mat and @a result must not overlap. If they do, the result is undefined.
@@ -898,7 +862,7 @@ FEL FfScalarProduct(PTR a, PTR b)
 /// @param col Column to extract (starting with 0).
 /// @param result Pointer to buffer for the extracted column.
 
-void FfExtractColumn(PTR mat, int nor, int col, PTR result)
+void ffExtractColumn(PTR mat, int nor, int col, PTR result)
 {
    register BYTE *x = (BYTE *)mat + (col / MPB);
    register BYTE *extab = mtx_textract[col % MPB];
@@ -914,7 +878,7 @@ void FfExtractColumn(PTR mat, int nor, int col, PTR result)
          a = 0;
          ind = 0;
       }
-      x += FfCurrentRowSize;
+      x += ffRowSize(ffNoc);
    }
    if (ind != 0) { *y = a; }
 }
@@ -924,38 +888,27 @@ void FfExtractColumn(PTR mat, int nor, int col, PTR result)
 /// Insert a mark into a row
 /// This function inserts the field element @em mark at position @em col into @em row.
 /// Column indexes start with 0.
-/// Before this function can be used, the field must be selected with FfSetField().
-/// %FfInsert() does not need the row size beeing set correctly. For
+/// Before this function can be used, the field must be selected with ffSetField().
+/// %ffInsert() does not need the row size beeing set correctly. For
 /// example, if you are working with rows of different size, you do
-/// not have to call FfSetNoc() prior to each %FfInsert(). On the
+/// not have to call ffSetNoc() prior to each %ffInsert(). On the
 /// other hand, there is no protection against writing beyond the end
 /// of a row.
 ///
-/// If the MeatAxe is compiled with the DEBUG option
-/// %FfInsert() checks that @em mark is a valid
-/// field element and @em col is not negative. If also the PARANOID option
-/// was in effect during compilation, %FfInsert() also checks if @em col is
-/// less than or equal to the current row size.
+/// If the MeatAxe is compiled with the MTX_DEBUG option @c ffInsert() checks that @a mark
+/// is a valid field element and @em col is not negative and less than the current row size.
+///
 /// @param row Pointer to the row.
 /// @param col Insert position (0-based).
 /// @param mark Value to insert.
 
-void FfInsert(PTR row, int col, FEL mark)
+void ffInsert(PTR row, int col, FEL mark)
 {
+   MTX_ASSERT_DEBUG(isFel(mark),);
+   MTX_ASSERT_DEBUG(col >= 0 && col < ffNoc,);
+
    register BYTE *loc = (BYTE *)row + (col / MPB);
    register int idx = col % MPB;
-
-#ifdef DEBUG
-   CHECKFEL(mark);
-   if (col < 0) {
-      MTX_ERROR1("Invalid column index %d",col);
-   }
-#ifdef PARANOID
-   if (col >= FfNoc) {
-      MTX_ERROR2("Invalid column index %d, noc=%d)",col,FfNoc);
-   }
-#endif
-#endif
    *loc = (BYTE) (mtx_tnull[idx][*loc] + mtx_tinsert[idx][mark]);
 }
 
@@ -963,8 +916,8 @@ void FfInsert(PTR row, int col, FEL mark)
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 /// Extract a mark from a row
 /// This function returns the entry at position @a col of @a row.
-/// Note that column indexes start with 0, i.e., FfExtract(row,0) returns the first entry.
-/// Like FfInsert(), this function does not depend on the current row size.
+/// Note that column indexes start with 0, i.e., ffExtract(row,0) returns the first entry.
+/// Like ffInsert(), this function does not depend on the current row size.
 /// The index, @a col, is not checked. Reading at negative positions or beyond the end of the row
 /// results in undefined behaviour.
 ///
@@ -974,20 +927,11 @@ void FfInsert(PTR row, int col, FEL mark)
 ///
 /// @see FfInsert
 
-FEL FfExtract(PTR row, int col)
+FEL ffExtract(PTR row, int col)
 {
-#ifdef DEBUG
-   if (col < 0) {
-      MTX_ERROR1("Invalid column index (%d)",col);
-   }
-#ifdef PARANOID
-   if (col >= FfNoc) {
-      MTX_ERROR2("Invalid column index %d, noc=%d",col,FfNoc);
-   }
-   CHECKFEL(mtx_textract[col % MPB][((BYTE *)row)[col / MPB]]);
-#endif
-#endif
-   return mtx_textract[col % MPB][((BYTE *)row)[col / MPB]];
+   FEL result = mtx_textract[col % MPB][((BYTE *)row)[col / MPB]];
+   MTX_ASSERT_DEBUG(isFel(result), FF_ZERO);
+   return result;
 }
 
 
@@ -995,13 +939,13 @@ FEL FfExtract(PTR row, int col)
 /// Find pivot column.
 /// This function finds the first non-zero mark in a row vector.
 /// The mark is stored into <tt>*mark</tt> and its position (counting from 0) is returned.
-/// If the whole vector is zero, %FfFindPivot()
+/// If the whole vector is zero, %ffFindPivot()
 /// returns -1 and leaves <tt>*mark</tt> unchanged.
 /// @param row Pointer to the row.
 /// @param mark Buffer for pivot element.
 /// @return Index of the first non-zero entry in @a row or -1 if all entries are zero.
 
-int FfFindPivot(PTR row, FEL *mark)
+int ffFindPivot(PTR row, FEL *mark)
 {
    register long *l = (long *) row;
    register int idx;
@@ -1019,9 +963,10 @@ int FfFindPivot(PTR row, FEL *mark)
       idx += MPB;
    }
    idx += mtx_tffirst[*m][1];
-   if (idx >= FfNoc) {          // Ignore garbage in padding bytes
+   if (idx >= ffNoc) {          // Ignore garbage in padding bytes
       return -1;
    }
    *mark = mtx_tffirst[*m][0];
    return idx;
 }
+// vim:fileencoding=utf8:sw=3:ts=8:et:cin

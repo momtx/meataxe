@@ -1,17 +1,12 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // C MeatAxe - Print a polynomial
-//
-// (C) Copyright 1998-2015 Michael Ringe, Lehrstuhl D fuer Mathematik, RWTH Aachen
-//
-// This program is free software; see the file COPYING for details.
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#include <meataxe.h>
+#include "meataxe.h"
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // Local data
 
-MTX_DEFINE_FILE_INFO
 
 /// @addtogroup poly
 /// @{
@@ -20,7 +15,7 @@ MTX_DEFINE_FILE_INFO
 /// Print a polynomial
 /// This function prints a polynomial on the standard output in a human-readable
 /// form. If @em name is not 0, the name followed by an equal sign is printed
-/// before the polynomial. For example, the statement <tt>PolPrint("P",P)</tt> could
+/// before the polynomial. For example, the statement <tt>polPrint("P",P)</tt> could
 /// produce the following output:
 /// <pre>
 /// P=3x^2+x+1</pre>
@@ -28,18 +23,15 @@ MTX_DEFINE_FILE_INFO
 /// @param p Pointer to the polynomial.
 /// @return 0 on success, -1 on error.
 
-void PolPrint(char *name, const Poly_t *p)
+void polPrint(char *name, const Poly_t *p)
 {
    int i,flag = 0;
 
-   if (!PolIsValid(p)) {
-      MTX_ERROR1("%E",MTX_ERR_BADARG);
-      return;
-   }
+   polValidate(MTX_HERE, p);
    if (name != NULL) {
       printf("%s=",name);
    }
-   FfSetField(p->Field);
+   ffSetField(p->Field);
    if (p->Degree == -1) {
       printf("0x^0");
    }
@@ -49,7 +41,7 @@ void PolPrint(char *name, const Poly_t *p)
             printf("+");
          }
          if ((p->Data[i] != FF_ONE) || (i == 0)) {
-            printf("%d",FfToInt(p->Data[i]));
+            printf("%d",ffToInt(p->Data[i]));
          }
          if (i > 1) {
             printf("x^%d",i);
@@ -66,3 +58,4 @@ void PolPrint(char *name, const Poly_t *p)
 
 
 /// @}
+// vim:fileencoding=utf8:sw=3:ts=8:et:cin

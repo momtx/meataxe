@@ -1,12 +1,8 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // C MeatAxe - Print a factored polynomial.
-//
-// (C) Copyright 1998-2015 Michael Ringe, Lehrstuhl D fuer Mathematik, RWTH Aachen
-//
-// This program is free software; see the file COPYING for details.
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#include <meataxe.h>
+#include "meataxe.h"
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // Local data
@@ -23,12 +19,10 @@
 /// @param p Pointer to the factored polynomial.
 /// @return 0 on success, -1 on error.
 
-int FpPrint(const char *name, const FPoly_t *p)
+int fpPrint(const char *name, const FPoly_t *p)
 {
    int i;
-   if (!FpIsValid(p)) {
-      return -1;
-   }
+   fpValidate(MTX_HERE, p);
    if (name != NULL) {
       printf("%s =",name);
    }
@@ -36,7 +30,7 @@ int FpPrint(const char *name, const FPoly_t *p)
       int e = p->Mult[i];
       if (i > 0) { printf("    * "); }
       printf("(");
-      PolPrint(NULL,p->Factor[i]);
+      polPrint(NULL,p->Factor[i]);
       if (e > 1) {
          printf(")^%d\n",e);
       } else {
@@ -48,3 +42,4 @@ int FpPrint(const char *name, const FPoly_t *p)
 
 
 /// @}
+// vim:fileencoding=utf8:sw=3:ts=8:et:cin

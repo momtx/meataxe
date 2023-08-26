@@ -139,7 +139,6 @@ documented on a separate page (see @ref prog_stdopts).
 - @subpage prog_chop
 - @subpage prog_decomp
 - @subpage prog_genmod
-- @subpage prog_maketab
 - @subpage prog_mkcycl
 - @subpage prog_mkdotl
 - @subpage prog_mkgraph
@@ -254,18 +253,12 @@ Instructions for compiling and installing the MeatAxe can be found in the file
 README.md, which is included in the distribution package.
 There are several options which can be defined at compile time:
 
-@par @c MTXBIN
-Name of the MeatAxe binary directory. This should be the
-final installation directory. The value selected at compile-time
-can be overridden later by defining the environment variable
-MTXBIN or by using the `-B' option.
-
 @par @c MTXLIB
 Name of the library directory, see @ref sec_libdir.
 The value selected at compile-time can be overridden later by defining
 the environment variable MTXLIB or by using the `-L' option.
 
-@par @c DEBUG
+@par @c MTX_DEBUG
 Useful only for development and bug-fixing. Setting this option
 results in more argument checking and, consequently, slower execution.
 
@@ -292,23 +285,15 @@ You need to define this variable only if you want to use a library directory
 different from the default library directory chosen at compile time.
 This can be overridden by the -L command line option.
 
-@par @c MTXBIN
-Name of the MeatAxe installation directory.
-This is necessary if the programs have been moved into another directory without
-recompiling and you want to use the automatic table file generation
-feature.
-The value of this variable can be overridden by the -B option.
-
 @section sec_tables Arithmetic Tables
 All programs use lookup tables for row operations and finite field arithmetic.
-These tables are read from a file named <tt>pXXX.zzz</tt>.
+These tables are read from a file named <tt>pXXX.zzz</tt> or <tt>pXXXXX.zzz</tt>,
 where XXX is the field order.
 For example, tables for GF(25) are read from the file <tt>p025.zzz</tt>.
-If the table file does not exist, it will be created automatically.
-You may also use the @ref prog_maketab "maketab" program
-to generate the table file manually.
-Table files may also be placed in the library directory (see below)
-because the programs look there before they try to generate a new file.
+The table file can be in the library directory (see below) or in the current
+working directory. If it is not found in either location, a new file is created
+in the working directory. You can copy the file to the library directory to avoid
+creating new files in every working directory.
 
 @section sec_ft File Types
 All MeatAxe programs operate on files and do not require user interaction.
@@ -481,10 +466,6 @@ The following command line options are understood by all MeatAxe programs:
   Verbose, more messages. Repeat this option (e.g., -VVV) to see more detailed information.
 @par -T @em Time
   Limit CPU time to \e Time seconds.
-@par -B @em BinDir
-  Used to specify a different binary directory. This overrides both
-  the directory name compiled into the programs and the value of
-  MTXBIN.
 @par -L @em LibDir
   Used to specify a different library directory. This overrides both
   the directory name compiled into the programs and the value of
@@ -540,9 +521,9 @@ Matrices are stored as a sequence of rows in the internal format
 (see @ref ff), but the rows are truncated to their actual length. 
 For example, a row with 17 entries over GF(125) on a machine with
 sizeof(long)=4 would occupy 20 bytes in memory but only 17 bytes in
-a data file.
-As specified in @ref UNDEFINED:kernel.ff, unused bits in the last byte
-of each row are always filled with zeroes.
+a data file. Depending on the arithmetic kernel used (see @ref ff)
+the may also be unused bits in each byte. These unused bits are always
+set to zero.
 
 @subsection sec_fileformats_binary_perm Permutations
 A permutation of degree N is stored as N 32-bit integers in little-endian

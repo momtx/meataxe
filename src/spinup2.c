@@ -1,17 +1,12 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // C MeatAxe - Spin-up with script
-//
-// (C) Copyright 1998-2014 Michael Ringe, Lehrstuhl D fuer Mathematik, RWTH Aachen
-//
-// This program is free software; see the file COPYING for details.
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#include <meataxe.h>
+#include "meataxe.h"
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // Local data
 
-MTX_DEFINE_FILE_INFO
 
 /// @addtogroup spinup
 /// @{
@@ -20,24 +15,20 @@ MTX_DEFINE_FILE_INFO
 
 static int ArgsAreValid(const Matrix_t *seed, const MatRep_t *rep, const IntMatrix_t *script)
 {
-    if (!ImatIsValid(script) || script->Noc != 2)
+    if (!imatIsValid(script) || script->Noc != 2)
     {
-	MTX_ERROR("Invalid script");
+	mtxAbort(MTX_HERE,"Invalid script");
 	return 0;
     }
-    if (!MatIsValid(seed))
+    matValidate(MTX_HERE, seed);
+    if (!mrIsValid(rep) || rep->NGen <= 0)
     {
-	MTX_ERROR("Invalid seed space");
-	return 0;
-    }
-    if (!MrIsValid(rep) || rep->NGen <= 0)
-    {
-	MTX_ERROR("Invalid representation");
+	mtxAbort(MTX_HERE,"Invalid representation");
 	return 0;
     }
     if (seed->Noc != rep->Gen[0]->Noc || seed->Field != rep->Gen[0]->Field)
     {
-	MTX_ERROR1("seed and rep: %E",MTX_ERR_INCOMPAT);
+	mtxAbort(MTX_HERE,"seed and rep: %s",MTX_ERR_INCOMPAT);
 	return 0;
     }
     return 1;
@@ -63,41 +54,41 @@ Matrix_t *SpinUpWithScript(const Matrix_t *seed, const MatRep_t *rep, const IntM
        ---------------- */
     if (!ArgsAreValid(seed,rep,script))
     {
-	MTX_ERROR("Invalid arguments");
+	mtxAbort(MTX_HERE,"Invalid arguments");
 	return NULL;
     }
 
     /* Spin up
        ------- */
-    FfSetField(seed->Field);
-    FfSetNoc(seed->Noc);
+    ffSetField(seed->Field);
+    ffSetNoc(seed->Noc);
     op = script->Data;
-    basis = MatAlloc(FfOrder,script->Nor,seed->Noc);
+    basis = matAlloc(ffOrder,script->Nor,seed->Noc);
     for (i = 0; i < script->Nor; ++i)
     {
     	int vecno = (int) op[2 * i];
 	int vecgen = (int) op[2 * i + 1];
-	PTR vec = MatGetPtr(basis,i);
+	PTR vec = matGetPtr(basis,i);
 	if (vecgen < 0)
 	{
 	    if (vecno < 1 || vecno > seed->Nor)
 	    {
-	    	MTX_ERROR2("Seed vector number (%d) out of range (%d)",
+	    	mtxAbort(MTX_HERE,"Seed vector number (%d) out of range (%d)",
 		    vecno,seed->Nor);
 	    }
 	    else
-	    	FfCopyRow(vec,MatGetPtr(seed,vecno - 1));
+	    	ffCopyRow(vec,matGetPtr(seed,vecno - 1));
 	}
 	else
 	{
 	    if (vecno < 0 || vecno >= i)
-	    	MTX_ERROR2("Invalid source vector %d at position %d",vecno,i);
+	    	mtxAbort(MTX_HERE,"Invalid source vector %d at position %d",vecno,i);
 	    else if (vecgen < 0 || vecgen >= rep->NGen)
 	    {
-	    	MTX_ERROR2("Invalid generator number %d at position %d",
+	    	mtxAbort(MTX_HERE,"Invalid generator number %d at position %d",
 		    vecgen,i);
 	    }
-	    FfMapRow(MatGetPtr(basis,vecno),rep->Gen[vecgen]->Data,FfNoc,vec);
+	    ffMapRow(matGetPtr(basis,vecno),rep->Gen[vecgen]->Data,ffNoc,vec);
 	}
     }
     return basis;
@@ -141,3 +132,4 @@ int ConvertSpinUpScript(IntMatrix_t *script)
 
 /// @}
 
+// vim:fileencoding=utf8:sw=3:ts=8:et:cin

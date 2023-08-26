@@ -1,19 +1,14 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // C MeatAxe - Condensation of tensor products.
-//
-// (C) Copyright 1998-2015 Michael Ringe, Lehrstuhl D fuer Mathematik, RWTH Aachen
-//
-// This program is free software; see the file COPYING for details.
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#include <meataxe.h>
+#include "meataxe.h"
 #include <string.h>
 
 /* --------------------------------------------------------------------------
    Global data
    -------------------------------------------------------------------------- */
 
-MTX_DEFINE_FILE_INFO
 
 
 static const char *TkiName;		/* Base name for .tki file */
@@ -66,30 +61,29 @@ static MtxApplication_t *App = NULL;
 
 
 static void MakeInvertible(Matrix_t *mat, const char *fn)
-
 {
-    Matrix_t *dup = MatDup(mat);
+    Matrix_t *dup = matDup(mat);
     PTR x;
     int i, k;
 
-    MatEchelonize(dup);
+    matEchelonize(dup);
     k = dup->Nor;
     if (k < mat->Nor)
     {
 	MESSAGE(0,("WARNING: %s: %d basis vectors are missing, "
 	    "using random vectors\n",fn,mat->Nor - k));
     }
-    for (i = 0, x = mat->Data; i < mat->Nor; ++i, FfStepPtr(&x))
+    for (i = 0, x = mat->Data; i < mat->Nor; ++i, ffStepPtr(&x, mat->Noc))
     {
 	FEL f;
-	if (FfFindPivot(x,&f) < 0)
+	if (ffFindPivot(x,&f) < 0)
 	{
-	    FfInsert(x,dup->PivotTable[k],FF_ONE);
+	    ffInsert(x,dup->PivotTable[k],FF_ONE);
 	    ++k;
 	}
     }
-    MTX_VERIFY(k == mat->Nor);
-    MatFree(dup);
+    MTX_ASSERT(k == mat->Nor,);
+    matFree(dup);
 }
 
 
@@ -106,28 +100,27 @@ static void MakeInvertible(Matrix_t *mat, const char *fn)
      <argv>: Command line arguments
    -------------------------------------------------------------------------- */
 
-static int Init(int argc, const char **argv)
-
+static int Init(int argc, char **argv)
 {
     char fn[200];
     int i;
 
     /* Process command line options
        ---------------------------- */
-    if ((App = AppAlloc(&AppInfo,argc,argv)) == NULL)
+    if ((App = appAlloc(&AppInfo,argc,argv)) == NULL)
 	return -1;
-    NGen = AppGetIntOption(App,"-g",2,1,100);
-    WriteGenerators = AppGetOption(App,"-t --write-generators");
-    NoBasisChange = AppGetOption(App,"-n --no-basis-change");
+    NGen = appGetIntOption(App,"-g",2,1,100);
+    WriteGenerators = appGetOption(App,"-t --write-generators");
+    NoBasisChange = appGetOption(App,"-n --no-basis-change");
     if (WriteGenerators && NoBasisChange)
     {
-	MTX_ERROR("'-t' and '-n' cannot be used together");
+	mtxAbort(NULL,"'-t' and '-n' cannot be used together");
 	return -1;
     }
 
     /* Process command line arguments
        ------------------------------ */
-    if (AppGetArguments(App,4,4) < 0)
+    if (appGetArguments(App,4,4) < 0)
 	return -1;
     TkiName = App->ArgV[0];
     AName = App->ArgV[1];
@@ -136,22 +129,22 @@ static int Init(int argc, const char **argv)
 
     /* Read info files
        --------------- */
-    if (TK_ReadInfo(&TKInfo,TkiName) != 0)
-	MTX_ERROR1("Error reading %s.tki",TkiName);
-    if (Lat_ReadInfo(&InfoM,TKInfo.NameM) != 0)
-	MTX_ERROR1("Error reading %s.cfinfo",TKInfo.NameM);
-    if (Lat_ReadInfo(&InfoN,TKInfo.NameN) != 0)
-	MTX_ERROR1("Error reading %s.cfinfo",TKInfo.NameN);
+    if (tkReadInfo(&TKInfo,TkiName) != 0)
+	mtxAbort(MTX_HERE,"Error reading %s.tki",TkiName);
+    if (latReadInfo(&InfoM,TKInfo.NameM) != 0)
+	mtxAbort(MTX_HERE,"Error reading %s.cfinfo",TKInfo.NameM);
+    if (latReadInfo(&InfoN,TKInfo.NameN) != 0)
+	mtxAbort(MTX_HERE,"Error reading %s.cfinfo",TKInfo.NameN);
 
     /* Some checks on info file data
        ----------------------------- */
     if (TKInfo.Dim <= 0)
-	MTX_ERROR("No dimension found in .tki file - did you run precond?");
+	mtxAbort(MTX_HERE,"No dimension found in .tki file - did you run precond?");
     if (InfoM.Field != InfoN.Field)
-	MTX_ERROR("Different fields in .cfinfo files");
+	mtxAbort(MTX_HERE,"Different fields in .cfinfo files");
     if (InfoN.NGen != InfoM.NGen)
     {
-	MTX_ERROR2("Different number of generators in %s and %s",
+	mtxAbort(MTX_HERE,"Different number of generators in %s and %s",
 	    InfoM.BaseName,InfoN.BaseName);
     }
 
@@ -161,27 +154,27 @@ static int Init(int argc, const char **argv)
     {
         MESSAGE(1,("Reading and inverting semisimplicity bases\n"));
         sprintf(fn,"%s.ssb",TKInfo.NameM);
-        SsBasisM = MatLoad(fn);
+        SsBasisM = matLoad(fn);
         if (SsBasisM == NULL)
         {
-	    MTX_ERROR1("Cannot load semisimplicity basis -- Did you run "
+	    mtxAbort(MTX_HERE,"Cannot load semisimplicity basis -- Did you run "
 	        "'pwkond -t -b %s'?",TKInfo.NameM);
 	    return -1;
         }
         MakeInvertible(SsBasisM,fn);
-        SsBasisMi = MatInverse(SsBasisM);
+        SsBasisMi = matInverse(SsBasisM);
         if (strcmp(AName,BName))
         {
 	    sprintf(fn,"%s.ssb",TKInfo.NameN);
-	        SsBasisN = MatLoad(fn);
+	        SsBasisN = matLoad(fn);
 	    if (SsBasisN == NULL)
 	    {
-	        MTX_ERROR1("Cannot load semisimplicity basis -- Did you run "
+	        mtxAbort(MTX_HERE,"Cannot load semisimplicity basis -- Did you run "
 		    "'pwkond -t -b %s'?",TKInfo.NameN);
 	        return -1;
 	    }
 	    MakeInvertible(SsBasisN,fn);
-	    SsBasisNi = MatInverse(SsBasisN);
+	    SsBasisNi = matInverse(SsBasisN);
         }
         else
         {
@@ -199,20 +192,20 @@ static int Init(int argc, const char **argv)
 	int f;
 	tdim *= tdim;
         sprintf(fn,"%s.p.%d",TkiName,i + 1);
-	if ((P[i] = MatLoad(fn)) == NULL)
+	if ((P[i] = matLoad(fn)) == NULL)
 	    return -1;
-	f = FfOrder;
+	f = ffOrder;
 	if (P[i]->Field != f || P[i]->Noc != spl || P[i]->Nor != tdim)
 	{
-	    MTX_ERROR1("%s: Invalid P matrix",fn);
+	    mtxAbort(MTX_HERE,"%s: Invalid P matrix",fn);
 	    return -1;
 	}
         sprintf(fn,"%s.q.%d",TkiName,i + 1);
-	if ((Q[i] = MatLoad(fn)) == NULL)
+	if ((Q[i] = matLoad(fn)) == NULL)
 	    return -1;
 	if (Q[i]->Field != f || Q[i]->Nor != spl || Q[i]->Noc != tdim)
 	{
-	    MTX_ERROR1("%s: Invalid Q matrix",fn);
+	    mtxAbort(MTX_HERE,"%s: Invalid Q matrix",fn);
 	    return -1;
 	}
     }
@@ -248,8 +241,8 @@ static int FirstRow(Lat_Info *info, int cf, int k)
     int ind = 0;
     int i;
 
-    MTX_VERIFY(cf >= 0 && cf < info->NCf);
-    MTX_VERIFY(k >= 0 && k < info->Cf[cf].mult);
+    MTX_ASSERT(cf >= 0 && cf < info->NCf, 0);
+    MTX_ASSERT(k >= 0 && k < info->Cf[cf].mult, 0);
 
     /* Constituents before <cf> consume dim*mult rows
        ---------------------------------------------- */
@@ -297,7 +290,7 @@ static void gemap(Matrix_t *conma, Matrix_t *q, Matrix_t *mrow, Matrix_t *nrow)
         for (mj = 0; mj < InfoM.Cf[cfm].mult; ++mj)
         {
 	    long mstart = FirstRow(&InfoM,cfm,mj);
-	    Matrix_t *mop = MatCut(mrow,0,mstart,-1,d);
+	    Matrix_t *mop = matCut(mrow,0,mstart,-1,d);
 	    int nj;
 
 	    /* For each copy of I in N
@@ -305,15 +298,15 @@ static void gemap(Matrix_t *conma, Matrix_t *q, Matrix_t *mrow, Matrix_t *nrow)
             for (nj = 0; nj < InfoN.Cf[cfn].mult; nj++)
             {   
 		long nstart = FirstRow(&InfoN,cfn,nj);
-                Matrix_t *nop = MatCut(nrow,0,nstart,-1,d);
+                Matrix_t *nop = matCut(nrow,0,nstart,-1,d);
 		Matrix_t *image = TensorMap(q,mop,nop);
-                MatFree(nop);
-                MatMul(image, P[j]);   /* projection */
-		MatCopyRegion(conma,0,bcol,image,0,0,-1,-1);
-                MatFree(image);
+                matFree(nop);
+                matMul(image, P[j]);   /* projection */
+		matCopyRegion(conma,0,bcol,image,0,0,-1,-1);
+                matFree(image);
                 bcol += P[j]->Noc;
             }
-	    MatFree(mop);
+	    matFree(mop);
         }
     }
 }
@@ -351,9 +344,9 @@ static int CondenseMat(int gen)
 
     /* Load the generator on M and N
        ----------------------------- */
-    mmat = MatLoad(aname);
+    mmat = matLoad(aname);
     if (strcmp(aname,bname))
-	nmat = MatLoad(bname);
+	nmat = matLoad(bname);
     else
 	nmat = mmat;
 
@@ -362,23 +355,23 @@ static int CondenseMat(int gen)
     if (!NoBasisChange)
     {
         MESSAGE(1,("  Changing basis\n"));
-        x = MatDup(SsBasisM);
-        if (MatMul(x,mmat) == NULL)
+        x = matDup(SsBasisM);
+        if (matMul(x,mmat) == NULL)
         {
-	    MTX_ERROR("Basis change failed - did you run 'pwkond -tb' and "
+	    mtxAbort(MTX_HERE,"Basis change failed - did you run 'pwkond -tb' and "
 		"'precond'?");
 	    return -1;
         }
-        MatMul(x,SsBasisMi);
-        MatFree(mmat);
+        matMul(x,SsBasisMi);
+        matFree(mmat);
         mmat = x;
 
         if (strcmp(aname,bname))
         {
-	    x = MatDup(SsBasisN);
-	    MatMul(x,nmat);
-	    MatMul(x,SsBasisNi);
-            MatFree(nmat);
+	    x = matDup(SsBasisN);
+	    matMul(x,nmat);
+	    matMul(x,SsBasisNi);
+            matFree(nmat);
 	    nmat = x;
         }
         else
@@ -389,18 +382,18 @@ static int CondenseMat(int gen)
     {
 	char fn[200];
         sprintf(fn,"%s.ss.%d",AName,gen+1);
-	MatSave(mmat,fn);
+	matSave(mmat,fn);
 	if (strcmp(aname,bname))
         {
 	    sprintf(fn,"%s.ss.%d",BName,gen+1);
-	    MatSave(nmat,fn);
+	    matSave(nmat,fn);
 	}
     }
 
     /* Open the output file
        -------------------- */
     MESSAGE(1,("  Beginning condensation\n"));
-    fptr = FfWriteHeader(resname,FfOrder,TKInfo.Dim,TKInfo.Dim);
+    fptr = ffWriteHeader(resname,ffOrder,TKInfo.Dim,TKInfo.Dim);
 
     /* Main loop: for each constituent
        ------------------------------- */
@@ -411,15 +404,15 @@ static int CondenseMat(int gen)
 	int rownb = InfoM.Cf[cfm].dim;	/* Number of rows to extract */
 	int mi;				/* Counter for copies of this const. */
 
-        MESSAGE(2,("  Processing %s",Lat_CfName(&InfoM,cfm)));
-        MESSAGE(2,(" x %s\n",Lat_CfName(&InfoN,cfn)));
+        MESSAGE(2,("  Processing %s",latCfName(&InfoM,cfm)));
+        MESSAGE(2,(" x %s\n",latCfName(&InfoN,cfn)));
 
         for (mi = 0; mi < InfoM.Cf[cfm].mult; ++mi)
         {
 	    Matrix_t *mrow;
 	    int ni;
 	    int firstrow = FirstRow(&InfoM,cfm,mi);
-	    mrow = MatCutRows(mmat,firstrow,rownb);
+	    mrow = matCutRows(mmat,firstrow,rownb);
 
 	    MESSAGE(3,("  "));
             for (ni = 0; ni < InfoN.Cf[cfn].mult; ++ni)
@@ -427,11 +420,11 @@ static int CondenseMat(int gen)
 		Matrix_t *nrow, *condmat;
 
 		firstrow = FirstRow(&InfoN,cfn,ni);
-		nrow = MatCutRows(nmat,firstrow,rownb);
-		condmat = MatAlloc(FfOrder,Q[cf]->Nor,TKInfo.Dim);
+		nrow = matCutRows(nmat,firstrow,rownb);
+		condmat = matAlloc(ffOrder,Q[cf]->Nor,TKInfo.Dim);
 		if (condmat == NULL)
 		{
-		    MTX_ERROR2("Cannot allocate %dx%d matrix",
+		    mtxAbort(MTX_HERE,"Cannot allocate %dx%d matrix",
 			Q[cf]->Nor,TKInfo.Dim);
 		}
 
@@ -439,22 +432,22 @@ static int CondenseMat(int gen)
                 gemap(condmat,Q[cf],mrow,nrow);
                 
                 /* write result */
-                FfSetNoc(condmat->Noc);
-        	FfWriteRows(fptr,condmat->Data,condmat->Nor);
-                MatFree(condmat);
-                MatFree(nrow);
+                ffSetNoc(condmat->Noc);
+        	ffWriteRows(fptr,condmat->Data,condmat->Nor,condmat->Noc);
+                matFree(condmat);
+                matFree(nrow);
             }
 	    MESSAGE(3,("\n"));
-            MatFree(mrow);
+            matFree(mrow);
         }   
     }   
 
     /* Clean up
        -------- */
     fclose(fptr);
-    MatFree(mmat);
+    matFree(mmat);
     if (strcmp(aname,bname))
-	MatFree(nmat);
+	matFree(nmat);
     return 0;
 }
 
@@ -466,26 +459,26 @@ static int CondenseMat(int gen)
    main() - Program entry point
    -------------------------------------------------------------------------- */
 
-int main(int argc, const char **argv)
+int main(int argc, char **argv)
 
 {
     int i;
     int rc = 0;
     if (Init(argc,argv) != 0)
     {
-	MTX_ERROR("Initialization failed");
+	mtxAbort(MTX_HERE,"Initialization failed");
 	return 1;
     }
     for (i = 0; i < NGen; ++i)
     {
 	if (CondenseMat(i) != 0)
 	{
-	    MTX_ERROR4("Condensation failed for %s.%d x %s.%d",AName,i+1,BName,i+1);
+	    mtxAbort(MTX_HERE,"Condensation failed for %s.%d x %s.%d",AName,i+1,BName,i+1);
 	    rc = 1;
 	}
     }
     if (App != NULL) 
-	AppFree(App);
+	appFree(App);
     return rc;
 }  
 
@@ -585,3 +578,4 @@ The algorithm used by this program is described in @ref Wie94 "[Wie94]".
 
 */
 
+// vim:fileencoding=utf8:sw=3:ts=8:et:cin

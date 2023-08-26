@@ -1,17 +1,12 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // C MeatAxe - Find the (kernel-)stable power of a matrix.
-//
-// (C) Copyright 1998-2015 Michael Ringe, Lehrstuhl D fuer Mathematik, RWTH Aachen
-//
-// This program is free software; see the file COPYING for details.
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#include <meataxe.h>
+#include "meataxe.h"
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 //   Local data
 
-MTX_DEFINE_FILE_INFO
 
 /// @addtogroup mat
 /// @{
@@ -37,52 +32,48 @@ MTX_DEFINE_FILE_INFO
 int StablePower_(Matrix_t *mat, int *pwr, Matrix_t **ker)
 {
    // check the arguments.
-   if (!MatIsValid(mat)) {
-      MTX_ERROR1("mat: %E",MTX_ERR_BADARG);
-      return -1;
-   }
+   matValidate(MTX_HERE, mat);
    if (mat->Nor != mat->Noc) {
-      MTX_ERROR1("%E",MTX_ERR_NOTSQUARE);
-      return -1;
+      mtxAbort(MTX_HERE,"%s",MTX_ERR_NOTSQUARE);
    }
 
    // calculate the stable power
    int p = 1;
-   Matrix_t *k1 = MatNullSpace(mat);
+   Matrix_t *k1 = matNullSpace(mat);
    if (k1 == NULL) {
        return -1;
    }
-   if (MatMul(mat,mat) == NULL) {
-       MatFree(k1);
+   if (matMul(mat,mat) == NULL) {
+       matFree(k1);
        return -1;
    }
-   Matrix_t *k2 = MatNullSpace(mat);
+   Matrix_t *k2 = matNullSpace(mat);
    if (k2 == NULL) {
-       MatFree(k1);
+       matFree(k1);
        return -1;
    }
 
    while (k2->Nor > k1->Nor) {
       p *= 2;
-      MatFree(k1);
+      matFree(k1);
       k1 = k2;
-      if (MatMul(mat,mat) == NULL) {
-         MatFree(k1);
+      if (matMul(mat,mat) == NULL) {
+         matFree(k1);
          return -1;
       }
-      k2 = MatNullSpace(mat);
+      k2 = matNullSpace(mat);
       if (k2 == NULL) {
-         MatFree(k1);
+         matFree(k1);
          return -1;
       }
    }
-   MatFree(k2);
+   matFree(k2);
 
    // return the result
    if (ker != NULL) {
       *ker = k1;
    } else {
-      MatFree(k1);
+      matFree(k1);
    }
    if (pwr != NULL) {
       *pwr = p;
@@ -107,15 +98,16 @@ int StablePower(const Matrix_t *mat, int *pwr, Matrix_t **ker)
    int rc;
    Matrix_t *tmp;
 
-   tmp = MatDup(mat);
+   tmp = matDup(mat);
    if (tmp == NULL) {
-      MTX_ERROR1("mat: %E",MTX_ERR_BADARG);
+      mtxAbort(MTX_HERE,"mat: %s",MTX_ERR_BADARG);
       return -1;
    }
    rc = StablePower_(tmp,pwr,ker);
-   MatFree(tmp);
+   matFree(tmp);
    return rc;
 }
 
 
 /// @}
+// vim:fileencoding=utf8:sw=3:ts=8:et:cin

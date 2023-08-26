@@ -1,21 +1,17 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // C MeatAxe - Greased matrix multiplication
-//
-// (C) Copyright 1998-2015 Michael Ringe, Lehrstuhl D fuer Mathematik, RWTH Aachen
-//
-// This program is free software; see the file COPYING for details.
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#include <meataxe.h>
+#include "meataxe.h"
 #include <stdlib.h>
 #include <string.h>
 
-#if ZZZ == 0	// greasing is only available for the standard kernel
+
+#if MTXZZZ == 0	// greasing is only available for the standard kernel
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // Local data
 
-MTX_DEFINE_FILE_INFO
 
 /// @addtogroup grmat
 /// @{
@@ -37,10 +33,10 @@ static void ExtractNrs(PTR v,GreasedMatrix_t *M)
    register int i = M->Nor / M->GrRows;
 
    if (extrtablen < i + 16) { /* some reserve! */
-      if (extractednrs) { SysFree(extractednrs); }
+      if (extractednrs) { sysFree(extractednrs); }
       extractednrs = NALLOC(long,i + 16);
       if (extractednrs == NULL) {
-         MTX_ERROR("Not enough memory for extraction table");
+         mtxAbort(MTX_HERE,"Not enough memory for extraction table");
          return;
       }
       extrtablen = i + 16;
@@ -85,22 +81,22 @@ static void CleverMapRow(PTR v,GreasedMatrix_t *M,PTR w)
    PTR p = M->PrecalcData;
 
    ExtractNrs(v,M);    /* extracts numbers into global table */
-   FfMulRow(w,FF_ZERO);   /* Clear result */
+   ffMulRow(w,FF_ZERO);   /* Clear result */
    curcol = M->Nor / M->GrRows;   /* only used later and for i init */
    nr = extractednrs;
    for (i = curcol; i > 0; i--) {
       /* for all greasing blocks */
       if (*nr) { /* not the zero vector */
-         FfAddRow(w,FfGetPtr(p,*nr - 1));
+         ffAddRow(w,ffGetPtr(p,*nr - 1, ffNoc));
       }
-      p = FfGetPtr(p,M->GrBlockSize);
+      p = ffGetPtr(p,M->GrBlockSize, ffNoc);
       nr++;
    }
    curcol = curcol * M->GrRows;
    for (i = M->Nor % M->GrRows; i > 0; i--) {
       /* do the rest */
-      FfAddMulRow(w,p,FfExtract(v,curcol++));
-      FfStepPtr(&p);
+      ffAddMulRow(w,p,ffExtract(v,curcol++));
+      ffStepPtr(&p, ffNoc);
    }
 }
 
@@ -110,7 +106,7 @@ static void CleverMapRow(PTR v,GreasedMatrix_t *M,PTR w)
 /// the matrix @a M and write the result to @a w. The length of @a v must
 /// coincide with the number of rows of @a M. The result @a w is as long
 /// as the length of a row of @a M.
-/// Unlike FfMapRow(), this function sets field and row length correctly!
+/// Unlike ffMapRow(), this function sets field and row length correctly!
 /// @param v The vector.
 /// @param M Pointer to the matrix.
 /// @param w The result, vM.
@@ -123,11 +119,11 @@ void GrMapRow(PTR v,GreasedMatrix_t *M, PTR w)
    PTR p;         /* Pointer into lookup table */
 
    if (!GrMatIsValid(M)) {
-      MTX_ERROR("GrMapRow(): Invalid argument(s)");
+      mtxAbort(MTX_HERE,"GrMapRow(): Invalid argument(s)");
       return;
    }
-   FfSetField(M->Field);
-   FfSetNoc(M->Noc);
+   ffSetField(M->Field);
+   ffSetNoc(M->Noc);
 
    /* Handle some special cases.
       -------------------------- */
@@ -136,11 +132,11 @@ void GrMapRow(PTR v,GreasedMatrix_t *M, PTR w)
       return;
    }
    if (M->GrRows == 0) {        /* Greasig is switched off */
-      FfMapRow(v,M->PrecalcData,M->Nor,w);
+      ffMapRow(v,M->PrecalcData,M->Nor,w);
       return;
    }
 
-   FfMulRow(w,FF_ZERO);   /* Clear result */
+   ffMulRow(w,FF_ZERO);   /* Clear result */
    curcol = 0;                  /* start with the first column of `v' */
    p = M->PrecalcData;          /* start at the beginning of the table */
 
@@ -164,9 +160,9 @@ void GrMapRow(PTR v,GreasedMatrix_t *M, PTR w)
             }
          }
          if (nr) {     /* not the zero vector */
-            p = FfGetPtr(p,nr - 1);   /* now p points to the right linear combination */
+            p = ffGetPtr(p,nr - 1,ffNoc);   /* now p points to the right linear combination */
 #if 1
-            FfAddRow(w,p);
+            ffAddRow(w,p);
 #else
             {
                register long *a = (long *) w;
@@ -177,15 +173,15 @@ void GrMapRow(PTR v,GreasedMatrix_t *M, PTR w)
                }
             }
 #endif
-            p = FfGetPtr(p,M->GrBlockSize - nr + 1);
+            p = ffGetPtr(p,M->GrBlockSize - nr + 1, ffNoc);
          } else {
-            p = FfGetPtr(p,M->GrBlockSize);
+            p = ffGetPtr(p,M->GrBlockSize, ffNoc);
          }
       }
       for (i = M->Nor % M->GrRows; i > 0; i--) {
          /* do the rest */
-         if (buf < 0) { FfAddRow(w,p); }
-         FfStepPtr(&p);
+         if (buf < 0) { ffAddRow(w,p); }
+         ffStepPtr(&p, ffNoc);
          if ((++curcol & 0x7) == 0) {
             buf = *q++;
          } else {
@@ -198,24 +194,34 @@ void GrMapRow(PTR v,GreasedMatrix_t *M, PTR w)
          /* Calculate the number for the first lookup: */
          nr = 0;
          for (j = M->GrRows - 1; j >= 0; j--) { /* add j to curcol */
-            nr = nr * M->Field + FfToInt(FfExtract(v,curcol + j));
+            nr = nr * M->Field + ffToInt(ffExtract(v,curcol + j));
          }
          if (nr) {     /* not the zero vector */
-            p = FfGetPtr(p,nr - 1);   /* now p points to the right linear combination */
-            FfAddRow(w,p);
-            p = FfGetPtr(p,M->GrBlockSize - nr + 1);
+            p = ffGetPtr(p,nr - 1, ffNoc);   /* now p points to the right linear combination */
+            ffAddRow(w,p);
+            p = ffGetPtr(p,M->GrBlockSize - nr + 1, ffNoc);
          } else {
-            p = FfGetPtr(p,M->GrBlockSize);
+            p = ffGetPtr(p,M->GrBlockSize, ffNoc);
          }
          curcol += M->GrRows;
       }
       for (i = M->Nor % M->GrRows; i > 0; i--) {  /* do the rest */
-         FfAddMulRow(w,p,FfExtract(v,curcol++));
-         FfStepPtr(&p);
+         ffAddMulRow(w,p,ffExtract(v,curcol++));
+         ffStepPtr(&p, ffNoc);
       }
    }
+}
+
+#else
+// greasing is only available for the standard kernel
+
+void GrMapRow(PTR v,GreasedMatrix_t *M, PTR w)
+{
+    mtxAbort(MTX_HERE,"Greasing is not yet supported for ZZZ=1");
+    abort();
 }
 
 #endif
 
 /// @}
+// vim:fileencoding=utf8:sw=3:ts=8:et:cin

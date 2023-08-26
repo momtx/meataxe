@@ -1,18 +1,13 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // C MeatAxe - Basic polynomial functions.
-//
-// (C) Copyright 1998-2015 Michael Ringe, Lehrstuhl D fuer Mathematik, RWTH Aachen
-//
-// This program is free software; see the file COPYING for details.
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#include <meataxe.h>
+#include "meataxe.h"
 #include <string.h>
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // Local data
 
-MTX_DEFINE_FILE_INFO
 
 #define POLY_MAGIC 0x355A3207
 
@@ -45,27 +40,40 @@ MTX_DEFINE_FILE_INFO
 /// @param p The polynomial to check.
 /// @return 1 if @em p points to a valid polynomial, 0 otherwise.
 
-int PolIsValid(const Poly_t *p)
+int polIsValid(const Poly_t *p)
 {
-   int deg;
-
-   if (p == NULL) {
-      MTX_ERROR("NULL polynomial");
+   if (p == NULL || p->Magic != POLY_MAGIC) {
       return 0;
    }
-   deg = p->Degree;
-   if ((p->Magic != POLY_MAGIC) || (deg < -1) || (p->Field < 2)
-       || (p->Data == NULL) || (p->BufSize < 0)) {
-      MTX_ERROR4("Invalid polynomial (magic=%d, field=%d, deg=%d, bufsize=%d)",
-                 p->Magic,p->Field,deg,p->BufSize);
+   const int deg = p->Degree;
+   if (deg < -1 || p->Field < 2 || p->Data == NULL || p->BufSize < 0) {
       return 0;
    }
-
-   if ((deg >= 0) && (p->Data[deg] == FF_ZERO)) {
-      MTX_ERROR("Invalid polynomial: leading coefficient is zero");
+   if (deg >= 0 && p->Data[deg] == FF_ZERO) {
       return 0;
    }
    return 1;
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+/// Checks if the given polynimial is valid and aborts the program if the test fails.
+
+void polValidate(const struct MtxSourceLocation* src, const Poly_t *pol)
+{
+   if (pol == NULL)
+      mtxAbort(src,"NULL polynomial");
+   if (pol->Magic != POLY_MAGIC || pol->Degree < -1 || pol->Field < 2) {
+      mtxAbort(src,"Invalid polynomial (magic=0x%x, field=%d, deg=%d)",
+            pol->Magic, pol->Field, pol->Degree);
+   }
+   if (pol->Data == NULL || pol->BufSize < 0) {
+      mtxAbort(src,"Invalid polynomial (data=0x%lx, size=%d)",
+            (unsigned long)pol->Data, pol->BufSize);
+   }
+   if (pol->Degree >= 0 && pol->Data[pol->Degree] == FF_ZERO) {
+      mtxAbort(src,"Invalid polynomial (leading coefficient is zero)");
+   }
 }
 
 
@@ -74,13 +82,13 @@ int PolIsValid(const Poly_t *p)
 /// This function creates the polynomial p(x)=x^n over the current field.
 /// If n is negative, a zero polynomial is created. The return value is a
 /// pointer to a newly allocated Poly_t structure. The caller is responsible
-/// for releasing memory by calling PolFree() when the polynomial is no
+/// for releasing memory by calling polFree() when the polynomial is no
 /// longer needed.
 /// @param fl Field order.
 /// @param n Degree of the polynomial.
-/// @return Pointer to a new Poly_t structure or 0 on error.
+/// @return Pointer to a new Poly_t structure
 
-Poly_t *PolAlloc(int fl, int n)
+Poly_t *polAlloc(int fl, int n)
 {
    Poly_t *x;
    int i, s;
@@ -92,19 +100,17 @@ Poly_t *PolAlloc(int fl, int n)
       s = 1;
    }
 
-   FfSetField(fl);
+   ffSetField(fl);
    if ((x = ALLOC(Poly_t)) == NULL) {
-      MTX_ERROR("Cannot allocate polynomial");
-      return NULL;
+      mtxAbort(MTX_HERE,"Cannot allocate polynomial");
    }
    x->Magic = POLY_MAGIC;
    x->Field = fl;
    x->Degree = n;
    x->BufSize = s;
    if ((x->Data = NALLOC(FEL,s)) == NULL) {
-      SysFree(x);
-      MTX_ERROR("Cannot allocate polynomial data");
-      return NULL;
+      sysFree(x);
+      mtxAbort(MTX_HERE,"Cannot allocate polynomial data");
    }
    for (i = 0; i < (int) s - 1; ++i) {
       x->Data[i] = FF_ZERO;
@@ -120,14 +126,12 @@ Poly_t *PolAlloc(int fl, int n)
 /// @param x Pointer to the polynomial.
 /// @return $0$ on success, $-1$ on error.
 
-int PolFree(Poly_t *x)
+int polFree(Poly_t *x)
 {
-   if (!PolIsValid(x)) {
-      return -1;
-   }
-   SysFree(x->Data);
+   polValidate(MTX_HERE, x);
+   sysFree(x->Data);
    memset(x,0,sizeof(Poly_t));
-   SysFree(x);
+   sysFree(x);
    return 0;
 }
 
@@ -147,3 +151,4 @@ void Pol_Normalize(Poly_t *p)
 
 
 /// @}
+// vim:fileencoding=utf8:sw=3:ts=8:et:cin

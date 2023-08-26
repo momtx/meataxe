@@ -1,13 +1,9 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // C MeatAxe - Map vector under tensor product.
-//
-// (C) Copyright 1998-2015 Michael Ringe, Lehrstuhl D fuer Mathematik, RWTH Aachen
-//
-// This program is free software; see the file COPYING for details.
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
-#include <meataxe.h>
+#include "meataxe.h"
 #include <stdlib.h>
 #include <string.h>
 
@@ -16,7 +12,6 @@
    Variables
    ------------------------------------------------------------------ */
 
-MTX_DEFINE_FILE_INFO
 
 static MtxApplicationInfo_t AppInfo = { 
 "ztm", "Tensor Multiply",
@@ -51,14 +46,14 @@ static Matrix_t *VecToMat(PTR vec, int fl, int nor, int noc)
     PTR d;
     int i, k;
 
-    mat = MatAlloc(fl,nor,noc);
+    mat = matAlloc(fl,nor,noc);
     d = mat->Data;
-    FfSetNoc(noc);
+    ffSetNoc(noc);
     for (i = 0; i < nor; i++) 
     {
         for (k = 0; k < noc; k++) 
-            FfInsert(d,k,FfExtract(vec,i*noc+k));
-        FfStepPtr(&d);
+            ffInsert(d,k,ffExtract(vec,i*noc+k));
+        ffStepPtr(&d, noc);
     }
     return mat;
 }
@@ -67,10 +62,10 @@ static Matrix_t *VecToMat(PTR vec, int fl, int nor, int noc)
 
 
 /* ------------------------------------------------------------------
-   MatToVec() - Convert matrix to vector
+   matToVec() - Convert matrix to vector
    ------------------------------------------------------------------ */
 
-static void MatToVec(Matrix_t *mat, PTR vec)
+static void matToVec(Matrix_t *mat, PTR vec)
 
 {
     PTR y;
@@ -81,19 +76,19 @@ static void MatToVec(Matrix_t *mat, PTR vec)
 
     /* Clear the vector 
        ---------------- */
-    FfSetNoc(ncol * nrows);
-    FfMulRow(vec,FF_ZERO);
+    ffSetNoc(ncol * nrows);
+    ffMulRow(vec,FF_ZERO);
 
     /* Convert
        ------- */
-    FfSetNoc(ncol);
+    ffSetNoc(ncol);
     y = mat->Data;
     l = 0;
     for (i = 0; i < nrows; ++i) 
     {
         for (k = 0; k < ncol; ++k) 
-            FfInsert(vec,l++,FfExtract(y,k));
-        FfStepPtr(&y);
+            ffInsert(vec,l++,ffExtract(y,k));
+        ffStepPtr(&y, ncol);
     }
 }
 
@@ -104,26 +99,26 @@ static int ReadMatrices()
 {
     /* Read matrices and check compatibility.
        -------------------------------------- */
-    mat1 = MatLoad(AName);
-    mat2 = MatLoad(BName);
+    mat1 = matLoad(AName);
+    mat2 = matLoad(BName);
     if (mat1 == NULL || mat2 == NULL)
     {
-	MTX_ERROR("Error reading matrices");
+	mtxAbort(MTX_HERE,"Error reading matrices");
 	return -1;
     }
     if (mat1->Nor != mat1->Noc)
     {
-	MTX_ERROR2("%s: %E",AName,MTX_ERR_NOTSQUARE);
+	mtxAbort(MTX_HERE,"%s: %s",AName,MTX_ERR_NOTSQUARE);
 	return -1;
     }
     if (mat2->Nor != mat2->Noc)
     {
-	MTX_ERROR2("%s: %E",BName,MTX_ERR_NOTSQUARE);
+	mtxAbort(MTX_HERE,"%s: %s",BName,MTX_ERR_NOTSQUARE);
 	return -1;
     }
     if (mat1->Field != mat2->Field)
     {
-	MTX_ERROR3("%s and %s: %E",AName,BName,MTX_ERR_INCOMPAT);
+	mtxAbort(MTX_HERE,"%s and %s: %s",AName,BName,MTX_ERR_INCOMPAT);
 	return -1;
     }
     MESSAGE(1,("%s: %dx%d matrix over GF(%d)\n", AName,mat1->Nor,mat1->Noc,mat1->Field));
@@ -136,20 +131,20 @@ static int OpenVectorFiles()
 {
     /* Open the <Vectors> file and check the header.
        --------------------------------------------- */
-    vecfile = MfOpen(VName);
+    vecfile = mfOpen(VName);
     if (vecfile == NULL)
 	return -1;
     if (vecfile->Field != mat1->Field 
 	|| vecfile->Noc != mat1->Noc * mat2->Noc)
     {
-	MTX_ERROR4("%s and %s/%s: %E",VName,AName,BName,MTX_ERR_INCOMPAT);
+	mtxAbort(MTX_HERE,"%s and %s/%s: %s",VName,AName,BName,MTX_ERR_INCOMPAT);
 	return -1;
     }
     MESSAGE(1,("%s: %dx%d matrix over GF(%d)\n",VName,vecfile->Nor,vecfile->Noc,vecfile->Field));
     
     /* Create output file.
        ------------------- */
-    resultfile = MfCreate(RName,vecfile->Field,vecfile->Nor,vecfile->Noc);
+    resultfile = mfCreate(RName,vecfile->Field,vecfile->Nor,vecfile->Noc);
     if (resultfile == NULL)
 	return -1;
 
@@ -157,15 +152,15 @@ static int OpenVectorFiles()
 }
 
 
-static int Init(int argc, const char **argv)
+static int Init(int argc, char **argv)
 
 {
 
     /* Process command line options and arguments.
        ------------------------------------------- */
-    if ((App = AppAlloc(&AppInfo,argc,argv)) == NULL)
+    if ((App = appAlloc(&AppInfo,argc,argv)) == NULL)
 	return -1;
-    if (AppGetArguments(App,4,4) != 4)
+    if (appGetArguments(App,4,4) != 4)
 	return -1;
     AName = App->ArgV[0];
     BName = App->ArgV[1];
@@ -186,11 +181,11 @@ static void Cleanup()
 
 {
     if (App != NULL)
-	AppFree(App);
+	appFree(App);
     if (resultfile != NULL)
-	MfClose(resultfile);
+	mfClose(resultfile);
     if (vecfile != NULL)
-	MfClose(vecfile);
+	mfClose(vecfile);
 }
 
 
@@ -199,7 +194,7 @@ static void Cleanup()
    main()
    ------------------------------------------------------------------ */
 
-int main(int argc, const char **argv)
+int main(int argc, char **argv)
 
 {  
     Matrix_t *mat1tr;
@@ -209,19 +204,19 @@ int main(int argc, const char **argv)
 
     if (Init(argc,argv) != 0)
     {
-	MTX_ERROR("Initialization failed");
+	mtxAbort(MTX_HERE,"Initialization failed");
 	return 1;
     }
 
     /* Transpose first matrix 
        ---------------------- */
-    mat1tr = MatTransposed(mat1);
-    MatFree(mat1);
+    mat1tr = matTransposed(mat1);
+    matFree(mat1);
 
     /* Allocate buffer for one vector
        ------------------------------ */
-    FfSetNoc(vecfile->Noc);
-    tmp = FfAlloc(1);
+    ffSetNoc(vecfile->Noc);
+    tmp = ffAlloc(1, vecfile->Noc);
 
     /* Process <Vectors> one by one
        ---------------------------- */
@@ -231,32 +226,32 @@ int main(int argc, const char **argv)
 
         /* Read on evector and convert to matrix.
            -------------------------------------- */
-        if (MfReadRows(vecfile,tmp,1) != 1)
+        if (mfReadRows(vecfile,tmp,1) != 1)
 	{
-	    MTX_ERROR("Error reading vector");
+	    mtxAbort(MTX_HERE,"Error reading vector");
 	    return 1;
 	}
-        mat3 = VecToMat(tmp,FfOrder,mat1tr->Nor,mat2->Nor);
+        mat3 = VecToMat(tmp,ffOrder,mat1tr->Nor,mat2->Nor);
        
         /* Multiply from both sides.
            ------------------------- */
-	newmat = MatDup(mat1tr);
-	MatMul(newmat,mat3);
-	MatMul(newmat,mat2);
+	newmat = matDup(mat1tr);
+	matMul(newmat,mat3);
+	matMul(newmat,mat2);
 
         /* Turn matrix into vector and write out
            ------------------------------------- */
-        MatToVec(newmat,tmp);
-        if (MfWriteRows(resultfile,tmp,1) != 1)
+        matToVec(newmat,tmp);
+        if (mfWriteRows(resultfile,tmp,1) != 1)
 	{
-	    MTX_ERROR("Error writing vector");
+	    mtxAbort(MTX_HERE,"Error writing vector");
 	    return 1;
 	}
 
         /* Free memory
            ----------- */
-        MatFree(mat3);
-        MatFree(newmat);
+        matFree(mat3);
+        matFree(newmat);
     }
    
     Cleanup();
@@ -322,3 +317,4 @@ Both matrices and one vector must fit into memory at the same time.
 
 
 **/
+// vim:fileencoding=utf8:sw=3:ts=8:et:cin

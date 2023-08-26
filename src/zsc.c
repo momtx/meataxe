@@ -1,12 +1,8 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // C MeatAxe - Spinup with script
-//
-// (C) Copyright 1998-2015 Michael Ringe, Lehrstuhl D fuer Mathematik, RWTH Aachen
-//
-// This program is free software; see the file COPYING for details.
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#include <meataxe.h>
+#include "meataxe.h"
 
 #include <string.h>
 #include <stdlib.h>
@@ -17,7 +13,6 @@
    Global data
    -------------------------------------------------------------------------- */
 
-MTX_DEFINE_FILE_INFO
 
 static MtxApplicationInfo_t AppInfo = { 
 "zsc", "Spin up with script",
@@ -73,7 +68,7 @@ static int ReadFiles()
 
     /* Read the generators.
       --------------------- */
-    Rep = MrLoad(GenName,ngen);
+    Rep = mrLoad(GenName,ngen);
     if (Rep == NULL)
 	return -1;
     fl = Rep->Gen[0]->Field;
@@ -82,19 +77,19 @@ static int ReadFiles()
     /* Read the script.
        ---------------- */
     MESSAGE(1,("Reading %s\n",OpName));
-    OpTable = ImatLoad(OpName);
+    OpTable = imatLoad(OpName);
     if (OpTable == NULL)
 	return -1;
     ConvertSpinUpScript(OpTable);   /* 2.3 compatibility */
     if (OpTable->Noc != 2)
     {
-	MTX_ERROR1("%s: bad number of columns",OpName);
+	mtxAbort(MTX_HERE,"%s: bad number of columns",OpName);
 	return -1;
     }
    /* Das ist doch unsinnig! J.M. */
    /* if (OpTable->Nor != nor)
     {
-	MTX_ERROR1("%s: bad number of rows",OpName);
+	mtxAbort(MTX_HERE,"%s: bad number of rows",OpName);
 	return -1;
     } */
 
@@ -102,28 +97,28 @@ static int ReadFiles()
        --------------------------- */
     /* if (OPVEC(0) != 0 || OPGEN(0) != -1) nanana, J.M. */
     if (OPGEN(0) != -1)
-	MTX_ERROR("Illegal script (does not start with seed vector)");
+	mtxAbort(MTX_HERE,"Illegal script (does not start with seed vector)");
     if (OPVEC(0) != 1)
 	MESSAGE(0,("Note: script does not start with first vector"));
     for (i = 1; i < OpTable->Nor; ++i)
     {
 	if (OPGEN(i) == -1)
-	    MTX_ERROR("Illegal skript (more than 1 seed vector)");
+	    mtxAbort(MTX_HERE,"Illegal skript (more than 1 seed vector)");
 	if (OPGEN(i) < 0 || OPGEN(i) >= ngen)
-	    MTX_ERROR1("Illegal skript (pos %d: generator out of range)",i);
+	    mtxAbort(MTX_HERE,"Illegal skript (pos %d: generator out of range)",i);
 	/* if (OPVEC(i) <= 0 || OPVEC(i) >= i) nanana, J.M. */
 	if (OPVEC(i) < 0 || OPVEC(i) >= i)
-	    MTX_ERROR1("Illegal skript (pos %d: vector out of range)",i);
+	    mtxAbort(MTX_HERE,"Illegal skript (pos %d: vector out of range)",i);
     }
 
     /* Read the seed vectors.
        ---------------------- */
-    Seed = MatLoad(SeedName);
+    Seed = matLoad(SeedName);
     if (Seed == NULL)
 	return -1;
     if (Seed->Noc != nor || Seed->Field != fl)
     {
-	MTX_ERROR3("%s.1 and %s: %E",GenName,SeedName,MTX_ERR_INCOMPAT);
+	mtxAbort(MTX_HERE,"%s.1 and %s: %s",GenName,SeedName,MTX_ERR_INCOMPAT);
 	return 1;
     }
     MESSAGE(1,("%s: %d seed vectors\n",SeedName,Seed->Nor));
@@ -136,19 +131,19 @@ static int ReadFiles()
    Init() - Program initialization
    ------------------------------------------------------------------ */
 
-static int Init(int argc, const char **argv)
+static int Init(int argc, char **argv)
 
 {
-    if ((App = AppAlloc(&AppInfo,argc,argv)) == NULL)
+    if ((App = appAlloc(&AppInfo,argc,argv)) == NULL)
 	return -1;
 
     /* Options.
        -------- */
-    ngen = AppGetIntOption(App,"-g",2,1,1000);
+    ngen = appGetIntOption(App,"-g",2,1,1000);
 
     /* Arguments.
        ---------- */
-    if (AppGetArguments(App,3,4) < 0)
+    if (appGetArguments(App,3,4) < 0)
 	return -1;
     OpName = App->ArgV[2];
     SeedName = App->ArgV[1];
@@ -172,13 +167,13 @@ static int Init(int argc, const char **argv)
    main()
    ------------------------------------------------------------------ */
 
-int main(int argc, const char *argv[])
+int main(int argc, char *argv[])
 {
     int seedno;
 
-    if (Init(argc,argv) != 0)
+    if (Init(argc, argv) != 0)
     {
-	MTX_ERROR("Initialization failed");
+	mtxAbort(MTX_HERE,"Initialization failed");
 	return 1;
     }
 
@@ -187,19 +182,19 @@ int main(int argc, const char *argv[])
     for (seedno = 0; seedno < Seed->Nor; ++seedno)
     {
 	char fn[200];
-	Matrix_t *seed_vec = MatCutRows(Seed,seedno,1);
+	Matrix_t *seed_vec = matCutRows(Seed,seedno,1);
 	Matrix_t *result = SpinUpWithScript(seed_vec,Rep,OpTable);
         if (result == NULL)
 	    return 1;
 	sprintf(fn,"%s.%d",OutName,seedno+1);
-	MatSave(result,fn);
-	MatFree(result);
-	MatFree(seed_vec);
+	matSave(result,fn);
+	matFree(result);
+	matFree(seed_vec);
     }
 
     /* Clean up.
        --------- */
-    AppFree(App);
+    appFree(App);
     return 0;
 }
 
@@ -260,3 +255,4 @@ reads three generators fom "gen.1", "gen.2" and "gen.3",
 seed vectors from `seed', the script from "op", and
 writes the output to "seed.0001", "seed.0002", ...
 */
+// vim:fileencoding=utf8:sw=3:ts=8:et:cin

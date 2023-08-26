@@ -1,15 +1,10 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // C MeatAxe - Compare vector spaces
-//
-// (C) Copyright 1998-2015 Michael Ringe, Lehrstuhl D fuer Mathematik, RWTH Aachen
-//
-// This program is free software; see the file COPYING for details.
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
-#include <meataxe.h>
+#include "meataxe.h"
 
-MTX_DEFINE_FILE_INFO
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 /// @addtosection algo
@@ -49,26 +44,23 @@ int IsSubspace(const Matrix_t *sub, const Matrix_t *space, int ngen)
 
     /* Check the arguments
        ------------------- */
-    if (!MatIsValid(sub) || !MatIsValid(space))
-    {
-	MTX_ERROR1("%E",MTX_ERR_BADARG);
-	return -1;
-    }
+    matValidate(MTX_HERE, sub);
+    matValidate(MTX_HERE, space);
     if (sub->Field != space->Field || sub->Noc != space->Noc)
     {
-	MTX_ERROR1("%E",MTX_ERR_INCOMPAT);
+	mtxAbort(MTX_HERE,"%s",MTX_ERR_INCOMPAT);
 	return -1;
     }
     if (space->PivotTable == NULL)
     {
-	MTX_ERROR1("space: %E",MTX_ERR_NOTECH);
+	mtxAbort(MTX_HERE,"space: %s",MTX_ERR_NOTECH);
 	return -1;
     }
 
     /* Decide how many vectors from <sub> we shall check
        ------------------------------------------------- */
-    FfSetField(space->Field);
-    FfSetNoc(space->Noc);
+    ffSetField(space->Field);
+    ffSetNoc(space->Noc);
     spcdim = space->Nor;
     nvec = sub->Nor;
     if (ngen > 0 && ngen < nvec)
@@ -76,28 +68,29 @@ int IsSubspace(const Matrix_t *sub, const Matrix_t *space, int ngen)
 
     /* Allocate workspace 
        ------------------ */
-    tmp = FfAlloc(1);
+    tmp = ffAlloc(1, space->Noc);
     if (tmp == NULL)
     {	
-	MTX_ERROR("Cannot allocate workspace");
+	mtxAbort(MTX_HERE,"Cannot allocate workspace");
 	return -1;
     }
 
     /* Check if vectors from <sub> are in the span of <space>
        ------------------------------------------------------ */
-    for (i = nvec, y = sub->Data; i > 0; --i, FfStepPtr(&y))
+    for (i = nvec, y = sub->Data; i > 0; --i, ffStepPtr(&y, space->Noc))
     {
 	FEL f;
-	FfCopyRow(tmp,y);
-	FfCleanRow(tmp,space->Data,spcdim,space->PivotTable);
-        if (FfFindPivot(tmp,&f) >= 0) 
+	ffCopyRow(tmp,y);
+	ffCleanRow(tmp,space->Data,spcdim,space->Noc, space->PivotTable);
+        if (ffFindPivot(tmp,&f) >= 0) 
 	    break;
     }
 
     /* Clean up and return the result
        ------------------------------ */
-    SysFree(tmp);
+    sysFree(tmp);
     return (i <= 0);
 }
 
 /// @}
+// vim:fileencoding=utf8:sw=3:ts=8:et:cin

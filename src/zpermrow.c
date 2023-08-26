@@ -1,16 +1,11 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // C MeatAxe - Map a vector under a permutation.
-//
-// (C) Copyright 1998-2015 Michael Ringe, Lehrstuhl D fuer Mathematik, RWTH Aachen
-//
-// This program is free software; see the file COPYING for details.
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
-#include <meataxe.h>
+#include "meataxe.h"
 
 #ifdef PARANOID
-MTX_DEFINE_FILE_INFO
 #endif
 
 
@@ -26,7 +21,7 @@ MTX_DEFINE_FILE_INFO
 ///
 /// Note: @a result and @a row must not overlap. Otherwise the result is undefined.
 
-void FfPermRow(PTR row, const long *perm, PTR result)
+void ffPermRow(PTR row, const long *perm, PTR result)
 {
     register FEL f;
     register int i;
@@ -34,18 +29,19 @@ void FfPermRow(PTR row, const long *perm, PTR result)
 
 #ifdef PARANOID
     if (row == result)
-	MTX_ERROR("row = result: undefined result!");
+	mtxAbort(MTX_HERE,"row = result: undefined result!");
 #endif
 
-    for (i = 0; i < FfNoc; ++i)
+    for (i = 0; i < ffNoc; ++i)
     {
 #ifdef PARANOID
-	if (*p < 0 || *p > FfNoc)
-	    MTX_ERROR2("Invalid point %d in permutation, noc=%d",(int)*p,FfNoc);
+	if (*p < 0 || *p > ffNoc)
+	    mtxAbort(MTX_HERE,"Invalid point %d in permutation, noc=%d",(int)*p,ffNoc);
 #endif
-	f = FfExtract(row,i);
-	FfInsert(result,*p++,f);
+	f = ffExtract(row,i);
+	ffInsert(result,*p++,f);
     }
 }
 
 /// @}
+// vim:fileencoding=utf8:sw=3:ts=8:et:cin

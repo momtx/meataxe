@@ -1,12 +1,8 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // C MeatAxe - Make word.
-//
-// (C) Copyright 1998-2015 Michael Ringe, Lehrstuhl D fuer Mathematik, RWTH Aachen
-//
-// This program is free software; see the file COPYING for details.
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#include <meataxe.h>
+#include "meataxe.h"
 
 #include <ctype.h>
 #include <stdarg.h>
@@ -20,7 +16,6 @@
    Global data
    ------------------------------------------------------------------ */
 
-MTX_DEFINE_FILE_INFO
 
 static int opt_G = 0;
 static int NGen = -1;
@@ -80,14 +75,14 @@ static int ReadGenerators()
 	    sprintf(fn,"%s.%d",App->ArgV[1],i + 1);
 	else
 	    strcpy(fn,App->ArgV[1 + i]);
-	if ((Gen[i] = MatLoad(fn)) == NULL)
+	if ((Gen[i] = matLoad(fn)) == NULL)
 	    return -1;
 	if (i > 0)
 	{
 	    if (Gen[i]->Field != Gen[0]->Field 
 		|| Gen[i]->Nor != Gen[0]->Nor || Gen[i]->Noc != Gen[0]->Noc)
 	    {
-		MTX_ERROR3("%s and %s: %E",App->ArgV[1],App->ArgV[i+1],
+		mtxAbort(MTX_HERE,"%s and %s: %s",App->ArgV[1],App->ArgV[i+1],
 		    MTX_ERR_INCOMPAT);
 	    }
 	}
@@ -96,9 +91,9 @@ static int ReadGenerators()
     }
 
     NGen = ngen;
-    if ((Rep = MrAlloc(NGen,Gen,0)) == NULL)
+    if ((Rep = mrAlloc(NGen,Gen,0)) == NULL)
 	return -1;
-    if ((WGen = WgAlloc(Rep)) == NULL)
+    if ((WGen = wgAlloc(Rep)) == NULL)
 	return -1;
 
     return 0;
@@ -147,12 +142,12 @@ static int ParseWord(const char *spec)
 	    if (*c == ',') 
 		++deg;
 	}
-	Poly = PolAlloc(FfOrder,deg);
+	Poly = polAlloc(ffOrder,deg);
 	while (deg >= 0)
 	{
 	    if (!isdigit(*spec) && (*spec != '-' || !isdigit(spec[1])))
 		return -1;
-	    Poly->Data[deg--] = FfFromInt(atoi(spec));
+	    Poly->Data[deg--] = ffFromInt(atoi(spec));
 	    while (*spec == '-' || isdigit(*spec)) 
 		++spec;
 	    if (*spec == ',')
@@ -168,7 +163,7 @@ static int ParseWord(const char *spec)
     {
 	if (Poly != NULL)
 	{
-	    PolPrint(NULL,Poly);
+	    polPrint(NULL,Poly);
 	    printf("\n");
 	}
 	else
@@ -184,24 +179,24 @@ static int ParseWord(const char *spec)
    init() - Process command line options and arguments
    ------------------------------------------------------------------ */
 
-static int Init(int argc, const char **argv)
+static int Init(int argc, char **argv)
 
 {
     int min_num_args;
 
     /* Process command line options.
        ----------------------------- */
-    App = AppAlloc(&AppInfo,argc,argv);
+    App = appAlloc(&AppInfo,argc,argv);
     if (App == NULL)
 	return -1;
-    opt_G = AppGetOption(App,"-G --gap");
+    opt_G = appGetOption(App,"-G --gap");
     if (opt_G) MtxMessageLevel = -100;
-    NGen = AppGetIntOption(App,"-g",-1,1,MAXGEN);
+    NGen = appGetIntOption(App,"-g",-1,1,MAXGEN);
 
     /* Process arguments.
        ------------------ */
     min_num_args = (NGen == -1) ? 3 : 2;
-    if (AppGetArguments(App,min_num_args,min_num_args + 2) < 0)
+    if (appGetArguments(App,min_num_args,min_num_args + 2) < 0)
 	return -1;
     if (App->ArgC > min_num_args)
 	WordFileName = App->ArgV[min_num_args];
@@ -214,7 +209,7 @@ static int Init(int argc, const char **argv)
 	return -1;
     if (ParseWord(App->ArgV[0]) != 0)
     {
-	MTX_ERROR("Invalid word/polynomial specification");
+	mtxAbort(MTX_HERE,"Invalid word/polynomial specification");
 	return -1;
     }
 
@@ -227,9 +222,9 @@ static int Init(int argc, const char **argv)
 static void Cleanup()
 
 {
-    WgFree(WGen);
-    MrFree(Rep);
-    AppFree(App);
+    wgFree(WGen);
+    mrFree(Rep);
+    appFree(App);
 }
 
 
@@ -243,31 +238,31 @@ static int MakeWord()
 
     if (Poly != NULL && MSG0)
     {
-	    PolPrint("Using polynomial p(x)",Poly);
+	    polPrint("Using polynomial p(x)",Poly);
     }
     MESSAGE(0,("Number Nullity Word\n"));
     for (; WordNo <= lastword; ++WordNo)
     {
-	w = WgMakeWord(WGen,WordNo);
+	w = wgMakeWord(WGen,WordNo);
 	if (w == NULL)
 	    return -1;
 	if (Poly != NULL)
-	    MatInsert_(w,Poly);
+	    matInsert_(w,Poly);
 	MESSAGE(0,("%6d",WordNo));
 	if (WordFileName != NULL && WordNo2 == -1)
-	    MatSave(w,WordFileName);
+	    matSave(w,WordFileName);
 	if (WordNo2 != -1 || NspFileName != NULL)
 	{
-	    Matrix_t *nsp = MatNullSpace_(w,0);
+	    Matrix_t *nsp = matNullSpace_(w,0);
 	    if (WordNo2 == -1)
-		MatSave(nsp,NspFileName);
+		matSave(nsp,NspFileName);
 	    MESSAGE(0,("%8d",nsp->Nor));
-	    MatFree(nsp);
+	    matFree(nsp);
 	}
 	else
 	    MESSAGE(0,("        "));
-	MESSAGE(0,(" %s\n",WgSymbolicName(WGen,WordNo)));
-	MatFree(w);
+	MESSAGE(0,(" %s\n",wgSymbolicName(WGen,WordNo)));
+	matFree(w);
     }
     return 0;
 }
@@ -281,7 +276,7 @@ static int MakeWord()
    main()
    ------------------------------------------------------------------ */
 
-int main(int argc, const char **argv)
+int main(int argc, char **argv)
 
 {
     int rc;
@@ -361,3 +356,4 @@ calculates word number 103, and inserts the result into the
 polynomial x<sup>3</sup>+x<sup>2</sup>-1.
 **/
 
+// vim:fileencoding=utf8:sw=3:ts=8:et:cin

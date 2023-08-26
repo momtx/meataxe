@@ -1,12 +1,8 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // C MeatAxe - Seed vector generator
-//
-// (C) Copyright 1998-2014 Michael Ringe, Lehrstuhl D fuer Mathematik, RWTH Aachen
-//
-// This program is free software; see the file COPYING for details.
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#include <meataxe.h>
+#include "meataxe.h"
 
 /// @defgroup misc Miscellaneous
 /// @{
@@ -56,3 +52,4 @@ long lcm(long a,long b)
 
 
 /// @}
+// vim:fileencoding=utf8:sw=3:ts=8:et:cin

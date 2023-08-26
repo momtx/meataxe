@@ -1,13 +1,9 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // C MeatAxe - Multiply matrix by scalar
-//
-// (C) Copyright 1998-2015 Michael Ringe, Lehrstuhl D fuer Mathematik, RWTH Aachen
-//
-// This program is free software; see the file COPYING for details.
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
-#include <meataxe.h>
+#include "meataxe.h"
 
 
 
@@ -21,12 +17,9 @@
 /// @param coeff Value to multiply with.
 /// @return The function returns @a dest or NULL on error.
 
-Matrix_t *MatMulScalar(Matrix_t *dest, FEL coeff)
+Matrix_t *matMulScalar(Matrix_t *dest, FEL coeff)
 {
-#ifdef DEBUG
-    if (!MatIsValid(dest))
-	return NULL;
-#endif
+    matValidate(MTX_HERE, dest);
 
     if (coeff == FF_ONE)
     {
@@ -36,15 +29,17 @@ Matrix_t *MatMulScalar(Matrix_t *dest, FEL coeff)
     {
 	PTR dp = dest->Data;
 	int n;
-	FfSetField(dest->Field);
-	FfSetNoc(dest->Noc);
+	ffSetField(dest->Field);
+	ffSetNoc(dest->Noc);
 	for (n = dest->Nor; n > 0; --n)
 	{
-	    FfMulRow(dp,coeff);
-	    FfStepPtr(&dp);
+	    ffMulRow(dp,coeff);
+	    ffStepPtr(&dp, dest->Noc);
 	}
     }
     return dest;
 }
 
 /// @}
+
+// vim:fileencoding=utf8:sw=3:ts=8:et:cin

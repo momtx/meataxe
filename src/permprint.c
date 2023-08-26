@@ -1,18 +1,13 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // C MeatAxe - Print a permutation
-//
-// (C) Copyright 1998-2015 Michael Ringe, Lehrstuhl D fuer Mathematik, RWTH Aachen
-//
-// This program is free software; see the file COPYING for details.
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#include <meataxe.h>
+#include "meataxe.h"
 #include <string.h>
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // Local data
 
-MTX_DEFINE_FILE_INFO
 
 #define SIZE(i) ((i) < 9 ? 2 : (i) < 99 ? 3 : (i) < 999 ? 4 : (i) < 9999 ? 5 : \
                  (i) < 99999 ? 6 : (i) > 999999 ? 7 : (i) < 9999999 ? 8 : 9)
@@ -25,7 +20,7 @@ MTX_DEFINE_FILE_INFO
 /// This function prints a permutation on the standard output using
 /// cycle notation. If @em name is not 0, the name followed by an
 /// equal sign is printed before the permutation. For example, the
-/// statement <tt>PermPrint("Perm",P);</tt> could produce the following output:
+/// statement <tt>permPrint("Perm",P);</tt> could produce the following output:
 /// <pre>
 /// Perm=(1 9)(2 3 6)(4 5 7)
 /// </pre>
@@ -34,7 +29,7 @@ MTX_DEFINE_FILE_INFO
 /// @param perm Pointer to the permutation.
 /// @return The function returns 0 on success and -1 on error.
 
-void PermPrint(const char *name, const Perm_t *perm)
+void permPrint(const char *name, const Perm_t *perm)
 {
    long *p;
    int cycle = 0;
@@ -43,10 +38,7 @@ void PermPrint(const char *name, const Perm_t *perm)
    int i;
 
    // check arguments
-   if (!PermIsValid(perm)) {
-      MTX_ERROR1("%E",MTX_ERR_BADARG);
-      return;
-   }
+   permValidate(MTX_HERE, perm);
 
    // print the name
    if (name != NULL) {
@@ -110,3 +102,4 @@ void PermPrint(const char *name, const Perm_t *perm)
 
 
 /// @}
+// vim:fileencoding=utf8:sw=3:ts=8:et:cin

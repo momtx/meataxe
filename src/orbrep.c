@@ -1,12 +1,8 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // C MeatAxe - Make a permutation which maps A to B
-//
-// (C) Copyright 1998-2015 Michael Ringe, Lehrstuhl D fuer Mathematik, RWTH Aachen
-//
-// This program is free software; see the file COPYING for details.
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#include <meataxe.h>
+#include "meataxe.h"
 #include <stdlib.h>
 #include <string.h>
 
@@ -14,7 +10,6 @@
    Global data
    ------------------------------------------------------------------ */
 
-MTX_DEFINE_FILE_INFO
 
 #define MAXPERM 50		/* Max. number of permutations */
 static Perm_t *Perm[MAXPERM];			/* Permutations */
@@ -54,12 +49,12 @@ static int ReadPermutations()
     for (i = 0; i < nperm; ++i)
     {
 	sprintf(fn,"%s.%d",permname,i+1);
-	Perm[i] = PermLoad(fn);
+	Perm[i] = permLoad(fn);
 	if (Perm[i] == NULL)
 	    return -1;
 	if (i > 1 && Perm[i]->Degree != Perm[0]->Degree)
 	{
-	    MTX_ERROR2("%s and %s.1 have different degrees",
+	    mtxAbort(MTX_HERE,"%s and %s.1 have different degrees",
 		fn,permname);
 	    return -1;
 	}
@@ -67,12 +62,12 @@ static int ReadPermutations()
     Degree = Perm[0]->Degree;
     if (Seed < 0 || Seed >= Degree)
     {
-	MTX_ERROR1("Illegal seed point, valid range is 1..%d.",Degree+1);
+	mtxAbort(MTX_HERE,"Illegal seed point, valid range is 1..%d.",Degree+1);
 	return -1;
     }
     if (Stop < 0 || Stop >= Degree)
     {
-	MTX_ERROR1("Illegal stop point, valid range is 1..%d.",Degree+1);
+	mtxAbort(MTX_HERE,"Illegal stop point, valid range is 1..%d.",Degree+1);
 	return -1;
     }
 
@@ -80,16 +75,16 @@ static int ReadPermutations()
 }
 
 /* ###################################################################### */
-static int Init(int argc, const char **argv)
+static int Init(int argc, char **argv)
 {
-    App = AppAlloc(&AppInfo,argc,argv);
+    App = appAlloc(&AppInfo,argc,argv);
     if (App == NULL)
 	return -1;
 
     /* Command line.
        ------------- */
-    nperm = AppGetIntOption(App,"-g",2,1,MAXPERM);
-    if (AppGetArguments(App,4,4) < 0)
+    nperm = appGetIntOption(App,"-g",2,1,MAXPERM);
+    if (appGetArguments(App,4,4) < 0)
 	return -1;
     permname = App->ArgV[0];
     scriptname = App->ArgV[1];
@@ -103,11 +98,11 @@ static void Cleanup()
 {
   if (ptnr != NULL)
     {
-      SysFree(ptnr);
-      SysFree(pre);
-      SysFree(gen);
+      sysFree(ptnr);
+      sysFree(pre);
+      sysFree(gen);
     }
-    AppFree(App);
+    appFree(App);
 }
 
 /* ###################################################################### */
@@ -138,7 +133,7 @@ static int MakeOrbit()
     MESSAGE(1,("Finding orbit of seed point %d\n",Seed+1));
     if (Seed == Stop)
     {
-	MTX_ERROR("Stop point equals seed point");
+	mtxAbort(MTX_HERE,"Stop point equals seed point");
 	return -1;
     }
     ptnr[orblen] = Seed;
@@ -162,7 +157,7 @@ static int MakeOrbit()
 	    }
 	}
     }
-    MTX_ERROR1("Stop point %d not in orbit\n",Stop+1);
+    mtxAbort(MTX_HERE,"Stop point %d not in orbit\n",Stop+1);
     return -1;
 }
 
@@ -189,7 +184,7 @@ static int WriteOutput()
         found[i++] = pt;
 	pt = pre[pt];
       }
-    if ((f = SysFopen(scriptname,FM_CREATE)) == NULL)
+    if ((f = sysFopen(scriptname,"w")) == NULL)
 	return -1;
     fprintf(f,"word:=[\n");
     for (i = len-1; i >= 0; --i)
@@ -200,31 +195,31 @@ static int WriteOutput()
     }
     fprintf(f,"];\n");
     fclose(f);
-    SysFree(found);
+    sysFree(found);
     return 0;
 }
 
 /* ###################################################################### */
-int main(int argc, const char **argv)
+int main(int argc, char **argv)
 {
     if (Init(argc,argv) != 0)
     {
-	MTX_ERROR("Initialization failed");
+	mtxAbort(MTX_HERE,"Initialization failed");
 	return 1;
     }
     if (ReadPermutations() != 0)
     {
-	MTX_ERROR("Error reading input files");
+	mtxAbort(MTX_HERE,"Error reading input files");
 	return 1;
     }
     if (AllocWorkspace() != 0)
     {
-	MTX_ERROR("Error allocating workspace");
+	mtxAbort(MTX_HERE,"Error allocating workspace");
 	return 1;
     }
     if (MakeOrbit() != 0)
     {
-	MTX_ERROR("Error making orbit");
+	mtxAbort(MTX_HERE,"Error making orbit");
 	return 1;
     }
     if (WriteOutput() != 0)
@@ -278,3 +273,4 @@ in the generators. This file is a text file an can be read by GAP.
 
 */
 
+// vim:fileencoding=utf8:sw=3:ts=8:et:cin

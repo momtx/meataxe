@@ -1,16 +1,11 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // C MeatAxe - I/o for vectors and matrices.
-//
-// (C) Copyright 1998-2015 Michael Ringe, Lehrstuhl D fuer Mathematik, RWTH Aachen
-//
-// This program is free software; see the file COPYING for details.
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 #include <string.h>
 #include <stdlib.h>
-#include <meataxe.h>
+#include "meataxe.h"
 
-MTX_DEFINE_FILE_INFO
 
 
 /// @addtogroup ff
@@ -25,25 +20,25 @@ MTX_DEFINE_FILE_INFO
 /// @param n Number of rows to read.
 /// @return Number of rows that were actually read, or -1 on error.
 
-int FfReadRows(FILE *f, PTR buf, int n)
+int ffReadRows(FILE *f, PTR buf, int n, int noc)
 {
    int i;
    register char *b = (char *) buf;
 
    // handle special case: NOC=0
-   if (FfNoc == 0) {
+   if (noc == 0) {
       return n;
    }
 
    // read rows one by one
    for (i = 0; i < n; ++i) {
-      if (fread(b,FfTrueRowSize(FfNoc),1,f) != 1) {
+      if (fread(b,ffTrueRowSize(noc),1,f) != 1) {
 	  break;
       }
-      b += FfCurrentRowSize;
+      b += ffRowSize(noc);
    }
    if (ferror(f)) {
-      MTX_ERROR("Read failed: %S");
+      mtxAbort(MTX_HERE,"Read failed: %S");
       return -1;
    }
    return i;
@@ -58,25 +53,25 @@ int FfReadRows(FILE *f, PTR buf, int n)
 /// @param n Number of rows to write.
 /// @return The number of rows (n), or -1 on error.
 
-int FfWriteRows(FILE *f, PTR buf, int n)
+int ffWriteRows(FILE *f, PTR buf, int n, int noc)
 {
    int i;
    register char *b = (char *) buf;
 
    // handle special case: NOC=0
-   if (FfNoc == 0) {
+   if (noc == 0) {
       return n;
    }
 
    // write rows one by one
    for (i = 0; i < n; ++i) {
-      if (fwrite(b,FfTrueRowSize(FfNoc),1,f) != 1) {
+      if (fwrite(b,ffTrueRowSize(noc),1,f) != 1) {
 	  break;
       }
-      b += FfCurrentRowSize;
+      b += ffRowSize(noc);
    }
    if (ferror(f)) {
-      MTX_ERROR("Write failed: %S");
+      mtxAbort(MTX_HERE,"Write failed: %S");
       return -1;
    }
    return i;
@@ -85,29 +80,29 @@ int FfWriteRows(FILE *f, PTR buf, int n)
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 /// Move to a Row.
 /// This function sets the read/write pointer of file @em f to position
-/// @em pos. I.e., the next FfReadRows() or FfWriteRows() will start
+/// @em pos. I.e., the next ffReadRows() or ffWriteRows() will start
 /// at the specified row.
 /// Note that row numbers start with 0. If @em pos is different
-/// from 0, the row size must have been set before with FfSetNoc().
+/// from 0, the row size must have been set before with ffSetNoc().
 ///
-/// You should always use FfSeekRow() rather than fseek() because
-/// FfSeekRow() knows about MeatAxe file headers and adjusts the
+/// You should always use ffSeekRow() rather than fseek() because
+/// ffSeekRow() knows about MeatAxe file headers and adjusts the
 /// file pointer appropriately.
 /// @param f Pointer to File.
 /// @param pos Row number (0-based).
 /// @return 0 on success, -1 on error.
 
-int FfSeekRow(FILE *f, int pos)
+int ffSeekRow(FILE *f, int pos)
 {
    long addr;
 
-   if (FfOrder != -1) {
-      addr = (long) FfTrueRowSize(FfNoc) * pos + 12;
+   if (ffOrder != -1) {
+      addr = (long) ffTrueRowSize(ffNoc) * pos + 12;
    } else {
-      addr = (long) FfNoc * 4 * pos + 12;
+      addr = (long) ffNoc * 4 * pos + 12;
    }
-   if (SysFseek(f,addr) == -1) {
-      MTX_ERROR("Seek failed: %S");
+   if (sysFseek(f,addr) == -1) {
+      mtxAbort(MTX_HERE,"Seek failed: %S");
       return -1;
    }
    return 0;
@@ -125,30 +120,37 @@ int FfSeekRow(FILE *f, int pos)
 /// @param noc Pointer to buffer for third header entry (usually the number of columns).
 /// @return Pointer to open file, or 0 on error.
 
-FILE *FfReadHeader(const char *name, int *field, int *nor, int *noc)
+FILE *ffReadHeader(const char *name, int *field, int *nor, int *noc)
 {
    FILE *fd;
    long header[3];
 
    /* Open the file
       ------------- */
-   fd = SysFopen(name,FM_READ);
+   fd = sysFopen(name, "rb");
    if (fd == NULL) {
       return NULL;
    }
 
    /* Read the file header
       -------------------- */
-   if (SysReadLong(fd,header,3) != 3) {
+   if (sysReadLong32(fd,header,3) != 3) {
       fclose(fd);
-      MTX_ERROR1("%s: Error reading file header",name);
+      mtxAbort(MTX_HERE,"%s: Error reading file header",name);
       return NULL;
    }
 
    /* Check header
       ------------ */
-   if ((header[0] > 256) || (header[1] < 0) || (header[2] < 0)) {
-      MTX_ERROR1("%s: Invalid header, possibly non-MeatAxe file",name);
+#if MTXZZZ == 0
+   #define MTX_MAX_Q 256
+#elif MTXZZZ == 1
+   #define MTX_MAX_Q 65535
+#else
+   #error
+#endif
+   if ((header[0] > MTX_MAX_Q) || (header[1] < 0) || (header[2] < 0)) {
+      mtxAbort(MTX_HERE,"%s: Invalid header, possibly non-MeatAxe file",name);
       fclose(fd);
       return NULL;
    }
@@ -174,14 +176,14 @@ FILE *FfReadHeader(const char *name, int *field, int *nor, int *noc)
 /// @param noc Third header entry (usually the number of columns).
 /// @return Pointer to open file, or |NULL| on error.
 
-FILE *FfWriteHeader(const char *name, int field, int nor, int noc)
+FILE *ffWriteHeader(const char *name, int field, int nor, int noc)
 {
    FILE *fd;
    long header[3];
 
    /* Open the file
       ------------- */
-   fd = SysFopen(name,FM_CREATE);
+   fd = sysFopen(name,"wb");
    if (fd == NULL) {
       return NULL;
    }
@@ -191,8 +193,8 @@ FILE *FfWriteHeader(const char *name, int field, int nor, int noc)
    header[0] = (long) field;
    header[1] = (long) nor;
    header[2] = (long) noc;
-   if (SysWriteLong(fd,header,3) != 3) {
-      MTX_ERROR1("%s: Error writing file header",name);
+   if (sysWriteLong32(fd,header,3) != 3) {
+      mtxAbort(MTX_HERE,"%s: Error writing file header",name);
       fclose(fd);
       return NULL;
    }
@@ -201,3 +203,4 @@ FILE *FfWriteHeader(const char *name, int field, int nor, int noc)
 }
 
 /// @}
+// vim:fileencoding=utf8:sw=3:ts=8:et:cin

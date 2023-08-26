@@ -1,12 +1,8 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // C MeatAxe - Calculate the incidences between mountains
-//
-// (C) Copyright 1998-2015 Michael Ringe, Lehrstuhl D fuer Mathematik, RWTH Aachen
-//
-// This program is free software; see the file COPYING for details.
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#include <meataxe.h>
+#include "meataxe.h"
 #include <string.h>
 #include <stdlib.h>
 
@@ -16,7 +12,6 @@
    Global data
    ------------------------------------------------------------------------- */
 
-MTX_DEFINE_FILE_INFO
 MatRep_t *Rep;				/* Generators */
 Matrix_t *bild[LAT_MAXCF];		/* Image of peak word (gkond) */
 int nmount = 0;				/* Number of mountains */
@@ -69,18 +64,18 @@ static void ReadFiles(const char *basename)
     char fn[200];
     int i;
 
-    if (Lat_ReadInfo(&LI,basename) != 0)
+    if (latReadInfo(&LI,basename) != 0)
     {
-	MTX_ERROR1("Error reading %s.cfinfo",basename);
+	mtxAbort(MTX_HERE,"Error reading %s.cfinfo",basename);
 	return;
     }
 
     /* Load the generators 
        ------------------- */
-    Rep = MrLoad(LI.BaseName,LI.NGen);
+    Rep = mrLoad(LI.BaseName,LI.NGen);
     if (Rep == NULL)
     {
-	MTX_ERROR("Cannot load generators");
+	mtxAbort(MTX_HERE,"Cannot load generators");
 	return;
     }
 
@@ -88,9 +83,9 @@ static void ReadFiles(const char *basename)
        --------------------- */
     for (i = 0; i < LI.NCf; ++i)
     {
-	sprintf(fn,"%s%s.im",LI.BaseName,Lat_CfName(&LI,i));
-	bild[i] = MatLoad(fn);
-	MatEchelonize(bild[i]);
+	sprintf(fn,"%s%s.im",LI.BaseName,latCfName(&LI,i));
+	bild[i] = matLoad(fn);
+	matEchelonize(bild[i]);
     }
 }
 
@@ -99,18 +94,18 @@ static void ReadFiles(const char *basename)
    Init() - Program initialization
    ------------------------------------------------------------------------- */
 
-static int Init(int argc, const char **argv)
+static int Init(int argc, char **argv)
 
 {
-    if ((App = AppAlloc(&AppInfo,argc,argv)) == NULL)
+    if ((App = appAlloc(&AppInfo,argc,argv)) == NULL)
 	return -1;
 
     /* Parse command line
        ------------------ */
-    opt_G = AppGetOption(App,"-G --gap");
+    opt_G = appGetOption(App,"-G --gap");
     if (opt_G) 
 	MtxMessageLevel = -100;
-    if (AppGetArguments(App,1,1) != 1)
+    if (appGetArguments(App,1,1) != 1)
 	return -1;
     MESSAGE(0,("\n*** INCIDENCE MATRIX ***\n\n"));
 
@@ -135,10 +130,10 @@ static void WriteMountains()
 
     /* Write dimensions and classes
        ---------------------------- */
-    f= SysFopen(strcat(strcpy(fn,LI.BaseName),".mnt"),FM_CREATE|FM_TEXT);
+    f= sysFopen(strcat(strcpy(fn,LI.BaseName),".mnt"),"w");
     if (f == NULL) 
     {
-	MTX_ERROR1("Cannot create %s: %S",fn);
+	mtxAbort(MTX_HERE,"Cannot create %s: %S",fn);
 	return;
     }
     MESSAGE(1,("Writing dimensions and classes to %s\n",fn));
@@ -156,16 +151,17 @@ static void WriteMountains()
        --------------- */
     strcat(strcpy(fn,LI.BaseName),".v");
     MESSAGE(1,("Writing mountains to %s\n",fn));
-    FfSetNoc(Rep->Gen[0]->Noc);
-    if ((f = FfWriteHeader(fn,FfOrder,nmount,Rep->Gen[0]->Noc)) == NULL)
+    ffSetNoc(Rep->Gen[0]->Noc);
+    if ((f = ffWriteHeader(fn,ffOrder,nmount,Rep->Gen[0]->Noc)) == NULL)
     {
-	MTX_ERROR1("Cannot create file %s: %S",fn);
+	mtxAbort(MTX_HERE,"Cannot create file %s: %S",fn);
 	return;
     }
     for (i = 0; i < nmount; ++i)
     {
-	FfWriteRows(f,mountlist[i]->Data,1);
-	MatFree(mountlist[i]);	/* We don't need them for step 2*/
+       MTX_ASSERT(ffNoc == mountlist[i]->Noc,);
+	ffWriteRows(f,mountlist[i]->Data,1, mountlist[i]->Noc);
+	matFree(mountlist[i]);	/* We don't need them for step 2*/
     }
     fclose(f);
 }
@@ -190,7 +186,7 @@ static int newmountain(Matrix_t *vec, int cf)
     span = SpinUp(vec,Rep,SF_FIRST|SF_SUB,NULL,NULL);
     MESSAGE(2,("Next vector spins up to %d\n",span->Nor));
     backproj = QProjection(bild[cf],span);
-    MatEchelonize(backproj);
+    matEchelonize(backproj);
 
     /* Check if it is a new mountain
        ----------------------------- */
@@ -201,7 +197,7 @@ static int newmountain(Matrix_t *vec, int cf)
 	    int issub = IsSubspace(proj[i][cf],backproj,0);
 	    if (issub == -1)
 	    {
-		MTX_ERROR("IsSubspace() failed");
+		mtxAbort(MTX_HERE,"IsSubspace() failed");
 		return -1;
 	    }
 	    if (issub != 0)
@@ -218,7 +214,7 @@ static int newmountain(Matrix_t *vec, int cf)
 
 	if (nmount >= MAXCYCL)
 	{
-	    MTX_ERROR("TOO MANY MOUNTAINS, INCREASE MAXCYCL");
+	    mtxAbort(MTX_HERE,"TOO MANY MOUNTAINS, INCREASE MAXCYCL");
 	    return -1;
 	}
 	proj[nmount] = NALLOC(Matrix_t *,LI.NCf);
@@ -232,20 +228,20 @@ static int newmountain(Matrix_t *vec, int cf)
 	    else
 	    {
 		proj[nmount][k] = QProjection(bild[k],span);
-		MatEchelonize(proj[nmount][k]);
+		matEchelonize(proj[nmount][k]);
 	    }
 	}
 	mountlist[nmount] = vec;
 	MountDim[nmount] = span->Nor;
 	++nmount;
-	MatFree(span);
+	matFree(span);
 	return 1;
     }
     else
     {
-	MatFree(backproj);
-	MatFree(span);
-	MatFree(vec);
+	matFree(backproj);
+	matFree(span);
+	matFree(vec);
 	return 0;
     }
 }
@@ -269,7 +265,7 @@ static void makeclass(int mnt, int cf, Matrix_t *vectors)
     MESSAGE(2,("Making equivalence class\n"));
     for (k = 0; k < vectors->Nor; ++k)
     {
-	vec = MatCutRows(vectors,k,1);
+	vec = matCutRows(vectors,k,1);
 	tmp[k] = 0;
         MESSAGE(3,(" %d",k));
 	if (IsSubspace(vec,proj[mnt][cf],1))
@@ -277,7 +273,7 @@ static void makeclass(int mnt, int cf, Matrix_t *vectors)
 	    tmp[k] = 1;
 	    ++nvec;
 	}
-	MatFree(vec);
+	matFree(vec);
     }
     MESSAGE(3,("\n"));
 
@@ -310,14 +306,14 @@ static void FindMountains()
     nmount = 0;
     for (cf = 0; cf < LI.NCf; ++cf)	/* For each irreducible */
     {
-	MESSAGE(0,("  %s%s: ",LI.BaseName,Lat_CfName(&LI,cf)));
+	MESSAGE(0,("  %s%s: ",LI.BaseName,latCfName(&LI,cf)));
 
 	/* Read the vectors and the uncondense matrix
 	   ------------------------------------------ */
-	sprintf(fn,"%s%s.v",LI.BaseName,Lat_CfName(&LI,cf));
-	vectors = MatLoad(fn);
-	sprintf(fn,"%s%s.k",LI.BaseName,Lat_CfName(&LI,cf));
-	uk = MatLoad(fn);
+	sprintf(fn,"%s%s.v",LI.BaseName,latCfName(&LI,cf));
+	vectors = matLoad(fn);
+	sprintf(fn,"%s%s.k",LI.BaseName,latCfName(&LI,cf));
+	uk = matLoad(fn);
 
 	/* Try each vector
 	   --------------- */
@@ -326,15 +322,15 @@ static void FindMountains()
 	{
 	    if (i % 50 == 0)
 		MESSAGE(1,("[%d] ",i));
-	    vec = MatCutRows(vectors,i,1);
-	    MatMul(vec,uk);	/* Uncondense */
+	    vec = matCutRows(vectors,i,1);
+	    matMul(vec,uk);	/* Uncondense */
 	    if (newmountain(vec,cf))
 		makeclass(nmount-1,cf,vectors);
 	}
 	LI.Cf[cf].nmount = nmount - moffset[cf];
 
-	MatFree(vectors);
-	MatFree(uk);
+	matFree(vectors);
+	matFree(uk);
 	MESSAGE(0,("%ld mountain%s\n",LI.Cf[cf].nmount,
 		LI.Cf[cf].nmount != 1 ? "s" : ""));
 
@@ -350,31 +346,30 @@ static void FindMountains()
    ----------------------------------------------------------------- */
 
 static void WriteIncidenceMatrix()
-
 {
     FILE *f;
     char fn[200];
     int i;
-    long l;
 
     /* Write the incidence matrix
        -------------------------- */
-    f = SysFopen(strcat(strcpy(fn,LI.BaseName),".inc"),FM_CREATE);
+    snprintf(fn, sizeof(fn), "%s.inc", LI.BaseName);
+    f = sysFopen(fn, "wb");
     if (f == NULL) 
     {
-	MTX_ERROR1("Cannot open %s: %S",fn);
+	mtxAbort(MTX_HERE,"Cannot open %s: %S",fn);
 	return;
     }
     MESSAGE(1,("Writing incidence matrix (%s)\n",fn));
-    l = (long) nmount;
-    SysWriteLong(f,&l,1);
+    long l = (long) nmount;
+    sysWriteLong32(f,&l,1);
     for (i = 0; i < nmount; ++i)
-	BsWrite(subof[i],f);
+	bsWrite(subof[i],f);
     fclose(f);
 
     /* Write the .cfinfo file
        ---------------------- */
-    Lat_WriteInfo(&LI);
+    latWriteInfo(&LI);
 }
 
 
@@ -394,14 +389,14 @@ static void CalculateIncidences()
     /* Allocate memory for the incidence matrix
        ---------------------------------------- */
     for (i = 0; i < nmount; ++i)
-	subof[i] = BsAlloc(nmount);
+	subof[i] = bsAlloc(nmount);
 
     /* Calculate the incidences
        ------------------------ */
     for (cfi = i = 0; i < nmount; ++i)
     {
 	if (i == moffset[cfi])
-	    MESSAGE(0,("  %s%s\n",LI.BaseName,Lat_CfName(&LI,cfi)));
+	    MESSAGE(0,("  %s%s\n",LI.BaseName,latCfName(&LI,cfi)));
 	for (cfk=0, k = 0; k < nmount; ++k)
 	{
 	    int isubk, ksubi;
@@ -409,13 +404,13 @@ static void CalculateIncidences()
 	    isubk = IsSubspace(proj[i][cfi],proj[k][cfi],0);
 	    if (ksubi < 0 || isubk < 0)
 	    {
-		MTX_ERROR("Subspace comparison failed");
+		mtxAbort(MTX_HERE,"Subspace comparison failed");
 		return;
 	    }
 	    if (ksubi)
-		BsSet(subof[k],i);
+		bsSet(subof[k],i);
 	    if (isubk)
-		BsSet(subof[i],k);
+		bsSet(subof[i],k);
 	    if (cfk < LI.NCf && k == moffset[cfk+1]-1)
 		++cfk;
     	}
@@ -449,7 +444,7 @@ static void WriteResultGAP()
 	for (j = 0 ; j < nmount ; j++)
 	{
       	    printf(j < (nmount - 1) ? "%s," : "%s], [1])", 
-		BsTest(subof[i],j) ? "1" : "0" ) ;
+		bsTest(subof[i],j) ? "1" : "0" ) ;
 	}
 
 	printf( i < nmount-1 ? ",\n" : "] ;\n" ) ;
@@ -481,12 +476,12 @@ static void WriteResultGAP()
    main()
    ----------------------------------------------------------------- */
 
-int main(int argc, const char **argv)
+int main(int argc, char **argv)
 
 {
     if (Init(argc,argv) != 0)
     {
-	MTX_ERROR("Initialization failed");
+	mtxAbort(MTX_HERE,"Initialization failed");
 	return -1;
     }
     FindMountains();
@@ -495,7 +490,7 @@ int main(int argc, const char **argv)
     WriteIncidenceMatrix();
     if (opt_G) 
 	WriteResultGAP();
-    if (App != NULL) AppFree(App);
+    if (App != NULL) appFree(App);
     return 0;
 }
 
@@ -560,3 +555,4 @@ and CPU time because one does not have to keep all mountains
 simultaneously, and the condensed modules have a smaller dimension.
 **/
 
+// vim:fileencoding=utf8:sw=3:ts=8:et:cin

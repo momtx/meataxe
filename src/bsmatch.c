@@ -1,17 +1,12 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // C MeatAxe - Bit Strings, count matching bits
-//
-// (C) Copyright 1998-2014 Michael Ringe, Lehrstuhl D fuer Mathematik, RWTH Aachen
-//
-// This program is free software; see the file COPYING for details.
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#include <meataxe.h>
+#include "meataxe.h"
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // Local data
 
-MTX_DEFINE_FILE_INFO
 
 static int BitCount[256] =  /* Number of '1' bits in binary representation */
 {
@@ -43,13 +38,11 @@ static int BitCount[256] =  /* Number of '1' bits in binary representation */
 /// strings of the same size.
 /// @return Number of bits in the intersection of @em a and @em b, or -1 on error.
 
-int BsIntersectionCount(const BitString_t *a, const BitString_t *b)
+int bsIntersectionCount(const BitString_t *a, const BitString_t *b)
 {
    // check arguments
-   if (!BsIsValid(a) || !BsIsValid(b)) {
-      MTX_ERROR1("%E",MTX_ERR_BADARG);
-      return -1;
-   }
+   bsValidate(MTX_HERE, a);
+   bsValidate(MTX_HERE, b);
 
    register const unsigned long *ap = (const unsigned long *) a->Data;
    register const unsigned long *bp = (const unsigned long *) b->Data;
@@ -67,3 +60,4 @@ int BsIntersectionCount(const BitString_t *a, const BitString_t *b)
 
 
 /// @}
+// vim:fileencoding=utf8:sw=3:ts=8:et:cin

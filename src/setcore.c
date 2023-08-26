@@ -1,18 +1,13 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // C MeatAxe - Basic set functions
-//
-// (C) Copyright 1998-2015 Michael Ringe, Lehrstuhl D fuer Mathematik, RWTH Aachen
-//
-// This program is free software; see the file COPYING for details.
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#include <meataxe.h>
+#include "meataxe.h"
 #include <string.h>
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // Local data
 
-MTX_DEFINE_FILE_INFO
 
 static const int InitialSize = 10;
 static const unsigned long SetMagic = 0xEF452338;
@@ -28,54 +23,54 @@ static const unsigned long SetMagic = 0xEF452338;
 /// So, if you expect a lot of inserts, the BitString_t data type may be a better choice.
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-/// Check a set.
-/// This function checks if the argument is a valid set. If the set is o.k.,
-/// the function returns 1.
-/// Otherwise, an error is signaled and, if the error handler does not
-/// terminate the program, the function returns 0.
-/// @param s Pointer to the set.
-/// @return 1 if @a s is a valid set, 0 otherwise.
 
-int SetIsValid(const Set_t *s)
+/// Returns 1 if the given set is valid and 0 otherwise,
+
+int setIsValid(const Set_t *s)
 {
-   if (s == NULL) {
-      MTX_ERROR("NULL set");
-      return 0;
-   }
-   if ((s->Magic != SetMagic) || (s->Size < 0) || (s->BufSize < s->Size)) {
-      MTX_ERROR3("Invalid set (Magic=%d, Size=%d, BufSize=%d)",
-                 (int)s->Magic,s->Size,s->BufSize);
-      return 0;
-   }
-   if (s->Data == NULL) {
-      MTX_ERROR("Data==NULL in set");
-      return 0;
-   }
-   return 1;
+   return s != NULL && s->Magic == SetMagic && s->Size >= 0
+      && s->BufSize >= s->Size && s->Data != NULL;
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+/// Checks whether the given set is valid and aborts the program if the test fails.
+
+void setValidate(const struct MtxSourceLocation* src, const Set_t *s)
+{
+   if (s == NULL) {
+      mtxAbort(MTX_HERE,"NULL set");
+   }
+   if ((s->Magic != SetMagic) || (s->Size < 0) || (s->BufSize < s->Size)) {
+      mtxAbort(MTX_HERE,"Invalid set (Magic=%d, Size=%d, BufSize=%d)",
+                 (int)s->Magic,s->Size,s->BufSize);
+   }
+   if (s->Data == NULL) {
+      mtxAbort(MTX_HERE,"Data==NULL in set");
+   }
+}
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 /// Create a new set.
 /// This function creates a new, empty set. To destroy a set,
-/// use SetFree(), @em not SysFree().
+/// use setFree(), @em not sysFree().
 /// @return Pointer to the new set or 0 on error.
 
-Set_t *SetAlloc()
+Set_t *setAlloc()
 {
    Set_t *x;
 
    x = ALLOC(Set_t);
    if (x == NULL) {
-      MTX_ERROR("Cannot allocate set");
+      mtxAbort(MTX_HERE,"Cannot allocate set");
       return NULL;
    }
    x->Size = 0;
    x->BufSize = InitialSize;
    x->Data = NALLOC(long,InitialSize);
    if (x->Data == NULL) {
-      SysFree(x);
-      MTX_ERROR("Cannot allocate set data");
+      sysFree(x);
+      mtxAbort(MTX_HERE,"Cannot allocate set data");
       return NULL;
    }
    x->Magic = SetMagic;
@@ -86,18 +81,16 @@ Set_t *SetAlloc()
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 /// Destroy a set.
 /// This function frees an integer set. The argument must be a Set_t
-/// structure which has previously been allocated with SetAlloc().
+/// structure which has previously been allocated with setAlloc().
 /// @param x Pointer to the set.
 /// @return 0 on success, -1 on error.
 
-int SetFree(Set_t *x)
+int setFree(Set_t *x)
 {
-   if (!SetIsValid(x)) {
-      return -1;
-   }
-   SysFree(x->Data);
+   setValidate(MTX_HERE, x);
+   sysFree(x->Data);
    memset(x,0,sizeof(Set_t));
-   SysFree(x);
+   sysFree(x);
    return 0;
 }
 
@@ -107,16 +100,14 @@ int SetFree(Set_t *x)
 /// @param s Pointer to the set.
 /// @return Pointer to a copy of the set, or 0 on error.
 
-Set_t *SetDup(const Set_t *s)
+Set_t *setDup(const Set_t *s)
 {
    Set_t *x;
 
-   if (!SetIsValid(s)) {
-      return NULL;
-   }
+   setValidate(MTX_HERE, s);
    x = ALLOC(Set_t);
    if (x == NULL) {
-      MTX_ERROR("Cannot allocate set");
+      mtxAbort(MTX_HERE,"Cannot allocate set");
       return NULL;
    }
 
@@ -124,8 +115,8 @@ Set_t *SetDup(const Set_t *s)
    x->BufSize = s->Size;
    x->Data = NALLOC(long,x->BufSize);
    if (x->Data == NULL) {
-      SysFree(x);
-      MTX_ERROR("Cannot allocate set data");
+      sysFree(x);
+      mtxAbort(MTX_HERE,"Cannot allocate set data");
       return NULL;
    }
    memcpy(x->Data,s->Data,sizeof(x->Data[0]) * s->Size);
@@ -135,3 +126,4 @@ Set_t *SetDup(const Set_t *s)
 
 
 /// @}
+// vim:fileencoding=utf8:sw=3:ts=8:et:cin

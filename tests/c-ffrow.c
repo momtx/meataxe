@@ -1,52 +1,50 @@
-////////////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////////////
 // C MeatAxe - Check low-level row operations.
-//
-// (C) Copyright 1998-2015 Michael Ringe, Lehrstuhl D fuer Mathematik, RWTH Aachen
-//
-// This program is free software; see the file COPYING for details.
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 #include "meataxe.h"
-#include "check.h"
+#include "testing.h"
 
 #include <stdlib.h>
 #include <stdio.h>
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static void TestScalarProduct1(PTR a, PTR b, int size)
+static int TestScalarProduct1(PTR a, PTR b, int size)
 {
    int count;
    for (count = 0; count < 10; ++count) {
       int i;
       FEL expected = FF_ZERO;
-      FfMulRow(a,FF_ZERO);
-      FfMulRow(b,FF_ZERO);
+      ffMulRow(a,FF_ZERO);
+      ffMulRow(b,FF_ZERO);
       for (i = 0; i < size; ++i) {
-         FEL f1 = FTab[MtxRandomInt(FfOrder)];
-         FEL f2 = FTab[MtxRandomInt(FfOrder)];
-         FfInsert(a,i,f1);
-         FfInsert(b,i,f2);
-         expected = FfAdd(expected,FfMul(f1,f2));
+         FEL f1 = FTab[mtxRandomInt(ffOrder)];
+         FEL f2 = FTab[mtxRandomInt(ffOrder)];
+         ffInsert(a,i,f1);
+         ffInsert(b,i,f2);
+         expected = ffAdd(expected,ffMul(f1,f2));
       }
-      ASSERT_EQ_INT(FfScalarProduct(a,b), expected);
+      ASSERT_EQ_INT(ffScalarProduct(a,b), expected);
    }
+   return 0;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
  
-test_F ScalarProduct()
+TstResult ScalarProduct()
 {
-   while (NextField() > 0) {
-      int size;
-      for (size = 0; size < 1000; size += size / 10 + 1) {
-         PTR a, b;
-         FfSetNoc(size);
-         a = FfAlloc(1);
-         b = FfAlloc(1);
-         TestScalarProduct1(a,b,size);
-         SysFree(a);
-         SysFree(b);
-      }
+   int result = 0;
+   for (int size = 0; result == 0 && size < 1000; size += size / 10 + 1) {
+      PTR a, b;
+      ffSetNoc(size);
+      a = ffAlloc(1, size);
+      b = ffAlloc(1, size);
+      result |= TestScalarProduct1(a,b,size);
+      sysFree(a);
+      sysFree(b);
    }
+   return result;
 }
+
+// vim:fileencoding=utf8:sw=3:ts=8:et:cin

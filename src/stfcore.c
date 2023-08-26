@@ -1,12 +1,8 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // C MeatAxe - Structured Text File (STF) basic functions.
-//
-// (C) Copyright 1998-2015 Michael Ringe, Lehrstuhl D fuer Mathematik, RWTH Aachen
-//
-// This program is free software; see the file COPYING for details.
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#include <meataxe.h>
+#include "meataxe.h"
 #include <stdio.h>
 #include <ctype.h>
 #include <string.h>
@@ -15,7 +11,6 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // Local data
 
-MTX_DEFINE_FILE_INFO
 
 /// @defgroup stf Text File Handling
 /// @{
@@ -63,7 +58,7 @@ MTX_DEFINE_FILE_INFO
 /// @param f Pointer to an open structured text file (STF) object.
 /// @return 0 on success, non-zero on error.
 
-int StfClose(StfData *f)
+int stfClose(StfData *f)
 {
    if (f == NULL) {
       return -1;
@@ -87,13 +82,13 @@ int StfClose(StfData *f)
 ///  initialized or, in case of any error, no resources are allocated.
 /// @return 0 on success, -1 on error
 
-static int StfInitData(StfData *f)
+static int stfInitData(StfData *f)
 {
    memset(f,0,sizeof(StfData));
    f->LineBufSize = 250;
    f->LineBuf = NALLOC(char,f->LineBufSize);
    if (f->LineBuf == NULL) {
-      MTX_ERROR("Cannot allocate line buffer");
+      mtxAbort(MTX_HERE,"Cannot allocate line buffer");
       return -1;
    }
    return 0;
@@ -103,20 +98,12 @@ static int StfInitData(StfData *f)
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 /// Open a structured text file.
 /// This function opens a structured text file. It returns to a StfData structure which
-/// can be used with StfXxx() functions.
-/// @a name and @a mode have the same semantics as with SysFopen().
-/// If the mode contains @c FM_CREATE, a new file is created and opened for writing,
-/// for example with StfWriteInt(). If a file with the specified name already exists,
-/// it is truncated to length zero. Otherwise, a new file is created.
+/// can be used with stfXxx() functions.
+/// @a name and @a mode have the same semantics as with sysFopen().
 ///
-/// The mode @a FM_READ opens the file for reading. If the file does not exist
-/// the function fails.
-/// FM_TEXT is always added implicitely to the mode.
-/// @param name File name.
-/// @param mode Open mode (see description).
 /// @return StfData structure or 0 on error.
 
-StfData *StfOpen(const char *name, int mode)
+StfData *stfOpen(const char *name, const char* mode)
 {
    StfData *f;
 
@@ -125,15 +112,15 @@ StfData *StfOpen(const char *name, int mode)
    if (f == NULL) {
       return NULL;
    }
-   if (StfInitData(f) != 0) {
+   if (stfInitData(f) != 0) {
       free(f);
       return NULL;
    }
 
    // open the file
-   f->File = SysFopen(name,mode | FM_TEXT);
+   f->File = sysFopen(name, mode);
    if (f->File == NULL) {
-      StfClose(f);
+      stfClose(f);
       return NULL;
    }
 
@@ -142,3 +129,4 @@ StfData *StfOpen(const char *name, int mode)
 
 
 /// @}
+// vim:fileencoding=utf8:sw=3:ts=8:et:cin

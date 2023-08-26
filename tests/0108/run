@@ -1,32 +1,29 @@
-# Test ZAD/ZMU
+echo "0108 - ZAD/ZMU"
 
 . ../tests/common.sh
 
 for f in $TEST_FIELDS ; do
-    zmu ../tests/data/Mat$f ../tests/data/Mat$f tmp.$$.a
-    zad ../tests/data/Mat$f tmp.$$.a tmp.$$.b$f
+    zmu "${MTX_TEST_DATA_DIR}/Mat$f" "${MTX_TEST_DATA_DIR}/Mat$f" tmp.$$.a
+    zad "${MTX_TEST_DATA_DIR}/Mat$f" tmp.$$.a tmp.$$.b$f
+    zpr tmp.$$.b$f tmp.$$.b$f.txt
+    cmp tmp.$$.b$f.txt "${MTX_TESTCASE_DIR}/b$f.txt.expected"
 done
-checksum tmp.$$.b2 84.3260854010
-checksum tmp.$$.b5 204.3853706129
-checksum tmp.$$.b9 300.3411179034 
-checksum tmp.$$.b25 588.3404845323 
-checksum tmp.$$.b67 588.3297508606 
-checksum tmp.$$.b125 588.3652652946
-checksum tmp.$$.b256 588.585784393 
 
-cp ../tests/data/Mat5 tmp.$$.x
+cp ${MTX_TEST_DATA_DIR}/Mat5 tmp.$$.x
 zad tmp.$$.x tmp.$$.x tmp.$$.x tmp.$$.x tmp.$$.x tmp.$$.null
-checksum tmp.$$.null 204.3866723418 || exit 1
+zpr tmp.$$.null tmp.$$.null.txt
+cmp tmp.$$.null.txt "${MTX_TESTCASE_DIR}/null.txt.expected"
+
 zad tmp.$$.x -tmp.$$.x tmp.$$.x -tmp.$$.x tmp.$$.x tmp.$$.a
 cmp tmp.$$.x tmp.$$.a || error "x-x+x-x+x is different from x"
 zad -- -tmp.$$.x tmp.$$.x -tmp.$$.x tmp.$$.x -tmp.$$.x tmp.$$.a tmp.$$.b
-checksum tmp.$$.b 204.3866723418 || exit 1
+zpr tmp.$$.b tmp.$$.b.txt
+cmp tmp.$$.b.txt "${MTX_TESTCASE_DIR}/b.txt.expected"
 
-zmu ../tests/data/Perm1 ../tests/data/Perm2 tmp.$$.c
-checksum tmp.$$.c 92.1136913884 || exit 1
+zmu ${MTX_TEST_DATA_DIR}/Perm1 ${MTX_TEST_DATA_DIR}/Perm2 tmp.$$.c
+zpr tmp.$$.c tmp.$$.c.txt
+cmp tmp.$$.c.txt "${MTX_TESTCASE_DIR}/c.txt.expected"
 
 
 # Clean up
-# --------
 rm -f tmp.$$.*
-

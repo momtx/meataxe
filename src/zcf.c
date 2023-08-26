@@ -1,13 +1,9 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // C MeatAxe - Change field.
-//
-// (C) Copyright 1998-2015 Michael Ringe, Lehrstuhl D fuer Mathematik, RWTH Aachen
-//
-// This program is free software; see the file COPYING for details.
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
-#include <meataxe.h>
+#include "meataxe.h"
 #include <stdlib.h>
 
 
@@ -16,7 +12,6 @@
    Global data
    ------------------------------------------------------------------ */
 
-MTX_DEFINE_FILE_INFO
 
 static const char *iname, *oname;
 static FILE *InputFile = NULL;
@@ -57,14 +52,14 @@ static int checkfl()
 	
     if (fl2 < 2)
     {
-    	MTX_ERROR1("Invalid field order %d",fl2);
+    	mtxAbort(MTX_HERE,"Invalid field order %d",fl2);
 	return -1;
     }
     if (fl == -1) 
 	return 3;
     if (fl == fl2) 
     {
-	MTX_ERROR2("%s is already over GF(%d)",iname,fl);
+	mtxAbort(MTX_HERE,"%s is already over GF(%d)",iname,fl);
 	return -1;
     }
     else if (fl < fl2)
@@ -74,7 +69,7 @@ static int checkfl()
 	    return 1;
 	else 
 	{
-	    MTX_ERROR2("Cannot change from GF(%d) to GF(%d)",fl,fl2);
+	    mtxAbort(MTX_HERE,"Cannot change from GF(%d) to GF(%d)",fl,fl2);
 	    return -1;
 	}
     }
@@ -85,7 +80,7 @@ static int checkfl()
 	    return 1;
 	else 
 	{
-	    MTX_ERROR2("Cannot change from GF(%d) to GF(%d)",fl,fl2);
+	    mtxAbort(MTX_HERE,"Cannot change from GF(%d) to GF(%d)",fl,fl2);
 	    return -1;
 	}
     }
@@ -95,14 +90,14 @@ static int checkfl()
 
 
 
-int PermToMat1(const Perm_t *perm, PTR row)
+int permToMat1(const Perm_t *perm, PTR row)
 
 {
     int rc = 0;
 
     /* Create the output file.
        ----------------------- */
-    if ((out = MfCreate(oname,fl2,nor,nor)) == NULL)
+    if ((out = mfCreate(oname,fl2,nor,nor)) == NULL)
 	rc = -1;
 
     /* Convert the permutation.
@@ -113,9 +108,9 @@ int PermToMat1(const Perm_t *perm, PTR row)
 	int i;
 	for (i = 0; rc == 0 && i < nor; ++i)
 	{	
-	    FfMulRow(row,FF_ZERO);
-	    FfInsert(row,p[i],FF_ONE);
-	    if (MfWriteRows(out,row,1) != 1)
+	    ffMulRow(row,FF_ZERO);
+	    ffInsert(row,p[i],FF_ONE);
+	    if (mfWriteRows(out,row,1) != 1)
 		rc = -1;
 	}
     }
@@ -140,8 +135,8 @@ int permmat()
 
     /* Read the permutation.
        --------------------- */
-    SysFseek(InputFile,0);
-    perm = PermRead(InputFile);
+    sysFseek(InputFile,0);
+    perm = permRead(InputFile);
     if (perm == NULL)
 	rc = -1;
 
@@ -149,20 +144,20 @@ int permmat()
        ------------------- */
     if (rc == 0)
     {
-	FfSetField(fl2);
-	FfSetNoc(nor);
-	row = FfAlloc(1);
+	ffSetField(fl2);
+	ffSetNoc(nor);
+	row = ffAlloc(1, nor);
     }
 
     /* Convert the permutation.
        ------------------------ */
     if (rc == 0)
-	rc = PermToMat1(perm, row);
+	rc = permToMat1(perm, row);
 
     /* Clean up.
        --------- */
-    if (perm != NULL) PermFree(perm);
-    if (row != NULL) SysFree(row);
+    if (perm != NULL) permFree(perm);
+    if (row != NULL) sysFree(row);
 
     return rc;
 }
@@ -183,19 +178,19 @@ static int AllocateBuffer()
     BufNRows = 1000000 / (sizeof(FEL) * noc);
     if (BufNRows < 1)
     {
-	MTX_ERROR("Matrix is too big");
+	mtxAbort(MTX_HERE,"Matrix is too big");
 	return -1;
     }
     Buf = NALLOC(FEL,BufNRows * noc);
     if (Buf == NULL)
 	return -1;
-    FfSetField(fl);
-    FfSetNoc(noc);
-    if ((RowIn = FfAlloc(1)) == NULL)
+    ffSetField(fl);
+    ffSetNoc(noc);
+    if ((RowIn = ffAlloc(1, noc)) == NULL)
 	return -1;
-    FfSetField(fl2);
-    FfSetNoc(noc);
-    if ((RowOut = FfAlloc(1)) == NULL)
+    ffSetField(fl2);
+    ffSetNoc(noc);
+    if ((RowOut = ffAlloc(1, noc)) == NULL)
 	return -1;
     return 0;
 }
@@ -206,16 +201,15 @@ static void FreeBuffer()
 
 {
     if (Buf != NULL)
-	SysFree(Buf);
+	sysFree(Buf);
     if (RowIn != NULL)
-	SysFree(RowIn);
+	sysFree(RowIn);
     if (RowOut != NULL)
-	SysFree(RowOut);
+	sysFree(RowOut);
 }
 
 
 static int ReadRows(int req)
-
 {
     int to_read;
     int i;
@@ -223,38 +217,37 @@ static int ReadRows(int req)
 
     if ((to_read = req) > BufNRows)
 	to_read = BufNRows;
-    FfSetField(fl);
-    FfSetNoc(noc);
+    ffSetField(fl);
+    ffSetNoc(noc);
     tp = Buf;
     MESSAGE(1,("Reading %d rows\n",to_read));
     for (i = 0; i < to_read; ++i)
     {
 	int k;
-	if (FfReadRows(InputFile,RowIn,1) != 1)
+	if (ffReadRows(InputFile,RowIn,1,noc) != 1)
 	    return -1;
 	for (k = 0; k < noc; ++k)
-	    *tp++ = FfExtract(RowIn,k);
+	    *tp++ = ffExtract(RowIn,k);
     }
     return to_read;
 }
 
 
 static int WriteRows(int nrows)
-
 {
     int i;
     FEL *tp;
 
-    FfSetField(fl2);
-    FfSetNoc(noc);
+    ffSetField(fl2);
+    ffSetNoc(noc);
     tp = Buf;
     MESSAGE(1,("Writing %d rows\n",nrows));
     for (i = 0; i < nrows; ++i)
     {
 	int k;
 	for (k = 0; k < noc; ++k)
-	    FfInsert(RowOut,k,*tp++);
-	if (MfWriteRows(out,RowOut,1) != 1)
+	    ffInsert(RowOut,k,*tp++);
+	if (mfWriteRows(out,RowOut,1) != 1)
 	    return -1;
     }
     return 0;
@@ -264,7 +257,6 @@ static int WriteRows(int nrows)
 
 
 static int ChangeField()
-
 {
     int rc = 0;
     int i;
@@ -274,7 +266,7 @@ static int ChangeField()
     rc = AllocateBuffer();
     if (rc == 0)
     {
-	if ((out = MfCreate(oname,fl2,nor,noc)) == NULL)
+	if ((out = mfCreate(oname,fl2,nor,noc)) == NULL)
 	    rc = -1;
     }
 
@@ -293,15 +285,15 @@ static int ChangeField()
 	MESSAGE(1,("Converting\n"));
 	if (fl < fl2)
 	{
-	    FfSetField(fl2);
+	    ffSetField(fl2);
 	    for (rp = Buf, k = 0; k < rows_read * noc; ++k, ++rp)
-		*rp = FfEmbed(*rp,fl);
+		*rp = ffEmbed(*rp,fl);
 	}
 	else
 	{
-	    FfSetField(fl);
+	    ffSetField(fl);
 	    for (rp = Buf, k = 0; k < rows_read * noc; ++k, ++rp)
-		*rp = FfRestrict(*rp,fl2);
+		*rp = ffRestrict(*rp,fl2);
 	}
 
 	if (WriteRows(rows_read) != 0)
@@ -322,14 +314,14 @@ static int ChangeField()
     return rc;
 }
 
-static int Init(int argc, const char **argv)
+static int Init(int argc, char **argv)
 
 {
     /* Process command line options and arguments.
        ------------------------------------------- */
-    if ((App = AppAlloc(&AppInfo,argc,argv)) == NULL)
+    if ((App = appAlloc(&AppInfo,argc,argv)) == NULL)
 	return -1;
-    if (AppGetArguments(App,3,3) != 3)
+    if (appGetArguments(App,3,3) != 3)
 	return -1;
     fl2 = atol(App->ArgV[0]);
     iname = App->ArgV[1];
@@ -344,11 +336,11 @@ static void Cleanup()
 
 {
     if (App != NULL)
-	AppFree(App);
+	appFree(App);
     if (InputFile != NULL)
 	fclose(InputFile);
     if (out != NULL)
-	MfClose(out);
+	mfClose(out);
 }
 
 
@@ -357,7 +349,7 @@ static void Cleanup()
    main()
    ------------------------------------------------------------------ */
 
-int main(int argc, const char **argv)
+int main(int argc, char **argv)
 
 {
     int rc = 0;
@@ -365,7 +357,7 @@ int main(int argc, const char **argv)
     if (Init(argc,argv) != 0)
 	return -1;
 
-    if ((InputFile = FfReadHeader(iname,&fl,&nor,&noc)) == NULL)
+    if ((InputFile = ffReadHeader(iname,&fl,&nor,&noc)) == NULL)
 	rc = -1;
 
     /* Convert
@@ -382,7 +374,7 @@ int main(int argc, const char **argv)
 		break;
 	}
 	if (rc != 0)
-	    MTX_ERROR("Conversion failed");
+	    mtxAbort(MTX_HERE,"Conversion failed");
     }
 
     Cleanup();
@@ -450,3 +442,4 @@ arithmetic version and s=2 for the big version.
 In case of permutations, the input permutation and one row
 of the output file must fit into memory.
 */
+// vim:fileencoding=utf8:sw=3:ts=8:et:cin

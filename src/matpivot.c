@@ -1,19 +1,14 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // C MeatAxe - Rebuild the pivot table of a matrix
-//
-// (C) Copyright 1998-2015 Michael Ringe, Lehrstuhl D fuer Mathematik, RWTH Aachen
-//
-// This program is free software; see the file COPYING for details.
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#include <meataxe.h>
+#include "meataxe.h"
 #include <stdlib.h>
 #include <string.h>
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // Local data
 
-MTX_DEFINE_FILE_INFO
 
 /// @addtogroup mat
 /// @{
@@ -30,11 +25,11 @@ static int zmkpivot(PTR matrix, int nor, int noc, int *piv, int *ispiv)
    /* Build the pivot table in <piv>.
       Keep track of assigned pivot columns in <ispiv>.
       ------------------------------------------------ */
-   for (i = 0, x = matrix; i < nor && i < noc; ++i, FfStepPtr(&x)) {
+   for (i = 0, x = matrix; i < nor && i < noc; ++i, ffStepPtr(&x, noc)) {
       FEL f;
-      int newpiv = FfFindPivot(x,&f);
+      int newpiv = ffFindPivot(x,&f);
       if (ispiv[newpiv]) {
-         MTX_ERROR1("%E",MTX_ERR_NOTECH);
+         mtxAbort(MTX_HERE, "%s", MTX_ERR_NOTECH);
          return -1;
       }
       piv[i] = newpiv;
@@ -49,40 +44,38 @@ static int zmkpivot(PTR matrix, int nor, int noc, int *piv, int *ispiv)
       }
    }
 
-   MTX_VERIFY(i == noc);
+   MTX_ASSERT(i == noc, -1);
    return 0;
 }
 
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 /// Reduce to echelon form.
-/// This function builds the pivot table of a matrix. Unlike MatEchelonize()
+/// This function builds the pivot table of a matrix. Unlike matEchelonize()
 /// this function assumes that @a mat is already in echelon form.
 /// @param mat Pointer to the matrix.
 /// @return 0 on success, -1 on error.
 
-int MatPivotize(Matrix_t *mat)
+int matPivotize(Matrix_t *mat)
 {
    int *newtab;
    static int *is_pivot = NULL;
    static int maxnoc = -1;
 
    // check argument
-   if (!MatIsValid(mat)) {
-      return -1;
-   }
+   matValidate(MTX_HERE, mat);
 
    // (re-)allocate pivot table
    newtab = NREALLOC(mat->PivotTable,int,mat->Noc);
    if (newtab == NULL) {
-      MTX_ERROR1("Cannot allocate pivot table (size %d)",mat->Noc);
+      mtxAbort(MTX_HERE,"Cannot allocate pivot table (size %d)",mat->Noc);
       return -1;
    }
    mat->PivotTable = newtab;
    if (mat->Noc > maxnoc) {
       int *new_is_piv = NREALLOC(is_pivot,int,mat->Noc);
       if (new_is_piv == NULL) {
-         MTX_ERROR("Cannot allocate temporary table");
+         mtxAbort(MTX_HERE,"Cannot allocate temporary table");
          return -1;
       }
       is_pivot = new_is_piv;
@@ -90,10 +83,11 @@ int MatPivotize(Matrix_t *mat)
    }
 
    // build the pivot table
-   FfSetField(mat->Field);
-   FfSetNoc(mat->Noc);
+   ffSetField(mat->Field);
+   ffSetNoc(mat->Noc);
    return zmkpivot(mat->Data,mat->Nor,mat->Noc,mat->PivotTable,is_pivot);
 }
 
 
 /// @}
+// vim:fileencoding=utf8:sw=3:ts=8:et:cin

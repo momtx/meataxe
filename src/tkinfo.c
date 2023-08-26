@@ -1,13 +1,9 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // C MeatAxe - Reading and writing the tensor condense information (.tki) file
-//
-// (C) Copyright 1998-2015 Michael Ringe, Lehrstuhl D fuer Mathematik, RWTH Aachen
-//
-// This program is free software; see the file COPYING for details.
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
-#include <meataxe.h>
+#include "meataxe.h"
 
 
 #include <stdio.h>
@@ -18,7 +14,6 @@
 /// @addtogroup tp
 /// @{
 
-MTX_DEFINE_FILE_INFO
 
 static int ReadVector(StfData *f, const char *c,
     const char *name, int size, int *vec)
@@ -26,10 +21,10 @@ static int ReadVector(StfData *f, const char *c,
     int len = size;
     if (!strcmp(c,name))
     {
-	StfGetVector(f,&len,vec);
+	stfGetVector(f,&len,vec);
 	if (len != size)
 	{
-	    MTX_ERROR1("Invalid %s in .tki file",c);
+	    mtxAbort(MTX_HERE,"Invalid %s in .tki file",c);
 	    return 0;
 	}
 	return 1;
@@ -62,25 +57,25 @@ static int ParseTKInfoFile(StfData *f, TkData_t *tki)
 
     /* Read header
        ----------- */
-    if (StfReadLine(f) || strcmp(StfGetName(f),"TKInfo"))
+    if (stfReadLine(f) || strcmp(stfGetName(f),"TKInfo"))
     {
-	MTX_ERROR("File header not found in .tki file");
+	mtxAbort(MTX_HERE,"File header not found in .tki file");
 	return -1;
     }
 
     /* Read data
        --------- */
-    while (StfReadLine(f) == 0)
+    while (stfReadLine(f) == 0)
     {
-	const char *c = StfGetName(f);
+	const char *c = stfGetName(f);
 	if (c == NULL) continue;
 	if (!strcmp(c,"TKInfo.NameM"))
-	    StfGetString(f,tki->NameM,sizeof(tki->NameM));
+	    stfGetString(f,tki->NameM,sizeof(tki->NameM));
         else if (!strcmp(c,"TKInfo.NameN"))
-	    StfGetString(f,tki->NameN,sizeof(tki->NameN));
+	    stfGetString(f,tki->NameN,sizeof(tki->NameN));
 	else if (!strcmp(c,"TKInfo.Dim"))
 	{
-	    StfGetInt(f,&tki->Dim);
+	    stfGetInt(f,&tki->Dim);
 	    if (tki->Dim < 0 || tki->Dim > 1000000)
 	    {
 		fprintf(stderr,"Illegal dimension in .tki file\n");
@@ -89,7 +84,7 @@ static int ParseTKInfoFile(StfData *f, TkData_t *tki)
 	}
 	else if (!strcmp(c,"TKInfo.NCf"))
 	{
-	    StfGetInt(f,&tki->NCf);
+	    stfGetInt(f,&tki->NCf);
 	    if (tki->NCf < 1 || tki->NCf > LAT_MAXCF)
 	    {
 		fprintf(stderr,"Illegal number of constituents in .tki file");
@@ -117,7 +112,7 @@ static int ParseTKInfoFile(StfData *f, TkData_t *tki)
 ///    automatically).
 /// @return 0 on success, -1 on error.
 
-int TK_ReadInfo(TkData_t *tki, const char *name)
+int tkReadInfo(TkData_t *tki, const char *name)
 {
     char fn[500];
     StfData *f;
@@ -127,9 +122,9 @@ int TK_ReadInfo(TkData_t *tki, const char *name)
     /* Open input file
        --------------- */
     strcat(strcpy(fn,name),".tki");
-    if ((f = StfOpen(fn,FM_READ)) == NULL)
+    if ((f = stfOpen(fn,"r")) == NULL)
     {
-	MTX_ERROR1("Cannot open %s for reading\n",fn);
+	mtxAbort(MTX_HERE,"Cannot open %s for reading\n",fn);
 	return -1;
     }
 
@@ -139,7 +134,7 @@ int TK_ReadInfo(TkData_t *tki, const char *name)
 
     /* Close input file
        ---------------- */
-    StfClose(f);
+    stfClose(f);
     return result;
 }
 
@@ -152,29 +147,30 @@ int TK_ReadInfo(TkData_t *tki, const char *name)
 /// @param name File name without ".tki" extension (which is appended automatically).
 /// @return 0 o success, -1 on error.
 
-int TK_WriteInfo(TkData_t *tki, const char *name)
+int tkWriteInfo(TkData_t *tki, const char *name)
 {
     char fn[500];
     StfData *f;
     int result = 0;
     strcat(strcpy(fn,name),".tki");
-    if ((f = StfOpen(fn,FM_CREATE)) == NULL)
+    if ((f = stfOpen(fn,"w")) == NULL)
     {
 	fprintf(stderr,"Cannot open %s for writing, error %d\n",fn,errno);
 	return -1;
     }
 
-    StfWriteValue(f,"TKInfo","rec()");
-    StfWriteString(f,"TKInfo.NameM",tki->NameM);
-    StfWriteString(f,"TKInfo.NameN",tki->NameN);
-    StfWriteInt(f,"TKInfo.Dim",tki->Dim);
-    StfWriteInt(f,"TKInfo.NCf",tki->NCf);
-    StfWriteVector(f,"TKInfo.CfIndexM",tki->NCf,tki->CfIndex[0]);
-    StfWriteVector(f,"TKInfo.CfIndexN",tki->NCf,tki->CfIndex[1]);
+    stfWriteValue(f,"TKInfo","rec()");
+    stfWriteString(f,"TKInfo.NameM",tki->NameM);
+    stfWriteString(f,"TKInfo.NameN",tki->NameN);
+    stfWriteInt(f,"TKInfo.Dim",tki->Dim);
+    stfWriteInt(f,"TKInfo.NCf",tki->NCf);
+    stfWriteVector(f,"TKInfo.CfIndexM",tki->NCf,tki->CfIndex[0]);
+    stfWriteVector(f,"TKInfo.CfIndexN",tki->NCf,tki->CfIndex[1]);
 
-    StfClose(f);
+    stfClose(f);
     MESSAGE(1,("Wrote %s: NCf=%d\n",fn,tki->NCf));
     return result;
 }
 
 /// @}
+// vim:fileencoding=utf8:sw=3:ts=8:et:cin

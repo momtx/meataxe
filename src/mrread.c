@@ -1,18 +1,13 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // C MeatAxe - Matrix representations, file i/o
-//
-// (C) Copyright 1998-2015 Michael Ringe, Lehrstuhl D fuer Mathematik, RWTH Aachen
-//
-// This program is free software; see the file COPYING for details.
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#include <meataxe.h>
+#include "meataxe.h"
 #include <string.h>
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // Local data
 
-MTX_DEFINE_FILE_INFO
 
 /// @addtogroup mrep
 /// @{
@@ -25,8 +20,8 @@ MTX_DEFINE_FILE_INFO
 /// contains a "%d" placeholder, by replacing the "%d" with "1", "2", etc.
 /// For example, the following lines
 /// @code
-/// m11 = MrLoad("m11",2);
-/// m11 = MrLoad("m11.%d",2);
+/// m11 = mrLoad("m11",2);
+/// m11 = mrLoad("m11.%d",2);
 /// @endcode
 /// are equivalent. In both cases, two matrices are read from "m11.2" and "m11.2",
 /// repectively.
@@ -34,7 +29,7 @@ MTX_DEFINE_FILE_INFO
 /// @param ngen Number of generators.
 /// @return Pointer to the representation, or 0 on error.
 
-MatRep_t *MrLoad(const char *basename, int ngen)
+MatRep_t *mrLoad(const char *basename, int ngen)
 {
    char *fn;
    int ext_format;          /* '%d' found in <basename> */
@@ -43,18 +38,18 @@ MatRep_t *MrLoad(const char *basename, int ngen)
 
    /* Make a copy of the basename and reserve extra bytes for the extension.
       ---------------------------------------------------------------------- */
-   fn = SysMalloc(strlen(basename) + 10);
+   fn = sysMalloc(strlen(basename) + 10);
    if (fn == NULL) {
-      MTX_ERROR("Cannot allocate buffer");
+      mtxAbort(MTX_HERE,"Cannot allocate buffer");
       return NULL;
    }
 
    /* Allocate the Representation
       --------------------------- */
-   mr = MrAlloc(0,NULL,0);
+   mr = mrAlloc(0,NULL,0);
    if (mr == NULL) {
-      MTX_ERROR("Cannot allocate representation");
-      SysFree(fn);
+      mtxAbort(MTX_HERE,"Cannot allocate representation");
+      sysFree(fn);
       return NULL;
    }
 
@@ -68,17 +63,18 @@ MatRep_t *MrLoad(const char *basename, int ngen)
       } else {
          sprintf(fn,"%s.%d",basename,i + 1);
       }
-      if (((gen = MatLoad(fn)) == NULL) || (MrAddGenerator(mr,gen,0) != 0)) {
-         MTX_ERROR("Cannot load generator");
-         MrFree(mr);
-         SysFree(fn);
+      if (((gen = matLoad(fn)) == NULL) || (mrAddGenerator(mr,gen,0) != 0)) {
+         mtxAbort(MTX_HERE,"Cannot load generator");
+         mrFree(mr);
+         sysFree(fn);
          return NULL;
       }
    }
 
-   SysFree(fn);
+   sysFree(fn);
    return mr;
 }
 
 
 /// @}
+// vim:fileencoding=utf8:sw=3:ts=8:et:cin

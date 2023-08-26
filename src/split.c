@@ -1,15 +1,9 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // C MeatAxe - Split a representation
-//
-// (C) Copyright 1998-2014 Michael Ringe, Lehrstuhl D fuer Mathematik, RWTH Aachen
-//
-// This program is free software; see the file COPYING for details.
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#include <meataxe.h>
+#include "meataxe.h"
 #include <stdlib.h>
-
-MTX_DEFINE_FILE_INFO 
 
 /// @addtogroup spinup
 /// @{
@@ -18,19 +12,15 @@ MTX_DEFINE_FILE_INFO
 
 static int CheckArguments(Matrix_t *subspace, const MatRep_t *rep)
 {
-    if (!MrIsValid(rep))
+    if (!mrIsValid(rep))
     {
-	MTX_ERROR1("rep: %E",MTX_ERR_BADARG);
+	mtxAbort(MTX_HERE,"rep: %s",MTX_ERR_BADARG);
 	return -1;
     }
-    if (!MatIsValid(subspace))
-    {
-	MTX_ERROR1("subspace: %E",MTX_ERR_BADARG);
-	return -1;
-    }
+    matValidate(MTX_HERE, subspace);
     if (subspace->PivotTable == NULL)
     {
-	MTX_ERROR1("%E",MTX_ERR_NOTECH);
+	mtxAbort(MTX_HERE,"%s",MTX_ERR_NOTECH);
 	return -1;
     }
     return 0;
@@ -94,7 +84,7 @@ int Split(Matrix_t *subspace, const MatRep_t *rep,
        ---------------- */
     if (CheckArguments(subspace,rep) != 0)
     {
-	MTX_ERROR1("%E",MTX_ERR_BADARG);
+	mtxAbort(MTX_HERE,"%s",MTX_ERR_BADARG);
 	return -1;
     }
 
@@ -103,14 +93,14 @@ int Split(Matrix_t *subspace, const MatRep_t *rep,
     if (sub != NULL)
     {
 	if (*sub != NULL)
-	    MrFree(*sub);
-	*sub = MrAlloc(0,NULL,0);
+	    mrFree(*sub);
+	*sub = mrAlloc(0,NULL,0);
 	if (*sub == NULL)
 	    return -1;
 	for (g = 0; g < rep->NGen; ++g)
 	{
 	    Matrix_t *gen = SAction(subspace,rep->Gen[g]);
-	    MrAddGenerator(*sub,gen,0);
+	    mrAddGenerator(*sub,gen,0);
 	}
     }
 
@@ -119,14 +109,14 @@ int Split(Matrix_t *subspace, const MatRep_t *rep,
     if (quot != NULL)
     {
 	if (*quot != NULL)
-	    MrFree(*quot);
-	*quot = MrAlloc(0,NULL,0);
+	    mrFree(*quot);
+	*quot = mrAlloc(0,NULL,0);
 	if (*quot == NULL)
 	    return -1;
 	for (g = 0; g < rep->NGen; ++g)
 	{
 	    Matrix_t *gen = QAction(subspace,rep->Gen[g]);
-	    MrAddGenerator(*quot,gen,0);
+	    mrAddGenerator(*quot,gen,0);
 	}
     }
 
@@ -135,3 +125,4 @@ int Split(Matrix_t *subspace, const MatRep_t *rep,
 
 /// @}
 
+// vim:fileencoding=utf8:sw=3:ts=8:et:cin

@@ -1,17 +1,12 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // C MeatAxe - Convert vector to matrix.
-//
-// (C) Copyright 1998-2015 Michael Ringe, Lehrstuhl D fuer Mathematik, RWTH Aachen
-//
-// This program is free software; see the file COPYING for details.
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#include <meataxe.h>
+#include "meataxe.h"
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 //   Local data
 
-MTX_DEFINE_FILE_INFO
 
 /// @addtogroup tp
 /// @{
@@ -37,24 +32,21 @@ Matrix_t *VectorToMatrix(Matrix_t *vecs, int n, int noc)
 
    /* Check arguments.
       ---------------- */
-   if (!MatIsValid(vecs)) {
-      MTX_ERROR1("vecs: %E",MTX_ERR_BADARG);
-      return NULL;
-   }
+   matValidate(MTX_HERE, vecs);
    if ((noc > vecs->Noc) || (vecs->Noc % noc != 0)) {
-      MTX_ERROR3("noc=%d (vec:%d): %E",noc,vecs->Noc,MTX_ERR_BADARG);
+      mtxAbort(MTX_HERE,"noc=%d (vec:%d): %s",noc,vecs->Noc,MTX_ERR_BADARG);
       return NULL;
    }
 
    /* Convert the vector.
       ------------------- */
-   result = MatAlloc(vecs->Field,vecs->Noc / noc,noc);
+   result = matAlloc(vecs->Field,vecs->Noc / noc,noc);
    if (result == NULL) {
       return NULL;
    }
    for (i = 0; i < result->Nor; ++i) {
-      if (MatCopyRegion(result,i,0, vecs,n,i * noc,1,noc) != 0) {
-         MTX_ERROR("Copy failed");
+      if (matCopyRegion(result,i,0, vecs,n,i * noc,1,noc) != 0) {
+         mtxAbort(MTX_HERE,"Copy failed");
 	 return NULL;
       }
    }
@@ -63,3 +55,4 @@ Matrix_t *VectorToMatrix(Matrix_t *vecs, int n, int noc)
 
 
 /// @}
+// vim:fileencoding=utf8:sw=3:ts=8:et:cin

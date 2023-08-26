@@ -1,13 +1,9 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // C MeatAxe - Calculates the socle series of a module.
-//
-// (C) Copyright 1998-2015 Michael Ringe, Lehrstuhl D fuer Mathematik, RWTH Aachen
-//
-// This program is free software; see the file COPYING for details.
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
-#include <meataxe.h>
+#include "meataxe.h"
 
 
 
@@ -15,7 +11,6 @@
    Global data
    -------------------------------------------------------------------------- */
 
-MTX_DEFINE_FILE_INFO
 
 static MtxApplicationInfo_t AppInfo = { 
 "soc", "Socle series", 
@@ -58,8 +53,8 @@ static Matrix_t *basis = NULL;		/* Basis corresponding to Loewy series */
 static int ParseCommandLine()
 
 {
-    MaxLen = AppGetIntOption(App,"-l --max-length",0,0,1000);
-    if (AppGetArguments(App,1,1) != 1)
+    MaxLen = appGetIntOption(App,"-l --max-length",0,0,1000);
+    if (appGetArguments(App,1,1) != 1)
 	return -1;
     return 0;
 }
@@ -80,15 +75,15 @@ static int ReadConstituents()
     {
 	/* Read generators
 	   --------------- */
-	sprintf(fn,"%s%s.std", LI.BaseName,Lat_CfName(&LI,i));
-	CfRep[i] = MrLoad(fn,LI.NGen);
+	sprintf(fn,"%s%s.std", LI.BaseName,latCfName(&LI,i));
+	CfRep[i] = mrLoad(fn,LI.NGen);
 	if (CfRep[i] == NULL)
 	    return -1;
 
 	/* Read spinup script for standard basis
 	   ------------------------------------- */
-	sprintf(fn,"%s%s.op",LI.BaseName,Lat_CfName(&LI,i));
-	OpTableMat[i] = ImatLoad(fn);
+	sprintf(fn,"%s%s.op",LI.BaseName,latCfName(&LI,i));
+	OpTableMat[i] = imatLoad(fn);
 	if (ConvertSpinUpScript(OpTableMat[i]))
 	{
 	    static int first_time = 1;
@@ -101,9 +96,9 @@ static int ReadConstituents()
 
 	/* Read peak word kernel.
 	   ---------------------- */
-	sprintf(fn,"%s%s.k",LI.BaseName,Lat_CfName(&LI,i));
+	sprintf(fn,"%s%s.k",LI.BaseName,latCfName(&LI,i));
 	MESSAGE(1,("Taking seed vectors from %s\n",fn));
-	seed[i] = MatLoad(fn);
+	seed[i] = matLoad(fn);
     }
     return 0;
 }
@@ -115,30 +110,30 @@ static int ReadConstituents()
    Init() - Program initialization
    -------------------------------------------------------------------------- */
 
-static int Init(int argc, const char **argv)
+static int Init(int argc, char **argv)
 
 {
     /* Process the command line
        ------------------------ */
-    if ((App = AppAlloc(&AppInfo,argc,argv)) == NULL)
+    if ((App = appAlloc(&AppInfo,argc,argv)) == NULL)
 	return -1;
     if (ParseCommandLine() != 0)
     {
-	MTX_ERROR("Error in command line");
+	mtxAbort(MTX_HERE,"Error in command line");
 	return -1;
     }
 
     /* Read input files
        ---------------- */
-    if (Lat_ReadInfo(&LI,App->ArgV[0]) != 0)
+    if (latReadInfo(&LI,App->ArgV[0]) != 0)
 	return -1;
-    if ((Rep = MrLoad(App->ArgV[0],LI.NGen)) == NULL)
+    if ((Rep = mrLoad(App->ArgV[0],LI.NGen)) == NULL)
 	return -1;
     if (ReadConstituents() != 0)
 	return -1;
     Dimension = Rep->Gen[0]->Nor;
 
-    WGen = WgAlloc(Rep);
+    WGen = wgAlloc(Rep);
     LI.NSocles = 0;
 
     return 0;
@@ -151,7 +146,7 @@ static void WriteBasis(const Matrix_t *basis)
     char name[200];
     sprintf(name, "%s.soc",App->ArgV[0]);
     MESSAGE(1,("Writing basis to %s\n",name));
-    MatSave(basis,name);
+    matSave(basis,name);
 }
 
 
@@ -166,15 +161,15 @@ static int NextLayer()
     Matrix_t *basi;
 
     SocDim = 0;
-    if ((bas = MatAlloc(FfOrder,Dimension,Dimension)) == NULL)
+    if ((bas = matAlloc(ffOrder,Dimension,Dimension)) == NULL)
     {
-	MTX_ERROR("Cannot allocate basis matrix");
+	mtxAbort(MTX_HERE,"Cannot allocate basis matrix");
 	return -1;
     }
 
     if ((cfvec = NALLOC(int,LI.NCf)) == NULL)
     {
-	MTX_ERROR("Cannot allocate vector table");
+	mtxAbort(MTX_HERE,"Cannot allocate vector table");
 	return -1;
     }
 
@@ -187,7 +182,7 @@ static int NextLayer()
 
         if (LI.Cf[j].peakword <= 0)
 	{
-            MTX_ERROR1("Missing peak word for constituent %d - run pwkond!",j);
+            mtxAbort(MTX_HERE,"Missing peak word for constituent %d - run pwkond!",j);
 	    return -1;
 	}
 	
@@ -202,19 +197,19 @@ static int NextLayer()
 	    partbas = HomogeneousPart(Rep,CfRep[j],sed,OpTableMat[j],dimendS);
 	    if (partbas == NULL)
 	    {
-		MTX_ERROR("The module is too big");
+		mtxAbort(MTX_HERE,"The module is too big");
 		return -1;
 	    }
 	}
 	else 
-	    partbas = MatDup(sed);
+	    partbas = matDup(sed);
                 
 	/* Append the new basis to the old one.
 	   ------------------------------------ */
 	cfvec[j] = partbas->Nor / LI.Cf[j].dim;
-	MatCopyRegion(bas,SocDim,0,partbas,0,0,-1,-1);
+	matCopyRegion(bas,SocDim,0,partbas,0,0,-1,-1);
 	SocDim += partbas->Nor;
-	MESSAGE(2,("Socle dimension of %s is %d\n", Lat_CfName(&LI,j),
+	MESSAGE(2,("Socle dimension of %s is %d\n", latCfName(&LI,j),
 	    partbas->Nor));
     }
 
@@ -232,15 +227,15 @@ static int NextLayer()
 	if (flag++ > 0)
 	    MESSAGE(0,(" +"));
 	if (cfvec[j] == 1)
-	    MESSAGE(0,(" %s",Lat_CfName(&LI,j)));
+	    MESSAGE(0,(" %s",latCfName(&LI,j)));
 	else
-	    MESSAGE(0,(" %d*%s",cfvec[j],Lat_CfName(&LI,j)));
+	    MESSAGE(0,(" %d*%s",cfvec[j],latCfName(&LI,j)));
     }
     MESSAGE(0,("\n"));
-    Lat_AddSocle(&LI,cfvec);
+    latAddSocle(&LI,cfvec);
 
   
-    SysFree(cfvec);
+    sysFree(cfvec);
 
 
 /* --------------------------------------------------
@@ -258,10 +253,10 @@ static int NextLayer()
 	else
 	{
 	    Matrix_t *mat;
-	    mat = MatCutRows(basis,basis->Nor - SocDim,SocDim);
-	    MatMul(bas,mat);
-	    MatFree(mat);
-	    MatCopyRegion(basis,basis->Nor - SocDim,0,bas,0,0,SocDim,-1);
+	    mat = matCutRows(basis,basis->Nor - SocDim,SocDim);
+	    matMul(bas,mat);
+	    matFree(mat);
+	    matCopyRegion(basis,basis->Nor - SocDim,0,bas,0,0,SocDim,-1);
 	    WriteBasis(basis);
 	}
         return 1;
@@ -271,12 +266,12 @@ static int NextLayer()
     
     /* Extend the basis of the socle to a basis of the whole module.
        ------------------------------------------------------------- */
-    echbas = MatAlloc(bas->Field,bas->Noc,bas->Noc);
-    MatCopyRegion(echbas,0,0,bas,0,0,-1,-1);
-    MatEchelonize(bas);
+    echbas = matAlloc(bas->Field,bas->Noc,bas->Noc);
+    matCopyRegion(echbas,0,0,bas,0,0,-1,-1);
+    matEchelonize(bas);
     for (i = bas->Nor; i < bas->Noc; ++i)
-	FfInsert(MatGetPtr(echbas,i),bas->PivotTable[i],FF_ONE);
-    MatFree(bas);
+	ffInsert(matGetPtr(echbas,i),bas->PivotTable[i],FF_ONE);
+    matFree(bas);
     bas = echbas;
 
 	    
@@ -284,17 +279,17 @@ static int NextLayer()
 /* multiplying the last two basischanges
    ------------------------------------- */
     if (basis == NULL)
-	basis = MatDup(bas);
+	basis = matDup(bas);
     else
     {
 	Matrix_t *mat, *stgen;
 
-	mat = MatCutRows(basis,basis->Nor - Dimension,Dimension);
-	stgen = MatDup(bas);
-	MatMul(stgen, mat);
-	MatCopyRegion(basis,basis->Nor - Dimension,0,stgen,0,0,Dimension,-1);
-	MatFree(mat);
-	MatFree(stgen);
+	mat = matCutRows(basis,basis->Nor - Dimension,Dimension);
+	stgen = matDup(bas);
+	matMul(stgen, mat);
+	matCopyRegion(basis,basis->Nor - Dimension,0,stgen,0,0,Dimension,-1);
+	matFree(mat);
+	matFree(stgen);
     }
 
 /* ------------------------------------------------------
@@ -311,7 +306,7 @@ static int NextLayer()
    factorizing with the socle
    -------------------------- */
 
-    basi = MatInverse(bas);
+    basi = matInverse(bas);
 
 /* the kernels
    ----------- */
@@ -320,29 +315,29 @@ static int NextLayer()
 	Matrix_t *tmp;
 	if (seed[j] == NULL)
 	    continue;
-	MatMul(seed[j], basi);
-	tmp = MatCut(seed[j],0,SocDim,-1,-1);
-	MatFree(seed[j]);
+	matMul(seed[j], basi);
+	tmp = matCut(seed[j],0,SocDim,-1,-1);
+	matFree(seed[j]);
 	seed[j] = tmp;
-	MatEchelonize(seed[j]);
+	matEchelonize(seed[j]);
     }
 
     /* the generators
        -------------- */
     for (i = 0; i < LI.NGen; i++)
     {
-        Matrix_t *stgen = MatDup(bas);
-        MatMul(stgen,Rep->Gen[i]);
-        MatMul(stgen,basi);
-        MatFree(Rep->Gen[i]);
-	Rep->Gen[i] = MatCut(stgen,SocDim,SocDim,-1,-1);
-        MatFree(stgen);
+        Matrix_t *stgen = matDup(bas);
+        matMul(stgen,Rep->Gen[i]);
+        matMul(stgen,basi);
+        matFree(Rep->Gen[i]);
+	Rep->Gen[i] = matCut(stgen,SocDim,SocDim,-1,-1);
+        matFree(stgen);
     }
     Dimension = Rep->Gen[0]->Nor;
     MESSAGE(1,("Reduced to dimension %d\n",Dimension));
 
-    MatFree(bas);
-    MatFree(basi);
+    matFree(bas);
+    matFree(basi);
 
     return 0;
 }
@@ -350,13 +345,13 @@ static int NextLayer()
 
 
 
-int main( int argc, const char **argv)
+int main( int argc, char **argv)
 {
     int rc;
 
     if (Init(argc,argv) != 0)
     {
-	MTX_ERROR("Program initialization failed");
+	mtxAbort(MTX_HERE,"Program initialization failed");
 	return 1;
     }
 
@@ -364,20 +359,20 @@ int main( int argc, const char **argv)
     while ((rc = NextLayer()) == 0);
     if (rc < 0)
     {
-	MTX_ERROR("Error calculating socle series");
+	mtxAbort(MTX_HERE,"Error calculating socle series");
 	return 1;
     }
 
     /* Clean up
        -------- */
-    Lat_WriteInfo(&LI);
-    WgFree(WGen);
+    latWriteInfo(&LI);
+    wgFree(WGen);
     if (SocDim != Dimension)
     {
 	MESSAGE(0,("Warning: Calculation aborted at dimension %d of %d\n",
 	    SocDim,Dimension));
     }
-    if (App != NULL) AppFree(App);
+    if (App != NULL) appFree(App);
     return 0;
 }
 
@@ -448,3 +443,4 @@ vectors to form a complete basis.
 This program uses an algorithm by Magdolna Szöke, see @ref Sz98 "[Sz98]".
 
 **/
+// vim:fileencoding=utf8:sw=3:ts=8:et:cin

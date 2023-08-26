@@ -1,13 +1,9 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // C MeatAxe - Characteristic polynomial of a matrix
-//
-// (C) Copyright 1998-2015 Michael Ringe, Lehrstuhl D fuer Mathematik, RWTH Aachen
-//
-// This program is free software; see the file COPYING for details.
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
-#include <meataxe.h>
+#include "meataxe.h"
 #include <string.h>
 #include <stdlib.h>
 
@@ -18,14 +14,15 @@
    Global data
    ------------------------------------------------------------------ */
 
-MTX_DEFINE_FILE_INFO
 
 static const char *fname;		/* Matrix file name */
 static Matrix_t *mat;			/* The matrix */
 static int opt_G = 0;			/* GAP output */
-static int opt_f = 0;			/* Factorization */
+static int opt_f = 0;			/* Factorize the result */
 static int opt_m = 0;			/* Minimal polynomial */
+static int opt_p = 0;			/* Return a single polynomial */
 static FPoly_t *cpol;			/* Char. polynomial (with -f) */
+static Poly_t *cpol1;			/* Char. polynomial (with -p) */
 
 
 static MtxApplicationInfo_t AppInfo = { 
@@ -41,6 +38,7 @@ MTX_COMMON_OPTIONS_DESCRIPTION
 "    -G ...................... GAP output\n"
 "    -m ...................... Calculate the minimal polynomial\n"
 "    -f ...................... Factor the polynomial\n"
+"    -p ...................... Multiply factors, print a single polynomial\n"
 "\n"
 "FILES\n"
 "    <File> .................. I A square matrix\n"
@@ -53,25 +51,29 @@ static MtxApplication_t *App = NULL;
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static int Init(int argc, const char **argv)
+static int Init(int argc, char **argv)
 
 {	
-    if ((App = AppAlloc(&AppInfo,argc,argv)) == NULL)
+    if ((App = appAlloc(&AppInfo,argc,argv)) == NULL)
 	return -1;
 
     /* Parse command line
        ------------------ */
-    opt_G = AppGetOption(App,"-G --gap");
-    opt_f = AppGetOption(App,"-f --factorize");
-    opt_m = AppGetOption(App,"-m --minimal-polynomial");
+    opt_G = appGetOption(App,"-G --gap");
+    opt_f = appGetOption(App,"-f --factorize");
+    opt_m = appGetOption(App,"-m --minimal-polynomial");
+    opt_p = appGetOption(App,"-p --single-polynomial");
+    if (opt_f && opt_p) {
+       mtxAbort(MTX_HERE, "-f and -p cannot be combined");
+    }
     if (opt_G) MtxMessageLevel = -100;
-    if (AppGetArguments(App,1,1) != 1)
+    if (appGetArguments(App,1,1) != 1)
 	return -1;
     fname = App->ArgV[0];
 
     /* Read the matrix
        --------------- */
-    mat = MatLoad(fname);
+    mat = matLoad(fname);
     if (mat == NULL)
 	return -1;
 
@@ -107,22 +109,22 @@ static void write_init()
 
 static void write_end()
 {
-    int i;
+   int i;
 
-    if (opt_G)
-	printf("];\n");
-    else
-    {
-	if (opt_f)
-	{
-	    for (i = 0; i < cpol->NFactors; ++i)
-    	    {
-		printf("( ");
-		PolPrint(NULL,cpol->Factor[i]);
-		printf(" )^%d\n",cpol->Mult[i]);
-    	    }
-	}
-    }
+   if (opt_G)
+      printf("];\n");
+   else if (opt_f) {
+      for (i = 0; i < cpol->NFactors; ++i)
+      {
+         printf("(");
+         polPrint(NULL,cpol->Factor[i]);
+         printf(")^%d\n",cpol->Mult[i]);
+      }
+   }
+   else if (opt_p) {
+      polPrint(NULL,cpol1);
+      printf("\n");
+   }
 }
 
 
@@ -130,26 +132,26 @@ static void write_end()
 
 static void write_one(const Poly_t *pol)
 { 
-    if (opt_G)
-    {
+    if (opt_G) {
 	int i;
 	if (!first)
 	    printf(",\n");
 	printf("[");
 	for (i = 0; i < pol->Degree; ++i)
-	    printf("%s,",FfToGap(pol->Data[i]));
-	printf("%s]",FfToGap(pol->Data[i]));
+	    printf("%s,",ffToGap(pol->Data[i]));
+	printf("%s]",ffToGap(pol->Data[i]));
     }
-    else if (!opt_f)
-    {
-	PolPrint(NULL,pol);
-	printf("\n");
+    else if (opt_p) {
+       polMul(cpol1,pol);
     }
-    else
-    {
+    else if (opt_f) {
 	FPoly_t *f = Factorization(pol);
-	FpMul(cpol,f);
-	FpFree(f);
+	fpMul(cpol,f);
+	fpFree(f);
+    }
+    else {
+	polPrint(NULL,pol);
+	printf("\n");
     }
     first = 0;
 }
@@ -161,44 +163,45 @@ static void Cleanup()
 
 {
     if (mat != NULL)
-	MatFree(mat);
+	matFree(mat);
     if (cpol != NULL)
-	FpFree(cpol);
+	fpFree(cpol);
     if (App != NULL)
-	AppFree(App);
+	appFree(App);
 }
 
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-int main(int argc, const char **argv)
-
+int main(int argc, char **argv)
 {	
     Poly_t *p;
     int rc = 0;
 
     if (Init(argc,argv) != 0)
     {
-	MTX_ERROR("Initialization failed");
+	mtxAbort(MTX_HERE,"Initialization failed");
 	return -1;
     }
     if (opt_f) 
-	cpol = FpAlloc();
+	cpol = fpAlloc();
+    else if (opt_p)
+        cpol1 = polAlloc(mat->Field, 0);
     write_init();
     if (opt_m)
     {
-    	for (p = MinPolFactor(mat); p != NULL; p = MinPolFactor(NULL))
+    	for (p = minPolFactor(mat); p != NULL; p = minPolFactor(NULL))
 	{
 	    write_one(p);
-	    PolFree(p);
+	    polFree(p);
 	}
     }
     else
     {
-    	for (p = CharPolFactor(mat); p != NULL; p = CharPolFactor(NULL))
+    	for (p = charPolFactor(mat); p != NULL; p = charPolFactor(NULL))
 	{
 	    write_one(p);
-	    PolFree(p);
+	    polFree(p);
 	}
     }
     write_end();
@@ -272,3 +275,4 @@ minimal polynomial of A is the least common multiple of the
 @f$p_i@f$'s.
 
 */
+// vim:fileencoding=utf8:sw=3:ts=8:et:cin

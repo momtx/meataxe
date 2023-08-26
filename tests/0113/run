@@ -1,26 +1,27 @@
-# Test ZSY
+echo "0113 - ZSY"
 
 . ../tests/common.sh
 
-zsy -Q e2 ../tests/data/Perm1 tmp.$$.x1
-zsy -Q e3 ../tests/data/Perm1 tmp.$$.x2
-checksum tmp.$$.x1 772.2115894062  || exit 1
-checksum tmp.$$.x2 4572.2159097617 || exit 1
+# Permutations
 
+zsy -Q e2 "${MTX_TEST_DATA_DIR}/Perm1" tmp.$$.p1
+compareBinaryWithReference p1
 
-zct 1-5:1-7 ../tests/data/Mat67 m67
-zct 1-5:1-6 ../tests/data/Mat25 m25
-zct 1-7:1-7 ../tests/data/Mat9 m9
-zsy -Q e2 ../tests/data/Mat5 tmp.$$.x1
-zsy -Q e3 m67 tmp.$$.x2
-zsy -Q e4 m25 tmp.$$.x3
-zsy -Q s2 ../tests/data/Mat2 tmp.$$.x4
-checksum tmp.$$.x1 25404.3020209772 || exit 1
-checksum tmp.$$.x2 362.1554181026 || exit 1
-checksum tmp.$$.x3 87.4019966339  || exit 1
-checksum tmp.$$.x4 11412.1035840264 || exit 1
+zsy -Q e3 "${MTX_TEST_DATA_DIR}/Perm1" tmp.$$.p2
+compareBinaryWithReference p2
+
+# Matrices
+
+zsy -Q s2 "${MTX_TEST_DATA_DIR}/Mat2" tmp.$$.m2s2
+compareBinaryWithReference m2s2
+
+zct 1-5:1-7 "${MTX_TEST_DATA_DIR}/Mat67" tmp.$$.m67
+zsy -Q e3 tmp.$$.m67 tmp.$$.m67e3
+compareBinaryWithReference m67e3
+
+zct 1-5:1-6 "${MTX_TEST_DATA_DIR}/Mat25" tmp.$$.m25
+zsy -Q e4 tmp.$$.m25 tmp.$$.m25e4
+compareBinaryWithReference m25e4
 
 # Clean up
-# --------
 rm -f tmp.$$.*
-

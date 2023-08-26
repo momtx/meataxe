@@ -1,18 +1,13 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // C MeatAxe - Read a matrix from a file
-//
-// (C) Copyright 1998-2015 Michael Ringe, Lehrstuhl D fuer Mathematik, RWTH Aachen
-//
-// This program is free software; see the file COPYING for details.
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#include <meataxe.h>
+#include "meataxe.h"
 #include <stdlib.h>
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // Local data
 
-MTX_DEFINE_FILE_INFO
 
 /// @addtogroup mat
 /// @{
@@ -22,26 +17,26 @@ MTX_DEFINE_FILE_INFO
 /// @param f File to read from.
 /// @return Pointer to the matrix, or 0 on error.
 
-Matrix_t *MatRead(FILE *f)
+Matrix_t *matRead(FILE *f)
 {
    Matrix_t *m;
    long hdr[3];
 
-   if (SysReadLong(f,hdr,3) != 3) {
-      MTX_ERROR("Cannot read header");
+   if (sysReadLong32(f,hdr,3) != 3) {
+      mtxAbort(MTX_HERE,"Cannot read header");
       return NULL;
    }
    if (hdr[0] < 2) {
-      MTX_ERROR1("%E",MTX_ERR_NOTMATRIX);
+      mtxAbort(MTX_HERE,"%s",MTX_ERR_NOTMATRIX);
       return NULL;
    }
-   m = MatAlloc(hdr[0],hdr[1],hdr[2]);
+   m = matAlloc(hdr[0],hdr[1],hdr[2]);
    if (m == NULL) {
       return NULL;
    }
-   if (FfReadRows(f,m->Data,m->Nor) != m->Nor) {
-      MTX_ERROR1("File format error: could not read %d rows", m->Nor);
-      MatFree(m);
+   if (ffReadRows(f,m->Data,m->Nor, m->Noc) != m->Nor) {
+      mtxAbort(MTX_HERE,"File format error: could not read %d rows", m->Nor);
+      matFree(m);
       return NULL;
    }
    return m;
@@ -51,22 +46,23 @@ Matrix_t *MatRead(FILE *f)
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 /// Read a matrix from a file.
 /// This function opens a file, reads a single matrix, and closes the file.
-/// To read more than one matrix from a file, use |MatRead()|.
+/// To read more than one matrix from a file, use |matRead()|.
 /// @param fn File name.
 /// @return Pointer to the matrix, or |NULL| on error.
 
-Matrix_t *MatLoad(const char *fn)
+Matrix_t *matLoad(const char *fn)
 {
    FILE *f;
    Matrix_t *m;
 
-   if ((f = SysFopen(fn,FM_READ)) == NULL) {
+   if ((f = sysFopen(fn,"rb")) == NULL) {
       return NULL;
    }
-   m = MatRead(f);
+   m = matRead(f);
    fclose(f);
    return m;
 }
 
 
 /// @}
+// vim:fileencoding=utf8:sw=3:ts=8:et:cin

@@ -1,31 +1,29 @@
-# Decomposition
+echo "0215 - Chop direct products (m11)"
 
 . ../tests/common.sh
 
-
-cp ../tests/data/m11.1 tmp.$$.m11.1
-cp ../tests/data/m11.2 tmp.$$.m11.2
+cp "${MTX_TEST_DATA_DIR}/m11.1" tmp.$$.m11.1
+cp "${MTX_TEST_DATA_DIR}/m11.2" tmp.$$.m11.2
 chop -Q tmp.$$.m11
 pwkond -Qt tmp.$$.m11
 
-zpt -Q -r 2 -c 2 x.1 tmp.$$.m1144a.1 - - tmp.$$.m1110a.1
-zpt -Q -r 2 -c 2 x.2 tmp.$$.m1144a.2 - - tmp.$$.m1110a.2
+zpt -Q -r 2 -c 2 tmp.$$.x.1 tmp.$$.m1144a.1 - - tmp.$$.m1110a.1
+zpt -Q -r 2 -c 2 tmp.$$.x.2 tmp.$$.m1144a.2 - - tmp.$$.m1110a.2
 
-zpt -Q -r 2 -c 2 y.1 tmp.$$.m111a.1 - - tmp.$$.m1110a.1
-zpt -Q -r 2 -c 2 y.2 tmp.$$.m111a.2 - - tmp.$$.m1110a.2
+zpt -Q -r 2 -c 2 tmp.$$.y.1 tmp.$$.m111a.1 - - tmp.$$.m1110a.1
+zpt -Q -r 2 -c 2 tmp.$$.y.2 tmp.$$.m111a.2 - - tmp.$$.m1110a.2
 
-zpt -Q -r 3 -c 3 z.1 tmp.$$.m111a.1 - - - tmp.$$.m1110a.1 - - - tmp.$$.m1110a.1
-zpt -Q -r 3 -c 3 z.2 tmp.$$.m111a.2 - - - tmp.$$.m1110a.2 - - - tmp.$$.m1110a.2
+zpt -Q -r 3 -c 3 tmp.$$.z.1 tmp.$$.m111a.1 - - - tmp.$$.m1110a.1 - - - tmp.$$.m1110a.1
+zpt -Q -r 3 -c 3 tmp.$$.z.2 tmp.$$.m111a.2 - - - tmp.$$.m1110a.2 - - - tmp.$$.m1110a.2
 
-chop -Q x
-chop -Q y
-chop -Q z
-pwkond -Qt x y z
+chop -Q tmp.$$.x
+chop -Q tmp.$$.y
+chop -Q tmp.$$.z
+pwkond -Qt tmp.$$.x tmp.$$.y tmp.$$.z
 
-fgrep '[[17,2,1,1,1],[307,2,1,1,1]]' x.cfinfo >/dev/null || error "Peak words of x"
-fgrep '[[73,2,1,0,1],[17,2,1,1,1]]' y.cfinfo >/dev/null || error "Peak words of y"
-fgrep '[[73,2,1,0,1],[17,2,1,1,1]]' z.cfinfo >/dev/null || error "Peak words of z"
-
+fgrep '[[17,2,1,1,1],[307,2,1,1,1]]' tmp.$$.x.cfinfo >/dev/null || error "Peak words of x"
+fgrep '[[73,2,1,0,1],[17,2,1,1,1]]' tmp.$$.y.cfinfo >/dev/null || error "Peak words of y"
+fgrep '[[73,2,1,0,1],[17,2,1,1,1]]' tmp.$$.z.cfinfo >/dev/null || error "Peak words of z"
 
 # Clean up
 # --------

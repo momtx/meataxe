@@ -1,15 +1,10 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // C MeatAxe - Add a generator to a matrix representation
-//
-// (C) Copyright 1998-2015 Michael Ringe, Lehrstuhl D fuer Mathematik, RWTH Aachen
-//
-// This program is free software; see the file COPYING for details.
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
-#include <meataxe.h>
+#include "meataxe.h"
 
-MTX_DEFINE_FILE_INFO
 
 /// @addtogroup mrep
 /// @{
@@ -23,34 +18,34 @@ MTX_DEFINE_FILE_INFO
 /// MR_COPY_GENERATORS. In the latter case, a local copy of the generator 
 /// is made, and @a gen can be safely destroyed. Otherwise, only a reference to 
 /// the matrix is stored in the MatRep_t structure. Consequently, the application
-/// must not modify or destroy the matrix after calling %MrAddGenerator(). 
-/// It will be destroyed by MrFree() together with the representation.
+/// must not modify or destroy the matrix after calling %mrAddGenerator(). 
+/// It will be destroyed by mrFree() together with the representation.
 /// @param rep Matrix representation.
 /// @param gen Matrix to add.
 /// @param flags Optional flags (see below).
 /// @return 0 on success, -1 on error.
 
-int MrAddGenerator(MatRep_t *rep, Matrix_t *gen, int flags)
+int mrAddGenerator(MatRep_t *rep, Matrix_t *gen, int flags)
 {
     Matrix_t **new_gen;
 
     /* Check arguments
        --------------- */
-    if (!MrIsValid(rep))
+    if (!mrIsValid(rep))
     {
-	MTX_ERROR1("rep: %E",MTX_ERR_BADARG);
+	mtxAbort(MTX_HERE,"rep: %s",MTX_ERR_BADARG);
 	return -1;
     }
     if (gen->Nor != gen->Noc)
     {
-	MTX_ERROR1("gen: %E",MTX_ERR_NOTSQUARE);
+	mtxAbort(MTX_HERE,"gen: %s",MTX_ERR_NOTSQUARE);
 	return -1;
     }
     if (rep->NGen > 0)
     {
 	if (gen->Field != rep->Gen[0]->Field || gen->Nor != rep->Gen[0]->Nor)
 	{
-	    MTX_ERROR1("%E",MTX_ERR_INCOMPAT);
+	    mtxAbort(MTX_HERE,"%s",MTX_ERR_INCOMPAT);
 	    return -1;
 	}
     }
@@ -60,7 +55,7 @@ int MrAddGenerator(MatRep_t *rep, Matrix_t *gen, int flags)
     new_gen = NREALLOC(rep->Gen,Matrix_t *,rep->NGen + 1);
     if (new_gen == NULL)
     {
-	MTX_ERROR("Cannot extend matrix list");
+	mtxAbort(MTX_HERE,"Cannot extend matrix list");
 	return -1;
     }
 
@@ -68,10 +63,10 @@ int MrAddGenerator(MatRep_t *rep, Matrix_t *gen, int flags)
        ------------------------------------------ */
     if (flags & MR_COPY_GENERATORS)
     {
-	gen = MatDup(gen);
+	gen = matDup(gen);
         if (gen == NULL)
 	{
-	    MTX_ERROR("Cannot copy generator");
+	    mtxAbort(MTX_HERE,"Cannot copy generator");
 	    return -1;
 	}
     }
@@ -86,3 +81,4 @@ int MrAddGenerator(MatRep_t *rep, Matrix_t *gen, int flags)
 
 /// @}
 
+// vim:fileencoding=utf8:sw=3:ts=8:et:cin

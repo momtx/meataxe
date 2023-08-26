@@ -1,12 +1,8 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // C MeatAxe - Calculates submodule basis 
-//
-// (C) Copyright 1998-2015 Michael Ringe, Lehrstuhl D fuer Mathematik, RWTH Aachen
-//
-// This program is free software; see the file COPYING for details.
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#include <meataxe.h>
+#include "meataxe.h"
 #include <string.h>
 #include <stdlib.h>
 
@@ -16,7 +12,6 @@
    Global data
    ------------------------------------------------------------------ */
 
-MTX_DEFINE_FILE_INFO
 
 MatRep_t *Rep;			/* Generators for the algebra */
 Matrix_t *mountains;		/* Genrators for all mountains */
@@ -58,30 +53,29 @@ static MtxApplication_t *App = NULL;
    init() - Read generators and mountains
    ----------------------------------------------------------------- */
 
-static int Init(int argc, const char **argv)
-
+static int Init(int argc, char **argv)
 {
     char fn[200];
     FILE *f;
     int i;
 
-    App = AppAlloc(&AppInfo,argc,argv);
-    opt_m = AppGetOption(App,"-m --mountain");
-    if (AppGetArguments(App,2,2) < 0)
+    App = appAlloc(&AppInfo,argc,argv);
+    opt_m = appGetOption(App,"-m --mountain");
+    if (appGetArguments(App,2,2) < 0)
 	return -1;
     ModuleName = App->ArgV[0];
     modnum = atoi(App->ArgV[1]);
-    if (Lat_ReadInfo(&LI,ModuleName) != 0)
+    if (latReadInfo(&LI,ModuleName) != 0)
     {
-	MTX_ERROR1("Error reading %s.cfinfo",ModuleName);
+	mtxAbort(MTX_HERE,"Error reading %s.cfinfo",ModuleName);
 	return -1;
     }
 
     /* Read the generators and mountains.
        ---------------------------------- */
-    if ((Rep = MrLoad(ModuleName,LI.NGen)) == NULL)
+    if ((Rep = mrLoad(ModuleName,LI.NGen)) == NULL)
 	return -1;
-    mountains = MatLoad(strcat(strcpy(fn,LI.BaseName),".v"));
+    mountains = matLoad(strcat(strcpy(fn,LI.BaseName),".v"));
     nmount = mountains->Nor;
     MESSAGE(1,("%d mountains\n",nmount));
     
@@ -91,23 +85,23 @@ static int Init(int argc, const char **argv)
       ------------------------ --------------------------------- */
     if (opt_m)
     {
-	bs = BsAlloc(nmount);
-	BsSet(bs,modnum);
+	bs = bsAlloc(nmount);
+	bsSet(bs,modnum);
     }
     else
     {
-    	f = SysFopen(strcat(strcpy(fn,LI.BaseName),".sub"),FM_READ);
+    	f = sysFopen(strcat(strcpy(fn,LI.BaseName),".sub"),"rb");
     	if (f == NULL)
-	    MTX_ERROR("CANNOT OPEN .sub FILE");
-	bs = BsAlloc(nmount);
-    	SysFseek(f,modnum * (12 + (bs->Size + 7) / 8));	/* HACK: !!! */
-	BsFree(bs);
-    	bs = BsRead(f);
+	    mtxAbort(MTX_HERE,"CANNOT OPEN .sub FILE");
+	bs = bsAlloc(nmount);
+    	sysFseek(f,modnum * (12 + (bs->Size + 7) / 8));	/* HACK: !!! */
+	bsFree(bs);
+    	bs = bsRead(f);
     	if (MSG1)
     	{
 	    printf("Mountains: ");
 	    for (i = 0; i < nmount; ++i)
-	    	if (BsTest(bs,i)) printf("%d ",i);
+	    	if (bsTest(bs,i)) printf("%d ",i);
 	    printf("\n");
     	}
 	fclose(f);
@@ -130,23 +124,24 @@ static void sp()
     PTR p;
     char fn[200];
 
-    m = MatAlloc(FfOrder,nmount,Rep->Gen[0]->Noc);
+    m = matAlloc(ffOrder,nmount,Rep->Gen[0]->Noc);
     p = m->Data;
     for (i = 0; i < nmount; ++i)
     {
-	if (BsTest(bs,i))
+	if (bsTest(bs,i))
 	{
-	    PTR q = FfGetPtr(mountains->Data,i);
-	    FfCopyRow(p,q);
-	    FfStepPtr(&p);
+           MTX_ASSERT(ffNoc == Rep->Gen[0]->Noc,);
+	    PTR q = ffGetPtr(mountains->Data,i, Rep->Gen[0]->Noc);
+	    ffCopyRow(p,q);
+	    ffStepPtr(&p, Rep->Gen[0]->Noc);
 	}
     }
-    MatEchelonize(m);
+    matEchelonize(m);
     MESSAGE(0,("Seed space has dimension %d\n",m->Nor));
     subsp = SpinUp(m,Rep,SF_EACH|SF_COMBINE,NULL,NULL);
     MESSAGE(0,("Submodule has dimension %d\n",subsp->Nor));
     sprintf(fn,"%s.%c%d",LI.BaseName,opt_m ? 'm' : 's',modnum);
-    MatSave(subsp,fn);
+    matSave(subsp,fn);
     MESSAGE(0,("Module written to `%s'\n",fn));
 }
 
@@ -155,18 +150,18 @@ static void sp()
    main()
    ----------------------------------------------------------------- */
 
-int main(int argc, const char *argv[])
+int main(int argc, char *argv[])
 
 {
-    if (Init(argc,argv) != 0)
+    if (Init(argc, argv) != 0)
     {
-	MTX_ERROR("Initialization failed");
+	mtxAbort(MTX_HERE,"Initialization failed");
 	return -1;
     }
 
 
     sp();
-    AppFree(App);
+    appFree(App);
     return 0;
 }
 
@@ -211,3 +206,4 @@ to  <em>Name</em>.m<em>Number</em>.
 
 **/
 
+// vim:fileencoding=utf8:sw=3:ts=8:et:cin

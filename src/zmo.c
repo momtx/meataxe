@@ -1,13 +1,9 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // C MeatAxe - Make orbits under permutations
-//
-// (C) Copyright 1998-2015 Michael Ringe, Lehrstuhl D fuer Mathematik, RWTH Aachen
-//
-// This program is free software; see the file COPYING for details.
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
-#include <meataxe.h>
+#include "meataxe.h"
 #include <stdlib.h>
 #include <string.h>
 
@@ -20,7 +16,6 @@
    Global data
    ------------------------------------------------------------------ */
 
-MTX_DEFINE_FILE_INFO
 
 static Perm_t *Perm[MAXPERM];			/* Permutations */
 static const char *orbname;
@@ -65,7 +60,7 @@ static int ReadPermutations()
     for (i = 0; i < nperm; ++i)
     {
 	sprintf(fn,"%s.%d",permname,i+1);
-	Perm[i] = PermLoad(fn);
+	Perm[i] = permLoad(fn);
 	if (Perm[i] == NULL)
 	    return -1;
     }
@@ -74,18 +69,18 @@ static int ReadPermutations()
 }
 
 
-static int Init(int argc, const char **argv)
+static int Init(int argc, char **argv)
 
 {
-    App = AppAlloc(&AppInfo,argc,argv);
+    App = appAlloc(&AppInfo,argc,argv);
     if (App == NULL)
 	return -1;
 
     /* Command line.
        ------------- */
-    nperm = AppGetIntOption(App,"-g",2,1,MAXPERM);
-    Seed = AppGetIntOption(App,"-s --seed",1,1,1000000) - 1;
-    if (AppGetArguments(App,2,2) < 0)
+    nperm = appGetIntOption(App,"-g",2,1,MAXPERM);
+    Seed = appGetIntOption(App,"-s --seed",1,1,1000000) - 1;
+    if (appGetArguments(App,2,2) < 0)
 	return -1;
     permname = App->ArgV[0];
     orbname = App->ArgV[1];
@@ -97,8 +92,8 @@ static void Cleanup()
 
 {
     if (OrbNo!= NULL) 
-	SysFree(OrbNo);
-    AppFree(App);
+	sysFree(OrbNo);
+    appFree(App);
 }
 
 
@@ -145,7 +140,7 @@ static int MakeOrbits()
 		;
 	    if (pt >= Degree)
 	    {
-		MTX_ERROR("Internal error: no point found to continue");
+		mtxAbort(MTX_HERE,"Internal error: no point found to continue");
 		return -1;
 	    }
 	    seedpos = pt + 1;
@@ -163,7 +158,7 @@ static int MakeOrbits()
 		OrbNo[image] = orb;
 		if (Sp >= STACKSIZE - 1)
 		{
-		    MTX_ERROR("Stack overflow");
+		    mtxAbort(MTX_HERE,"Stack overflow");
 		    return -1;
 		}
 		Stack[++Sp] = image;
@@ -172,7 +167,7 @@ static int MakeOrbits()
 	    {
 		if (OrbNo[image] != orb)
 		{
-		    MTX_ERROR("Internal error: inconsistent orbit numbers");
+		    mtxAbort(MTX_HERE,"Internal error: inconsistent orbit numbers");
 	    	    return -1;
 		}
 	    }
@@ -205,7 +200,7 @@ static int WriteOutput()
     long hdr[3];
     FILE *f;
 
-    if ((f = SysFopen(orbname,FM_CREATE)) == NULL)
+    if ((f = sysFopen(orbname,"wb")) == NULL)
 	return -1;
 
     /* Write the orbit number table.
@@ -213,14 +208,14 @@ static int WriteOutput()
     hdr[0] = -8;
     hdr[1] = 1;
     hdr[2] = Degree;
-    if (SysWriteLong(f,hdr,3) != 3)
+    if (sysWriteLong32(f,hdr,3) != 3)
     {
-	MTX_ERROR("Error writing file header");
+	mtxAbort(MTX_HERE,"Error writing file header");
 	return -1;
     }
-    if (SysWriteLong(f,OrbNo,Degree) != Degree)
+    if (sysWriteLong32(f,OrbNo,Degree) != Degree)
     {
-	MTX_ERROR("Error writing file orbit number table");
+	mtxAbort(MTX_HERE,"Error writing file orbit number table");
 	return -1;
     }
 
@@ -229,14 +224,14 @@ static int WriteOutput()
     hdr[0] = -8;
     hdr[1] = 1;
     hdr[2] = NOrbits;
-    if (SysWriteLong(f,hdr,3) != 3)
+    if (sysWriteLong32(f,hdr,3) != 3)
     {
-	MTX_ERROR("Error writing file header");
+	mtxAbort(MTX_HERE,"Error writing file header");
 	return -1;
     }
-    if (SysWriteLong(f,OrbSize,NOrbits) != NOrbits)
+    if (sysWriteLong32(f,OrbSize,NOrbits) != NOrbits)
     {
-	MTX_ERROR("Error writing file orbit sizes table");
+	mtxAbort(MTX_HERE,"Error writing file orbit sizes table");
 	return -1;
     }
     fclose(f);
@@ -278,14 +273,14 @@ static int WriteOutput()
    main()
    ------------------------------------------------------------------ */
 
-int main(int argc, const char **argv)
+int main(int argc, char **argv)
 
 {
     if (Init(argc,argv) != 0)
 	return 1;
     if (ReadPermutations() != 0)
     {
-	MTX_ERROR("Error reading input files");
+	mtxAbort(MTX_HERE,"Error reading input files");
 	return 1;
     }
     if (AllocWorkspace() != 0)
@@ -380,3 +375,4 @@ The number of permutations must be less than 50. All permutations must
 fit into memory at the same time. Also the stack size is limited to 
 100000 positions.
 */
+// vim:fileencoding=utf8:sw=3:ts=8:et:cin

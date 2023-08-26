@@ -1,18 +1,13 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // C MeatAxe - Seed vector generator
-//
-// (C) Copyright 1998-2014 Michael Ringe, Lehrstuhl D fuer Mathematik, RWTH Aachen
-//
-// This program is free software; see the file COPYING for details.
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#include <meataxe.h>
+#include "meataxe.h"
 #include <limits.h>     /* For LONG_MAX */
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 //  Local data
 
-MTX_DEFINE_FILE_INFO
 
 static long int randtbl[32] = {
    3,
@@ -36,7 +31,7 @@ static long int *end_ptr = &randtbl[sizeof(randtbl) / sizeof(randtbl[0])];
 /// Initializes the random number generator.
 /// @param x Seed value.
 
-void MtxRandomInit(unsigned x)
+void mtxRandomInit(unsigned x)
 {
    register int i;
    state[0] = x;
@@ -46,7 +41,7 @@ void MtxRandomInit(unsigned x)
    fptr = &state[3];
    rptr = &state[0];
    for (i = 0; i < 10 * 31; ++i) {
-      MtxRandom();
+      mtxRandom();
    }
 }
 
@@ -56,7 +51,7 @@ void MtxRandomInit(unsigned x)
 /// This function returns a nonnegative (pseudo) random number.
 /// @return A nonnegative number.
 
-long MtxRandom(void)
+long mtxRandom(void)
 {
    long int i;
 
@@ -82,11 +77,12 @@ long MtxRandom(void)
 /// The argument must be greater than 0.
 /// @return Pseudo random number.
 
-int MtxRandomInt(int max)
+int mtxRandomInt(int max)
 {
-   MTX_VERIFY(max > 0);
-   return (int) (MtxRandom() % max);
+   MTX_ASSERT(max > 0, 0);
+   return (int) (mtxRandom() % max);
 }
 
 
 /// @}
+// vim:fileencoding=utf8:sw=3:ts=8:et:cin

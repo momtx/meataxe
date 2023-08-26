@@ -1,29 +1,29 @@
-# Test tensor condensation of 378x378 (Ru)
+echo "0210 - Tensor condensation of Ru (dim = 378)"
 
 . ../tests/common.sh
 
+quiet="-Q"
 
-cp ../tests/data/Ru-K378.1 tmp.$$.Ru-K378.1
-cp ../tests/data/Ru-K378.2 tmp.$$.Ru-K378.2
-cp ../tests/data/Ru-K378.3 tmp.$$.Ru-K378.3
-cp ../tests/data/Ru-K378.4 tmp.$$.Ru-K378.4
-cp ../tests/data/Ru-M378.1 tmp.$$.Ru-M378.1
-cp ../tests/data/Ru-M378.2 tmp.$$.Ru-M378.2
-chop -Q -g 4 tmp.$$.Ru-K378 || error "CHOP failed"
-checksum tmp.$$.Ru-K37816a.1 140.4266387334 || exit 1
-checksum tmp.$$.Ru-K37816a.2 140.1949646745 || exit 1
-checksum tmp.$$.Ru-K37820a.1 212.4080859098 || exit 1
-checksum tmp.$$.Ru-K37820a.2 212.2255477776 || exit 1
-checksum tmp.$$.Ru-K37824a.1 300.891136837 || exit 1
-checksum tmp.$$.Ru-K37824a.2 300.285513747 || exit 1
+cp "${MTX_TEST_DATA_DIR}/Ru-K378.1" tmp.$$.Ru-K378.1
+cp "${MTX_TEST_DATA_DIR}/Ru-K378.2" tmp.$$.Ru-K378.2
+cp "${MTX_TEST_DATA_DIR}/Ru-K378.3" tmp.$$.Ru-K378.3
+cp "${MTX_TEST_DATA_DIR}/Ru-K378.4" tmp.$$.Ru-K378.4
+cp "${MTX_TEST_DATA_DIR}/Ru-M378.1" tmp.$$.Ru-M378.1
+cp "${MTX_TEST_DATA_DIR}/Ru-M378.2" tmp.$$.Ru-M378.2
+chop ${quiet} -g 4 tmp.$$.Ru-K378 || error "CHOP failed"
+pwkond ${quiet} -bt tmp.$$.Ru-K378 || error "PWKOND failed"
+precond ${quiet} tmp.$$.tp tmp.$$.Ru-K378 tmp.$$.Ru-K378 || error "PRECOND failed"
+tcond ${quiet} -g 2 tmp.$$.tp tmp.$$.Ru-M378 tmp.$$.Ru-M378 tmp.$$.result || error "TCOND failed"
 
-pwkond -Qbt tmp.$$.Ru-K378 || error "PWKOND failed"
-checksum tmp.$$.Ru-K378.ssb 71454.449071558 || exit 1
+compareBinaryWithReference Ru-K37816a.1
+compareBinaryWithReference Ru-K37816a.2
+compareBinaryWithReference Ru-K37820a.1
+compareBinaryWithReference Ru-K37820a.2
+compareBinaryWithReference Ru-K37824a.1
+compareBinaryWithReference Ru-K37824a.2
 
-precond -Q tmp.$$.tp tmp.$$.Ru-K378 tmp.$$.Ru-K378 || error "PRECOND failed"
-tcond -Q -g 2 tmp.$$.tp tmp.$$.Ru-M378 tmp.$$.Ru-M378 tmp.$$.result || error "TCOND failed"
-checksum tmp.$$.result.1 9260.4214749600 || exit 1
-checksum tmp.$$.result.2 9260.3960108909 || exit 1
+compareBinaryWithReference result.1
+compareBinaryWithReference result.2
 
 
 # Clean up

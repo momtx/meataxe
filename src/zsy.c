@@ -1,13 +1,9 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // C MeatAxe - Symmetric tensor product.
-//
-// (C) Copyright 1998-2015 Michael Ringe, Lehrstuhl D fuer Mathematik, RWTH Aachen
-//
-// This program is free software; see the file COPYING for details.
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
-#include <meataxe.h>
+#include "meataxe.h"
 #include <stdlib.h>
 #include <string.h>
 
@@ -18,7 +14,6 @@
    Global Data
    ------------------------------------------------------------------ */
 
-MTX_DEFINE_FILE_INFO
 
 static MtxApplicationInfo_t AppInfo = { 
 "zsy", "Symmetrized Tensor Product",
@@ -67,14 +62,14 @@ static int Prepare()
 
     /* Open the input file and check the header.
        ----------------------------------------- */
-    if ((f = MfOpen(iname)) == NULL)
+    if ((f = mfOpen(iname)) == NULL)
     {
-	MTX_ERROR("Error opening input file");
+	mtxAbort(MTX_HERE,"Error opening input file");
 	return 1;
     }
     if (mode != M_E2 && mode != M_S2 && mode != M_E3 && f->Field < 2)
     {
-	MTX_ERROR2("%s: %E",iname,MTX_ERR_NOTMATRIX);
+	mtxAbort(MTX_HERE,"%s: %s",iname,MTX_ERR_NOTMATRIX);
 	return 1;
     }
     fl = f->Field;
@@ -83,10 +78,10 @@ static int Prepare()
 
     if (fl >= 2)	/* Matrix */
     {
-	FfSetField(fl); 
-	FfSetNoc(noc);
-	m1 = FfAlloc(nor);
-	MfReadRows(f,m1,nor);
+	ffSetField(fl); 
+	ffSetNoc(noc);
+	m1 = ffAlloc(nor, noc);
+	mfReadRows(f,m1,nor);
 
 	/* Set up pointers to the rows of the input matrix
    	   ----------------------------------------------- */
@@ -96,17 +91,17 @@ static int Prepare()
 	for (i = 0; i < nor; ++i)
 	{	
 	    row[i] = m1;
-	    FfStepPtr(&m1);
+	    ffStepPtr(&m1, noc);
 	}
     }
     else		/* Permutation */
     {	
-	SysFseek(f->File,0);
-	PermIn = PermRead(f->File);
+	sysFseek(f->File,0);
+	PermIn = permRead(f->File);
 	if (PermIn == NULL) 
 	    return -1;
     }
-    MfClose(f);
+    mfClose(f);
 
     /* Calculate nor2 and noc2
        ----------------------- */
@@ -128,28 +123,27 @@ static int Prepare()
 	    noc2 = noc*(noc-1)/2*(noc-2)/3*(noc-3)/4;
 	    break;
 	default:
-	    MTX_ERROR1("Unknown mode %d",(int)mode);
+	    mtxAbort(MTX_HERE,"Unknown mode %d",(int)mode);
 	    return -1;
     }
     if (fl > 0 && (nor2 < 0 || noc2 <= 0))
     {
-	MTX_ERROR1("%s: Matrix too small",iname);
+	mtxAbort(MTX_HERE,"%s: Matrix too small",iname);
 	return -1;
     }
 
 
-    /* Allocate the output buffer
-       -------------------------- */
+    // Prepare output buffer and file.
     if (fl >= 2)
     {
 	MESSAGE(0,("Output is %ld x %ld\n",nor2,noc2));
-	FfSetNoc(noc2);
-	if ((m2 = FfAlloc(1)) == NULL)
+	ffSetNoc(noc2);
+	if ((m2 = ffAlloc(1, noc2)) == NULL)
 	    return -1;
-	ofile = FfWriteHeader(oname,fl,nor2,(fl >= 2) ? noc2 : 1);
+	ofile = ffWriteHeader(oname,fl,nor2,(fl >= 2) ? noc2 : 1);
 	if (ofile == NULL)
 	{
-	    MTX_ERROR("Error creating output file");
+	    mtxAbort(MTX_HERE,"Error creating output file");
 	    return -1;
 	}
     }
@@ -157,7 +151,7 @@ static int Prepare()
     {	
 	MESSAGE(0,("Output has degree %ld\n",nor2));
 	fflush(stdout);
-	PermOut = PermAlloc(nor2);
+	PermOut = permAlloc(nor2);
 	if (PermOut == NULL) 
 	    return -1;
     }
@@ -173,7 +167,6 @@ static int Prepare()
    ------------------------------------------------------------------ */
 
 static void zs2()
-
 {   long i1, i2, j1, j2, j3;
     FEL f11, f12, f21, f22;
     FEL w1,w2,f1,f2;
@@ -183,29 +176,30 @@ static void zs2()
     {	
 	for (i2 = i1 + 1; i2 < nor; ++i2)
 	{   
-	    FfMulRow(m2,FF_ZERO);
+	    ffMulRow(m2,FF_ZERO);
 	    j3 = 0;
 	    for (j1 = 0; j1 < noc - 1; ++ j1)
 	    {	
-		f11 = FfExtract(row[i1],j1);
-		f21 = FfExtract(row[i2],j1);
+		f11 = ffExtract(row[i1],j1);
+		f21 = ffExtract(row[i2],j1);
 		for (j2 = j1+1; j2 < noc; ++j2)
 		{   
-		    f12 = FfExtract(row[i1],j2);
-		    f22 = FfExtract(row[i2],j2);
-		    w1 = FfMul(f11,f22);
-		    w2 = FfMul(f12,f21);
-		    FfInsert(m2,j3,FfAdd(w1,w2));
+		    f12 = ffExtract(row[i1],j2);
+		    f22 = ffExtract(row[i2],j2);
+		    w1 = ffMul(f11,f22);
+		    w2 = ffMul(f12,f21);
+		    ffInsert(m2,j3,ffAdd(w1,w2));
 		    ++j3;
 		}
 	    }
 	    for (j2 = 0; j2 < noc; ++j2)
-	    {	f1 = FfExtract(row[i1],j2);
-		f2 = FfExtract(row[i2],j2);
-		FfInsert(m2,j3,FfMul(f1,f2));
+	    {	f1 = ffExtract(row[i1],j2);
+		f2 = ffExtract(row[i2],j2);
+		ffInsert(m2,j3,ffMul(f1,f2));
 		++j3;
 	    }
-	    FfWriteRows(ofile,m2,1);
+            MTX_ASSERT(ffNoc == noc2,);
+	    ffWriteRows(ofile,m2,1, noc2);
 	}
     }
 
@@ -213,25 +207,26 @@ static void zs2()
     for (i1 = 0; i1 < nor; ++i1)
     {	
 	j3 = 0;
-	FfMulRow(m2,FF_ZERO);
+	ffMulRow(m2,FF_ZERO);
 	for (j1 = 0; j1 < noc-1; ++j1)
 	{   
-	    f1 = FfExtract(row[i1],j1);
+	    f1 = ffExtract(row[i1],j1);
 	    for (j2 = j1+1; j2 < noc; ++j2)
 	    {	
-		f2 = FfExtract(row[i1],j2);
-		w2 = FfMul(f1,f2);
-		FfInsert(m2,j3,FfAdd(w2,w2));
+		f2 = ffExtract(row[i1],j2);
+		w2 = ffMul(f1,f2);
+		ffInsert(m2,j3,ffAdd(w2,w2));
 		++j3;
 	    }
 	}
 	for (j2 = 0; j2 < noc; ++j2)
 	{   
-	    f1 = FfExtract(row[i1],j2);
-	    FfInsert(m2,j3,FfMul(f1,f1));
+	    f1 = ffExtract(row[i1],j2);
+	    ffInsert(m2,j3,ffMul(f1,f1));
 	    ++j3;
 	}
-	FfWriteRows(ofile,m2,1);
+        MTX_ASSERT(ffNoc == noc2,);
+	ffWriteRows(ofile,m2,1, noc2);
     }
 }
 
@@ -265,7 +260,7 @@ static void zs2p()
 	for (k = 0; k <= i; ++k)
 	    p2[maps2(i,k)] = maps2(p1[i],p1[k]);
     }
-    PermSave(PermOut,oname);
+    permSave(PermOut,oname);
 }
 
 
@@ -298,7 +293,7 @@ static void ze2p()
 	for (k = 0; k < i; ++k)
 	    p2[mape2(i,k)] = mape2(p1[i],p1[k]);
     }
-    PermSave(PermOut,oname);
+    permSave(PermOut,oname);
 }
 
 
@@ -320,24 +315,25 @@ static void ze2()
 	for (i2 = i1+1; i2 < nor; ++i2)
 	{
             MESSAGE(2,("i2 = %d\n",i2)); 
-	    FfMulRow(m2,FF_ZERO);
+	    ffMulRow(m2,FF_ZERO);
 	    j3 = 0;
 	    for (j1 = 0; j1 < noc-1; ++j1)
 	    {	register FEL f11, f21;
-		f11 = FfExtract(row[i1],j1);
-		f21 = FfExtract(row[i2],j1);
+		f11 = ffExtract(row[i1],j1);
+		f21 = ffExtract(row[i2],j1);
 		for (j2 = j1+1; j2 < noc; ++j2)
 		{
-		    f12 = FfExtract(row[i1],j2);
-		    f22 = FfExtract(row[i2],j2);
-		    w1 = FfMul(f11,f22);
-		    w2 = FfMul(f12,f21);
-		    w3 = FfSub(w1,w2);
-		    FfInsert(m2,j3,w3);
+		    f12 = ffExtract(row[i1],j2);
+		    f22 = ffExtract(row[i2],j2);
+		    w1 = ffMul(f11,f22);
+		    w2 = ffMul(f12,f21);
+		    w3 = ffSub(w1,w2);
+		    ffInsert(m2,j3,w3);
 		    ++j3;
 		}
 	    }
-	    FfWriteRows(ofile,m2,1);
+            MTX_ASSERT(ffNoc == noc2,);
+	    ffWriteRows(ofile,m2,1, noc2);
 	}
     }
 }
@@ -362,33 +358,34 @@ static void ze3()
 	    for (i3 = i2+1; i3 < nor; ++i3)
 	    {	
    	       	MESSAGE(3,("i3 = %d\n",i3)); 
-		FfMulRow(m2,FF_ZERO);
+		ffMulRow(m2,FF_ZERO);
 		jins = 0;
 		for (j1 = 0; j1 < noc-2; ++j1)
 		{   
-		    f11 = FfExtract(row[i1],j1);
-		    f21 = FfExtract(row[i2],j1);
-		    f31 = FfExtract(row[i3],j1);
+		    f11 = ffExtract(row[i1],j1);
+		    f21 = ffExtract(row[i2],j1);
+		    f31 = ffExtract(row[i3],j1);
 		    for (j2 = j1+1; j2 < noc-1; ++j2)
 		    {	
-			f12 = FfExtract(row[i1],j2);
-			f22 = FfExtract(row[i2],j2);
-			f32 = FfExtract(row[i3],j2);
-			g12 = FfSub(FfMul(f11,f22),FfMul(f21,f12));
-			g13 = FfSub(FfMul(f31,f12),FfMul(f11,f32));
-			g23 = FfSub(FfMul(f21,f32),FfMul(f31,f22));
+			f12 = ffExtract(row[i1],j2);
+			f22 = ffExtract(row[i2],j2);
+			f32 = ffExtract(row[i3],j2);
+			g12 = ffSub(ffMul(f11,f22),ffMul(f21,f12));
+			g13 = ffSub(ffMul(f31,f12),ffMul(f11,f32));
+			g23 = ffSub(ffMul(f21,f32),ffMul(f31,f22));
 			for (j3 = j2+1; j3 < noc; ++j3)
-			{   f13 =FfExtract(row[i1],j3);
-			    f23 =FfExtract(row[i2],j3);
-			    f33 =FfExtract(row[i3],j3);
-			    e = FfAdd(FfAdd(FfMul(g12,f33),FfMul(g13,f23)),
-			    	FfMul(g23,f13));
-			    FfInsert(m2,jins,e);
+			{   f13 =ffExtract(row[i1],j3);
+			    f23 =ffExtract(row[i2],j3);
+			    f33 =ffExtract(row[i3],j3);
+			    e = ffAdd(ffAdd(ffMul(g12,f33),ffMul(g13,f23)),
+			    	ffMul(g23,f13));
+			    ffInsert(m2,jins,e);
 			    ++jins;
 			}
 		    }
 		}
-		FfWriteRows(ofile,m2,1);
+                MTX_ASSERT(ffNoc == noc2,);
+		ffWriteRows(ofile,m2,1l, noc2);
 	    }
 	}
     }
@@ -427,7 +424,7 @@ static void ze3p()
 		p2[mape3(i,k,l)] = mape3(p1[i],p1[k],p1[l]);
 	}
     }
-    PermSave(PermOut,oname);
+    permSave(PermOut,oname);
 }
 
 
@@ -438,106 +435,108 @@ static void ze3p()
 
 static void ze4()
 
-{   FEL f11,f12,f13,f14,f21,f22,f23,f24,f31,f32,f33,f34,f41,f42,f43,f44;
-    FEL e,g12,g13,g14,g23,g24,g34,g123,g124,g134,g234;
-    int i1, i2, i3, i4, j1, j2, j3, j4, jins;
+{
+   FEL f11,f12,f13,f14,f21,f22,f23,f24,f31,f32,f33,f34,f41,f42,f43,f44;
+   FEL e,g12,g13,g14,g23,g24,g34,g123,g124,g134,g234;
+   int i1, i2, i3, i4, j1, j2, j3, j4, jins;
 
-    for (i1 = 0; i1 < nor-3; ++i1)
-    {	
-        MESSAGE(1,("i1 = %d\n",i1)); 
-	for (i2 = i1+1; i2 < nor-2; ++i2)
-	{   
-            MESSAGE(2,("i2 = %d\n",i2)); 
-	    for (i3 = i2+1; i3 < nor-1; ++i3)
-	    {   
-            	MESSAGE(3,("i3 = %d\n",i3)); 
-		for (i4 = i3+1; i4 < nor; ++i4)
-	    	{   
-		    FfMulRow(m2,FF_ZERO);
-		    jins = 0;
-		    for (j1 = 0; j1 < noc-3; ++j1)
-		    {   
-			f11 = FfExtract(row[i1],j1);
-		    	f21 = FfExtract(row[i2],j1);
-		    	f31 = FfExtract(row[i3],j1);
-		    	f41 = FfExtract(row[i4],j1);
+   for (i1 = 0; i1 < nor-3; ++i1)
+   {	
+      MESSAGE(1,("i1 = %d\n",i1)); 
+      for (i2 = i1+1; i2 < nor-2; ++i2)
+      {   
+         MESSAGE(2,("i2 = %d\n",i2)); 
+         for (i3 = i2+1; i3 < nor-1; ++i3)
+         {   
+            MESSAGE(3,("i3 = %d\n",i3)); 
+            for (i4 = i3+1; i4 < nor; ++i4)
+            {   
+               ffMulRow(m2,FF_ZERO);
+               jins = 0;
+               for (j1 = 0; j1 < noc-3; ++j1)
+               {   
+                  f11 = ffExtract(row[i1],j1);
+                  f21 = ffExtract(row[i2],j1);
+                  f31 = ffExtract(row[i3],j1);
+                  f41 = ffExtract(row[i4],j1);
 
-		    	for (j2 = j1+1; j2 < noc-2; ++j2)
-		    	{   f12 = FfExtract(row[i1],j2);
-			    f22 = FfExtract(row[i2],j2);
-			    f32 = FfExtract(row[i3],j2);
-			    f42 = FfExtract(row[i4],j2);
+                  for (j2 = j1+1; j2 < noc-2; ++j2)
+                  {   f12 = ffExtract(row[i1],j2);
+                     f22 = ffExtract(row[i2],j2);
+                     f32 = ffExtract(row[i3],j2);
+                     f42 = ffExtract(row[i4],j2);
 
-			    g12 = FfSub(FfMul(f11,f22),FfMul(f21,f12));
-			    g13 = FfSub(FfMul(f11,f32),FfMul(f31,f12));
-			    g14 = FfSub(FfMul(f11,f42),FfMul(f41,f12));
-			    g23 = FfSub(FfMul(f21,f32),FfMul(f31,f22));
-			    g24 = FfSub(FfMul(f21,f42),FfMul(f41,f22));
-			    g34 = FfSub(FfMul(f31,f42),FfMul(f41,f32));
+                     g12 = ffSub(ffMul(f11,f22),ffMul(f21,f12));
+                     g13 = ffSub(ffMul(f11,f32),ffMul(f31,f12));
+                     g14 = ffSub(ffMul(f11,f42),ffMul(f41,f12));
+                     g23 = ffSub(ffMul(f21,f32),ffMul(f31,f22));
+                     g24 = ffSub(ffMul(f21,f42),ffMul(f41,f22));
+                     g34 = ffSub(ffMul(f31,f42),ffMul(f41,f32));
 
-			    for (j3 = j2+1; j3 < noc-1; ++j3)
-			    {   f13 =FfExtract(row[i1],j3);
-			    	f23 =FfExtract(row[i2],j3);
-			    	f33 =FfExtract(row[i3],j3);
-			    	f43 =FfExtract(row[i4],j3);
+                     for (j3 = j2+1; j3 < noc-1; ++j3)
+                     {   f13 =ffExtract(row[i1],j3);
+                        f23 =ffExtract(row[i2],j3);
+                        f33 =ffExtract(row[i3],j3);
+                        f43 =ffExtract(row[i4],j3);
 
-				g123 = FfMul(f13,g23);
-				g123 = FfSub(g123,FfMul(f23,g13));
-				g123 = FfAdd(g123,FfMul(f33,g12));
-				g124 = FfMul(f13,g24);
-				g124 = FfSub(g124,FfMul(f23,g14));
-				g124 = FfAdd(g124,FfMul(f43,g12));
-				g134 = FfMul(f13,g34);
-				g134 = FfSub(g134,FfMul(f33,g14));
-				g134 = FfAdd(g134,FfMul(f43,g13));
-				g234 = FfMul(f23,g34);
-				g234 = FfSub(g234,FfMul(f33,g24));
-				g234 = FfAdd(g234,FfMul(f43,g23));
+                        g123 = ffMul(f13,g23);
+                        g123 = ffSub(g123,ffMul(f23,g13));
+                        g123 = ffAdd(g123,ffMul(f33,g12));
+                        g124 = ffMul(f13,g24);
+                        g124 = ffSub(g124,ffMul(f23,g14));
+                        g124 = ffAdd(g124,ffMul(f43,g12));
+                        g134 = ffMul(f13,g34);
+                        g134 = ffSub(g134,ffMul(f33,g14));
+                        g134 = ffAdd(g134,ffMul(f43,g13));
+                        g234 = ffMul(f23,g34);
+                        g234 = ffSub(g234,ffMul(f33,g24));
+                        g234 = ffAdd(g234,ffMul(f43,g23));
 
-			    	for (j4 = j3+1; j4 < noc; ++j4)
-				{   f14 =FfExtract(row[i1],j4);
-				    f24 =FfExtract(row[i2],j4);
-				    f34 =FfExtract(row[i3],j4);
-				    f44 =FfExtract(row[i4],j4);
+                        for (j4 = j3+1; j4 < noc; ++j4)
+                        {   f14 =ffExtract(row[i1],j4);
+                           f24 =ffExtract(row[i2],j4);
+                           f34 =ffExtract(row[i3],j4);
+                           f44 =ffExtract(row[i4],j4);
 
-				    e = FfMul(f24,g134);
-				    e = FfSub(e,FfMul(f14,g234));
-				    e = FfAdd(e,FfMul(f44,g123));
-				    e = FfSub(e,FfMul(f34,g124));
-			    	    FfInsert(m2,jins,e);
-			    	    ++jins;
-				}
-			    }
-			}
-		    }
-		    FfWriteRows(ofile,m2,1);
-		}
-	    }
-	}
-    }
+                           e = ffMul(f24,g134);
+                           e = ffSub(e,ffMul(f14,g234));
+                           e = ffAdd(e,ffMul(f44,g123));
+                           e = ffSub(e,ffMul(f34,g124));
+                           ffInsert(m2,jins,e);
+                           ++jins;
+                        }
+                     }
+                  }
+               }
+               MTX_ASSERT(ffNoc == noc2,);
+               ffWriteRows(ofile,m2,1, noc2);
+            }
+         }
+      }
+   }
 }
 
 
 
 
 
-static int Init(int argc, const char **argv)
+static int Init(int argc, char **argv)
 
 {
     const char *arg3;
 
     /* Process command line options.
        ----------------------------- */
-    App = AppAlloc(&AppInfo,argc,argv);
+    App = appAlloc(&AppInfo,argc,argv);
     if (App == NULL)
 	return -1;
-    opt_G = AppGetOption(App,"-G --gap");
+    opt_G = appGetOption(App,"-G --gap");
     if (opt_G)
 	MtxMessageLevel = -100;
 
     /* Process arguments.
        ------------------ */
-    if (AppGetArguments(App,3,3) < 0)
+    if (appGetArguments(App,3,3) < 0)
 	return -1;
     iname = App->ArgV[1];
     oname = App->ArgV[2];
@@ -548,7 +547,7 @@ static int Init(int argc, const char **argv)
     else if (!strcmp(arg3,"s2")) mode = M_S2;
     else 
     {
-	MTX_ERROR1("Unknown mode '%s'",arg3);
+	mtxAbort(MTX_HERE,"Unknown mode '%s'",arg3);
 	return -1;
     }
     return 0;
@@ -565,13 +564,13 @@ static int Init(int argc, const char **argv)
    main()
    ------------------------------------------------------------------ */
 
-int main(int argc, const char **argv)
+int main(int argc, char **argv)
 
 {
 
     if (Init(argc,argv) != 0)
     {
-	MTX_ERROR("Initialization failed");
+	mtxAbort(MTX_HERE,"Initialization failed");
 	return 1;
     }
     if (Prepare() != 0)
@@ -583,13 +582,13 @@ int main(int argc, const char **argv)
 	case M_E3: fl >= 2 ? ze3() : ze3p(); break;
 	case M_E4: ze4(); break;
 	default:
-	    MTX_ERROR1("Unknown mode %d",(int)mode);
+	    mtxAbort(MTX_HERE,"Unknown mode %d",(int)mode);
 	    return 1;
 	    break;
     }
     if (ofile != NULL)
 	fclose(ofile);
-    AppFree(App);
+    appFree(App);
     return EXIT_OK;
 }
 
@@ -743,3 +742,4 @@ and the result must fit into memory.
 
 **/
 
+// vim:fileencoding=utf8:sw=3:ts=8:et:cin

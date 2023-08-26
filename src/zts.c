@@ -1,19 +1,14 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // C MeatAxe - Tensor spin
-//
-// (C) Copyright 1998-2015 Michael Ringe, Lehrstuhl D fuer Mathematik, RWTH Aachen
-//
-// This program is free software; see the file COPYING for details.
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#include <meataxe.h>
+#include "meataxe.h"
 
 /* ------------------------------------------------------------------
    Global data
    ------------------------------------------------------------------ */
 
 
-MTX_DEFINE_FILE_INFO
 
 
 static MtxApplicationInfo_t AppInfo = { 
@@ -83,14 +78,14 @@ static int ReadFiles()
     for (i = 0; i < NGen; ++i)
     {
 	sprintf(fn,"%s.%d",MName,i+1);
-	m = MatLoad(fn);
-	GenM[i] = MatTransposed(m);
-	MatFree(m);
+	m = matLoad(fn);
+	GenM[i] = matTransposed(m);
+	matFree(m);
 	sprintf(fn,"%s.%d",NName,i+1);
-	if ((GenN[i] = MatLoad(fn)) == NULL)
+	if ((GenN[i] = matLoad(fn)) == NULL)
 	    return -1;
     }
-    Seed = MatLoad(SeedName);
+    Seed = matLoad(SeedName);
     if (Seed  == NULL)
 	return -1;
     TpDim = GenM[0]->Nor * GenN[0]->Nor;
@@ -105,36 +100,36 @@ static void VecToMat(PTR vec, Matrix_t *m)
     int row, pos;
     PTR rowptr;
 
-    FfSetNoc(m->Noc);
-    for (pos=row=0, rowptr=m->Data; row < m->Nor; ++row,FfStepPtr(&rowptr))
+    ffSetNoc(m->Noc);
+    for (pos=row=0, rowptr=m->Data; row < m->Nor; ++row,ffStepPtr(&rowptr,m->Noc))
     {
 	int col;
-	FfMulRow(rowptr,FF_ZERO);
+	ffMulRow(rowptr,FF_ZERO);
 	for (col = 0; col < m->Noc; ++col, ++pos)
 	{
-	    FEL f = FfExtract(vec,pos);
+	    FEL f = ffExtract(vec,pos);
 	    if (f != FF_ZERO)
-		FfInsert(rowptr,col,f);
+		ffInsert(rowptr,col,f);
 	}
     }
 }
 
-static void MatToVec(PTR vec, const Matrix_t *m)
+static void matToVec(PTR vec, const Matrix_t *m)
 {
     int row, pos;
     PTR rowptr;
 
-    FfSetNoc(TpDim);
-    FfMulRow(vec,FF_ZERO);
-    FfSetNoc(m->Noc);
-    for (pos=row=0, rowptr=m->Data; row < m->Nor; ++row,FfStepPtr(&rowptr))
+    ffSetNoc(TpDim);
+    ffMulRow(vec,FF_ZERO);
+    ffSetNoc(m->Noc);
+    for (pos=row=0, rowptr=m->Data; row < m->Nor; ++row,ffStepPtr(&rowptr,m->Noc))
     {
 	int col;
 	for (col = 0; col < m->Noc; ++col, ++pos)
 	{
-	    FEL f = FfExtract(rowptr,col);
+	    FEL f = ffExtract(rowptr,col);
 	    if (f != FF_ZERO)
-		FfInsert(vec,pos,f);
+		ffInsert(vec,pos,f);
 	}
     }
 }
@@ -145,12 +140,12 @@ static int FindPivot(Matrix_t *m, tPivotEntry *piv)
     int row;
     PTR rowptr;
 
-    FfSetNoc(m->Noc);
-    for (row = 0, rowptr=m->Data; row < m->Nor; ++row, FfStepPtr(&rowptr))
+    ffSetNoc(m->Noc);
+    for (row = 0, rowptr=m->Data; row < m->Nor; ++row, ffStepPtr(&rowptr,m->Noc))
     {
 	int col;
 	FEL f;
-	col = FfFindPivot(rowptr,&f);
+	col = ffFindPivot(rowptr,&f);
 	if (col >= 0)
 	{
 	    piv->Row = row;
@@ -170,15 +165,15 @@ static void Clean(Matrix_t *mat, const Matrix_t **basis,
     int i;
 
     MTX_ASSERT(dim == 0 || 
-	       (mat->Noc == basis[0]->Noc && mat->Nor == basis[0]->Nor));
-    FfSetNoc(mat->Noc);
+	       (mat->Noc == basis[0]->Noc && mat->Nor == basis[0]->Nor),);
+    ffSetNoc(mat->Noc);
     for (i = 0; i < dim; ++i)
     {
 	PTR x;
 	FEL f;
-	x = MatGetPtr(mat,piv[i].Row);
-	f = FfNeg(FfDiv(FfExtract(x,piv[i].Col),piv[i].Mark));
-	MatAddMul(mat,basis[i],f);
+	x = matGetPtr(mat,piv[i].Row);
+	f = ffNeg(ffDiv(ffExtract(x,piv[i].Col),piv[i].Mark));
+	matAddMul(mat,basis[i],f);
     }
 }
 
@@ -190,17 +185,17 @@ static void Clean2(Matrix_t *mat, const Matrix_t **basis,
 {
     int i;
 
-    MTX_ASSERT(mat->Noc == basis[0]->Noc && mat->Nor == basis[0]->Nor);
-    FfSetNoc(dim);
-    FfMulRow(op,FF_ZERO);
+    MTX_ASSERT(mat->Noc == basis[0]->Noc && mat->Nor == basis[0]->Nor,);
+    ffSetNoc(dim);
+    ffMulRow(op,FF_ZERO);
     for (i = 0; i < dim; ++i)
     {
 	PTR x;
 	FEL f;
-	x = MatGetPtr(mat,piv[i].Row);
-	f = FfDiv(FfExtract(x,piv[i].Col),piv[i].Mark);
-	MatAddMul(mat,basis[i],FfNeg(f));
-	FfInsert(op,i,f);
+	x = matGetPtr(mat,piv[i].Row);
+	f = ffDiv(ffExtract(x,piv[i].Col),piv[i].Mark);
+	matAddMul(mat,basis[i],ffNeg(f));
+	ffInsert(op,i,f);
     }
 }
 
@@ -209,10 +204,10 @@ static Matrix_t *Map(Matrix_t *src, int gen)
 {
     Matrix_t *a;
 
-    MTX_ASSERT(gen >= 0 && gen < NGen);
-    a = MatDup(GenM[gen]);
-    MatMul(a,src);
-    MatMul(a,GenN[gen]);
+    MTX_ASSERT(gen >= 0 && gen < NGen, NULL);
+    a = matDup(GenM[gen]);
+    matMul(a,src);
+    matMul(a,GenN[gen]);
     return a;
 }
 
@@ -238,7 +233,7 @@ static void CleanAndAppend(Matrix_t *mat)
 	    MESSAGE(2,("Dimension=%d (%d%%)\n",Dim,Src*100/Dim));
     }
     else
-	MatFree(mat);
+	matFree(mat);
 }
 
 
@@ -248,7 +243,7 @@ static void SpinUpMatrix(Matrix_t *seed)
     int gen = 0;
     Matrix_t *newvec = seed;
 
-    FfSetNoc(seed->Noc);
+    ffSetNoc(seed->Noc);
     Src = Dim;
     while (1)
     {
@@ -280,11 +275,11 @@ static void Spinup()
     {
 	Matrix_t *seed;
 	MESSAGE(1,("Spinning up seed vector %d\n",i));
-	seed = MatAlloc(FfOrder,GenM[0]->Nor,GenN[0]->Nor);
+	seed = matAlloc(ffOrder,GenM[0]->Nor,GenN[0]->Nor);
 	VecToMat(vec,seed);
 	SpinUpMatrix(seed);		    /* <Spinup()> eats <seed>! */
-	FfSetNoc(Seed->Noc);
-	FfStepPtr(&vec);
+	ffSetNoc(Seed->Noc);
+	ffStepPtr(&vec,Seed->Noc);
 	if (i < Seed->Nor)
 	    MESSAGE(1,("Dimension = %d\n",Dim));
     }
@@ -299,16 +294,16 @@ static void WriteSubspace()
     PTR row;
 
     MESSAGE(1,("Writing subspace to %s\n",SubName));
-    FfSetNoc(TpDim);
-    row = FfAlloc(1);
-    f = MfCreate(SubName,Seed->Field,Dim,TpDim);
+    ffSetNoc(TpDim);
+    row = ffAlloc(1, TpDim);
+    f = mfCreate(SubName,Seed->Field,Dim,TpDim);
     for (i = 0; i < Dim; ++i)
     {
-	MatToVec(row,Basis[i]);
-	MfWriteRows(f,row,1);
+	matToVec(row,Basis[i]);
+	mfWriteRows(f,row,1);
     }
-    MfClose(f);
-    FfFree(row);
+    mfClose(f);
+    ffFree(row);
 }
 
 
@@ -319,18 +314,18 @@ static void CalculateAction1(int gen, const char *file_name)
     int i;
 
     MESSAGE(1,("Writing generator to %s\n",file_name));
-    f = MfCreate(file_name,Seed->Field,Dim,Dim);
-    FfSetNoc(Dim);
-    rowptr = FfAlloc(1);
+    f = mfCreate(file_name,Seed->Field,Dim,Dim);
+    ffSetNoc(Dim);
+    rowptr = ffAlloc(1, Dim);
     for (i = 0; i < Dim; ++i)
     {
 	Matrix_t *image = Map(Basis[i],gen);
 	Clean2(image,(const Matrix_t **)Basis,Piv,Dim,rowptr);
-	MatFree(image);
-	MfWriteRows(f,rowptr,1);
+	matFree(image);
+	mfWriteRows(f,rowptr,1);
     }
-    FfFree(rowptr);
-    MfClose(f);
+    ffFree(rowptr);
+    mfClose(f);
 }
 
 
@@ -350,18 +345,18 @@ static void CalculateAction()
 
 
 
-static int Init(int argc, const char **argv)
+static int Init(int argc, char **argv)
 {
     /* Process command line options.
        ----------------------------- */
-    if ((App = AppAlloc(&AppInfo,argc,argv)) == NULL)
+    if ((App = appAlloc(&AppInfo,argc,argv)) == NULL)
 	return -1;
-    NGen = AppGetIntOption(App,"-g",2,1,1000);
-    NoAction = AppGetOption(App,"-n --no-action");
+    NGen = appGetIntOption(App,"-g",2,1,1000);
+    NoAction = appGetOption(App,"-n --no-action");
 
     /* Procerss command line arguments.
        -------------------------------- */
-    if (AppGetArguments(App,3,4) < 0)
+    if (appGetArguments(App,3,4) < 0)
 	return -1;
     MName = App->ArgV[0];
     NName = App->ArgV[1];
@@ -374,19 +369,19 @@ static int Init(int argc, const char **argv)
 
 static void Cleanup()
 {
-    AppFree(App);
+    appFree(App);
 }
 
 
 
 
-int main(int argc, const char **argv)
+int main(int argc, char **argv)
 {
     if (Init(argc, argv) != 0)
 	return 1;
     if (ReadFiles() != 0)
     {
-	MTX_ERROR("Cannot read input file(s)");
+	mtxAbort(MTX_HERE,"Cannot read input file(s)");
 	return 1;
     }
     Spinup();
@@ -503,3 +498,4 @@ on \f$v\in M\otimes N\f$.
 
 */
 
+// vim:fileencoding=utf8:sw=3:ts=8:et:cin

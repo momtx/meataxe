@@ -1,17 +1,8 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // C MeatAxe - Bit Strings, incidence relation
-//
-// (C) Copyright 1998-2014 Michael Ringe, Lehrstuhl D fuer Mathematik, RWTH Aachen
-//
-// This program is free software; see the file COPYING for details.
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#include <meataxe.h>
-
-////////////////////////////////////////////////////////////////////////////////////////////////////
-// Local data
-
-MTX_DEFINE_FILE_INFO
+#include "meataxe.h"
 
 /// @addtogroup bs
 /// @{
@@ -22,22 +13,16 @@ MTX_DEFINE_FILE_INFO
 /// @em b. Both bit strings must have the same size.
 /// @return 1 if a⊆b, 0 if a⊈b, -1 on error.
 
-int BsIsSub(const BitString_t *a, const BitString_t *b)
+int bsIsSub(const BitString_t *a, const BitString_t *b)
 {
    register int i;
    register const unsigned long *ap, *bp;
 
    // check arguments
-   if (!BsIsValid(a)) {
-      MTX_ERROR1("a: %E",MTX_ERR_BADARG);
-      return -1;
-   }
-   if (!BsIsValid(b)) {
-      MTX_ERROR1("b: %E",MTX_ERR_BADARG);
-      return -1;
-   }
+   bsValidate(MTX_HERE, a);
+   bsValidate(MTX_HERE, b);
    if (a->Size != b->Size) {
-      MTX_ERROR1("%E",MTX_ERR_INCOMPAT);
+      mtxAbort(MTX_HERE,"%s",MTX_ERR_INCOMPAT);
       return -1;
    }
 
@@ -54,3 +39,4 @@ int BsIsSub(const BitString_t *a, const BitString_t *b)
 
 
 /// @}
+// vim:fileencoding=utf8:sw=3:ts=8:et:cin

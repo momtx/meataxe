@@ -1,17 +1,12 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // C MeatAxe - Read a permutation
-//
-// (C) Copyright 1998-2015 Michael Ringe, Lehrstuhl D fuer Mathematik, RWTH Aachen
-//
-// This program is free software; see the file COPYING for details.
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#include <meataxe.h>
+#include "meataxe.h"
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // Local data
 
-MTX_DEFINE_FILE_INFO
 
 /// @addtogroup perm
 /// @{
@@ -44,36 +39,34 @@ void Perm_ConvertOld(long *data, int len)
 /// If a permutation was successfully read, the function returns a pointer to
 /// a newly created Perm_t object. The caller is responsible for deleting
 /// this object as soon as the permutation is no longer needed.
-/// @see PermLoad()
+/// @see permLoad()
 /// @param f File to read from.
 /// @return Pointer to the permutation, or 0 on error.
 
-Perm_t *PermRead(FILE *f)
+Perm_t *permRead(FILE *f)
 {
    Perm_t *p;
    long hdr[3];
 
-   if (SysReadLong(f,hdr,3) != 3) {
-      MTX_ERROR("Cannot read header");
+   if (sysReadLong32(f,hdr,3) != 3) {
+      mtxAbort(MTX_HERE,"Cannot read header");
       return NULL;
    }
    if (hdr[0] != -1) {
-      MTX_ERROR1("%E", MTX_ERR_NOTPERM);
+      mtxAbort(MTX_HERE,"%s", MTX_ERR_NOTPERM);
       return NULL;
    }
-   p = PermAlloc(hdr[1]);
+   p = permAlloc(hdr[1]);
    if (p == NULL) {
       return NULL;
    }
-   if (SysReadLong(f,p->Data,p->Degree) != p->Degree) {
-      PermFree(p);
-      MTX_ERROR("Cannot read permutation data");
+   if (sysReadLong32(f,p->Data,p->Degree) != p->Degree) {
+      permFree(p);
+      mtxAbort(MTX_HERE,"Cannot read permutation data");
       return NULL;
    }
    Perm_ConvertOld(p->Data,p->Degree);
-   if (!PermIsValid(p)) {
-      return NULL;
-   }
+   permValidate(MTX_HERE, p);
    return p;
 }
 
@@ -87,23 +80,23 @@ Perm_t *PermRead(FILE *f)
 /// If a permutation was successfully read, the function returns a pointer to
 /// a newly created Perm_t object. The caller is responsible for deleting
 /// this object as soon as the permutation is no longer needed.
-/// @see PermRead()
+/// @see permRead()
 /// @param fn File name.
 /// @return Pointer to the permutation read from the file, or 0 on error.
 
-Perm_t *PermLoad(const char *fn)
+Perm_t *permLoad(const char *fn)
 {
    FILE *f;
    Perm_t *p;
 
-   if ((f = SysFopen(fn,FM_READ)) == NULL) {
-      MTX_ERROR1("Cannot open %s",fn);
+   if ((f = sysFopen(fn,"rb")) == NULL) {
+      mtxAbort(MTX_HERE,"Cannot open %s",fn);
       return NULL;
    }
-   p = PermRead(f);
+   p = permRead(f);
    fclose(f);
    if (p == NULL) {
-      MTX_ERROR1("Cannot read permutation from %s",fn);
+      mtxAbort(MTX_HERE,"Cannot read permutation from %s",fn);
       return NULL;
    }
    return p;
@@ -111,3 +104,4 @@ Perm_t *PermLoad(const char *fn)
 
 
 /// @}
+// vim:fileencoding=utf8:sw=3:ts=8:et:cin

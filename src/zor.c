@@ -1,12 +1,8 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // C MeatAxe - Order of a matrix or permutations.
-//
-// (C) Copyright 1998-2015 Michael Ringe, Lehrstuhl D fuer Mathematik, RWTH Aachen
-//
-// This program is free software; see the file COPYING for details.
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#include <meataxe.h>
+#include "meataxe.h"
 #include <stdlib.h>
 #include <string.h>
 
@@ -19,7 +15,6 @@
    Global data
    ------------------------------------------------------------------ */
 
-MTX_DEFINE_FILE_INFO
 
 static MtxApplicationInfo_t AppInfo = {
 "zor", "Order of a Matrix or Permutation",
@@ -57,30 +52,30 @@ static int ordmat()
     int dim;
     int *piv;
     char *ispiv;
-    int ord, i;
+    int ord;
 
-    FfSetField(ifile->Field); 
-    FfSetNoc(ifile->Noc); 
+    ffSetField(ifile->Field); 
+    ffSetNoc(ifile->Noc); 
     if (ifile->Nor != ifile->Noc) 
     {
-	MTX_ERROR2("%s: %E",iname,MTX_ERR_NOTSQUARE);
+	mtxAbort(MTX_HERE,"%s: %s",iname,MTX_ERR_NOTSQUARE);
 	return 1;
     }
-    m1 = FfAlloc(FfNoc);
-    base = FfAlloc(FfNoc+1);
-    piv = NALLOC(int,FfNoc);
-    ispiv = NALLOC(char,FfNoc);
-    memset(ispiv,0,FfNoc);
-    v = FfAlloc(1);
-    if (MfReadRows(ifile,m1,FfNoc) != FfNoc)
+    m1 = ffAlloc(ifile->Noc, ifile->Noc);
+    base = ffAlloc(ifile->Noc+1, ifile->Noc);
+    piv = NALLOC(int,ifile->Noc);
+    ispiv = NALLOC(char,ifile->Noc);
+    memset(ispiv,0,ifile->Noc);
+    v = ffAlloc(1, ifile->Noc);
+    if (mfReadRows(ifile,m1,ifile->Noc) != ifile->Noc)
     {
-	MTX_ERROR("Error reading input file");
+	mtxAbort(MTX_HERE,"Error reading input file");
 	return -1;
     }
     ord = 1;
     bend = base;
 
-    for (dim = 0; dim < FfNoc; )
+    for (dim = 0; dim < ifile->Noc; )
     {	
 	PTR start = bend;
 	int tord = 0;
@@ -88,10 +83,11 @@ static int ordmat()
 
 	/* Find the next seed vector
 	   ------------------------- */
-	for (i = 0; i < FfNoc && ispiv[i]; ++i);
-	MTX_ASSERT(i < FfNoc);
-	FfMulRow(bend,FF_ZERO);
-	FfInsert(bend,i,FF_ONE);
+	int i = 0;
+	while (i < ifile->Noc && ispiv[i]) ++i;
+	MTX_ASSERT(i < ifile->Noc, -1);
+	ffMulRow(bend,FF_ZERO);
+	ffInsert(bend,i,FF_ONE);
 
 	/* Calculate order on the cyclic subspace
 	   -------------------------------------- */
@@ -103,23 +99,23 @@ static int ordmat()
 	    /* Save the vector and extend the basis,
 	       if the vector is linearly independent.
 	       -------------------------------------- */
-	    FfCopyRow(v,bend);
+	    ffCopyRow(v,bend);
 	    if (!closed)
 	    {	b = base;
 	    	for (i = 0; i < dim; ++i)
 	    	{   
-		    f = FfExtract(bend,piv[i]);
+		    f = ffExtract(bend,piv[i]);
 		    if (f != FF_ZERO)
 		    {	
-			FfAddMulRow(bend,b,FfNeg(FfDiv(f,FfExtract(b,piv[i]))));
+			ffAddMulRow(bend,b,ffNeg(ffDiv(f,ffExtract(b,piv[i]))));
 		    }
-		    FfStepPtr(&b);
+		    ffStepPtr(&b,ifile->Noc);
 		}
-		pv = FfFindPivot(bend,&f);
+		pv = ffFindPivot(bend,&f);
 		if (pv >= 0)
 		{   piv[dim++] = pv;
 		    ispiv[pv] = 1;
-		    FfStepPtr(&bend);
+		    ffStepPtr(&bend, ifile->Noc);
 		}
 		else
 		    closed = 1;
@@ -129,22 +125,22 @@ static int ordmat()
 	       ----------------- */
 	    if (++tord > MAXORDER_C)
 	    {  
-		MTX_ERROR1("zor: Partial order is over %d",MAXORDER_C);
+		mtxAbort(MTX_HERE,"zor: Partial order is over %d",MAXORDER_C);
 		return 1;
 	    }
-	    FfMapRow(v,m1,FfNoc,bend);
+	    ffMapRow(v,m1,ffNoc,bend);
 	}
-	while (FfCmpRows(bend,start));
+	while (ffCmpRows(bend,start));
 
 	/* Calculate l.c.m. of all tord's
 	   ------------------------------ */
 	for (i = ord; ord % tord != 0; ord += i);
 	if (ord > MAXORDER)
 	{
-	    MTX_ERROR1("zor: Order is over %d",MAXORDER);
+	    mtxAbort(MTX_HERE,"zor: Order is over %d",MAXORDER);
 	    return 1;
 	}
-	if (opt_q && dim > FfNoc/10) break;
+	if (opt_q && dim > ffNoc/10) break;
 	if (maxord > 1)
 	{   if (ord > maxord)
 	    {
@@ -181,29 +177,29 @@ static int ordperm()
 
     if (ifile->Field != -1) 
     {
-	MTX_ERROR2("%s: %E",iname,MTX_ERR_NOTPERM);	/* No monomials */
+	mtxAbort(MTX_HERE,"%s: %s",iname,MTX_ERR_NOTPERM);	/* No monomials */
 	return -1;
     }
-    if ((perm = PermAlloc(ifile->Nor)) == NULL)
+    if ((perm = permAlloc(ifile->Nor)) == NULL)
     {
-	MTX_ERROR("Error allocating permutation");
+	mtxAbort(MTX_HERE,"Error allocating permutation");
 	return -1;
     }
     if (opt_G) 
 	printf("MeatAxe.Orders := [");
     for (iper = 1; iper <= ifile->Noc; ++iper)
     {
-	if (MfReadLong(ifile,perm->Data,perm->Degree) != perm->Degree)
+	if (mfReadLong(ifile,perm->Data,perm->Degree) != perm->Degree)
     	{
-	    MTX_ERROR("Error reading permutation");
+	    mtxAbort(MTX_HERE,"Error reading permutation");
 	    return -1;
 	}
 	Perm_ConvertOld(perm->Data,perm->Degree);
-	order = PermOrder(perm);
-	PermFree(perm);
+	order = permOrder(perm);
+	permFree(perm);
 	if (order < 0)
 	{
-	    MTX_ERROR("Error calculating order");
+	    mtxAbort(MTX_HERE,"Error calculating order");
 	    return -1;
 	}
 	if (opt_G)
@@ -229,31 +225,31 @@ static int ordperm()
 
 
 
-static int Init(int argc, const char **argv)
+static int Init(int argc, char **argv)
 
 {
     /* Process command line options.
        ----------------------------- */
-    App = AppAlloc(&AppInfo,argc,argv);
+    App = appAlloc(&AppInfo,argc,argv);
     if (App == NULL)
 	return -1;
-    opt_G = AppGetOption(App,"-G --gap");
+    opt_G = appGetOption(App,"-G --gap");
     if (opt_G)
 	MtxMessageLevel = -100;
-    opt_q = AppGetOption(App,"-q --quick");
-    maxord = AppGetIntOption(App,"-m --max-order",-1,1,1000000);
+    opt_q = appGetOption(App,"-q --quick");
+    maxord = appGetIntOption(App,"-m --max-order",-1,1,1000000);
 
     /* Process arguments.
        ------------------ */
-    if (AppGetArguments(App,1,1) < 0)
+    if (appGetArguments(App,1,1) < 0)
 	return -1;
     iname = App->ArgV[0];
 
     /* Open input file, call the appropriate function
        ---------------------------------------------- */
-    if ((ifile = MfOpen(iname)) == NULL)
+    if ((ifile = mfOpen(iname)) == NULL)
     {
-	MTX_ERROR("Error opening input file");
+	mtxAbort(MTX_HERE,"Error opening input file");
 	return -1;
     }
     return 0;
@@ -265,22 +261,22 @@ static int Init(int argc, const char **argv)
    main()
    ------------------------------------------------------------------ */
 
-int main(int argc, const char **argv)
+int main(int argc, char **argv)
 
 {
     int rc;
 
     if (Init(argc,argv) != 0)
     {
-	MTX_ERROR("Initialization failed");
+	mtxAbort(MTX_HERE,"Initialization failed");
 	return 1;
     }
     if (ifile->Field < 0)
 	rc = ordperm();
     else
 	rc = ordmat();
-    MfClose(ifile);
-    AppFree(App);
+    mfClose(ifile);
+    appFree(App);
     return rc;
 }
 
@@ -354,3 +350,4 @@ one permutation.
 **/
 
 
+// vim:fileencoding=utf8:sw=3:ts=8:et:cin

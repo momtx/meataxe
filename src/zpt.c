@@ -1,13 +1,9 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // C MeatAxe - Paste matrices.
-//
-// (C) Copyright 1998-2015 Michael Ringe, Lehrstuhl D fuer Mathematik, RWTH Aachen
-//
-// This program is free software; see the file COPYING for details.
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
-#include <meataxe.h>
+#include "meataxe.h"
 #include <string.h>
 #include <stdlib.h>
 
@@ -16,7 +12,6 @@
    Global data
    ------------------------------------------------------------------ */
 
-MTX_DEFINE_FILE_INFO
 static MtxApplicationInfo_t AppInfo = { 
 "zpt", "Paste Matrices or Permutations",
 "SYNTAX\n"
@@ -64,32 +59,32 @@ static const char *mkname(int r, int c)
    Init()
    ------------------------------------------------------------------ */
 
-static int Init(int argc, const char **argv)
+static int Init(int argc, char **argv)
 
 {   
     MtxFile_t *f;
 
-    App = AppAlloc(&AppInfo,argc,argv);
+    App = appAlloc(&AppInfo,argc,argv);
     if (App == NULL)
 	return -1;
 
     /* Command line options.
        --------------------- */
-    nrows = AppGetIntOption(App,"-r",1,1,100);
-    ncols = AppGetIntOption(App,"-c",1,1,100);
+    nrows = appGetIntOption(App,"-r",1,1,100);
+    ncols = appGetIntOption(App,"-c",1,1,100);
 
     /* Command line arguments.
        ----------------------- */ 
     if (nrows == 1 && ncols == 1)
     {
-	if (AppGetArguments(App,2,1000) < 0)
+	if (appGetArguments(App,2,1000) < 0)
 	    return -1;
 	nrows = App->ArgC - 1;
     }
     else
     {
     	int names_needed = nrows * ncols + 1;
-    	if (AppGetArguments(App,names_needed,names_needed) < 0)
+    	if (appGetArguments(App,names_needed,names_needed) < 0)
 	    return -1;
     }
     ofilename = App->ArgV[0];
@@ -98,11 +93,11 @@ static int Init(int argc, const char **argv)
 
     /* Check if we are pasting matrices or permutations.
        ------------------------------------------------- */
-    if ((f = MfOpen(mkname(0,0))) == NULL)
+    if ((f = mfOpen(mkname(0,0))) == NULL)
 	return -1;
     if (f->Field < 0)
 	Mode = PERMUTATIONS;
-    MfClose(f);
+    mfClose(f);
 
     return 0;
 }
@@ -134,33 +129,33 @@ static int checksizes()
 	    const char *c = mkname(i,k);
 	    if (!strcmp(c,"-"))
 		continue;
-	    if ((ifile = FfReadHeader(c,&fl2,&nor2,&noc2)) == NULL)
+	    if ((ifile = ffReadHeader(c,&fl2,&nor2,&noc2)) == NULL)
 		return -1;
 	    fclose(ifile);
 	    if (fl2 < 2)
 	    {
-		MTX_ERROR2("%s: %E",c,MTX_ERR_NOTMATRIX);
+		mtxAbort(MTX_HERE,"%s: %s",c,MTX_ERR_NOTMATRIX);
 		return -1;
 	    }
 	    if (fl == 0)
 		fl = fl2;
 	    else if (fl != fl2)
 	    {
-		MTX_ERROR3("%s and %s: %E",mkname(0,0),c,MTX_ERR_INCOMPAT);
+		mtxAbort(MTX_HERE,"%s and %s: %s",mkname(0,0),c,MTX_ERR_INCOMPAT);
 		return -1;
 	    }
 	    if (height[i] == -1) 
 		height[i] = nor2;
 	    else if (height[i] != nor2)
 	    {
-		MTX_ERROR3("%s and %s: %E",mkname(i,0),c,MTX_ERR_INCOMPAT);
+		mtxAbort(MTX_HERE,"%s and %s: %s",mkname(i,0),c,MTX_ERR_INCOMPAT);
 		return -1;
 	    }
 	    if (width[k] == -1) 
 		width[k] = noc2;
 	    else if (width[k] != noc2)
 	    {
-		MTX_ERROR3("%s and %s: %E",mkname(0,k),c,MTX_ERR_INCOMPAT);
+		mtxAbort(MTX_HERE,"%s and %s: %s",mkname(0,k),c,MTX_ERR_INCOMPAT);
 		return -1;
 	    }
 	}
@@ -173,7 +168,7 @@ static int checksizes()
     {
 	if (height[i] == -1) 
 	{
-	    MTX_ERROR("Undetermined size");
+	    mtxAbort(MTX_HERE,"Undetermined size");
 	    return -1;
 	}
 	if (height[i] > maxnor)
@@ -184,7 +179,7 @@ static int checksizes()
     {
 	if (width[k] == -1)
 	{
-	    MTX_ERROR("Undetermined size");
+	    mtxAbort(MTX_HERE,"Undetermined size");
 	    return -1;
 	}
 	noc += width[k];
@@ -208,23 +203,23 @@ static int pastemat()
     int l, j;
     int pos;
 
-    FfSetField(fl);
-    FfSetNoc(noc);
-    m = FfAlloc(maxnor);
-    if ((ofile = FfWriteHeader(ofilename,fl,nor,noc)) == NULL)
+    ffSetField(fl);
+    ffSetNoc(noc);
+    m = ffAlloc(maxnor, noc);
+    if ((ofile = ffWriteHeader(ofilename,fl,nor,noc)) == NULL)
     {
-	MTX_ERROR("Cannot create output file\n");
+	mtxAbort(MTX_HERE,"Cannot create output file\n");
 	return -1;
     }
     for (i = 0; i < nrows; ++i)
     {	
 	MESSAGE(1,("Pasting row %d\n",i));
-	FfSetNoc(noc);
+	ffSetNoc(noc);
 	x = m;
 	for (l = maxnor; l > 0; --l)
 	{	
-	    FfMulRow(x,FF_ZERO);
-	    FfStepPtr(&x);
+	    ffMulRow(x,FF_ZERO);
+	    ffStepPtr(&x, noc);
 	}
 	pos = 0;
 	for (k = 0; k < ncols; ++k)
@@ -234,30 +229,30 @@ static int pastemat()
 
 	    if (strcmp(c,"-"))
 	    {
-		if ((ifile = FfReadHeader(c,&fl2,&nor2,&noc2)) == NULL)
+		if ((ifile = ffReadHeader(c,&fl2,&nor2,&noc2)) == NULL)
 		    return -1;
-		FfSetNoc(noc2);
-		piece = FfAlloc(nor2);
-		FfReadRows(ifile,piece,nor2);
+		ffSetNoc(noc2);
+		piece = ffAlloc(nor2, noc2);
+		ffReadRows(ifile, piece, nor2, noc2);
 		fclose(ifile);
 		x = m;
 		y = piece;
-		FfSetNoc(noc);
+		ffSetNoc(noc);
  		for (l = 0; l < nor2; ++l)
 		{	
 		    for (j = 0; j < noc2; ++j)
-			FfInsert(x,j+pos,FfExtract(y,j));
-		    FfSetNoc(noc2);
-		    FfStepPtr(&y);
-		    FfSetNoc(noc);
-		    FfStepPtr(&x);
+			ffInsert(x,j+pos,ffExtract(y,j));
+		    ffSetNoc(noc2);
+		    ffStepPtr(&y, noc2);
+		    ffSetNoc(noc);
+		    ffStepPtr(&x, noc);
 		}
-		SysFree(piece);
+		sysFree(piece);
 	    }
 	    pos += width[k];
 	}
-	FfSetNoc(noc);
-	FfWriteRows(ofile,m,height[i]);
+	ffSetNoc(noc);
+	ffWriteRows(ofile,m,height[i], noc);
     }
     return 0;
 }
@@ -277,53 +272,53 @@ static int PastePerms()
        ------------------------------------------- */
     for (i = 0; i < nrows; ++i)
     {
-	if ((in = MfOpen(mkname(i,0))) == NULL)
+	if ((in = mfOpen(mkname(i,0))) == NULL)
 	    return -1;
 	if (in->Field != -1)
 	{
-	    MTX_ERROR2("%s: %E",mkname(i,0),MTX_ERR_NOTPERM);
+	    mtxAbort(MTX_HERE,"%s: %s",mkname(i,0),MTX_ERR_NOTPERM);
 	    return -1;
 	}
 	if (i == 0)
 	    degree = in->Nor;
 	else if (degree != in->Nor)
 	{
-	    MTX_ERROR("Permutations are not compatible");
+	    mtxAbort(MTX_HERE,"Permutations are not compatible");
 	    return -1;
 	}
 	nperms += in->Noc;
-	MfClose(in);
+	mfClose(in);
     }
 
     /* Concatenate the permutations.
        ----------------------------- */
-    if ((out = MfCreate(ofilename,-1,degree,nperms)) == NULL)
+    if ((out = mfCreate(ofilename,-1,degree,nperms)) == NULL)
 	return -1;
     if ((buf = NALLOC(long,degree)) == NULL)
 	return -1;
     for (i = 0; i < nrows; ++i)
     {
 	int k;
-	if ((in = MfOpen(mkname(i,0))) == NULL)
+	if ((in = mfOpen(mkname(i,0))) == NULL)
 	    return -1;
 	for (k = 0; k < in->Noc; ++k)
 	{
-	    if (MfReadLong(in,buf,degree) != degree)
+	    if (mfReadLong(in,buf,degree) != degree)
     	    {
-		MTX_ERROR1("Error reading %s",in->Name);
+		mtxAbort(MTX_HERE,"Error reading %s",in->Name);
 	    	return -1;
 	    }
 	    Perm_ConvertOld(buf,degree);
-	    if (MfWriteLong(out,buf,degree) != degree)
+	    if (mfWriteLong(out,buf,degree) != degree)
     	    {
-		MTX_ERROR1("Error writing %s",out->Name);
+		mtxAbort(MTX_HERE,"Error writing %s",out->Name);
 	    	return -1;
 	    }
 	}
-	MfClose(in);
+	mfClose(in);
     }
     free(buf);
-    MfClose(out);
+    mfClose(out);
     return 0;
 }
 
@@ -333,7 +328,7 @@ static int PastePerms()
 static void Cleanup()
 
 {
-    AppFree(App);
+    appFree(App);
 }
 
 
@@ -341,13 +336,13 @@ static void Cleanup()
    main()
    ------------------------------------------------------------------ */
 
-int main(int argc, const char **argv)
+int main(int argc, char **argv)
 
 {
     int rc = 0;
     if (Init(argc,argv) != 0)
     {
-	MTX_ERROR("Initialization failed");
+	mtxAbort(MTX_HERE,"Initialization failed");
 	return 1;
     }
     if (Mode == PERMUTATIONS)
@@ -438,3 +433,4 @@ with older versions of the MeatAxe.
 
 */
 
+// vim:fileencoding=utf8:sw=3:ts=8:et:cin

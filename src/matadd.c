@@ -1,17 +1,12 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // C MeatAxe - Add two matrices
-//
-// (C) Copyright 1998-2015 Michael Ringe, Lehrstuhl D fuer Mathematik, RWTH Aachen
-//
-// This program is free software; see the file COPYING for details.
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#include <meataxe.h>
+#include "meataxe.h"
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // Local data
 
-MTX_DEFINE_FILE_INFO
 
 /// @addtogroup mat
 /// @{
@@ -22,21 +17,18 @@ MTX_DEFINE_FILE_INFO
 /// The matrices must be over the same field and have the  same dimensions.
 /// @return @em dest on success, 0 on error.
 
-Matrix_t *MatAdd(Matrix_t *dest, const Matrix_t *src)
+Matrix_t *matAdd(Matrix_t *dest, const Matrix_t *src)
 {
    PTR dp, sp;
    register int n;
 
    /* Check arguments
       --------------- */
-#ifdef DEBUG
-   if (!MatIsValid(src) || !MatIsValid(dest)) {
-      return NULL;
-   }
-#endif
+   matValidate(MTX_HERE,src);
+   matValidate(MTX_HERE,dest);
    if ((dest->Field != src->Field) || (dest->Nor != src->Nor) ||
        (dest->Noc != src->Noc)) {
-      MTX_ERROR1("%E",MTX_ERR_INCOMPAT);
+      mtxAbort(MTX_HERE,"%s",MTX_ERR_INCOMPAT);
       return NULL;
    }
 
@@ -44,20 +36,21 @@ Matrix_t *MatAdd(Matrix_t *dest, const Matrix_t *src)
       ------------------- */
    dp = dest->Data;
    sp = src->Data;
-   FfSetField(src->Field);
-   FfSetNoc(src->Noc);
+   ffSetField(src->Field);
+   ffSetNoc(src->Noc);
    for (n = src->Nor; n > 0; --n) {
-      FfAddRow(dp,sp);
-      FfStepPtr(&dp);
-      FfStepPtr(&sp);
+      ffAddRow(dp,sp);
+      ffStepPtr(&dp, src->Noc);
+      ffStepPtr(&sp, src->Noc);
    }
 
    /* Delete the pivot table
       ---------------------- */
-   Mat_DeletePivotTable(dest);
+   mat_DeletePivotTable(dest);
 
    return dest;
 }
 
 
 /// @}
+// vim:fileencoding=utf8:sw=3:ts=8:et:cin

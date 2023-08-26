@@ -1,22 +1,17 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // C MeatAxe - Permutation chop.
-//
-// (C) Copyright 1998-2015 Michael Ringe, Lehrstuhl D fuer Mathematik, RWTH Aachen
-//
-// This program is free software; see the file COPYING for details.
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
 #include <string.h>
 #include <stdlib.h>
-#include <meataxe.h>
+#include "meataxe.h"
 
 
 /* ------------------------------------------------------------------
    Global data
    ------------------------------------------------------------------ */
 
-MTX_DEFINE_FILE_INFO
 
 static MtxApplicationInfo_t AppInfo = {
 "zpc", "Permutation Chop",
@@ -94,9 +89,9 @@ static void setnperm(const char *c)
     if (sscanf(c,"%d.%d",&nperm,&ngen) == 1)
 	ngen = nperm;
     if (nperm > MAXGEN || ngen > nperm || ngen < 2)
-	MTX_ERROR1("-g: %E",MTX_ERR_OPTION);
+	mtxAbort(MTX_HERE,"-g: %s",MTX_ERR_OPTION);
     if (ngen != nperm && MSG1)
-        MTX_ERROR2("%d generators, %d permutations",ngen,nperm);
+        mtxAbort(MTX_HERE,"%d generators, %d permutations",ngen,nperm);
 }
 
 
@@ -111,8 +106,8 @@ static int parseargs()
     const char *c;
     int args_needed;
 
-    opt_b = AppGetOption(App,"-b --block-system");
-    c = AppGetTextOption(App,"-g",NULL);
+    opt_b = appGetOption(App,"-b --block-system");
+    c = appGetTextOption(App,"-g",NULL);
 
     opt_g = c != NULL;
     if (opt_g)
@@ -121,7 +116,7 @@ static int parseargs()
     /* Get file names
        -------------- */
     args_needed = opt_g ? 4 : 7;
-    if (AppGetArguments(App,args_needed,args_needed) < 0)
+    if (appGetArguments(App,args_needed,args_needed) < 0)
 	return -1;
     if (opt_g)
     {
@@ -160,7 +155,7 @@ static int init(int argc, char **argv)
     MtxFile_t *f;
 
 
-    App = AppAlloc(&AppInfo,argc,argv);
+    App = appAlloc(&AppInfo,argc,argv);
     if (App == NULL)
 	return -1;
     parseargs(argc, argv);
@@ -169,37 +164,37 @@ static int init(int argc, char **argv)
        -------------------- */
     for (i = 1; i <= nperm; ++i)
     {
-	if ((f = MfOpen(genname[i])) == NULL)
+	if ((f = mfOpen(genname[i])) == NULL)
 	    return -1;
 	if (f->Field != -1 || f->Noc != 1)
 	{
-	    MTX_ERROR2("%s: %E",genname[i],MTX_ERR_NOTPERM);
+	    mtxAbort(MTX_HERE,"%s: %s",genname[i],MTX_ERR_NOTPERM);
 	    return -1;
 	}
 	if (i == 1)
 	    npoints = f->Nor;
 	else if (f->Nor != npoints)
 	{
-	    MTX_ERROR3("%s and %s: %E",genname[1],genname[i],MTX_ERR_INCOMPAT);
+	    mtxAbort(MTX_HERE,"%s and %s: %s",genname[1],genname[i],MTX_ERR_INCOMPAT);
 	    return -1;
 	}
     	m = NALLOC(long,npoints);
 	if (m == NULL)
 	    return -1;
-	if (MfReadLong(f,m,npoints) != npoints)
+	if (mfReadLong(f,m,npoints) != npoints)
 	    return -1;
 	Perm_ConvertOld(m,npoints);
         perm[i] = m;
-	MfClose(f);
+	mfClose(f);
     }
 
     /* Seed
        ---- */
-    if ((f = MfOpen(seedname)) == NULL)
+    if ((f = mfOpen(seedname)) == NULL)
 	return -1;
     if (f->Field != -1) 
     {
-	MTX_ERROR3("%s: %E (found type %d, expected -1)",seedname,
+	mtxAbort(MTX_HERE,"%s: %s (found type %d, expected -1)",seedname,
 	    MTX_ERR_FILEFMT,(int)f->Field);
     }
     if (!opt_b)
@@ -213,7 +208,7 @@ static int init(int argc, char **argv)
 	nblocks = npoints / blksize;
 	if (npoints % blksize != 0)
 	{
-	    MTX_ERROR("BLOCK SIZE DOES NOT DIVIDE DEGREE");
+	    mtxAbort(MTX_HERE,"BLOCK SIZE DOES NOT DIVIDE DEGREE");
 	    return -1;
 	}
     }
@@ -221,9 +216,9 @@ static int init(int argc, char **argv)
     seed = NALLOC(long,blksize);
     if (seed == NULL) 
 	return -1;
-    if (MfReadLong(f,seed,blksize) != blksize)
+    if (mfReadLong(f,seed,blksize) != blksize)
 	return -1;
-    MfClose(f);
+    mfClose(f);
 
     /* Allocate tables
        --------------- */
@@ -266,7 +261,7 @@ static int writeresult()
        ------------------------------- */
     if (orblen % blksize != 0) 
     {
-	MTX_ERROR2("Invalid block system: orblen=%d, blksize=%d",
+	mtxAbort(MTX_HERE,"Invalid block system: orblen=%d, blksize=%d",
 	    orblen,blksize);
     }
     s = NALLOC(long,orblen/blksize+1);
@@ -286,14 +281,14 @@ static int writeresult()
 	    else
 	    {
 		if (s[x] != y) 
-		    MTX_ERROR("Invalid block system");
+		    mtxAbort(MTX_HERE,"Invalid block system");
 	    }
 	}
-	if ((f = MfCreate(subname[i],-1,orblen/blksize,1)) == NULL)
+	if ((f = mfCreate(subname[i],-1,orblen/blksize,1)) == NULL)
 	    return -1;
-	if (MfWriteLong(f,s,orblen/blksize) != (orblen/blksize))
+	if (mfWriteLong(f,s,orblen/blksize) != (orblen/blksize))
 	    return -1;
-	MfClose(f);
+	mfClose(f);
     }
     free(s);
     if (opt_b || cosize <= 0) 
@@ -313,11 +308,11 @@ static int writeresult()
 	    im = p[k];
 	    s[num[k]-orblen] = num[im]-orblen;
 	}
-	if ((f = MfCreate(quotname[i],(long)-1,cosize,(long)1)) == NULL)
+	if ((f = mfCreate(quotname[i],(long)-1,cosize,(long)1)) == NULL)
 	    return -1;
-	if (MfWriteLong(f,s,cosize) != cosize)
+	if (mfWriteLong(f,s,cosize) != cosize)
 	    return -1;
-	MfClose(f);
+	mfClose(f);
     }
     free(s);
     return 0;
@@ -389,13 +384,13 @@ int main(int argc, char *argv[])
 {
     if (init(argc,argv) != 0)
     {
-	MTX_ERROR("Initialization failed");
+	mtxAbort(MTX_HERE,"Initialization failed");
 	return 1;
     }
 
     chop();
     writeresult();
-    AppFree(App);
+    appFree(App);
     return EXIT_OK;
 }
 
@@ -542,3 +537,4 @@ or indeed one of the permutations can be used.
 
 **/
 
+// vim:fileencoding=utf8:sw=3:ts=8:et:cin

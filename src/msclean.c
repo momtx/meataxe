@@ -1,30 +1,25 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // C MeatAxe - Matrix set cleaning functions
-//
-// (C) Copyright 1998-2015 Michael Ringe, Lehrstuhl D fuer Mathematik, RWTH Aachen
-//
-// This program is free software; see the file COPYING for details.
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#include <meataxe.h>
+#include "meataxe.h"
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // Local data
 
-MTX_DEFINE_FILE_INFO
 
 /// @addtogroup matset
 /// @{
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-int MatFindPivot(const Matrix_t *mat, int *row, int *col, FEL *f)
+int matFindPivot(const Matrix_t *mat, int *row, int *col, FEL *f)
 {
    int i;
    for (i = 0; i < mat->Nor; ++i) {
       int piv;
       FEL g;
-      piv = FfFindPivot(MatGetPtr(mat,i),&g);
+      piv = ffFindPivot(matGetPtr(mat,i),&g);
       if (piv >= 0) {
          if (f != NULL) { *f = g; }
          *row = i;
@@ -45,21 +40,19 @@ int MatFindPivot(const Matrix_t *mat, int *row, int *col, FEL *f)
 /// @param mat Matrix to be cleaned.
 /// @return 0 on success, -1 on error.
 
-int MsClean(const MatrixSet_t *set, Matrix_t *mat)
+int msClean(const MatrixSet_t *set, Matrix_t *mat)
 {
    int i;
    MatrixSetElement_t *l;
 
    /* Check the arguments.
       -------------------- */
-   if (!MsIsValid(set) || !MatIsValid(mat)) {
-      return -1;
-   }
+   matValidate(MTX_HERE, mat);
    if (set->Len > 0) {
       Matrix_t *mat0 = set->List[0].Matrix;
       if ((mat->Field != mat0->Field) || (mat->Nor != mat0->Nor)
           || (mat->Noc != mat0->Noc)) {
-         MTX_ERROR1("Cannot clean: %E",MTX_ERR_INCOMPAT);
+         mtxAbort(MTX_HERE,"Cannot clean: %s",MTX_ERR_INCOMPAT);
          return -1;
       }
    }
@@ -67,9 +60,9 @@ int MsClean(const MatrixSet_t *set, Matrix_t *mat)
    /* Clean the matrix.
       ----------------- */
    for (i = 0, l = set->List; i < set->Len; ++i, ++l) {
-      FEL f = FfExtract(MatGetPtr(mat,l->PivRow),l->PivCol);
+      FEL f = ffExtract(matGetPtr(mat,l->PivRow),l->PivCol);
       if (f != FF_ZERO) {
-         MatAddMul(mat,l->Matrix,FfNeg(FfDiv(f,l->PivMark)));
+         matAddMul(mat,l->Matrix,ffNeg(ffDiv(f,l->PivMark)));
       }
    }
    return 0;
@@ -78,13 +71,13 @@ int MsClean(const MatrixSet_t *set, Matrix_t *mat)
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 /// Extend a matrix set.
-/// This function cleans a matrix with a matrix by calling MsClean().
+/// This function cleans a matrix with a matrix by calling msClean().
 /// If the resulting matrix is nonzero, it is added to the matrix set,
 /// and the function returns 0. Otherwise the return value is 1,
 /// indicating that the matrix is now zero.
 ///
 /// @attention Once a matrix has been added to a matrix set, i.e., after
-/// MsCleanAndAppend() returns zero, the application is no longer allowed to
+/// msCleanAndAppend() returns zero, the application is no longer allowed to
 /// modify or free the matrix. The matrix will be freed, when the matrix set
 /// is destroyed.
 /// @param set Pointer to the matrix set.
@@ -92,16 +85,16 @@ int MsClean(const MatrixSet_t *set, Matrix_t *mat)
 /// @return 0 if the matrix was added, 1 if the matrix was already in
 /// the span of @a set, -1 on error.
 
-int MsCleanAndAppend(MatrixSet_t *set, Matrix_t *mat)
+int msCleanAndAppend(MatrixSet_t *set, Matrix_t *mat)
 {
    int piv_row, piv_col;
    FEL piv_mark;
    MatrixSetElement_t *newlist, *newelem;
 
-   if (MsClean(set,mat) != 0) {
+   if (msClean(set,mat) != 0) {
       return -1;
    }
-   if (MatFindPivot(mat,&piv_row,&piv_col,&piv_mark) < 0) {
+   if (matFindPivot(mat,&piv_row,&piv_col,&piv_mark) < 0) {
       return 1;
    }
 
@@ -109,7 +102,7 @@ int MsCleanAndAppend(MatrixSet_t *set, Matrix_t *mat)
       ----------------------- */
    newlist = NREALLOC(set->List,MatrixSetElement_t,set->Len + 1);
    if (newlist == NULL) {
-      MTX_ERROR("Cannot extend matrix set");
+      mtxAbort(MTX_HERE,"Cannot extend matrix set");
       return -1;
    }
    set->List = newlist;
@@ -128,3 +121,4 @@ int MsCleanAndAppend(MatrixSet_t *set, Matrix_t *mat)
 
 
 /// @}
+// vim:fileencoding=utf8:sw=3:ts=8:et:cin

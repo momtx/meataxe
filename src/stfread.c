@@ -1,19 +1,13 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // C MeatAxe - Structured Text File (STF) input functions.
-//
-// (C) Copyright 1998-2015 Michael Ringe, Lehrstuhl D fuer Mathematik, RWTH Aachen
-//
-// This program is free software; see the file COPYING for details.
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#include <meataxe.h>
+#include "meataxe.h"
 #include <stdio.h>
 #include <ctype.h>
 #include <string.h>
 #include <stdlib.h>
 
-
-MTX_DEFINE_FILE_INFO 
 
 /// @addtogroup stf
 /// @{
@@ -21,14 +15,14 @@ MTX_DEFINE_FILE_INFO
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 /// Read next line.
 /// This function reads a single text line into the STF object's internal 
-/// line buffer and prepares the text for parsing with StfGetXXX() functions.
-/// StfReadLine() strips comments and assembles multi-line texts into a 
+/// line buffer and prepares the text for parsing with stfGetXXX() functions.
+/// stfReadLine() strips comments and assembles multi-line texts into a 
 /// single line. Thus, the application need not handle comments and multi-line
 /// texts.
 /// @param f Pointer to a structured text file (STF) object.
 /// @return 0 on success, -1 on end-of-file or error.
 
-int StfReadLine(StfData *f)
+int stfReadLine(StfData *f)
 {
     char lbuf[6000];
     int ch;
@@ -76,16 +70,16 @@ int StfReadLine(StfData *f)
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 /// Get entry name.
 /// This function extracts the name part of internal line buffer and prepares 
-/// the buffer for further parsing with StfGetXXX() functions.
+/// the buffer for further parsing with stfGetXXX() functions.
 /// On return,  <tt>f->GetPtr</tt> points to the first non-space character after
 /// the ":=".
-/// %StfGetName() can be called only after a line was successfully read with
-/// StfReadLine(). It must be called before any of the StfGetXXX()
-/// functions. See StfGetInt() for an example.
+/// %stfGetName() can be called only after a line was successfully read with
+/// stfReadLine(). It must be called before any of the stfGetXXX()
+/// functions. See stfGetInt() for an example.
 /// @param f Pointer to a structured text file (STF) object.
 /// @return Name found in text line or |NULL| on error.
 
-const char *StfGetName(StfData *f)
+const char *stfGetName(StfData *f)
 {
     char *c, *name;
     
@@ -120,7 +114,7 @@ const char *StfGetName(StfData *f)
 /// Read an integer.
 /// This function gets one integer from the current line and increments the
 /// read pointer accordingly. Before this function is called, a line must 
-/// have been read with StfReadLine() and prepared with StfGetName().
+/// have been read with stfReadLine() and prepared with stfGetName().
 ///
 /// Reading starts at the current position. Any leading blanks are skipped.
 /// On return, the new current position is the character following the last 
@@ -129,15 +123,15 @@ const char *StfGetName(StfData *f)
 ///
 /// Here is an example:
 /// @code
-/// StfFile *f = StfOpen("test","r");
+/// StfFile *f = stfOpen("test","r");
 /// int dim, degree, result = 0;
-/// while (result == 0 && StfReadLine(f) == 0)
+/// while (result == 0 && stfReadLine(f) == 0)
 /// {
-///     char *name = StfGetName(f);
+///     char *name = stfGetName(f);
 ///     if (!strcmp(name,"Dimension"))
-///         result = StfGetInt(f,&dim);
+///         result = stfGetInt(f,&dim);
 ///     else if (!strcmp(name,"Degree"))
-///         result = StfGetInt(f,&degree);
+///         result = stfGetInt(f,&degree);
 /// }
 /// @endcode
 /// This code fragment opens a text file and reads two parameters, "Degree" and 
@@ -146,7 +140,7 @@ const char *StfGetName(StfData *f)
 /// @param buf Pointer to a buffer receiving the value.
 /// @return 0 on success, -1 on error.
 
-int StfGetInt(StfData *f, int *buf)
+int stfGetInt(StfData *f, int *buf)
 {
     char *c = f->GetPtr;
     int neg = 0;
@@ -167,7 +161,7 @@ int StfGetInt(StfData *f, int *buf)
     /* Parse number */
     if (!isdigit(*c)) 
     {
-	MTX_ERROR1("Invalid integer: %.20s",f->GetPtr);
+	mtxAbort(MTX_HERE,"Invalid integer: %.20s",f->GetPtr);
 	return -1;
     }
     *buf = 0;
@@ -190,7 +184,7 @@ int StfGetInt(StfData *f, int *buf)
 /// Read a string.
 /// This function gets a string from the current line and increments the
 /// read pointer accordingly. Before this function is called, a line must 
-/// have been read with StfReadLine() and prepared with StfGetName().
+/// have been read with stfReadLine() and prepared with stfGetName().
 /// The string is expected at the current position of the test file and must
 /// be in C syntax, i.e., enclosed in double quotation marks.
 /// @param f Pointer to a structured text file (STF) object.
@@ -198,7 +192,7 @@ int StfGetInt(StfData *f, int *buf)
 /// @param bufsize Buffer size in bytes.
 /// @return 0 on success, -1 on error.
 
-int StfGetString(StfData *f, char *buf, size_t bufsize)
+int stfGetString(StfData *f, char *buf, size_t bufsize)
 {
     char *c, *d, *s;
 
@@ -208,7 +202,7 @@ int StfGetString(StfData *f, char *buf, size_t bufsize)
 	;
     if (*c != '"')
     {
-	MTX_ERROR("Missing \"");
+	mtxAbort(MTX_HERE,"Missing \"");
 	return -1;
     }
     s = c;
@@ -230,7 +224,7 @@ int StfGetString(StfData *f, char *buf, size_t bufsize)
 		case 'f': *c++ = '\f'; break;
 		case '"': *c++ = '"'; break;
 		default:
-		    MTX_ERROR1("Line %d: Invalid escape sequence in string",
+		    mtxAbort(MTX_HERE,"Line %d: Invalid escape sequence in string",
 			f->LineNo);
 		    return -1;
 	    }
@@ -241,7 +235,7 @@ int StfGetString(StfData *f, char *buf, size_t bufsize)
     }
     if (*d != '"')
     {
-	MTX_ERROR1("Line %d: Unexpected end of line in string",f->LineNo);
+	mtxAbort(MTX_HERE,"Line %d: Unexpected end of line in string",f->LineNo);
 	return -1;
     }
 
@@ -249,7 +243,7 @@ int StfGetString(StfData *f, char *buf, size_t bufsize)
        ------------------ */
     if (bufsize < c - s + 1)
     {
-	MTX_ERROR1("Line %d: Buffer too small",f->LineNo);
+	mtxAbort(MTX_HERE,"Line %d: Buffer too small",f->LineNo);
 	return -1;
     }
 
@@ -265,10 +259,10 @@ int StfGetString(StfData *f, char *buf, size_t bufsize)
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 /// Skip text.
 /// This function reads (and skips) the text given by @a pattern.
-/// Before using this function, a line must have been read with StfReadLine()
-/// and prepared with StfGetname(). Reading starts at the current position, 
+/// Before using this function, a line must have been read with stfReadLine()
+/// and prepared with stfGetname(). Reading starts at the current position, 
 /// i.e., at the first non-space character after the ":=", or at the first
-/// character that was not read by the previous StfGetXXX() or StfMatch().
+/// character that was not read by the previous stfGetXXX() or stfMatch().
 /// A space in @a pattern matches any number (including 0) of spaces or tabs. 
 /// Any other characters in @a pattern are matched one-to-one against the input 
 /// line. 
@@ -280,7 +274,7 @@ int StfGetString(StfData *f, char *buf, size_t bufsize)
 /// @return 0, if the complete text in @a pattern has beed
 /// skipped. -1 otherwise.
 
-int StfMatch(StfData *f, const char *pattern)
+int stfMatch(StfData *f, const char *pattern)
 {
     char *b = f->GetPtr;
 
@@ -316,15 +310,15 @@ int StfMatch(StfData *f, const char *pattern)
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 /// Read a vector.
 /// This function reads a sequence of integers. The sequence must have been
-/// written with StfWriteVector() or at least in the same format.
+/// written with stfWriteVector() or at least in the same format.
 ///
-/// Before using this function, a line must have been read with StfReadLine()
-/// and prepared with StfGetname(). Reading starts at the current position, 
+/// Before using this function, a line must have been read with stfReadLine()
+/// and prepared with stfGetname(). Reading starts at the current position, 
 /// i.e., at the first non-space character after the ":=", or at the first
-/// character that was not read by the previous StfGetXXX() or StfMatch().
+/// character that was not read by the previous stfGetXXX() or stfMatch().
 ///
 /// The caller must supply two buffers, the data buffer (@a buf) and an 
-/// integer buffer (@a bufsize). When %StfGetVector() is called, the variable
+/// integer buffer (@a bufsize). When %stfGetVector() is called, the variable
 /// pointed to by @a bufsize must contain the maximal number of integers
 /// that can be stored in @a buf. On successful return, the variable contains 
 /// the number of integers that were actually stored, which may be smaller than
@@ -334,12 +328,12 @@ int StfMatch(StfData *f, const char *pattern)
 ///
 /// Here is an example:
 /// @code
-/// char *name = StfGetName(f);
+/// char *name = stfGetName(f);
 /// if (!strcmp(name,"Vector"))
 /// {
 ///     int vec[10];
 ///     int vecsize = 10;
-///     StfGetVector(f,&vecsize,vec);
+///     stfGetVector(f,&vecsize,vec);
 ///     printf("%d elements read\n",*vecsize);
 /// }
 /// @endcode
@@ -349,25 +343,25 @@ int StfMatch(StfData *f, const char *pattern)
 /// @param buf Pointer to a buffer receiving the data.
 /// @return The function returns $0$ on success and $-1$ on error.
 
-int StfGetVector(StfData *f, int *bufsize, int *buf)
+int stfGetVector(StfData *f, int *bufsize, int *buf)
 {
     char *c = f->GetPtr;
     int i;
     if (buf == NULL || bufsize == NULL || *bufsize <= 0)
 	return -1;
     
-    if (StfMatch(f," ["))
+    if (stfMatch(f," ["))
 	return (f->GetPtr = c, -1);
     for (i = 0; i < *bufsize; ++i, ++buf)
     {
-	if (StfMatch(f," ]") == 0)
+	if (stfMatch(f," ]") == 0)
 	    break;
-	if (i > 0 && StfMatch(f,","))
+	if (i > 0 && stfMatch(f,","))
 	    return (f->GetPtr = c, -1);
-	if (StfGetInt(f,buf))
+	if (stfGetInt(f,buf))
 	    break;
     }
-    if (i >= *bufsize && StfMatch(f,"]"))
+    if (i >= *bufsize && stfMatch(f,"]"))
 	return (f->GetPtr = c, -1);
     *bufsize = i;
     return 0;
@@ -375,4 +369,4 @@ int StfGetVector(StfData *f, int *bufsize, int *buf)
 
 /// @}
 
-// vim:sw=3:et
+// vim:fileencoding=utf8:sw=3:ts=8:et:cin

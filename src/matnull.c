@@ -1,18 +1,13 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // C MeatAxe - Matrix null space
-//
-// (C) Copyright 1998-2015 Michael Ringe, Lehrstuhl D fuer Mathematik, RWTH Aachen
-//
-// This program is free software; see the file COPYING for details.
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#include <meataxe.h>
+#include "meataxe.h"
 #include <stdlib.h>
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // Local data
 
-MTX_DEFINE_FILE_INFO
 
 /// @addtogroup mat
 /// @{
@@ -37,20 +32,18 @@ static long znullsp(PTR matrix, long nor, int *piv, PTR nsp, int flags)
 {
    PTR x, y, a, b;
    int i;
-   long noc = FfNoc;
+   long noc = ffNoc;
    long dim;
    FEL f;
 
    // initialize result with identity
-   if (FfSetNoc(nor) != 0) {
-      return -1;
-   }
+   ffSetNoc(nor);
    x = nsp;
    for (i = 0; i < nor; ++i) {
       piv[i] = -1;
-      FfMulRow(x,FF_ZERO);
-      FfInsert(x,i,FF_ONE);
-      FfStepPtr(&x);
+      ffMulRow(x,FF_ZERO);
+      ffInsert(x,i,FF_ONE);
+      ffStepPtr(&x, nor);
    }
 
    // gaussian elimination
@@ -61,25 +54,24 @@ static long znullsp(PTR matrix, long nor, int *piv, PTR nsp, int flags)
       long k, p;
 
       for (k = 0; k < i; ++k) {
-         FfSetNoc(noc); // not checked since we know noc is valid
-         if (((p = piv[k]) >= 0) && ((f = FfExtract(x,p)) != FF_ZERO)) {
-            f = FfNeg(FfDiv(f,FfExtract(xx,p)));
-            FfSetNoc(noc);
-            FfAddMulRow(x,xx,f);
-            FfSetNoc(nor);
-            FfAddMulRow(y,yy,f);
+         ffSetNoc(noc); // not checked since we know noc is valid
+         if (((p = piv[k]) >= 0) && ((f = ffExtract(x,p)) != FF_ZERO)) {
+            f = ffNeg(ffDiv(f,ffExtract(xx,p)));
+            ffSetNoc(noc);
+            ffAddMulRow(x,xx,f);
+            ffSetNoc(nor);
+            ffAddMulRow(y,yy,f);
          }
-         FfSetNoc(noc);
-         FfStepPtr(&xx);
-         FfSetNoc(nor);
-         FfStepPtr(&yy);
+         ffSetNoc(noc);
+         ffStepPtr(&xx, noc);
+         ffSetNoc(nor);
+         ffStepPtr(&yy, nor);
       }
-      FfSetNoc(noc);
-      piv[i] = p = FfFindPivot(x,&f);
-      FfSetNoc(noc);
-      FfStepPtr(&x);
-      FfSetNoc(nor);
-      FfStepPtr(&y);
+      ffSetNoc(noc);
+      piv[i] = p = ffFindPivot(x,&f);
+      ffStepPtr(&x, noc);
+      ffSetNoc(nor);
+      ffStepPtr(&y, nor);
    }
 
    // step 2: reduce the null space to echelon form.
@@ -88,24 +80,24 @@ static long znullsp(PTR matrix, long nor, int *piv, PTR nsp, int flags)
    a = b = matrix;
    for (i = 0; i < nor; ++i) {
       if (piv[i] == -1) {
-         FfSetNoc(nor);
-         if (y != x) { FfCopyRow(y,x); }
+         ffSetNoc(nor);
+         if (y != x) { ffCopyRow(y,x); }
          if (flags) {
             ++dim;
          } else {
-            FfCleanRow(y,nsp,dim,piv);
-            piv[dim++] = FfFindPivot(y,&f);
+            ffCleanRow(y,nsp,dim,nor, piv);
+            piv[dim++] = ffFindPivot(y,&f);
          }
-         FfStepPtr(&y);
+         ffStepPtr(&y, nor);
       } else {
-         FfSetNoc(noc);
-         if (b != a) { FfCopyRow(b,a); }
-         FfStepPtr(&b);
+         ffSetNoc(noc);
+         if (b != a) { ffCopyRow(b,a); }
+         ffStepPtr(&b, noc);
       }
-      FfSetNoc(nor);
-      FfStepPtr(&x);
-      FfSetNoc(noc);
-      FfStepPtr(&a);
+      ffSetNoc(nor);
+      ffStepPtr(&x, nor);
+      ffSetNoc(noc);
+      ffStepPtr(&a, noc);
    }
 
    return dim;
@@ -114,7 +106,7 @@ static long znullsp(PTR matrix, long nor, int *piv, PTR nsp, int flags)
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 /// Null-space of a matrix
-/// This function calculates the null-space of a matrix. Unlike MatNullSpace(), this function
+/// This function calculates the null-space of a matrix. Unlike matNullSpace(), this function
 /// modifies the orginal matrix, but uses less memory since no temporary workspace is allocated.
 /// The result is in echelon form.
 ///
@@ -122,44 +114,42 @@ static long znullsp(PTR matrix, long nor, int *piv, PTR nsp, int flags)
 /// @param flags If nonzero, the null-space is not reduced to echelon form.
 /// @return Pointer to the null-space, or NULL on error.
 
-Matrix_t *MatNullSpace_(Matrix_t *mat, int flags)
+Matrix_t *matNullSpace_(Matrix_t *mat, int flags)
 {
    long dim;
    Matrix_t *nsp;
 
    // check arguments
-   if (!MatIsValid(mat)) {
-      return NULL;
-   }
+   matValidate(MTX_HERE, mat);
 
    // allocate workspace
-   nsp = MatAlloc(mat->Field,mat->Nor,mat->Nor);
+   nsp = matAlloc(mat->Field,mat->Nor,mat->Nor);
    if (nsp == NULL) {
       return NULL;
    }
    nsp->PivotTable = NREALLOC(nsp->PivotTable,int,mat->Nor);
    if (nsp->PivotTable == NULL)
    {
-       MatFree(nsp);
+       matFree(nsp);
        return NULL;
    }
 
    // calculate the null-space
-   FfSetNoc(mat->Noc);
+   ffSetNoc(mat->Noc);
    dim = znullsp(mat->Data,mat->Nor,nsp->PivotTable,nsp->Data,flags);
    if (dim == -1)
    {
-      MatFree(nsp);
+      matFree(nsp);
       return NULL;
    }
    if (flags) {
-      SysFree(nsp->PivotTable);
+      sysFree(nsp->PivotTable);
       nsp->PivotTable = NULL;
    }
 
    // resize the result buffer to its actual size
    nsp->Nor = dim;
-   nsp->Data = (PTR) SysRealloc(nsp->Data,nsp->RowSize * dim);
+   nsp->Data = (PTR) sysRealloc(nsp->Data,nsp->RowSize * dim);
 
    return nsp;
 }
@@ -167,30 +157,26 @@ Matrix_t *MatNullSpace_(Matrix_t *mat, int flags)
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 /// Null-space of a matrix
-/// This function calculates the null-space of a matrix. Unlike MatNullSpace_() and
-/// MatNullSpace__(), this function does not change the original matrix, but it allocates
+/// This function calculates the null-space of a matrix. Unlike matNullSpace_() and
+/// matNullSpace__(), this function does not change the original matrix, but it allocates
 /// a temporary copy of the matrix and thus needs more memory.
 /// @param mat Pointer to the matrix.
 /// @return Pointer to the null-space, or 0 on error.
 
-Matrix_t *MatNullSpace(const Matrix_t *mat)
+Matrix_t *matNullSpace(const Matrix_t *mat)
 {
    Matrix_t *tmp, *nsp;
 
    // Check arguments
-#ifdef DEBUG
-   if (!MatIsValid(mat)) {
-      return NULL;
-   }
-#endif
+   matValidate(MTX_HERE, mat);
 
    // Non-destructive null-space
-   if ((tmp = MatDup(mat)) == NULL) {
-      MTX_ERROR("Cannot duplicate matrix");
+   if ((tmp = matDup(mat)) == NULL) {
+      mtxAbort(MTX_HERE,"Cannot duplicate matrix");
       return NULL;
    }
-   nsp = MatNullSpace_(tmp,0);
-   MatFree(tmp);
+   nsp = matNullSpace_(tmp,0);
+   matFree(tmp);
    return nsp;
 }
 
@@ -198,19 +184,19 @@ Matrix_t *MatNullSpace(const Matrix_t *mat)
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 /// Null-space of a matrix
 /// This function calculates the null-space of a matrix and deletes the original matrix.
-/// @see MatNullSpace_(), MatNullSpace()
+/// @see matNullSpace_(), matNullSpace()
 /// @param mat Pointer to the matrix.
 /// @return Pointer to the null-space, or 0 on error.
 
-Matrix_t *MatNullSpace__(Matrix_t *mat)
+Matrix_t *matNullSpace__(Matrix_t *mat)
 {
    Matrix_t *nsp;
-   nsp = MatNullSpace_(mat,0);
-   MatFree(mat);
+   nsp = matNullSpace_(mat,0);
+   matFree(mat);
    return nsp;
 }
 
 
 /// @}
 
-// vim:sw=3:et
+// vim:fileencoding=utf8:sw=3:ts=8:et:cin

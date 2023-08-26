@@ -1,14 +1,9 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // C MeatAxe - Find endomorphisms
-//
-// (C) Copyright 1998-2015 Michael Ringe, Lehrstuhl D fuer Mathematik, RWTH Aachen
-//
-// This program is free software; see the file COPYING for details.
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#include <meataxe.h>
+#include "meataxe.h"
 
-MTX_DEFINE_FILE_INFO
 
 /// @defgroup endo Endomorphisms
 /// @{
@@ -22,14 +17,14 @@ static Matrix_t *MakeEndo(const MatRep_t *rep, const Matrix_t *sb1,
     /* Make standard basis from <vec>
        ------------------------------ */
     sb2 = SpinUp(vec,rep,SF_FIRST|SF_CYCLIC|SF_STD,NULL,NULL);
-    MTX_VERIFY(sb2 != NULL && sb2->Nor == sb2->Noc);
+    MTX_ASSERT(sb2 != NULL && sb2->Nor == sb2->Noc, NULL);
 
     /* The linear mapping that maps <sb1> on <Matrix_t> is the endomorphism
        we are looking for!
        --------------------------------------------------------------- */
-    endo = MatInverse(sb1);
-    MatMul(endo,sb2);
-    MatFree(sb2);
+    endo = matInverse(sb1);
+    matMul(endo,sb2);
+    matFree(sb2);
     return endo;
 }
 
@@ -65,17 +60,17 @@ int MakeEndomorphisms(const MatRep_t *rep, const Matrix_t *nsp,
     Matrix_t *sb1;		/* Standard bases */
     int nendo;			/* # of endomorphisms obtained so far */
 
-    MTX_ASSERT(nsp->Nor > 0);
-    MTX_ASSERT(rep->NGen > 0);
+    MTX_ASSERT(nsp->Nor > 0, -1);
+    MTX_ASSERT(rep->NGen > 0, -1);
 
     /* Take the first vector from <nsp> and make the standard basis.
        ------------------------------------------------------------- */
     sb1 = SpinUp(nsp,rep,SF_FIRST|SF_CYCLIC|SF_STD,NULL,NULL);
-    MTX_VERIFY(sb1 != NULL && sb1->Nor == sb1->Noc);
+    MTX_ASSERT(sb1 != NULL && sb1->Nor == sb1->Noc, -1);
 
     /* Take the identity as the first basis element for E
        -------------------------------------------------- */
-    endo[0] = MatId(rep->Gen[0]->Field,rep->Gen[0]->Nor);
+    endo[0] = matId(rep->Gen[0]->Field,rep->Gen[0]->Nor);
     nendo = 1;
 
     /* For each of the remaining vectors v_2,..v_d in <nsp>, construct the
@@ -83,9 +78,9 @@ int MakeEndomorphisms(const MatRep_t *rep, const Matrix_t *nsp,
        -------------------------------------------------------------------- */
     while (nendo < nsp->Nor)
     {
-	Matrix_t *vec = MatCutRows(nsp,nendo,1);
+	Matrix_t *vec = matCutRows(nsp,nendo,1);
 	endo[nendo] = MakeEndo(rep,sb1,vec);
-	MatFree(vec);
+	matFree(vec);
 	if (endo[nendo] == NULL)	/* Error */
 	    break;
 	++nendo;
@@ -96,9 +91,9 @@ int MakeEndomorphisms(const MatRep_t *rep, const Matrix_t *nsp,
     if (nendo < nsp->Nor)
     {
 	while (nendo > 0)
-	    MatFree(endo[--nendo]);
+	    matFree(endo[--nendo]);
     }
-    MatFree(sb1); 
+    matFree(sb1); 
 
     /* Return error code
        ----------------- */
@@ -106,3 +101,4 @@ int MakeEndomorphisms(const MatRep_t *rep, const Matrix_t *nsp,
 }
 
 /// @}
+// vim:fileencoding=utf8:sw=3:ts=8:et:cin

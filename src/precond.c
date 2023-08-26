@@ -1,12 +1,8 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // C MeatAxe - Precondensation of tensor products
-//
-// (C) Copyright 1998-2015 Michael Ringe, Lehrstuhl D fuer Mathematik, RWTH Aachen
-//
-// This program is free software; see the file COPYING for details.
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#include <meataxe.h>
+#include "meataxe.h"
 
 #include <ctype.h>
 #include <stdarg.h>
@@ -18,7 +14,6 @@
    Global data
    -------------------------------------------------------------------------- */
 
-MTX_DEFINE_FILE_INFO
 
 char TkiName[LAT_MAXBASENAME];	/* Base name for .tki file */
 TkData_t TKInfo;			/* Data from .tki file */
@@ -66,7 +61,7 @@ static MtxApplication_t *App = NULL;
      <argv>: Command line arguments
    -------------------------------------------------------------------------- */
 
-static int Init(int argc, const char **argv)
+static int Init(int argc, char **argv)
 
 {
     int i;
@@ -81,25 +76,25 @@ static int Init(int argc, const char **argv)
 
     /* Initialize the MeatAxe library
        ------------------------------ */
-    if ((App = AppAlloc(&AppInfo,argc,argv)) == NULL)
+    if ((App = appAlloc(&AppInfo,argc,argv)) == NULL)
 	return -1;
-    opt_s = AppGetOption(App,"-s");
-    if (AppGetArguments(App,3,3) != 3)
+    opt_s = appGetOption(App,"-s");
+    if (appGetArguments(App,3,3) != 3)
 	return -1;
     strcpy(TkiName,App->ArgV[0]);
 
     /* Read info files
        --------------- */
-    strncpy(TKInfo.NameM,App->ArgV[1],sizeof(TKInfo.NameM));
-    strncpy(TKInfo.NameN,App->ArgV[2],sizeof(TKInfo.NameN));
-    if (Lat_ReadInfo(&InfoM,App->ArgV[1]) != 0)
+    strncpy(TKInfo.NameM,App->ArgV[1],sizeof(TKInfo.NameM)-1);
+    strncpy(TKInfo.NameN,App->ArgV[2],sizeof(TKInfo.NameN)-1);
+    if (latReadInfo(&InfoM,App->ArgV[1]) != 0)
     {
-	MTX_ERROR1("Error reading %s.cfinfo",App->ArgV[1]);
+	mtxAbort(MTX_HERE,"Error reading %s.cfinfo",App->ArgV[1]);
 	return -1;
     }
-    if (Lat_ReadInfo(&InfoN,App->ArgV[2]) != 0)
+    if (latReadInfo(&InfoN,App->ArgV[2]) != 0)
     {
-	MTX_ERROR1("Error reading %s.cfinfo",App->ArgV[2]);
+	mtxAbort(MTX_HERE,"Error reading %s.cfinfo",App->ArgV[2]);
 	return -1;
     }
 
@@ -114,14 +109,14 @@ static int Init(int argc, const char **argv)
        ------------------------------------- */
     if (InfoM.Field != InfoN.Field)
     {
-	MTX_ERROR4("Incompatible representations: %s is over GF(%d), "
+	mtxAbort(MTX_HERE,"Incompatible representations: %s is over GF(%d), "
 	   "%s is over GF(%d)",InfoM.BaseName,InfoM.Field,InfoN.BaseName,
 	   InfoN.Field);
 	return -1;
     }
     if (InfoM.NGen != InfoN.NGen)
     {
-	MTX_ERROR4("Incompatible representations: %s has %d generators, "
+	mtxAbort(MTX_HERE,"Incompatible representations: %s has %d generators, "
 	   "%s has %d generators",InfoM.BaseName,InfoM.NGen,InfoN.BaseName,
 	   InfoN.NGen);
 	return -1;
@@ -130,9 +125,9 @@ static int Init(int argc, const char **argv)
     /* Print start message
        ------------------- */
     sprintf(fn,"%s.1",InfoM.BaseName);
-    fclose(FfReadHeader(fn,&fl1,&nor1,&noc1));
+    fclose(ffReadHeader(fn,&fl1,&nor1,&noc1));
     sprintf(fn,"%s.1",InfoN.BaseName);
-    fclose(FfReadHeader(fn,&fl2,&nor2,&noc2));
+    fclose(ffReadHeader(fn,&fl2,&nor2,&noc2));
     MESSAGE(0,("Beginning pre-condensation of dimension %d x %d = %d\n",
 	nor1,nor2,nor1*nor2));
     return 0;
@@ -170,13 +165,13 @@ static int IsDual(int mj, MatRep_t *rep_m, int nj)
 
     /* Read the (contragrediate) generators and compare
        ------------------------------------------------ */
-    MESSAGE(2,(" (%s%s)",InfoN.BaseName,Lat_CfName(&InfoN,nj)));
-    rep_n = Lat_ReadCfGens(&InfoN,nj,LAT_RG_INVERT|LAT_RG_TRANSPOSE
+    MESSAGE(2,(" (%s%s)",InfoN.BaseName,latCfName(&InfoN,nj)));
+    rep_n = latReadCfGens(&InfoN,nj,LAT_RG_INVERT|LAT_RG_TRANSPOSE
 	| (InfoN.Cf[nj].peakword >= 0 ? LAT_RG_STD : 0));
     
     result = IsIsomorphic(rep_m,minfo,rep_n,Trans + TKInfo.NCf,
 	minfo->peakword >= 0);
-    MrFree(rep_n);
+    mrFree(rep_n);
     return result;
 }
 
@@ -251,24 +246,23 @@ static void MkEndo(const MatRep_t *rep, const CfInfo *cf,
     Matrix_t *pw, *nsp;
     WgData_t *wg;
 
-    MTX_VERIFY(maxendo >= cf->spl);
+    MTX_ASSERT(maxendo >= cf->spl,);
 
     /* Make the peak word kernel
        ------------------------- */
-    wg = WgAlloc(rep);
-    pw = WgMakeWord(wg,cf->idword);
-    WgFree(wg);
-    nsp = MatNullSpace__(MatInsert(pw,cf->idpol));
-    MTX_ASSERT(nsp->Nor == cf->spl);
-    MatFree(pw);
+    wg = wgAlloc(rep);
+    pw = wgMakeWord(wg,cf->idword);
+    wgFree(wg);
+    nsp = matNullSpace__(matInsert(pw,cf->idpol));
+    MTX_ASSERT(nsp->Nor == cf->spl,);
+    matFree(pw);
 
     /* Calculate a basis of the the endomorphism ring
        ---------------------------------------------- */
     const int i = MakeEndomorphisms(rep,nsp,endo);
-    (void)i;
-    MTX_ASSERT(i == 0);
+    MTX_ASSERT(i == 0,);
 
-    MatFree(nsp);
+    matFree(nsp);
 }
 
 
@@ -292,42 +286,42 @@ static void MakeQ(int n, int spl, const Matrix_t **endo)
 {		  
     int i;
     int dim = endo[0]->Nor;
-    Matrix_t *q = MatAlloc(endo[0]->Field,spl,dim*dim);
+    Matrix_t *q = matAlloc(endo[0]->Field,spl,dim*dim);
     char fn[200];
     for (i = 0; i < spl; ++i)
     {
 	int j;
-	Matrix_t *y = MatInverse(Trans[n]), *x;
-	MatMul(y,endo[i]);
-	x = MatTransposed(y);
-	MatFree(y);
+	Matrix_t *y = matInverse(Trans[n]), *x;
+	matMul(y,endo[i]);
+	x = matTransposed(y);
+	matFree(y);
 	for (j = 0; j < dim; ++j)
-	    MatCopyRegion(q,i,j * dim,x,j,0,1,-1);
-	MatFree(x);
+	    matCopyRegion(q,i,j * dim,x,j,0,1,-1);
+	matFree(x);
     }
     sprintf(fn,"%s.q.%d",TkiName,n+1);
     MESSAGE(2,("Writing %s\n",fn));
 
 #if 0
     if (InfoM.Cf[TKInfo.CfIndex[0][n]].peakword < 0)
-	MatMulScalar(q,FF_ZERO);
+	matMulScalar(q,FF_ZERO);
 #endif
 
-    MatSave(q,fn);
-    MatFree(q);
+    matSave(q,fn);
+    matFree(q);
 }
 
 
 
-static FEL MatProd(Matrix_t *a, Matrix_t *b)
+static FEL matProd(Matrix_t *a, Matrix_t *b)
 
 {
     FEL f = FF_ZERO;
     int i;
 
-    FfSetNoc(a->Noc);
+    ffSetNoc(a->Noc);
     for (i = 0; i < a->Nor; ++i)
-	f = FfAdd(f,FfScalarProduct(MatGetPtr(a,i),MatGetPtr(b,i)));
+	f = ffAdd(f,ffScalarProduct(matGetPtr(a,i),matGetPtr(b,i)));
     return f;
 }
 
@@ -359,16 +353,16 @@ static void MakePQ(int n, int mj, int nj)
     int i;
     Matrix_t *p;
 
-    MESSAGE(1,("Condensing %s%s x ",InfoM.BaseName,Lat_CfName(&InfoM,mj)));
-    MESSAGE(1,("%s%s, [E:k]=%d\n",InfoN.BaseName,Lat_CfName(&InfoN,nj),spl));
+    MESSAGE(1,("Condensing %s%s x ",InfoM.BaseName,latCfName(&InfoM,mj)));
+    MESSAGE(1,("%s%s, [E:k]=%d\n",InfoN.BaseName,latCfName(&InfoN,nj),spl));
 
     /* Read the generators for the constituent of M and make the
        endomorphism ring.
        --------------------------------------------------------- */
-    rep_m = Lat_ReadCfGens(&InfoM,mj,InfoM.Cf[mj].peakword >= 0 ? LAT_RG_STD : 0);
+    rep_m = latReadCfGens(&InfoM,mj,InfoM.Cf[mj].peakword >= 0 ? LAT_RG_STD : 0);
     MESSAGE(2,("Calculating endomorphism ring\n"));
     MkEndo(rep_m,InfoM.Cf + mj,endo,MAXENDO);
-    MrFree(rep_m);
+    mrFree(rep_m);
 
     /* Calculate the Q matrix
        ---------------------- */
@@ -380,34 +374,34 @@ static void MakePQ(int n, int mj, int nj)
        --------------------------------------------------- */
     MESSAGE(2,("Calculating projection on E\n"));
     MESSAGE(2,("   E* matrices\n"));
-    e = MatAlloc(FfOrder,spl,spl);
+    e = matAlloc(ffOrder,spl,spl);
     for (i = 0; i < spl; ++i)
     {
-	PTR pptr = MatGetPtr(e,i);
+	PTR pptr = matGetPtr(e,i);
 	int k;
 	for (k = 0; k < spl; ++k)
 	{
 	    FEL f;
-	    Matrix_t *x = MatDup(endo[i]);  
-	    MatMul(x,endo[k]);
-	    f = MatTrace(x);
-	    FfInsert(pptr,k,f);
-	    MatFree(x);
+	    Matrix_t *x = matDup(endo[i]);  
+	    matMul(x,endo[k]);
+	    f = matTrace(x);
+	    ffInsert(pptr,k,f);
+	    matFree(x);
 	}
     }
-    ei = MatInverse(e);
-    MatFree(e);
+    ei = matInverse(e);
+    matFree(e);
 
     for (i = 0; i < spl; ++i)
     {
 	int k;
 	PTR p;
-	estar[i] = MatAlloc(FfOrder,dim,dim);
-	p = MatGetPtr(ei,i);
+	estar[i] = matAlloc(ffOrder,dim,dim);
+	p = matGetPtr(ei,i);
 	for (k = 0; k < spl; ++k)
-	    MatAddMul(estar[i],endo[k],FfExtract(p,k));
+	    matAddMul(estar[i],endo[k],ffExtract(p,k));
     }
-    MatFree(ei);
+    matFree(ei);
 
     /* Transpose the E* matrices. This simplifies the 
        calculation of tr(z E*) below.
@@ -415,30 +409,30 @@ static void MakePQ(int n, int mj, int nj)
     MESSAGE(2,("   Transposing E* matrices\n"));
     for (i = 0; i < spl; ++i)
     {
-	Matrix_t *x = MatTransposed(estar[i]);
-	MatFree(estar[i]);
+	Matrix_t *x = matTransposed(estar[i]);
+	matFree(estar[i]);
 	estar[i] = x;
     }
 
     /* Calculate the P matrix
        ---------------------- */
     MESSAGE(2,("   P matrix\n"));
-    p = MatAlloc(FfOrder,dim*dim,spl);
+    p = matAlloc(ffOrder,dim*dim,spl);
     for (i = 0; i < dim; ++i)
     {
 	int j;
 	for (j = 0; j < dim; ++j)
 	{
 	    int r;
-	    PTR pptr = MatGetPtr(p,i*dim + j);
-	    Matrix_t *x = MatAlloc(FfOrder,dim,dim);
-	    MatCopyRegion(x,0,i,Trans[n],0,j,dim,1);
+	    PTR pptr = matGetPtr(p,i*dim + j);
+	    Matrix_t *x = matAlloc(ffOrder,dim,dim);
+	    matCopyRegion(x,0,i,Trans[n],0,j,dim,1);
 	    for (r = 0; r < spl; ++r)
 	    {
-		FEL f = MatProd(x,estar[r]);
-		FfInsert(pptr,r,f);
+		FEL f = matProd(x,estar[r]);
+		ffInsert(pptr,r,f);
 	    }
-	    MatFree(x);
+	    matFree(x);
 	}
     }
 
@@ -446,15 +440,15 @@ static void MakePQ(int n, int mj, int nj)
     MESSAGE(2,("Writing %s\n",fn));
 #if 0
     if (InfoM.Cf[mj].peakword < 0)
-	MatMulScalar(p,FF_ZERO);
+	matMulScalar(p,FF_ZERO);
 #endif
-    MatSave(p,fn);
+    matSave(p,fn);
 
     /* Clean up
        -------- */
-    MatFree(p);
+    matFree(p);
     for (i = 0; i < spl; ++i)
-        MatFree(endo[i]);
+        matFree(endo[i]);
 }
 
 
@@ -490,14 +484,14 @@ static void CalcDim()
    main() - Program entry point
    -------------------------------------------------------------------------- */
 
-int main(int argc, const char **argv)
+int main(int argc, char **argv)
 
 {
     int mj;
 
     if (Init(argc,argv) != 0)
     {
-	MTX_ERROR("Initialization failed");
+	mtxAbort(MTX_HERE,"Initialization failed");
 	return -1;
     }
 
@@ -511,14 +505,14 @@ int main(int argc, const char **argv)
 	if (InfoM.Cf[mj].peakword < 0)
 	{
 	    MESSAGE(0,("WARNING: No peak word word available for %s%s\n",
-		InfoM.BaseName,Lat_CfName(&InfoM,mj)));
+		InfoM.BaseName,latCfName(&InfoM,mj)));
 	}
-	MESSAGE(0,("%s%s ",InfoM.BaseName,Lat_CfName(&InfoM,mj)));
+	MESSAGE(0,("%s%s ",InfoM.BaseName,latCfName(&InfoM,mj)));
 
 	/* Read the generators for the <mj>-th contituent of M, and find
 	   the corresponding (=contragredient) constituent in N.
 	   ------------------------------------------------------------- */
-	rep_m = Lat_ReadCfGens(&InfoM,mj,InfoM.Cf[mj].peakword >= 0 ? LAT_RG_STD : 0);
+	rep_m = latReadCfGens(&InfoM,mj,InfoM.Cf[mj].peakword >= 0 ? LAT_RG_STD : 0);
 	nj = FindConstituentInN(mj,rep_m);
 
 	/* Calculate the P and Q matrix for this constituent
@@ -526,7 +520,7 @@ int main(int argc, const char **argv)
 	if (nj >= 0)
 	{
 	    MESSAGE(0,(" <--> %s%s\n",InfoN.BaseName,
-		Lat_CfName(&InfoN,nj)));
+		latCfName(&InfoN,nj)));
 	    TKInfo.CfIndex[0][TKInfo.NCf] = mj;
 	    TKInfo.CfIndex[1][TKInfo.NCf] = nj;
 	    MakePQ(TKInfo.NCf,mj,nj);
@@ -537,12 +531,12 @@ int main(int argc, const char **argv)
 
 	/* Clean up
 	   -------- */
-	MrFree(rep_m);
+	mrFree(rep_m);
     }
 
     CalcDim();				/* Calculate dimension */
-    TK_WriteInfo(&TKInfo,TkiName);	/* Write .tki file */
-    if (App != NULL) AppFree(App);
+    tkWriteInfo(&TKInfo,TkiName);	/* Write .tki file */
+    if (App != NULL) appFree(App);
     return 0;
 }
 
@@ -615,3 +609,4 @@ Hom<sub>k</sub>(V,V) on End<sub>kH</sub>(V).
 More details on the algorithm used in Step 2 can be found in @ref Ri98 "[Ri98]".
 
 **/
+// vim:fileencoding=utf8:sw=3:ts=8:et:cin

@@ -1,14 +1,10 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // C MeatAxe - Draw the submodule lattice
-//
-// (C) Copyright 1998-2015 Michael Ringe, Lehrstuhl D fuer Mathematik, RWTH Aachen
-//
-// This program is free software; see the file COPYING for details.
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 /* Use the PostScript output routine by default */
 
-#include <meataxe.h>
+#include "meataxe.h"
 
 #include <ctype.h>
 #include <string.h>
@@ -24,7 +20,6 @@
 /* ------------------------------------------------------------------
    Global data
    ------------------------------------------------------------------ */
-MTX_DEFINE_FILE_INFO
 
 
 static MtxApplicationInfo_t AppInfo = { 
@@ -53,9 +48,9 @@ MTX_COMMON_OPTIONS_DESCRIPTION
 static MtxApplication_t *App = NULL;
 
 
-static char ifilename[100];
-static char ofilename[100];
 static char name[100];
+static char ifilename[130];
+static char ofilename[130];
 static long block = -1;
 static Lat_Info LI;		/* Data from .cfinfo file */
 static enum { O_PS, O_GAP } OutputMode = O_PS;
@@ -98,7 +93,7 @@ static LdLattice_t *Lattice;
 static void err(char *msg)
 
 {
-    MTX_ERROR1("*** Fatal error: %s",msg);
+    mtxAbort(MTX_HERE,"*** Fatal error: %s",msg);
     exit(1);
 }
 
@@ -117,12 +112,12 @@ void readfile(void)
 
     /* Open input file
        --------------- */
-    f = SysFopen(ifilename,FM_READ|FM_TEXT);
+    f = sysFopen(ifilename,"r");
     if (f == NULL)
     {	perror(ifilename);
 		err("Error opening input file");
     }
-    buf = (char *)SysMalloc(LBUFSIZE);
+    buf = (char *)sysMalloc(LBUFSIZE);
     MESSAGE(1,("Reading %s\n",ifilename));
 
     /* Read number of submodules 
@@ -266,7 +261,7 @@ void buildroot(void)
 
     /* Calculate the factor lattice
        ---------------------------- */
-    Lattice = LdAlloc(xnsub);
+    Lattice = ldAlloc(xnsub);
     k = 0;
     for (i = 0; i < nsub; ++i)
     {   
@@ -276,7 +271,7 @@ void buildroot(void)
 	    for (ip = max[i]; *ip >= 0; ++ip)
 	    {   
 		if (flag[*ip] == 3)
-		    LdAddIncidence(Lattice,map[*ip],k);
+		    ldAddIncidence(Lattice,map[*ip],k);
 	    }
 	    ++k;
 	}
@@ -288,10 +283,10 @@ void buildroot(void)
 
 
 /* ------------------------------------------------------------------
-   SetColors() - Set colors from command line option.
+   setColors() - Set colors from command line option.
    ------------------------------------------------------------------ */
 
-static void SetColors(const char *opt_text_ptr)
+static void setColors(const char *opt_text_ptr)
 
 {
     int i;
@@ -303,23 +298,23 @@ static void SetColors(const char *opt_text_ptr)
     	for (i = 0; *(c = ColorMap[i].name) != 0; ++i)
 	    if (!strncmp(c,opt_text_ptr,strlen(c))) break;
 	if (*c == 0)
-	    MTX_ERROR1("-c: %E",MTX_ERR_OPTION);
+	    mtxAbort(MTX_HERE,"-c: %s",MTX_ERR_OPTION);
 	opt_text_ptr += strlen(c);
 	if (*opt_text_ptr != '=' && *opt_text_ptr != ':')
-	    MTX_ERROR1("-c: %E",MTX_ERR_OPTION);
+	    mtxAbort(MTX_HERE,"-c: %s",MTX_ERR_OPTION);
 	++opt_text_ptr;
 	if (sscanf(opt_text_ptr,"%d/%d/%d",&r,&g,&b) !=3)
-	    MTX_ERROR1("-c: %E",MTX_ERR_OPTION);
+	    mtxAbort(MTX_HERE,"-c: %s",MTX_ERR_OPTION);
 	while (*opt_text_ptr != 0 && *opt_text_ptr != ',') 
 	    ++opt_text_ptr;
 	if (*opt_text_ptr == ',') 
 	    ++opt_text_ptr;
 	if (r < 0 || g < 0 || b < 0 || r > 99 || g > 99 || b > 99) 
-	    MTX_ERROR1("color value (-c): %E",MTX_ERR_RANGE);
+	    mtxAbort(MTX_HERE,"color value (-c): %s",MTX_ERR_RANGE);
 	ColorMap[i].r = r;
 	ColorMap[i].g = g;
 	ColorMap[i].b = b;
-	MESSAGE(2,("SetColor(%s = %d/%d/%d)\n",ColorMap[i].name,
+	MESSAGE(2,("setColor(%s = %d/%d/%d)\n",ColorMap[i].name,
 		r,g,b));
     }
 }
@@ -329,7 +324,7 @@ static void SetColors(const char *opt_text_ptr)
    Init()
    ------------------------------------------------------------------ */
 
-static int Init(int argc, const char **argv)
+static int Init(int argc, char **argv)
 
 {	
     const char *c;
@@ -338,17 +333,17 @@ static int Init(int argc, const char **argv)
     /* Parse command line
        ------------------ */
 
-    if ((App = AppAlloc(&AppInfo,argc,argv)) == NULL)
+    if ((App = appAlloc(&AppInfo,argc,argv)) == NULL)
 	return -1;
-    block = AppGetIntOption(App,"-b",-1,0,-1);
-    if (AppGetOption(App,"-G"))
+    block = appGetIntOption(App,"-b",-1,0,-1);
+    if (appGetOption(App,"-G"))
 	OutputMode = O_GAP;
-    if ((c = AppGetTextOption(App,"-c",NULL)) != NULL)
-	SetColors(c);
+    if ((c = appGetTextOption(App,"-c",NULL)) != NULL)
+	setColors(c);
     if (OutputMode == O_GAP)
 	MtxMessageLevel = -1000;
     upper = lower = -1;
-    AppGetArguments(App,1,3);
+    appGetArguments(App,1,3);
     switch (App->ArgC)
     {	case 3:
 		upper = atoi(App->ArgV[2]);
@@ -359,17 +354,17 @@ static int Init(int argc, const char **argv)
 		break;
     }
 
-    if (Lat_ReadInfo(&LI,name) != 0)
-	MTX_ERROR1("Error reading %s.cfinfo",name);
+    if (latReadInfo(&LI,name) != 0)
+	mtxAbort(MTX_HERE,"Error reading %s.cfinfo",name);
     if (block > 0)
     {
-	sprintf(ifilename,"%s.gra.%ld",name,block);
-	sprintf(ofilename,"%s.ps.%ld",name,block);
+	snprintf(ifilename, sizeof(ifilename), "%s.gra.%ld",name,block);
+	snprintf(ofilename, sizeof(ofilename), "%s.ps.%ld",name,block);
     }
     else
     {
-	sprintf(ifilename,"%s.gra",name);
-	sprintf(ofilename,"%s.ps",name);
+	snprintf(ifilename, sizeof(ifilename), "%s.gra",name);
+	snprintf(ofilename, sizeof(ofilename), "%s.ps",name);
     }
     return 0;
 }
@@ -395,7 +390,7 @@ static char hdr1[] =
     "%%%%Creator: mkgraph (%s)\n"
     "%%%%Title: %s\n"
     "%%%%Pages: 1 1\n"
-    "%%%%EndComments\n";
+    "%%%%sndComments\n";
 static char hdr2[] =
     "/NCols 1 def\n"
     "/NRows 1 def\n"
@@ -581,7 +576,7 @@ void writelegend()
 	fprintf(psfile,
 	    "stdColor [] 0 setdash %1.1f %1.1f moveto ",
 	    XMAP(0.8)+65.0,YMAP(1.0)-10.0*i-3.0);
-	fprintf(psfile,"(%s) show stroke\n",Lat_CfName(&LI,i));
+	fprintf(psfile,"(%s) show stroke\n",latCfName(&LI,i));
     }
     fprintf(psfile,"\n");
 }
@@ -594,7 +589,7 @@ void display()
 
     MESSAGE(0,("Writing lattice diagram to %s\n",ofilename));
     fflush(stdout);
-    psfile = SysFopen(ofilename,FM_CREATE|FM_TEXT);
+    psfile = sysFopen(ofilename,"w");
     if (psfile == NULL)
     {	perror(ofilename);
 	exit(1);
@@ -628,7 +623,7 @@ printf("Show line %d-%d: orig=%d-%d, m=%d, type=%d\n",
 	fprintf(psfile,"} repeat\n");
     }
     fprintf(psfile,"showpage\n");
-    fprintf(psfile,"%%%%EOF\n");
+    fprintf(psfile,"%%%%sOF\n");
     fclose(psfile);
 }
 
@@ -664,8 +659,8 @@ static void DisplayGap()
     for (i = 0; i < Lattice->NNodes; ++i)
     {
 	LdNode_t *n = Lattice->Nodes + i;
-	char tmp[10];
-	sprintf(tmp,"%d",i);
+	char tmp[50];
+	snprintf(tmp, sizeof(tmp), "%d",i);
 	printf("Add(%s,Vertex(%s,rec(SubmoduleNumber:=%d),"
 	    "rec(x:=%d,levelparam:=%d,label:=\"%s\",shape:=\"%s\")));\n",
 	    GapVlName,GapLatName,i,(int)(n->PosX * GapXSize),n->Layer,
@@ -709,13 +704,12 @@ Edge(p,vertexliste[from[i]],vertexliste[to[i]]);
    ------------------------------------------------------------------ */
 
 int main(int argc, char *argv[])
-
 {
-    if (Init(argc,(const char **)argv) != 0)
+    if (Init(argc,argv) != 0)
 	return 1;
     readfile();
     buildroot();
-    LdSetPositions(Lattice);
+    ldSetPositions(Lattice);
     switch (OutputMode)
     {
 	case O_GAP: DisplayGap(); break;
@@ -788,3 +782,4 @@ y (vertical) position, and at equidistant x positions. The program tries
 to optimize the order of submodules in each layer, such that lines between
 the submodules become short.
 **/
+// vim:fileencoding=utf8:sw=3:ts=8:et:cin

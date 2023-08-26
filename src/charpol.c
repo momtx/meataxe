@@ -1,30 +1,26 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-// C MeatAxe - Characteristic polynomial of a matrix
-//
-// (C) Copyright 1998-2015 Michael Ringe, Lehrstuhl D fuer Mathematik, RWTH Aachen
-//
-// This program is free software; see the file COPYING for details.
+// C MeatAxe - Characteristic and minimal polynomial of a matrix
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#include <meataxe.h>
+#include "meataxe.h"
 #include <string.h>
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // Local data
 
-MTX_DEFINE_FILE_INFO
+enum PolyMode { PM_CHARPOL, PM_MINPOL };
 
 /// @defgroup charpol Characteristic and Minimal Polynomials
 /// @{
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 /// Seed for Characteristic Polynomial.
-/// This variable is used by CharPolFactor() to select the first
+/// This variable is used by charPolFactor() to select the first
 /// seed vector. By default, CharPolSeed has the value 0, i.e., the
 /// first seed vector is (1,0,...,0). Assigning the value 1 selects
 /// the start vector (0,1,...,0) in all subsequent calls to
-/// CharPolFactor().
-/// If CharPolSeed is out of bounds, CharPolFactor() will reset it to 0.
+/// charPolFactor().
+/// If CharPolSeed is out of bounds, charPolFactor() will reset it to 0.
 
 long CharPolSeed = 0;           /* Seed */
 
@@ -32,249 +28,283 @@ long CharPolSeed = 0;           /* Seed */
    Local data
    -------------------------------------------------------------------------- */
 
-static long fl, nor;            /* Field and size */
-static long *piv = NULL;        /* Pivot table */
-static char *ispiv = NULL;      /* Pivot flags */
-static PTR mat = NULL,          /* The matrix */
-           A = NULL,            /* Work space (for spin-up) */
-           B = NULL;            /* Work space II (coefficients) */
-static long dim;                /* Dimension reached so far */
-static long n;                  /* Dimension of cyclic subspace */
-
-/* ------------------------------------------------------------------
-   cleanup() - Free memory
-   ------------------------------------------------------------------ */
-
-static void cleanup()
+struct CharpolState 
 {
-   if (mat != NULL) { SysFree(mat); }
-   if (A != NULL) { SysFree(A); }
-   if (B != NULL) { SysFree(B); }
-   if (piv != NULL) { SysFree(piv); }
-   if (ispiv != NULL) { SysFree(ispiv); }
-   mat = A = B = NULL;
-   piv = NULL;
-   ispiv = NULL;
+   enum PolyMode mode;
+
+   long fl;      // field order
+   long nor;     // vector space dimension  TODO: rename to vsDim
+   long *piv;    // Pivot table
+   char *ispiv;  // Pivot flags
+   PTR mat;      // The matrix
+   PTR A;        // Work space (for spin-up)
+   PTR B;        // Work space II (coefficients)
+   long dim;     // Dimension reached so far (sum of cyclic subspace dimensions) TODO: rename to currentDim
+   long n;       // Dimension of cyclic subspace
+   long seed;    // Number if seed vector for the first cyclic subspace
+
+   // Minimal polynomial for the current subspace dimension. NULL in characteristic polynomial mode.
+   Poly_t* partialMinPol;  
+};
+
+// will be removed for MT support
+static struct CharpolState state__;
+
+// will be rewritten for MT support
+static void destroyState(struct CharpolState* state)
+{
+   if (state->mat == NULL)
+      return;
+
+   sysFree(state->mat);
+   sysFree(state->A);
+   sysFree(state->B);
+   sysFree(state->piv);
+   sysFree(state->ispiv);
+   if (state->partialMinPol != NULL) polFree(state->partialMinPol);
+
+   memset(state, 0, sizeof(*state));
 }
 
-
-/* ------------------------------------------------------------------
-   init()
-   ------------------------------------------------------------------ */
-
-static int init(const Matrix_t *matrix)
+// will be rewritten for MT support
+static struct CharpolState* createState(const Matrix_t* matrix, enum PolyMode mode)
 {
-   /* Set some global variables
-      ------------------------- */
+   matValidate(MTX_HERE, matrix);
    if (matrix->Nor != matrix->Noc) {
-      MTX_ERROR1("%E",MTX_ERR_NOTSQUARE);
-      return -1;
+      mtxAbort(MTX_HERE,"%s",MTX_ERR_NOTSQUARE);
    }
-   fl = matrix->Field;
-   nor = matrix->Nor;
-   dim = 0;
-   if ((CharPolSeed < 0) || (CharPolSeed >= nor)) {
-      CharPolSeed = 0;
-   }
+   
+   if (state__.mat != NULL) destroyState(&state__);
+   struct CharpolState* state = &state__;
+   memset(state, 0, sizeof(*state));
 
-   /* Allocate memory
-      --------------- */
-   cleanup();
-   FfSetField(fl);
-   FfSetNoc(nor);
-   if (((mat = FfAlloc(nor)) == NULL)
-       || ((A = FfAlloc(nor + 1)) == NULL)
-       || ((B = FfAlloc(nor + 1)) == NULL)
-       || ((piv = NALLOC(long,nor + 2)) == NULL)
-       || ((ispiv = NALLOC(char,nor + 2)) == NULL)
-       ) {
-      return -1;
-   }
+   state->mode = mode;
+   state->fl = matrix->Field;
+   state->nor = matrix->Nor;
+   ffSetField(state->fl);
+   ffSetNoc(state->nor);
+   state->mat = ffAlloc(state->nor, state->nor);
+   state->A = ffAlloc(state->nor + 1, state->nor);
+   state->B = ffAlloc(state->nor + 1, state->nor);
+   state->piv = NALLOC(long,state->nor + 2);
+   state->ispiv = NALLOC(char,state->nor + 2);
+       
+   // TODO: provide option to suppress copy and use the original matrix.
+   // This should always done in charPol() and may be useful for charPolFactor().
+   memcpy(state->mat,matrix->Data,ffSize(state->nor,state->nor));
+   memset(state->ispiv,0,(size_t)(state->nor + 2));
 
-   /* Initialize memory
-      ----------------- */
-   memcpy(mat,matrix->Data,FfCurrentRowSize * nor);
-   memset(ispiv,0,(size_t)(nor + 2));
+   state->seed = (CharPolSeed >= 0 && CharPolSeed < state->nor) ? CharPolSeed : 0;
+   CharPolSeed = state->seed;  // reproduce MeatAxe v2.3 behaviour
 
-   return 0;
+   if (mode == PM_MINPOL)
+      state->partialMinPol = polAlloc(state->fl, 0);
+
+   return state;
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
-/* ------------------------------------------------------------------
-   mkpoly() - Make polynomial for the latest cyclic subspace
-   ------------------------------------------------------------------ */
-
-static Poly_t *mkpoly()
+static struct CharpolState* getState(enum PolyMode mode)
 {
-   int k;
-   PTR x;
-   Poly_t *pol;
+   MTX_ASSERT(state__.mat != NULL, NULL);
+   MTX_ASSERT(state__.mode == mode, NULL);
+   return &state__;
+}
 
-   pol = PolAlloc(fl,n);
-   x = FfGetPtr(B,n);
-   for (k = 0; k < n; ++k) {
-      pol->Data[k] = FfExtract(x,k);
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+/// Make polynomial for the latest cyclic subspace
+
+static Poly_t *mkpoly(struct CharpolState* state)
+{
+   Poly_t *pol = polAlloc(state->fl,state->n);
+   PTR x = ffGetPtr(state->B,state->n, state->nor);
+   for (int k = 0; k < state->n; ++k) {
+      pol->Data[k] = ffExtract(x,k);
    }
-   pol->Data[n] = FF_ONE;
+   pol->Data[state->n] = FF_ONE;
    return pol;
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
-/* --------------------------------------------------------------------------
-   spinup_cyclic() - Spin up one cyclic subspace
-   -------------------------------------------------------------------------- */
+/// Spin up one cyclic subspace
 
-static void spinup_cyclic()
+static void spinup_cyclic(struct CharpolState* state)
 {
-   PTR a, b;
    long pv, k;
    FEL f;
 
-   a = FfGetPtr(A,dim);
-   b = B;
-   FfMulRow(b,FF_ZERO);
-   n = 0;
-   while ((pv = FfFindPivot(a,&f)) >= 0) {
+   PTR a = ffGetPtr(state->A, state->dim, state->nor);
+   PTR b = state->B;
+   ffMulRow(b,FF_ZERO);
+   state->n = 0;
+   while ((pv = ffFindPivot(a,&f)) >= 0) {
       PTR x, y;
 
       /* Add new vector to basis
          ----------------------- */
-      piv[dim + n] = pv;
-      ispiv[pv] = 1;
-      FfInsert(b,n,FF_ONE);
-      ++n;
+      state->piv[state->dim + state->n] = pv;
+      state->ispiv[pv] = 1;
+      ffInsert(b,state->n,FF_ONE);
+      ++state->n;
 
       /* Calculate the next vector
          ------------------------- */
       x = a;
-      FfStepPtr(&a);
-      FfMapRow(x,mat,nor,a);
+      ffStepPtr(&a, state->nor);
+      ffMapRow(x,state->mat,state->nor,a);
       y = b;
-      FfStepPtr(&b);
-      FfMulRow(b,FF_ZERO);
-      for (k = 0; k < nor - 1; ++k) {
-         FfInsert(b,k + 1,FfExtract(y,k));
+      ffStepPtr(&b, state->nor);
+      ffMulRow(b,FF_ZERO);
+      for (k = 0; k < state->nor - 1; ++k) {
+         ffInsert(b,k + 1,ffExtract(y,k));
       }
 
       /* Clean with existing basis vectors
          --------------------------------- */
-      x = A;
-      y = B;
-      for (k = 0; k < dim + n; ++k) {
-         f = FfDiv(FfExtract(a,piv[k]),FfExtract(x,piv[k]));
-         FfAddMulRow(a,x,FfNeg(f));
-         if (k >= dim) {
-            FfAddMulRow(b,y,FfNeg(f));
-            FfStepPtr(&y);
+      x = state->A;
+      y = state->B;
+      for (k = 0; k < state->dim + state->n; ++k) {
+         f = ffDiv(ffExtract(a,state->piv[k]),ffExtract(x,state->piv[k]));
+         ffAddMulRow(a,x,ffNeg(f));
+         if (k >= state->dim) {
+            ffAddMulRow(b,y,ffNeg(f));
+            ffStepPtr(&y, state->nor);
          }
-         FfStepPtr(&x);
+         ffStepPtr(&x, state->nor);
       }
    }
-   dim += n;
+   state->dim += state->n;
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+/// Returns the next factor or NULL if the characteristic polynomial is complete.
+
+static Poly_t *CharPolFactor_(struct CharpolState* state)
+{
+   MTX_ASSERT(state != NULL, NULL);
+   MTX_ASSERT(state->mat, NULL);
+   if (state->dim >= state->nor)      // nothing left to do
+   {
+      return NULL;
+   }
+
+   // Prepare the next seed vector
+   ffSetField(state->fl);
+   ffSetNoc(state->nor);
+   /*    seed = ffGetPtr(A,state->dim,state->nor);*/
+   PTR seed = (PTR)((char *)state->A + ffSize(state->dim, state->nor));
+   int i;
+   if (state->dim == 0) {
+      i = state->seed;
+   } else {
+      for (i = 0; i < state->nor && state->ispiv[i] != 0; ++i);
+   }
+   ffMulRow(seed,FF_ZERO);
+   ffInsert(seed,i,FF_ONE);
+
+   // Spin up and return the polynomial
+   spinup_cyclic(state);
+   Poly_t* factor = mkpoly(state);
+
+   if (state->mode == PM_MINPOL) {
+      Poly_t* gcd = polGcd(factor, state->partialMinPol);
+      Poly_t* minpolFactor = polDivMod(factor, gcd);
+      polFree(factor);
+      polFree(gcd);
+      polMul(state->partialMinPol, minpolFactor);
+      return minpolFactor;
+   }
+
+   return factor;
+}
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
+
 /// Characteristic Polynomial.
 /// This function returns one factor of the characteristic polynomial of
 /// a given matrix. Further calls with a 0 argument return
 /// more factors or 0, if there are no more factors.
 /// Note that the factors obtained in this way are in general not irreducible.
 ///
-/// Here is how %CharPolFactor() works: If @a mat is different from 0,
-/// %CharPolFactor() initializes its internal data and starts
+/// Here is how %charPolFactor() works: If @a mat is different from 0,
+/// %charPolFactor() initializes its internal data and starts
 /// computing one cyclic subspace. The choice of starting vector for this
 /// first subspace depends on the global variable CharPolSeed.
 /// Usually, this variable has a value of 0, corresponding to the vector
 /// (1,0,...,0). Then, the polynomial of the matrix restricted to
 /// that cyclic subspace is constructed and returned to the caller.
 ///
-/// If @a mat is 0 on the next call, %CharPolFactor() resumes at
+/// If @a mat is 0 on the next call, %charPolFactor() resumes at
 /// the point where it returned the last time, calculates the next cyclic
 /// subspace and so on, until the complete space is exhausted.
-
+///
 /// @attention Since the function uses static variables to store
 /// information across multiple calls, your program must not use
-/// %CharPolFactor() on more than one matrix at the same time.
+/// %charPolFactor() on more than one matrix at the same time.
 /// @param mat Pointer to the matrix.
-/// @return A factor of the characteristic polynomial, or 0 if there are no more factors.
+/// @return A factor of the characteristic polynomial, or NULL if there are no more factors.
 
-Poly_t *CharPolFactor(const Matrix_t *mat)
+Poly_t *charPolFactor(const Matrix_t *mat)
 {
-   PTR seed;
-   int i;
-
-   /* If called with mat != NULL, initialize everything
-      ------------------------------------------------- */
-   if (mat != NULL) {
-      if (!MatIsValid(mat)) {
-         return NULL;
-      }
-      if (init(mat) != 0) {
-         MTX_ERROR("Initialization failed");
-         return NULL;
-      }
-   }
-
-   /* If there is nothing left to do, return NULL
-      ------------------------------------------- */
-   /* we could call cleanup() here... */
-   if (dim >= nor) {
-      return NULL;
-   }
-
-   /* Prepare the next seed vector
-      ---------------------------- */
-   FfSetField(fl);
-   FfSetNoc(nor);
-/*    seed = FfGetPtr(A,dim,FfNoc);*/
-   seed = (PTR)((char *)A + dim * FfCurrentRowSize);
-   if (dim == 0) {
-      i = CharPolSeed;
-   } else {
-      for (i = 0; i < nor && ispiv[i] != 0; ++i) {
-      }
-   }
-   FfMulRow(seed,FF_ZERO);
-   FfInsert(seed,i,FF_ONE);
-
-   /* Spin up and return the polynomial
-      --------------------------------- */
-   spinup_cyclic();
-   return mkpoly();
+   struct CharpolState* state =
+      (mat != NULL) ? createState(mat, PM_CHARPOL) : getState(PM_CHARPOL);
+   return CharPolFactor_(state);
 }
-
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 /// Characteristic Polynomial.
-/// This function calculates the characteristic polynomial of a matrix in
-/// factored form. The return value is a pointer to a FPoly_t structure
-/// containing the irreducible factors of the characteristic polynomial.
+/// This function calculates the characteristic polynomial of a matrix in fully factorized form.
+/// The return value is a pointer to a FPoly_t structure containing the irreducible factors of
+/// the characteristic polynomial.
+///
 /// @param mat Pointer to the matrix.
-/// @return The characteristic polynomial of @a mat or 0 on error.
+/// @return The characteristic polynomial of @a mat
 
-FPoly_t *CharPol(const Matrix_t *mat)
+FPoly_t *charPol(const Matrix_t *mat)
 {
-   FPoly_t *cpol = FpAlloc();
+   struct CharpolState* state = createState(mat, PM_CHARPOL);
+
+   FPoly_t *cpol = fpAlloc();
    Poly_t *p;
 
-   if (cpol == NULL) {
-      MTX_ERROR("Cannot allocate result");
-      return NULL;
-   }
-
-   for (p = CharPolFactor(mat); p != NULL; p = CharPolFactor(NULL)) {
-      FPoly_t *fac = Factorization(p);
-      if (fac == NULL) {
-         MTX_ERROR("Factorization failed");
-         return NULL;
-      }
-      PolFree(p);
-      FpMul(cpol,fac);
-      FpFree(fac);
+   for (p = CharPolFactor_(state); p != NULL; p = CharPolFactor_(state)) {
+      FPoly_t *factors = Factorization(p);
+      polFree(p);
+      fpMul(cpol,factors);
+      fpFree(factors);
    }
    return cpol;
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
+Poly_t* minPolFactor(const Matrix_t *mat)
+{
+   struct CharpolState* state = mat != NULL ? createState(mat, PM_MINPOL) : getState(PM_MINPOL);
+   return CharPolFactor_(state);
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+FPoly_t *minPol(const Matrix_t *mat)
+{
+    matValidate(MTX_HERE, mat);
+
+    FPoly_t *mp = fpAlloc();
+    while (1)
+    {
+        Poly_t* f = minPolFactor(mat);
+        if (f == NULL) break;
+    	FPoly_t *ff = Factorization(f);
+    	polFree(f);
+    	fpMul(mp,ff);
+    	fpFree(ff);
+    }
+    return mp;
+}
 /// @}
+// vim:fileencoding=utf8:sw=3:ts=8:et:cin

@@ -1,18 +1,13 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // C MeatAxe - Matrix representations, file i/o
-//
-// (C) Copyright 1998-2015 Michael Ringe, Lehrstuhl D fuer Mathematik, RWTH Aachen
-//
-// This program is free software; see the file COPYING for details.
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#include <meataxe.h>
+#include "meataxe.h"
 #include <string.h>
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // Local data
 
-MTX_DEFINE_FILE_INFO
 
 /// @addtogroup mrep
 /// @{
@@ -28,7 +23,7 @@ MTX_DEFINE_FILE_INFO
 /// @param basename Base file name for generators.
 /// @return 0 on success, -1 on error.
 
-int MrSave(const MatRep_t *rep, const char *basename)
+int mrSave(const MatRep_t *rep, const char *basename)
 {
    char *fn;
    int ext_format;          /* '%d' found in <basename> */
@@ -36,9 +31,9 @@ int MrSave(const MatRep_t *rep, const char *basename)
 
    /* Make a copy of the basename an reserve extra bytes for the extension
       -------------------------------------------------------------------- */
-   fn = SysMalloc(strlen(basename) + 10);
+   fn = sysMalloc(strlen(basename) + 10);
    if (fn == NULL) {
-      MTX_ERROR("Cannot allocate buffer");
+      mtxAbort(MTX_HERE,"Cannot allocate buffer");
       return -1;
    }
 
@@ -51,17 +46,18 @@ int MrSave(const MatRep_t *rep, const char *basename)
       } else {
          sprintf(fn,"%s.%d",basename,i + 1);
       }
-      if (MatSave(rep->Gen[i],fn) != 0) {
-         MTX_ERROR1("Error writing generator %d",i + 1);
+      if (matSave(rep->Gen[i],fn) != 0) {
+         mtxAbort(MTX_HERE,"Error writing generator %d",i + 1);
          break;
       }
    }
 
    /* Clean up.
       --------- */
-   SysFree(fn);
+   sysFree(fn);
    return i >= rep->NGen ? 0 : -1;
 }
 
 
 /// @}
+// vim:fileencoding=utf8:sw=3:ts=8:et:cin

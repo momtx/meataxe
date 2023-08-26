@@ -1,13 +1,9 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // C MeatAxe - Check functions for factored polynomials.
-//
-// (C) Copyright 1998-2016 Michael Ringe, Lehrstuhl D fuer Mathematik, RWTH Aachen
-//
-// This program is free software; see the file COPYING for details.
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 #include "meataxe.h"
-#include "check.h"
+#include "testing.h"
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -15,24 +11,21 @@
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#define NPOLY 5
-
-test_F FactoredPolynomialAllocation()
+TstResult FPoly_Allocation()
 {
+    const int NPOLY = 5;
    FPoly_t *p[NPOLY];
    int i;
 
    for (i = 0; i < NPOLY; ++i) {
-      p[i] = FpAlloc();
+      p[i] = fpAlloc();
    }
    for (i = 0; i < NPOLY; ++i) {
-      FpIsValid(p[i]);
+      fpIsValid(p[i]);
    }
    for (i = 0; i < NPOLY; ++i) {
-      ASSERT(FpFree(p[i]) == 0);
+      ASSERT(fpFree(p[i]) == 0);
+      ASSERT(!fpIsValid(p[i]));
    }
-   TstStartErrorChecking();
-   for (i = 0; i < NPOLY; ++i) {
-      ASSERT(!FpIsValid(p[i]) && TstHasError());
-   }
+   return 0;
 }

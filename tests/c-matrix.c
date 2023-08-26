@@ -1,13 +1,9 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // C MeatAxe - Check functions for matrices.
-//
-// (C) Copyright 1998-2015 Michael Ringe, Lehrstuhl D fuer Mathematik, RWTH Aachen
-//
-// This program is free software; see the file COPYING for details.
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 #include "meataxe.h"
-#include "check.h"
+#include "testing.h"
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -16,13 +12,13 @@
 
 Matrix_t *RndMat(int fl, int nor, int noc)
 {
-   Matrix_t *a = MatAlloc(fl,nor,noc);
+   Matrix_t *a = matAlloc(fl,nor,noc);
    int i;
    for (i = 0; i < nor; ++i) {
-      PTR ax = MatGetPtr(a,i);
+      PTR ax = matGetPtr(a,i);
       int k;
       for (k = 0; k < noc; ++k) {
-         FfInsert(ax,k,FTab[MtxRandomInt(FfOrder)]);
+         ffInsert(ax,k,FTab[mtxRandomInt(ffOrder)]);
       }
    }
    return a;
@@ -32,7 +28,7 @@ Matrix_t *RndMat(int fl, int nor, int noc)
 
 #define NMAT 5
 
-static void TestMatAlloc1(int fl)
+TstResult Matrix_Allocation(int q)
 {
    static const int nor[NMAT] = { 0,0,1,1,9 };
    static const int noc[NMAT] = { 0,1,0,1,9 };
@@ -40,49 +36,46 @@ static void TestMatAlloc1(int fl)
    int i;
 
    for (i = 0; i < NMAT; ++i) {
-      m[i] = MatAlloc(fl,nor[i],noc[i]);
+      m[i] = matAlloc(ffOrder,nor[i],noc[i]);
    }
    for (i = 0; i < NMAT; ++i) {
-      MatIsValid(m[i]);
-      ASSERT(m[i]->Field == fl);
+      ASSERT(matIsValid(m[i]));
+      ASSERT(m[i]->Field == ffOrder);
       ASSERT(m[i]->Nor == nor[i]);
       ASSERT(m[i]->Noc == noc[i]);
    }
    for (i = 0; i < NMAT; ++i) {
-      ASSERT_EQ_INT(MatFree(m[i]), 0);
+      ASSERT_EQ_INT(matFree(m[i]), 0);
+      ASSERT(!matIsValid(m[i]));
    }
-   TstStartErrorChecking();
-   for (i = 0; i < NMAT; ++i) {
-      ASSERT(!MatIsValid(m[i]));
-      ASSERT(TstHasError());
-   }
-   TstStopErrorChecking();
+   return 0;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-test_F MatrixAllocation(unsigned flags)
+TstResult Matrix_ThrowsOnDoubleFree()
 {
-   while (NextField() > 0) {
-      TestMatAlloc1(FfOrder);
-   }
-   flags = 0;
+   Matrix_t *m = matAlloc(3, 20, 30);
+   ASSERT(matIsValid(m));
+   matFree(m);
+   ASSERT(!matIsValid(m));
+   ASSERT_ABORT(matFree(m));
+   return 0;
 }
-
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static void ChkEch(Matrix_t *mat)
+static int ChkEch(Matrix_t *mat)
 {
    int i;
 
    for (i = 0; i < mat->Nor; ++i) {
-      PTR p = MatGetPtr(mat,i);
+      PTR p = matGetPtr(mat,i);
       int k;
       FEL f;
 
-      ASSERT_EQ_INT(FfFindPivot(p,&f), mat->PivotTable[i]);
+      ASSERT_EQ_INT(ffFindPivot(p,&f), mat->PivotTable[i]);
       for (k = 0; k < i; ++k) {
-	 ASSERT_EQ_INT(FfExtract(p,mat->PivotTable[k]), FF_ZERO);
+	 ASSERT_EQ_INT(ffExtract(p,mat->PivotTable[k]), FF_ZERO);
       }
    }
    for (i = mat->Nor; i < mat->Noc; ++i) {
@@ -94,520 +87,431 @@ static void ChkEch(Matrix_t *mat)
 	 ASSERT(mat->PivotTable[k] != piv);
       }
    }
+   return 0;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static void TestMatEchelonize1(Matrix_t *m, int size)
+static int TestMatEchelonize1(Matrix_t *m, int size)
 {
    int i;
 
    for (i = 0; i < size; ++i) {
-      PTR p = MatGetPtr(m,i);
+      PTR p = matGetPtr(m,i);
       int k;
-      FfMulRow(p,FF_ZERO);
+      ffMulRow(p,FF_ZERO);
       for (k = size - i - 1; k < size; ++k) {
-         FfInsert(p,k,FF_ONE);
+         ffInsert(p,k,FF_ONE);
       }
    }
-   ASSERT_EQ_INT(MatEchelonize(m), size);
-   ChkEch(m);
+   ASSERT_EQ_INT(matEchelonize(m), size);
+   ASSERT(ChkEch(m) == 0);
    for (i = 0; i < size; ++i) {
-      PTR p = MatGetPtr(m,i);
+      PTR p = matGetPtr(m,i);
       int k;
       ASSERT_EQ_INT(m->PivotTable[i], size - i - 1);
       for (k = 0; k < size; ++k) {
-         FEL f = FfExtract(p,k);
-         if ((f == FF_ZERO) ^ (k != size - i - 1)) {
-            TST_FAIL2("Unexpected element %d at column %d",f,k);
-         }
+         FEL f = ffExtract(p,k);
+         ASSERT(!((f == FF_ZERO) ^ (k != size - i - 1)));
       }
    }
+   return 0;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static void TestMatEchelonize2(Matrix_t *m, int size)
+static int TestMatEchelonize2(Matrix_t *m, int size)
 {
    int i;
    static unsigned long x = 0;
 
    for (i = 1; i <= size; ++i) {
       int k;
-      PTR p = MatGetPtr(m,i - 1);
+      PTR p = matGetPtr(m,i - 1);
       for (k = 0; k < size; ++k) {
-         FfInsert(p,k,FTab[(x >> 3) % FfOrder]);
+         ffInsert(p,k,FTab[(x >> 3) % ffOrder]);
          x = 69069 * x + 3;
       }
    }
-   ASSERT(MatEchelonize(m) >= 5);
-   ChkEch(m);
+   int result = 0;
+   ASSERT(matEchelonize(m) >= 5);
+   result |= ChkEch(m);
+   return result;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-test_F TestMatEchelonize()
+TstResult Matrix_Echelonize(int q)
 {
    const int size = 10;
-
-   while (NextField() > 0) {
-      Matrix_t *m = MatAlloc(FfOrder,size,size);
-      TestMatEchelonize1(m,size);
-      TestMatEchelonize2(m,size);
-      MatFree(m);
-   }
+   Matrix_t *m = matAlloc(ffOrder,size,size);
+   int result = 0;
+   result |= TestMatEchelonize1(m,size);
+   result |= TestMatEchelonize2(m,size);
+   matFree(m);
+   return result;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static void TestMatCompare1(Matrix_t *a, Matrix_t *b, int size)
+static int TestMatCompare1(Matrix_t *a, Matrix_t *b, int size)
 {
-   ASSERT(MatCompare(a,b) == 0);
-   ASSERT(MatCompare(b,a) == 0);
+   ASSERT(matCompare(a,b) == 0);
+   ASSERT(matCompare(b,a) == 0);
    for (int i = 0; i < size; ++i) {
-      PTR pa = MatGetPtr(a,i);
-      PTR pb = MatGetPtr(b,i);
-      FfInsert(pa,0,FF_ONE);
-      ASSERT(MatCompare(a,b) > 0);
-      ASSERT(MatCompare(b,a) < 0);
+      PTR pa = matGetPtr(a,i);
+      PTR pb = matGetPtr(b,i);
+      ffInsert(pa,0,FF_ONE);
+      ASSERT(matCompare(a,b) != 0);
+      ASSERT(matCompare(b,a) != 0);
 
-      FfInsert(pb,0,FF_ONE);
-      ASSERT(MatCompare(a,b) == 0);
-      ASSERT(MatCompare(b,a) == 0);
+      ffInsert(pb,0,FF_ONE);
+      ASSERT(matCompare(a,b) == 0);
+      ASSERT(matCompare(b,a) == 0);
    }
+   return 0;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static void Check2(int fld1, int nor1, int noc1, int fld2, int nor2,
-                   int noc2)
+TstResult Matrix_Compare1(int q)
+{
+   int result = 0;
+   for (int size = 2; size < 10; ++size) {
+      Matrix_t *a = matAlloc(ffOrder,size,size);
+      Matrix_t *b = matAlloc(ffOrder,size,size);
+      result |= TestMatCompare1(a,b,size);
+      matFree(a);
+      matFree(b);
+   }
+   return result;
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+static int check2(int nor1, int noc1, int nor2, int noc2, int expectedResult)
 {
    Matrix_t *a, *b;
-   a = MatAlloc(fld1,nor1,noc1);
-   b = MatAlloc(fld2,nor2,noc2);
-   ASSERT(MatCompare(a,b) < 0);
-   ASSERT(MatCompare(b,a) > 0);
+   a = matAlloc(ffOrder,nor1,noc1);
+   b = matAlloc(ffOrder,nor2,noc2);
+   ASSERT_EQ_INT(matCompare(a,b), expectedResult);
+   ASSERT_EQ_INT(matCompare(b,a), -expectedResult);
+   matFree(a);
+   matFree(b);
+   return 0;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static void TestMatCompare2()
+TstResult Matrix_CompareSize(int q)
 {
-   Check2(2,20,20,3,10,10);
-   Check2(2,20,20,2,10,30);
-   Check2(2,20,20,2,30,20);
-}
-
-////////////////////////////////////////////////////////////////////////////////////////////////////
-
-test_F MatrixCompare()
-{
-
-   while (NextField() > 0) {
-      int size;
-      for (size = 2; size < 10; ++size) {
-         Matrix_t *a = MatAlloc(FfOrder,size,size);
-         Matrix_t *b = MatAlloc(FfOrder,size,size);
-         TestMatCompare1(a,b,size);
-         MatFree(a);
-         MatFree(b);
-      }
+   int result = 0;
+   for (int n = 1; result == 0 && n < 16; ++n) {
+      result |= check2(n, n, n, n+1, -1);
+      result |= check2(n, n, n, n-1, 1);
+      result |= check2(n, n, n+1, n - 1, 1);
+      result |= check2(n, n, n-1, n + 1, -1);
    }
-   TestMatCompare2();
+   return result;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static void TestMatClean1()
+TstResult Matrix_Clean(int q)
 {
-   Matrix_t *a =
-      MkMat(4,6, 1,0,0,0,0,0,  0,1,1,0,0,0, 0,0,0,0,1,0, 0,0,1,1,0,0);
-   Matrix_t *b =
-      MkMat(4,6, 0,0,0,0,0,1,  0,0,0,0,0,0, 1,1,1,1,1,1, 1,0,1,0,1,0);
-   Matrix_t *c =
-      MkMat(2,6, 0,0,0,0,0,1,  0,0,0,1,0,0);
+   Matrix_t *a = MkMat(4,6, 1,0,0,0,0,0,  0,1,1,0,0,0, 0,0,0,0,1,0, 0,0,1,1,0,0);
+   Matrix_t *b = MkMat(4,6, 0,0,0,0,0,1,  0,0,0,0,0,0, 1,1,1,1,1,1, 1,0,1,0,1,0);
+   Matrix_t *c = MkMat(2,6, 0,0,0,0,0,1,  0,0,0,1,0,0);
 
-   MatEchelonize(a);
-   if (MatClean(b,a) != 2) {
-      TST_FAIL("MatClean() failed");
-   }
-   if (MatCompare(b,c) != 0) {
-      TST_FAIL("MatClean() produced wrong result");
-   }
+   matEchelonize(a);
+   ASSERT(matClean(b,a) == 2);
+   ASSERT(matCompare(b,c) == 0);
 
-   MatFree(a);
-   MatFree(b);
-   MatFree(c);
+   matFree(a);
+   matFree(b);
+   matFree(c);
+   return 0;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-test_F MatrixClean()
+static int TestMatInv1()
 {
-   while (NextField() > 0) {
-      TestMatClean1();
+   for (int i = 0; i < 20; ++i) {
+      Matrix_t *a = matId(ffOrder,i);
+      Matrix_t *ai = matInverse(a);
+      ASSERT(matCompare(a,ai) == 0);
+      matFree(a);
+      matFree(ai);
    }
+   return 0;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static void TestMatInv1()
+static int TestMatInv2()
 {
-   int i;
-
-   for (i = 0; i < 20; ++i) {
-      Matrix_t *a = MatId(FfOrder,i);
-      Matrix_t *ai = MatInverse(a);
-      if (MatCompare(a,ai) != 0) {
-         TST_FAIL("Wrong inverse of identity matrix");
-      }
-      MatFree(a);
-      MatFree(ai);
-   }
-}
-
-////////////////////////////////////////////////////////////////////////////////////////////////////
-
-static void TestMatInv2()
-{
-   Matrix_t *a =
-      MkMat(5,5, 1,2,3,0,2,  0,0,0,1,1, 0,0,1,1,0, 0,1,2,3,0, 0,0,0,0,1);
+   Matrix_t *a = MkMat(5,5, 1,2,3,0,2,  0,0,0,1,1, 0,0,1,1,0, 0,1,2,3,0, 0,0,0,0,1);
    Matrix_t *ai, *id;
-   ai = MatInverse(a);
-   MatMul(ai,a);
-   id = MatId(FfOrder,5);
-   if (MatCompare(ai,id) != 0) {
-      TST_FAIL("M * 1/M != 1");
-   }
-   MatFree(a);
-   MatFree(ai);
-   MatFree(id);
+   ai = matInverse(a);
+   matMul(ai,a);
+   id = matId(ffOrder,5);
+   ASSERT(matCompare(ai,id) == 0);
+   matFree(a);
+   matFree(ai);
+   matFree(id);
+   return 0;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-test_F TestMatrixInversion()
+TstResult Matrix_Inversion(int q)
 {
-   while (NextField() > 0) {
-      TestMatInv1();
-      TestMatInv2();
-   }
+   int result = 0;
+   result |= TestMatInv1();
+   result |= TestMatInv2();
+   return result;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static void TestMatDup1(int fl, int nor, int noc)
+TstResult Matrix_Duplication(int q)
 {
-   Matrix_t *a, *b;
-
-   a = RndMat(fl,nor,noc);
-   b = MatDup(a);
-   if (MatCompare(a,b) != 0) {
-      TST_FAIL("MatDup() failed");
-   }
-   MatFree(a);
-   MatFree(b);
-}
-
-////////////////////////////////////////////////////////////////////////////////////////////////////
-
-test_F MatrixDuplication()
-{
-   int nor, noc;
-   while (NextField() > 0) {
-      for (nor = 0; nor < 10; ++nor) {
-         for (noc = 0; noc < 10; ++noc) {
-            TestMatDup1(FfOrder,nor,noc);
-         }
+   for (int nor = 0; nor < 10; ++nor) {
+      for (int noc = 0; noc < 10; ++noc) {
+         Matrix_t* a = RndMat(ffOrder,nor,noc);
+         Matrix_t* b = matDup(a);
+         ASSERT(matCompare(a,b) == 0);
+         matFree(a);
+         matFree(b);
       }
    }
+   return 0;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static void TestNullSpace1(int fl, int dim)
+static int TestNullSpace1(int dim)
 {
-   Matrix_t *a, *b;
-   a = MatId(fl,dim);
-   b = MatNullSpace(a);
-   if (!MatIsValid(b) || (b->Noc != dim) || (b->Nor != 0)) {
-      TST_FAIL("NullSpace(Id) failed");
-   }
-   MatFree(b);
-   b = MatNullSpace__(MatAlloc(fl,dim,dim));
-   if (MatCompare(a,b) != 0) {
-      TST_FAIL("NullSpace(0) != Id");
-   }
-   MatFree(a);
-   MatFree(b);
+   Matrix_t* a = matId(ffOrder,dim);
+   Matrix_t* b = matNullSpace(a);
+   ASSERT(matIsValid(b));
+   ASSERT(b->Noc == dim);
+   ASSERT(b->Nor == 0);
+   matFree(b);
+
+   b = matNullSpace__(matAlloc(ffOrder,dim,dim));
+   ASSERT(matCompare(a,b) == 0);
+   matFree(a);
+   matFree(b);
+   return 0;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static void TestNullSpace2(int fl, int dim)
+static int TestNullSpace2(int dim)
 {
-   Matrix_t *a, *b;
-   int i;
-
-   a = RndMat(fl,dim + 3,dim);
-   b = MatNullSpace(a);
-   if (b->Nor < 3) {
-      TST_FAIL("Unexpected null-space dimension");
-   }
-   MatMul(b,a);
-   FfSetNoc(b->Noc);
-   for (i = 0; i < b->Nor; ++i) {
+   Matrix_t* a = RndMat(ffOrder,dim + 3,dim);
+   Matrix_t* b = matNullSpace(a);
+   ASSERT(b->Nor >= 3);
+   matMul(b,a);
+   ffSetNoc(b->Noc);
+   for (int i = 0; i < b->Nor; ++i) {
       FEL f;
-      if (FfFindPivot(MatGetPtr(b,i),&f) >= 0) {
-         TST_FAIL("Wrong null-space");
+      ASSERT(ffFindPivot(matGetPtr(b,i),&f) == -1);
+   }
+   matFree(a);
+   matFree(b);
+   return 0;
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+TstResult Matrix_NullSpace(int q)
+{
+   int result = 0;
+   for (int nor = 0; result == 0 && nor < 10; ++nor) {
+      result |= TestNullSpace1(nor);
+      if (nor > 0) {
+         result |= TestNullSpace2(nor);
       }
    }
-   MatFree(a);
-   MatFree(b);
+   return result;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-test_F NullSpace()
-{
-   int nor;
-
-   while (NextField() > 0) {
-      for (nor = 0; nor < 10; ++nor) {
-         TestNullSpace1(FfOrder,nor);
-         if (nor > 0) {
-            TestNullSpace2(FfOrder,nor);
-         }
-      }
-   }
-}
-
-////////////////////////////////////////////////////////////////////////////////////////////////////
-
-static void TestMatOrder2(Matrix_t *a, int order)
-{
-   ASSERT_EQ_INT(MatOrder(a), order);
-   MatFree(a);
-}
-
-////////////////////////////////////////////////////////////////////////////////////////////////////
-
-static void TestMatOrder1()
+TstResult Matrix_Order(int q)
 {
    Matrix_t *a;
 
    a = MkMat(5,5, 1,0,0,0,0,  0,1,0,0,0, 0,0,1,0,0, 0,0,0,1,0, 0,0,0,0,1);
-   TestMatOrder2(a,1);
+   ASSERT_EQ_INT(matOrder(a), 1);
+   matFree(a);
 
    a = MkMat(3,3, -1,1,0, -1,0,1, 0,0,1);
-   TestMatOrder2(a,3);
+   ASSERT_EQ_INT(matOrder(a), 3);
+   matFree(a);
 
    a = MkMat(5,5, 0,1,0,-1,0,  1,1,0,-1,1, -1,1,0,0,0, 0,1,0,-1,1, -1,0,1,0,0);
-   TestMatOrder2(a,6);
+   ASSERT_EQ_INT(matOrder(a), 6);
+   matFree(a);
+
+   return 0;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-test_F MatrixOrder()
-{
-   while (NextField() > 0) {
-      TestMatOrder1();
-   }
-}
-
-////////////////////////////////////////////////////////////////////////////////////////////////////
-
-static void TestMatCut1(int fl)
+TstResult Matrix_Cut(int q)
 {
    Matrix_t *a, *b;
    int anor = 10, anoc = 20;
    int i;
 
-   a = RndMat(fl,anor,anoc);
+   a = RndMat(ffOrder,anor,anoc);
 
-   b = MatCut(a,0,0,-1,-1);
-   if (MatCompare(a,b) != 0) {
-      TST_FAIL("MatCut(...0,0,-1,-1) failed");
-   }
-   MatFree(b);
-   b = MatCutRows(a,0,-1);
-   if (MatCompare(a,b) != 0) {
-      TST_FAIL("MatCutRows(...,0,-1) failed");
-   }
-   MatFree(b);
+   b = matCut(a,0,0,-1,-1);
+   ASSERT(matCompare(a,b) == 0);
+   matFree(b);
+   b = matCutRows(a,0,-1);
+   ASSERT(matCompare(a,b) == 0);
+   matFree(b);
 
    for (i = 0; i < anor * anoc * 10; ++i) {
       int bnor, bnoc;
       int nor0, noc0;
       int r;
 
-      nor0 = MtxRandomInt(anor);
-      noc0 = MtxRandomInt(anoc);
-      bnor = MtxRandomInt(anor - nor0);
-      bnoc = MtxRandomInt(anoc - noc0);
-      b = MatCut(a,nor0,noc0,bnor,bnoc);
+      nor0 = mtxRandomInt(anor);
+      noc0 = mtxRandomInt(anoc);
+      bnor = mtxRandomInt(anor - nor0);
+      bnoc = mtxRandomInt(anoc - noc0);
+      b = matCut(a,nor0,noc0,bnor,bnoc);
       for (r = 0; r < bnor; ++r) {
          int c;
          for (c = 0; c < bnoc; ++c) {
             FEL fa, fb;
-            FfSetNoc(anoc);
-            fa = FfExtract(MatGetPtr(a,nor0 + r),noc0 + c);
-            FfSetNoc(bnoc);
-            fb = FfExtract(MatGetPtr(b,r),c);
-            if (fa != fb) {
-               TST_FAIL6("Error at (%d+%d,%d+%d): %d != %d",nor0,r,noc0,c,
-                     (int)fa,(int)fb);
-            }
+            ffSetNoc(anoc);
+            fa = ffExtract(matGetPtr(a,nor0 + r),noc0 + c);
+            ffSetNoc(bnoc);
+            fb = ffExtract(matGetPtr(b,r),c);
+            ASSERT(fa == fb);
          }
       }
-      MatFree(b);
+      matFree(b);
    }
-   MatFree(a);
+   matFree(a);
+   return 0;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-test_F TestMatrixCut()
-{
-   while (NextField() > 0) {
-      TestMatCut1(FfOrder);
-   }
-}
-
-////////////////////////////////////////////////////////////////////////////////////////////////////
-
-static void TestMatCopy1(int fl)
+TstResult Matrix_Copy(int q)
 {
    Matrix_t *a, *b;
    int nor = 10, noc = 20;
    int i;
 
-   a = RndMat(fl,nor,noc);
-   b = MatAlloc(fl,nor,noc);
+   a = RndMat(ffOrder,nor,noc);
+   b = matAlloc(ffOrder,nor,noc);
 
    for (i = 0; i < nor * noc * 10; ++i) {
-      int sr0, sc0, snor, snoc;
-      int dr0, dc0;
-      int r;
+      int sr0 = mtxRandomInt(nor);
+      int sc0 = mtxRandomInt(noc);
+      int snor = mtxRandomInt(nor - sr0);
+      int snoc = mtxRandomInt(noc - sc0);
+      int dr0 = mtxRandomInt(nor - snor);
+      int dc0 = mtxRandomInt(noc - snoc);
 
-      sr0 = MtxRandomInt(nor);
-      sc0 = MtxRandomInt(noc);
-      snor = MtxRandomInt(nor - sr0);
-      snoc = MtxRandomInt(noc - sc0);
-      dr0 = MtxRandomInt(nor - snor);
-      dc0 = MtxRandomInt(noc - snoc);
-
-      MatMulScalar(b,FF_ZERO);
-      if (MatCopyRegion(b,dr0,dc0,a,sr0,sc0,snor,snoc) != 0) {
-         TST_FAIL("MatCopyRegion() failed");
-      }
-      for (r = 0; r < nor; ++r) {
-         int c;
-         for (c = 0; c < noc; ++c) {
-            FEL fb = FfExtract(MatGetPtr(b,r),c);
+      matMulScalar(b,FF_ZERO);
+      ASSERT(matCopyRegion(b,dr0,dc0,a,sr0,sc0,snor,snoc) == 0);
+      for (int r = 0; r < nor; ++r) {
+         for (int c = 0; c < noc; ++c) {
+            FEL fb = ffExtract(matGetPtr(b,r),c);
             if ((r < dr0) || (r >= dr0 + snor) || (c < dc0) || (c >= dc0 + snoc)) {
-               if (fb != FF_ZERO) {
-                  TST_FAIL3("Found %d at (%d,%d), expected 0",fb,r,c);
-               }
+		ASSERT_EQ_INT(fb, FF_ZERO);
             } else {
-	       ASSERT_EQ_INT(FfExtract(MatGetPtr(a,sr0 + r - dr0),sc0 + c - dc0), fb);
+	       ASSERT_EQ_INT(ffExtract(matGetPtr(a,sr0 + r - dr0),sc0 + c - dc0), fb);
             }
          }
       }
    }
-   MatFree(a);
-   MatFree(b);
+   matFree(a);
+   matFree(b);
+   return 0;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-test_F MatrixCopy(unsigned flags)
+static int TestMatAddMul2(int nor, int noc, Matrix_t *a, Matrix_t *b, Matrix_t *c)
 {
-   while (NextField() > 0) {
-      TestMatCopy1(FfOrder);
-   }
-   flags = 0;
-}
-
-////////////////////////////////////////////////////////////////////////////////////////////////////
-
-static void TestMatAddMul2(int fl, int nor, int noc, Matrix_t *a, Matrix_t *b,
-                           Matrix_t *c)
-{
-   int i;
-   for (i = 0; i < fl; i += i / 10 + 1) {
-      int r;
-      FEL f = FfFromInt(i);
-      MatCopyRegion(b,0,0,a,0,0,-1,-1);
-      MatAddMul(a,c,f);
-      for (r = 0; r < nor; ++r) {
+   for (int i = 0; i < ffOrder; i += i / 10 + 1) {
+      FEL f = ffFromInt(i);
+      matCopyRegion(b,0,0,a,0,0,-1,-1);
+      matAddMul(a,c,f);
+      for (int r = 0; r < nor; ++r) {
          int co;
          for (co = 0; co < noc; ++co) {
-	    FEL fa = FfExtract(MatGetPtr(a,r),co);
-            FEL fb = FfExtract(MatGetPtr(b,r),co);
-            FEL fc = FfExtract(MatGetPtr(c,r),co);
-            fb = FfAdd(fb,FfMul(fc,f));
+	    FEL fa = ffExtract(matGetPtr(a,r),co);
+            FEL fb = ffExtract(matGetPtr(b,r),co);
+            FEL fc = ffExtract(matGetPtr(c,r),co);
+            fb = ffAdd(fb,ffMul(fc,f));
 	    ASSERT_EQ_INT(fa, fb);
          }
       }
    }
+   return 0;
 }
 
-////////////////////////////////////////////////////////////////////////////////////////////////////
-
-static void TestMatAddMul1(int fl)
+TstResult Matrix_MultiplyAdd(int q)
 {
-   int nor;
-   for (nor = 0; nor < 20; nor += nor / 5 + 1) {
-      int noc;
-      for (noc = 0; noc < 20; noc += noc / 5 + 1) {
-         Matrix_t *a = RndMat(fl,nor,noc);
-         Matrix_t *b = MatDup(a);
-         Matrix_t *c = RndMat(fl,nor,noc);
-         TestMatAddMul2(fl,nor,noc,a,b,c);
-         MatFree(a);
+   int result = 0;
+   for (int nor = 0; nor < 20; nor += nor / 5 + 1) {
+      for (int noc = 0; noc < 20; noc += noc / 5 + 1) {
+         Matrix_t *a = RndMat(ffOrder,nor,noc);
+         Matrix_t *b = matDup(a);
+         Matrix_t *c = RndMat(ffOrder,nor,noc);
+         result |= TestMatAddMul2(nor,noc,a,b,c);
+         matFree(a);
       }
    }
+   return result;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-test_F MatrixMultiplyAdd()
-{
-   while (NextField() > 0) {
-      TestMatAddMul1(FfOrder);
-   }
-}
-
-////////////////////////////////////////////////////////////////////////////////////////////////////
-
-static void TestMatId2(int fl, int dim)
+static int TestMatId2(int fl, int dim)
 {
    Matrix_t *m;
    int i;
 
-   m = MatId(fl,dim);
+   m = matId(fl,dim);
    ASSERT_EQ_INT(m->Field, fl);
    ASSERT_EQ_INT(m->Nor, dim);
    ASSERT_EQ_INT(m->Noc, dim);
    for (i = 0; i < dim; ++i) {
       int k;
-      PTR r = MatGetPtr(m,i);
+      PTR r = matGetPtr(m,i);
       for (k = 0; k < dim; ++k) {
-         const FEL f = FfExtract(r,k);
-         if (k == i) ASSERT_EQ_INT(f, FF_ONE); else ASSERT_EQ_INT(f, FF_ZERO);
+         const FEL f = ffExtract(r,k);
+         if (k == i)
+	     ASSERT_EQ_INT(f, FF_ONE);
+	 else 
+	     ASSERT_EQ_INT(f, FF_ZERO);
       }
    }
-   MatFree(m);
+   matFree(m);
+   return 0;
 }
 
-////////////////////////////////////////////////////////////////////////////////////////////////////
 
-test_F MatrixIdentity()
+TstResult Matrix_Identity(int q)
 {
-   while (NextField() > 0) {
-       for (int dim = 0; dim < 100; dim += dim / 10 + 1) {
-	   TestMatId2(FfOrder,dim);
-       }
-   }
+    int result = 0;
+    for (int dim = 0; result == 0 && dim < 20; ++dim) {
+	result |= TestMatId2(ffOrder,dim);
+    }
+    return result;
 }
+
+// vim:fileencoding=utf8:sw=3:ts=8:et:cin

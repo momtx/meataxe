@@ -1,13 +1,9 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // C MeatAxe - Calculate the submodule lattice
-//
-// (C) Copyright 1998-2015 Michael Ringe, Lehrstuhl D fuer Mathematik, RWTH Aachen
-//
-// This program is free software; see the file COPYING for details.
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
-#include <meataxe.h>
+#include "meataxe.h"
 #include <string.h>
 #include <stdlib.h>
 
@@ -18,7 +14,6 @@
    Global data
    ------------------------------------------------------------------ */
 
-MTX_DEFINE_FILE_INFO
 
 #define O_MOUNTAINS		0x01
 #define O_SUBMODULES		0x02
@@ -129,38 +124,38 @@ static void init(const char *basename)
     char fn[40];
     FILE *f;
 
-    if (Lat_ReadInfo(&LI,basename) != 0)
+    if (latReadInfo(&LI,basename) != 0)
     {
-	MTX_ERROR1("Error reading %s.cfinfo",basename);
+	mtxAbort(MTX_HERE,"Error reading %s.cfinfo",basename);
 	return;
     }
     
     /* Read incidence matrix
        --------------------- */
-    f = SysFopen(strcat(strcpy(fn,LI.BaseName),".inc"),FM_READ);
+    f = sysFopen(strcat(strcpy(fn,LI.BaseName),".inc"),"r");
     if (f == NULL) 
     {
-	MTX_ERROR1("Cannot open %s",fn);
+	mtxAbort(MTX_HERE,"Cannot open %s",fn);
 	return;
     }
-    SysReadLong(f,l,1);
+    sysReadLong32(f,l,1);
     xnmount = (int) l[0];
     MESSAGE(1,("Reading%s: %d mountain%s\n",fn,xnmount,xnmount == 1 ? "" : "s"));
     if (xnmount > MAXCYCL) 
     {
-	MTX_ERROR2("Too many mountains (%d, max=%d)",xnmount,MAXCYCL);
+	mtxAbort(MTX_HERE,"Too many mountains (%d, max=%d)",xnmount,MAXCYCL);
 	return;
     }
     for (i = 0; i < xnmount; ++i)
     {
-	if ((xsubof[i] = BsRead(f)) == NULL)
+	if ((xsubof[i] = bsRead(f)) == NULL)
 	{
-	    MTX_ERROR("Error reading incidence matrix");
+	    mtxAbort(MTX_HERE,"Error reading incidence matrix");
 	    return;
 	}
 	if (xsubof[i]->Size != xnmount)
 	{
-	    MTX_ERROR("Invalid bit string");
+	    mtxAbort(MTX_HERE,"Invalid bit string");
 	    return;
 	}
     }
@@ -168,38 +163,38 @@ static void init(const char *basename)
 
     /* Read dotted lines
        ----------------- */
-    f = SysFopen(strcat(strcpy(fn,LI.BaseName),".dot"),FM_READ);
+    f = sysFopen(strcat(strcpy(fn,LI.BaseName),".dot"),"rb");
     if (f == NULL) 
     {
-	MTX_ERROR1("Cannot open %s",fn);
+	mtxAbort(MTX_HERE,"Cannot open %s",fn);
 	return;
     }
     MESSAGE(1,("Reading %s: ",fn));
-    SysReadLong(f,l,1);
+    sysReadLong32(f,l,1);
     xndotl = (int) l[0];
     MESSAGE(1,("%d dotted line%s\n",xndotl,xndotl == 1 ? "" : "s"));
     if (xndotl > MAXDOTL) 
     {
-	MTX_ERROR2("Too many dotted-lines (%d, max=%d)",xndotl,MAXDOTL);
+	mtxAbort(MTX_HERE,"Too many dotted-lines (%d, max=%d)",xndotl,MAXDOTL);
 	return;
     }
     for (i = 0; i < xndotl; ++i)
     {
-	if ((xdotl[i] = BsRead(f)) == NULL)
+	if ((xdotl[i] = bsRead(f)) == NULL)
 	{
-	    MTX_ERROR("Error reading dotted lines");
+	    mtxAbort(MTX_HERE,"Error reading dotted lines");
 	    return;
 	}
     }
     fclose(f);
-    y = BsAlloc(xnmount);
+    y = bsAlloc(xnmount);
 
     /* Read dimensions
        --------------- */
-    f = SysFopen(strcat(strcpy(fn,LI.BaseName),".mnt"),FM_READ|FM_TEXT);
+    f = sysFopen(strcat(strcpy(fn,LI.BaseName),".mnt"),"r");
     if (f == NULL) 
     {
-	MTX_ERROR1("Cannot open %s",fn);
+	mtxAbort(MTX_HERE,"Cannot open %s",fn);
 	return;
     }
     MESSAGE(1,("Reading %s\n",fn));
@@ -208,7 +203,7 @@ static void init(const char *basename)
 	long mno, mdim;
 	if (fscanf(f,"%ld%ld",&mno,&mdim) != 2 || mno != i || mdim < 1)
 	{
-	    MTX_ERROR("Error in .mnt file");
+	    mtxAbort(MTX_HERE,"Error in .mnt file");
 	    return;
 	}
 	xmdim[i] = mdim;
@@ -216,7 +211,7 @@ static void init(const char *basename)
 	{
 	    if (ferror(f) || feof(f))
 	    {
-		MTX_ERROR("Error in .mnt file");
+		mtxAbort(MTX_HERE,"Error in .mnt file");
 		return;
 	    }
 	}
@@ -273,7 +268,7 @@ void findrsm()
 
 {
     char *flag = NALLOC(char,nsub);
-    BitString_t *bs = BsAlloc(bnmount);
+    BitString_t *bs = bsAlloc(bnmount);
     int i, k;
 
 
@@ -293,14 +288,14 @@ void findrsm()
 	for (k = i-1; k >= 0; --k)
 	{
 	    if (flag[k] != 0) continue;
-	    if (BsIsSub(sub[k],sub[i]))
+	    if (bsIsSub(sub[k],sub[i]))
 	    {
 		int l;
 		flag[k] = 1;
 		++maxcount;
 		for (l = k-1; l >= 0; --l)
 		{
-		    if (BsIsSub(sub[l],sub[k])) 
+		    if (bsIsSub(sub[l],sub[k])) 
 			flag[l] = 2;
 		}
 	    }
@@ -316,7 +311,7 @@ void findrsm()
 	    {
 		int l;
 		*lp++ = k;
-		for (l = 0; !BsTest(sub[i],l)||BsTest(sub[k],l); ++l);
+		for (l = 0; !bsTest(sub[i],l)||bsTest(sub[k],l); ++l);
 		*lp++ = isotype(l);
 	    }
 	}
@@ -341,10 +336,10 @@ void findrsm()
     for (i = nsub-1; i > 0; )
     {	
 	int *lp;
-	BsCopy(bs,sub[i]);
+	bsCopy(bs,sub[i]);
 	for (lp = max[i]; *lp >= 0; lp += 2)
-	    BsAnd(bs,sub[*lp]);
-	for (i = nsub-1; !BsIsSub(sub[i],bs); --i);
+	    bsAnd(bs,sub[*lp]);
+	for (i = nsub-1; !bsIsSub(sub[i],bs); --i);
 	israd[i] = 1;
     }
 
@@ -360,25 +355,25 @@ void findrsm()
 	for (k = i+1; k < nsub; ++k)
 	{
 	    if (flag[k] != 0) continue;
-	    if (BsIsSub(sub[i],sub[k]))
+	    if (bsIsSub(sub[i],sub[k]))
 	    {
 		int l;
 		flag[k] = 1;
 		for (l = k + 1; l < nsub; ++l)
-		    if (BsIsSub(sub[k],sub[l])) flag[l] = 2;
+		    if (bsIsSub(sub[k],sub[l])) flag[l] = 2;
 	    }
         }
 
         /* Calculate the sum of all simple submodules (=Socle)
 	   --------------------------------------------------- */
-	BsCopy(bs,sub[i]);
+	bsCopy(bs,sub[i]);
 	for (k = i; k < nsub; ++k)
 	{
 	    if (flag[k] == 1) 
-		BsOr(bs,sub[k]);
+		bsOr(bs,sub[k]);
 	}
 
-	for (i = 0; !BsIsSub(bs,sub[i]); ++i);
+	for (i = 0; !bsIsSub(bs,sub[i]); ++i);
 	issoc[i] = 1;
     }
 }
@@ -396,8 +391,8 @@ static void extend(BitString_t *x, int i, int nextend)
     int k;
     int changed;
 
-    BsOr(x,bsupof[i]);		/* Add mountain and its subspaces */
-    if (nextend) BsClear(x,i);	/* Add the radical only */
+    bsOr(x,bsupof[i]);		/* Add mountain and its subspaces */
+    if (nextend) bsClear(x,i);	/* Add the radical only */
 
     /* Make closure
        ------------ */
@@ -407,9 +402,9 @@ static void extend(BitString_t *x, int i, int nextend)
 	changed = 0;
         for (k = 0; k < bndotl; ++k)
         {
-	    if (!dlflag[k] && BsIntersectionCount(x,bdotl[k]) >= 2)
+	    if (!dlflag[k] && bsIntersectionCount(x,bdotl[k]) >= 2)
 	    {
-	        BsOr(x,bdlspan[k]);
+	        bsOr(x,bdlspan[k]);
 	        dlflag[k] = 1;
 	        changed = 1;
 	    }
@@ -430,10 +425,10 @@ FILE *openout(char *name)
 
     sprintf(fn,opt_b ? "%s%s.%d" : "%s%s",LI.BaseName,name,blnum);
     MESSAGE(1,("Writing %s\n",fn));
-    f = SysFopen(fn,FM_CREATE|FM_TEXT);
+    f = sysFopen(fn, "w");
     if (f == NULL)
     {
-	MTX_ERROR1("Cannot open %s",fn);
+	mtxAbort(MTX_HERE,"Cannot open %s",fn);
 	return NULL;
     }
     return f;
@@ -449,7 +444,7 @@ static int printbs(FILE *f, BitString_t *b)
     if (bnmount < 100)
     {
 	for (k = 0; k < bnmount;  ++k)
-	    fputc(BsTest(b,k) ? '+' : '.',f);
+	    fputc(bsTest(b,k) ? '+' : '.',f);
 	len = bnmount;
     }
     else
@@ -458,11 +453,11 @@ static int printbs(FILE *f, BitString_t *b)
 	flag = 0;
 	while (1)
 	{
-	    while (k < bnmount && !BsTest(b,k)) ++k;
+	    while (k < bnmount && !bsTest(b,k)) ++k;
 	    if (k >= bnmount) 
 		break;
 	    k1 = k;
-	    while (k < bnmount && BsTest(b,k)) ++k;
+	    while (k < bnmount && bsTest(b,k)) ++k;
 	    k2 = k-1;
 	    if (flag)
 	    {
@@ -494,7 +489,7 @@ void writeresult()
     FILE *f, *g;
     int i, k;
     char tmp[100];
-    BitString_t *b = BsAlloc(bnmount);
+    BitString_t *b = bsAlloc(bnmount);
 
     MESSAGE(0,("Finished, %d submodules found\n",nsub));
     f = openout(".out");
@@ -505,7 +500,7 @@ void writeresult()
     fprintf(f,"    Type   Mult   SF   Mountains           Dotted lines\n");
     for (i = 0; i < blsize; ++i)
     {
-	sprintf(tmp,"%s",Lat_CfName(&LI,block[i]));
+	sprintf(tmp,"%s",latCfName(&LI,block[i]));
 	fprintf(f,"    %-7s%-7ld%-5ld",tmp,LI.Cf[block[i]].mult,
 	    LI.Cf[block[i]].spl);
 	sprintf(tmp,"%ld (%ld-%ld)",LI.Cf[block[i]].nmount,
@@ -531,16 +526,16 @@ void writeresult()
 	for (i = 0; i < bnmount; ++i)
 	{
 	    fprintf(f,"    %-7d%-7ld",i,bmdim[i]);
-	    BsCopy(b,bsupof[i]);
-	    BsClear(b,i);
+	    bsCopy(b,bsupof[i]);
+	    bsClear(b,i);
 	    for (k = 0; k < bnmount; ++k)
 	    {
-		if (!BsTest(b,k)) continue;
-		BsMinus(b,bsupof[k]);
-		BsSet(b,k);
+		if (!bsTest(b,k)) continue;
+		bsMinus(b,bsupof[k]);
+		bsSet(b,k);
 	    }
 	    for (k = 0; k < bnmount; ++k)
-		if (BsTest(b,k)) fprintf(f,"%d ",k);
+		if (bsTest(b,k)) fprintf(f,"%d ",k);
 	    fprintf(f,"\n");
 	}
 	fprintf(f,"\n");
@@ -604,7 +599,7 @@ void writeresult()
 		fprintf(f,"%d",*lp);
 	    }
 	    fprintf(f,"\n");
-	    BsWrite(sub[i],g);
+	    bsWrite(sub[i],g);
 	}
 	fprintf(f,"\n");
 	fclose(g);
@@ -618,29 +613,29 @@ void writeresult()
 	long rdim;
 	int layer;
 	BitString_t
-	    *rad = BsAlloc(bnmount),
-	    *newrad = BsAlloc(bnmount),
-	    *x = BsAlloc(bnmount),
-	    *zero = BsAlloc(bnmount);
+	    *rad = bsAlloc(bnmount),
+	    *newrad = bsAlloc(bnmount),
+	    *x = bsAlloc(bnmount),
+	    *zero = bsAlloc(bnmount);
 
 	MESSAGE(1,("  Radical series\n"));
 	fprintf(f,"Radical series:\n");
-	for (i = 0; i < bnmount; ++i) BsSet(rad,i);
-	BsClearAll(zero);
+	for (i = 0; i < bnmount; ++i) bsSet(rad,i);
+	bsClearAll(zero);
 	for (i = 0, rdim = 0; i < LI.NCf; ++i)
 	    rdim += LI.Cf[i].dim * LI.Cf[i].mult;
-	for (layer = 1; BsCompare(rad,zero) != 0; ++layer)
+	for (layer = 1; bsCompare(rad,zero) != 0; ++layer)
 	{
-	    BsClearAll(x);
-	    BsClearAll(newrad);
+	    bsClearAll(x);
+	    bsClearAll(newrad);
 	    MESSAGE(1,("Starting layer %d\n",layer));
 
 	    /* Extend the zero module = x by all those mountains
 	       which are contained in the radical and extend y
 	       ------------------------------------------------- */
-	    for (i = 0; i < bnmount && BsCompare(rad,x); ++i)
+	    for (i = 0; i < bnmount && bsCompare(rad,x); ++i)
 	    {
-		if (BsTest(rad,i) && !(BsTest(x,i)))
+		if (bsTest(rad,i) && !(bsTest(x,i)))
 		{
 		    MESSAGE(2,("extend(%i)\n",i));
 		    extend(x,i,0);
@@ -652,10 +647,10 @@ void writeresult()
 	    /* Find the irreducible factors in this layer
 	       ------------------------------------------ */
 	    memset(mult,0,sizeof(mult));
-	    BsCopy(x,newrad);
-	    for (i = 0; i < bnmount && BsCompare(rad,x); ++i)
+	    bsCopy(x,newrad);
+	    for (i = 0; i < bnmount && bsCompare(rad,x); ++i)
 	    {
-	      if (BsTest(rad,i) && !(BsTest(x,i)))
+	      if (bsTest(rad,i) && !(bsTest(x,i)))
 	      {
 		  extend(x,i,0);
 		  k = isotype(i);
@@ -666,9 +661,9 @@ void writeresult()
 	    fprintf(f,"    Layer %d: Dim=%-4ld  ",layer,rdim);
 	    for (i = 0; i < LI.NCf; ++i)
 		for (; mult[i] > 0; --mult[i])
-		    fprintf(f,"%s ",Lat_CfName(&LI,i));
+		    fprintf(f,"%s ",latCfName(&LI,i));
 	    fprintf(f,"\n");
-	    BsCopy(rad,newrad);
+	    bsCopy(rad,newrad);
 	}
 	fprintf(f,"\n");
     }
@@ -688,7 +683,7 @@ void writeresult()
 	    fprintf(f,"[");
 	    for (k = 0; k < nsub; ++k)
 	    {
-		fprintf(f,"%d",BsIsSub(sub[i],sub[k]) ? 1 : 0);
+		fprintf(f,"%d",bsIsSub(sub[i],sub[k]) ? 1 : 0);
 		if (k < nsub-1)
 		    fprintf(f,",");
 	    }
@@ -763,8 +758,8 @@ static int sameblock(int i, int k)
     for (ii = firstm[i]; ii < firstm[i+1]; ++ii)
 	for (kk = firstm[k]; kk < firstm[k+1]; ++kk)
 	{
-	    if (BsTest(xsubof[ii],kk)) return 1;
-	    if (BsTest(xsubof[kk],ii)) return 1;
+	    if (bsTest(xsubof[ii],kk)) return 1;
+	    if (bsTest(xsubof[kk],ii)) return 1;
 	}
     return 0;
 }
@@ -835,7 +830,7 @@ static int nextblock()
     {
         printf("\nBlock %d: ",blnum);
 	for (i = 0; i < blsize; ++i)
-	    printf(" %s%s",LI.BaseName,Lat_CfName(&LI,block[i]));
+	    printf(" %s%s",LI.BaseName,latCfName(&LI,block[i]));
 	printf("\n");
         fflush(stdout);
     }
@@ -859,7 +854,7 @@ void sort()
     {
 	for (k = i+1; k < nsub; ++k)
 	{
-	    if (BsIsSub(sub[k],sub[i]))
+	    if (bsIsSub(sub[k],sub[i]))
 	    {
 		x = sub[i];
 		sub[i] = sub[k];
@@ -888,7 +883,7 @@ static void addtolist(BitString_t *x)
 
     for (i = nsub-1; i >= 0; --i)
     {
-	if (!BsCompare(sub[i],x))
+	if (!bsCompare(sub[i],x))
 	    return;
     }
     if (nsub >= MAXNSUB)
@@ -896,10 +891,10 @@ static void addtolist(BitString_t *x)
 	sort();
 	findrsm();
 	writeresult();	/* Write out what we have found so far */
-	MTX_ERROR1("Too many submodules (> %d)",MAXNSUB);
+	mtxAbort(MTX_HERE,"Too many submodules (> %d)",MAXNSUB);
     }
-    sub[nsub] = BsAlloc(bnmount);
-    BsCopy(sub[nsub++],x);
+    sub[nsub] = bsAlloc(bnmount);
+    bsCopy(sub[nsub++],x);
 }
 
 
@@ -927,8 +922,8 @@ static void initblock()
     fflush(stdout);
     for (i = 0; i < bnmount; ++i)
     {
-	bsubof[i] = BsAlloc(bnmount);
-	bsupof[i] = BsAlloc(bnmount);
+	bsubof[i] = bsAlloc(bnmount);
+	bsupof[i] = bsAlloc(bnmount);
     }
     row = 0;
     for (i = 0; i < blsize; ++i)
@@ -940,10 +935,10 @@ static void initblock()
 	    {
 		for (kk=firstm[block[k]]; kk<firstm[block[k]+1]; ++kk)
 		{
-		    if (BsTest(xsubof[ii],kk))
+		    if (bsTest(xsubof[ii],kk))
 		    {
-			BsSet(bsubof[row],col);
-		        BsSet(bsupof[col],row);
+			bsSet(bsubof[row],col);
+		        bsSet(bsupof[col],row);
 		    }
 		    ++col;
 		}
@@ -962,17 +957,17 @@ static void initblock()
     {
         for (ii = firstdl[block[i]]; ii < firstdl[block[i]+1]; ++ii)
 	{
-	    bdotl[bndotl] = BsAlloc(bnmount);
-	    bdlspan[bndotl] = BsAlloc(bnmount);
+	    bdotl[bndotl] = bsAlloc(bnmount);
+	    bdlspan[bndotl] = bsAlloc(bnmount);
 	    col = 0;
 	    for (k = 0; k < blsize; ++k)
 	    {
 		for (kk=firstm[block[k]]; kk<firstm[block[k]+1]; ++kk)
 		{
-		    if (BsTest(xdotl[ii],kk))
+		    if (bsTest(xdotl[ii],kk))
 		    {
-			BsOr(bdlspan[bndotl],bsupof[col]);
-			BsSet(bdotl[bndotl],col);
+			bsOr(bdlspan[bndotl],bsupof[col]);
+			bsSet(bdotl[bndotl],col);
 		    }
 		    ++col;
 		}
@@ -988,7 +983,7 @@ static void initblock()
     lastgen = 0;	/* First submodule of previous generation */
     nadd = 0;
     oldnsub = 0;
-    addtolist(BsAlloc(bnmount));	/* Null module */
+    addtolist(bsAlloc(bnmount));	/* Null module */
 }
 
 
@@ -1039,14 +1034,14 @@ void nextgen()
     int i, k, oldnsub = nsub;
     BitString_t *x;
 
-    x = BsAlloc(bnmount);
+    x = bsAlloc(bnmount);
     for (i = lastgen; i < oldnsub; ++i)
     {
 	for (k = 0; k < bnmount; ++k)
 	{
-	    if (BsTest(sub[i],k))
+	    if (bsTest(sub[i],k))
 		continue;
-	    BsCopy(x,sub[i]);
+	    bsCopy(x,sub[i]);
 	    extend(x,k,0);
 	    addtolist(x);
 	}
@@ -1056,7 +1051,7 @@ void nextgen()
 }
 
 
-static int SetFormatFlags(const char *c, int set)
+static int setFormatFlags(const char *c, int set)
 
 {
     static int FirstTime = 1;
@@ -1078,7 +1073,7 @@ static int SetFormatFlags(const char *c, int set)
 	    case 'o': flag = O_SOCLE; break;
 	    case 'i': flag = O_INCIDENCES; break;
 	    default: 
-		MTX_ERROR1("Unknown format flag '%c'",*c);
+		mtxAbort(MTX_HERE,"Unknown format flag '%c'",*c);
 		return -1;
 	}
 	if (set)
@@ -1098,31 +1093,31 @@ static int ParseCommandLine()
 
     /* Parse command line
        ------------------ */
-    opt_G = AppGetOption(App,"-G --gap");
+    opt_G = appGetOption(App,"-G --gap");
     if (opt_G) 
 	MtxMessageLevel = -100;
-    opt_b = AppGetOption(App,"-b --blocks");
-    if ((c = AppGetTextOption(App,"-o --output",NULL)) != NULL)
+    opt_b = appGetOption(App,"-b --blocks");
+    if ((c = appGetTextOption(App,"-o --output",NULL)) != NULL)
     {
-	if (SetFormatFlags(c,1) != 0)
+	if (setFormatFlags(c,1) != 0)
 	    return -1;
     }
-    if ((c = AppGetTextOption(App,"-n --no-output",NULL)) != NULL)
+    if ((c = appGetTextOption(App,"-n --no-output",NULL)) != NULL)
     {
-	if (SetFormatFlags(c,0) != 0)
+	if (setFormatFlags(c,0) != 0)
 	    return -1;
     }
-    if (AppGetArguments(App,1,1) != 1)
+    if (appGetArguments(App,1,1) != 1)
 	return -1;
     return 0;
 }
 
 
 
-static int Init(int argc, const char **argv)
+static int Init(int argc, char **argv)
 
 {
-    if ((App = AppAlloc(&AppInfo,argc,argv)) == NULL)
+    if ((App = appAlloc(&AppInfo,argc,argv)) == NULL)
 	return -1;
     if (ParseCommandLine() != 0)
 	return -1;
@@ -1140,12 +1135,12 @@ static int Init(int argc, const char **argv)
    main()
    ----------------------------------------------------------------- */
 
-int main(int argc, const char **argv)
+int main(int argc, char **argv)
 
 {
     if (Init(argc,argv) != 0)
     {
-	MTX_ERROR("Initialization failed");
+	mtxAbort(MTX_HERE,"Initialization failed");
 	return -1;
     }
 
@@ -1296,3 +1291,5 @@ Each letter corresponds to a certain piece of output:
   Socle series.
 
 **/
+
+// vim:fileencoding=utf8:sw=3:ts=8:et:cin

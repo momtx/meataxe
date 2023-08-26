@@ -1,14 +1,10 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // C MeatAxe - Reduce to (normalized) echelon form
-//
-// (C) Copyright 1998-2015 Michael Ringe, Lehrstuhl D fuer Mathematik, RWTH Aachen
-//
-// This program is free software; see the file COPYING for details.
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
 
-#include <meataxe.h>
+#include "meataxe.h"
 #include <stdlib.h>
 
 
@@ -18,7 +14,6 @@
    Global data
    ------------------------------------------------------------------ */
 
-MTX_DEFINE_FILE_INFO
 
 static int opt_G = 0;	/* GAP output */
 static const char *iname, *oname;
@@ -48,16 +43,16 @@ static MtxApplication_t *App = NULL;
 
 
 
-static int Init(int argc, const char **argv)
+static int Init(int argc, char **argv)
 
 {
     /* Process command line options and arguments.
        ------------------------------------------- */
-    if ((App = AppAlloc(&AppInfo,argc,argv)) == NULL)
+    if ((App = appAlloc(&AppInfo,argc,argv)) == NULL)
 	return -1;
-    opt_G = AppGetOption(App,"-G --gap");
+    opt_G = appGetOption(App,"-G --gap");
     if (opt_G) MtxMessageLevel = -100;
-    if (AppGetArguments(App,2,2) != 2)
+    if (appGetArguments(App,2,2) != 2)
 	return -1;
     iname = App->ArgV[0];
     oname = App->ArgV[1];
@@ -71,9 +66,9 @@ static void Cleanup()
 
 {
     if (App != NULL)
-	AppFree(App);
+	appFree(App);
     if (Mat != NULL)
-	MatFree(Mat);
+	matFree(Mat);
 }
 
 
@@ -84,23 +79,23 @@ static void Cleanup()
    main()
    ------------------------------------------------------------------ */
 
-int main(int argc, const char **argv)
+int main(int argc, char **argv)
 
 {
     int rc = 0;
 
     if (Init(argc,argv) != 0)
     {
-	MTX_ERROR("Initialization failed");
+	mtxAbort(MTX_HERE,"Initialization failed");
 	return 1;
     }
 
-    Mat = MatLoad(iname);
+    Mat = matLoad(iname);
     if (Mat == NULL)
 	rc = -1;
     if (rc == 0)
     {
-	if (MatEchelonize(Mat) < 0)
+	if (matEchelonize(Mat) < 0)
 	    rc = 1;
     }
     if (rc == 0)
@@ -110,13 +105,13 @@ int main(int argc, const char **argv)
 	int i;
 	for (i = 0; i < Mat->Nor; ++i)
 	{
-	    PTR rp = MatGetPtr(Mat,i);
-	    FfMulRow(rp,FfInv(FfExtract(rp,Mat->PivotTable[i])));
+	    PTR rp = matGetPtr(Mat,i);
+	    ffMulRow(rp,ffInv(ffExtract(rp,Mat->PivotTable[i])));
 	}
     }
     if (rc == 0)
     {
-	if (MatSave(Mat,oname) != 0)
+	if (matSave(Mat,oname) != 0)
 	    rc = -1;
     }
     if (rc == 0)
@@ -188,3 +183,4 @@ matrix, being faster than the null-space program. There is no need for
 the input matrix to be square, and the output may also not be square.
 
 */
+// vim:fileencoding=utf8:sw=3:ts=8:et:cin

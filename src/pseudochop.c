@@ -1,12 +1,8 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // C MeatAxe - Chop with known peak words
-//
-// (C) Copyright 1998-2015 Michael Ringe, Lehrstuhl D fuer Mathematik, RWTH Aachen
-//
-// This program is free software; see the file COPYING for details.
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#include <meataxe.h>
+#include "meataxe.h"
 
 #include <ctype.h>
 #include <stdarg.h>
@@ -15,7 +11,6 @@
 
 
 
-MTX_DEFINE_FILE_INFO
 static const MtxApplicationInfo_t AppInfo = {
 "pseudochop", "Chop by peakwords",
 "SYNTAX\n"
@@ -44,8 +39,8 @@ static int semisimp =0;
 
 static int ParseCommandLine()
 {
-    semisimp = AppGetOption(App,"-s --assume-semisimple");
-    if (AppGetArguments(App,2,2) != 2)
+    semisimp = appGetOption(App,"-s --assume-semisimple");
+    if (appGetArguments(App,2,2) != 2)
 	return -1;
     if (semisimp)
         printf("Assuming that the representation is semisimple.\n");
@@ -54,7 +49,7 @@ static int ParseCommandLine()
 
 /*----------------------------------------------------------------------------*/
 
-int main(int argc, const char *argv[])
+int main(int argc, char *argv[])
 {
     int dim = 0, i, j;
     char name[MAX_NAME], name2[MAX_NAME];
@@ -64,19 +59,19 @@ int main(int argc, const char *argv[])
     WgData_t *rep;
     Lat_Info mycfinfo;
     IntMatrix_t *OpTable;
-    MtxInitLibrary();
-    if ((App = AppAlloc(&AppInfo,argc,argv)) == NULL)
+    MtxInitLibrary(argv[0]);
+    if ((App = appAlloc(&AppInfo,argc,argv)) == NULL)
 	return 1;
     if (ParseCommandLine() != 0)
 	return 1;
 
     /* Read <ref>.cfinfo */
-    if (Lat_ReadInfo(&mycfinfo,App->ArgV[1]) != 0)
+    if (latReadInfo(&mycfinfo,App->ArgV[1]) != 0)
 	return -1;
 
     /* Read generators of <mod>, and set up the word generator */
-    gens = MrLoad(App->ArgV[0],mycfinfo.NGen);
-    rep = WgAlloc(gens);
+    gens = mrLoad(App->ArgV[0],mycfinfo.NGen);
+    rep = wgAlloc(gens);
 
     /* Run through all possible constituents and calculate their multiplicity in <mod> */
     for ( j = 0; j < mycfinfo.NCf; j++ )
@@ -84,11 +79,11 @@ int main(int argc, const char *argv[])
 	int oldnul, newnul;
         if (mycfinfo.Cf[j].peakword == 0)
         {
-	    MTX_ERROR("0 is definitly not a peakword! - Did you run mkpeak?");
+	    mtxAbort(MTX_HERE,"0 is definitly not a peakword! - Did you run mkpeak?");
             return 1;
         }
-        old = MatInsert(WgMakeWord(rep,mycfinfo.Cf[j].peakword),mycfinfo.Cf[j].peakpol);
-	nulsp = MatNullSpace(old);
+        old = matInsert(wgMakeWord(rep,mycfinfo.Cf[j].peakword),mycfinfo.Cf[j].peakpol);
+	nulsp = matNullSpace(old);
 	newnul = nulsp->Nor; 
         oldnul = 0;
 
@@ -97,47 +92,47 @@ int main(int argc, const char *argv[])
         {
 	    Matrix_t *newmat;
             oldnul = newnul;
-            newmat = MatDup(old);
-            MatMul(newmat,old);
-            MatFree(old);
-            MatFree(nulsp);
-            old = MatDup(newmat);
-            nulsp = MatNullSpace__(newmat); 
+            newmat = matDup(old);
+            matMul(newmat,old);
+            matFree(old);
+            matFree(nulsp);
+            old = matDup(newmat);
+            nulsp = matNullSpace__(newmat); 
             newnul= nulsp->Nor;
         }
-        MatFree(old);
+        matFree(old);
         mycfinfo.Cf[j].mult = newnul / mycfinfo.Cf[j].spl;
         dim += mycfinfo.Cf[j].dim * mycfinfo.Cf[j].mult;
 
         MESSAGE(0,("%s%s occurs %ld times (total dimension now %d out of %d)\n",
-	    App->ArgV[1],Lat_CfName(&mycfinfo,j),mycfinfo.Cf[j].mult,
+	    App->ArgV[1],latCfName(&mycfinfo,j),mycfinfo.Cf[j].mult,
 	    dim,gens->Gen[0]->Nor));
 
 	/* Copy generators, std basis, and .op file for this constituent.
            Note: we do this even if this constituent does not occcur in <mod> */
-        sprintf(name, "%s%s.k", App->ArgV[0], Lat_CfName(&mycfinfo,j));
-        MatSave(nulsp,name);
-        sprintf(name, "%s%s.op", App->ArgV[0], Lat_CfName(&mycfinfo,j));
-        sprintf(name2, "%s%s.op", App->ArgV[1], Lat_CfName(&mycfinfo,j));
-        OpTable = ImatLoad(name2);
-        ImatSave(OpTable,name);
+        sprintf(name, "%s%s.k", App->ArgV[0], latCfName(&mycfinfo,j));
+        matSave(nulsp,name);
+        sprintf(name, "%s%s.op", App->ArgV[0], latCfName(&mycfinfo,j));
+        sprintf(name2, "%s%s.op", App->ArgV[1], latCfName(&mycfinfo,j));
+        OpTable = imatLoad(name2);
+        imatSave(OpTable,name);
         for ( i = 0; i < mycfinfo.NGen; i++ )
         {
-            sprintf(name, "%s%s.%d", App->ArgV[0], Lat_CfName(&mycfinfo,j), i+1);
-            sprintf(name2, "%s%s.%d", App->ArgV[1], Lat_CfName(&mycfinfo,j), i+1);
-            mat = MatLoad(name2);
+            sprintf(name, "%s%s.%d", App->ArgV[0], latCfName(&mycfinfo,j), i+1);
+            sprintf(name2, "%s%s.%d", App->ArgV[1], latCfName(&mycfinfo,j), i+1);
+            mat = matLoad(name2);
             if (mat->Field != gens->Gen[0]->Field)
             {
-		MTX_ERROR2("%s: %E",name2,MTX_ERR_INCOMPAT); 
+		mtxAbort(MTX_HERE,"%s: %s",name2,MTX_ERR_INCOMPAT); 
                 return -1;
             }
-            MatSave(mat, name);
-            MatFree(mat);
-            sprintf(name, "%s%s.std.%d", App->ArgV[0], Lat_CfName(&mycfinfo,j), i+1);
-            sprintf(name2, "%s%s.std.%d", App->ArgV[1], Lat_CfName(&mycfinfo,j), i+1);
-            mat = MatLoad(name2);
-            MatSave(mat, name);
-            MatFree(mat);
+            matSave(mat, name);
+            matFree(mat);
+            sprintf(name, "%s%s.std.%d", App->ArgV[0], latCfName(&mycfinfo,j), i+1);
+            sprintf(name2, "%s%s.std.%d", App->ArgV[1], latCfName(&mycfinfo,j), i+1);
+            mat = matLoad(name2);
+            matSave(mat, name);
+            matFree(mat);
         } 
     }
     if (dim < gens->Gen[0]->Nor)
@@ -145,7 +140,7 @@ int main(int argc, const char *argv[])
 		dim, gens->Gen[0]->Nor);
 
     strcpy(mycfinfo.BaseName,App->ArgV[0]);
-    Lat_WriteInfo(&mycfinfo);
+    latWriteInfo(&mycfinfo);
 
     return 0;	
 }
@@ -195,3 +190,4 @@ and the reference module must have been chopped, and peak words must have been
 calculated.
 
 */
+// vim:fileencoding=utf8:sw=3:ts=8:et:cin

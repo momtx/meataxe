@@ -1,12 +1,8 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // C MeatAxe - 
-//
-// (C) Copyright 1998-2015 Michael Ringe, Lehrstuhl D fuer Mathematik, RWTH Aachen
-//
-// This program is free software; see the file COPYING for details.
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#include <meataxe.h>
+#include "meataxe.h"
 
 
 
@@ -30,17 +26,16 @@ static MtxApplicationInfo_t AppInfo = {
 static MtxApplication_t *App = NULL;
 static const char *iname = 0, *oname = 0;
 
-MTX_DEFINE_FILE_INFO
 
 
-static int Init(int argc, const char **argv)
+static int Init(int argc, char **argv)
 {
-    if ((App = AppAlloc(&AppInfo,argc,argv)) == NULL)
+    if ((App = appAlloc(&AppInfo,argc,argv)) == NULL)
 	return -1;
 
     /* Parse command line.
        ------------------- */
-    if (AppGetArguments(App,2,2) < 0)
+    if (appGetArguments(App,2,2) < 0)
 	return -1;
     
     iname = App->ArgV[0];
@@ -61,31 +56,31 @@ int main(int argc, char *argv[])
     int nor, noc, i, j;
     FILE *inp, *out;
 
-    if (Init(argc, (const char **)argv) != 0)
+    if (Init(argc, (char **)argv) != 0)
     {
-	MTX_ERROR("Initialization failed");
+	mtxAbort(MTX_HERE,"Initialization failed");
 	return 1;
     }
 
     /* Open the input file.
        -------------------- */
-    if ((inp = FfReadHeader(iname,&fl,&nor,&noc)) == NULL)
+    if ((inp = ffReadHeader(iname,&fl,&nor,&noc)) == NULL)
 	return 1;
     if (fl < 1)
     {
-	MTX_ERROR2("%s: %E",iname,MTX_ERR_NOTMATRIX);
+	mtxAbort(MTX_HERE,"%s: %s",iname,MTX_ERR_NOTMATRIX);
 	return 1;
     }
 
     /* Allocate workspace.
        ------------------- */
-    FfSetField(fl);
-    FfSetNoc(noc);
-    m1 = FfAlloc((long)1);
+    ffSetField(fl);
+    ffSetNoc(noc);
+    m1 = ffAlloc(1, noc);
 
     /* Open the output file.
        --------------------- */
-    if ((out = FfWriteHeader(oname,fl,nor,noc)) == NULL)
+    if ((out = ffWriteHeader(oname,fl,nor,noc)) == NULL)
     {
 	return 1;
     }
@@ -94,10 +89,10 @@ int main(int argc, char *argv[])
        ----------- */
     for (i = 1; i <= nor; ++i)
     {
-	FfReadRows(inp,m1,1);
+	ffReadRows(inp,m1,1,noc);
 	for (j = i + 1; j <= noc; ++j)
-	    FfInsert(m1,j,FF_ZERO);
-	FfWriteRows(out,m1,1);
+	    ffInsert(m1,j,FF_ZERO);
+	ffWriteRows(out,m1,1,noc);
     }
 
     /* Clean up.
@@ -168,3 +163,4 @@ it is just a bodge, but it is possible:
   matrix (use @ref prog_znu "znu") iff the form was fixed (given that the symplectic one was).
 
 */
+// vim:fileencoding=utf8:sw=3:ts=8:et:cin

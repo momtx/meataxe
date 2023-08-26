@@ -1,16 +1,8 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // C MeatAxe - Decompose a module into direct summands.
-//
-// (C) Copyright 1998-2015 Michael Ringe, Lehrstuhl D fuer Mathematik, RWTH Aachen
-//
-// This program is free software; see the file COPYING for details.
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-
-#include <meataxe.h>
-
-
-MTX_DEFINE_FILE_INFO
+#include "meataxe.h"
 
 static MtxApplicationInfo_t AppInfo = {
 "decomp", "Decompose module",
@@ -57,9 +49,9 @@ static int WriteAction = 0;		/* -a: Write action on components */
 static int ParseArgs()
 
 {
-    TransformGenerators = AppGetOption(App,"-t");
-    WriteAction = AppGetOption(App,"-a");
-    if (AppGetArguments(App,2,2) < 0)
+    TransformGenerators = appGetOption(App,"-t");
+    WriteAction = appGetOption(App,"-a");
+    if (appGetArguments(App,2,2) < 0)
 	return -1;
     ModName = App->ArgV[0];
     EndoName = App->ArgV[1];
@@ -76,10 +68,10 @@ static int ReadFiles()
 
     /* Read the .cfinfo files and calculate some dimensions.
        ----------------------------------------------------- */
-    if (Lat_ReadInfo(&ModInfo,ModName) != 0)
+    if (latReadInfo(&ModInfo,ModName) != 0)
         return -1;
     sprintf(fn,"%s.lrr",EndoName);
-    if (Lat_ReadInfo(&LrrInfo,fn) != 0)
+    if (latReadInfo(&LrrInfo,fn) != 0)
         return -1;
     moddim = 0;
     for (i = 0; i < ModInfo.NCf; ++i)
@@ -93,7 +85,7 @@ static int ReadFiles()
     }
     if (headdim > enddim || headdim <= 0)
     {
-	MTX_ERROR2("The head (%d) is bigger than the ring itself (%d)!",
+	mtxAbort(MTX_HERE,"The head (%d) is bigger than the ring itself (%d)!",
 		headdim,enddim);
 	return -1;
     }
@@ -103,13 +95,13 @@ static int ReadFiles()
        --------------------------- */
     sprintf(fn,"%s.lrr.soc",EndoName);
     MESSAGE(1,("Loading socle basis\n"));
-    if ((tmp = MatLoad(fn)) == NULL)
+    if ((tmp = matLoad(fn)) == NULL)
 	return -1;
-    tmp2 = MatInverse(tmp);
-    MatFree(tmp);
-    tmp = MatTransposed(tmp2);
-    MatFree(tmp2);
-    head = MatCutRows(tmp,0,headdim);
+    tmp2 = matInverse(tmp);
+    matFree(tmp);
+    tmp = matTransposed(tmp2);
+    matFree(tmp2);
+    head = matCutRows(tmp,0,headdim);
 
     return 0;
 }
@@ -117,10 +109,9 @@ static int ReadFiles()
 
 
 
-static int Init(int argc, const char **argv)
-
+static int Init(int argc, char **argv)
 {
-    if ((App = AppAlloc(&AppInfo,argc,argv)) == NULL)                           
+    if ((App = appAlloc(&AppInfo,argc,argv)) == NULL)                           
         return -1;
     if (ParseArgs() != 0)
         return -1;
@@ -134,7 +125,7 @@ static int Init(int argc, const char **argv)
 static void Cleanup()
 
 {
-    AppFree(App);
+    appFree(App);
 }
 
 
@@ -151,7 +142,7 @@ static int WriteOutput(Matrix_t *bas)
        ------------------------------ */
     sprintf(name,"%s.dec", ModName);
     MESSAGE(1,("Writing the decomposition basis (%s)\n",name));
-    MatSave(bas,name);
+    matSave(bas,name);
 
     /* Transform the generators.
        ------------------------- */
@@ -159,22 +150,22 @@ static int WriteOutput(Matrix_t *bas)
     {
 	MESSAGE(1,("Transforming the generators\n"));
 	sprintf(name,"%s.std",ModName);
-	rep = MrLoad(name,ModInfo.NGen);
+	rep = mrLoad(name,ModInfo.NGen);
 	if (rep == NULL)
 	{
-	    MTX_ERROR("Cannot load generators");
+	    mtxAbort(MTX_HERE,"Cannot load generators");
 	    return 1;
 	}
-	if (MrChangeBasis(rep,bas) != 0)
+	if (mrChangeBasis(rep,bas) != 0)
 	{
-	    MTX_ERROR("Error changing basis");
+	    mtxAbort(MTX_HERE,"Error changing basis");
 	    return 1;
 	}
 	if (TransformGenerators)
 	{
 	    sprintf(name,"%s.dec",ModName);
 	    MESSAGE(1,("Writing transformed generators (%s.1, ...)\n",name));
-	    MrSave(rep,name);
+	    mrSave(rep,name);
 	}
     }
 
@@ -192,13 +183,13 @@ static int WriteOutput(Matrix_t *bas)
 		int l;
 		for (l = 0; l < LrrInfo.Cf[k].dim / LrrInfo.Cf[k].spl; l++)
 		{
-		    Matrix_t *tmp = MatCut(rep->Gen[i],block_start,block_start,
+		    Matrix_t *tmp = matCut(rep->Gen[i],block_start,block_start,
 			compdim[k],compdim[k]);
 		    block_start += compdim[k];
 		    sprintf(name, "%s.comp%d%c%d.%d", ModName,compdim[k], 
 			compnm[k],l+1,i+1);
-		    MatSave(tmp, name);
-		    MatFree(tmp);
+		    matSave(tmp, name);
+		    matFree(tmp);
 		}
 	    }
 	}
@@ -208,7 +199,7 @@ static int WriteOutput(Matrix_t *bas)
 }
 
 
-int main(int argc, const char **argv)
+int main(int argc, char **argv)
 
 {
     int rc = 0;
@@ -222,7 +213,7 @@ int main(int argc, const char **argv)
                                                                                 
     if (Init(argc,argv) != 0)                                                   
     {                                                                           
-        MTX_ERROR("Initialization failed");                                     
+        mtxAbort(MTX_HERE,"Initialization failed");                                     
         return 1;                                                               
     }                                                                           
 
@@ -230,47 +221,48 @@ int main(int argc, const char **argv)
    makes the corresponding element of the endomorphismring
    ------------------------------------------------------- */
 
-    bas = MatAlloc(FfOrder,moddim,moddim);
+    bas = matAlloc(ffOrder,moddim,moddim);
     headptr = head->Data;
     for (i = 0; i < LrrInfo.NCf; i++)
     {
 	MESSAGE(1,("Next constituent is %s%s\n",LrrInfo.BaseName,
-	    Lat_CfName(&LrrInfo,i)));
+	    latCfName(&LrrInfo,i)));
 	for (j = 0; j < LrrInfo.Cf[i].dim / LrrInfo.Cf[i].spl; j++)
 	{
 	    num = LrrInfo.Cf[i].dim;
 	    do
 	    {
 		if (partbas != NULL)
-		    MatFree(partbas);
-		partbas = MatAlloc(FfOrder, moddim, moddim);
+		    matFree(partbas);
+		partbas = matAlloc(ffOrder, moddim, moddim);
 		if (num-- == 0)
 		{
-		    MTX_ERROR("na, most mi van?");
+		    mtxAbort(MTX_HERE,"na, most mi van?");
 		    return 1;
 		}
 		for (l = 0; l < enddim; l++)
 		{
-		    if ((f = FfExtract(headptr, l)) == FF_ZERO)
+		    if ((f = ffExtract(headptr, l)) == FF_ZERO)
 		    	continue;
 		    sprintf(name, "%s.%d", EndoName, l+1);
-		    if ((mat = MatLoad(name)) == NULL)
+		    if ((mat = matLoad(name)) == NULL)
 			return 1;
-		    MatAddMul(partbas,mat,f);
-		    MatFree(mat);
+		    matAddMul(partbas,mat,f);
+		    matFree(mat);
 		}
-		FfSetNoc(enddim);
-		FfStepPtr(&headptr);
+		ffSetNoc(enddim);
+		ffStepPtr(&headptr, enddim);
 
 		if (pol != NULL)
-		    FpFree(pol);
-		pol = CharPol(partbas);
+		    fpFree(pol);
+		pol = charPol(partbas);
 	    }
 	    while (LrrInfo.Cf[i].dim != 1 && pol->NFactors == 1 
-		&& pol->Factor[0]->Degree == 1 && pol->Factor[0]->Data[0] == 0 
-		&& pol->Factor[0]->Data[1] == 1); /* i.e.,charpol == x^enddim */
-	    FfSetNoc(enddim);
-	    headptr = FfGetPtr(headptr,num);
+		&& pol->Factor[0]->Degree == 1
+		&& pol->Factor[0]->Data[0] == FF_ZERO 
+		&& pol->Factor[0]->Data[1] == FF_ONE); /* i.e.,charpol == x^enddim */
+	    ffSetNoc(enddim);
+	    headptr = ffGetPtr(headptr,num, enddim);
 
 
             /* Make the stable kernel.
@@ -283,26 +275,26 @@ int main(int argc, const char **argv)
 		compnm[i] = (char)(compnm[l] + 1);
 	    else
 		compnm[i] = 'a';
-	    MatFree(ker);
+	    matFree(ker);
 	    MESSAGE(0,("The %d-th direct summand is: %d%c\n\n", j,
 		compdim[i], compnm[i]));
 
 
 	    /* Append <partbas> to <bas>.
 	       -------------------------- */
-	    MatEchelonize(partbas);
-	    #ifdef PARANOID
-	    FfSetNoc(dim);
+	    matEchelonize(partbas);
+	    #ifdef MTX_DEBUG
+	    ffSetNoc(dim);
 	    #endif
-	    MatCopyRegion(bas,dim,0,partbas,0,0,-1,-1);
+	    matCopyRegion(bas,dim,0,partbas,0,0,-1,-1);
 	    dim += partbas->Nor;
 	}
     }
-    MatFree(partbas);
+    matFree(partbas);
 
     if (dim != moddim)
     {
-	MTX_ERROR("es most mi van?");
+	mtxAbort(MTX_HERE,"Something is wrong - dimension mismatch (%d vs. %d)", dim, moddim);
 	for (i = 0; i < LrrInfo.NCf; i++)
     	    printf("%d  ", compdim[i]);
     	printf("\n");
@@ -396,3 +388,4 @@ the left regular representation.
   The algorithm used by this program was developed by Magdolna Szöke [@ref Sz98].
 
 **/
+// vim:fileencoding=utf8:sw=3:ts=8:et:cin

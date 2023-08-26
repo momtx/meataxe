@@ -1,18 +1,29 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // C MeatAxe - Compare polynomials
-//
-// (C) Copyright 1998-2015 Michael Ringe, Lehrstuhl D fuer Mathematik, RWTH Aachen
-//
-// This program is free software; see the file COPYING for details.
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#include <meataxe.h>
+#include "meataxe.h"
 #include <string.h>
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // Local data
 
-MTX_DEFINE_FILE_INFO
+
+/// @addtogroup poly
+/// @{
+
+// Gives identical results for ZZZ=0 and ZZZ=1.
+static inline int ffCompare(FEL a, FEL b)
+{
+#if MTXZZZ == 0
+   return a > b ? 1 : ((a == b) ?  0 : -1);
+#elif MTXZZZ == 1
+   int d = ffToInt(a) - ffToInt(b);
+   return d > 0 ? 1 : (d == 0 ?  0 : -1);
+#else
+   #error
+#endif
+}
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 /// Compare Two poynomials.
@@ -29,23 +40,19 @@ MTX_DEFINE_FILE_INFO
 /// @param b Second polynomial.
 /// @return 1 if a>b, -1 if a<b, 0 if a=b, or -2 on error.
 
-int PolCompare(const Poly_t *a, const Poly_t *b)
+int polCompare(const Poly_t *a, const Poly_t *b)
 {
    int i;
 
    // check arguments
-   if (!PolIsValid(a) || !PolIsValid(b)) {
-      MTX_ERROR1("%E",MTX_ERR_BADARG);
-      return -2;
-   }
+   polValidate(MTX_HERE, a);
+   polValidate(MTX_HERE, b);
 
    // compare fields
-   if (a->Field > b->Field) {
+   if (a->Field > b->Field)
       return 1;
-   }
-   if (a->Field < b->Field) {
+   if (a->Field < b->Field)
       return -1;
-   }
 
    // compare degrees
    if (a->Degree > b->Degree) {
@@ -57,12 +64,9 @@ int PolCompare(const Poly_t *a, const Poly_t *b)
 
    // compare coefficients
    for (i = a->Degree; i >= 0; --i) {
-      if (a->Data[i] > b->Data[i]) {
-         return 1;
-      }
-      if (a->Data[i] < b->Data[i]) {
-         return -1;
-      }
+       int cmp = ffCompare(a->Data[i], b->Data[i]);
+       if (cmp != 0)
+	   return cmp;
    }
 
    // the polynomials are equal
@@ -71,3 +75,4 @@ int PolCompare(const Poly_t *a, const Poly_t *b)
 
 
 /// @}
+// vim:fileencoding=utf8:sw=3:ts=8:et:cin

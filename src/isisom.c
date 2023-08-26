@@ -1,16 +1,11 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // C MeatAxe - Isomorphism test
-//
-// (C) Copyright 1998-2015 Michael Ringe, Lehrstuhl D fuer Mathematik, RWTH Aachen
-//
-// This program is free software; see the file COPYING for details.
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
-#include <meataxe.h>
+#include "meataxe.h"
 
 
-MTX_DEFINE_FILE_INFO
 
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -20,55 +15,54 @@ MTX_DEFINE_FILE_INFO
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 static int CheckArgs(int ngen, Matrix_t  **gen1, const CfInfo *info1, Matrix_t **gen2, int use_pw)
-
 {
-    int j;
+   int j;
 
-    /* Check arguments
-       --------------- */
-    MTX_VERIFY(ngen > 0);
-    for (j = 0; j < ngen; ++j)
-    {
-        if (!MatIsValid(gen1[j]) || !MatIsValid(gen2[j]))
-	    return -1;
-	if (gen1[j]->Nor != gen1[j]->Noc)
-	{
-	    MTX_ERROR1("gen1[%d]: Matrix not square",j);
-	    return -1;
-	}
-	if (gen2[j]->Nor != gen2[j]->Noc)
-	{
-	    MTX_ERROR1("gen2[%d]: Matrix not square",j);
-	    return -1;
-	}
-	if (gen1[j]->Field != gen1[0]->Field || gen1[j]->Nor != gen1[0]->Nor)
-	{
-	    MTX_ERROR1("gen1[%d]: Incompatible matrix",j);
-	    return -1;
-	}
-	if (gen2[j]->Field != gen1[0]->Field)
-	{
-	    MTX_ERROR1("gen2[%d]: Incompatible matrix",j);
-	    return -1;
-	}
-    }
+   /* Check arguments
+      --------------- */
+   MTX_ASSERT(ngen > 0, -1);
+   for (j = 0; j < ngen; ++j)
+   {
+      matValidate(MTX_HERE, gen1[j]);
+      matValidate(MTX_HERE, gen2[j]);
+      if (gen1[j]->Nor != gen1[j]->Noc)
+      {
+         mtxAbort(MTX_HERE,"gen1[%d]: Matrix not square",j);
+         return -1;
+      }
+      if (gen2[j]->Nor != gen2[j]->Noc)
+      {
+         mtxAbort(MTX_HERE,"gen2[%d]: Matrix not square",j);
+         return -1;
+      }
+      if (gen1[j]->Field != gen1[0]->Field || gen1[j]->Nor != gen1[0]->Nor)
+      {
+         mtxAbort(MTX_HERE,"gen1[%d]: Incompatible matrix",j);
+         return -1;
+      }
+      if (gen2[j]->Field != gen1[0]->Field)
+      {
+         mtxAbort(MTX_HERE,"gen2[%d]: Incompatible matrix",j);
+         return -1;
+      }
+   }
 
-    if (info1->dim != gen1[0]->Nor)
-    {
-	MTX_ERROR("Inconsistent cfinfo data");
-	return -1;
-    }
-    if (use_pw && info1->peakword == 0)
-    {
-	MTX_ERROR("No peak word available");
-	return -1;
-    }
-    if (!use_pw && info1->idword == 0)
-    {
-	MTX_ERROR("No id word available");
-	return -1;
-    }
-    return 0;
+   if (info1->dim != gen1[0]->Nor)
+   {
+      mtxAbort(MTX_HERE,"Inconsistent cfinfo data");
+      return -1;
+   }
+   if (use_pw && info1->peakword == 0)
+   {
+      mtxAbort(MTX_HERE,"No peak word available");
+      return -1;
+   }
+   if (!use_pw && info1->idword == 0)
+   {
+      mtxAbort(MTX_HERE,"No id word available");
+      return -1;
+   }
+   return 0;
 }
 
 
@@ -116,39 +110,39 @@ int IsIsomorphic(const MatRep_t *rep1, const CfInfo *info1,
 
     /* Make the idword on representation 2
        ----------------------------------- */
-    wg = WgAlloc(rep2);
-    word = WgMakeWord(wg,use_pw ? info1->peakword : info1->idword);
-    m = MatInsert(word,use_pw ? info1->peakpol : info1->idpol);
-    MatFree(word);
-    WgFree(wg);
-    seed = MatNullSpace__(m);
+    wg = wgAlloc(rep2);
+    word = wgMakeWord(wg,use_pw ? info1->peakword : info1->idword);
+    m = matInsert(word,use_pw ? info1->peakpol : info1->idpol);
+    matFree(word);
+    wgFree(wg);
+    seed = matNullSpace__(m);
     if (seed->Nor != info1->spl)
     {	
-	MatFree(seed);
+	matFree(seed);
 	return 0;
     }
 
     /* Make the standard basis
        ----------------------- */
     b = SpinUp(seed,rep2,SF_FIRST|SF_CYCLIC|SF_STD,NULL,NULL);
-    MatFree(seed);
+    matFree(seed);
     if (b->Nor != b->Noc)
     {
-	MatFree(b);
+	matFree(b);
 	return 0;
     }
-    bi = MatInverse(b);
+    bi = matInverse(b);
 
     /* Compare generators
        ------------------ */
     for (j = 0, result = 0; result == 0 && j < rep2->NGen; ++j)
     {
-	Matrix_t *g = MatDup(b);
-	MatMul(g,rep2->Gen[j]);
-	MatMul(g,bi);
-	if (MatCompare(g,rep1->Gen[j]) != 0)
+	Matrix_t *g = matDup(b);
+	matMul(g,rep2->Gen[j]);
+	matMul(g,bi);
+	if (matCompare(g,rep1->Gen[j]) != 0)
 	    result = 1;
-	MatFree(g);
+	matFree(g);
     }
 
     /* Clean up 
@@ -156,10 +150,11 @@ int IsIsomorphic(const MatRep_t *rep1, const CfInfo *info1,
     if (trans != NULL && result == 0)
 	*trans = b;
     else
-	MatFree(b);
-    MatFree(bi);
+	matFree(b);
+    matFree(bi);
 
     return (result == 0);
 }
 
 /// @}
+// vim:fileencoding=utf8:sw=3:ts=8:et:cin

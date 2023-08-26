@@ -1,12 +1,8 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // C MeatAxe - Transpose a matrix.
-//
-// (C) Copyright 1998-2015 Michael Ringe, Lehrstuhl D fuer Mathematik, RWTH Aachen
-//
-// This program is free software; see the file COPYING for details.
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#include <meataxe.h>
+#include "meataxe.h"
 
 
 
@@ -14,7 +10,6 @@
    Global Data
    ------------------------------------------------------------------ */
 
-MTX_DEFINE_FILE_INFO
 
 static const char *iname, *oname;
 static int fl;
@@ -50,33 +45,33 @@ static int ReadMatrix()
 
     /* Read matrix
        ----------- */
-    if ((f = FfReadHeader(iname,&fl,&nor,&noc)) == NULL)
+    if ((f = ffReadHeader(iname,&fl,&nor,&noc)) == NULL)
 	return 1;
     if (fl < 2) 
     {
-	MTX_ERROR2("%s: %E",iname,MTX_ERR_NOTMATRIX);
+	mtxAbort(MTX_HERE,"%s: %s",iname,MTX_ERR_NOTMATRIX);
 	return 1;
     }
-    FfSetField(fl);
-    FfSetNoc(noc);
-    m1 = FfAlloc(nor);
-    FfReadRows(f,m1,nor);
+    ffSetField(fl);
+    ffSetNoc(noc);
+    m1 = ffAlloc(nor, noc);
+    ffReadRows(f,m1,nor, noc);
     fclose(f);
     return 0;
 }
 
 
 
-static int Init(int argc, const char **argv)
+static int Init(int argc, char **argv)
 
 {
-    App = AppAlloc(&AppInfo,argc,argv);
+    App = appAlloc(&AppInfo,argc,argv);
     if (App == NULL)
 	return -1;
 
     /* Command line.
        ------------- */
-    if (AppGetArguments(App,2,2) < 0)
+    if (appGetArguments(App,2,2) < 0)
 	return -1;
     iname = App->ArgV[0];
     oname = App->ArgV[1];
@@ -90,7 +85,7 @@ static int Init(int argc, const char **argv)
 static void Cleanup()
 
 {
-    AppFree(App);
+    appFree(App);
 }
 
 
@@ -102,32 +97,32 @@ static void Cleanup()
    main()
    ------------------------------------------------------------------ */
 
-int main(int argc, const char **argv)
+int main(int argc, char **argv)
 
 {
     if (Init(argc,argv) != 0)
     {
-	MTX_ERROR("Initialization failed");
+	mtxAbort(MTX_HERE,"Initialization failed");
 	return 1;
     }
 
     /* Transpose
        --------- */
-    FfSetNoc(nor);
-    m2 = FfAlloc(1);
-    if ((f = FfWriteHeader(oname,fl,noc,nor)) == NULL)
+    ffSetNoc(nor);
+    m2 = ffAlloc(1, nor);
+    if ((f = ffWriteHeader(oname,fl,noc,nor)) == NULL)
     {
-	MTX_ERROR("Cannot open output file");
+	mtxAbort(MTX_HERE,"Cannot open output file");
 	return 1;
     }
     for (j = 0; j < noc; ++j)
     {
-	FfSetNoc(nor);
-	FfMulRow(m2,FF_ZERO);	/* Fill with zeros */
-	FfSetNoc(noc);
-	FfExtractColumn(m1,nor,j,m2);
-	FfSetNoc(nor);
-	FfWriteRows(f,m2,1);
+	ffSetNoc(nor);
+	ffMulRow(m2,FF_ZERO);	/* Fill with zeros */
+	ffSetNoc(noc);
+	ffExtractColumn(m1,nor,j,m2);
+	ffSetNoc(nor);
+	ffWriteRows(f,m2,1, nor);
     }
     fclose(f);
 
@@ -171,3 +166,4 @@ This program transposes a matrix.
 
 */
 
+// vim:fileencoding=utf8:sw=3:ts=8:et:cin

@@ -1,24 +1,30 @@
-# Decomposition
+echo "0214 - Endomorphisms of ac (dim = 167)"
 
 . ../tests/common.sh
 
-
-cp ../tests/data/ac.1 tmp.$$.ac.1
-cp ../tests/data/ac.2 tmp.$$.ac.2
+cp "${MTX_TEST_DATA_DIR}/ac.1" tmp.$$.ac.1
+cp "${MTX_TEST_DATA_DIR}/ac.2" tmp.$$.ac.2
 chop -Q -g 2 tmp.$$.ac || error "CHOP failed"
 pwkond -Qt tmp.$$.ac || error "PWKOND failed"
 mkhom -Q -t -s tmp.$$.ac tmp.$$.ac tmp.$$.end ||  error "MKHOM failed"
 if [ ! -r tmp.$$.end.8 -o -r tmp.$$.end.9 ]; then error "Wrong number of endomorphisms"; fi
+
+compareBinaryWithReference end.1
+compareBinaryWithReference end.2
+compareBinaryWithReference end.3
+compareBinaryWithReference end.4
+compareBinaryWithReference end.5
+compareBinaryWithReference end.6
+compareBinaryWithReference end.7
+compareBinaryWithReference end.8
+
 for g in 1 2; do
-   for e in 1 2 3 4; do
+   for e in 1 2 3 4 5 6 7 8; do
        zmu tmp.$$.ac.std.$g tmp.$$.end.$e tmp.$$.a
        zmu tmp.$$.end.$e tmp.$$.ac.std.$g tmp.$$.b
        cmp tmp.$$.a tmp.$$.b || error "Endomorphism does not commute with generators"
    done
 done
 
-
-
 # Clean up
-# --------
 rm -f tmp.$$.*

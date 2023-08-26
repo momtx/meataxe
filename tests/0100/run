@@ -1,11 +1,11 @@
-# ZPR/ZCV test
+echo "0100 - ZPR/ZCV"
 
 . ../tests/common.sh
 
 rm -f tmp.$$.f1 tmp.$$.f2 tmp.$$.f3
 FILES="Perm1 Perm2 Mat2 Mat5 Mat25 Perm1 Mat256 Mat125 Perm2"
 for f in Perm1 Perm2 Mat2 Mat5 Mat25 Perm1 Mat256 Mat125 Perm2; do
-   cat ../tests/data/$f >> tmp.$$.f1
+   cat "$MTX_TEST_DATA_DIR"/$f >> tmp.$$.f1
 done
 zpr tmp.$$.f1 tmp.$$.f2
 zcv -Q tmp.$$.f2 tmp.$$.f3

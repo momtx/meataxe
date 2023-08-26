@@ -1,18 +1,13 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // C MeatAxe - Reduce a matrix to semi echelon form
-//
-// (C) Copyright 1998-2015 Michael Ringe, Lehrstuhl D fuer Mathematik, RWTH Aachen
-//
-// This program is free software; see the file COPYING for details.
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#include <meataxe.h>
+#include "meataxe.h"
 #include <stdlib.h>
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // Local data
 
-MTX_DEFINE_FILE_INFO
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -33,21 +28,23 @@ static int zmkechelon(PTR matrix, int nor, int noc, int *piv, int *ispiv)
       --------------------------------------------------------- */
    rank = 0;
    newrow = matrix;
-   for (i = 0, x = matrix; i < nor && rank < noc; ++i, FfStepPtr(&x)) {
+   MTX_ASSERT(ffNoc == noc, 0);
+   for (i = 0, x = matrix; i < nor && rank < noc; ++i, ffStepPtr(&x, noc)) {
       int newpiv;
       FEL f;
 
       if (rank < i) {
-         FfCopyRow(newrow,x);
+         ffCopyRow(newrow,x);
       }
-      FfCleanRow(newrow,matrix,rank,piv);
-      newpiv = FfFindPivot(newrow,&f);
-      MTX_ASSERT(newpiv < noc);
+      ffCleanRow(newrow,matrix,rank,noc,piv);
+      newpiv = ffFindPivot(newrow,&f);
+      MTX_ASSERT(newpiv < noc, 0);
       if (newpiv >= 0) {
          piv[rank] = newpiv;
          ispiv[newpiv] = 1;
          ++rank;
-         FfStepPtr(&newrow);
+         MTX_ASSERT(ffNoc == noc, 0);
+         ffStepPtr(&newrow, noc);
       }
    }
 
@@ -59,7 +56,7 @@ static int zmkechelon(PTR matrix, int nor, int noc, int *piv, int *ispiv)
          piv[j++] = i;
       }
    }
-   MTX_VERIFY(j == noc);
+   MTX_ASSERT(j == noc, 0);
 
    return rank;
 }
@@ -78,7 +75,7 @@ static int zmkechelon(PTR matrix, int nor, int noc, int *piv, int *ispiv)
 /// @param mat Pointer to the matrix.
 /// @return Rank of @em mat, or -1 on error.
 
-int MatEchelonize(Matrix_t *mat)
+int matEchelonize(Matrix_t *mat)
 {
    int rank;
    int *newtab;
@@ -87,9 +84,7 @@ int MatEchelonize(Matrix_t *mat)
 
    /* Check the argument
       ------------------ */
-   if (!MatIsValid(mat)) {
-      return -1;
-   }
+   matValidate(MTX_HERE, mat);
 
    /* Re-allocate the pivot table. This is not really necessary, since
       |Noc| should never change without releasing the pivot table, but
@@ -97,14 +92,14 @@ int MatEchelonize(Matrix_t *mat)
       ----------------------------------------------------------------- */
    newtab = NREALLOC(mat->PivotTable,int,mat->Noc);
    if (newtab == NULL) {
-      MTX_ERROR1("Cannot allocate pivot table (size %d)",mat->Noc);
+      mtxAbort(MTX_HERE,"Cannot allocate pivot table (size %d)",mat->Noc);
       return -1;
    }
    mat->PivotTable = newtab;
    if (mat->Noc > maxnoc) {
       int *new_is_piv = NREALLOC(is_pivot,int,mat->Noc);
       if (new_is_piv == NULL) {
-         MTX_ERROR("Cannot allocate temporary table");
+         mtxAbort(MTX_HERE,"Cannot allocate temporary table");
          return -1;
       }
       is_pivot = new_is_piv;
@@ -113,15 +108,15 @@ int MatEchelonize(Matrix_t *mat)
 
    /* Build the pivot table
       --------------------- */
-   FfSetField(mat->Field);
-   FfSetNoc(mat->Noc);
+   ffSetField(mat->Field);
+   ffSetNoc(mat->Noc);
    rank = zmkechelon(mat->Data,mat->Nor,mat->Noc,mat->PivotTable,is_pivot);
 
    /* If the rank is less than the number of rows, remove null rows
       ------------------------------------------------------------- */
    if (rank != mat->Nor) {
       mat->Nor = rank;
-      mat->Data = (PTR) SysRealloc(mat->Data,FfCurrentRowSize * rank);
+      mat->Data = (PTR) sysRealloc(mat->Data,ffSize(rank, mat->Noc));
    }
 
    return rank;
@@ -130,16 +125,16 @@ int MatEchelonize(Matrix_t *mat)
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 /// Nullity of a matrix.
 /// This function calculates the dimension of the null-space of a matrix.
-/// Unlike MatNullity__() this function does not modify the matrix.
+/// Unlike matNullity__() this function does not modify the matrix.
 /// @param mat Pointer to the matrix.
 /// @return Nullity of the matrix, or -1 on error.
 
-long MatNullity(const Matrix_t *mat)
+int matNullity(const Matrix_t *mat)
 {
    if (mat == NULL) {
       return -1;
    }
-   return MatNullity__(MatDup(mat));
+   return matNullity__(matDup(mat));
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -149,19 +144,19 @@ long MatNullity(const Matrix_t *mat)
 /// @param mat Pointer to the matrix.
 /// @return Nullity of @em mat, or -1 on error.
 
-long MatNullity__(Matrix_t *mat)
+int matNullity__(Matrix_t *mat)
 {
    if (mat == NULL) {
       return -1;
    }
-   long nul;
-   if (MatEchelonize(mat) < 0) {
+   if (matEchelonize(mat) < 0) {
       return -1;
    }
-   nul = mat->Noc - mat->Nor;
-   MatFree(mat);
+   int nul = mat->Noc - mat->Nor;
+   matFree(mat);
    return nul;
 }
 
 
 /// @}
+// vim:fileencoding=utf8:sw=3:ts=8:et:cin

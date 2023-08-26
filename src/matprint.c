@@ -1,12 +1,8 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-// C MeatAxe - Clean a row vector
-//
-// (C) Copyright 1998-2015 Michael Ringe, Lehrstuhl D fuer Mathematik, RWTH Aachen
-//
-// This program is free software; see the file COPYING for details.
+// C MeatAxe - Print a matrix
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#include <meataxe.h>
+#include "meataxe.h"
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // Local data
@@ -25,26 +21,26 @@
 /// @param name Name to print before the matrix, or 0.
 /// @param m Pointer to the matrix.
 
-void MatPrint(const char *name, const Matrix_t *m)
+void matPrint(const char *name, const Matrix_t *m)
 {
    PTR x;
    long i, k;
 
-   if (!MatIsValid(m)) {
-      return;
-   }
-   FfSetField(m->Field);
-   FfSetNoc(m->Noc);
+   matValidate(MTX_HERE, m);
+   ffSetField(m->Field);
+   ffSetNoc(m->Noc);
    x = m->Data;
    if (name != NULL) { printf("%s=\n",name); }
    for (i = 0; i < m->Nor; ++i) {
       for (k = 0; k < m->Noc; ++k) {
-         printf("%d",FfExtract(x,k));
+         printf("%d",ffToInt(ffExtract(x,k)));
       }
       printf("\n");
-      FfStepPtr(&x);
+      ffStepPtr(&x, m->Noc);
    }
 }
 
 
 /// @}
+
+// vim:fileencoding=utf8:sw=3:ts=8:et:cin

@@ -1,0 +1,10 @@
+echo "0010 - Data file conversion"
+
+. ../tests/common.sh
+
+for f in $MTX_TEST_DATA_DIR/*; do
+   baseName="${f##*/}"
+   zpr "$f" "${baseName}.txt"
+   cmp "${baseName}.txt" "$MTX_TEST_DATA_DIR/../text/${baseName}.txt"
+done
+

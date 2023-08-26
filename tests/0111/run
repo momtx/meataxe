@@ -1,26 +1,21 @@
-# Test ZSI
+echo "0111 - ZSI"
 
 . ../tests/common.sh
 
 for f in 2 5 9 25 67 125 256 ; do
-    zct 1-10 ../tests/data/Mat$f m || exit 1
-    zct 8-15 ../tests/data/Mat$f n || exit 1
-    zct 11-24 ../tests/data/Mat$f q || exit 1
-    zsi -Q ../tests/data/Mat$f ../tests/data/Mat$f s1 i1 || exit 1
+    zct 1-10 "${MTX_TEST_DATA_DIR}/Mat$f" m || exit 1
+    zct 8-15 "${MTX_TEST_DATA_DIR}/Mat$f" n || exit 1
+    zct 11-24 "${MTX_TEST_DATA_DIR}/Mat$f" q || exit 1
+    zsi -Q "${MTX_TEST_DATA_DIR}/Mat$f" "${MTX_TEST_DATA_DIR}/Mat$f" s1 i1 || exit 1
     zsi -Q m n s2 i2 || exit 1
-    zsi -Q ../tests/data/Mat$f m s3 i3 || exit 1
+    zsi -Q "${MTX_TEST_DATA_DIR}/Mat$f" m s3 i3 || exit 1
     zsi -Q q m s4 i4 || exit 1
     zpt -Q -r 8 -c 1 tmp.$$.x$f s1 s2 s3 s4 i1 i2 i3 i4 || exit 1
     rm -f m n q s1 s2 i1 i2 s3 i3 s4 i4
+
+    zpr tmp.$$.x$f tmp.$$.x$f.txt
+    cmp tmp.$$.x$f.txt "${MTX_TESTCASE_DIR}/x$f.txt.expected"
 done
-checksum tmp.$$.x2 384.1740937932 || exit 1
-checksum tmp.$$.x5 1004.2214196534 || exit 1
-checksum tmp.$$.x25 2988.692851586 || exit 1
-checksum tmp.$$.x256 2988.2785643016 || exit 1
-checksum tmp.$$.x125 2988.347859245 || exit 1
-checksum tmp.$$.x9 1500.4013879445 || exit 1
-checksum tmp.$$.x67 2988.526555067 || exit 1
 
 # Clean up
-# --------
 rm -f tmp.$$.*

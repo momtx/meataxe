@@ -1,20 +1,15 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // C MeatAxe - Tensor product of two matrices or permutations.
-//
-// (C) Copyright 1998-2015 Michael Ringe, Lehrstuhl D fuer Mathematik, RWTH Aachen
-//
-// This program is free software; see the file COPYING for details.
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
-#include <meataxe.h>
+#include "meataxe.h"
 
 
 /* ------------------------------------------------------------------
    Global data
    ------------------------------------------------------------------ */
 
-MTX_DEFINE_FILE_INFO
 
 static const char *aname, *bname, *cname;	/* File names */
 static MtxFile_t *AFile, *BFile;
@@ -61,25 +56,25 @@ static int tensormatrices()
 
     /* Allocate buffers.
        ----------------- */
-    FfSetField(AFile->Field);
-    FfSetNoc(a_noc);
-    m1 = FfAlloc(1);
-    FfSetNoc(b_noc);
-    m2 = FfAlloc(b_nor);
-    FfSetNoc(c_noc);
-    m3 = FfAlloc(1);
+    ffSetField(AFile->Field);
+    ffSetNoc(a_noc);
+    m1 = ffAlloc(1, a_noc);
+    ffSetNoc(b_noc);
+    m2 = ffAlloc(b_nor, b_noc);
+    ffSetNoc(c_noc);
+    m3 = ffAlloc(1, c_noc);
     if (m1 == NULL || m2 == NULL || m3 == NULL)
 	return -1;
 
     /* Read the second matrix (B).
        --------------------------- */
-    FfSetNoc(b_noc);
-    if (MfReadRows(BFile,m2,b_nor) != b_nor) 
+    ffSetNoc(b_noc);
+    if (mfReadRows(BFile,m2,b_nor) != b_nor) 
 	return -1;
 
     /* Open the outpt file.
        -------------------- */
-    if ((f = MfCreate(cname,FfOrder,c_nor,c_noc)) == NULL)
+    if ((f = mfCreate(cname,ffOrder,c_nor,c_noc)) == NULL)
 	return -1;
 
     /* Calculate the tensor product.
@@ -91,7 +86,7 @@ static int tensormatrices()
 
 	/* Read the next row from A.
 	   ------------------------- */
-	if (MfReadRows(AFile,m1,1) != 1)
+	if (mfReadRows(AFile,m1,1) != 1)
 	    break;
 
 	bp = m2;
@@ -99,28 +94,28 @@ static int tensormatrices()
 	{
 	    int aj, cj;
 	    cj = 0;
-	    FfSetNoc(c_noc);
+	    ffSetNoc(c_noc);
 	    for (aj = 0; aj < a_noc; ++aj)
 	    {
-		FEL f = FfExtract(m1,aj);
+		FEL f = ffExtract(m1,aj);
 		int bj;
 		for (bj = 0; bj < b_noc; ++bj)
 		{
-		    FEL g = FfExtract(bp,bj);
-		    FfInsert(m3,cj,FfMul(f,g));
+		    FEL g = ffExtract(bp,bj);
+		    ffInsert(m3,cj,ffMul(f,g));
 		    ++cj;
 		}
 	    }
-	    if (MfWriteRows(f,m3,1) != 1)
+	    if (mfWriteRows(f,m3,1) != 1)
 	    {
-		MTX_ERROR("Error writing output file");
+		mtxAbort(MTX_HERE,"Error writing output file");
 		return -1;
 	    }
-	    FfSetNoc(b_noc);
-	    FfStepPtr(&bp);
+	    ffSetNoc(b_noc);
+	    ffStepPtr(&bp, b_noc);
 	}
     }
-    MfClose(f);
+    mfClose(f);
     return 0;
 }
 
@@ -149,10 +144,10 @@ static int tensorperms(void)
     c_buf = NALLOC(long,b_deg);
     if (a_buf == NULL || b_buf == NULL || c_buf == NULL) 
 	return -1;
-    if (MfReadLong(AFile,a_buf,a_deg) != a_deg ||
-        MfReadLong(BFile,b_buf,b_deg) != b_deg)
+    if (mfReadLong(AFile,a_buf,a_deg) != a_deg ||
+        mfReadLong(BFile,b_buf,b_deg) != b_deg)
     {
-	MTX_ERROR("Error reading permutation");
+	mtxAbort(MTX_HERE,"Error reading permutation");
 	return -1;
     }
 
@@ -163,7 +158,7 @@ static int tensorperms(void)
 
     /* Open output file.
        ----------------- */
-    if ((f = MfCreate(cname,-1,c_deg,1)) == NULL)
+    if ((f = mfCreate(cname,-1,c_deg,1)) == NULL)
 	return -1;
 
     /* Calculate the tensor product
@@ -173,13 +168,13 @@ static int tensorperms(void)
 	int k;
 	for (k = 0; k < b_deg; ++k)
 	    c_buf[k] = a_buf[i] * b_deg + b_buf[k];
-        if (MfWriteLong(f,c_buf,b_deg) != b_deg)
+        if (mfWriteLong(f,c_buf,b_deg) != b_deg)
         {
-	    MTX_ERROR("Error writing permutation");
+	    mtxAbort(MTX_HERE,"Error writing permutation");
 	    return -1;
 	}
     }
-    MfClose(f);
+    mfClose(f);
     return 0;
 }
 
@@ -187,20 +182,20 @@ static int tensorperms(void)
 static int OpenFiles()
 
 {
-    if ((AFile = MfOpen(aname)) == NULL ||
-	(BFile = MfOpen(bname)) == NULL)
+    if ((AFile = mfOpen(aname)) == NULL ||
+	(BFile = mfOpen(bname)) == NULL)
     {
-	MTX_ERROR("Error opening input file");
+	mtxAbort(MTX_HERE,"Error opening input file");
 	return -1;
     }
     if (AFile->Field != -1 && AFile->Field < 2)
     {
-	MTX_ERROR2("%s: Invalid file type %d",aname,AFile->Field);
+	mtxAbort(MTX_HERE,"%s: Invalid file type %d",aname,AFile->Field);
 	return -1;
     }
     if (AFile->Field != BFile->Field)
     {
-	MTX_ERROR3("%s and %s: %E",aname,bname,MTX_ERR_INCOMPAT);
+	mtxAbort(MTX_HERE,"%s and %s: %s",aname,bname,MTX_ERR_INCOMPAT);
 	return -1;
     }
     return 0;
@@ -208,14 +203,14 @@ static int OpenFiles()
 
 
 
-static int Init(int argc, const char **argv)
+static int Init(int argc, char **argv)
 
 {
     /* Process command line options and arguments.
        ------------------------------------------- */
-    if ((App = AppAlloc(&AppInfo,argc,argv)) == NULL)
+    if ((App = appAlloc(&AppInfo,argc,argv)) == NULL)
 	return -1;
-    if (AppGetArguments(App,3,3) != 3)
+    if (appGetArguments(App,3,3) != 3)
 	return -1;
     aname = App->ArgV[0];
     bname = App->ArgV[1];
@@ -238,11 +233,11 @@ static void Cleanup()
 
 {
     if (App != NULL)
-	AppFree(App);
+	appFree(App);
     if (AFile != NULL)
-	MfClose(AFile);
+	mfClose(AFile);
     if (BFile != NULL)
-	MfClose(BFile);
+	mfClose(BFile);
 }
 
 
@@ -252,14 +247,14 @@ static void Cleanup()
    main()
    ------------------------------------------------------------------ */
 
-int main(int argc, const char **argv)
+int main(int argc, char **argv)
 
 {
     int rc = 0;
 
     if (Init(argc,argv) != 0)
     {
-	MTX_ERROR("Initialization failed");
+	mtxAbort(MTX_HERE,"Initialization failed");
 	return 1;
     }
     if (AFile->Field == -1)
@@ -329,3 +324,4 @@ action is defined in the obvious way: (i,k) maps to (iA,kB).
 In the output, pairs are represented as numbers using the 
 lexicographic ordering (1,1), ..., (1,n'), (2,1), ..., (n,n').
 **/
+// vim:fileencoding=utf8:sw=3:ts=8:et:cin
