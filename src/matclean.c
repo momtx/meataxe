@@ -39,7 +39,6 @@ int matClean(Matrix_t *mat, const Matrix_t *sub)
 
    /* Clean
       ----- */
-   ffSetNoc(mat->Noc);
    for (i = 0; i < mat->Nor; ++i) {
       PTR m = matGetPtr(mat,i);
       ffCleanRow(m,sub->Data,sub->Nor,sub->Noc, sub->PivotTable);

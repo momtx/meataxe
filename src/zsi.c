@@ -50,14 +50,14 @@ static int WriteFiles()
     
     MESSAGE(0,("Sum %d, Intersection %d\n",NorA,NorB));
     MESSAGE(1,("Writing sum to %s\n",sumname));
-    if ((of = mfCreate(sumname,ffOrder,NorA,ffNoc)) == NULL)
+    if ((of = mfCreate(sumname,ffOrder,NorA,Noc)) == NULL)
 	return -1;
     if (mfWriteRows(of,Wrk1,NorA) != NorA)
 	return -1;
     mfClose(of);
 
     MESSAGE(1,("Writing intersection to %s\n",intname));
-    if ((of = mfCreate(intname,ffOrder,NorB,ffNoc)) == NULL)
+    if ((of = mfCreate(intname,ffOrder,NorB,Noc)) == NULL)
 	return -1;
     if (mfWriteRows(of,ffGetPtr(Wrk2,NorA,Noc),NorB) != NorB)
 	return -1;
@@ -98,7 +98,6 @@ static int ReadFiles()
        -------------------- */
     ffSetField(af->Field);
     Noc = af->Noc;
-    ffSetNoc(Noc);
     NorA = af->Nor;
     NorB = bf->Nor;
     Wrk1 = ffAlloc(NorA + NorB, Noc);

@@ -20,10 +20,9 @@ static int TestGrMapRow1(Matrix_t *m, int gr_level)
 
    for (i = 0; i < m->Nor; ++i) {
       PTR vec = matGetPtr(input,i);
-      ffSetNoc(m->Noc);
-      ffMapRow(vec,m->Data,m->Nor,res_std);
+      ffMapRow(vec,m->Data,m->Nor,m->Noc, res_std);
       GrMapRow(vec,gm,res_grease);
-      ASSERT_EQ_INT(ffCmpRows(res_grease,res_std), 0);
+      ASSERT_EQ_INT(ffCmpRows(res_grease,res_std,m->Noc), 0);
    }
    sysFree(res_std);
    sysFree(res_grease);
@@ -37,7 +36,7 @@ static int TestGrMapRow1(Matrix_t *m, int gr_level)
 TstResult GreasedMapRow(int q)
 {
       int result = 0;
-#if MTXZZZ == 0
+#if MTX_ZZZ == 0
       int gr_level;
       int max_gr_level;
       int fpow;
@@ -51,7 +50,7 @@ TstResult GreasedMapRow(int q)
          result |= TestGrMapRow1(m,gr_level);
       }
       matFree(m);
-#elif MTXZZZ == 1
+#elif MTX_ZZZ == 1
    (void)TestGrMapRow1;
    printf("Greasing is not supported for ZZZ=1 - SKIPPING TEST\n");
 #else

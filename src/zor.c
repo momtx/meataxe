@@ -55,7 +55,6 @@ static int ordmat()
     int ord;
 
     ffSetField(ifile->Field); 
-    ffSetNoc(ifile->Noc); 
     if (ifile->Nor != ifile->Noc) 
     {
 	mtxAbort(MTX_HERE,"%s: %s",iname,MTX_ERR_NOTSQUARE);
@@ -86,7 +85,7 @@ static int ordmat()
 	int i = 0;
 	while (i < ifile->Noc && ispiv[i]) ++i;
 	MTX_ASSERT(i < ifile->Noc, -1);
-	ffMulRow(bend,FF_ZERO);
+	ffMulRow(bend,FF_ZERO, ifile->Noc);
 	ffInsert(bend,i,FF_ONE);
 
 	/* Calculate order on the cyclic subspace
@@ -99,7 +98,7 @@ static int ordmat()
 	    /* Save the vector and extend the basis,
 	       if the vector is linearly independent.
 	       -------------------------------------- */
-	    ffCopyRow(v,bend);
+	    ffCopyRow(v,bend, ifile->Noc);
 	    if (!closed)
 	    {	b = base;
 	    	for (i = 0; i < dim; ++i)
@@ -107,11 +106,11 @@ static int ordmat()
 		    f = ffExtract(bend,piv[i]);
 		    if (f != FF_ZERO)
 		    {	
-			ffAddMulRow(bend,b,ffNeg(ffDiv(f,ffExtract(b,piv[i]))));
+			ffAddMulRow(bend,b,ffNeg(ffDiv(f,ffExtract(b,piv[i]))),ifile->Noc);
 		    }
 		    ffStepPtr(&b,ifile->Noc);
 		}
-		pv = ffFindPivot(bend,&f);
+		pv = ffFindPivot(bend,&f, ifile->Noc);
 		if (pv >= 0)
 		{   piv[dim++] = pv;
 		    ispiv[pv] = 1;
@@ -128,9 +127,9 @@ static int ordmat()
 		mtxAbort(MTX_HERE,"zor: Partial order is over %d",MAXORDER_C);
 		return 1;
 	    }
-	    ffMapRow(v,m1,ffNoc,bend);
+	    ffMapRow(v,m1,ifile->Noc,ifile->Noc,bend);
 	}
-	while (ffCmpRows(bend,start));
+	while (ffCmpRows(bend,start,ifile->Noc));
 
 	/* Calculate l.c.m. of all tord's
 	   ------------------------------ */
@@ -140,7 +139,7 @@ static int ordmat()
 	    mtxAbort(MTX_HERE,"zor: Order is over %d",MAXORDER);
 	    return 1;
 	}
-	if (opt_q && dim > ffNoc/10) break;
+	if (opt_q && dim > ifile->Noc / 10) break;
 	if (maxord > 1)
 	{   if (ord > maxord)
 	    {

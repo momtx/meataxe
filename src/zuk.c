@@ -60,8 +60,7 @@ static int uncondense()
 	    return -1;
 	}
 
-	ffSetNoc(Degree);
-	ffMulRow(OutputBuffer,FF_ZERO);
+	ffMulRow(OutputBuffer,FF_ZERO, Degree);
 
 	for (k = 0; k < NOrbits; ++k)
 	{
@@ -140,7 +139,6 @@ static int OpenFiles()
 	return -1;
     }
     ffSetField(InputFile->Field);
-    ffSetNoc(NOrbits);
     InputBuffer = ffAlloc(1, NOrbits);
 
     /* Open the output file and allocate output buffer.
@@ -149,7 +147,6 @@ static int OpenFiles()
     OutputFile = mfCreate(resname,ffOrder,InputFile->Nor,Degree);
     if (OutputFile == NULL)
 	return -1;
-    ffSetNoc(Degree);
     OutputBuffer = ffAlloc(1, Degree);
 
     return 0;

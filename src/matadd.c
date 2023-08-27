@@ -37,9 +37,8 @@ Matrix_t *matAdd(Matrix_t *dest, const Matrix_t *src)
    dp = dest->Data;
    sp = src->Data;
    ffSetField(src->Field);
-   ffSetNoc(src->Noc);
    for (n = src->Nor; n > 0; --n) {
-      ffAddRow(dp,sp);
+      ffAddRow(dp,sp, src->Noc);
       ffStepPtr(&dp, src->Noc);
       ffStepPtr(&sp, src->Noc);
    }

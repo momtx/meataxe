@@ -49,7 +49,6 @@ static int trmat()
     PTR m1;
 
     ffSetField(InputFile->Field); 
-    ffSetNoc(InputFile->Noc);
     m1 = ffAlloc(1, InputFile->Noc);
     tr = FF_ZERO;
     if ((max = InputFile->Nor) > InputFile->Noc) 

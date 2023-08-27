@@ -64,7 +64,6 @@ Matrix_t *matTensor(const Matrix_t *m1, const Matrix_t *m2)
       x1 = m1->Data;
       x3 = matGetPtr(temat,i2);
       MTX_ASSERT(x3 != NULL, NULL);
-      ffSetNoc(temat->Noc);
 
       // Loop through all rows of <m1>
       for (i1 = 0; i1 < m1->Nor; ++i1) {
@@ -103,7 +102,7 @@ Matrix_t *matTensor(const Matrix_t *m1, const Matrix_t *m2)
    }
 
    // Clean up
-   FREE(rowbuf);
+   sysFree(rowbuf);
    return temat;
 }
 

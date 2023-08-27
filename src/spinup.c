@@ -108,21 +108,20 @@ static int Spin1(PTR seed, int seedno, const SpinUpInfo_t *info)
 
     /* Copy the seed vector to <put>, extending the pivot table
        -------------------------------------------------------- */
-    ffCopyRow(put,seed);
-    MTX_ASSERT(ffNoc == Span->Noc, -1);
+    ffCopyRow(put,seed, Span->Noc);
     ffCleanRow(put,Span->Data,SpanDim,Span->Noc, Piv);
     if (Script != NULL)
     {
 	OPVEC(SpanDim) = seedno;
 	OPGEN(SpanDim) = -1;	/* -1 means it's a seed vector */
     }
-    if ((Piv[SpanDim] = ffFindPivot(put,&f)) >= 0)
+    if ((Piv[SpanDim] = ffFindPivot(put,&f,Span->Noc)) >= 0)
     {
 	++SpanDim;
 	ffStepPtr(&put, Dim);
 	if (Flags & SF_STD)
 	{
-    	    ffCopyRow(stdput,seed);
+    	    ffCopyRow(stdput,seed, Span->Noc);
 	    ffStepPtr(&stdput, Dim);
 	}
     }
@@ -140,17 +139,17 @@ static int Spin1(PTR seed, int seedno, const SpinUpInfo_t *info)
 	if (Flags & SF_STD)
 	{
 	    if (Gen != NULL)
-		ffMapRow(stdget,Gen[igen]->Data,Dim,stdput);
+		ffMapRow(stdget,Gen[igen]->Data,Dim,Dim,stdput);
 	    else
-		ffPermRow(stdget,GenP[igen]->Data,stdput);
-	    ffCopyRow(put,stdput);
+		ffPermRow(stdget,GenP[igen]->Data, Dim,stdput);
+	    ffCopyRow(put,stdput, Dim );
 	}
 	else
 	{
 	    if (Gen != NULL)
-		ffMapRow(get,Gen[igen]->Data,Dim,put);
+		ffMapRow(get,Gen[igen]->Data,Dim,Dim,put);
 	    else
-		ffPermRow(get,GenP[igen]->Data,put);
+		ffPermRow(get,GenP[igen]->Data,Dim, put);
 	}
     	if (Script != NULL)
     	{
@@ -170,9 +169,8 @@ static int Spin1(PTR seed, int seedno, const SpinUpInfo_t *info)
 
 	/* Clean the result with the existing basis
 	   ---------------------------------------- */
-        MTX_ASSERT(ffNoc == Span->Noc, -1);
 	ffCleanRow(put,Span->Data,SpanDim,Span->Noc, Piv);
-	if ((Piv[SpanDim] = ffFindPivot(put,&f)) >= 0)
+	if ((Piv[SpanDim] = ffFindPivot(put,&f,Span->Noc)) >= 0)
 	{
 	    num_tries = 0;
 	    ++SpanDim;
@@ -274,7 +272,6 @@ static int Init0(const Matrix_t *seed, int flags, IntMatrix_t **script,
 {
     int ws_size;
     ffSetField(seed->Field);
-    ffSetNoc(seed->Noc);
     Flags = flags;
     Dim = seed->Noc;
     Seed = seed;

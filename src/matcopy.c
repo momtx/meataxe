@@ -90,9 +90,7 @@ int matCopyRegion(Matrix_t *dest, int destrow, int destcol,
       for (k = col1; k < col1 + ncols; ++k) {
 #ifdef MTX_DEBUG
          FEL f;
-         ffSetNoc(src->Noc);
          f = ffExtract(s,k);
-         ffSetNoc(dest->Noc);
          ffInsert(d,destcol + k - col1,f);
 #else
          ffInsert(d,destcol + k - col1,ffExtract(s,k));

@@ -32,7 +32,6 @@ int matWrite(const Matrix_t *mat, FILE *f)
       return -1;
    }
    ffSetField(mat->Field);
-   ffSetNoc(mat->Noc);
    if (ffWriteRows(f,mat->Data,mat->Nor, mat->Noc) != mat->Nor) {
       mtxAbort(MTX_HERE,"Cannot write rows");
       return -1;

@@ -48,7 +48,6 @@ static Matrix_t *VecToMat(PTR vec, int fl, int nor, int noc)
 
     mat = matAlloc(fl,nor,noc);
     d = mat->Data;
-    ffSetNoc(noc);
     for (i = 0; i < nor; i++) 
     {
         for (k = 0; k < noc; k++) 
@@ -76,12 +75,10 @@ static void matToVec(Matrix_t *mat, PTR vec)
 
     /* Clear the vector 
        ---------------- */
-    ffSetNoc(ncol * nrows);
-    ffMulRow(vec,FF_ZERO);
+    ffMulRow(vec,FF_ZERO, nrows * ncol);
 
     /* Convert
        ------- */
-    ffSetNoc(ncol);
     y = mat->Data;
     l = 0;
     for (i = 0; i < nrows; ++i) 
@@ -215,7 +212,6 @@ int main(int argc, char **argv)
 
     /* Allocate buffer for one vector
        ------------------------------ */
-    ffSetNoc(vecfile->Noc);
     tmp = ffAlloc(1, vecfile->Noc);
 
     /* Process <Vectors> one by one

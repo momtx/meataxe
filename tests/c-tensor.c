@@ -22,7 +22,6 @@ static int TestMatTensor2(int dim)
       Matrix_t *m1 = RndMat(ffOrder,nor1,noc1);
       Matrix_t *m2 = RndMat(ffOrder,nor2,noc2);
       Matrix_t *m3 = matTensor(m1,m2);
-      ffSetNoc(m3->Noc + m1->Noc + m2->Noc);
       for (i1 = 0; i1 < nor1; ++i1) {
          PTR r1 = matGetPtr(m1,i1);
          for (i2 = 0; i2 < nor2; ++i2) {

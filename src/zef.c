@@ -106,7 +106,7 @@ int main(int argc, char **argv)
 	for (i = 0; i < Mat->Nor; ++i)
 	{
 	    PTR rp = matGetPtr(Mat,i);
-	    ffMulRow(rp,ffInv(ffExtract(rp,Mat->PivotTable[i])));
+	    ffMulRow(rp,ffInv(ffExtract(rp,Mat->PivotTable[i])),Mat->Noc);
 	}
     }
     if (rc == 0)

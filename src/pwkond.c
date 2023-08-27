@@ -689,7 +689,6 @@ static void addid(Matrix_t *m, FEL f)
    if (f == FF_ZERO) {
       return;
    }
-   ffSetNoc(m->Noc);
    for (i = 0, x = m->Data; i < m->Nor; ++i, ffStepPtr(&x, m->Noc)) {
       ffInsert(x,i,ffAdd(ffExtract(x,i),f));
    }

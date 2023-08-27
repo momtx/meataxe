@@ -188,12 +188,11 @@ static int AddToList(Matrix_t *mat, int src, int gen)
 
 
 static int MakeTree()
-
 {
     int rc = 0;
     int src;
 
-    if (AddToList(matId(ffOrder,ffNoc),-1,-1) != 0)
+    if (AddToList(matId(ffOrder,Rep->Gen[0]->Nor),-1,-1) != 0)
 	return -1;
 
     /* Calculate all elements

@@ -18,6 +18,7 @@ static Matrix_t *Seed = NULL;		/* Seed vectors */
 static MatRep_t *Rep = NULL;		/* Generators */
 static Matrix_t *Span = NULL;		/* Invariant subspace */
 static IntMatrix_t *OpTable = NULL;	/* Spin-up script */
+static int Dim = -1;                    // Dimension / permutation size
 static int ngen = 2;			/* Number of generators */
 static int opt_G = 0;		        /* GAP output */
 static long SeedVecNo = 0;		/* Current seed vector */
@@ -112,6 +113,7 @@ static int ReadGenerators()
 	    if (Perm[i] == NULL)
 		return -1;
 	}
+        Dim = Perm[0]->Degree;
     }
     else
     {
@@ -129,6 +131,7 @@ static int ReadGenerators()
 		return -1;
 	    }
 	}
+        Dim = Rep->Gen[0]->Noc;
     }
     return 0;
 }
@@ -141,7 +144,6 @@ static int ReadGenerators()
    -------------------------------------------------------------------------- */
 
 static int ReadSeed()
-
 {
     MtxFile_t *sf;
     int skip = 0;
@@ -157,21 +159,20 @@ static int ReadSeed()
     if (Permutations)
     {
 	ffSetField(sf->Field);
-	ffSetNoc(sf->Noc);
     }
-    if (sf->Noc != ffNoc || sf->Field != ffOrder)
+    if (sf->Noc != Dim || sf->Field != ffOrder)
     {
 	mtxAbort(MTX_HERE,"%s and %s: %s",GenName[0],SeedName,MTX_ERR_INCOMPAT);
 	return -1;
     }
     if (!TryLinearCombinations && SeedVecNo > 0)
 	skip = SeedVecNo - 1;
-    ffSeekRow(sf->File,skip);
+    ffSeekRow(sf->File,skip, Dim);
     if (TryOneVector)
 	num_seed = 1;
     else
 	num_seed = sf->Nor - skip;
-    Seed = matAlloc(ffOrder,num_seed,ffNoc);
+    Seed = matAlloc(ffOrder,num_seed,Dim);
     if (Seed == NULL)
 	return -1;
     if (mfReadRows(sf,Seed->Data,Seed->Nor) != Seed->Nor)
@@ -302,16 +303,14 @@ static int WriteAction()
 
 
 static int WriteResult()
-
 {
-    if (Span->Nor < ffNoc && (Standard || FindCyclicVector))
-	MESSAGE(0,("ZSP: Warning: Span is only %d of %d\n",Span->Nor,ffNoc));
-    else if (Span->Nor == ffNoc && TryLinearCombinations)
+    if (Span->Nor < Dim && (Standard || FindCyclicVector))
+	MESSAGE(0,("ZSP: Warning: Span is only %d of %d\n",Span->Nor,Dim));
+    else if (Span->Nor == Dim && TryLinearCombinations)
 	MESSAGE(0,("ZSP: Warning: No invariant subspace found\n"));
     else
     {
-	MESSAGE(0,("Subspace %d, quotient %d\n",Span->Nor,
-	    Span->Noc - Span->Nor));
+	MESSAGE(0,("Subspace %d, quotient %d\n",Span->Nor, Span->Noc - Span->Nor));
     }
 
     /* Write the invariant subspace.

@@ -229,7 +229,7 @@ void SvClean2(SvVector_t *vec, const SvVector_t **basis, int dim, PTR op)
 {
     int i;
     if (op != NULL)
-	ffMulRow(op,FF_ZERO);
+	ffMulRow(op, FF_ZERO, noc);
     for (i = 0; i < dim; ++i)
     {
 	FEL f;
@@ -272,17 +272,6 @@ static void MapBasisVector(int n, SvVector_t *x)
 	SvAddEntry(x,img_n,OmegaFactor[i]);
     }
 }
-
-#if 0
-static void PrintRow(PTR row)
-{
-    int i;
-    const char *fmt = (ffOrder < 10) ? "%d" : " %d";
-    for (i = 0; i < ffNoc; ++i)
-	printf(fmt,ffExtract(row,i));
-}	
-#endif
-
 
 static void MakeSBasis()
 {
@@ -362,7 +351,6 @@ static void MapVector(int n, PTR mat, SvVector_t *result)
 {
     int i;
     result->Size = 0;
-    ffSetNoc(VDim);
 
     for (i = 0; i < SBasis[n]->Size; ++i)
     {
@@ -379,12 +367,10 @@ static void CalculateSAction(PTR mat)
     PTR img;
     SvVector_t *v = SvAlloc(100);
 
-    MTX_ASSERT(ffNoc == noc, );
     img = ffAlloc(1, noc);
     for (n = 0; n < SDim; ++n)
     {
 	MapVector(n,mat,v);
-    	ffSetNoc(SDim);
 	fprintf(stderr,".");
 	SvClean2(v,(const SvVector_t **)SBasis,SDim,img);
 	mfWriteRows(OutputFile,img,1);
@@ -430,7 +416,6 @@ static int Prepare()
     noc = f->Noc;
 
     ffSetField(fl); 
-    ffSetNoc(noc);
     m1 = ffAlloc(nor, noc);
     mfReadRows(f,m1,nor);
 
@@ -455,7 +440,6 @@ static int Prepare()
     /* Allocate the output buffer
        -------------------------- */
     MESSAGE(0,("Output is %d x %d\n",SDim,SDim));
-    ffSetNoc(SDim);
     OutputFile = mfCreate(oname,fl,SDim,SDim);
 
 

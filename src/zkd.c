@@ -21,7 +21,7 @@ static MtxApplicationInfo_t AppInfo = {
 "ARGUMENTS\n"
 "    <Field> ................. The field to use for condensation\n"
 "                              or 'Z' to condense over the integers.\n"
-"    <Orbits> ................ Name of Orbit sizes file.\n"
+"    <Orbits> ................ Name of orbit sizes file.\n"
 "    <Perm> .................. Permutation to be condensed.\n"
 "    <Kond> .................. File name for condensed permutation."
 "\n"
@@ -124,7 +124,6 @@ static int readdata()
     if (fl != 0)		/* Condensation ofer GF(q) */
     {
 	ffSetField(fl);
-	ffSetNoc(NOrbits);
 	MESSAGE(1,("Condensation over GF(%d), characteristic is %d\n",
 	    fl,ffChar));
     	m1 = ffAlloc(1, NOrbits);
@@ -158,12 +157,11 @@ static int readdata()
    ------------------------------------------------------------------ */
 
 static void init2()
-
 {
     int i;
     FEL f;
 
-    ffMulRow(hsz,FF_ZERO);
+    ffMulRow(hsz,FF_ZERO, NOrbits);
     for (i = 0; i < NOrbits; ++i)
     {	
 	int l = (int) OrbitSizes->Data[i];
@@ -178,7 +176,6 @@ static void init2()
 
 
 int main(int argc, char **argv)
-
 {
     int orbit;	/* Current orbit */
 
@@ -211,8 +208,9 @@ int main(int argc, char **argv)
 
 	/* Clear the output buffer.
 	   ------------------------ */
-	if (fl != 0)
-	    ffMulRow(m1,FF_ZERO);
+	if (fl != 0) {
+	    ffMulRow(m1,FF_ZERO, NOrbits);
+        }
 	else
 	    memset(RowZ,0,sizeof(RowZ[0]) * NOrbits);
 

@@ -204,7 +204,6 @@ static int pastemat()
     int pos;
 
     ffSetField(fl);
-    ffSetNoc(noc);
     m = ffAlloc(maxnor, noc);
     if ((ofile = ffWriteHeader(ofilename,fl,nor,noc)) == NULL)
     {
@@ -214,11 +213,10 @@ static int pastemat()
     for (i = 0; i < nrows; ++i)
     {	
 	MESSAGE(1,("Pasting row %d\n",i));
-	ffSetNoc(noc);
 	x = m;
 	for (l = maxnor; l > 0; --l)
 	{	
-	    ffMulRow(x,FF_ZERO);
+	    ffMulRow(x,FF_ZERO, noc);
 	    ffStepPtr(&x, noc);
 	}
 	pos = 0;
@@ -231,27 +229,22 @@ static int pastemat()
 	    {
 		if ((ifile = ffReadHeader(c,&fl2,&nor2,&noc2)) == NULL)
 		    return -1;
-		ffSetNoc(noc2);
 		piece = ffAlloc(nor2, noc2);
 		ffReadRows(ifile, piece, nor2, noc2);
 		fclose(ifile);
 		x = m;
 		y = piece;
-		ffSetNoc(noc);
  		for (l = 0; l < nor2; ++l)
 		{	
 		    for (j = 0; j < noc2; ++j)
 			ffInsert(x,j+pos,ffExtract(y,j));
-		    ffSetNoc(noc2);
 		    ffStepPtr(&y, noc2);
-		    ffSetNoc(noc);
 		    ffStepPtr(&x, noc);
 		}
 		sysFree(piece);
 	    }
 	    pos += width[k];
 	}
-	ffSetNoc(noc);
 	ffWriteRows(ofile,m,height[i], noc);
     }
     return 0;

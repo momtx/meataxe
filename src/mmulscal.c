@@ -30,10 +30,9 @@ Matrix_t *matMulScalar(Matrix_t *dest, FEL coeff)
 	PTR dp = dest->Data;
 	int n;
 	ffSetField(dest->Field);
-	ffSetNoc(dest->Noc);
 	for (n = dest->Nor; n > 0; --n)
 	{
-	    ffMulRow(dp,coeff);
+	    ffMulRow(dp, coeff, dest->Noc);
 	    ffStepPtr(&dp, dest->Noc);
 	}
     }

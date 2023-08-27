@@ -82,7 +82,6 @@ static struct CharpolState* createState(const Matrix_t* matrix, enum PolyMode mo
    state->fl = matrix->Field;
    state->nor = matrix->Nor;
    ffSetField(state->fl);
-   ffSetNoc(state->nor);
    state->mat = ffAlloc(state->nor, state->nor);
    state->A = ffAlloc(state->nor + 1, state->nor);
    state->B = ffAlloc(state->nor + 1, state->nor);
@@ -138,9 +137,9 @@ static void spinup_cyclic(struct CharpolState* state)
 
    PTR a = ffGetPtr(state->A, state->dim, state->nor);
    PTR b = state->B;
-   ffMulRow(b,FF_ZERO);
+   ffMulRow(b,FF_ZERO, state->nor);
    state->n = 0;
-   while ((pv = ffFindPivot(a,&f)) >= 0) {
+   while ((pv = ffFindPivot(a,&f, state->nor)) >= 0) {
       PTR x, y;
 
       /* Add new vector to basis
@@ -154,10 +153,10 @@ static void spinup_cyclic(struct CharpolState* state)
          ------------------------- */
       x = a;
       ffStepPtr(&a, state->nor);
-      ffMapRow(x,state->mat,state->nor,a);
+      ffMapRow(x,state->mat,state->nor,state->nor,a);
       y = b;
       ffStepPtr(&b, state->nor);
-      ffMulRow(b,FF_ZERO);
+      ffMulRow(b,FF_ZERO, state->nor);
       for (k = 0; k < state->nor - 1; ++k) {
          ffInsert(b,k + 1,ffExtract(y,k));
       }
@@ -168,9 +167,9 @@ static void spinup_cyclic(struct CharpolState* state)
       y = state->B;
       for (k = 0; k < state->dim + state->n; ++k) {
          f = ffDiv(ffExtract(a,state->piv[k]),ffExtract(x,state->piv[k]));
-         ffAddMulRow(a,x,ffNeg(f));
+         ffAddMulRow(a,x,ffNeg(f), state->nor);
          if (k >= state->dim) {
-            ffAddMulRow(b,y,ffNeg(f));
+            ffAddMulRow(b,y,ffNeg(f), state->nor);
             ffStepPtr(&y, state->nor);
          }
          ffStepPtr(&x, state->nor);
@@ -194,7 +193,6 @@ static Poly_t *CharPolFactor_(struct CharpolState* state)
 
    // Prepare the next seed vector
    ffSetField(state->fl);
-   ffSetNoc(state->nor);
    /*    seed = ffGetPtr(A,state->dim,state->nor);*/
    PTR seed = (PTR)((char *)state->A + ffSize(state->dim, state->nor));
    int i;
@@ -203,7 +201,7 @@ static Poly_t *CharPolFactor_(struct CharpolState* state)
    } else {
       for (i = 0; i < state->nor && state->ispiv[i] != 0; ++i);
    }
-   ffMulRow(seed,FF_ZERO);
+   ffMulRow(seed,FF_ZERO, state->nor);
    ffInsert(seed,i,FF_ONE);
 
    // Spin up and return the polynomial

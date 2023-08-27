@@ -25,16 +25,16 @@ static int TestMapRow1(PTR mat, PTR a, PTR b, int noc)
    for (i = 0; i < noc; ++i) {
       int k;
 
-      /* Check that the i-th basis vector is mapped on itself.
-         ----------------------------------------------------- */
-      ffMulRow(a,FF_ZERO);
+      // Check that the i-th basis vector is mapped to itself.
+      ffMulRow(a,FF_ZERO, noc);
       ffInsert(a,i,FF_ONE);
-      ffMapRow(a,mat,noc,b);
+      ffMapRow(a,mat,noc,noc,b);
       for (k = 0; k < noc; ++k) {
          ASSERT((ffExtract(b,k) == FF_ZERO) ^ (k == i));
       }
 
-      ffMapRow(a,mat,i,b);
+      
+      ffMapRow(a,mat,i,noc,b);
       for (k = 0; k < noc; ++k) {
          ASSERT_EQ_INT(ffExtract(b,k), FF_ZERO);
       }
@@ -43,7 +43,7 @@ static int TestMapRow1(PTR mat, PTR a, PTR b, int noc)
    for (i = 0; i < noc; ++i) {
       ffInsert(a,i,FTab[i % ffOrder]);
    }
-   ffMapRow(a,mat,noc,b);
+   ffMapRow(a,mat,noc,noc,b);
    for (i = 0; i < noc; ++i) {
       ASSERT_EQ_INT(ffExtract(b,i), FTab[i % ffOrder]);
    }
@@ -57,7 +57,6 @@ TstResult Kernel_MapRow(int q)
    int size = 10;
 
    PTR mat, a, b;
-   ffSetNoc(size);
    mat = ffAlloc(size, size);
    a = ffAlloc(1, size);
    b = ffAlloc(1, size);
@@ -79,8 +78,6 @@ static int TestSumInter1(int noc)
    int nor1, nor2;
    int i, k;
 
-   ffSetNoc(noc);
-   //printf("GF(%d) nor=%d\n", ffOrder, ffNoc);
    nor1 = nor2 = noc;
    w1 = ffAlloc(nor1 + nor2, noc);
    w2 = ffAlloc(nor1 + nor2, noc);
@@ -120,8 +117,8 @@ static int TestSumInter1(int noc)
    //printrows("sum", w1,nor1);
    //printrows("intersection", ffGetPtr(w2,nor1), nor2);
 
-   ASSERT_EQ_INT(nor1, ffNoc);	// whole space
-   ASSERT_EQ_INT(nor2, (ffNoc - 1) / 3 + 1);
+   ASSERT_EQ_INT(nor1, noc);	// whole space
+   ASSERT_EQ_INT(nor2, (noc - 1) / 3 + 1);
    for (i = 0; i < nor2; ++i) {
       ASSERT_EQ_INT(piv[nor1 + i] % 3, 0);
    }
@@ -156,12 +153,12 @@ static int CheckIsSubspace(int noc, PTR u, int udim, PTR v, int vdim)
       FEL f;
       int p;
       ffCleanRow(x,v,vrank,noc,piv);
-      p = ffFindPivot(x,&f);
+      p = ffFindPivot(x,&f,noc);
       if (p < 0) {
          continue;
       }
       if (i > vrank) {
-         ffCopyRow(y,x);
+         ffCopyRow(y,x, noc);
       }
       piv[vrank++] = p;
       ffStepPtr(&y,noc);
@@ -174,9 +171,9 @@ static int CheckIsSubspace(int noc, PTR u, int udim, PTR v, int vdim)
    row = ffAlloc(1, noc);
    for (i = 0, x = u; i < udim; ++i, ffStepPtr(&x,noc)) {
       FEL f;
-      ffCopyRow(row,x);
+      ffCopyRow(row,x, noc);
       ffCleanRow(row,v,vrank,noc,piv);
-      ASSERT(ffFindPivot(row,&f) < 0);
+      ASSERT(ffFindPivot(row,&f, noc) < 0);
    }
    sysFree(row);
    sysFree(piv);
@@ -201,7 +198,6 @@ static int TestSumInter2(int noc)
    wdim = nor2 = mtxRandomInt(noc + 1);
    v = ffAlloc(vdim, noc);
    w = ffAlloc(wdim, noc);
-   ffSetNoc(noc);
    wrk1 = ffAlloc(nor1 + nor2, noc);
    wrk2 = ffAlloc(nor1 + nor2, noc);
    piv = NALLOC(int,nor1 + nor2);

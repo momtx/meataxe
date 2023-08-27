@@ -62,7 +62,6 @@ Matrix_t *QProjection(const Matrix_t *subspace, const Matrix_t *vectors)
    }
 
    // Calculate the projection
-   ffSetNoc(subspace->Noc);
    tmp = ffAlloc(1, subspace->Noc);
    if (tmp == NULL) {
        matFree(result);
@@ -72,9 +71,7 @@ Matrix_t *QProjection(const Matrix_t *subspace, const Matrix_t *vectors)
    for (i = 0; i < vectors->Nor; ++i) {
       int k;
       PTR q = matGetPtr(result,i);
-      MTX_ASSERT(q != NULL, NULL);
-      ffCopyRow(tmp,matGetPtr(vectors,i));
-      MTX_ASSERT(ffNoc == subspace->Noc, NULL);
+      ffCopyRow(tmp,matGetPtr(vectors,i), subspace->Noc);
       ffCleanRow(tmp,subspace->Data,sdim,subspace->Noc, subspace->PivotTable);
       for (k = 0; k < qdim; ++k) {
          ffInsert(q,k,ffExtract(tmp,non_piv[k]));
@@ -134,7 +131,6 @@ Matrix_t *QAction(const Matrix_t *subspace, const Matrix_t *gen)
 
    /* Calculate the action on the quotient
       ------------------------------------ */
-   ffSetNoc(dim);
    PTR tmp = ffAlloc(1, dim);
    if (tmp == NULL) {
       matFree(action);
@@ -145,8 +141,7 @@ Matrix_t *QAction(const Matrix_t *subspace, const Matrix_t *gen)
    for (k = 0; k < qdim; ++k) {
       int l;
       PTR qx = matGetPtr(action,k);
-      ffCopyRow(tmp,matGetPtr(gen,non_piv[k]));
-      MTX_ASSERT(ffNoc == dim, NULL);
+      ffCopyRow(tmp,matGetPtr(gen,non_piv[k]), dim);
       ffCleanRow(tmp,subspace->Data,sdim,dim, piv);
       for (l = 0; l < qdim; ++l) {
          ffInsert(qx,l,ffExtract(tmp,non_piv[l]));

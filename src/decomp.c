@@ -250,7 +250,6 @@ int main(int argc, char **argv)
 		    matAddMul(partbas,mat,f);
 		    matFree(mat);
 		}
-		ffSetNoc(enddim);
 		ffStepPtr(&headptr, enddim);
 
 		if (pol != NULL)
@@ -261,7 +260,6 @@ int main(int argc, char **argv)
 		&& pol->Factor[0]->Degree == 1
 		&& pol->Factor[0]->Data[0] == FF_ZERO 
 		&& pol->Factor[0]->Data[1] == FF_ONE); /* i.e.,charpol == x^enddim */
-	    ffSetNoc(enddim);
 	    headptr = ffGetPtr(headptr,num, enddim);
 
 
@@ -284,7 +282,6 @@ int main(int argc, char **argv)
 	       -------------------------- */
 	    matEchelonize(partbas);
 	    #ifdef MTX_DEBUG
-	    ffSetNoc(dim);
 	    #endif
 	    matCopyRegion(bas,dim,0,partbas,0,0,-1,-1);
 	    dim += partbas->Nor;

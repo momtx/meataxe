@@ -97,7 +97,6 @@ static int Init(int argc, char **argv)
 	return -1;
     }
     ffSetField(Matrix->Field);
-    ffSetNoc(Matrix->Noc);
     return 0;
 }
 

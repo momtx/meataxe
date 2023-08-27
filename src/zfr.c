@@ -64,7 +64,6 @@ static int OpenFiles()
 	return -1;
     }
     ffSetField(ifile->Field); 
-    ffSetNoc(ifile->Noc);
     MESSAGE(0,("Characteristic is %d\n",ffChar));
 
     /* Open output file, allocate memory.
@@ -110,7 +109,7 @@ static int FrobeniusMap()
 	    mtxAbort(MTX_HERE,"Error reading %s",iname);
 	    return 1;
 	}
-	for (k = 0; k < ffNoc; ++k)
+	for (k = 0; k < ifile->Noc; ++k)
 	{
 	    FEL f1 = ffExtract(m1,k);
 	    FEL f2 = f1;

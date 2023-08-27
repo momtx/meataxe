@@ -60,7 +60,6 @@ int IsSubspace(const Matrix_t *sub, const Matrix_t *space, int ngen)
     /* Decide how many vectors from <sub> we shall check
        ------------------------------------------------- */
     ffSetField(space->Field);
-    ffSetNoc(space->Noc);
     spcdim = space->Nor;
     nvec = sub->Nor;
     if (ngen > 0 && ngen < nvec)
@@ -80,9 +79,9 @@ int IsSubspace(const Matrix_t *sub, const Matrix_t *space, int ngen)
     for (i = nvec, y = sub->Data; i > 0; --i, ffStepPtr(&y, space->Noc))
     {
 	FEL f;
-	ffCopyRow(tmp,y);
+	ffCopyRow(tmp,y, space->Noc);
 	ffCleanRow(tmp,space->Data,spcdim,space->Noc, space->PivotTable);
-        if (ffFindPivot(tmp,&f) >= 0) 
+        if (ffFindPivot(tmp,&f, space->Noc) >= 0) 
 	    break;
     }
 

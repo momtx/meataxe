@@ -49,7 +49,6 @@ Matrix_t *SAction(const Matrix_t *subspace, const Matrix_t *gen)
    if (action == NULL) {
       return NULL;
    }
-   ffSetNoc(dim);
    PTR tmp = ffAlloc(1, dim);
    if (tmp == NULL) {
       matFree(action);
@@ -59,19 +58,18 @@ Matrix_t *SAction(const Matrix_t *subspace, const Matrix_t *gen)
    // calculate the action
    for (int i = 0; i < subspace->Nor; ++i) {
       PTR xi = matGetPtr(subspace,i);
-      MTX_ASSERT(xi != NULL, NULL); // TODO: memory leak
+      MTX_ASSERT(xi != NULL, NULL);
       PTR yi = matGetPtr(action,i);
-      MTX_ASSERT(yi != NULL, NULL); // TODO: memory leak
+      MTX_ASSERT(yi != NULL, NULL);
       FEL f;
 
       // calculate the image of the <i>-th row of <subspace>
-      ffMapRow(xi,gen->Data,dim,tmp);
+      ffMapRow(xi,gen->Data,dim,dim,tmp);
 
       // clean the image with the subspace and store coefficients
-      MTX_ASSERT(ffNoc == dim, NULL);
       int rc = ffCleanRow2(tmp,subspace->Data,sdim,dim,subspace->PivotTable,yi);
-      MTX_ASSERT(rc == 0, NULL); // TODO: memory leak
-      if (ffFindPivot(tmp,&f) >= 0) {
+      MTX_ASSERT(rc == 0, NULL);
+      if (ffFindPivot(tmp,&f,dim) >= 0) {
          mtxAbort(MTX_HERE,"Split(): Subspace not invariant");
 	 sysFree(tmp);
 	 matFree(action);

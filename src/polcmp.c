@@ -15,9 +15,9 @@
 // Gives identical results for ZZZ=0 and ZZZ=1.
 static inline int ffCompare(FEL a, FEL b)
 {
-#if MTXZZZ == 0
+#if MTX_ZZZ == 0
    return a > b ? 1 : ((a == b) ?  0 : -1);
-#elif MTXZZZ == 1
+#elif MTX_ZZZ == 1
    int d = ffToInt(a) - ffToInt(b);
    return d > 0 ? 1 : (d == 0 ?  0 : -1);
 #else

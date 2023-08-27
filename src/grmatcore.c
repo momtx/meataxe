@@ -115,7 +115,6 @@ GreasedMatrix_t *GrMatAlloc(const Matrix_t *M, int gr_rows)
    res->GrRows = gr_rows;
 
    ffSetField(M->Field);
-   ffSetNoc(M->Noc);
 
    /* special case of greasing switched off: */
    if (gr_rows == 0) {
@@ -151,17 +150,16 @@ GreasedMatrix_t *GrMatAlloc(const Matrix_t *M, int gr_rows)
       /* now for all vectors in the block: */
       for (j = gr_rows; j > 0; j--) { /* all vectors in block */
          for (k = 1; k < M->Field; k++) { /* all field elements */
-            ffCopyRow(v,q);
-            ffMulRow(v,ffFromInt(k));
-            ffCopyRow(p,v); /* copy the new multiple */
-            MTX_ASSERT(ffNoc == M->Noc, NULL);
+            ffCopyRow(v,q, M->Noc);
+            ffMulRow(v,ffFromInt(k), M->Noc);
+            ffCopyRow(p,v, M->Noc); /* copy the new multiple */
             ffStepPtr(&p, M->Noc);
 
             r = bs;  /* start from the beginning of the current block */
             for (l = rows; l > 0; l--) { /* for all vectors so far */
-               ffCopyRow(p,r);
+               ffCopyRow(p,r, M->Noc);
                ffStepPtr(&r, M->Noc);
-               ffAddRow(p,v);
+               ffAddRow(p,v, M->Noc);
                ffStepPtr(&p, M->Noc);
             }
          }
@@ -171,7 +169,7 @@ GreasedMatrix_t *GrMatAlloc(const Matrix_t *M, int gr_rows)
    }
 
    for (i = M->Nor % gr_rows; i > 0; i--) { /* the rest of the vectors */
-      ffCopyRow(p,q);
+      ffCopyRow(p,q, M->Noc);
       ffStepPtr(&p, M->Noc);
       ffStepPtr(&q, M->Noc);
    }

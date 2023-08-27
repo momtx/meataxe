@@ -83,7 +83,7 @@ int stfPutString(StfData *f, const char *text)
     *c++ = '"';
     *c = 0;
     result = stfPut(f,tmp);
-    FREE(tmp);
+    sysFree(tmp);
     return result;
 }
 

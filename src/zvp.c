@@ -177,7 +177,6 @@ static int AllocateTables()
 
    tabsize = maxvec + maxvec / 10 + 1;
    MESSAGE(1,("Allocating tables (size=%d)\n",tabsize));
-   MTX_ASSERT(ffNoc == Seed->Noc, -1);
    vtable = ffAlloc(tabsize + 1, Seed->Noc);
    tmp = ffAlloc(1, Seed->Noc);
    vecpos = NALLOC(int,tabsize + 1);
@@ -223,9 +222,8 @@ static int Init(int argc, char **argv)
 static void Normalize(PTR row)
 {
    FEL f;
-
-   ffFindPivot(row,&f);
-   ffMulRow(row,ffInv(f));
+   ffFindPivot(row,&f, Seed->Noc);
+   ffMulRow(row,ffInv(f), Seed->Noc);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -243,7 +241,7 @@ static int MakeNextSeedVector()
       if ((int) iseed >= Seed->Nor) {
          return -1;
       }
-      ffCopyRow(tmp,matGetPtr(Seed,(int)iseed));
+      ffCopyRow(tmp,matGetPtr(Seed,(int)iseed), Seed->Noc);
       ++iseed;
    }
    if (proj) {
@@ -283,7 +281,7 @@ static void InitTables()
    nfinished = 0;
    pos = hash(tmp);
    x = ffGetPtr(vtable,pos,Seed->Noc);
-   ffCopyRow(x,tmp);
+   ffCopyRow(x,tmp, Seed->Noc);
    isfree[pos] = 0;
    vecpos[0] = pos;
    vecno[pos] = 0;
@@ -301,7 +299,7 @@ static int MakeOrbit()
    while (nfinished < nvec && nvec <= maxvec) {
       MESSAGE(3,("Vec[%d] * Gen[%d] = ",nfinished,igen));
       x = ffGetPtr(vtable,vecpos[nfinished],Seed->Noc);
-      ffMapRow(x,Gen[igen]->Data,ffNoc,tmp);
+      ffMapRow(x,Gen[igen]->Data,Seed->Noc,Seed->Noc,tmp);
       if (proj) {
          Normalize(tmp);
       }
@@ -309,7 +307,7 @@ static int MakeOrbit()
       // Look up the vector in the hash table.
       pos1 = pos = hash(tmp);
       x = ffGetPtr(vtable,pos,Seed->Noc);
-      while (!isfree[pos] && ffCmpRows(tmp,x)) {
+      while (!isfree[pos] && ffCmpRows(tmp,x,Seed->Noc)) {
          if (++pos == tabsize) {
             pos = 0;
             x = vtable;
@@ -322,7 +320,7 @@ static int MakeOrbit()
 
       if (isfree[pos]) {        // new vector
          MESSAGE(3,("%d (new)\n",nvec));
-         ffCopyRow(x,tmp);
+         ffCopyRow(x,tmp, Seed->Noc);
          im = nvec;
          isfree[pos] = 0;
          vecpos[nvec] = pos;
@@ -377,7 +375,6 @@ static int WriteOutput()
       int i;
 
       MESSAGE(1,("Writing orbit to %s\n",OrbName));
-      MTX_ASSERT(ffNoc == Seed->Noc,-1);
       if ((f = mfCreate(OrbName,ffOrder,nvec,Seed->Noc)) == 0) {
          mtxAbort(MTX_HERE,"Cannot open %s",OrbName);
          rc = -1;

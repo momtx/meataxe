@@ -32,7 +32,6 @@ int matOrder(const Matrix_t *mat)
    }
 
    ffSetField(mat->Field);
-   ffSetNoc(mat->Noc);
    const int nor = mat->Nor;
    PTR const m1 = ffAlloc(nor, nor);
    PTR const basis = ffAlloc(nor + 1, nor);
@@ -58,8 +57,8 @@ int matOrder(const Matrix_t *mat)
    int tord;
    int ord;
 
-   memcpy(m1,mat->Data,ffSize(nor,mat->Noc));
-   memset(done,0,(size_t)nor);
+   memcpy(m1,mat->Data,ffSize(nor,nor));
+   memset(done,0,nor);
    tord = ord = 1;
    int dim = 0;
    while (dim < nor && tord <= 1000 && ord <= 1000000) {
@@ -70,39 +69,37 @@ int matOrder(const Matrix_t *mat)
       if (j1 >= nor) {
          break;                 // done
       }
-      ffMulRow(v1,FF_ZERO);
+      ffMulRow(v1,FF_ZERO,nor);
       ffInsert(v1,j1,FF_ONE);
 
       // calculate order on cyclic subspace
       tord = 0;
       int flag = 1;
-      ffCopyRow(v3,v1);
+      ffCopyRow(v3,v1,nor);
       do {
-         ffCopyRow(v2,v3);
+         ffCopyRow(v2,v3, nor);
          if (flag) {
-            ffCopyRow(bend,v3);
+            ffCopyRow(bend,v3, nor);
             PTR bptr = basis;
             for (int i = 0; i < dim; ++i) {
                f1 = ffExtract(bend,piv[i]);
                if (f1 != FF_ZERO) {
-                  ffAddMulRow(bend,bptr,ffNeg(ffDiv(f1, ffExtract(bptr,piv[i]))));
+                  ffAddMulRow(bend,bptr,ffNeg(ffDiv(f1, ffExtract(bptr,piv[i]))),nor);
                }
-               MTX_ASSERT(ffNoc == mat->Noc, -1);
-               ffStepPtr(&bptr, mat->Noc);
+               ffStepPtr(&bptr, nor);
             }
-            if ((piv[dim] = ffFindPivot(bend,&f1)) >= 0) {
+            if ((piv[dim] = ffFindPivot(bend,&f1, nor)) >= 0) {
                done[piv[dim]] = 1;
                ++dim;
-               MTX_ASSERT(ffNoc == mat->Noc, -1);
-               ffStepPtr(&bend, mat->Noc);
+               ffStepPtr(&bend, nor);
             } else {
                flag = 0;
             }
          }
-         ffMapRow(v2,m1,nor,v3);
+         ffMapRow(v2,m1,nor,nor,v3);
          ++tord;
       }
-      while (tord <= 1000 && ffCmpRows(v3,v1) != 0);
+      while (tord <= 1000 && ffCmpRows(v3,v1, nor) != 0);
 
       // Order = lcm(orders on cyclic subspaces)
       ord = lcm(ord,tord);

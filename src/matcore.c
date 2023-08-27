@@ -109,7 +109,6 @@ Matrix_t *matAlloc(int field, int nor, int noc)
       mtxAbort(MTX_HERE,"Cannot select field GF(%d)",field);
       return NULL;
    }
-   ffSetNoc(noc);
 
    // Allocate a new Matrix_t structure
    m = ALLOC(Matrix_t);

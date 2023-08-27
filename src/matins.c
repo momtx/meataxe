@@ -42,12 +42,11 @@ Matrix_t *matInsert_(Matrix_t *mat, const Poly_t *pol)
    }
 
    ffSetField(mat->Field);
-   ffSetNoc(nor);
 
    // Special case: p(x) = 0
    if (pol->Degree == -1) {
       for (l = 0, v = mat->Data; l < nor; ffStepPtr(&v, nor), ++l) {
-         ffMulRow(v,FF_ZERO);
+         ffMulRow(v,FF_ZERO, nor);
       }
       return mat;
    }
@@ -55,7 +54,7 @@ Matrix_t *matInsert_(Matrix_t *mat, const Poly_t *pol)
    // Special case: deg(p) = 0
    if (pol->Degree == 0) {
       for (l = 0, v = mat->Data; l < nor; ffStepPtr(&v, nor), ++l) {
-         ffMulRow(v,FF_ZERO);
+         ffMulRow(v,FF_ZERO, nor);
          ffInsert(v,l,pol->Data[0]);
       }
       return mat;
@@ -70,7 +69,7 @@ Matrix_t *matInsert_(Matrix_t *mat, const Poly_t *pol)
    }
    if ((f = pol->Data[pol->Degree]) != FF_ONE) {
       for (l = nor, v = mat->Data; l > 0; --l, ffStepPtr(&v, nor)) {
-         ffMulRow(v,f);
+         ffMulRow(v,f, nor);
       }
    }
    for (i = pol->Degree - 1; i >= 0; --i) {
@@ -141,7 +140,7 @@ Matrix_t *matInsert(const Matrix_t *mat, const Poly_t *pol)
    }
    if ((f = pol->Data[pol->Degree]) != FF_ONE) {
       for (l = nor, v = x->Data; l > 0; --l, ffStepPtr(&v, nor)) {
-         ffMulRow(v,f);
+         ffMulRow(v,f, nor);
       }
    }
    for (i = pol->Degree - 1; i >= 0; --i) {

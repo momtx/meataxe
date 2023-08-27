@@ -51,11 +51,10 @@ int matCompare(const Matrix_t *a, const Matrix_t *b)
    // Compare the marks row by row. We cannot use memcmp() on the whole matrix
    // because we must ignore padding bytes.
    ffSetField(a->Field);
-   ffSetNoc(a->Noc);
    for (i = 0; i < a->Nor; ++i) {
       PTR pa = matGetPtr(a,i);
       PTR pb = matGetPtr(b,i);
-      const int diff = ffCmpRows(pa,pb);
+      const int diff = ffCmpRows(pa,pb, a->Noc);
       if (diff > 0) return 1;
       if (diff < 0) return -1;
    }

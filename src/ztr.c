@@ -53,7 +53,6 @@ static int ReadMatrix()
 	return 1;
     }
     ffSetField(fl);
-    ffSetNoc(noc);
     m1 = ffAlloc(nor, noc);
     ffReadRows(f,m1,nor, noc);
     fclose(f);
@@ -108,26 +107,22 @@ int main(int argc, char **argv)
 
     /* Transpose
        --------- */
-    ffSetNoc(nor);
     m2 = ffAlloc(1, nor);
-    if ((f = ffWriteHeader(oname,fl,noc,nor)) == NULL)
+    if ((f = ffWriteHeader(oname, fl, noc, nor)) == NULL)
     {
 	mtxAbort(MTX_HERE,"Cannot open output file");
 	return 1;
     }
     for (j = 0; j < noc; ++j)
     {
-	ffSetNoc(nor);
-	ffMulRow(m2,FF_ZERO);	/* Fill with zeros */
-	ffSetNoc(noc);
-	ffExtractColumn(m1,nor,j,m2);
-	ffSetNoc(nor);
-	ffWriteRows(f,m2,1, nor);
+	ffMulRow(m2, FF_ZERO, nor);	/* Fill with zeros */
+	ffExtractColumn(m1, nor, noc, j, m2);
+	ffWriteRows(f, m2, 1, nor);
     }
     fclose(f);
 
     Cleanup();
-    return (EXIT_OK);
+    return EXIT_OK;
 }
 
 

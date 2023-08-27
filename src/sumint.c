@@ -53,9 +53,8 @@ int ffSumAndIntersection(int noc, PTR wrk1, int *nor1, int *nor2, PTR wrk2, int 
     }
 
     // Set up the workspace 2. Initially, it contains a copy of V1
-    MTX_ASSERT(ffNoc == noc, -1);
     for (x2 = wrk2, i = 0; i < dim1 + dim2; ++i, ffStepPtr(&x2, noc)) {
-      ffMulRow(x2,FF_ZERO);
+      ffMulRow(x2,FF_ZERO, noc);
     }
     memcpy(wrk2,wrk1,ffSize(dim1, noc));
 
@@ -67,19 +66,17 @@ int ffSumAndIntersection(int noc, PTR wrk1, int *nor1, int *nor2, PTR wrk2, int 
     {
 	FEL f;
 	int p;
-        MTX_ASSERT(ffNoc == noc, -1);
 	if (ffCleanRowAndRepeat(x1,wrk1,k,noc, piv,x2,wrk2)) {
 	   return -1;
 	}
-	if ((p = ffFindPivot(x1,&f)) < 0)
+	if ((p = ffFindPivot(x1,&f,noc)) < 0)
 	   continue;	/* Null row - ignore */
 	if (k < i)
 	{
-	    ffSwapRows(y1,x1);
-	    ffSwapRows(y2,x2);
+	    ffSwapRows(y1,x1, noc);
+	    ffSwapRows(y2,x2, noc);
 	}
 	piv[k++] = p;
-        MTX_ASSERT(ffNoc == noc, -1);
 	ffStepPtr(&y1, noc);
 	ffStepPtr(&y2, noc);
     }
@@ -91,12 +88,11 @@ int ffSumAndIntersection(int noc, PTR wrk1, int *nor1, int *nor2, PTR wrk2, int 
     {
 	FEL f;
 	int p;
-        MTX_ASSERT(ffNoc == noc, -1);
 	ffCleanRow(x2,sec,k - sumdim,noc,piv + sumdim);
-	if ((p = ffFindPivot(x2,&f)) < 0)
+	if ((p = ffFindPivot(x2,&f,noc)) < 0)
 	    continue;
 	if (i > k)
-	    ffCopyRow(y2,x2);
+	    ffCopyRow(y2,x2, noc);
 	piv[k++] = p;
 	ffStepPtr(&y2, noc);
     }

@@ -28,7 +28,6 @@ void matPrint(const char *name, const Matrix_t *m)
 
    matValidate(MTX_HERE, m);
    ffSetField(m->Field);
-   ffSetNoc(m->Noc);
    x = m->Data;
    if (name != NULL) { printf("%s=\n",name); }
    for (i = 0; i < m->Nor; ++i) {

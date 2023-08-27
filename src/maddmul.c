@@ -33,20 +33,15 @@ Matrix_t *matAddMul(Matrix_t *dest, const Matrix_t *src, FEL coeff)
       return NULL;
    }
 
-   /* Handle special cases
-      -------------------- */
    if (coeff == FF_ONE) {
       matAdd(dest,src);
-   } else if (coeff == FF_ZERO) {
-   } else {
-      /* Add multiple
-         ------------ */
+   }
+   else if (coeff != FF_ZERO) {
       PTR dp = dest->Data, sp = src->Data;
       int n;
       ffSetField(src->Field);
-      ffSetNoc(src->Noc);
       for (n = src->Nor; n > 0; --n) {
-         ffAddMulRow(dp,sp,coeff);
+         ffAddMulRow(dp,sp,coeff,src->Noc);
          ffStepPtr(&dp, src->Noc);
          ffStepPtr(&sp, src->Noc);
       }

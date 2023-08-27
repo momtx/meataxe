@@ -18,7 +18,6 @@ FEL matTrace(const Matrix_t *mat)
 {
    matValidate(MTX_HERE, mat);
    ffSetField(mat->Field);
-   ffSetNoc(mat->Noc);
    FEL trace = FF_ZERO;
    PTR x = mat->Data;
    const int maxi = mat->Nor > mat->Noc ? mat->Noc : mat->Nor;

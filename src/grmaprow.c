@@ -7,7 +7,7 @@
 #include <string.h>
 
 
-#if MTXZZZ == 0	// greasing is only available for the standard kernel
+#if MTX_ZZZ == 0	// greasing is only available for the standard kernel
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // Local data
@@ -81,22 +81,22 @@ static void CleverMapRow(PTR v,GreasedMatrix_t *M,PTR w)
    PTR p = M->PrecalcData;
 
    ExtractNrs(v,M);    /* extracts numbers into global table */
-   ffMulRow(w,FF_ZERO);   /* Clear result */
+   ffMulRow(w,FF_ZERO, M->Noc);   /* Clear result */
    curcol = M->Nor / M->GrRows;   /* only used later and for i init */
    nr = extractednrs;
    for (i = curcol; i > 0; i--) {
       /* for all greasing blocks */
       if (*nr) { /* not the zero vector */
-         ffAddRow(w,ffGetPtr(p,*nr - 1, ffNoc));
+         ffAddRow(w,ffGetPtr(p,*nr - 1, M->Noc), M->Noc);
       }
-      p = ffGetPtr(p,M->GrBlockSize, ffNoc);
+      p = ffGetPtr(p,M->GrBlockSize, M->Noc);
       nr++;
    }
    curcol = curcol * M->GrRows;
    for (i = M->Nor % M->GrRows; i > 0; i--) {
       /* do the rest */
-      ffAddMulRow(w,p,ffExtract(v,curcol++));
-      ffStepPtr(&p, ffNoc);
+      ffAddMulRow(w,p,ffExtract(v,curcol++),M->Noc);
+      ffStepPtr(&p, M->Noc);
    }
 }
 
@@ -123,7 +123,6 @@ void GrMapRow(PTR v,GreasedMatrix_t *M, PTR w)
       return;
    }
    ffSetField(M->Field);
-   ffSetNoc(M->Noc);
 
    /* Handle some special cases.
       -------------------------- */
@@ -132,11 +131,11 @@ void GrMapRow(PTR v,GreasedMatrix_t *M, PTR w)
       return;
    }
    if (M->GrRows == 0) {        /* Greasig is switched off */
-      ffMapRow(v,M->PrecalcData,M->Nor,w);
+      ffMapRow(v,M->PrecalcData,M->Nor,M->Noc,w);
       return;
    }
 
-   ffMulRow(w,FF_ZERO);   /* Clear result */
+   ffMulRow(w,FF_ZERO, M->Noc);   /* Clear result */
    curcol = 0;                  /* start with the first column of `v' */
    p = M->PrecalcData;          /* start at the beginning of the table */
 
@@ -160,28 +159,17 @@ void GrMapRow(PTR v,GreasedMatrix_t *M, PTR w)
             }
          }
          if (nr) {     /* not the zero vector */
-            p = ffGetPtr(p,nr - 1,ffNoc);   /* now p points to the right linear combination */
-#if 1
-            ffAddRow(w,p);
-#else
-            {
-               register long *a = (long *) w;
-               register long *b = (long *) p;
-               register long k = zsize(1) / sizeof(long);
-               for (; k; k--) {
-                  *a++ ^= *b++;
-               }
-            }
-#endif
-            p = ffGetPtr(p,M->GrBlockSize - nr + 1, ffNoc);
+            p = ffGetPtr(p,nr - 1,M->Noc);   /* now p points to the right linear combination */
+            ffAddRow(w,p, M->Noc);
+            p = ffGetPtr(p,M->GrBlockSize - nr + 1, M->Noc);
          } else {
-            p = ffGetPtr(p,M->GrBlockSize, ffNoc);
+            p = ffGetPtr(p,M->GrBlockSize, M->Noc);
          }
       }
       for (i = M->Nor % M->GrRows; i > 0; i--) {
          /* do the rest */
-         if (buf < 0) { ffAddRow(w,p); }
-         ffStepPtr(&p, ffNoc);
+         if (buf < 0) { ffAddRow(w,p, M->Noc); }
+         ffStepPtr(&p, M->Noc);
          if ((++curcol & 0x7) == 0) {
             buf = *q++;
          } else {
@@ -197,17 +185,17 @@ void GrMapRow(PTR v,GreasedMatrix_t *M, PTR w)
             nr = nr * M->Field + ffToInt(ffExtract(v,curcol + j));
          }
          if (nr) {     /* not the zero vector */
-            p = ffGetPtr(p,nr - 1, ffNoc);   /* now p points to the right linear combination */
-            ffAddRow(w,p);
-            p = ffGetPtr(p,M->GrBlockSize - nr + 1, ffNoc);
+            p = ffGetPtr(p,nr - 1, M->Noc);   /* now p points to the right linear combination */
+            ffAddRow(w,p, M->Noc);
+            p = ffGetPtr(p,M->GrBlockSize - nr + 1, M->Noc);
          } else {
-            p = ffGetPtr(p,M->GrBlockSize, ffNoc);
+            p = ffGetPtr(p,M->GrBlockSize, M->Noc);
          }
          curcol += M->GrRows;
       }
       for (i = M->Nor % M->GrRows; i > 0; i--) {  /* do the rest */
-         ffAddMulRow(w,p,ffExtract(v,curcol++));
-         ffStepPtr(&p, ffNoc);
+         ffAddMulRow(w,p,ffExtract(v,curcol++),M->Noc);
+         ffStepPtr(&p, M->Noc);
       }
    }
 }

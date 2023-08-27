@@ -148,7 +148,6 @@ static Matrix_t *makekernel(const Poly_t *pol)
 	for (l = 0; l < pdeg; ++l) 
 	    ffInsert(rowptr,l,xbuf[l]);
 	ffInsert(rowptr,k,ffSub(xbuf[k],FF_ONE));
-        MTX_ASSERT(ffNoc == pdeg, NULL);
 	ffStepPtr(&rowptr, pdeg);
         for (xshift = (int) fl; xshift > 0; )
 	{
@@ -191,13 +190,11 @@ static Poly_t **berlekamp(const Poly_t *pol, const Matrix_t  *kernel)
     list[0] = polDup(pol);
     int nfactors = 1;
     Poly_t* t = polAlloc(kernel->Field,kernel->Noc-1);
-    ffSetNoc(kernel->Noc);
 
     /* Loop through all kernel vectors */
     for (int j = 2; j <= kernel->Nor; ++j)
     {
 	int ngcd = 0;
-        MTX_ASSERT(ffNoc == kernel->Noc, NULL);
 	ffStepPtr(&vec, kernel->Noc);			/* Next vector */
 	if (nfactors == kernel->Nor) 
 	    break;	/* Done? */

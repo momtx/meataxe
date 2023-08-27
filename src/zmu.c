@@ -94,7 +94,7 @@ static int multpm(void)
        ------------------------------------------------------ */
     for (i = 0; i < nor1; ++i)
     {	
-	ffSeekRow(bfile,perm->Data[i]);
+	ffSeekRow(bfile,perm->Data[i], noc2);
 	if (ffReadRows(bfile,row->Data, 1, noc2) != 1)
 	{
 	    mtxAbort(MTX_HERE,"Cannot read from %s",bname);
@@ -164,7 +164,7 @@ static int multmp(void)
 	    mtxAbort(MTX_HERE,"Cannot read from %s",aname);
 	    return -1;
 	}
-	ffPermRow(row_in,perm->Data,row_out);
+	ffPermRow(row_in,perm->Data,noc1,row_out);
 	if (ffWriteRows(cfile,row_out,1, noc1) != 1)
 	{
 	    mtxAbort(MTX_HERE,"Cannot write to %s",cname);
@@ -189,11 +189,9 @@ static int multsm(FILE *s, FILE *m, int norM, int nocM)
 
 {
     ffSetField(fl1);
-    ffSetNoc(1);
     PTR ms = ffAlloc(1,1);
     ffReadRows(s,ms,1,1);
     const FEL f = ffExtract(ms,0);
-    ffSetNoc(nocM);
     PTR mm = ffAlloc(1, nocM);
 	
     if ((cfile = ffWriteHeader(cname,fl1,norM,nocM)) == NULL)
@@ -205,7 +203,7 @@ static int multsm(FILE *s, FILE *m, int norM, int nocM)
 	    mtxAbort(MTX_HERE,"Cannot read from input file");
 	    return -1;
 	}
-	ffMulRow(mm,f);
+	ffMulRow(mm,f, nocM);
 	if (ffWriteRows(cfile,mm,1, nocM) != 1)
 	{
 	    mtxAbort(MTX_HERE,"Cannot write to %s",cname);
@@ -249,23 +247,19 @@ static int multmm(void)
     /* First matrix
        ------------ */
     ffSetField(fl1);
-    ffSetNoc(noc1);
     m1 = ffAlloc(1, noc1);
-    ffSeekRow(afile,row1);
+    ffSeekRow(afile,row1, noc1);
 
     /* Read second matrix
        ------------------ */
-    ffSetNoc(noc2);
     tmp = ffAlloc(1, noc2);
     const int colspan = col2 - col1 + 1;
-    ffSetNoc(colspan);
     diffsize = ffRowSize(colspan);
     m2 = ffAlloc(nor2, colspan);
     out = ffAlloc(1, colspan);
     if (colspan < noc2)
     {
 	PTR x = m2;
-	ffSetNoc(noc2);
 	for (i = 1; i <= nor2; ++i)
 	{
 	    ffReadRows(bfile, tmp, 1, noc2);
@@ -276,7 +270,6 @@ static int multmm(void)
     }
     else
     {
-	ffSetNoc(noc2);
 	ffReadRows(bfile,m2,nor2, noc2);
     }
 
@@ -288,14 +281,12 @@ static int multmm(void)
     const int nocOut = col2 - col1 + 1;
     for (i = 0; i < row2 - row1 + 1; ++i)
     {
-        ffSetNoc(noc1);
-        if (ffReadRows(afile,m1,1, noc1) != 1)
+        if (ffReadRows(afile, m1, 1, noc1) != 1)
 	{
 	    mtxAbort(MTX_HERE,"Cannot read from %s",aname);
 	    return -1;
 	}
-	ffSetNoc(nocOut);
-	ffMapRow(m1, m2, nor2, out);
+	ffMapRow(m1, m2, nor2, nocOut, out);
 	if (ffWriteRows(cfile,out,1, nocOut) != 1)
 	{
 	    mtxAbort(MTX_HERE,"Cannot write to %s",cname);

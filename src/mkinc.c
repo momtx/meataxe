@@ -151,7 +151,6 @@ static void WriteMountains()
        --------------- */
     strcat(strcpy(fn,LI.BaseName),".v");
     MESSAGE(1,("Writing mountains to %s\n",fn));
-    ffSetNoc(Rep->Gen[0]->Noc);
     if ((f = ffWriteHeader(fn,ffOrder,nmount,Rep->Gen[0]->Noc)) == NULL)
     {
 	mtxAbort(MTX_HERE,"Cannot create file %s: %S",fn);
@@ -159,7 +158,6 @@ static void WriteMountains()
     }
     for (i = 0; i < nmount; ++i)
     {
-       MTX_ASSERT(ffNoc == mountlist[i]->Noc,);
 	ffWriteRows(f,mountlist[i]->Data,1, mountlist[i]->Noc);
 	matFree(mountlist[i]);	/* We don't need them for step 2*/
     }

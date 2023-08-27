@@ -151,12 +151,11 @@ static void convmatrix()
       return;
    }
    ffSetField(fl);
-   ffSetNoc(noc);
    m1 = ffAlloc(1,noc);
    WriteHeader(fl,nor,noc);
    MESSAGE(0,("%dx%d matrix over GF(%d)\n",nor,noc,fl));
    for (i = 1; i <= nor; ++i) {
-      ffMulRow(m1,FF_ZERO);
+      ffMulRow(m1,FF_ZERO, noc);
       inp = 81;
       for (j = 0; j < noc; ++j) {
          if (inp >= 80) {       /* read next line */
@@ -185,7 +184,6 @@ static void convmatrix()
          }
          ffInsert(m1,j,ffFromInt(val));
       }
-      MTX_ASSERT(ffNoc == noc,);
       ffWriteRows(out,m1,1, noc);
    }
 }
@@ -202,11 +200,10 @@ static void conv3456()
 
    MESSAGE(0,("%dx%d matrix over GF(%d)\n",nor,noc,fl));
    ffSetField(fl);
-   ffSetNoc(noc);
    m1 = ffAlloc(1, noc);
    WriteHeader(fl,nor,noc);
    for (i = 1; i <= nor; ++i) {
-      ffMulRow(m1,FF_ZERO);
+      ffMulRow(m1,FF_ZERO, noc);
       for (j = 0; j < noc; ++j) {
          val = readlong();
          if (mod == 5) {
@@ -231,11 +228,10 @@ static void ConvertMatrix()
 
    MESSAGE(0,("%dx%d matrix over GF(%d)\n",nor,noc,fl));
    ffSetField(fl);
-   ffSetNoc(noc);
    m1 = ffAlloc(1, noc);
    WriteHeader(fl,nor,noc);
    for (i = 1; i <= nor; ++i) {
-      ffMulRow(m1,FF_ZERO);
+      ffMulRow(m1,FF_ZERO, noc);
       for (j = 0; j < noc; ++j) {
          val = readlong();
          ffInsert(m1,j,ffFromInt(val));
@@ -305,7 +301,6 @@ static void ConvertPolynomial()
    Poly_t *p;
 
    MESSAGE(0,("Polynomial of degree %d over GF(%d)\n",nor,fl));
-   ffSetNoc(fl);
    p = polAlloc(fl,nor);
    if ((out = sysFopen(outname,"wb")) == NULL) {
       mtxAbort(MTX_HERE,"Cannot open %s: %S",outname);
@@ -328,12 +323,11 @@ void convperm()
 
    MESSAGE(0,("%dx%d permutation matrix over GF(%d)\n",nor,noc,fl));
    ffSetField(fl);
-   ffSetNoc(noc);
    m1 = ffAlloc(1, noc);
    WriteHeader(fl,nor,noc);
    for (i = 1; i <= nor; ++i) {
       val = readlong();
-      ffMulRow(m1,FF_ZERO);
+      ffMulRow(m1,FF_ZERO, noc);
       ffInsert(m1,val - 1,FF_ONE);
       ffWriteRows(out, m1, 1, noc);
    }

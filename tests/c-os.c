@@ -47,7 +47,6 @@ TstResult OS_sysMalloc_InitializesMemoryWithZero()
    int result = 0;
    for (int i = 0; result == 0 && i < 10; ++i) {
       int *buf = (int*) sysMalloc(SIZE * sizeof(int));
-      printf("buf=%p\n",buf);
       int k;
       for (k = 0; k < SIZE && buf[k] == 0; ++k);
       if (k < SIZE) {

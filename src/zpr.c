@@ -82,7 +82,6 @@ static void prmatrix()
     int md, mx, iv;
 
     ffSetField(hdr[0]);
-    ffSetNoc(hdr[2]);
     m1 = ffAlloc(1, hdr[2]);
 
     if (hdr[0] < 10) {md = 1; mx = 80;}
@@ -94,7 +93,6 @@ static void prmatrix()
     fprintf(dest,"matrix field=%ld rows=%ld cols=%ld\n",hdr[0],hdr[1],hdr[2]);
     for (loop1 = 1; loop1 <= hdr[1]; ++loop1)
     {	
-       MTX_ASSERT(ffNoc == hdr[2],);
 	if (ffReadRows(inpfile, m1, 1, hdr[2]) != 1)
 	    mtxAbort(MTX_HERE,"Cannot read %s",inpname);
 	iv = 1;
@@ -133,7 +131,6 @@ static void prgapmat()
 
 
    ffSetField(hdr[0]);
-   ffSetNoc(hdr[2]);
    gen = ffGen;		/* Generator */
    isprimefield = (ffChar == ffOrder);
 
@@ -141,7 +138,6 @@ static void prgapmat()
    PrString("MeatAxe.Matrix := [\n");
    for (loop1 = 1; loop1 <= hdr[1]; ++loop1)
    {	
-      MTX_ASSERT(ffNoc == hdr[2],);
       if (ffReadRows(inpfile,m1,1, hdr[2]) != 1) 
          mtxAbort(MTX_HERE,"Cannot read %s",inpname);
       cnt = 0;
@@ -476,7 +472,6 @@ static void PrintSummary()
 	long l;
 	PrintMatrixSummary();
 	ffSetField(hdr[0]);
-	ffSetNoc(hdr[2]);
 	x = ffAlloc(1, hdr[2]);
 	for (l = hdr[1]; l > 0; --l)
 	    ffReadRows(inpfile,x,1,hdr[2]);
@@ -486,7 +481,6 @@ static void PrintSummary()
     {
 	PrintPolySummary();
 	ffSetField(hdr[1]);
-	ffSetNoc(hdr[2]+1);
 	sysFseek(inpfile,ftell(inpfile) + ffRowSize(hdr[2]+1));
     }
     else if (hdr[0] == -8)

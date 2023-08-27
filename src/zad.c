@@ -110,7 +110,6 @@ static int Init(int argc, char **argv)
     /* Allocate workspace
        ------------------ */
     ffSetField(Field);
-    ffSetNoc(Noc);
     Buf1 = ffAlloc(1, Noc);
     Buf2 = ffAlloc(1, Noc);
     if (Buf1 == NULL || Buf2 == NULL)
@@ -165,7 +164,7 @@ static int AddMatrices()
 	   --------------------------------- */
 	ffReadRows(Input[0],Buf1,1, Noc);
 	if (Subtract[0])
-	    ffMulRow(Buf1,MinusOne);
+	    ffMulRow(Buf1,MinusOne, Noc);
 
 	/* Add or subtract rows from the other matrices.
 	   --------------------------------------------- */
@@ -173,9 +172,9 @@ static int AddMatrices()
 	{
 	    ffReadRows(Input[k],Buf2,1, Noc);
 	    if (Subtract[k])
-		ffAddMulRow(Buf1,Buf2,MinusOne);
+		ffAddMulRow(Buf1,Buf2,MinusOne, Noc);
 	    else
-		ffAddRow(Buf1,Buf2);
+		ffAddRow(Buf1,Buf2, Noc);
 	}
 
 	/* Write the result to the output file.

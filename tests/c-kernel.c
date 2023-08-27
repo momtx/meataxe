@@ -235,7 +235,6 @@ static int InsertExtract2(PTR x, int pos)
 TstResult Kernel_RowOps_InsertExtract(int q)
 {
    int result = 0;
-   ffSetNoc(20);
    const PTR x = ffAlloc(1, 20);
    for (int pos = 0; result == 0 && pos < 14; ++pos) {
       result |= InsertExtract2(x,pos);
@@ -258,7 +257,7 @@ static int TestFindPiv2(PTR row, int noc)
       for (int k = 1; k < ffOrder; ++k) {
          ffInsert(row,i,FTab[k]);
 	 FEL pivotElement;
-	 const int pivotColumn = ffFindPivot(row,&pivotElement);
+	 const int pivotColumn = ffFindPivot(row,&pivotElement, noc);
          ASSERT_EQ_INT(pivotColumn, i);
 	 ASSERT_EQ_INT(pivotElement, FTab[k]);
       }
@@ -267,7 +266,7 @@ static int TestFindPiv2(PTR row, int noc)
 
    // empty row
    FEL dummy;
-   ASSERT_EQ_INT(ffFindPivot(row,&dummy), -1);
+   ASSERT_EQ_INT(ffFindPivot(row,&dummy, noc), -1);
    return 0;
 }
 
@@ -275,16 +274,15 @@ static int TestFindPiv3(PTR row, int noc)
 {
    int i;
 
-   ffMulRow(row,FF_ZERO);
+   ffMulRow(row,FF_ZERO, noc);
    for (i = noc - 1; i > 0; --i) {
       ffInsert(row,i,FF_ONE);
       FEL pivotValue;
-      const int pivotColumn = ffFindPivot(row,&pivotValue);
+      const int pivotColumn = ffFindPivot(row,&pivotValue, noc);
       ASSERT_EQ_INT(pivotColumn , i);
 
       // reduce row size below pivot column and try again
-      ffSetNoc(i);
-      ASSERT_EQ_INT(ffFindPivot(row,&pivotValue), -1);
+      ASSERT_EQ_INT(ffFindPivot(row,&pivotValue, i), -1);
    }
    return 0;
 }
@@ -293,7 +291,6 @@ TstResult Kernel_FindPivot(int q)
 {
    int result = 0;
    for (int noc = 0; result == 0 && noc < 35; ++noc) {
-      ffSetNoc(noc);
       const PTR x = ffAlloc(1, noc);
       result |= TestFindPiv2(x,noc);
       result |= TestFindPiv3(x,noc);
@@ -382,7 +379,7 @@ static int TestAddRow2(PTR x, PTR y, int noc, int d1, int d2)
       ffInsert(x,i,FTab[(i + d1) % ffOrder]);
       ffInsert(y,i,FTab[(i + d2) % ffOrder]);
    }
-   ffAddRow(x,y);
+   ffAddRow(x,y, noc);
    for (i = 0; i < noc; ++i) {
       FEL f = ffExtract(x,i);
       if (f != ffAdd(FTab[(i + d1) % ffOrder],FTab[(i + d2) % ffOrder])) {
@@ -396,7 +393,7 @@ static int TestAddRow2(PTR x, PTR y, int noc, int d1, int d2)
       for (i = 0; i < noc; ++i) {
          ffInsert(x,i,FTab[(i + d1) % ffOrder]);
       }
-      ffAddMulRow(x,y,FTab[k]);
+      ffAddMulRow(x,y,FTab[k],noc);
       for (i = 0; i < noc; ++i) {
          FEL f = ffExtract(x,i);
          FEL g = ffAdd(FTab[(i + d1) % ffOrder],
@@ -421,7 +418,7 @@ static int TestAddRowPartial(PTR x, PTR y, int noc, int d1, int d2)
       ffInsert(x,i,FTab[(i + d1) % ffOrder]);
       ffInsert(y,i,FTab[(i + d2) % ffOrder]);
    }
-   ffAddRow(x,y);
+   ffAddRow(x,y, noc);
    for (i = 0; i < noc; ++i) {
       FEL f = ffExtract(x,i);
       if (f != ffAdd(FTab[(i + d1) % ffOrder],FTab[(i + d2) % ffOrder])) {
@@ -434,7 +431,7 @@ static int TestAddRowPartial(PTR x, PTR y, int noc, int d1, int d2)
       for (i = 0; i < noc; ++i) {
          ffInsert(x,i,FTab[(i + d1) % ffOrder]);
       }
-      ffAddMulRow(x,y,FTab[k]);
+      ffAddMulRow(x,y,FTab[k], noc);
       for (i = 0; i < noc; ++i) {
          FEL f = ffExtract(x,i);
          FEL g = ffAdd(FTab[(i + d1) % ffOrder],
@@ -457,7 +454,7 @@ static int TestAddRow1a(PTR x, PTR y, int noc)
          for (int bi = 0; bi < ffOrder; bi += step) {
             FEL ist, soll;
             ffInsert(y,i,FTab[bi]);
-            ffAddRow(y,x);
+            ffAddRow(y,x, noc);
             ist = ffExtract(y,i);
             soll = ffAdd(FTab[ai],FTab[bi]);
             if (ist != soll) {
@@ -477,7 +474,6 @@ TstResult Kernel_RowOps_AddRow(int q)
    const int max1 = ffOrder < 32 ? ffOrder : 32;
    int result = 0;
 
-   ffSetNoc(noc);
    PTR x = ffAlloc(1, noc);
    PTR y = ffAlloc(1, noc);
    TestAddRow1a(x,y,noc);
@@ -509,7 +505,7 @@ static int TestMulRow1(PTR row, FEL* row2, int noc)
       FEL a = FTab[i];
       for (int col = 0; col < noc; ++col)
          row2[col] = ffMul(row2[col], a);
-      ffMulRow(row, a);
+      ffMulRow(row, a, noc);
 
       for (int col = 0; col < noc; ++col) {
          ASSERT_EQ_INT(ffExtract(row,col), row2[col]);
@@ -517,7 +513,7 @@ static int TestMulRow1(PTR row, FEL* row2, int noc)
    }
 
    // Multiply with zero.
-   ffMulRow(row,FF_ZERO);
+   ffMulRow(row,FF_ZERO, noc);
    for (int col = 0; col < noc; ++col) {
       ASSERT_EQ_INT(ffExtract(row,col), FF_ZERO);
    }
@@ -531,7 +527,6 @@ TstResult Kernel_RowOps_MulRow(int q)
    const int noc = ffOrder + 100;
    int result = 0;
    
-   ffSetNoc(noc);
    PTR row = ffAlloc(1, noc);
    FEL* row2 = NALLOC(FEL, noc);
    result = TestMulRow1(row, row2, noc);
@@ -546,14 +541,13 @@ TstResult Kernel_RowOps_MulRow(int q)
 TstResult Kernel_RowOps_MulRowPadsWithZero(int q)
 {
    ffSetField(2);
-   ffSetNoc(1);
    PTR x = ffAlloc(1, 1);
    uint8_t* const begin = (uint8_t*) x;
-   uint8_t* const pad = begin + ffTrueRowSize(1);
+   uint8_t* const pad = begin + ffRowSizeUsed(1);
    uint8_t* const end = begin + ffRowSize(1);
 
    memset(x,0xaa,ffRowSize(1));
-   ffMulRow(x, FF_ZERO);
+   ffMulRow(x, FF_ZERO, 1);
 
    for (const uint8_t* p = pad; p < end; ++p)
       ASSERT_EQ_INT(*p, 0);
@@ -576,7 +570,6 @@ TstResult Kernel_RowOps_StepPtr(int q)
 {
    int result = 0;
    for (int noc = 10; result == 0 && noc < 30; ++noc) {
-      ffSetNoc(noc);
       PTR x = ffAlloc(noc, noc);
       result |= TestStepPtr(x, noc);
       ffFree(x);
@@ -610,9 +603,9 @@ TstResult Kernel_RowOps_RowSize(int q)
       if ((rs < 0) || (rs > noc * sizeof(FEL) + sizeof(long))) {
          TST_FAIL("ffRowSize(%d) = %d out of range",noc,rs);
       }
-      int diff = rs - ffTrueRowSize(noc);
+      int diff = rs - ffRowSizeUsed(noc);
       if ((diff < 0) || (diff >= sizeof(long))) {
-         TST_FAIL("ffRowSize() and ffTrueRowSize() differ too much",0);
+         TST_FAIL("ffRowSize() and ffRowSizeUsed() differ too much",0);
       }
    }
    return 0;
@@ -624,21 +617,21 @@ static int TestCmpRows2(PTR m1, PTR m2, int noc)
 {
    int i;
 
-   ffMulRow(m1,FF_ZERO);
-   ffMulRow(m2,FF_ZERO);
+   ffMulRow(m1,FF_ZERO, noc);
+   ffMulRow(m2,FF_ZERO, noc);
 
    for (i = 1; i < ffOrder; ++i) {
       int k;
       for (k = 0; k < noc; ++k) {
-         if (ffCmpRows(m2,m1) != 0) {
+         if (ffCmpRows(m2,m1, noc) != 0) {
             TST_FAIL("Rows are different",0);
          }
          ffInsert(m1,k,FTab[i]);
-         if (ffCmpRows(m2,m1) == 0) {
+         if (ffCmpRows(m2,m1, noc) == 0) {
             TST_FAIL("Rows are still equal",0);
          }
          ffInsert(m2,k,FTab[i]);
-         if (ffCmpRows(m2,m1) != 0) {
+         if (ffCmpRows(m2,m1, noc) != 0) {
             TST_FAIL("Rows are still different", 0);
          }
       }
@@ -652,7 +645,6 @@ TstResult Kernel_RowOps_CmpRows(int q)
 
    for (int noc = 10; result == 0 && noc < 30; ++noc) {
       PTR m1, m2;
-      ffSetNoc(noc);
       m1 = ffAlloc(1, noc);
       m2 = ffAlloc(1, noc);
       result |= TestCmpRows2(m1,m2,noc);

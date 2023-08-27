@@ -98,9 +98,9 @@ MtxFile_t *mfOpen(const char *name)
 
    /* Check header
       ------------ */
-   #if MTXZZZ == 0
+   #if MTX_ZZZ == 0
       #define MTX_MAX_Q 256
-   #elif MTXZZZ == 1
+   #elif MTX_ZZZ == 1
       #define MTX_MAX_Q 63001
    #endif
 

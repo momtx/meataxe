@@ -79,7 +79,6 @@ static int Prepare()
     if (fl >= 2)	/* Matrix */
     {
 	ffSetField(fl); 
-	ffSetNoc(noc);
 	m1 = ffAlloc(nor, noc);
 	mfReadRows(f,m1,nor);
 
@@ -137,7 +136,6 @@ static int Prepare()
     if (fl >= 2)
     {
 	MESSAGE(0,("Output is %ld x %ld\n",nor2,noc2));
-	ffSetNoc(noc2);
 	if ((m2 = ffAlloc(1, noc2)) == NULL)
 	    return -1;
 	ofile = ffWriteHeader(oname,fl,nor2,(fl >= 2) ? noc2 : 1);
@@ -176,7 +174,7 @@ static void zs2()
     {	
 	for (i2 = i1 + 1; i2 < nor; ++i2)
 	{   
-	    ffMulRow(m2,FF_ZERO);
+	    ffMulRow(m2,FF_ZERO, noc2);
 	    j3 = 0;
 	    for (j1 = 0; j1 < noc - 1; ++ j1)
 	    {	
@@ -198,7 +196,6 @@ static void zs2()
 		ffInsert(m2,j3,ffMul(f1,f2));
 		++j3;
 	    }
-            MTX_ASSERT(ffNoc == noc2,);
 	    ffWriteRows(ofile,m2,1, noc2);
 	}
     }
@@ -207,7 +204,7 @@ static void zs2()
     for (i1 = 0; i1 < nor; ++i1)
     {	
 	j3 = 0;
-	ffMulRow(m2,FF_ZERO);
+	ffMulRow(m2,FF_ZERO, noc2);
 	for (j1 = 0; j1 < noc-1; ++j1)
 	{   
 	    f1 = ffExtract(row[i1],j1);
@@ -225,7 +222,6 @@ static void zs2()
 	    ffInsert(m2,j3,ffMul(f1,f1));
 	    ++j3;
 	}
-        MTX_ASSERT(ffNoc == noc2,);
 	ffWriteRows(ofile,m2,1, noc2);
     }
 }
@@ -314,8 +310,8 @@ static void ze2()
         MESSAGE(1,("i1 = %d\n",i1)); 
 	for (i2 = i1+1; i2 < nor; ++i2)
 	{
-            MESSAGE(2,("i2 = %d\n",i2)); 
-	    ffMulRow(m2,FF_ZERO);
+           MESSAGE(2,("i2 = %d\n",i2)); 
+	    ffMulRow(m2,FF_ZERO, noc2);
 	    j3 = 0;
 	    for (j1 = 0; j1 < noc-1; ++j1)
 	    {	register FEL f11, f21;
@@ -332,7 +328,6 @@ static void ze2()
 		    ++j3;
 		}
 	    }
-            MTX_ASSERT(ffNoc == noc2,);
 	    ffWriteRows(ofile,m2,1, noc2);
 	}
     }
@@ -358,7 +353,7 @@ static void ze3()
 	    for (i3 = i2+1; i3 < nor; ++i3)
 	    {	
    	       	MESSAGE(3,("i3 = %d\n",i3)); 
-		ffMulRow(m2,FF_ZERO);
+		ffMulRow(m2,FF_ZERO, noc2);
 		jins = 0;
 		for (j1 = 0; j1 < noc-2; ++j1)
 		{   
@@ -384,7 +379,6 @@ static void ze3()
 			}
 		    }
 		}
-                MTX_ASSERT(ffNoc == noc2,);
 		ffWriteRows(ofile,m2,1l, noc2);
 	    }
 	}
@@ -451,7 +445,7 @@ static void ze4()
             MESSAGE(3,("i3 = %d\n",i3)); 
             for (i4 = i3+1; i4 < nor; ++i4)
             {   
-               ffMulRow(m2,FF_ZERO);
+               ffMulRow(m2,FF_ZERO, noc2);
                jins = 0;
                for (j1 = 0; j1 < noc-3; ++j1)
                {   
@@ -508,7 +502,6 @@ static void ze4()
                      }
                   }
                }
-               MTX_ASSERT(ffNoc == noc2,);
                ffWriteRows(ofile,m2,1, noc2);
             }
          }

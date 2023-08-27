@@ -99,7 +99,6 @@ static int ReadFiles()
 	mtxAbort(MTX_HERE,"%s: %s",mname,MTX_ERR_NOTSQUARE);
 	return 1;
     }
-    ffSetNoc(InputFile->Noc);
     InputBuffer = ffAlloc(1, InputFile->Noc);
     QuotientDim = Subspace->Noc - Subspace->Nor;
 
@@ -107,7 +106,6 @@ static int ReadFiles()
        ----------------------------------------- */
     OutputFile = mfCreate(oname,ffOrder,opt_i ? QuotientDim : InputFile->Nor,
 	QuotientDim);
-    MTX_ASSERT(ffNoc == InputFile->Noc, 1);
     OutputBuffer = ffAlloc(1, InputFile->Noc);
 
     return 0;
@@ -168,8 +166,7 @@ static int doit()
 	/* Clean and extract insignificant columns.
 	   ---------------------------------------- */
 	ffCleanRow(InputBuffer,Subspace->Data,Subspace->Nor,Subspace->Noc,Subspace->PivotTable);
-	ffSetNoc(QuotientDim);
-	ffMulRow(OutputBuffer,FF_ZERO);
+	ffMulRow(OutputBuffer,FF_ZERO, QuotientDim);
 	for (k = 0; k < QuotientDim; ++k)
 	    ffInsert(OutputBuffer,k,ffExtract(InputBuffer,non_pivot[k]));
 

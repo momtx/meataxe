@@ -13,7 +13,13 @@
 /// @{
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
+
 /// Calculate the n-th power of a matrix using the binary method.
+/// @param n The exponent.
+/// @param inp Input matrix (dim x dim)
+/// @param out Output matrix (dim x dim)
+/// @param tmp2 Workspace (1xdim)
+/// @param dim Matrix size
 
 static void matpwr_(long n, PTR inp, PTR out, PTR tmp2, int dim)
 {
@@ -28,10 +34,9 @@ static void matpwr_(long n, PTR inp, PTR out, PTR tmp2, int dim)
             first = 0;
          } else {
             x = out;
-            for (i = 1; i <= ffNoc; ++i) {
-               ffMapRow(x,inp,dim,tmp2);
-               ffCopyRow(x,tmp2);
-               MTX_ASSERT(ffNoc == dim,);
+            for (i = 0; i < dim; ++i) {
+               ffMapRow(x,inp,dim,dim,tmp2);
+               ffCopyRow(x,tmp2, dim);
                ffStepPtr(&x, dim);
             }
          }
@@ -41,9 +46,8 @@ static void matpwr_(long n, PTR inp, PTR out, PTR tmp2, int dim)
       }
       x = inp;
       y = tmp2;
-      for (i = 1; i <= ffNoc; ++i) {
-         ffMapRow(x,inp,ffNoc,y);
-         MTX_ASSERT(ffNoc == dim,);
+      for (i = 0; i < dim; ++i) {
+         ffMapRow(x,inp,dim, dim,y);
          ffStepPtr(&x, dim);
          ffStepPtr(&y, dim);
       }
@@ -91,8 +95,7 @@ Matrix_t *matPower(const Matrix_t *mat, long n)
    }
 
    ffSetField(mat->Field);
-   ffSetNoc(mat->Noc);
-   tmp = ffAlloc(ffNoc, mat->Noc);
+   tmp = ffAlloc(mat->Noc, mat->Noc);
    if (tmp == NULL) {
        return NULL;
    }

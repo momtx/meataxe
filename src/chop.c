@@ -416,34 +416,31 @@ static Matrix_t *extendbasis(Matrix_t *basis, Matrix_t *space)
 
    /* Concatenate basis and space
       --------------------------- */
-   ffSetNoc(basis->Noc);
    tmp = ffAlloc(dimb + dims, basis->Noc);
    memcpy(tmp,basis->Data,ffSize(dimb, basis->Noc));
-   /*x = ffGetPtr(tmp,dimb,ffNoc);*/
+   /*x = ffGetPtr(tmp,dimb,basis->Noc);*/
    x = (PTR)((char*)tmp + dimb * ffRowSize(basis->Noc));
    memcpy(x,space->Data,ffSize(dims, basis->Noc));
 
    /* Clean with basis
       ---------------- */
-   MTX_ASSERT(ffNoc == basis->Noc, NULL);
    for (i = 0, x = tmp; i < dimb; ffStepPtr(&x, basis->Noc), ++i) {
-      piv = ffFindPivot(x,&f);
+      piv = ffFindPivot(x,&f,basis->Noc);
       if (piv == -1) {
          mtxAbort(MTX_HERE,"extendbasis(): zero vector in basis");
       }
       y = x;
       for (j = i + 1; j < dimb + dims; ++j) {
          ffStepPtr(&y, basis->Noc);
-         ffAddMulRow(y,x,ffSub(FF_ZERO,ffDiv(ffExtract(y,piv),f)));
+         ffAddMulRow(y,x,ffSub(FF_ZERO,ffDiv(ffExtract(y,piv),f)),basis->Noc);
       }
    }
 
    /* Find the first non-zero row
       --------------------------- */
-   MTX_ASSERT(ffNoc == basis->Noc, NULL);
-/*    x = ffGetPtr(tmp,dimb,ffNoc);*/
+/*    x = ffGetPtr(tmp,dimb,basis->Noc);*/
    x = (PTR)((char*)tmp + ffSize(dimb, basis->Noc));
-   for (j = 0; ffFindPivot(x,&f) == -1; ++j, ffStepPtr(&x, basis->Noc)) {
+   for (j = 0; ffFindPivot(x,&f,basis->Noc) == -1; ++j, ffStepPtr(&x, basis->Noc)) {
    }
    free(tmp);
    if (j > dims) {
@@ -767,8 +764,7 @@ Matrix_t *polymap(Matrix_t *v, Matrix_t *m, Poly_t *p)
       PTR x = result->Data, y = tmp->Data;
       long i;
       for (i = v->Nor; i > 0; --i) {
-         ffAddMulRow(x,y,f);
-         MTX_ASSERT(ffNoc == v->Noc, NULL);
+         ffAddMulRow(x,y,f,v->Noc);
          ffStepPtr(&x,v->Noc);
          ffStepPtr(&y,v->Noc);
       }

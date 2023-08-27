@@ -31,20 +31,15 @@ int mfWriteRows(MtxFile_t *f, PTR buf, int nrows)
    if (!mfIsValid(f)) {
       return -1;
    }
-   if (ffNoc != f->Noc) {
-      ffSetNoc(f->Noc);
-   }
 
-   /* Handle special case <ffNoc> = 0.
-      -------------------------------- */
+   // Handle special case Noc=0
    if (f->Noc == 0) {
       return nrows;
    }
 
-   /* Write rows one by one
-      --------------------- */
+   // Write rows one by one
    for (i = 0; i < nrows; ++i) {
-      if (fwrite(b,ffTrueRowSize(f->Noc),1,f->File) != 1) {
+      if (fwrite(b,ffRowSizeUsed(f->Noc),1,f->File) != 1) {
          break;
       }
       b += ffRowSize(f->Noc);

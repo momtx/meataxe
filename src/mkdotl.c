@@ -176,7 +176,6 @@ static void mkmount(int i)
 
     seed = matAlloc(cycl->Field,class[i][0],cycl->Noc);
     x = seed->Data;
-    ffSetNoc(cycl->Noc);
     for (p = class[i] + 1; *p > 0; ++p)
     {
 	if (*p < 1 || *p > cycl->Nor)
@@ -185,8 +184,7 @@ static void mkmount(int i)
 	    return;
 	}
 	y = matGetPtr(cycl,*p - 1);
-	ffCopyRow(x,y);
-        MTX_ASSERT(ffNoc == cycl->Noc,);
+	ffCopyRow(x,y, cycl->Noc);
 	ffStepPtr(&x, cycl->Noc);
     }
 
@@ -267,12 +265,6 @@ static Matrix_t *sum(int i, int k)
 
     matCopyRegion(s,0,0,mountlist[i],0,0,dim_i,-1);
     matCopyRegion(s,dim_i,0,mountlist[k],0,0,dim_k,-1);
-
-    /* OLD:
-    memcpy(s->Data,mountlist[i]->Data,ffCurrentRowSize * mountlist[i]->Nor);
-    x = ffGetPtr(s->Data,mountlist[i]->Nor,ffNoc);
-    memcpy(x,mountlist[k]->Data,ffCurrentRowSize * mountlist[k]->Nor);
-    */
 
     matEchelonize(s);
 

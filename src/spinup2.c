@@ -61,7 +61,6 @@ Matrix_t *SpinUpWithScript(const Matrix_t *seed, const MatRep_t *rep, const IntM
     /* Spin up
        ------- */
     ffSetField(seed->Field);
-    ffSetNoc(seed->Noc);
     op = script->Data;
     basis = matAlloc(ffOrder,script->Nor,seed->Noc);
     for (i = 0; i < script->Nor; ++i)
@@ -76,8 +75,9 @@ Matrix_t *SpinUpWithScript(const Matrix_t *seed, const MatRep_t *rep, const IntM
 	    	mtxAbort(MTX_HERE,"Seed vector number (%d) out of range (%d)",
 		    vecno,seed->Nor);
 	    }
-	    else
-	    	ffCopyRow(vec,matGetPtr(seed,vecno - 1));
+            else {
+               ffCopyRow(vec,matGetPtr(seed,vecno - 1),seed->Noc);
+            }
 	}
 	else
 	{
@@ -88,7 +88,7 @@ Matrix_t *SpinUpWithScript(const Matrix_t *seed, const MatRep_t *rep, const IntM
 	    	mtxAbort(MTX_HERE,"Invalid generator number %d at position %d",
 		    vecgen,i);
 	    }
-	    ffMapRow(matGetPtr(basis,vecno),rep->Gen[vecgen]->Data,ffNoc,vec);
+	    ffMapRow(matGetPtr(basis,vecno),rep->Gen[vecgen]->Data,seed->Noc,seed->Noc,vec);
 	}
     }
     return basis;

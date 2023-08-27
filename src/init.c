@@ -21,6 +21,15 @@ int Mtx_IsBigEndian = 0;
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
+
+/// This variable contains the name of the MeatAxe library directory.
+/// MtxLibDir can be set on the command line with the "-L" option. Otherwise, the value of the 
+/// environment variable MTXLIB is used. If neither "-L" nor MTXLIB are defined, the directory is
+/// assumed to be on the same level as the program execuable directory and named "lib". For example,
+/// if the program is "/home/user1/mtx/bin/zcp", the derived library directory would be
+/// "/home/user1/mtx/lib".
+/// If this fails, too, the current directory (".") is used.
+
 char MtxLibDir[250] = "";
 
 int MtxOpt_UseOldWordGenerator = 0;
@@ -72,6 +81,19 @@ static void setDirectories(char* argv0)
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
+/// This function initializes the MeatAxe library including finite field arithmetic and file i/o
+/// functions. It must be called before any other MeatAxe library function.
+/// It is legal to call MtxInitLibrary() multiple times. Only the first call will actually do
+/// anything.
+/// An application that uses @ref MtxInitApplication need not call this function.
+///
+/// @a argv0 is the name of the process executable. It will be used to initialize directory names
+/// such as @ref MtxLibDir, which have a default value relative to the executable directory. If the
+/// program name is not known, the argument may be NULL or an empty string.
+///  
+/// @c MtxInitLibrary() returns a version number which is different for each implementation of the
+/// arithmetic, or -1 on error.
+
 int MtxInitLibrary(char* argv0)
 {
    if (Mtx_IsInitialized)
@@ -94,7 +116,7 @@ int MtxInitLibrary(char* argv0)
    v += snprintf(v, vEnd - v,"%s ", MTX_VERSION);
    if (sizeof(long) == 8) v += snprintf(v, vEnd - v, " L64");
    v += snprintf(v, vEnd - v, " %s", Mtx_IsBigEndian ? "BE" : "LE");
-   v += snprintf(v, vEnd - v, " ZZZ=%d ZZZVERSION=0x%x", MTXZZZ, ZZZVERSION);
+   v += snprintf(v, vEnd - v, " ZZZ=%d ZZZVERSION=0x%x", MTX_ZZZ, ZZZVERSION);
 
 
 
@@ -102,6 +124,7 @@ int MtxInitLibrary(char* argv0)
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
+
 /// Terminate the library.
 /// This function terminates the MeatAxe library. An application that uses
 /// appFree() need not call this function.
@@ -110,12 +133,14 @@ void MtxCleanupLibrary()
 {
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+/// Sets the library directory.
 
 void mtxSetLibraryDirectory(const char *dir)
 {
    snprintf(MtxLibDir, sizeof(MtxLibDir), "%s", dir);
 }
-
 
 /// @}
 

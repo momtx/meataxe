@@ -6,9 +6,6 @@
 #include <string.h>
 #include <stdlib.h>
 
-//#define LPR (ffCurrentRowSize / sizeof(long))
-
-
 /// @addtogroup ff
 /// @{
 
@@ -30,22 +27,6 @@ int ffOrder = -1;
 
 FEL ffGen = 0;
 
-/// Current row size.
-/// Used by all low-level row operations. %ffNoc is updated automatically when the row size
-/// is changed with ffSetNoc().
-
-int ffNoc = 0;
-
-/// The number of bytes occupied by a single row in memory.
-/// Equal to <tt>ffRowSize(ffNoc)</tt> and always a multiple of sizeof(long).
-//size_t ffCurrentRowSize = (size_t) -1;
-
-/// The number of bytes occupied by a row in a data file.
-/// Equal to <tt>ffTrueRowSize(ffNoc)</tt>. ffCurrentRowSizeIo can be smaller than
-/// ffCurrentRowSize because there is no padding in data files.
-size_t ffCurrentRowSizeIo = -1;
-
-
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 /// Allocate memory and initialize
@@ -66,12 +47,11 @@ PTR ffAlloc(int nrows, int noc)
    const size_t req = rowSize * (size_t) nrows;
 
    PTR p = (PTR) sysMalloc(req);
-   ffSetNoc(noc); // TODO remove
 
    // Initialize all rows with zeroes.
    char* q = (char *) p;
    for (i = nrows; i > 0; --i) {
-      ffMulRow((PTR) q,FF_ZERO);
+      ffMulRow((PTR) q, FF_ZERO, noc);
       q += rowSize;
    }
    return p;
@@ -95,44 +75,49 @@ void ffFree(PTR x)
 
 /// Copy a row.
 /// This function copies the contents of one row to another row.
-/// As with all row operations, the row length must have been set before
-/// with |ffSetNoc()|.
 /// @param dest Pointer to the destination.
 /// @param src Pointer to the source.
+/// @param noc Row size (number of colums).
 
-void ffCopyRow(PTR dest, PTR src)
+void ffCopyRow(PTR dest, PTR src, int noc)
 {
-   long *s = (long *) src, *d = (long *) dest, i;
-   const int LPR = ffRowSize(ffNoc) / sizeof(long);
-   for (i = LPR; i > 0; --i) {
-      *d++ = *s++;
-   }
+   memcpy(dest, src, ffRowSize(noc));
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 /// Exchange two rows
-/// This function exchanges the contents of two rows. As with all row
-/// operations, the row length must have been set before with |ffSetNoc()|.
+/// This function exchanges the contents of two rows.
 /// @param dest Pointer to the first row
 /// @param src Pointer to the second row
+/// @param noc Row size (number of colums).
 
-void ffSwapRows(PTR dest, PTR src)
+void ffSwapRows(PTR dest, PTR src, int noc)
 {
-   long *p1 = (long *) src, *p2 = (long *) dest, i, l;
-   const int LPR = ffRowSize(ffNoc) / sizeof(long);
-   for (i = LPR; i > 0; --i) {
-      l = *p1;
+   long *p1 = (long *) src;
+   long *p2 = (long *) dest;
+   for (int i = ffRowSize(noc) / sizeof(long); i > 0; --i) {
+      long tmp = *p1;
       *p1++ = *p2;
-      *p2++ = l;
+      *p2++ = tmp;
    }
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
+/// Get row pointer.
+/// This function returns a pointer to a row of a matrix, given the row index.
+/// @a base must be a pointer to the beginning of a row, but this need not be the first
+/// row of the matrix. For example, <tt>x = ffGetPtr(x,1,noc)</tt> can be used to advance a
+/// row pointer to the next row.
+///
+/// Note: The function does not check if the resulting pointer is still inside the matrix.
+/// @see ffStepPtr()
+/// @param base Pointer to the first row of the matrix.
+/// @param row Row index. The first row has index 0.
+
 PTR ffGetPtr(PTR base, int row, int noc)
 {
-   MTX_ASSERT(ffNoc == noc, NULL);
    return (PTR) ((char *)base + ffSize(row, noc));
 }
 
@@ -145,7 +130,6 @@ PTR ffGetPtr(PTR base, int row, int noc)
 
 void ffStepPtr(PTR *x, int noc)
 {
-   MTX_ASSERT(ffNoc == noc,);
    *x = (PTR)((char*)*x + ffRowSize(noc));
 }
 

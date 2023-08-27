@@ -37,16 +37,15 @@ FEL minusone;                   /* -1 */
 FEL *inc = NULL;                /* a+1 = inc[a] */
 FEL *FfFromIntTable = NULL;
 unsigned short *FfToIntTable = NULL;
-FEL subfieldsTable[17];         // list of proper subfields, terminated with 0xFFFF
-FEL *embeddingTables = NULL;    // combined embed/restrict tables
+int mtx_subfields[17];         // public list of proper subfields, terminated with 0
+static FEL subfieldsTable[17]; // internal list of proper subfields, terminated with 0xFFFF
+FEL *embeddingTables = NULL;   // combined embed/restrict tables
 
 static unsigned short P = 0;            // Characteristic
 static unsigned short Q = 0;            // Field order
 static unsigned short Q1 = 0;           // Q-1, order of the multiplicative group
 static unsigned short N;                // Degree over prime field, Q=P^N
 static unsigned short Gen;              // Generator of the multiplicative group
-
-static long IPR = 0;            /* No. of long ints per row */
 
 #define FF_INVALID 0xFFFE
 
@@ -63,7 +62,6 @@ static long IPR = 0;            /* No. of long ints per row */
               (long)(x),(long)(hi)); \
       mtxAbort(MTX_HERE,"RANGE CHECK ERROR");}
 #define CHECKFILE(x)  CHECKRANGE(file,0,MAXFILES)
-#define CHECKCOL(x)  CHECKRANGE(x,1,ffNoc)
 #define CHECKFEL(x) { \
       if ((x) != 0xFFFF && ((x) > Q - 2)) \
       mtxAbort(MTX_HERE,"range check error"); \
@@ -80,27 +78,18 @@ static long IPR = 0;            /* No. of long ints per row */
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void ffSetNoc(int ncols)
-{
-   ffNoc = ncols;
-   IPR = (ffNoc * sizeof(FEL) + sizeof(long) - 1) / (sizeof(long));
-}
-
-////////////////////////////////////////////////////////////////////////////////////////////////////
-
 static int loadEmbedAndRestrictTables(FILE *fd)
 {
    FEL numberOfSubfields;
    if (fread(&numberOfSubfields, sizeof(FEL), 1, fd) != 1 || numberOfSubfields > 16) {
-      mtxAbort(MTX_HERE,"Currupt table file (number of subfields)");
+      mtxAbort(MTX_HERE,"Corrupt table file (number of subfields)");
       return -1;
    }
    if (fread(subfieldsTable, sizeof(FEL), numberOfSubfields, fd) != numberOfSubfields) {
-      mtxAbort(MTX_HERE,"Currupt table file (subfield orders)");
+      mtxAbort(MTX_HERE,"Corrupt table file (subfield orders)");
       return -1;
    }
    subfieldsTable[numberOfSubfields] = FF_INVALID;
-
    size_t tblSize = 0;
    for (FEL* sf = subfieldsTable; *sf != FF_INVALID; ++sf) {
       if (*sf >= Q) {
@@ -113,6 +102,14 @@ static int loadEmbedAndRestrictTables(FILE *fd)
       mtxAbort(MTX_HERE,"Corrupt table file (subfield embeddings)");
       return -1;
    }
+
+   // Copy subfields to public table
+   subfieldsTable[numberOfSubfields] = FF_INVALID;
+   memset(mtx_subfields, 0, sizeof(mtx_subfields));
+   for (int i = 0; i < numberOfSubfields && subfieldsTable[i] != FF_INVALID; ++i) {
+      mtx_subfields[i] = (int) subfieldsTable[i];
+   }
+
    return 0;
 }
 
@@ -338,7 +335,7 @@ ssize_t ffSize(int nor, int noc)
 /// i.e., without counting the padding bytes. This number is less than or equal to
 /// <tt>ffRowSize(noc)</tt>.
 
-size_t ffTrueRowSize(int noc)
+size_t ffRowSizeUsed(int noc)
 {
    return noc * sizeof(FEL);
 }
@@ -413,12 +410,12 @@ FEL ffEmbed(FEL a, int subfield)
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-int ffFindPivot(PTR row,FEL *mark)
+int ffFindPivot(PTR row,FEL *mark, int noc)
 {
    register long i;
    register PTR p = row;
 
-   for (i = 0; i < ffNoc; ++i, ++p) {
+   for (i = 0; i < noc; ++i, ++p) {
       if (*p != FF_ZERO) {
          *mark = *p;
          return i;
@@ -429,13 +426,13 @@ int ffFindPivot(PTR row,FEL *mark)
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-PTR ffAddRow(PTR dest, PTR src)
+PTR ffAddRow(PTR dest, PTR src, int noc)
 {
    register int i;
    register FEL *p1 = dest;
    register FEL *p2 = src;
 
-   for (i = ffNoc; i != 0; --i) {
+   for (i = noc; i != 0; --i) {
       *p1 = ffAdd(*p1,*p2++);
       ++p1;
    }
@@ -444,25 +441,23 @@ PTR ffAddRow(PTR dest, PTR src)
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-PTR ffAddRowPartial(PTR dest, PTR src, int first)
+void ffAddRowPartial(PTR dest, PTR src, int first, int noc)
 {
-   MTX_ASSERT(first >= 0 && first < ffNoc, dest);
+   MTX_ASSERT(first >= 0 && first < noc, );
    long i;
 
    PTR p1 = dest + first;
    PTR p2 = src + first;
-   for (i = ffNoc - first; i != 0; --i) {
+   for (i = noc - first; i != 0; --i) {
       *p1 = ffAdd(*p1,*p2);
       p1++;
       p2++;
    }
-   return dest;
 }
-
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void ffMulRow(PTR row, FEL mark)
+void ffMulRow(PTR row, FEL mark, int noc)
 {
    register FEL *m;
    register long i;
@@ -470,17 +465,17 @@ void ffMulRow(PTR row, FEL mark)
    CHECKFEL(mark);
    if (mark == FF_ZERO) {
       m = row;
-      for (i = ffNoc; i != 0; --i) {
+      for (i = noc; i != 0; --i) {
          *m++ = FF_ZERO;
       }
 
       // Fill unused space with zeroes.
-      int rem = (ffNoc * sizeof(FEL)) % sizeof(long);
+      int rem = (noc * sizeof(FEL)) % sizeof(long);
       if (rem > 0)
          memset(m, 0, sizeof(long) - rem);
    } else {
       m = row;
-      for (i = ffNoc; i != 0; --i) {
+      for (i = noc; i != 0; --i) {
          if (*m != FF_ZERO) {
             unsigned int x = *m + mark;
             *m = (x >= Q1) ? x - Q1 : x;
@@ -490,52 +485,47 @@ void ffMulRow(PTR row, FEL mark)
    }
 }
 
-
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void ffAddMulRow(PTR row1, PTR row2, FEL f)
+void ffAddMulRow(PTR row1, PTR row2, FEL f, int noc)
 {
-   register long i;
-   register FEL *p1, *p2;
-
    CHECKFEL(f);
-   if (f == FF_ZERO) {return;}
    if (f == FF_ONE) {
-      ffAddRow(row1,row2);
+      ffAddRow(row1, row2, noc);
       return;
    }
-   p1 = row1;
-   p2 = row2;
-   for (i = ffNoc; i != 0; --i) {
-      *p1 = ffAdd(*p1,ffMul(*p2,f));
-      ++p1;
-      ++p2;
+   else if (f != FF_ZERO) {
+      FEL* p1 = row1;
+      FEL* p2 = row2;
+      for (int i = noc; i > 0; --i) {
+         *p1 = ffAdd(*p1,ffMul(*p2,f));
+         ++p1;
+         ++p2;
+      }
    }
 }
 
-
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void ffAddMulRowPartial(PTR dest, PTR src, FEL f, int firstcol)
+void ffAddMulRowPartial(PTR dest, PTR src, FEL f, int firstcol, int noc)
 {
    CHECKFEL(f);
-   MTX_ASSERT(firstcol >= 0 && firstcol < ffNoc,);
+   MTX_ASSERT(firstcol >= 0 && firstcol < noc,);
 
-   if (f == FF_ZERO) {
-      return;
-   }
    if (f == FF_ONE) {
-      ffAddRowPartial(dest, src, firstcol);
+      ffAddRowPartial(dest, src, firstcol, noc);
       return;
    }
-   PTR p1 = dest + firstcol;
-   PTR p2 = src + firstcol;
-   for (int i = ffNoc - firstcol; i != 0; --i) {
-      if (*p2 != FF_ZERO) {
-         *p1 = ffAdd(*p1,ffMul(*p2,f));
+   else if (f != FF_ZERO) {
+      PTR p1 = dest + firstcol;
+      PTR p2 = src + firstcol;
+      for (int i = noc - firstcol; i != 0; --i) {
+         if (*p2 != FF_ZERO) {
+            *p1 = ffAdd(*p1,ffMul(*p2,f));
+         }
+         ++p1;
+         ++p2;
       }
-      ++p1;
-      ++p2;
    }
 }
 
@@ -558,9 +548,9 @@ int ffToInt(FEL f)
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void ffMapRow(PTR row, PTR matrix, int nor, PTR result)
+void ffMapRow(PTR row, PTR matrix, int nor, int noc, PTR result)
 {
-   ffMulRow(result, FF_ZERO);
+   ffMulRow(result, FF_ZERO, noc);
 
    FEL *brow = row;
    FEL *m = matrix;
@@ -570,15 +560,14 @@ void ffMapRow(PTR row, PTR matrix, int nor, PTR result)
       if (f != FF_ZERO) {
          FEL *v = m;
          FEL *r = result;
-         int k = ffNoc;
          if (f == FF_ONE) {
-            for (; k != 0; --k) {
+            for (int k = noc; k != 0; --k) {
                *r = ffAdd(*r,*v);
                ++r;
                ++v;
             }
          } else {
-            for (; k != 0; --k) {
+            for (int k = noc; k != 0; --k) {
                *r = ffAdd(*r,ffMul(*v,f));
                ++r;
                ++v;
@@ -586,25 +575,19 @@ void ffMapRow(PTR row, PTR matrix, int nor, PTR result)
          }
       }
 
-      m += ffRowSize(ffNoc) / sizeof(FEL);   /* next row */
+      m += ffRowSize(noc) / sizeof(FEL);   /* next row */
    }
 }
 
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-/// Scalar Product of Two Vectors.
-/// Given two vectors @f$a=(a_i)@f$ and @f$b=(b_i)@f$, this function calculates the
-/// scalar product @f$p=\sum_ia_ib_i@f$.
-/// @param a The first vector.
-/// @param b The second vector.
-/// @return Scalar product of the two vectors.
 
-FEL ffScalarProduct(PTR a, PTR b)
+FEL ffScalarProduct(PTR a, PTR b, int noc)
 {
    FEL *ap = a;
    FEL *bp = b;
    FEL f = FF_ZERO;
-   for (int i = ffNoc; i > 0; --i) {
+   for (int i = noc; i > 0; --i) {
       f = ffAdd(f,ffMul(*ap++,*bp++));
    }
    return f;
@@ -612,24 +595,13 @@ FEL ffScalarProduct(PTR a, PTR b)
 
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-/// Extract one column of a matrix.
-/// This function extracts one column out of a matrix and converts it into a row vector.
-/// The number of columns of the matrix must have been set with ffSetNoc(), and the number of rows
-/// must be passed in the call. The result is a row with @a nor entries, and the output buffer,
-/// @a result, must be large enough to store a vector of this size.
-/// @a mat and @a result must not overlap. If they do, the result is undefined.
-///
-/// @param mat Pointer to the matrix.
-/// @param nor Number of rows in matrix.
-/// @param col Column to extract (starting with 0).
-/// @param result Pointer to buffer for the extracted column.
 
-void ffExtractColumn(PTR mat, int nor, int col, PTR result)
+void ffExtractColumn(PTR mat, int nor, int noc, int col, PTR result)
 {
    FEL *x = mat + col;
    FEL *y = result;
 
-   const size_t step = ffRowSize(ffNoc) / sizeof(FEL);
+   const size_t step = ffRowSize(noc) / sizeof(FEL);
    for (int count = nor; count > 0; --count) {
       *y++ = *x;
       x += step;

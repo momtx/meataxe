@@ -2,45 +2,40 @@
 // C MeatAxe - Map a vector under a permutation.
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-
 #include "meataxe.h"
-
-#ifdef PARANOID
-#endif
-
-
 
 /// @addtogroup ff
 /// @{
  
-/// Multiply a Vector by a Permutation.
-/// This function multiplies the vector @a row from the right with the permutation @a perm
-/// and stores the result in @a result. Multiplication of vectors by permutations is defined
-/// as follows: if the permutation maps i to k, then the i-ith mark of the vector is stored
-/// in the k-th position of the result. 
+/// Multiplies a vector from the right by a permutation.
 ///
-/// Note: @a result and @a row must not overlap. Otherwise the result is undefined.
+/// This function multiplies the vector @a row from the right with the permutation @a perm
+/// and stores the result in @a result. More explicitly: if <tt>perm[i] = k</tt>, then the
+/// i-th mark of the vector is stored in the k-th position of the result. 
+///
+/// @param row A row vector with @a noc columns.
+/// @param perm Pointer to a table of @a noc numbers defining a permutation of {0,..., noc-1}.
+/// @param noc Number of columns in @a row and @result
+/// @param result Result vector (@a noc columns).
+///
+/// Note: @a result and @a row must not overlap.
 
-void ffPermRow(PTR row, const long *perm, PTR result)
+void ffPermRow(PTR row, const long *perm, int noc, PTR result)
 {
-    register FEL f;
-    register int i;
-    register const long *p = (long *)perm;
+   register FEL f;
+   register int i;
+   register const long *p = (long *)perm;
 
-#ifdef PARANOID
-    if (row == result)
-	mtxAbort(MTX_HERE,"row = result: undefined result!");
-#endif
+   // Verify that row and result do not overlap
+   MTX_ASSERT(row != result,);
+   MTX_ASSERT_DEBUG(ffGetPtr(row, 1, noc) <= result || row >= ffGetPtr(result,1, noc), );
 
-    for (i = 0; i < ffNoc; ++i)
-    {
-#ifdef PARANOID
-	if (*p < 0 || *p > ffNoc)
-	    mtxAbort(MTX_HERE,"Invalid point %d in permutation, noc=%d",(int)*p,ffNoc);
-#endif
-	f = ffExtract(row,i);
-	ffInsert(result,*p++,f);
-    }
+   for (i = 0; i < noc; ++i)
+   {
+      MTX_ASSERT_DEBUG(*p >= 0 && *p < noc,);
+      f = ffExtract(row,i);
+      ffInsert(result,*p++,f);
+   }
 }
 
 /// @}

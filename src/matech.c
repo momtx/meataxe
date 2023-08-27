@@ -28,22 +28,20 @@ static int zmkechelon(PTR matrix, int nor, int noc, int *piv, int *ispiv)
       --------------------------------------------------------- */
    rank = 0;
    newrow = matrix;
-   MTX_ASSERT(ffNoc == noc, 0);
    for (i = 0, x = matrix; i < nor && rank < noc; ++i, ffStepPtr(&x, noc)) {
       int newpiv;
       FEL f;
 
       if (rank < i) {
-         ffCopyRow(newrow,x);
+         ffCopyRow(newrow,x, noc);
       }
       ffCleanRow(newrow,matrix,rank,noc,piv);
-      newpiv = ffFindPivot(newrow,&f);
+      newpiv = ffFindPivot(newrow,&f, noc);
       MTX_ASSERT(newpiv < noc, 0);
       if (newpiv >= 0) {
          piv[rank] = newpiv;
          ispiv[newpiv] = 1;
          ++rank;
-         MTX_ASSERT(ffNoc == noc, 0);
          ffStepPtr(&newrow, noc);
       }
    }
@@ -109,7 +107,6 @@ int matEchelonize(Matrix_t *mat)
    /* Build the pivot table
       --------------------- */
    ffSetField(mat->Field);
-   ffSetNoc(mat->Noc);
    rank = zmkechelon(mat->Data,mat->Nor,mat->Noc,mat->PivotTable,is_pivot);
 
    /* If the rank is less than the number of rows, remove null rows

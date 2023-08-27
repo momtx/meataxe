@@ -270,22 +270,17 @@ static int cutmatrix()
     if (rowlist[nrows-1][1] > nor) err('o');
     if (collist[ncols-1][1] > noc) err('o');
     ffSetField(fl);
-    ffSetNoc(noc);
     row = ffAlloc(1, noc);
-    ffSetNoc(onoc);
     x = ffAlloc(onor, onoc);
     y = x;
     for (i = 0; i < nrows; ++i)
     {	
-	ffSetNoc(noc);
-	ffSeekRow(InputFile,rowlist[i][0]-1);
+	ffSeekRow(InputFile, rowlist[i][0]-1, noc);
 	for (k = 0; k <= rowlist[i][1]-rowlist[i][0]; ++k)
 	{   
-	    ffSetNoc(noc);
 	    ffReadRows(InputFile,row,1, noc);
 	    pos = 0;
-	    ffSetNoc(onoc);
-	    ffMulRow(y,FF_ZERO);
+	    ffMulRow(y,FF_ZERO, onoc);
 	    for (ii = 0; ii < ncols; ++ii)
 	    {
 		for (kk = collist[ii][0]-1; kk < collist[ii][1]; ++kk)
@@ -300,7 +295,6 @@ static int cutmatrix()
 
     /* Write output
        ------------ */
-    ffSetNoc(onoc);
     if ((OutputFile = ffWriteHeader(ofilename,fl,onor,onoc)) == NULL)
 	return -1;
     if (ffWriteRows(OutputFile,x,onor, onoc) != onor)

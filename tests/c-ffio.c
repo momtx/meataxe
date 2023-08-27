@@ -27,7 +27,7 @@ static int TestRowIo2(PTR row0, PTR row1, PTR buf, int noc)
    f = sysFopen(file_name,"rb");
    for (x = 0, i = 0; i < 100; ++i) {
       ASSERT_EQ_INT(ffReadRows(f,buf,1,noc), 1);
-      ASSERT(ffCmpRows(buf,(x & 0x1000) ? row0 : row1) == 0);
+      ASSERT(ffCmpRows(buf,(x & 0x1000) ? row0 : row1, noc) == 0);
       x = x * 69069 + 1;
    }
    fclose(f);
@@ -46,12 +46,11 @@ TstResult Kernel_RowIo(int q)
       PTR row0, row1, buf;
       int i;
 
-      ffSetNoc(noc);
       row0 = ffAlloc(1, noc);
       row1 = ffAlloc(1, noc);
       buf = ffAlloc(1, noc);
 
-      ffMulRow(row0,FF_ZERO);
+      ffMulRow(row0,FF_ZERO, noc);
       for (i = 0; i < noc - 1; ++i) {
          ffInsert(row1,i,FF_ONE);
       }
@@ -68,7 +67,7 @@ TstResult Kernel_RowIo(int q)
 static int CmpMat(PTR a, PTR b, int nor, int noc)
 {
    while (nor-- > 0) {
-      int diff = ffCmpRows(a,b);
+      int diff = ffCmpRows(a,b, noc);
       if (diff != 0) {
          return diff;
       }
@@ -129,7 +128,6 @@ TstResult Kernel_FileHeader(int q)
       int i;
       long x = 0;
 
-      ffSetNoc(noc);
       buf1 = ffAlloc(nor, noc);
       buf2 = ffAlloc(nor, noc);
       for (i = 0; i < nor; ++i) {
@@ -170,7 +168,7 @@ static int TestSeek2(int nor, int noc, PTR buf1, PTR buf2)
    f = ffReadHeader(file_name, &fld2, &nor2, &noc2);
    for (i = nor - 1; i >= 0; --i) {
       PTR x = (PTR)((char *)buf2 + ffSize(i, noc));
-      ffSeekRow(f,i);
+      ffSeekRow(f, i, noc2);
       ASSERT_EQ_INT(ffReadRows(f,x,1,noc), 1);
    }
    fclose(f);
@@ -195,7 +193,6 @@ TstResult Kernel_Seek(int q)
       int i;
       long x = 0;
 
-      ffSetNoc(noc);
       buf1 = ffAlloc(bufsize, noc);
       buf2 = ffAlloc(bufsize, noc);
       for (i = 0; i < bufsize; ++i) {

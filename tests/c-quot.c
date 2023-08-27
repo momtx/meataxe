@@ -14,7 +14,6 @@ TstResult QuotientProjection1(int q)
 {
    Matrix_t *sub = MkMat(3,5, 1,0,0,0,0, 0,1,1,0,1, 0,0,0,1,1);
    matEchelonize(sub);
-   ffSetNoc(1);
 
    Matrix_t *m1 = MkMat(5,5, 0,0,0,0,1, 0,0,0,1,0, 0,0,1,0,0, 0,1,0,0,0, 1,0,0,0,0);
    Matrix_t *expectedP1 = MkMat(2,2, 0,1, 1,0);
@@ -49,14 +48,12 @@ TstResult QuotientProjection2(int q)
       Matrix_t *id = matId(ffOrder,size);
       Matrix_t *quot;
       matEchelonize(sub);
-      ffSetNoc(1);
       quot = QProjection(sub,id);
       matEchelonize(quot);
       matFree(id);
       for (k = 0; k < 3; ++k) {
          Matrix_t *vec = RndMat(ffOrder,size * 5,size);
          Matrix_t *proj;
-         ffSetNoc(1);
          proj = QProjection(sub,vec);
          matEchelonize(proj);
 	 ASSERT(IsSubspace(proj,quot,0));

@@ -19,7 +19,6 @@ static void mktmp(long fl, long deg)
 {
    ffSetField(fl);
    if (deg > 0) {
-      ffSetNoc(deg + 1);
    }
    if (tmpfl != fl || tmpdeg < deg) {
       if (tmpvec != NULL) { sysFree(tmpvec); }

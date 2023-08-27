@@ -108,7 +108,7 @@ int permToMat1(const Perm_t *perm, PTR row)
 	int i;
 	for (i = 0; rc == 0 && i < nor; ++i)
 	{	
-	    ffMulRow(row,FF_ZERO);
+	    ffMulRow(row,FF_ZERO, nor);
 	    ffInsert(row,p[i],FF_ONE);
 	    if (mfWriteRows(out,row,1) != 1)
 		rc = -1;
@@ -145,7 +145,6 @@ int permmat()
     if (rc == 0)
     {
 	ffSetField(fl2);
-	ffSetNoc(nor);
 	row = ffAlloc(1, nor);
     }
 
@@ -185,11 +184,9 @@ static int AllocateBuffer()
     if (Buf == NULL)
 	return -1;
     ffSetField(fl);
-    ffSetNoc(noc);
     if ((RowIn = ffAlloc(1, noc)) == NULL)
 	return -1;
     ffSetField(fl2);
-    ffSetNoc(noc);
     if ((RowOut = ffAlloc(1, noc)) == NULL)
 	return -1;
     return 0;
@@ -218,7 +215,6 @@ static int ReadRows(int req)
     if ((to_read = req) > BufNRows)
 	to_read = BufNRows;
     ffSetField(fl);
-    ffSetNoc(noc);
     tp = Buf;
     MESSAGE(1,("Reading %d rows\n",to_read));
     for (i = 0; i < to_read; ++i)
@@ -239,7 +235,6 @@ static int WriteRows(int nrows)
     FEL *tp;
 
     ffSetField(fl2);
-    ffSetNoc(noc);
     tp = Buf;
     MESSAGE(1,("Writing %d rows\n",nrows));
     for (i = 0; i < nrows; ++i)

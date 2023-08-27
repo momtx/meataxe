@@ -32,7 +32,7 @@ int ffReadRows(FILE *f, PTR buf, int n, int noc)
 
    // read rows one by one
    for (i = 0; i < n; ++i) {
-      if (fread(b,ffTrueRowSize(noc),1,f) != 1) {
+      if (fread(b,ffRowSizeUsed(noc),1,f) != 1) {
 	  break;
       }
       b += ffRowSize(noc);
@@ -65,7 +65,7 @@ int ffWriteRows(FILE *f, PTR buf, int n, int noc)
 
    // write rows one by one
    for (i = 0; i < n; ++i) {
-      if (fwrite(b,ffTrueRowSize(noc),1,f) != 1) {
+      if (fwrite(b,ffRowSizeUsed(noc),1,f) != 1) {
 	  break;
       }
       b += ffRowSize(noc);
@@ -82,24 +82,24 @@ int ffWriteRows(FILE *f, PTR buf, int n, int noc)
 /// This function sets the read/write pointer of file @em f to position
 /// @em pos. I.e., the next ffReadRows() or ffWriteRows() will start
 /// at the specified row.
-/// Note that row numbers start with 0. If @em pos is different
-/// from 0, the row size must have been set before with ffSetNoc().
+/// Note that row numbers start with 0.
 ///
 /// You should always use ffSeekRow() rather than fseek() because
 /// ffSeekRow() knows about MeatAxe file headers and adjusts the
 /// file pointer appropriately.
 /// @param f Pointer to File.
 /// @param pos Row number (0-based).
+/// @param noc Row size (number of columns).
 /// @return 0 on success, -1 on error.
 
-int ffSeekRow(FILE *f, int pos)
+int ffSeekRow(FILE *f, int pos, int noc)
 {
    long addr;
 
    if (ffOrder != -1) {
-      addr = (long) ffTrueRowSize(ffNoc) * pos + 12;
+      addr = ffRowSizeUsed(noc) * pos + 12;
    } else {
-      addr = (long) ffNoc * 4 * pos + 12;
+      addr = (long) noc * 4 * pos + 12;
    }
    if (sysFseek(f,addr) == -1) {
       mtxAbort(MTX_HERE,"Seek failed: %S");
@@ -142,9 +142,9 @@ FILE *ffReadHeader(const char *name, int *field, int *nor, int *noc)
 
    /* Check header
       ------------ */
-#if MTXZZZ == 0
+#if MTX_ZZZ == 0
    #define MTX_MAX_Q 256
-#elif MTXZZZ == 1
+#elif MTX_ZZZ == 1
    #define MTX_MAX_Q 65535
 #else
    #error

@@ -16,7 +16,7 @@ void tstPrintRows(const char *name, PTR x, int nor, int noc)
 {
    printf("---\n%s (%dx%d):\n", name, nor, noc);
    for (int n = nor; n > 0; --n) {
-      for (int col = 0; col < ffNoc; ++col) {
+      for (int col = 0; col < noc; ++col) {
          printf(" %5d",ffToInt(ffExtract(x,col)));
       }
       printf("\n");
@@ -77,7 +77,7 @@ int tstAssertEqInt(const char *file, int line, const char *func, int act, int ex
 }
 
 static const int DEFAULT_FIELDS[] = {2,3,4,5,16,67,125,256,
-#if MTXZZZ == 1
+#if MTX_ZZZ == 1
     59049, // = 3 ^ 10
 #endif
     -1};
@@ -151,7 +151,6 @@ static void UseFixedField(int field)
    static int fixedField[2];
    fixedField[0] = field;
    fixedField[1] = -1;
-   ffSetNoc(field);
    SelectedFields = fixedField;
    defaultField = field;
 }
@@ -232,7 +231,7 @@ Matrix_t *MkMat(int nor, int noc, ...)
 
 #define CHECK_FUNCTION_TABLE
 
-static int prtables(int field)
+static void printTables(int field)
 {
    int a, b;
 
@@ -265,7 +264,27 @@ static int prtables(int field)
       }
       printf("\n");
    }
-   return 0;
+
+   printf("\n");
+   printf("Subfield elements\n");
+   const size_t MAX_EMBED = sizeof(mtx_subfields) / sizeof(mtx_subfields[0]);
+
+   for (size_t i = 0; i < MAX_EMBED && mtx_subfields[i] >= 2; ++i) {
+      const int subfield = mtx_subfields[i];
+      // Get all subfield elements (temporary swith the working field).
+      FEL* subfieldElements = NALLOC(FEL, subfield);
+      ffSetField(subfield);
+      for (int k = 0; k < subfield; ++k)
+         subfieldElements[k] = ffFromInt(k);
+
+      // Print the embedding.
+      ffSetField(field);
+      printf("%5d   ", subfield);
+      for (int k = 0; k < subfield; ++k) {
+         printf(" %d", ffToInt(ffEmbed(subfieldElements[k],subfield)));
+      }
+      printf("\n");
+   }
 }
 
 
@@ -276,66 +295,66 @@ struct TstAbortState tstAbortState = {0};
 
 static void CatchAbortHandler(const struct MtxErrorInfo *err)
 {
-   if (tstAbortState.enabled) {
-      longjmp(tstAbortState.jumpTarget, 112);
-   }
-   tstFail(__FILE__, __LINE__, __func__, "UNEXPECTED ABORT\nabort reason: %s\nCANNOT CONTINUE TESTS, EXITING",
-         err->message);
-   exit(2);
+if (tstAbortState.enabled) {
+   longjmp(tstAbortState.jumpTarget, 112);
+}
+tstFail(__FILE__, __LINE__, __func__, "UNEXPECTED ABORT\nabort reason: %s\nCANNOT CONTINUE TESTS, EXITING",
+      err->message);
+exit(2);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void tstPrepareCatchAbort(const char *file, int line, const char *func, const char *estr)
 {
-   tstAbortState.file = file;
-   tstAbortState.line = line;
-   tstAbortState.func = func;
-   tstAbortState.expr = estr;
-   tstAbortState.enabled = 1;
+tstAbortState.file = file;
+tstAbortState.line = line;
+tstAbortState.func = func;
+tstAbortState.expr = estr;
+tstAbortState.enabled = 1;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void tstMissingAbort()
 {
-   tstAbortState.enabled = 0;
-   tstFail(tstAbortState.file, tstAbortState.line, tstAbortState.func,
-         "Did not abort as expected\nexpr: %s", tstAbortState.expr);
+tstAbortState.enabled = 0;
+tstFail(tstAbortState.file, tstAbortState.line, tstAbortState.func,
+      "Did not abort as expected\nexpr: %s", tstAbortState.expr);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 static int strmatch(const char *s, const char *pattern)
 {
-    while (*pattern) {
-        if (*pattern == '?') {
-            if (*s == 0) return 1;
-            ++s;
-        } else if (*pattern == '*') {
-            while (1) {
-                if (!strmatch(s,pattern+1)) return 0;
-                if (*s == 0) return 1;
-                ++s;
-            }
-        } else {
-            if (*s != *pattern) return 1;
-            ++s;
-        }
-        ++pattern;
-    }
-    return *s == 0 ? 0 : 1;
+ while (*pattern) {
+     if (*pattern == '?') {
+         if (*s == 0) return 1;
+         ++s;
+     } else if (*pattern == '*') {
+         while (1) {
+             if (!strmatch(s,pattern+1)) return 0;
+             if (*s == 0) return 1;
+             ++s;
+         }
+     } else {
+         if (*s != *pattern) return 1;
+         ++s;
+     }
+     ++pattern;
+ }
+ return *s == 0 ? 0 : 1;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 static int testSelected(const char *name, int nsel, const char * const *sel)
 {
-   if (nsel == 0) return 1;	// no selection, run all tests
-   for (int i = 0; i < nsel; ++i) {
-      if (strmatch(name,sel[i]) == 0) return 1;
-   }
-   return 0;
+if (nsel == 0) return 1;	// no selection, run all tests
+for (int i = 0; i < nsel; ++i) {
+   if (strmatch(name,sel[i]) == 0) return 1;
+}
+return 0;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -373,25 +392,25 @@ static int executeTest(const struct TstFoundTest* test, int field)
 
 static void listTests(int nsel, const char* const* sel)
 {
-   for (struct TstFoundTest* t = foundTests; t->f != NULL; ++t) {
-      if (!testSelected(t->name, nsel, sel)) continue;
-      printf("%s%s\n", t->name, (t->flags & TST_FLAG_PER_FIELD) ? "(q)" : "");
-   }
+for (struct TstFoundTest* t = foundTests; t->f != NULL; ++t) {
+   if (!testSelected(t->name, nsel, sel)) continue;
+   printf("%s%s\n", t->name, (t->flags & TST_FLAG_PER_FIELD) ? "(q)" : "");
+}
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 static int cmpTests(const void* a, const void* b)
 {
-   const struct TstFoundTest* ta = (const struct TstFoundTest*)a;
-   const struct TstFoundTest* tb = (const struct TstFoundTest*)b;
-   return strcmp(ta->name, tb->name);
+const struct TstFoundTest* ta = (const struct TstFoundTest*)a;
+const struct TstFoundTest* tb = (const struct TstFoundTest*)b;
+return strcmp(ta->name, tb->name);
 }
 
 static void sortTests()
 {
-   qsort(foundTests, sizeof(foundTests) / sizeof(foundTests[0]) - 1,
-         sizeof(foundTests[0]), cmpTests);
+qsort(foundTests, sizeof(foundTests) / sizeof(foundTests[0]) - 1,
+      sizeof(foundTests[0]), cmpTests);
 }
 
 
@@ -399,22 +418,22 @@ static void sortTests()
 
 int main(int argc, char **argv)
 {
-   MtxApplication_t *app;
+MtxApplication_t *app;
 
-   if ((app = appAlloc(&AppInfo,argc,argv)) == NULL) {
-      return -1;
-   }
-   #if MTXZZZ == 1
-   static const int MTX_MAX_Q = 65535;
-   #elif MTXZZZ == 0
-   static const int MTX_MAX_Q = 256;
-   #else
-   #error MTXZZZ undefined
-   #endif
+if ((app = appAlloc(&AppInfo,argc,argv)) == NULL) {
+   return -1;
+}
+#if MTX_ZZZ == 1
+static const int MTX_MAX_Q = 65535;
+#elif MTX_ZZZ == 0
+static const int MTX_MAX_Q = 256;
+#else
+#error MTX_ZZZ undefined
+#endif
 
-   int field = appGetIntOption(app,"-t --print-tables",-1, 2, MTX_MAX_Q);
-   if (field > 0) {
-      prtables(field);
+int field = appGetIntOption(app,"-t --print-tables",-1, 2, MTX_MAX_Q);
+if (field > 0) {
+   printTables(field);
       exit(0);
    }
 

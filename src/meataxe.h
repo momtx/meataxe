@@ -6,9 +6,10 @@
 #define MEATAXE_H_INCLUDED
 
 #include <stdio.h>
+#include <stdint.h>
 #include <stdarg.h>
 
-// Version nameng convention:
+// Version naming convention:
 // x.y.z          - Released version
 // x.y.z-UNSTABLE - Future version under development
 #define MTX_VERSION "2.5.0-UNSTABLE"
@@ -48,11 +49,12 @@ int sysWriteLongX(FILE *f, const long *buf, int n);
 #define NALLOC(type,n) ((type *) sysMalloc((size_t)(n) * sizeof(type)))
 #define NREALLOC(x,type,n) \
    ((type *) sysRealloc(x,(size_t)(n) * sizeof(type)))
-#define FREE(x) sysFree(x)
 
 /** @} **/
 
-/* ---------------------------------------------------------------------------------------------- */
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// Finite fields kernel
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 /**
 ** @addtogroup ff
@@ -62,7 +64,7 @@ int sysWriteLongX(FILE *f, const long *buf, int n);
 /* Data types and constants
    ------------------------ */
 
-#if MTXZZZ == 0
+#if MTX_ZZZ == 0
 
 typedef unsigned char FEL;              /**< A finite field element */
 typedef FEL *PTR;                       /**< A pointer to a row vector */
@@ -70,27 +72,23 @@ typedef FEL *PTR;                       /**< A pointer to a row vector */
 #define FF_ONE ((FEL)1)                 /**< The unit element */
 #define ZZZVERSION 6
 
-#elif MTXZZZ == 1
+#elif MTX_ZZZ == 1
 
-typedef unsigned short FEL;
-typedef unsigned short *PTR;
+typedef uint16_t FEL;
+typedef uint16_t* PTR;
 #define FF_ZERO ((FEL)0xFFFF)
 #define FF_ONE ((FEL)0)
 #define ZZZVERSION 0x105
 
 #else
 
-#error "MTXZZZ undefined"
+#error "MTX_ZZZ undefined"
 
 #endif
-
-/* Kernel variables and functions
-   ------------------------------ */
 
 extern int ffOrder;
 extern int ffChar;
 extern FEL ffGen;
-extern int ffNoc; // TODO: REMOVE
 
 /* Arithmetic */
 FEL ffAdd(FEL a, FEL b);
@@ -100,104 +98,52 @@ FEL ffDiv(FEL a, FEL b);
 FEL ffNeg(FEL a);
 FEL ffInv(FEL a);
 
-int ffMakeTables(int field);
-int ffSetField(int field);
-
-//TODO: REMOVE
-void ffSetNoc(int noc);
-
-/// Add a multiple of a row.
-/// This function adds a multiple of @em src to @em dest.
-void ffAddMulRow(PTR dest, PTR src, FEL f);
-
-void ffAddMulRowPartial(PTR dest, PTR src, FEL f, int firstcol);
-
-/// Add two rows.
-/// This function adds src to dest. Field order and row size must have been set before.
-/// @param dest The row to add to.
-/// @param src The row to add.
-/// @return Always returns dest.
-PTR ffAddRow(PTR dest, PTR src);
-PTR ffAddRowPartial(PTR dest, PTR src, int first);
-
+void ffAddMulRow(PTR dest, PTR src, FEL f, int noc);
+void ffAddMulRowPartial(PTR dest, PTR src, FEL f, int firstcol, int noc);
+PTR ffAddRow(PTR dest, PTR src, int noc);
+void ffAddRowPartial(PTR dest, PTR src, int first, int noc);
 PTR ffAlloc(int nor, int noc);
-
-int ffCmpRows(PTR p1, PTR p2);
+int ffCmpRows(PTR p1, PTR p2, int noc);
 void ffCleanRow(PTR row, PTR matrix, int nor, int noc, const int *piv);
 int ffCleanRow2(PTR row, PTR matrix, int nor, int noc, const int *piv, PTR row2);
-
-/// Clean Row and Repeat Operations.
-/// This function works like ffCleanRow(), but repeats all operations on
-/// a second row/matrix.
-/// @param row Pointer to row to be cleaned.
-/// @param mat Matrix to clean with.
-/// @param nor Number of rows.
-/// @param piv Pivot table for @em mat.
-/// @param row2 Pointer to the second row to be cleaned.
-/// @param mat2 Matrix to the second matrix.
-/// @return 0 on success, -1 on error.
 int ffCleanRowAndRepeat(PTR row, PTR mat, int nor, int noc, const int *piv, PTR row2, PTR mat2);
-
-void ffCopyRow(PTR dest, PTR src);
-
-/// Embed a subfield.
-/// @param a Element of the subfield.
-/// @param subfield Subfield order. Must be a divisor of the current field order.
-/// @return @em a, embedded into the current field. (FEL)255 on error.
+void ffCopyRow(PTR dest, PTR src, int noc);
 FEL ffEmbed(FEL a, int subfield);
-
 FEL ffExtract(PTR row, int col);
-void ffExtractColumn(PTR mat,int nor,int col,PTR result);
-int ffFindPivot(PTR row, FEL *mark);
+void ffExtractColumn(PTR mat,int nor,int noc,int col,PTR result);
+int ffFindPivot(PTR row, FEL *mark, int noc);
 void ffFree(PTR x);
-
-/// Convert integer to field element.
-/// This function, together with ffFromInt(), defines a bijection between field elements and
-/// the set of integers {0, 1, ... q-1}, where q is the field order. This mapping is used when
-/// field elements are converted to or from text form and has the following properties:
-/// - ffFromInt(0) if the zero element
-/// - ffFromInt(1) if the unit element
-/// - The restriction to {0,..,p-1} (with the usual arithmetic mod p) is an isomorphism of
-///   Z/(pZ) to the prime field.
 FEL ffFromInt(int l);
-
-/// Get row pointer.
-/// This function returns a pointer to a row of a matrix, given the row index.
-/// @a base must be a pointer to the beginning of a row, but this need not be the first
-/// row of the matrix. For example, <tt>x = ffGetPtr(x,1,noc)</tt> can be used to advance a
-/// row pointer to the next row.
-///
-/// Note: The function does not check if the resulting pointer is still inside the matrix.
-/// @see ffStepPtr()
-/// @param base Pointer to the first row of the matrix.
-/// @param row Row index. The first row has index 0.
 PTR ffGetPtr(PTR base, int row, int noc);
-
-void ffMulRow(PTR row, FEL mark);
-
+int ffMakeTables(int field);
+void ffMulRow(PTR row, FEL mark, int noc);
 FILE *ffReadHeader(const char *name, int *fld, int *nor, int *noc);
 int ffReadRows(FILE *f, PTR buf, int n, int noc);
 FEL ffRestrict(FEL a, int subfield);
 ssize_t ffSize(int nor, int noc);
 size_t ffRowSize(int noc);
-FEL ffScalarProduct(PTR a, PTR b);
-int ffSeekRow(FILE *f, int pos);
+FEL ffScalarProduct(PTR a, PTR b, int noc);
+int ffSeekRow(FILE *f, int pos, int noc);
+int ffSetField(int field);
 void ffStepPtr(PTR *x, int noc);
-void ffSwapRows(PTR dest, PTR src);
+void ffSwapRows(PTR dest, PTR src, int noc);
 const char *ffToGap(FEL f);
 
 /// Convert field element to integer. See @ref FfFromInt for more information.
 int ffToInt(FEL f);
 
-size_t ffTrueRowSize(int noc);
+size_t ffRowSizeUsed(int noc);
 FILE *ffWriteHeader(const char *name, int fld, int nor, int noc);
 int ffWriteRows(FILE *f, PTR buf, int n, int noc);
+
+/// List of subfield orders, terminated with 0.
+extern int mtx_subfields[17];
 
 /* --------------------------------------------------------------------------
    Macro versions of kernel functions
    -------------------------------------------------------------------------- */
 
-#if MTXZZZ == 0
+#if MTX_ZZZ == 0
 
 extern FEL mtx_tmult[256][256];
 extern FEL mtx_tadd[256][256];
@@ -219,13 +165,13 @@ extern FEL mtx_restrict[4][256];
 
 void ffInsert(PTR row, int col, FEL mark);
 
-#elif MTXZZZ == 1
+#elif MTX_ZZZ == 1
 
 #define ffExtract(row,col) ((FEL)((row)[col]))
 #define ffInsert(row,col,mark) ((void)((row)[col] = mark))
 
 #else
-   #error Illegal value of MTXZZZ
+   #error Illegal value of MTX_ZZZ
 #endif
 
 /** @} **/
@@ -233,24 +179,9 @@ void ffInsert(PTR row, int col, FEL mark);
 /* ------------------------------------------------------------------
    Other low-level functions (zzz2.c)
    ------------------------------------------------------------------ */
+void ffMapRow(PTR row, PTR matrix, int nor, int noc, PTR result);
 
-////////////////////////////////////////////////////////////////////////////////////////////////////
-/// Multiply a vector by a matrix.
-/// This function multiplies the vector @a row from the right by the matrix @a mat and
-/// stores the result into @a result.
-/// The number of columns in both @a mat and @a result must be the current row size
-/// (see @ref ffNoc). The number of rows in @a mat and the number of columns in @a row must be
-/// equal to @a nor.
-///
-/// @attention @em result and @em row must not overlap. Otherwise the result is undefined.
-///
-/// @param row The source vector (ffNoc columns).
-/// @param matrix The matrix (nor by ffNoc).
-/// @param nor number of rows in the matrix.
-/// @param[out] result The resulting vector (@em nor columns).
-void ffMapRow(PTR row, PTR matrix, int nor, PTR result);
-
-void ffPermRow(PTR row, const long *perm, PTR result);
+void ffPermRow(PTR row, const long *perm, int noc, PTR result);
 int ffSumAndIntersection(int noc, PTR wrk1, int *nor1, int *nor2, PTR wrk2, int *piv);
 
 
@@ -261,33 +192,11 @@ int ffSumAndIntersection(int noc, PTR wrk1, int *nor1, int *nor2, PTR wrk2, int 
 extern int Mtx_IsInitialized;
 extern int Mtx_IsBigEndian;
 extern int MtxOpt_UseOldWordGenerator;
+extern char MtxLibDir[];
 
-/// This function initializes the MeatAxe library including finite field arithmetic and file i/o
-/// functions. It must be called before any other MeatAxe library function.
-/// It is legal to call MtxInitLibrary() multiple times. Only the first call will actually do
-/// anything.
-/// An application that uses @ref MtxInitApplication need not call this function.
-///
-/// @a argv0 is the name of the process executable. It will be used to initialize directory names
-/// such as @ref MtxLibDir, which have a default value relative to the executable directory. If the
-/// program name is not known, the argument may be NULL or an empty string.
-///  
-/// @c MtxInitLibrary() returns a version number which is different for each implementation of the
-/// arithmetic, or -1 on error.
 int MtxInitLibrary(char* argv0);
 void MtxCleanupLibrary();
-
-/// Sets the library directory.
 void mtxSetLibraryDirectory(const char *dir);
-
-/// This variable contains the name of the MeatAxe library directory.
-/// MtxLibDir can be set on the command line with the "-L" option. Otherwise, the value of the 
-/// environment variable MTXLIB is used. If neither "-L" nor MTXLIB are defined, the directory is
-/// assumed to be on the same level as the program execuable directory and named "lib". For example,
-/// if the program is "/home/user1/mtx/bin/zcp", the derived library directory would be
-/// "/home/user1/mtx/lib".
-/// If this fails, too, the current directory (".") is used.
-extern char MtxLibDir[];
 
 /// @addtogroup str
 /// @{
@@ -909,15 +818,15 @@ Matrix_t *SpinUpWithPermutations(const Matrix_t *seed,
                                  IntMatrix_t **script,
                                  SpinUpInfo_t *info);
 
-/* ------------------------------------------------------------------
-   Seed vector generator
-   ------------------------------------------------------------------ */
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// Seed vector generator
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 long MakeSeedVector(const Matrix_t *basis, long lastno, PTR vec);
 
-/* ------------------------------------------------------------------
-   Miscellaneous algorithms
-   ------------------------------------------------------------------ */
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// Miscellaneous algorithms
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 Matrix_t *matInsert_(Matrix_t *mat, const Poly_t *pol);
 Matrix_t *matInsert(const Matrix_t *mat, const Poly_t *pol);
@@ -931,9 +840,9 @@ Matrix_t *TensorMap(Matrix_t *vec, const Matrix_t *a, const Matrix_t *b);
 int StablePower(const Matrix_t *mat, int *pwr, Matrix_t **ker);
 int StablePower_(Matrix_t *mat, int *pwr, Matrix_t **ker);
 
-/* ------------------------------------------------------------------
-   Polynomial factorization (Berlekamp algorithm)
-   ------------------------------------------------------------------ */
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// Polynomial factorization (Berlekamp algorithm)
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 FPoly_t *Factorization(const Poly_t *pol);
 

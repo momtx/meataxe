@@ -312,16 +312,13 @@ static void MakeQ(int n, int spl, const Matrix_t **endo)
 }
 
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 static FEL matProd(Matrix_t *a, Matrix_t *b)
-
 {
     FEL f = FF_ZERO;
-    int i;
-
-    ffSetNoc(a->Noc);
-    for (i = 0; i < a->Nor; ++i)
-	f = ffAdd(f,ffScalarProduct(matGetPtr(a,i),matGetPtr(b,i)));
+    for (int i = 0; i < a->Nor; ++i)
+	f = ffAdd(f,ffScalarProduct(matGetPtr(a,i),matGetPtr(b,i),a->Noc));
     return f;
 }
 

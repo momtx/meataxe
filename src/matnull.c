@@ -28,20 +28,18 @@
 ///
 /// @return The dimension of the null-space, or -1 on error.
 
-static long znullsp(PTR matrix, long nor, int *piv, PTR nsp, int flags)
+static long znullsp(PTR matrix, int nor, int noc, int *piv, PTR nsp, int flags)
 {
    PTR x, y, a, b;
    int i;
-   long noc = ffNoc;
    long dim;
    FEL f;
 
    // initialize result with identity
-   ffSetNoc(nor);
    x = nsp;
    for (i = 0; i < nor; ++i) {
       piv[i] = -1;
-      ffMulRow(x,FF_ZERO);
+      ffMulRow(x,FF_ZERO, nor);
       ffInsert(x,i,FF_ONE);
       ffStepPtr(&x, nor);
    }
@@ -54,23 +52,16 @@ static long znullsp(PTR matrix, long nor, int *piv, PTR nsp, int flags)
       long k, p;
 
       for (k = 0; k < i; ++k) {
-         ffSetNoc(noc); // not checked since we know noc is valid
          if (((p = piv[k]) >= 0) && ((f = ffExtract(x,p)) != FF_ZERO)) {
             f = ffNeg(ffDiv(f,ffExtract(xx,p)));
-            ffSetNoc(noc);
-            ffAddMulRow(x,xx,f);
-            ffSetNoc(nor);
-            ffAddMulRow(y,yy,f);
+            ffAddMulRow(x,xx,f, noc);
+            ffAddMulRow(y,yy,f, nor);
          }
-         ffSetNoc(noc);
          ffStepPtr(&xx, noc);
-         ffSetNoc(nor);
          ffStepPtr(&yy, nor);
       }
-      ffSetNoc(noc);
-      piv[i] = p = ffFindPivot(x,&f);
+      piv[i] = p = ffFindPivot(x,&f, noc);
       ffStepPtr(&x, noc);
-      ffSetNoc(nor);
       ffStepPtr(&y, nor);
    }
 
@@ -80,23 +71,21 @@ static long znullsp(PTR matrix, long nor, int *piv, PTR nsp, int flags)
    a = b = matrix;
    for (i = 0; i < nor; ++i) {
       if (piv[i] == -1) {
-         ffSetNoc(nor);
-         if (y != x) { ffCopyRow(y,x); }
+         if (y != x) 
+            ffCopyRow(y,x, nor);
          if (flags) {
             ++dim;
          } else {
-            ffCleanRow(y,nsp,dim,nor, piv);
-            piv[dim++] = ffFindPivot(y,&f);
+            ffCleanRow(y,nsp, dim, nor, piv);
+            piv[dim++] = ffFindPivot(y,&f, nor);
          }
          ffStepPtr(&y, nor);
       } else {
-         ffSetNoc(noc);
-         if (b != a) { ffCopyRow(b,a); }
+         if (b != a) 
+            ffCopyRow(b,a, noc);
          ffStepPtr(&b, noc);
       }
-      ffSetNoc(nor);
       ffStepPtr(&x, nor);
-      ffSetNoc(noc);
       ffStepPtr(&a, noc);
    }
 
@@ -135,8 +124,7 @@ Matrix_t *matNullSpace_(Matrix_t *mat, int flags)
    }
 
    // calculate the null-space
-   ffSetNoc(mat->Noc);
-   dim = znullsp(mat->Data,mat->Nor,nsp->PivotTable,nsp->Data,flags);
+   dim = znullsp(mat->Data,mat->Nor,mat->Noc,nsp->PivotTable,nsp->Data,flags);
    if (dim == -1)
    {
       matFree(nsp);

@@ -57,18 +57,14 @@ static int tensormatrices()
     /* Allocate buffers.
        ----------------- */
     ffSetField(AFile->Field);
-    ffSetNoc(a_noc);
     m1 = ffAlloc(1, a_noc);
-    ffSetNoc(b_noc);
     m2 = ffAlloc(b_nor, b_noc);
-    ffSetNoc(c_noc);
     m3 = ffAlloc(1, c_noc);
     if (m1 == NULL || m2 == NULL || m3 == NULL)
 	return -1;
 
     /* Read the second matrix (B).
        --------------------------- */
-    ffSetNoc(b_noc);
     if (mfReadRows(BFile,m2,b_nor) != b_nor) 
 	return -1;
 
@@ -94,7 +90,6 @@ static int tensormatrices()
 	{
 	    int aj, cj;
 	    cj = 0;
-	    ffSetNoc(c_noc);
 	    for (aj = 0; aj < a_noc; ++aj)
 	    {
 		FEL f = ffExtract(m1,aj);
@@ -111,7 +106,6 @@ static int tensormatrices()
 		mtxAbort(MTX_HERE,"Error writing output file");
 		return -1;
 	    }
-	    ffSetNoc(b_noc);
 	    ffStepPtr(&bp, b_noc);
 	}
     }

@@ -9,42 +9,43 @@
 #include <stdio.h>
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-
-static int TestScalarProduct1(PTR a, PTR b, int size)
+ 
+TstResult ScalarProduct_RandomValues(int q)
 {
-   int count;
-   for (count = 0; count < 10; ++count) {
-      int i;
+   int result = 0;
+   for (int noc = 0; result == 0 && noc < 30; ++noc) {
+      PTR a = ffAlloc(1, noc);
+      PTR b = ffAlloc(1, noc);
+      ffMulRow(a,FF_ZERO, noc);
+      ffMulRow(b,FF_ZERO, noc);
       FEL expected = FF_ZERO;
-      ffMulRow(a,FF_ZERO);
-      ffMulRow(b,FF_ZERO);
-      for (i = 0; i < size; ++i) {
+      for (int i = 0; i < noc; ++i) {
          FEL f1 = FTab[mtxRandomInt(ffOrder)];
          FEL f2 = FTab[mtxRandomInt(ffOrder)];
          ffInsert(a,i,f1);
          ffInsert(b,i,f2);
          expected = ffAdd(expected,ffMul(f1,f2));
       }
-      ASSERT_EQ_INT(ffScalarProduct(a,b), expected);
+      FEL result = ffScalarProduct(a,b,noc);
+      sysFree(a);
+      sysFree(b);
+
+      ASSERT_EQ_INT(result, expected);
    }
    return 0;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
  
-TstResult ScalarProduct()
+TstResult ScalarProduct_WorksForNocEqualsZero(int q)
 {
-   int result = 0;
-   for (int size = 0; result == 0 && size < 1000; size += size / 10 + 1) {
-      PTR a, b;
-      ffSetNoc(size);
-      a = ffAlloc(1, size);
-      b = ffAlloc(1, size);
-      result |= TestScalarProduct1(a,b,size);
-      sysFree(a);
-      sysFree(b);
-   }
-   return result;
+   PTR a = ffAlloc(1, 0);
+   PTR b = ffAlloc(1, 0);
+   FEL result = ffScalarProduct(a, b, 0);
+   sysFree(a);
+   sysFree(b);
+   ASSERT_EQ_INT(result, FF_ZERO);
+   return 0;
 }
 
 // vim:fileencoding=utf8:sw=3:ts=8:et:cin

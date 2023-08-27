@@ -42,11 +42,10 @@ Matrix_t *matMul(Matrix_t *dest, const Matrix_t *src)
 
    // matrix multiplication
    ffSetField(src->Field);
-   ffSetNoc(src->Noc);
    result = tmp = ffAlloc(dest->Nor, src->Noc);
    x = dest->Data;
    for (i = 0; i < dest->Nor; ++i) {
-      ffMapRow(x,src->Data,src->Nor,tmp);
+      ffMapRow(x,src->Data,src->Nor,src->Noc,tmp);
       ffStepPtr(&tmp, src->Noc);
 /*	x = ffGetPtr(x,1,dest->Noc);*/
       x = (PTR)((char*) x + dest->RowSize);

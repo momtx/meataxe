@@ -73,7 +73,7 @@ static int ChkEch(Matrix_t *mat)
       int k;
       FEL f;
 
-      ASSERT_EQ_INT(ffFindPivot(p,&f), mat->PivotTable[i]);
+      ASSERT_EQ_INT(ffFindPivot(p,&f,mat->Noc), mat->PivotTable[i]);
       for (k = 0; k < i; ++k) {
 	 ASSERT_EQ_INT(ffExtract(p,mat->PivotTable[k]), FF_ZERO);
       }
@@ -99,7 +99,7 @@ static int TestMatEchelonize1(Matrix_t *m, int size)
    for (i = 0; i < size; ++i) {
       PTR p = matGetPtr(m,i);
       int k;
-      ffMulRow(p,FF_ZERO);
+      ffMulRow(p,FF_ZERO, size);
       for (k = size - i - 1; k < size; ++k) {
          ffInsert(p,k,FF_ONE);
       }
@@ -315,10 +315,9 @@ static int TestNullSpace2(int dim)
    Matrix_t* b = matNullSpace(a);
    ASSERT(b->Nor >= 3);
    matMul(b,a);
-   ffSetNoc(b->Noc);
    for (int i = 0; i < b->Nor; ++i) {
       FEL f;
-      ASSERT(ffFindPivot(matGetPtr(b,i),&f) == -1);
+      ASSERT(ffFindPivot(matGetPtr(b,i),&f, b->Noc) == -1);
    }
    matFree(a);
    matFree(b);
@@ -391,9 +390,7 @@ TstResult Matrix_Cut(int q)
          int c;
          for (c = 0; c < bnoc; ++c) {
             FEL fa, fb;
-            ffSetNoc(anoc);
             fa = ffExtract(matGetPtr(a,nor0 + r),noc0 + c);
-            ffSetNoc(bnoc);
             fb = ffExtract(matGetPtr(b,r),c);
             ASSERT(fa == fb);
          }

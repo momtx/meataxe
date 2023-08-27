@@ -31,12 +31,11 @@ void ffCleanRow(PTR row, PTR matrix, int nor, int noc, const int *piv)
    PTR x;
    int i;
 
-   MTX_ASSERT(ffNoc == noc,);
    for (i = 0, x = matrix; i < nor; ++i, ffStepPtr(&x, noc)) {
       const int pivi = piv[i];
       const FEL f = ffExtract(row,pivi);
       if (f != FF_ZERO) {
-         ffAddMulRowPartial(row, x, ffNeg(ffDiv(f, ffExtract(x, pivi))), pivi);
+         ffAddMulRowPartial(row, x, ffNeg(ffDiv(f, ffExtract(x, pivi))), pivi, noc);
       }
    }
 }
@@ -70,7 +69,7 @@ int ffCleanRow2(PTR row, PTR mat, int nor, int noc, const int *piv, PTR row2)
       FEL f = ffExtract(row,piv[i]);
       if (f != FF_ZERO) {
          f = ffDiv(f,ffExtract(x,piv[i]));
-         ffAddMulRow(row,x,ffNeg(f));
+         ffAddMulRow(row,x,ffNeg(f), noc);
          ffInsert(row2,i,f);
       }
    }
@@ -78,6 +77,17 @@ int ffCleanRow2(PTR row, PTR mat, int nor, int noc, const int *piv, PTR row2)
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
+
+/// Clean Row and Repeat Operations.
+/// This function works like ffCleanRow(), but repeats all operations on
+/// a second row/matrix.
+/// @param row Pointer to row to be cleaned.
+/// @param mat Matrix to clean with.
+/// @param nor Number of rows.
+/// @param piv Pivot table for @em mat.
+/// @param row2 Pointer to the second row to be cleaned.
+/// @param mat2 Matrix to the second matrix.
+/// @return 0 on success, -1 on error.
 
 int ffCleanRowAndRepeat(PTR row, PTR mat, int nor, int noc, const int *piv, PTR row2, PTR mat2)
 {
@@ -88,13 +98,12 @@ int ffCleanRowAndRepeat(PTR row, PTR mat, int nor, int noc, const int *piv, PTR 
    MTX_ASSERT(row2 != NULL,-1);
    MTX_ASSERT(mat2 != NULL,-1);
    MTX_ASSERT(piv != NULL,-1);
-   MTX_ASSERT(ffNoc == noc, -1);
    for (i = 0, x = mat, x2 = mat2; i < nor; ++i, ffStepPtr(&x,noc), ffStepPtr(&x2,noc)) {
       FEL f = ffExtract(row,piv[i]);
       if (f != FF_ZERO) {
          f = ffNeg(ffDiv(f,ffExtract(x,piv[i])));
-         ffAddMulRow(row,x,f);
-         ffAddMulRow(row2,x2,f);
+         ffAddMulRow(row,x,f, noc);
+         ffAddMulRow(row2,x2,f, noc);
       }
    }
    return 0;

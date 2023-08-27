@@ -27,7 +27,7 @@ static int zmkpivot(PTR matrix, int nor, int noc, int *piv, int *ispiv)
       ------------------------------------------------ */
    for (i = 0, x = matrix; i < nor && i < noc; ++i, ffStepPtr(&x, noc)) {
       FEL f;
-      int newpiv = ffFindPivot(x,&f);
+      int newpiv = ffFindPivot(x,&f, noc);
       if (ispiv[newpiv]) {
          mtxAbort(MTX_HERE, "%s", MTX_ERR_NOTECH);
          return -1;
@@ -84,7 +84,6 @@ int matPivotize(Matrix_t *mat)
 
    // build the pivot table
    ffSetField(mat->Field);
-   ffSetNoc(mat->Noc);
    return zmkpivot(mat->Data,mat->Nor,mat->Noc,mat->PivotTable,is_pivot);
 }
 

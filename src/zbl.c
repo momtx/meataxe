@@ -75,7 +75,6 @@ int main(int argc, char *argv[])
     /* Allocate workspace.
        ------------------- */
     ffSetField(fl);
-    ffSetNoc(noc);
     m1 = ffAlloc(1, noc);
 
     /* Open the output file.

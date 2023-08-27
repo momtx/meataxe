@@ -10,16 +10,16 @@
 #include <stdarg.h>
 #include <setjmp.h>
 
-#if MTXZZZ == 0
+#if MTX_ZZZ == 0
 
 #define ISFEL(f) ((unsigned int)(f) < (unsigned int)ffOrder)
 
-#elif MTXZZZ == 1
+#elif MTX_ZZZ == 1
 
 #define ISFEL(f) ((f) == 0xffff || (unsigned short)(f) < (unsigned short)ffOrder)
 
 #elif 
-#error MTXZZZ undefined
+#error MTX_ZZZ undefined
 #endif
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////

@@ -35,9 +35,7 @@ Matrix_t *matTransposed(const Matrix_t *src)
       for (k = 0; k < src->Nor; ++k) {
 #if defined(MTX_DEBUG) && defined(PARANOID)
          FEL f;
-         ffSetNoc(src->Noc);
          f = ffExtract(s,i);
-         ffSetNoc(src->Nor);
          ffInsert(d,k,f);
 #else
          ffInsert(d,k,ffExtract(s,i));

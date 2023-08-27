@@ -130,9 +130,8 @@ static void sp()
     {
 	if (bsTest(bs,i))
 	{
-           MTX_ASSERT(ffNoc == Rep->Gen[0]->Noc,);
 	    PTR q = ffGetPtr(mountains->Data,i, Rep->Gen[0]->Noc);
-	    ffCopyRow(p,q);
+	    ffCopyRow(p,q, Rep->Gen[0]->Noc);
 	    ffStepPtr(&p, Rep->Gen[0]->Noc);
 	}
     }

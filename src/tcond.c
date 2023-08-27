@@ -76,7 +76,7 @@ static void MakeInvertible(Matrix_t *mat, const char *fn)
     for (i = 0, x = mat->Data; i < mat->Nor; ++i, ffStepPtr(&x, mat->Noc))
     {
 	FEL f;
-	if (ffFindPivot(x,&f) < 0)
+	if (ffFindPivot(x,&f, mat->Noc) < 0)
 	{
 	    ffInsert(x,dup->PivotTable[k],FF_ONE);
 	    ++k;
@@ -432,7 +432,6 @@ static int CondenseMat(int gen)
                 gemap(condmat,Q[cf],mrow,nrow);
                 
                 /* write result */
-                ffSetNoc(condmat->Noc);
         	ffWriteRows(fptr,condmat->Data,condmat->Nor,condmat->Noc);
                 matFree(condmat);
                 matFree(nrow);

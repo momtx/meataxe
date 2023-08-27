@@ -111,7 +111,6 @@ Matrix_t *HomogeneousPart(MatRep_t *m, MatRep_t *s, Matrix_t *npw,
 	    matAdd(a, b);			/* of a standard basis of a     */ 
 					/* module isomorphic to S       */
 	    col = colin;     	     /* the index of the temporary column  of A */
-	    ffSetNoc(len);
 	    for (u=0; u < Sdim; ++u)
 	    {
 		PTR v = matGetPtr(a,u);
@@ -124,7 +123,6 @@ Matrix_t *HomogeneousPart(MatRep_t *m, MatRep_t *s, Matrix_t *npw,
 	    }
 	    matFree(a);
 	    matFree(b);
-	    ffSetNoc(len);   
 	}
     }
 
@@ -144,7 +142,6 @@ Matrix_t *HomogeneousPart(MatRep_t *m, MatRep_t *s, Matrix_t *npw,
     }
     basptr = bas->Data;
     vec = gensys->Data;
-    ffSetNoc(nulldim);
     for (i = 1; i <= gensys->Nor; i++, ffStepPtr(&vec, nulldim))
     {
     	int j;
@@ -159,9 +156,8 @@ Matrix_t *HomogeneousPart(MatRep_t *m, MatRep_t *s, Matrix_t *npw,
 	    f = ffExtract(vec, j);
 	    mat = matDup(V[j]);
 	    row = mat->Data;
-	    ffSetNoc(Mdim);
-	    ffMulRow(row, f);
-	    ffAddRow(seed->Data, row);
+	    ffMulRow(row, f, Mdim);
+	    ffAddRow(seed->Data, row, Mdim);
 	    matFree(mat);
 	}
 	base = matDup(bas);
@@ -188,10 +184,9 @@ Matrix_t *HomogeneousPart(MatRep_t *m, MatRep_t *s, Matrix_t *npw,
 		matAddMul(sum,V[j],f);
 	    }
 	    v = sum->Data;
-	    ffSetNoc(Mdim);
 	    for (j = 0; j < Sdim; j++)
 	    {
-		ffCopyRow(basptr, v);
+		ffCopyRow(basptr, v, Mdim);
 		ffStepPtr(&basptr, Mdim);
 		ffStepPtr(&v, Mdim);
 	    }
@@ -199,7 +194,6 @@ Matrix_t *HomogeneousPart(MatRep_t *m, MatRep_t *s, Matrix_t *npw,
 	}
 	matFree(base); 
 /* if (!nr) break;	*/	/* the whole basis is found */
-	ffSetNoc(nulldim);
     }
 
     return bas;

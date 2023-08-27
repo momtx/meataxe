@@ -75,22 +75,12 @@ Matrix_t *matCut(const Matrix_t *src, int row1, int col1, int nrows, int ncols)
 
    /* Copy the requested data
       ----------------------- */
-   ffSetNoc(ncols);
    for (n = nrows; n > 0; --n) {
       if (col1 == 0) {
-         ffCopyRow(d,s);
+         ffCopyRow(d,s, ncols);
       } else {
-         register int k;
-         for (k = 0; k < ncols; ++k) {
-#ifdef PARANOID
-            FEL f;
-            ffSetNoc(src->Noc);
-            f = ffExtract(s,col1 + k);
-            ffSetNoc(ncols);
-            ffInsert(d,k,f);
-#else
+         for (int k = 0; k < ncols; ++k) {
             ffInsert(d,k,ffExtract(s,col1 + k));
-#endif
          }
       }
       ffStepPtr(&d, ncols);

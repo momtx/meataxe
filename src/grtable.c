@@ -37,7 +37,6 @@ static GrExtractionTable_t *BuildExtractionTable(int fl,int grrows)
       We need the *2 because of possible MMX modifications. */
    ffSetField(fl);
    int noc = sizeof(long) * 2 * 8 * 5 * 3;
-   ffSetNoc(noc);
    MPB = noc / ffRowSize(noc);
 
    /* Allocate memory.

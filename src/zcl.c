@@ -49,10 +49,8 @@ static int Clean1()
 
     /* Allocate work space.
        -------------------- */
-    ffSetNoc(Space->Nor);
     if ((op = ffAlloc(1,Space->Nor)) == NULL)
 	rc = -1;
-    ffSetNoc(Space->Noc);
     if ((row = ffAlloc(1, Space->Noc)) == NULL)
 	rc = -1;
 
@@ -67,7 +65,7 @@ static int Clean1()
 	    rc = -1;
 	if (mfWriteRows(Op,op,1) != 1)
 	    rc = -1;
-	ffMulRow(op,FF_ZERO);
+	ffMulRow(op,FF_ZERO, Space->Noc);
     }
 
     /* Clean up.

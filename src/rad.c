@@ -63,7 +63,6 @@ Matrix_t *intersect(Matrix_t *mat1, Matrix_t *mat2)
     int *piv = NALLOC(int,nor1 + nor2);
     Matrix_t *result;
 
-    ffSetNoc(mat1->Noc);
     wrk1 = ffAlloc(nor1 + nor2, mat1->Noc);
     wrk2 = ffAlloc(nor1 + nor2, mat1->Noc);
     memcpy(wrk1,mat1->Data, ffSize(nor1, mat1->Noc));
@@ -419,7 +418,6 @@ int main(int argc, char **argv)
 
 	matFree(bas);
         matFree(basi);
-        ffSetNoc(Rep->Gen[0]->Noc);
 	socdim = 0;
     }
 

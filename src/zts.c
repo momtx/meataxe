@@ -100,11 +100,10 @@ static void VecToMat(PTR vec, Matrix_t *m)
     int row, pos;
     PTR rowptr;
 
-    ffSetNoc(m->Noc);
     for (pos=row=0, rowptr=m->Data; row < m->Nor; ++row,ffStepPtr(&rowptr,m->Noc))
     {
 	int col;
-	ffMulRow(rowptr,FF_ZERO);
+	ffMulRow(rowptr,FF_ZERO, m->Noc);
 	for (col = 0; col < m->Noc; ++col, ++pos)
 	{
 	    FEL f = ffExtract(vec,pos);
@@ -119,9 +118,7 @@ static void matToVec(PTR vec, const Matrix_t *m)
     int row, pos;
     PTR rowptr;
 
-    ffSetNoc(TpDim);
-    ffMulRow(vec,FF_ZERO);
-    ffSetNoc(m->Noc);
+    ffMulRow(vec,FF_ZERO, TpDim);
     for (pos=row=0, rowptr=m->Data; row < m->Nor; ++row,ffStepPtr(&rowptr,m->Noc))
     {
 	int col;
@@ -140,12 +137,11 @@ static int FindPivot(Matrix_t *m, tPivotEntry *piv)
     int row;
     PTR rowptr;
 
-    ffSetNoc(m->Noc);
     for (row = 0, rowptr=m->Data; row < m->Nor; ++row, ffStepPtr(&rowptr,m->Noc))
     {
 	int col;
 	FEL f;
-	col = ffFindPivot(rowptr,&f);
+	col = ffFindPivot(rowptr,&f,m->Noc);
 	if (col >= 0)
 	{
 	    piv->Row = row;
@@ -166,7 +162,6 @@ static void Clean(Matrix_t *mat, const Matrix_t **basis,
 
     MTX_ASSERT(dim == 0 || 
 	       (mat->Noc == basis[0]->Noc && mat->Nor == basis[0]->Nor),);
-    ffSetNoc(mat->Noc);
     for (i = 0; i < dim; ++i)
     {
 	PTR x;
@@ -186,8 +181,7 @@ static void Clean2(Matrix_t *mat, const Matrix_t **basis,
     int i;
 
     MTX_ASSERT(mat->Noc == basis[0]->Noc && mat->Nor == basis[0]->Nor,);
-    ffSetNoc(dim);
-    ffMulRow(op,FF_ZERO);
+    ffMulRow(op,FF_ZERO, dim);
     for (i = 0; i < dim; ++i)
     {
 	PTR x;
@@ -243,7 +237,6 @@ static void SpinUpMatrix(Matrix_t *seed)
     int gen = 0;
     Matrix_t *newvec = seed;
 
-    ffSetNoc(seed->Noc);
     Src = Dim;
     while (1)
     {
@@ -278,7 +271,6 @@ static void Spinup()
 	seed = matAlloc(ffOrder,GenM[0]->Nor,GenN[0]->Nor);
 	VecToMat(vec,seed);
 	SpinUpMatrix(seed);		    /* <Spinup()> eats <seed>! */
-	ffSetNoc(Seed->Noc);
 	ffStepPtr(&vec,Seed->Noc);
 	if (i < Seed->Nor)
 	    MESSAGE(1,("Dimension = %d\n",Dim));
@@ -294,7 +286,6 @@ static void WriteSubspace()
     PTR row;
 
     MESSAGE(1,("Writing subspace to %s\n",SubName));
-    ffSetNoc(TpDim);
     row = ffAlloc(1, TpDim);
     f = mfCreate(SubName,Seed->Field,Dim,TpDim);
     for (i = 0; i < Dim; ++i)
@@ -315,7 +306,6 @@ static void CalculateAction1(int gen, const char *file_name)
 
     MESSAGE(1,("Writing generator to %s\n",file_name));
     f = mfCreate(file_name,Seed->Field,Dim,Dim);
-    ffSetNoc(Dim);
     rowptr = ffAlloc(1, Dim);
     for (i = 0; i < Dim; ++i)
     {
