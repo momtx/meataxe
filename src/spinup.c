@@ -56,7 +56,7 @@ static int NGen;			/* Number of generators */
 static const Matrix_t **Gen;		/* Generators */
 static const Perm_t **GenP;		/* Generators (permutation mode) */
 static Matrix_t *StdSpan = NULL;	/* Span */
-static long *Script = NULL;
+static int32_t *Script = NULL;
 
 #define OPVEC(i) Script[2*(i)]
 #define OPGEN(i) Script[2*(i)+1]
@@ -443,7 +443,7 @@ static Matrix_t *DoIt(IntMatrix_t **script, SpinUpInfo_t *info)
     Span->Data = (PTR) sysRealloc(Span->Data,ffSize(SpanDim, Seed->Noc));
     if (script != NULL)
     {
-	(*script)->Data = NREALLOC((*script)->Data,long,2 * SpanDim);
+	(*script)->Data = NREALLOC((*script)->Data,int32_t,2 * SpanDim);
 	(*script)->Nor = SpanDim;
     }
 

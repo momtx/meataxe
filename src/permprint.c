@@ -6,11 +6,22 @@
 #include <string.h>
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-// Local data
+
+static int width(uint32_t x)
+{
+   if (x < 10) return 1;
+   if (x < 100) return 2;
+   if (x < 1000) return 3;
+   if (x < 10000) return 4;
+   if (x < 100000) return 5;
+   if (x < 1000000) return 6;
+   if (x < 10000000) return 7;
+   if (x < 100000000) return 8;
+   if (x < 1000000000) return 9;
+   return 10;
+}
 
 
-#define SIZE(i) ((i) < 9 ? 2 : (i) < 99 ? 3 : (i) < 999 ? 4 : (i) < 9999 ? 5 : \
-                 (i) < 99999 ? 6 : (i) > 999999 ? 7 : (i) < 9999999 ? 8 : 9)
 
 /// @addtogroup perm
 /// @{
@@ -31,11 +42,6 @@
 
 void permPrint(const char *name, const Perm_t *perm)
 {
-   long *p;
-   int cycle = 0;
-   int empty = 1;
-   int count = 0, k;
-   int i;
 
    // check arguments
    permValidate(MTX_HERE, perm);
@@ -46,57 +52,65 @@ void permPrint(const char *name, const Perm_t *perm)
    }
 
    // print the permutation
-   p = perm->Data;
-   while (1) {
-      // find next cycle
-      while (cycle <= perm->Degree && p[cycle] < 0) {
-         ++cycle;
-      }
-      if (cycle >= perm->Degree) {
-         break;                                 /* Done */
-      }
-      i = cycle;
+   const uint32_t deg = perm->Degree;
+   const uint32_t* p = perm->Data;
 
-      // don't print fixed points (GAP doesn't like them)
-      if (p[i] == i) {
-         p[i] = -p[i] - 1;  // mark as done
+   uint8_t* done = NALLOC(uint8_t, deg);
+   uint8_t* seed = done - 1;
+   uint8_t* seedEnd = done + deg;
+
+   // Run through all orbits. 
+   int empty = 1;
+   int count = 0;
+   while (1) {
+      // Find start of next orbit.
+      while (*++seed != 0 && seed != seedEnd);
+      if (seed == seedEnd)
+         break;             // Done!
+      uint32_t x = (uint32_t)(seed - done);
+
+      // Suppress fixed points (GAP does not like them)
+      if (p[x] == x) {
+         done[x] = 1;
          continue;
       }
 
-      // print cycle
-      if ((count += SIZE(i)) > 77) {
-         printf("\n    (%ld",(long)i);
-         count = 5 + SIZE(i);
-      } else {
-         printf("(%ld",(long)i);
-      }
       empty = 0;
-
+      int first = 1;
       while (1) {
-         k = i;
-         i = p[i];
-         p[k] = -p[k] - 1;
-         if (p[i] < 0) { break; }
+         MTX_ASSERT_DEBUG(x >= 0 && x < deg);
+         if (done[x])
+            break;      // orbit complete
+         done[x] = 1;
 
-         if ((count += SIZE(i)) > 77) {
-            printf(",\n     %ld",(long)i);
-            count = 4 + SIZE(i);
+         if (first) {
+            first = 0;
+            if ((count += width(x) + 1) > 77) {
+               printf("\n    (%lu",(unsigned long)x);
+               count = 5 + width(x);
+            } else {
+               printf("(%lu",(unsigned long)x);
+            }
          } else {
-            printf(",%ld",(long)i);
+            if ((count += width(x)+1) > 77) {
+               printf(",\n    %lu",(unsigned long)x);
+               count = 4 + width(x);
+            } else {
+               printf(",%lu",(unsigned long)x);
+            }
          }
+         x = p[x];
       }
       printf(")");
       ++count;
    }
+
+   sysFree(done);
    if (empty) {
       printf("()");
    }
    if (name != NULL) {
       printf("\n");
-   }
-
-   for (i = 0; i < perm->Degree; ++i) {
-      p[i] = -p[i] - 1;
    }
 }
 

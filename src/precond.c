@@ -246,7 +246,7 @@ static void MkEndo(const MatRep_t *rep, const CfInfo *cf,
     Matrix_t *pw, *nsp;
     WgData_t *wg;
 
-    MTX_ASSERT(maxendo >= cf->spl,);
+    MTX_ASSERT(maxendo >= cf->spl);
 
     /* Make the peak word kernel
        ------------------------- */
@@ -254,13 +254,13 @@ static void MkEndo(const MatRep_t *rep, const CfInfo *cf,
     pw = wgMakeWord(wg,cf->idword);
     wgFree(wg);
     nsp = matNullSpace__(matInsert(pw,cf->idpol));
-    MTX_ASSERT(nsp->Nor == cf->spl,);
+    MTX_ASSERT(nsp->Nor == cf->spl);
     matFree(pw);
 
     /* Calculate a basis of the the endomorphism ring
        ---------------------------------------------- */
     const int i = MakeEndomorphisms(rep,nsp,endo);
-    MTX_ASSERT(i == 0,);
+    MTX_ASSERT(i == 0);
 
     matFree(nsp);
 }

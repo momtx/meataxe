@@ -32,20 +32,20 @@
 // {0..p} correspond to the prime field.
 
 
+int mtx_subfields[17];                  // public list of subfields, terminated with 0
 
-FEL minusone;                   /* -1 */
-FEL *inc = NULL;                /* a+1 = inc[a] */
-FEL *FfFromIntTable = NULL;
-unsigned short *FfToIntTable = NULL;
-int mtx_subfields[17];         // public list of proper subfields, terminated with 0
-static FEL subfieldsTable[17]; // internal list of proper subfields, terminated with 0xFFFF
-FEL *embeddingTables = NULL;   // combined embed/restrict tables
+static uint16_t minusone;                   // -1
+static uint16_t *inc = NULL;                // a+1 = inc[a]
+static uint16_t *FfFromIntTable = NULL;
+static uint16_t *FfToIntTable = NULL;
+static uint16_t subfieldsTable[17];     // internal list of subfields, terminated with 0xFFFF
+static FEL *embeddingTables = NULL;         // combined embed/restrict tables
 
-static unsigned short P = 0;            // Characteristic
-static unsigned short Q = 0;            // Field order
-static unsigned short Q1 = 0;           // Q-1, order of the multiplicative group
-static unsigned short N;                // Degree over prime field, Q=P^N
-static unsigned short Gen;              // Generator of the multiplicative group
+static unsigned short P = 0;         // Characteristic
+static unsigned short Q = 0;         // Field order
+static unsigned short Q1 = 0;        // Q-1, order of the multiplicative group
+static unsigned short N;             // Degree over prime field, Q=P^N
+static unsigned short Gen;           // Generator of the multiplicative group
 
 #define FF_INVALID 0xFFFE
 
@@ -80,15 +80,11 @@ static unsigned short Gen;              // Generator of the multiplicative group
 
 static int loadEmbedAndRestrictTables(FILE *fd)
 {
-   FEL numberOfSubfields;
-   if (fread(&numberOfSubfields, sizeof(FEL), 1, fd) != 1 || numberOfSubfields > 16) {
-      mtxAbort(MTX_HERE,"Corrupt table file (number of subfields)");
-      return -1;
-   }
-   if (fread(subfieldsTable, sizeof(FEL), numberOfSubfields, fd) != numberOfSubfields) {
-      mtxAbort(MTX_HERE,"Corrupt table file (subfield orders)");
-      return -1;
-   }
+   uint16_t numberOfSubfields;
+   sysRead16(fd, &numberOfSubfields, 1);
+   MTX_ASSERT(numberOfSubfields <= 16);
+        
+   sysRead16(fd, subfieldsTable, numberOfSubfields);
    subfieldsTable[numberOfSubfields] = FF_INVALID;
    size_t tblSize = 0;
    for (FEL* sf = subfieldsTable; *sf != FF_INVALID; ++sf) {
@@ -118,64 +114,62 @@ static int loadEmbedAndRestrictTables(FILE *fd)
 // Tries loading the tables from "pXXXXX.zzz".
 // Returns 1 on success or 0 if the file does not exist. If the file exists but cannot be opened
 // or contains invalid data, the function raises an error, see @ref MtxError.
-static int LoadTables(int fieldOrder)
+static int LoadTables_(int fieldOrder, const char* fileName)
 {
-   static char filename[50];
-   sprintf(filename,"p%5.5d.zzz",fieldOrder);
-   FILE* fd = sysFopen(filename,"rb::lib:noerror");
-   int ok = fd != NULL;
+   FILE* fd = sysFopen(fileName,"rb::lib:noerror");
+   if (fd == NULL)
+      return 0;
 
    // read header
    unsigned short info[5];
-   if (ok && (fread((char *)info,sizeof(short),5,fd) != 5)) {
+   if (fread((char *)info,sizeof(short),5,fd) != 5) {
       mtxAbort(MTX_HERE,"CANNOT READ TABLE HEADER");
-      ok = 0;
    }
-   if (ok) {
-      P = info[1];
-      Q = info[2];
-      N = info[3];
-      Gen = info[4];
-      Q1 = Q - 1;
-      ffOrder = (long) Q;
-      ffChar = (long) P;
-      ffGen = (Q == 2) ? 0 : 1;
 
-      if (info[0] != ZZZVERSION) {
-         mtxAbort(MTX_HERE,"Invalid table file: wrong version %d (expected %d)", info[0], ZZZVERSION);
-         ok = 0;
-      }
+   P = info[1];
+   Q = info[2];
+   N = info[3];
+   Gen = info[4];
+   Q1 = Q - 1;
+   ffOrder = (long) Q;
+   ffChar = (long) P;
+   ffGen = (Q == 2) ? 0 : 1;
 
-      if ((Q != fieldOrder) || (Q < 2) || (P < 2)
-          || (P > Q) || (Q % P != 0)) {
-         mtxAbort(MTX_HERE,"ERROR IN TABLE FILE HEADER");
-         ok = 0;
-      }
+   if (info[0] != MTX_ZZZVERSION) {
+      mtxAbort(MTX_HERE,"Invalid table file: wrong version %d (expected %d)", info[0], MTX_ZZZVERSION);
    }
+
+   if ((Q != fieldOrder) || (Q < 2) || (P < 2)
+         || (P > Q) || (Q % P != 0)) {
+      mtxAbort(MTX_HERE,"ERROR IN TABLE FILE HEADER");
+   }
+
 
    // Read tables
-   if (ok) {
-      inc = NREALLOC(inc, FEL, Q - 1);
-      FfFromIntTable = NREALLOC(FfFromIntTable, FEL, Q);
-      FfToIntTable = NREALLOC(FfToIntTable, unsigned short, Q);
-      if ((fread(&minusone,sizeof(short),1,fd) != 1) ||
-          (fread(inc,sizeof(short),(size_t)(Q - 1),fd) != (size_t) Q - 1) ||
-          (fread(FfToIntTable,sizeof(short),(size_t)Q,fd) != (size_t) Q) ||
-          (fread(FfFromIntTable,sizeof(short),(size_t)Q,fd) != (size_t) Q) ||
-          loadEmbedAndRestrictTables(fd) != 0 ||
-          ferror(fd)
-          ) {
-         mtxAbort(MTX_HERE,"COULD NOT LOAD ARITHMETIC TABLE FILE");
-         ok = 0;
-      }
-   }
+   sysRead16(fd, &minusone, 1);
+   inc = NREALLOC(inc, FEL, Q - 1);
+   sysRead16(fd, inc, Q - 1);
+   FfToIntTable = NREALLOC(FfToIntTable, uint16_t, Q);
+   sysRead16(fd, FfToIntTable,Q);
+   FfFromIntTable = NREALLOC(FfFromIntTable, uint16_t, Q);
+   sysRead16(fd, FfFromIntTable,Q);
+   loadEmbedAndRestrictTables(fd);
 
-   if (fd != NULL) {
-      fclose(fd);
-   }
-   return ok;
+   fclose(fd);
+   return 1;
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+static int LoadTables(int fieldOrder)
+{
+   static char fileName[50];
+   snprintf(fileName, sizeof(fileName), "p%5.5d.zzz", fieldOrder);
+   const int context = mtxBegin("Loading arithmetic tables: %s", fileName);
+   int rc = LoadTables_(fieldOrder, fileName);
+   mtxEnd(context);
+   return rc;
+}
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 /// Sets the field order.
@@ -186,9 +180,9 @@ static int LoadTables(int fieldOrder)
 
 int ffSetField(int field)
 {
-   MTX_ASSERT(sizeof(FEL) == 2, -1);
-   MTX_ASSERT(sizeof(unsigned short) == 2, -1);
-   MTX_ASSERT(sizeof(unsigned int) >= 4, -1);
+   MTX_ASSERT(sizeof(FEL) == 2);
+   MTX_ASSERT(sizeof(unsigned short) == 2);
+   MTX_ASSERT(sizeof(unsigned int) >= 4);
 
    if ((field == ffOrder) || (field < 2)) {
       return 0;
@@ -315,7 +309,7 @@ FEL ffInv(FEL a)
 
 size_t ffRowSize(int noc)
 {
-   MTX_ASSERT(noc >= 0, 0);
+   MTX_ASSERT(noc >= 0);
    if (noc == 0) {
       return 0;
    }
@@ -443,7 +437,7 @@ PTR ffAddRow(PTR dest, PTR src, int noc)
 
 void ffAddRowPartial(PTR dest, PTR src, int first, int noc)
 {
-   MTX_ASSERT(first >= 0 && first < noc, );
+   MTX_ASSERT(first >= 0 && first < noc);
    long i;
 
    PTR p1 = dest + first;
@@ -510,7 +504,7 @@ void ffAddMulRow(PTR row1, PTR row2, FEL f, int noc)
 void ffAddMulRowPartial(PTR dest, PTR src, FEL f, int firstcol, int noc)
 {
    CHECKFEL(f);
-   MTX_ASSERT(firstcol >= 0 && firstcol < noc,);
+   MTX_ASSERT(firstcol >= 0 && firstcol < noc);
 
    if (f == FF_ONE) {
       ffAddRowPartial(dest, src, firstcol, noc);
@@ -592,7 +586,6 @@ FEL ffScalarProduct(PTR a, PTR b, int noc)
    }
    return f;
 }
-
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 

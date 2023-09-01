@@ -16,12 +16,8 @@
 
 static void *XRead(FILE *f)
 {
-   long fl;
-
-   if (sysReadLong32(f,&fl,1) != 1) {
-      mtxAbort(MTX_HERE,"Error reading file header: %S");
-      return NULL;
-   }
+   int32_t fl;
+   sysRead32(f,&fl,1);
    sysFseek(f,0);
    if (fl >= 2) {
       return (void *)matRead(f);
@@ -64,9 +60,11 @@ void *XLoad(const char *fn)
 int XSave(void *a, const char *fn)
 {
    if (IS_MATRIX(a)) {
-      return matSave((Matrix_t *)a,fn);
+      matSave((Matrix_t *)a,fn);
+   } else {
+      permSave((Perm_t *)a,fn);
    }
-   return permSave((Perm_t *)a,fn);
+   return 0;
 }
 
 

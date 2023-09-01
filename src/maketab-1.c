@@ -165,7 +165,7 @@ static void lookupDefiningPolynomial(poltab_t* result, int q)
    int n = 1;
    int pn;
    for (pn = p; pn < q; ++n, pn *= p);
-   MTX_ASSERT(pn == q, );
+   MTX_ASSERT(pn == q);
    result->n = n;
    result->p = p;
    result->q = q;
@@ -175,7 +175,7 @@ static void lookupDefiningPolynomial(poltab_t* result, int q)
    } else {
       const poltab_t* tp = poltab;
       for (tp = poltab; tp->n != 0 && (tp->p != p || tp->n != n); ++tp);
-      MTX_ASSERT(tp->n != 0, );
+      MTX_ASSERT(tp->n != 0);
       memcpy(result, tp, sizeof(*result));
    }
 }
@@ -186,7 +186,7 @@ static void getpol()
 {
    poltab_t entry;
    lookupDefiningPolynomial(&entry, Q);
-   MTX_ASSERT(entry.q == Q, );
+   MTX_ASSERT(entry.q == Q);
    memcpy(irred, entry.pol, sizeof(irred));
 }
 
@@ -228,7 +228,7 @@ static int polInsert(POLY a, int p)
 
 static void polmultx(POLY a)
 {
-   MTX_ASSERT(a[MAXPWR] == 0, );
+   MTX_ASSERT(a[MAXPWR] == 0);
    for (int i = MAXPWR; i > 0; --i) {
       a[i] = a[i - 1];
    }
@@ -246,7 +246,7 @@ static void polmod(POLY a, POLY b)
    /* l= index of leading coeff. in b (must be 1) */
    for (l = MAXPWR; b[l] == 0 && l > 0; l--) {
    }
-   MTX_ASSERT(b[l] == 1, );
+   MTX_ASSERT(b[l] == 1);
 
    for (dl = MAXPWR; dl >= l; dl--) {
       f = (int) a[dl];
@@ -269,7 +269,7 @@ static int intLog(int base, int n)
       bl *= base;
       ++l;
    }
-   MTX_ASSERT(bl == n, 0);
+   MTX_ASSERT(bl == n);
    return l;
 }
 
@@ -329,7 +329,7 @@ static void testprim()
    a = (unsigned short*) malloc(sizeof(short) * (size_t)Q);
    memset(a,0,sizeof(short) * (size_t)Q);
    for (i = 1; i < Q; i++) {
-      MTX_ASSERT(FfFromIntTable[i] < Q,);
+      MTX_ASSERT(FfFromIntTable[i] < Q);
       ++a[FfFromIntTable[i]];
    }
    for (i = 0; i < Q - 1; i++) {
@@ -359,7 +359,7 @@ static void computeFieldMapQ(uint16_t *map, int q)
 
    for (FEL a = 0; a < (FEL)(q - 1); a++) {
       const int aExt = polInsert(apol, irred.p);
-      MTX_ASSERT(aExt > 0 && aExt < q,);
+      MTX_ASSERT(aExt > 0 && aExt < q);
       ffToExt[a] = aExt;
       extToFf[aExt] = a;
 
@@ -411,9 +411,9 @@ static uint16_t* computeFieldMap(const int p, const int q)
 
 static void computeEmbedding(uint16_t r, uint16_t* table)
 {
-   MTX_ASSERT(r % P == 0,);
+   MTX_ASSERT(r % P == 0);
    const int m = intLog(P, r);  // r = P^m
-   MTX_ASSERT(N % m ==  0,);
+   MTX_ASSERT(N % m ==  0);
 
    // Fill table with "invalid" marker
    uint16_t* const emb = table;
@@ -423,12 +423,12 @@ static void computeEmbedding(uint16_t r, uint16_t* table)
    // compute embedding + restriction (for nonzero elements)
    uint16_t* const subfieldMap = computeFieldMap(P, r);
    int d = (Q - 1) / (r - 1);
-   MTX_ASSERT(d * (r - 1) == Q - 1,);
+   MTX_ASSERT(d * (r - 1) == Q - 1);
 
    int i = 0;
    for (int j = 0; j < r - 1; i += d, ++j) {
-       MTX_ASSERT(j >= 0 && j < r,);
-       MTX_ASSERT(i >= 0 && i < Q,);
+       MTX_ASSERT(j >= 0 && j < r);
+       MTX_ASSERT(i >= 0 && i < Q);
        emb[j] = i;
        restr[i] = j;
    }
@@ -478,7 +478,7 @@ static void initarith()
 
    for (i = 0; i < (int)Q - 1; i++) {
       elem = polInsert(a, P);
-      MTX_ASSERT(elem > 0 && elem < Q,);
+      MTX_ASSERT(elem > 0 && elem < Q);
       FfFromIntTable[elem] = (unsigned short) i;
       FfToIntTable[i] = (unsigned short) elem;
       polmultx(a);
@@ -513,7 +513,7 @@ static void initarithP()
    FfToIntTable[Q] = 0; // never used
    a = 1;
    for (i = 0; i < P - 1; i++) {
-      MTX_ASSERT(a > 0 && a < Q,);
+      MTX_ASSERT(a > 0 && a < Q);
       FfFromIntTable[a] = i;
       FfToIntTable[i] = a;
       a = (unsigned short) (((unsigned long) a * gen) % P);
@@ -556,7 +556,7 @@ static void writeHeader()
    }
 
    uint16_t header[5];
-   header[0] = ZZZVERSION;
+   header[0] = MTX_ZZZVERSION;
    header[1] = P;
    header[2] = Q;
    header[3] = N;
@@ -584,7 +584,7 @@ static void writeHeader()
 
 static void init(long fieldOrder)
 {
-   MTX_ASSERT(FF_ZERO == 0xFFFF,);
+   MTX_ASSERT(FF_ZERO == 0xFFFF);
 
    if (fieldOrder < 2 || fieldOrder > 65535) {
       fprintf(stderr, "Field order %ld out of range (2-65535)\n", fieldOrder);
@@ -635,13 +635,15 @@ static void writeTables()
 
 int ffMakeTables(int field)
 {
-   MTX_ASSERT(sizeof(int) >= 4,-1); // required to avoid overflows
-   MTX_ASSERT(sizeof(FEL) == 2,-1);
+   const int context = mtxBegin("Generating arithmetic tables for GF(%d)", field);
+   MTX_ASSERT(sizeof(int) >= 4); // required to avoid overflows
+   MTX_ASSERT(sizeof(FEL) == 2);
    init(field);
    computeIncrementTable();
    computeEmbeddingTables();
    writeHeader();
    writeTables();
+   mtxEnd(context);
    return 0;
 }
 

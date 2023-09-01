@@ -17,7 +17,7 @@ static Matrix_t *MakeEndo(const MatRep_t *rep, const Matrix_t *sb1,
     /* Make standard basis from <vec>
        ------------------------------ */
     sb2 = SpinUp(vec,rep,SF_FIRST|SF_CYCLIC|SF_STD,NULL,NULL);
-    MTX_ASSERT(sb2 != NULL && sb2->Nor == sb2->Noc, NULL);
+    MTX_ASSERT(sb2 != NULL && sb2->Nor == sb2->Noc);
 
     /* The linear mapping that maps <sb1> on <Matrix_t> is the endomorphism
        we are looking for!
@@ -60,13 +60,13 @@ int MakeEndomorphisms(const MatRep_t *rep, const Matrix_t *nsp,
     Matrix_t *sb1;		/* Standard bases */
     int nendo;			/* # of endomorphisms obtained so far */
 
-    MTX_ASSERT(nsp->Nor > 0, -1);
-    MTX_ASSERT(rep->NGen > 0, -1);
+    MTX_ASSERT(nsp->Nor > 0);
+    MTX_ASSERT(rep->NGen > 0);
 
     /* Take the first vector from <nsp> and make the standard basis.
        ------------------------------------------------------------- */
     sb1 = SpinUp(nsp,rep,SF_FIRST|SF_CYCLIC|SF_STD,NULL,NULL);
-    MTX_ASSERT(sb1 != NULL && sb1->Nor == sb1->Noc, -1);
+    MTX_ASSERT(sb1 != NULL && sb1->Nor == sb1->Noc);
 
     /* Take the identity as the first basis element for E
        -------------------------------------------------- */

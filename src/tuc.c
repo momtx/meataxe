@@ -174,9 +174,9 @@ static void CalculatePositions(int cf, int num_m, int num_n, int *condpos,
     int startm = 0, startn = 0;
     int i;
 
-    MTX_ASSERT(cfm >= 0 && cfm <= InfoM.NCf,);
-    MTX_ASSERT(cfn >= 0 && cfn <= InfoN.NCf,);
-    MTX_ASSERT(InfoM.Cf[cfm].dim == InfoN.Cf[cfn].dim,);
+    MTX_ASSERT(cfm >= 0 && cfm <= InfoM.NCf);
+    MTX_ASSERT(cfn >= 0 && cfn <= InfoN.NCf);
+    MTX_ASSERT(InfoM.Cf[cfm].dim == InfoN.Cf[cfn].dim);
 
 
     /* Calculate starting position in M x N.
@@ -217,8 +217,8 @@ static void UncondenseCf(int row, int cf)
     int i;
     int cfm, cfn, mult_m, mult_n, cf_dim;
 
-    MTX_ASSERT(row >= 0, );
-    MTX_ASSERT(cf >= 0 && cf < TkInfo.NCf, );
+    MTX_ASSERT(row >= 0);
+    MTX_ASSERT(cf >= 0 && cf < TkInfo.NCf);
 
     cfm = TkInfo.CfIndex[0][cf];    /* Constituent index in M */
     cfn = TkInfo.CfIndex[1][cf];    /* Constituent index in N */

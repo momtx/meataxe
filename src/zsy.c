@@ -95,6 +95,7 @@ static int Prepare()
     }
     else		/* Permutation */
     {	
+       MTX_ASSERT(fl == -1);
 	sysFseek(f->File,0);
 	PermIn = permRead(f->File);
 	if (PermIn == NULL) 
@@ -104,33 +105,53 @@ static int Prepare()
 
     /* Calculate nor2 and noc2
        ----------------------- */
+    uint64_t nor2_ = 0;
+    uint64_t noc2_ = 0;
     switch (mode)
-    {	case M_S2:
-	    nor2 = (nor * (nor+1)) / 2;
-	    noc2 = (noc * (noc+1)) / 2;
-	    break;
-	case M_E2:
-	    nor2 = (nor * (nor-1)) / 2;
-	    noc2 = (noc * (noc-1)) / 2;
-	    break;
-	case M_E3:
-	    nor2 = nor*(nor-1)/2*(nor-2)/3;
-	    noc2 = noc*(noc-1)/2*(noc-2)/3;
-	    break;
-	case M_E4:
-	    nor2 = nor*(nor-1)/2*(nor-2)/3*(nor-3)/4;
-	    noc2 = noc*(noc-1)/2*(noc-2)/3*(noc-3)/4;
-	    break;
-	default:
-	    mtxAbort(MTX_HERE,"Unknown mode %d",(int)mode);
-	    return -1;
-    }
-    if (fl > 0 && (nor2 < 0 || noc2 <= 0))
     {
-	mtxAbort(MTX_HERE,"%s: Matrix too small",iname);
-	return -1;
+    case M_S2:
+       nor2_ = (nor * (nor+1)) / 2;
+       noc2_ = fl >= 2 ? (noc * (noc+1)) / 2 : nor2_;
+       break;
+    case M_E2:
+       MTX_ASSERT(nor > 1);
+       nor2_ = (nor * (nor-1)) / 2;
+       if (fl >= 2) {
+          MTX_ASSERT(noc > 0);
+          noc2_ = noc * (noc-1) / 2;
+       } else {
+          noc2_ = nor2_;
+       }
+       break;
+    case M_E3:
+       MTX_ASSERT(nor > 2);
+       nor2_ = nor*(nor-1)/2*(nor-2)/3;
+       if (fl >= 2) {
+          MTX_ASSERT(noc > 2);
+          noc2_ = noc*(noc-1)/2*(noc-2)/3;
+       } else {
+          noc2_ = nor2_;
+       }
+       break;
+    case M_E4:
+       MTX_ASSERT(nor > 3);
+       nor2_ = nor*(nor-1)/2*(nor-2)/3*(nor-3)/4;
+       if (fl >= 2) {
+          MTX_ASSERT(noc > 3);
+          noc2_ = noc*(noc-1)/2*(noc-2)/3*(noc-3)/4;
+       } else {
+          noc2_ = nor2_;
+       }
+       break;
+    default:
+       mtxAbort(MTX_HERE,"Unknown mode %d",(int)mode);
+       return -1;
     }
-
+    // Check for overflow
+    MTX_ASSERT((nor2_ >> 32) == 0);
+    MTX_ASSERT((noc2_ >> 32) == 0);
+    nor2 = (uint32_t) nor2_;
+    noc2 = (uint32_t) noc2_;
 
     // Prepare output buffer and file.
     if (fl >= 2)
@@ -232,8 +253,7 @@ static void zs2()
    zs2p() - Antisymmetric square (permutations)
    ------------------------------------------------------------------ */
 
-static int maps2(int i, int k)
-
+static uint32_t maps2(uint32_t i, uint32_t k)
 {	
     if (i <= k)
 	return ((k*(k+1))/2 + i);
@@ -244,10 +264,9 @@ static int maps2(int i, int k)
 
 
 static void zs2p()
-
 {
-    long *p1 = PermIn->Data;
-    long *p2 = PermOut->Data;
+    const uint32_t *p1 = PermIn->Data;
+    uint32_t *p2 = PermOut->Data;
     int i;
 
     for (i = 0; i < nor; ++i)
@@ -265,8 +284,7 @@ static void zs2p()
    ze2p() - Antisymmetric square (permutations)
    ------------------------------------------------------------------ */
 
-static int mape2(int i, int k)
-
+static uint32_t mape2(uint32_t i, uint32_t k)
 {
     if (i < k)
 	return (k*(k-1))/2 + i;
@@ -277,16 +295,13 @@ static int mape2(int i, int k)
 
 
 static void ze2p()
-
 {
-    long *p1 = PermIn->Data;
-    long *p2 = PermOut->Data;
-    int i;
+    const uint32_t *p1 = PermIn->Data;
+    uint32_t *p2 = PermOut->Data;
 
-    for (i = 0; i < nor; ++i)
+    for (uint32_t i = 0; i < nor; ++i)
     {	
-	int k;
-	for (k = 0; k < i; ++k)
+	for (uint32_t k = 0; k < i; ++k)
 	    p2[mape2(i,k)] = mape2(p1[i],p1[k]);
     }
     permSave(PermOut,oname);
@@ -300,30 +315,24 @@ static void ze2p()
    ------------------------------------------------------------------ */
 
 static void ze2()
-
 {
-    int i1, i2, j1, j2, j3;
-    FEL f12, f22, w1, w2, w3;
-
-    for (i1 = 0; i1 < nor-1; ++i1)
+    for (uint32_t i1 = 0; i1 < nor-1; ++i1)
     {	
-        MESSAGE(1,("i1 = %d\n",i1)); 
-	for (i2 = i1+1; i2 < nor; ++i2)
+	for (uint32_t i2 = i1+1; i2 < nor; ++i2)
 	{
-           MESSAGE(2,("i2 = %d\n",i2)); 
 	    ffMulRow(m2,FF_ZERO, noc2);
-	    j3 = 0;
-	    for (j1 = 0; j1 < noc-1; ++j1)
-	    {	register FEL f11, f21;
-		f11 = ffExtract(row[i1],j1);
-		f21 = ffExtract(row[i2],j1);
-		for (j2 = j1+1; j2 < noc; ++j2)
+	    uint32_t j3 = 0;
+	    for (uint32_t j1 = 0; j1 < noc-1; ++j1)
+	    {
+		const FEL f11 = ffExtract(row[i1],j1);
+		const FEL f21 = ffExtract(row[i2],j1);
+		for (uint32_t j2 = j1+1; j2 < noc; ++j2)
 		{
-		    f12 = ffExtract(row[i1],j2);
-		    f22 = ffExtract(row[i2],j2);
-		    w1 = ffMul(f11,f22);
-		    w2 = ffMul(f12,f21);
-		    w3 = ffSub(w1,w2);
+		    const FEL f12 = ffExtract(row[i1],j2);
+		    const FEL f22 = ffExtract(row[i2],j2);
+		    const FEL w1 = ffMul(f11,f22);
+		    const FEL w2 = ffMul(f12,f21);
+		    const FEL w3 = ffSub(w1,w2);
 		    ffInsert(m2,j3,w3);
 		    ++j3;
 		}
@@ -392,8 +401,7 @@ static void ze3()
 
 #define SWAP(x,y) {tmp=x; x=y; y=tmp;}
 
-static long mape3(long i, long k, long l)
-
+static uint32_t mape3(uint32_t i, uint32_t k, uint32_t l)
 {	
     register long tmp;
     if (i < k) SWAP(i,k);
@@ -405,16 +413,14 @@ static long mape3(long i, long k, long l)
 
 
 static void ze3p()
-
 {
-    long *p1 = PermIn->Data;
-    long *p2 = PermOut->Data;
-    int i, k, l;
-    for (i = 2; i < nor; ++i)
+    uint32_t *p1 = PermIn->Data;
+    uint32_t *p2 = PermOut->Data;
+    for (uint32_t i = 2; i < nor; ++i)
     {	
-	for (k = 1; k < i; ++k)
+	for (uint32_t k = 1; k < i; ++k)
 	{
-	    for (l = 0; l < k; ++l)
+	    for (uint32_t l = 0; l < k; ++l)
 		p2[mape3(i,k,l)] = mape3(p1[i],p1[k],p1[l]);
 	}
     }

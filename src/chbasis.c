@@ -74,7 +74,7 @@ int ChangeBasisOLD(const Matrix_t *M, int ngen, const Matrix_t *gen[],
     Matrix_t *bi, *tmp;
     int i;
 
-    MTX_ASSERT(ngen >= 0, -1);
+    MTX_ASSERT(ngen >= 0);
     matValidate(MTX_HERE, M);
     if ((bi = matInverse(M)) == NULL) 
     {

@@ -82,7 +82,7 @@ static void MakeInvertible(Matrix_t *mat, const char *fn)
 	    ++k;
 	}
     }
-    MTX_ASSERT(k == mat->Nor,);
+    MTX_ASSERT(k == mat->Nor);
     matFree(dup);
 }
 
@@ -241,8 +241,8 @@ static int FirstRow(Lat_Info *info, int cf, int k)
     int ind = 0;
     int i;
 
-    MTX_ASSERT(cf >= 0 && cf < info->NCf, 0);
-    MTX_ASSERT(k >= 0 && k < info->Cf[cf].mult, 0);
+    MTX_ASSERT(cf >= 0 && cf < info->NCf);
+    MTX_ASSERT(k >= 0 && k < info->Cf[cf].mult);
 
     /* Constituents before <cf> consume dim*mult rows
        ---------------------------------------------- */

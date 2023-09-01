@@ -23,10 +23,6 @@
 
 Perm_t *permPower(const Perm_t *p, int n)
 {
-   Perm_t *q;
-   long *xp;
-   long *xq;
-   long i, k, l;
 
    // check arguments
    permValidate(MTX_HERE, p);
@@ -35,17 +31,15 @@ Perm_t *permPower(const Perm_t *p, int n)
       return NULL;
    }
 
-   // allocate a new permutation for the result
-   q = permAlloc(p->Degree);
-   if (q == NULL) {
-      return NULL;
-   }
-   xp = p->Data;
-   xq = q->Data;
+   Perm_t* q = permAlloc(p->Degree);
+   
+   uint32_t* xp = p->Data;
+   uint32_t* xq = q->Data;
 
    // calculate the n-th power
-   for (i = 0; i < p->Degree; ++i) {
-      for (k = i, l = n; l > 0; --l) {
+   for (uint32_t i = 0; i < p->Degree; ++i) {
+      uint32_t k = i;
+      for (uint32_t l = n; l > 0; --l) {
          k = xp[k];
       }
       xq[i] = k;

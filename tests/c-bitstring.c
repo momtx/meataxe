@@ -177,7 +177,7 @@ static BitString_t *RndBs(int size)
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static int CheckIo1(FILE*f, BitString_t **bs, int n)
+static int CheckIo1(FILE* f, BitString_t **bs, int n)
 {
    // Write bit strings
    for (int i = 0; i < n; ++i) {
@@ -207,7 +207,7 @@ TstResult BitStringFileIo()
    }
    const char file_name[] = "check.1";
    FILE* f = fopen(file_name,"w+");
-   int result = CheckIo1(f, a,10);
+   int result = CheckIo1(f, a, 10);
    fclose(f);
    for (i = 1; i < 10; ++i) {
       bsFree(a[i]);

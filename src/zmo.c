@@ -23,8 +23,8 @@ static const char *permname;
 static int nperm = 2;
 static int Degree;
 static int Seed = 0;
-static long *OrbNo;
-static long *OrbSize;
+static int32_t *OrbNo;
+static uint32_t *OrbSize;
 static int NOrbits;
 static long Stack[STACKSIZE];
 static int Sp = -1;
@@ -101,7 +101,7 @@ static int AllocWorkspace()
 {
     int i;
 
-    OrbNo = NALLOC(long,Degree);
+    OrbNo = NALLOC(int32_t,Degree);
     if (OrbNo == NULL)
 	return -1;
     for (i = 0; i < Degree; ++i)
@@ -181,14 +181,10 @@ static int MakeOrbits()
 
 static int CalcSizes()
 {
-    int i;
-
     MESSAGE(1,("Calculating orbit sizes\n"));
-    OrbSize = NALLOC(long,NOrbits);
-    if (OrbSize == NULL)
-	return -1;
-    memset(OrbSize,0,sizeof(long)*NOrbits);
-    for (i = 0; i < Degree; ++i)
+    OrbSize = NALLOC(uint32_t,NOrbits);
+    memset(OrbSize,0,sizeof(*OrbSize) * NOrbits);
+    for (int i = 0; i < Degree; ++i)
 	++OrbSize[OrbNo[i]];
     return 0;
 }
@@ -197,44 +193,22 @@ static int CalcSizes()
 
 static int WriteOutput() 
 {
-    long hdr[3];
-    FILE *f;
-
-    if ((f = sysFopen(orbname,"wb")) == NULL)
-	return -1;
-
-    /* Write the orbit number table.
-       ----------------------------- */
-    hdr[0] = -8;
-    hdr[1] = 1;
-    hdr[2] = Degree;
-    if (sysWriteLong32(f,hdr,3) != 3)
+    FILE *f = sysFopen(orbname,"wb");
+    // Write the orbit number table.
     {
-	mtxAbort(MTX_HERE,"Error writing file header");
-	return -1;
-    }
-    if (sysWriteLong32(f,OrbNo,Degree) != Degree)
-    {
-	mtxAbort(MTX_HERE,"Error writing file orbit number table");
-	return -1;
+    uint32_t hdr[3] = {MTX_TYPE_INTMATRIX, 1, Degree};
+    sysWrite32(f,hdr,3);
+    sysWrite32(f, OrbNo, Degree);
     }
 
-    /* Write the orbit sizes table.
-       ---------------------------- */
-    hdr[0] = -8;
-    hdr[1] = 1;
-    hdr[2] = NOrbits;
-    if (sysWriteLong32(f,hdr,3) != 3)
+    // Write the orbit sizes table.
     {
-	mtxAbort(MTX_HERE,"Error writing file header");
-	return -1;
-    }
-    if (sysWriteLong32(f,OrbSize,NOrbits) != NOrbits)
-    {
-	mtxAbort(MTX_HERE,"Error writing file orbit sizes table");
-	return -1;
+    uint32_t hdr[3] = {MTX_TYPE_INTMATRIX, 1, NOrbits};
+    sysWrite32(f,hdr,3);
+    sysWrite32(f,OrbSize,NOrbits);
     }
     fclose(f);
+    
 
     /* Print orbit sizes
        ----------------- */

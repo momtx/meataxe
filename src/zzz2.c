@@ -40,8 +40,8 @@ FEL ffGen = 0;
 PTR ffAlloc(int nrows, int noc)
 {
    register long i;
-   MTX_ASSERT(nrows >= 0, NULL);
-   MTX_ASSERT(noc >= 0, NULL);
+   MTX_ASSERT(nrows >= 0);
+   MTX_ASSERT(noc >= 0);
 
    const size_t rowSize = ffRowSize(noc);
    const size_t req = rowSize * (size_t) nrows;

@@ -10,8 +10,6 @@
 
 
 #define MAXGRAD 12		/* Maximal degree of polynomials */
-#define MAXSUBFIELDORD 16	/* Maximal order of subfields */
-#define MAXSUBFIELDS 4		/* Maximal number of subfields */
 
 typedef unsigned char BYTE;
 typedef unsigned char POLY[MAXGRAD+1];
@@ -31,12 +29,12 @@ BYTE
 	mtx_textract[8][256],
 	mtx_tnull[8][256],
 	mtx_tinsert[8][256];
-BYTE mtx_embed[MAXSUBFIELDS][MAXSUBFIELDORD]; /* Embeddings of subfields */
-BYTE mtx_restrict[MAXSUBFIELDS][256];	  /* Restriction to subfields */
-long mtx_embedord[MAXSUBFIELDS];		  /* Subfield orders */
+BYTE mtx_embed[MTX_MAXSUBFIELDS][MTX_MAXSUBFIELDORD]; /* Embeddings of subfields */
+BYTE mtx_restrict[MTX_MAXSUBFIELDS][256];	  /* Restriction to subfields */
+static uint32_t mtx_embedord[MTX_MAXSUBFIELDS];		  /* Subfield orders */
 
-static long info[4] = {0L,0L,0L,0L};
-static long ver = ZZZVERSION;
+static uint32_t info[4] = {0L,0L,0L,0L};
+static uint32_t ver = MTX_ZZZVERSION;
 static char filename[50];
 
 static long 	P;		/* Characteristic of the field */
@@ -342,15 +340,16 @@ static void writeheader()
     info[2] = (long int) Q;
     info[3] = (long int) CPM;
 
-    MESSAGE(1,("ZZZ version : %ld\n",ver));
-    MESSAGE(1,("Field order : %ld=%ld^%ld\n",info[2],info[0],N));
+    MESSAGE(1,("ZZZ version : %lu\n",(unsigned long)ver));
+    MESSAGE(1,("Field order : %lu=%lu^%lu\n",
+             (unsigned long)info[2],(unsigned long)info[0],(unsigned long)N));
     if (P != Q && MtxMessageLevel >= 1)
     {
 	printf("Polynome    : ");
 	printpol(irred);
     }
-    MESSAGE(1,("Generator   : %ld\n",info[1]));
-    MESSAGE(1,("Packing     : %ld/byte\n",info[3]));
+    MESSAGE(1,("Generator   : %lu\n",(unsigned long)info[1]));
+    MESSAGE(1,("Packing     : %lu/byte\n",(unsigned long)info[3]));
 }
 
 
@@ -418,7 +417,7 @@ static void mkembed()
     /* Clear the mtx_embedord array. mtx_embedord[i]=0 means
        that the entry (and all subequent) is not used.
        ----------------------------------------------- */
-    for (i = 0; i < MAXSUBFIELDS; ++i) mtx_embedord[i] = 0;
+    for (i = 0; i < MTX_MAXSUBFIELDS; ++i) mtx_embedord[i] = 0;
 
 
     for (n = 1; n < N; ++n)
@@ -489,7 +488,7 @@ static void mkembed()
     {
         for (i = 0; i < 4; ++i)
         {
-	    printf("  GF(%2ld): ",mtx_embedord[i]);
+	    printf("  GF(%2d): ", (int)mtx_embedord[i]);
             for (k=0; k < 16; ++k)
 	        printf("%4d",mtx_embed[i][k]);
  	    printf("\n");
@@ -615,25 +614,20 @@ int ffMakeTables(int field)
     mkembed();
 
     MESSAGE(1,("Writing tables to %s\n",filename));
-    if (
-      sysWriteLong32(fd,info,4) != 4 ||
-      sysWriteLong32(fd,&ver,1) != 1 ||
-      fwrite(mtx_tmult,4,0x4000,fd) != 0x4000 ||
-      fwrite(mtx_tadd,4,0x4000,fd) != 0x4000 ||
-      fwrite(mtx_tffirst,1,sizeof(mtx_tffirst),fd) != sizeof(mtx_tffirst) ||
-      fwrite(mtx_textract,1,sizeof(mtx_textract),fd)!= sizeof(mtx_textract) ||
-      fwrite(mtx_taddinv,1,sizeof(mtx_taddinv),fd) != sizeof(mtx_taddinv) ||
-      fwrite(mtx_tmultinv,1,sizeof(mtx_tmultinv),fd)!= sizeof(mtx_tmultinv) ||
-      fwrite(mtx_tnull,1,sizeof(mtx_tnull),fd) != sizeof(mtx_tnull) ||
-      fwrite(mtx_tinsert,1,sizeof(mtx_tinsert),fd) != sizeof(mtx_tinsert) ||
-      sysWriteLong32(fd,mtx_embedord,MAXSUBFIELDS) != MAXSUBFIELDS ||
-      fwrite(mtx_embed,MAXSUBFIELDORD,MAXSUBFIELDS,fd) != MAXSUBFIELDS ||
-      fwrite(mtx_restrict,256,MAXSUBFIELDS,fd) != MAXSUBFIELDS
-      )
-    {
-	perror(filename);
-	mtxAbort(MTX_HERE,"Error writing table file");
-    }
+    sysWrite32(fd,info,4);
+    sysWrite32(fd,&ver,1);
+    sysWrite8(fd,mtx_tmult,sizeof(mtx_tmult));
+    sysWrite8(fd,mtx_tadd,sizeof(mtx_tadd));
+    sysWrite8(fd, mtx_tffirst,sizeof(mtx_tffirst));
+    sysWrite8(fd, mtx_textract,sizeof(mtx_textract));
+    sysWrite8(fd, mtx_taddinv,sizeof(mtx_taddinv));
+    sysWrite8(fd, mtx_tmultinv,sizeof(mtx_tmultinv));
+    sysWrite8(fd, mtx_tnull,sizeof(mtx_tnull));
+    sysWrite8(fd, mtx_tinsert,sizeof(mtx_tinsert));
+    sysWrite32(fd,mtx_embedord,MTX_MAXSUBFIELDS);
+    sysWrite8(fd,mtx_embed, MTX_MAXSUBFIELDS * MTX_MAXSUBFIELDORD);
+    sysWrite8(fd,mtx_restrict, MTX_MAXSUBFIELDS * 256);
+
     fclose(fd);
     return(0);
 }

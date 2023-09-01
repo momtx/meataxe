@@ -211,11 +211,11 @@ static Poly_t **berlekamp(const Poly_t *pol, const Matrix_t  *kernel)
 		Poly_t *gcd;
 
 		t->Data[0] = ffFromInt(s);
-		MTX_ASSERT(i >= 0 && i < nfactors, NULL);
+		MTX_ASSERT(i >= 0 && i < nfactors);
 		gcd = polGcd(list[i],t);
 		if (gcd->Degree >= 1)
 		{
-		    MTX_ASSERT(ngcd >= 0 && ngcd < kernel->Nor+1, NULL);
+		    MTX_ASSERT(ngcd >= 0 && ngcd < kernel->Nor+1);
 		    list2[ngcd++] = gcd;
 		}
 		else
@@ -225,7 +225,7 @@ static Poly_t **berlekamp(const Poly_t *pol, const Matrix_t  *kernel)
 	    if (ngcd > 0)
 	    {
 		int p;
-		MTX_ASSERT(i >= 0 && i < nfactors, NULL);
+		MTX_ASSERT(i >= 0 && i < nfactors);
 		polFree(list[i]);
 		for (p = i; p < nfactors - 1; ++p)
 		    list[p] = list[p+1];
@@ -240,7 +240,7 @@ static Poly_t **berlekamp(const Poly_t *pol, const Matrix_t  *kernel)
 	    int p;
 	    for (p = 0; p < ngcd; ++p)
 	    {
-		MTX_ASSERT(nfactors >= 0 && nfactors < kernel->Nor+1, NULL);
+		MTX_ASSERT(nfactors >= 0 && nfactors < kernel->Nor+1);
 	        list[nfactors++] = list2[p];
 	    }
 	}
@@ -248,9 +248,9 @@ static Poly_t **berlekamp(const Poly_t *pol, const Matrix_t  *kernel)
     polFree(t);
     sysFree(list2);
 
-    MTX_ASSERT(nfactors >= 0 && nfactors < kernel->Nor+1, NULL);
+    MTX_ASSERT(nfactors >= 0 && nfactors < kernel->Nor+1);
     list[nfactors] = NULL;	/* Terminate the list */
-    MTX_ASSERT(nfactors == kernel->Nor, NULL);
+    MTX_ASSERT(nfactors == kernel->Nor);
     return list;
 }
 

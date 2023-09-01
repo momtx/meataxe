@@ -45,7 +45,7 @@ static int NOrbits;
 static PTR hsz;
 static Perm_t *Perm;	/* The permutation to be condensed */
 static PTR m1;		/* One row of the output matrix */
-static long *RowZ;	/* One row of the ouput (for integer kondensation) */
+static uint32_t *RowZ;	/* One row of the ouput (for integer kondensation) */
 static MtxApplication_t *App = NULL;
 
 
@@ -145,7 +145,7 @@ static int readdata()
     else			/* Condensation over Z */
     {
 	MESSAGE(1,("Condensation over Z\n"));
-	RowZ = NALLOC(long,NOrbits);
+	RowZ = NALLOC(uint32_t,NOrbits);
     }
 
     return 0;
@@ -244,7 +244,7 @@ int main(int argc, char **argv)
 	if (fl != 0)
 	    mfWriteRows(kondfile,m1,1);
 	else
-	    mfWriteLong(kondfile,RowZ,NOrbits);
+	    mfWrite32(kondfile, RowZ, NOrbits);
     }
 
     mfClose(kondfile);

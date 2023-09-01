@@ -308,9 +308,7 @@ static void Standardize(int cf)
       int i = CfList[cf].CfMap[m][1];
       sprintf(fn,"%s%s.op",li->BaseName,latCfName(li,i));
       MESSAGE(2,("Write operations to %s\n",fn));
-      if (imatSave(script,fn) != 0) {
-         mtxAbort(MTX_HERE,"Cannot write .op file");
-      }
+      imatSave(script,fn);
       for (k = 0; k < li->NGen; ++k) {
          sprintf(fn,"%s%s.std.%d",li->BaseName,latCfName(li,i),k + 1);
          MESSAGE(2,(" %s",fn));
@@ -333,7 +331,7 @@ static int CfPosition(const Lat_Info *li, int cf)
 {
    int pos = 0;
    int i;
-   MTX_ASSERT(cf >= 0 && cf < li->NCf, 0);
+   MTX_ASSERT(cf >= 0 && cf < li->NCf);
    for (i = 0; i < cf; ++i) {
       pos += li->Cf[i].dim * li->Cf[i].mult;
    }

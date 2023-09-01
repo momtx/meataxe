@@ -58,9 +58,9 @@ Matrix_t *SAction(const Matrix_t *subspace, const Matrix_t *gen)
    // calculate the action
    for (int i = 0; i < subspace->Nor; ++i) {
       PTR xi = matGetPtr(subspace,i);
-      MTX_ASSERT(xi != NULL, NULL);
+      MTX_ASSERT(xi != NULL);
       PTR yi = matGetPtr(action,i);
-      MTX_ASSERT(yi != NULL, NULL);
+      MTX_ASSERT(yi != NULL);
       FEL f;
 
       // calculate the image of the <i>-th row of <subspace>
@@ -68,7 +68,7 @@ Matrix_t *SAction(const Matrix_t *subspace, const Matrix_t *gen)
 
       // clean the image with the subspace and store coefficients
       int rc = ffCleanRow2(tmp,subspace->Data,sdim,dim,subspace->PivotTable,yi);
-      MTX_ASSERT(rc == 0, NULL);
+      MTX_ASSERT(rc == 0);
       if (ffFindPivot(tmp,&f,dim) >= 0) {
          mtxAbort(MTX_HERE,"Split(): Subspace not invariant");
 	 sysFree(tmp);

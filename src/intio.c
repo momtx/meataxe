@@ -2,190 +2,214 @@
 // C MeatAxe - Input/output of integers
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-
 #include "meataxe.h"
 
-static const long test = 1;
-static const int IS_X86 = (sizeof(long) == 4 && *(char *)&test == 1);
+#include <string.h>
+#include <errno.h>
+
 
 /// @addtogroup os
 /// @{
 
+/// Reads an array of 32-bit integers.
+/// This function expects that integers are stored in little-endian format in the file.
+///
+/// @param f Input file.
+/// @param buf Pointer to data buffer (uint32_t* or int32_t*).
+/// @param n Number of 32-bit integers to read.
 
-/// Read long integers.
-/// This function reads @ n long integers from the file @a f into the array 
-/// @a buf. @a buf must point to a memory area of at least n*sizeof(long) 
-/// bytes and the file must be open for reading. The return value indicates how
-/// many integers have actually been read. This number may be less than
-/// @a n because the end of file was encountered while reading. A negative
-/// return value indicates a file i/o error.
-/// 
-/// %sysReadLong32() expects that the numbers in the file are 4-byte integers 
-/// in little-endian format, i.e. the least significant byte first.
-/// Using a machine-independent data format makes MeatAxe data files 
-/// more portable, but there are also some disadvantages:
-/// - The conversion to and from machine-independent format involves several
-///   arithmetic operations for each number read/written.
-/// - The highest number which can be read/written is 2<sup>32</sup>-1.
-/// @param f File to read from.
-/// @param buf Pointer to buffer.
-/// @param n Number of integers to read.
-/// @return Number of integers that were actually read, or $/1$ on error.
-
-int sysReadLong32(FILE *f, long *buf, int n)
+void sysRead32(FILE *f, void* buf, size_t n)
 {
-    int nread;
-
-    /* Check the arguments
-       ------------------- */
-    if (f == NULL || buf == NULL || n < 0)
-    {
-	mtxAbort(MTX_HERE,"Invalid arguments (f:%s,buf:%s,n=%d)",f ? "ok" : "NULL",
-		buf ? "ok" : "NULL",n);
-	return -1;
-    }
-
-    /* Read <n> long integers
-       ---------------------- */
-    if (IS_X86)
-    {
-	nread = (int)fread((char *)buf,sizeof(long),(size_t)n,f);
-    }
-    else
-    {
-        unsigned char a[4];
-    	for (nread = 0; nread < n; ++nread)
-    	{
-	    if (fread(a,1,4,f) != 4) break;
-	    *buf = ((unsigned long)a[0]|((unsigned long)a[1] << 8)|
-		((unsigned long)a[2] << 16)|((long)(signed char)a[3] << 24));
-	    ++buf;
-    	}
-    }
-
-    /* Check for errors
-       ---------------- */
-    if (ferror(f) && !feof(f))
-    {
-	mtxAbort(MTX_HERE,"Read failed: %S");
-	return -1;
-    }
-    return nread;
-}
-
-
-
-/// Write long integers.
-/// This function writes @a n long integers from the the array @a buf to the 
-/// file @a f. @a buf must point to a memory area of at least n*sizeof(long) 
-/// bytes and @a f must be open for writing. The numbers are written in a 
-/// machine-independent format which can be read by sysReadLong().
-/// @param f File to write to.
-/// @param buf Pointer to buffer.
-/// @param n Number of integers to write.
-/// @return Number of integers that were written, or $-1$ on error.
-
-int sysWriteLong32(FILE *f, const long *buf, int n)
-{
-    unsigned char a[4];
-    int nwritten;
-
-    if (IS_X86)
-	nwritten = fwrite((char *)buf,sizeof(long),n,f);
-    else
-    {
-    	for (nwritten = 0; nwritten < n; ++nwritten)
-    	{
-    	    a[0] = (unsigned char) *buf;
-    	    a[1] = (unsigned char) (*buf >> 8);
-    	    a[2] = (unsigned char) (*buf >> 16);
-    	    a[3] = (unsigned char) (*buf >> 24);
-    	    if (fwrite(a,1,4,f) != 4) break;
-	    ++buf;
-    	}
-    }
-    return nwritten;
-}
-
-////////////////////////////////////////////////////////////////////////////////////////////////////
-
-static void Swap(long *dest, const long *src, int n)
-{
-   for (; n > 0; --n)
-   {
-      register unsigned long x = (unsigned long) *src++;
-      if (sizeof(long int) == 4) {
-         *dest++ =
-            (x << 24)
-            + ((x << 8) & 0x00FF0000L)
-            + ((x >> 8) & 0x0000FF00L)
-            + (x >> 24);
-      } else if (sizeof(long int) == 8) {
-         *dest++ =
-            (x << 56)
-            + ((x << 40) & 0x00FF000000000000L)
-            + ((x << 24) & 0x0000FF0000000000L)
-            + ((x <<  8) & 0x000000FF00000000L)
-            + ((x >>  8) & 0x00000000FF000000L)
-            + ((x >> 24) & 0x0000000000FF0000L)
-            + ((x >> 40) & 0x000000000000FF00L)
-            + (x >> 56);
-      } else
-         mtxAbort(MTX_HERE,"sizeof(long)=%u not supported", sizeof(long));
+   MTX_ASSERT(n >= 0);
+   size_t nRead = fread(buf, 4, n, f);
+   if (nRead != n)
+      mtxAbort(MTX_HERE, "File read error: %s", strerror(errno));
+   if (mtxIsBigEndian()) {
+      uint8_t* p = (uint8_t*) buf;
+      uint8_t* end = p + 4 * n;
+      while (p < end) {
+         uint8_t tmp = p[0];
+         p[0] = p[3];
+         p[3] = tmp;
+         tmp = p[1];
+         p[1] = p[2];
+         p[2] = tmp;
+         p += 4;
+      }
    }
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#define BLK_SIZE 4096  // must be a multiple of sizeof(long)!
+/// Tries to read an array of 32-bit integers
+/// Returns 0 on eof (nothing read) or 1 on success.
+/// Aborts the program on partial read or error.
 
-int sysReadLongX(FILE *f, long *buf, int n_bytes)
+int sysTryRead32(FILE *f, void* buf, size_t n)
 {
-   int n_read = 0;		/* Bytes read so far */
-   if (Mtx_IsBigEndian) {
-
-      long tmp[BLK_SIZE];
-      while (n_read < n_bytes)
-      {
-         int n_blk = sizeof(tmp);
-         if (n_bytes - n_read < sizeof(tmp)) {
-            n_blk = n_bytes - n_read;
-            tmp[n_blk / sizeof(long)] = 0;        // zero pad
-         }
-         if (fread(tmp,1,n_blk,f) != n_blk) {
-            break;
-         }
-         Swap(buf + n_read / sizeof(long),tmp,(n_blk - 1)/sizeof(long) + 1);
-         n_read += n_blk;
+   MTX_ASSERT(n >= 0);
+   size_t nRead = fread(buf, 4, n, f);
+   if (nRead == 0 && feof(f))
+      return 0;
+   if (nRead != n || ferror(f))
+      mtxAbort(MTX_HERE, "File read error: %s", strerror(errno));
+   if (mtxIsBigEndian()) {
+      uint8_t* p = (uint8_t*) buf;
+      uint8_t* end = p + 4 * n;
+      while (p < end) {
+         uint8_t tmp = p[0];
+         p[0] = p[3];
+         p[3] = tmp;
+         tmp = p[1];
+         p[1] = p[2];
+         p[2] = tmp;
+         p += 4;
       }
-   } else {
-      n_read = fread(buf,1,n_bytes,f);
    }
-   return n_read;
+   return 1;
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
-int sysWriteLongX(FILE *f, const long *buf, int n_bytes)
+/// Writes an array of 32-bit integers.
+/// This function expects that integers are stored in little-endian format in the file.
+///
+/// @param f Output file.
+/// @param buf Pointer to data buffer (uint32_t* or int32_t*).
+/// @param n Number of 32-bit integers to read.
+
+void sysWrite32(FILE *f, const void* buf, size_t n)
 {
-   int n_written = 0;
-   if (Mtx_IsBigEndian) {
-      long tmp[BLK_SIZE];
-      while (n_written < n_bytes)
-      {
-         int n_blk = sizeof(tmp);
-         if (n_written + n_blk > n_bytes) {
-            n_blk = n_bytes - n_written;
-         }
-         Swap(tmp,buf + n_written / sizeof(long),(n_blk - 1) / sizeof(long) + 1);
-         if (fwrite(tmp,1,n_blk,f) != n_blk)
-            break;
-         n_written += n_blk;
+   MTX_ASSERT(n >= 0);
+   uint8_t* temp = NULL;
+   const uint8_t* bp = buf;
+
+   if (mtxIsBigEndian()) {
+      uint32_t* temp = NALLOC(uint32_t, n);
+      const uint8_t* p = (const uint8_t*) buf;
+      const uint8_t* end = p + 4 * n;
+      uint8_t* t = (uint8_t*) temp;
+      while (p < end) {
+         *t++ = p[3];
+         *t++ = p[2];
+         *t++ = p[1];
+         *t++ = p[0];
+         p += 4;
+         bp = (const uint8_t*) temp;
       }
    }
-   else {
-      n_written = fwrite(buf,1,n_bytes,f);
+   while (n > 0) {
+      size_t nWritten = fwrite(bp, 4, n, f);
+      if (nWritten == 0)
+         mtxAbort(MTX_HERE, "File write error: %s", strerror(errno));
+      n -= nWritten;
    }
-   return n_written;
+   if (mtxIsBigEndian())
+      sysFree(temp);
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+/// Reads an array of 16-bit integers.
+/// This function expects that integers are stored in little-endian format in the file.
+///
+/// @param f Input file.
+/// @param buf Pointer to data buffer (uint16_t* or int16_t*).
+/// @param n Number of 16-bit integers to read.
+
+void sysRead16(FILE *f, void* buf, size_t n)
+{
+   MTX_ASSERT(f != NULL);
+   size_t nRead = fread(buf, 2, n, f);
+   if (nRead != n)
+      mtxAbort(MTX_HERE, "File read error: %s", strerror(errno));
+   if (mtxIsBigEndian()) {
+      uint8_t* p = (uint8_t*) buf;
+      uint8_t* end = p + 2 * n;
+      while (p < end) {
+         uint8_t tmp = p[0];
+         p[0] = p[1];
+         p[1] = tmp;
+         p += 2;
+      }
+   }
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+/// Writes an array of 16-bit integers.
+/// This function expects that integers are stored in little-endian format in the file.
+///
+/// @param f Output file.
+/// @param buf Pointer to data buffer (uint16_t* or int16_t*).
+/// @param n Number of 16-bit integers to read.
+
+void sysWrite16(FILE *f, const void* buf, size_t n)
+{
+   MTX_ASSERT(f != NULL);
+   uint8_t* temp = NULL;
+   const uint8_t* bp = buf;
+
+   if (mtxIsBigEndian()) {
+      uint16_t* temp = NALLOC(uint16_t, n);
+      const uint8_t* p = (const uint8_t*) buf;
+      const uint8_t* end = p + (size_t) 2 * n;
+      uint8_t* t = (uint8_t*) temp;
+      while (p < end) {
+         *t++ = p[1];
+         *t++ = p[0];
+         p += 2;
+         bp = (const uint8_t*) temp;
+      }
+   }
+   while (n > 0) {
+      size_t nWritten = fwrite(bp, 2, n, f);
+      if (nWritten == 0)
+         mtxAbort(MTX_HERE, "File write error: %s", strerror(errno));
+      n -= nWritten;
+   }
+   if (mtxIsBigEndian())
+      sysFree(temp);
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+/// Reads bytes from a file. Aborts the program on error.
+///
+/// @param f Input file.
+/// @param buf Pointer to data buffer.
+/// @param n Number of bytes to read.
+
+void sysRead8(FILE *f, void* buf, size_t n)
+{
+   MTX_ASSERT(n >= 0);
+   size_t nRead = fread(buf, 1, n, f);
+   if (nRead != n)
+      mtxAbort(MTX_HERE, "File read error: %s", strerror(errno));
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+/// Writes bytes to a file. Aborts the program on error.
+///
+/// @param f Output file.
+/// @param buf Pointer to data buffer.
+/// @param n Number of bytes to read.
+
+void sysWrite8(FILE *f, const void* buf, size_t n)
+{
+   MTX_ASSERT(n >= 0);
+   uint8_t* temp = NULL;
+   const uint8_t* bp = buf;
+
+   while (n > 0) {
+      size_t nWritten = fwrite(bp, 1, n, f);
+      if (nWritten == 0)
+         mtxAbort(MTX_HERE, "File write error: %s", strerror(errno));
+      n -= nWritten;
+   }
+   if (mtxIsBigEndian())
+      sysFree(temp);
 }
 
 /// @}

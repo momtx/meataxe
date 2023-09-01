@@ -20,7 +20,7 @@ static int CheckArgs(int ngen, Matrix_t  **gen1, const CfInfo *info1, Matrix_t *
 
    /* Check arguments
       --------------- */
-   MTX_ASSERT(ngen > 0, -1);
+   MTX_ASSERT(ngen > 0);
    for (j = 0; j < ngen; ++j)
    {
       matValidate(MTX_HERE, gen1[j]);

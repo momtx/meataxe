@@ -13,57 +13,37 @@
 /// @{
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-/// Write an integer matrix to a file.
+/// Writes an integer matrix to a file.
+
 /// @see ImatSave
 /// @param mat Pointer to the matrix.
 /// @param f Pointer to the file.
 /// @return 0 on success, -1 on error.
 
-int imatWrite(const IntMatrix_t *mat, FILE *f)
+void imatWrite(const IntMatrix_t *mat, FILE *f)
 {
-   long hdr[3];
-
-   if (!imatIsValid(mat)) {
-      return -1;
-   }
-   hdr[0] = -8;     // HACK: T_IMAT in 2.3
-   hdr[1] = mat->Nor;
-   hdr[2] = mat->Noc;
-   if (sysWriteLong32(f,hdr,3) != 3) {
-      mtxAbort(MTX_HERE,"Cannot write header");
-      return -1;
-   }
-   if (sysWriteLong32(f,mat->Data,mat->Nor * mat->Noc) != mat->Nor * mat->Noc) {
-      return -1;
-   }
-   return 0;
+   imatValidate(MTX_HERE, mat);
+   uint32_t hdr[3] = {MTX_TYPE_INTMATRIX, mat->Nor, mat->Noc};
+   sysWrite32(f,hdr,3);
+   sysWrite32(f, mat->Data, (size_t) mat->Nor * mat->Noc);
 }
 
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-/// Write an integer matrix to a file.
-/// This function writes an integer matrix to a named file. If the file
-/// exists, it is destroyed.
-/// @see imatWrite()
+
+/// Writes an integer matrix to a file. If a file with te given name exists, its contents are
+/// replace wth the matrix.
+/// See also @ref imatWrite.
+///
 /// @param mat Pointer to the matrix.
 /// @param file_name File name.
-/// @return 0 on success, -1 on error.
 
-int imatSave(const IntMatrix_t *mat, const char *file_name)
+void imatSave(const IntMatrix_t *mat, const char *file_name)
 {
-   FILE *f;
-   int rc;
-
-   if (!imatIsValid(mat)) {
-      return -1;
-   }
-   f = sysFopen(file_name,"wb");
-   if (f == NULL) {
-      return -1;
-   }
-   rc = imatWrite(mat,f);
+   imatValidate(MTX_HERE, mat);
+   FILE *f = sysFopen(file_name,"wb");
+   imatWrite(mat,f);
    fclose(f);
-   return rc;
 }
 
 

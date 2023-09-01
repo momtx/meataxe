@@ -106,8 +106,8 @@ static struct CharpolState* createState(const Matrix_t* matrix, enum PolyMode mo
 
 static struct CharpolState* getState(enum PolyMode mode)
 {
-   MTX_ASSERT(state__.mat != NULL, NULL);
-   MTX_ASSERT(state__.mode == mode, NULL);
+   MTX_ASSERT(state__.mat != NULL);
+   MTX_ASSERT(state__.mode == mode);
    return &state__;
 }
 
@@ -184,8 +184,8 @@ static void spinup_cyclic(struct CharpolState* state)
 
 static Poly_t *CharPolFactor_(struct CharpolState* state)
 {
-   MTX_ASSERT(state != NULL, NULL);
-   MTX_ASSERT(state->mat, NULL);
+   MTX_ASSERT(state != NULL);
+   MTX_ASSERT(state->mat);
    if (state->dim >= state->nor)      // nothing left to do
    {
       return NULL;

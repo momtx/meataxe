@@ -15,11 +15,9 @@
 
 static int ArgsAreValid(const Matrix_t *seed, const MatRep_t *rep, const IntMatrix_t *script)
 {
-    if (!imatIsValid(script) || script->Noc != 2)
-    {
+    imatValidate(MTX_HERE, script);
+    if (script->Noc != 2)
 	mtxAbort(MTX_HERE,"Invalid script");
-	return 0;
-    }
     matValidate(MTX_HERE, seed);
     if (!mrIsValid(rep) || rep->NGen <= 0)
     {
@@ -46,12 +44,6 @@ static int ArgsAreValid(const Matrix_t *seed, const MatRep_t *rep, const IntMatr
 
 Matrix_t *SpinUpWithScript(const Matrix_t *seed, const MatRep_t *rep, const IntMatrix_t *script)
 {
-    const long *op;
-    Matrix_t *basis;
-    int i;
-
-    /* Check arguments.
-       ---------------- */
     if (!ArgsAreValid(seed,rep,script))
     {
 	mtxAbort(MTX_HERE,"Invalid arguments");
@@ -61,9 +53,9 @@ Matrix_t *SpinUpWithScript(const Matrix_t *seed, const MatRep_t *rep, const IntM
     /* Spin up
        ------- */
     ffSetField(seed->Field);
-    op = script->Data;
-    basis = matAlloc(ffOrder,script->Nor,seed->Noc);
-    for (i = 0; i < script->Nor; ++i)
+    const int32_t *op = script->Data;
+    Matrix_t *basis = matAlloc(ffOrder,script->Nor,seed->Noc);
+    for (int i = 0; i < script->Nor; ++i)
     {
     	int vecno = (int) op[2 * i];
 	int vecgen = (int) op[2 * i + 1];
@@ -107,7 +99,7 @@ Matrix_t *SpinUpWithScript(const Matrix_t *seed, const MatRep_t *rep, const IntM
 int ConvertSpinUpScript(IntMatrix_t *script)
 {
     int k;
-    long *op = script->Data;
+    int32_t *op = script->Data;
 
     if (script->Nor == 0 || op[1] < 0)
 	return 0;

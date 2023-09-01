@@ -19,26 +19,13 @@
 
 Matrix_t *matRead(FILE *f)
 {
-   Matrix_t *m;
-   long hdr[3];
-
-   if (sysReadLong32(f,hdr,3) != 3) {
-      mtxAbort(MTX_HERE,"Cannot read header");
-      return NULL;
-   }
+   int32_t hdr[3];
+   sysRead32(f,hdr,3);
    if (hdr[0] < 2) {
       mtxAbort(MTX_HERE,"%s",MTX_ERR_NOTMATRIX);
-      return NULL;
    }
-   m = matAlloc(hdr[0],hdr[1],hdr[2]);
-   if (m == NULL) {
-      return NULL;
-   }
-   if (ffReadRows(f,m->Data,m->Nor, m->Noc) != m->Nor) {
-      mtxAbort(MTX_HERE,"File format error: could not read %d rows", m->Nor);
-      matFree(m);
-      return NULL;
-   }
+   Matrix_t* m = matAlloc(hdr[0],hdr[1],hdr[2]);
+   ffReadRows(f,m->Data,m->Nor, m->Noc);
    return m;
 }
 
@@ -48,7 +35,7 @@ Matrix_t *matRead(FILE *f)
 /// This function opens a file, reads a single matrix, and closes the file.
 /// To read more than one matrix from a file, use |matRead()|.
 /// @param fn File name.
-/// @return Pointer to the matrix, or |NULL| on error.
+/// @return Pointer to the matrix.
 
 Matrix_t *matLoad(const char *fn)
 {

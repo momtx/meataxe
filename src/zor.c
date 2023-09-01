@@ -84,7 +84,7 @@ static int ordmat()
 	   ------------------------- */
 	int i = 0;
 	while (i < ifile->Noc && ispiv[i]) ++i;
-	MTX_ASSERT(i < ifile->Noc, -1);
+	MTX_ASSERT(i < ifile->Noc);
 	ffMulRow(bend,FF_ZERO, ifile->Noc);
 	ffInsert(bend,i,FF_ONE);
 
@@ -168,33 +168,20 @@ static int ordmat()
    ------------------------------------------------------------------ */
 
 static int ordperm()
-
 {
-    long order, iper;
-    Perm_t *perm;
-
-
     if (ifile->Field != -1) 
     {
 	mtxAbort(MTX_HERE,"%s: %s",iname,MTX_ERR_NOTPERM);	/* No monomials */
 	return -1;
     }
-    if ((perm = permAlloc(ifile->Nor)) == NULL)
-    {
-	mtxAbort(MTX_HERE,"Error allocating permutation");
-	return -1;
-    }
+    Perm_t* perm = permAlloc(ifile->Nor);
     if (opt_G) 
 	printf("MeatAxe.Orders := [");
-    for (iper = 1; iper <= ifile->Noc; ++iper)
+    for (long iper = 1; iper <= ifile->Noc; ++iper)
     {
-	if (mfReadLong(ifile,perm->Data,perm->Degree) != perm->Degree)
-    	{
-	    mtxAbort(MTX_HERE,"Error reading permutation");
-	    return -1;
-	}
-	Perm_ConvertOld(perm->Data,perm->Degree);
-	order = permOrder(perm);
+       sysRead32(ifile->File, perm->Data, perm->Degree);
+       permConvertLegacyFormat(perm->Data,perm->Degree);
+	uint32_t order = permOrder(perm);
 	permFree(perm);
 	if (order < 0)
 	{
@@ -204,34 +191,22 @@ static int ordperm()
 	if (opt_G)
 	{
 	    if (iper > 1) printf(",");
-	    printf("%ld",order);
+	    printf("%lu",(unsigned long)order);
 	}
 	else
-	    printf("ELEMENT %ld HAS ORDER %ld\n",iper, order);
+	    printf("ELEMENT %ld HAS ORDER %lu\n",iper, (unsigned long)order);
     }
     if (opt_G) printf("];\n");
     return 0;
 }
 
-
-
-
-
-
-
-
-
-
-
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 static int Init(int argc, char **argv)
-
 {
     /* Process command line options.
        ----------------------------- */
     App = appAlloc(&AppInfo,argc,argv);
-    if (App == NULL)
-	return -1;
     opt_G = appGetOption(App,"-G --gap");
     if (opt_G)
 	MtxMessageLevel = -100;

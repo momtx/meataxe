@@ -39,6 +39,16 @@ int mfIsValid(const MtxFile_t *file)
    return 1;
 }
 
+void mfValidate(const MtxFile_t *file)
+{
+   if (file == NULL) {
+      mtxAbort(MTX_HERE,"NULL file");
+   }
+   if (file->Magic != MF_MAGIC) {
+      mtxAbort(MTX_HERE,"Invalid file");
+   }
+}
+
 
 static MtxFile_t *Mf_Alloc(const char *name)
 {
@@ -75,7 +85,6 @@ static void Mf_Free(MtxFile_t *f)
 MtxFile_t *mfOpen(const char *name)
 {
    MtxFile_t *f;
-   long header[3];
 
    if ((f = Mf_Alloc(name)) == NULL) {
       return NULL;
@@ -87,11 +96,8 @@ MtxFile_t *mfOpen(const char *name)
 
    /* Read the file header.
       --------------------- */
-   if (sysReadLong32(f->File,header,3) != 3) {
-      Mf_Free(f);
-      mtxAbort(MTX_HERE,"%s: Error reading file header",name);
-      return NULL;
-   }
+   uint32_t header[3];
+   sysRead32(f->File,header,3);
    f->Field = (int) header[0];
    f->Nor = (int) header[1];
    f->Noc = (int) header[2];
@@ -122,7 +128,6 @@ MtxFile_t *mfOpen(const char *name)
 MtxFile_t *mfCreate(const char *name, int field, int nor, int noc)
 {
    MtxFile_t *f;
-   long header[3];
 
    if ((f = Mf_Alloc(name)) == NULL) {
       return NULL;
@@ -134,14 +139,11 @@ MtxFile_t *mfCreate(const char *name, int field, int nor, int noc)
 
    /* Write the file header.
       ---------------------- */
+   uint32_t header[3];
    header[0] = f->Field = field;
    header[1] = f->Nor = nor;
    header[2] = f->Noc = noc;
-   if (sysWriteLong32(f->File,header,3) != 3) {
-      mtxAbort(MTX_HERE,"%s: Error writing file header",name);
-      Mf_Free(f);
-      return NULL;
-   }
+   sysWrite32(f->File,header,3);
 
    f->Magic = MF_MAGIC;
    return f;

@@ -338,35 +338,23 @@ static void FindMountains()
 
 
 
-
-/* -----------------------------------------------------------------
-   WriteIncidenceMatrix() - Write the incidence matrix
-   ----------------------------------------------------------------- */
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 static void WriteIncidenceMatrix()
 {
-    FILE *f;
     char fn[200];
-    int i;
 
-    /* Write the incidence matrix
-       -------------------------- */
+    // Write the incidence matrix
     snprintf(fn, sizeof(fn), "%s.inc", LI.BaseName);
-    f = sysFopen(fn, "wb");
-    if (f == NULL) 
-    {
-	mtxAbort(MTX_HERE,"Cannot open %s: %S",fn);
-	return;
-    }
+    FILE* f = sysFopen(fn, "wb");
     MESSAGE(1,("Writing incidence matrix (%s)\n",fn));
-    long l = (long) nmount;
-    sysWriteLong32(f,&l,1);
-    for (i = 0; i < nmount; ++i)
+    uint32_t l = nmount;
+    sysWrite32(f,&l,1);
+    for (int i = 0; i < nmount; ++i)
 	bsWrite(subof[i],f);
     fclose(f);
 
-    /* Write the .cfinfo file
-       ---------------------- */
+    // Write the .cfinfo file
     latWriteInfo(&LI);
 }
 

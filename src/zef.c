@@ -111,8 +111,7 @@ int main(int argc, char **argv)
     }
     if (rc == 0)
     {
-	if (matSave(Mat,oname) != 0)
-	    rc = -1;
+	matSave(Mat,oname);
     }
     if (rc == 0)
     {

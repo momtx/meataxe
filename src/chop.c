@@ -473,7 +473,7 @@ static int checkspl(const MatRep_t *rep, Matrix_t *nsp)
    /* Take the first vector from nsp and change to standard basis.
       ------------------------------------------------------------ */
    sb1 = SpinUp(nsp,rep,SF_FIRST | SF_CYCLIC | SF_STD,NULL,NULL);
-   MTX_ASSERT(sb1 != NULL && sb1->Nor == sb1->Noc, 0);
+   MTX_ASSERT(sb1 != NULL && sb1->Nor == sb1->Noc);
    ChangeBasisOLD(sb1,LI.NGen,(const Matrix_t **)rep->Gen,g1);
    endo = mrAlloc(0,NULL,0);
 
@@ -487,7 +487,7 @@ static int checkspl(const MatRep_t *rep, Matrix_t *nsp)
          ---------------------------------------------------------- */
       MESSAGE(3,("1st spin-up: nendo=%d\n",endo->NGen));
       subsp = SpinUp(nsp,endo,SF_FIRST | SF_SUB,NULL,NULL);
-      MTX_ASSERT(subsp != NULL, 0);
+      MTX_ASSERT(subsp != NULL);
       if (subsp->Nor == nsp->Nor) {
          matFree(subsp);
          result = 1;    /* Successfull! */
@@ -508,7 +508,7 @@ static int checkspl(const MatRep_t *rep, Matrix_t *nsp)
       v2 = extendbasis(subsp,nsp);      /* Get vector */
       matFree(subsp);
       sb2 = SpinUp(v2,rep,SF_FIRST | SF_CYCLIC | SF_STD,NULL,NULL);
-      MTX_ASSERT(sb2 != NULL && sb2->Nor == sb2->Noc, 0);
+      MTX_ASSERT(sb2 != NULL && sb2->Nor == sb2->Noc);
       matFree(v2);
       ChangeBasisOLD(sb2,rep->NGen,(const Matrix_t **)rep->Gen,g2);
 
@@ -695,7 +695,7 @@ static void newirred(node_t *n)
    LI.Cf[i].idpol = n->idpol;
    LI.Cf[i].spl = n->spl = n->nsp->Nor;
    b = SpinUp(n->nsp,n->Rep,SF_FIRST | SF_CYCLIC | SF_STD,NULL,NULL);
-   MTX_ASSERT(b != NULL && b->Nor == b->Noc, );
+   MTX_ASSERT(b != NULL && b->Nor == b->Noc);
    ChangeBasisOLD(b,LI.NGen,(const Matrix_t **)n->Rep->Gen,n->Rep->Gen);
    matFree(b);
 
@@ -788,7 +788,7 @@ static void make_kern(node_t *n, Poly_t *p)
 
    f = polDup(n->f1);
    cof = polDivMod(f,p);
-   MTX_ASSERT(f->Degree == -1,);
+   MTX_ASSERT(f->Degree == -1);
    polFree(f);
 
    if (n->nsp != NULL) {
@@ -1073,13 +1073,13 @@ static int try_ex_factor(node_t *n, Poly_t *cp, FPoly_t *cpf, int factor)
       ------------------------------------------------ */
    tmp = polDup(cp);
    q = polDivMod(tmp,p);
-   MTX_ASSERT(tmp->Degree == -1,0);
+   MTX_ASSERT(tmp->Degree == -1);
    polFree(tmp);
 
    /* Calculate i(x):=b(x)q(x) with a(x)p(x)+b(x)q(x) = 1.
       ---------------------------------------------------- */
    polGcdEx(p,q,gcd);
-   MTX_ASSERT(gcd[0]->Degree == 0, 0);
+   MTX_ASSERT(gcd[0]->Degree == 0);
    polMul(q,gcd[2]);
 
    /* Insert the word into i(x) and clean up polynomials.
@@ -1167,7 +1167,7 @@ static int try_exceptional(node_t *n)
    FPoly_t *cpf;
    int factor;
    int success = 0;
-   MTX_ASSERT(n->f1 != NULL && n->f2 != NULL, 0);
+   MTX_ASSERT(n->f1 != NULL && n->f2 != NULL);
 
    MESSAGE(2,("Trying exceptional cases\n"));
 

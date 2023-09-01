@@ -7,8 +7,6 @@
 #include <stdlib.h>
 
 #define MAXGRAD 12              /* Maximal degree of polynomials */
-#define MAXSUBFIELDORD 16       /* Maximal order of subfields */
-#define MAXSUBFIELDS 4          /* Maximal number of subfields */
 
 typedef unsigned char BYTE;
 typedef unsigned char POLY[MAXGRAD + 1];
@@ -45,12 +43,12 @@ BYTE
    mtx_textract[8][256],
    mtx_tnull[8][256],
    mtx_tinsert[8][256];
-BYTE mtx_embed[MAXSUBFIELDS][MAXSUBFIELDORD]; /* Embeddings of subfields */
-BYTE mtx_restrict[MAXSUBFIELDS][256];     /* Restriction to subfields */
-long mtx_embedord[MAXSUBFIELDS];                  /* Subfield orders */
+BYTE mtx_embed[MTX_MAXSUBFIELDS][MTX_MAXSUBFIELDORD]; /* Embeddings of subfields */
+BYTE mtx_restrict[MTX_MAXSUBFIELDS][256];     /* Restriction to subfields */
+long mtx_embedord[MTX_MAXSUBFIELDS];                  /* Subfield orders */
 
 static long info[4] = {0L,0L,0L,0L};
-static long ver = ZZZVERSION;
+static long ver = MTX_ZZZVERSION;
 static char filename[50];
 
 static long P;                  /* Characteristic of the field */
@@ -460,7 +458,7 @@ static int mkembed()
    /* Clear the mtx_embedord array. mtx_embedord[i]=0 means
       that the entry (and all subequent) is not used.
       ----------------------------------------------- */
-   for (i = 0; i < MAXSUBFIELDS; ++i) {
+   for (i = 0; i < MTX_MAXSUBFIELDS; ++i) {
       mtx_embedord[i] = 0;
    }
 
@@ -669,9 +667,9 @@ int main(int argc, char *argv[])
       (fwrite(mtx_tmultinv,1,sizeof(mtx_tmultinv),fd) != sizeof(mtx_tmultinv)) ||
       (fwrite(mtx_tnull,1,sizeof(mtx_tnull),fd) != sizeof(mtx_tnull)) ||
       (fwrite(mtx_tinsert,1,sizeof(mtx_tinsert),fd) != sizeof(mtx_tinsert)) ||
-      (sysWriteLong(fd,mtx_embedord,MAXSUBFIELDS) != MAXSUBFIELDS) ||
-      (fwrite(mtx_embed,MAXSUBFIELDORD,MAXSUBFIELDS,fd) != MAXSUBFIELDS) ||
-      (fwrite(mtx_restrict,256,MAXSUBFIELDS,fd) != MAXSUBFIELDS)
+      (sysWriteLong(fd,mtx_embedord,MTX_MAXSUBFIELDS) != MAXSUBFIELDS) ||
+      (fwrite(mtx_embed,MTX_MAXSUBFIELDORD,MTX_MAXSUBFIELDS,fd) != MAXSUBFIELDS) ||
+      (fwrite(mtx_restrict,256,MTX_MAXSUBFIELDS,fd) != MAXSUBFIELDS)
       ) {
       perror(filename);
       mtxAbort(MTX_HERE,"Error writing table file");

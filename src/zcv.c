@@ -70,7 +70,7 @@ static int readline()
 /////////////////////////////////////////////////////////////////////////////////////////////////////
 /// Read integer number
 
-static long readlong()
+static int32_t readlong()
 {
    long l;
    int minus = 0;
@@ -124,107 +124,20 @@ static long readlong()
 /////////////////////////////////////////////////////////////////////////////////////////////////////
 /// Write a header consisting of three integers
 
-static void WriteHeader(long a, long b, long c)
+static void WriteHeader(uint32_t a, uint32_t b, uint32_t c)
 {
-   long hdr[3];
-   hdr[0] = a;
-   hdr[1] = b;
-   hdr[2] = c;
-   if (sysWriteLong32(out,hdr,3) != 3) {
-      mtxAbort(MTX_HERE,"Cannot write header");
-   }
+   uint32_t hdr[3] = {a, b, c};
+   sysWrite32(out,hdr,3);
 }
 
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////
-/// Convert matrix in fixed format (mode 1)
-
-static void convmatrix()
-{
-   int i, j;
-   PTR m1;
-   long val = 0;
-   int inp;
-
-   if (fl > 9) {
-      mtxAbort(MTX_HERE,"Mode 1 not allowed for GF(%d)",fl);
-      return;
-   }
-   ffSetField(fl);
-   m1 = ffAlloc(1,noc);
-   WriteHeader(fl,nor,noc);
-   MESSAGE(0,("%dx%d matrix over GF(%d)\n",nor,noc,fl));
-   for (i = 1; i <= nor; ++i) {
-      ffMulRow(m1,FF_ZERO, noc);
-      inp = 81;
-      for (j = 0; j < noc; ++j) {
-         if (inp >= 80) {       /* read next line */
-            memset(lbuf,0,sizeof(lbuf));
-            if (readline()) {
-               return;
-            }
-            inp = 0;
-         }
-         switch (lbuf[inp++]) {
-            case ' ':
-            case '0': val = 0; break;
-            case '1': val = 1; break;
-            case '2': val = 2; break;
-            case '3': val = 3; break;
-            case '4': val = 4; break;
-            case '5': val = 5; break;
-            case '6': val = 6; break;
-            case '7': val = 7; break;
-            case '8': val = 8; break;
-            default:
-               mtxAbort(MTX_HERE,"%s: Bad file format (Digit expected)",inpname);
-         }
-         if (val > fl) {
-            mtxAbort(MTX_HERE,"%s: Bad file format",inpname);
-         }
-         ffInsert(m1,j,ffFromInt(val));
-      }
-      ffWriteRows(out,m1,1, noc);
-   }
-}
-
-
-/////////////////////////////////////////////////////////////////////////////////////////////////////
-///  Convert matrix in free format (mode 3,4,5,6)
-
-static void conv3456()
-{
-   int i, j;
-   PTR m1;
-   long val;
-
-   MESSAGE(0,("%dx%d matrix over GF(%d)\n",nor,noc,fl));
-   ffSetField(fl);
-   m1 = ffAlloc(1, noc);
-   WriteHeader(fl,nor,noc);
-   for (i = 1; i <= nor; ++i) {
-      ffMulRow(m1,FF_ZERO, noc);
-      for (j = 0; j < noc; ++j) {
-         val = readlong();
-         if (mod == 5) {
-            val %= ffChar;
-            if (val < 0) { val += ffChar; }
-         }
-         ffInsert(m1,j,ffFromInt(val));
-      }
-      ffWriteRows(out, m1, 1, noc);
-   }
-}
-
-
-/////////////////////////////////////////////////////////////////////////////////////////////////////
-/// Convert matrix (new format)
+/// Convert matrix
 
 static void ConvertMatrix()
 {
    long i, j;
    PTR m1;
-   long val;
 
    MESSAGE(0,("%dx%d matrix over GF(%d)\n",nor,noc,fl));
    ffSetField(fl);
@@ -233,7 +146,7 @@ static void ConvertMatrix()
    for (i = 1; i <= nor; ++i) {
       ffMulRow(m1,FF_ZERO, noc);
       for (j = 0; j < noc; ++j) {
-         val = readlong();
+         long val = readlong();
          ffInsert(m1,j,ffFromInt(val));
       }
       ffWriteRows(out, m1, 1, noc);
@@ -247,48 +160,45 @@ static void ConvertMatrix()
 static void ConvertIntMatrix()
 {
    long i, j;
-   long *x;
+   int32_t *x;
 
    MESSAGE(0,("%dx%d integer matrix\n",nor,noc));
-   x = NALLOC(long,noc);
-   WriteHeader(-8,nor,noc);         /* 8 = T_IMAT */
+   x = NALLOC(int32_t,noc);
+   WriteHeader(MTX_TYPE_INTMATRIX, nor, noc);         /* 8 = T_IMAT */
    for (i = 1; i <= nor; ++i) {
       for (j = 0; j < noc; ++j) {
          x[j] = readlong();
       }
-      sysWriteLong32(out,x,noc);
+      sysWrite32(out,x,noc);
    }
    free(x);
 }
 
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////
-///   ConvertPermutation() - Convert permutation (new format)
+
+/// Convert permutation (new format)
 
 static void ConvertPermutation()
 {
    long i;
-   long *buf;
+   uint32_t *buf;
    long kk;
 
    MESSAGE(0,("Permutation on %d points\n",nor));
-   buf = NALLOC(long,nor);
+   buf = NALLOC(uint32_t,nor);
    if (buf == NULL) {
       mtxAbort(MTX_HERE,"Cannot allocate permutation: %S");
    }
-   WriteHeader(-1,nor,1);
+   WriteHeader(MTX_TYPE_PERMUTATION, nor, 1);
 
    for (i = 0; i < nor; ++i) {
       kk = readlong();
+      MTX_ASSERT(kk > 0);
+      MTX_ASSERT(kk <= nor);
       buf[i] = kk - 1;
-      if ((kk < 1) || (kk > nor)) {
-         mtxAbort(MTX_HERE,"%s: Invalid point %d in permutation of degree %d",
-                    inpname,(int)kk,nor);
-      }
    }
-   if (sysWriteLong32(out,buf,nor) != nor) {
-      mtxAbort(MTX_HERE,"Cannot write to %s",outname);
-   }
+   sysWrite32(out, buf, nor);
 }
 
 
@@ -333,44 +243,6 @@ void convperm()
    }
 }
 
-
-/////////////////////////////////////////////////////////////////////////////////////////////////////
-/// Convert permutation (mode 12, 13)
-
-void conv1213()
-{
-   long nper, i;
-   long *buf;
-   long kk = 0, f1, f2;
-
-   MESSAGE(0,("Permutation on %d points\n",nor));
-   buf = NALLOC(long,nor);
-   if (buf == NULL) {
-      mtxAbort(MTX_HERE,"Cannot allocate permutation: %S");
-      return;
-   }
-   WriteHeader(-fl,nor,noc);
-   for (nper = noc; nper != 0; --nper) {
-      for (i = 0; i < nor; ++i) {
-         switch (mod) {
-            case 12:
-               kk = readlong();
-               break;
-            case 13:
-               f1 = readlong();
-               f2 = readlong();
-               kk = (f1 - 1) * fl + f2 + 1;
-               break;
-         }
-         buf[i] = kk;
-      }
-      if (sysWriteLong32(out,buf,nor) != nor) {
-         mtxAbort(MTX_HERE,"Cannot write %s: %S",outname);
-      }
-   }
-}
-
-
 /////////////////////////////////////////////////////////////////////////////////////////////////////
 /// Read the next header. Returns 0 on end of file, 1 on success.
 
@@ -382,13 +254,11 @@ static int ReadHeader(void)
    return 1;
 }
 
-
 /////////////////////////////////////////////////////////////////////////////////////////////////////
 /// Convert one member.
 
 static void Convert(void)
 {
-   static char sfl[20], smode[20], snor[20], snoc[20];
    char *c;
 
    /* Check for new file format
@@ -474,45 +344,8 @@ static void Convert(void)
       readline();
       ConvertPolynomial();
       return;
-   }
-
-   /* Use old file format
-      ------------------- */
-   strncpy(smode,lbuf,2);
-   smode[2] = 0;
-   strncpy(sfl,lbuf + 2,6);
-   sfl[6] = 0;
-   strncpy(snor,lbuf + 8,6);
-   snor[6] = 0;
-   strncpy(snoc,lbuf + 14,6);
-   snoc[6] = 0;
-   if (sscanf(lbuf,"%d%d%d%d",&mod,&fl,&nor,&noc) != 4) {
-      sscanf(smode,"%d",&mod);
-      sscanf(sfl,"%d",&fl);
-      sscanf(snor,"%d",&nor);
-      sscanf(snoc,"%d",&noc);
-   }
-
-   if (mod != 1) { readline(); }
-   switch (mod) {
-      case 1:
-         convmatrix();
-         break;
-      case 2:
-         convperm();
-         break;
-      case 3:
-      case 4:
-      case 5:
-      case 6:
-         conv3456();
-         break;
-      case 12:
-      case 13:
-         conv1213();
-         break;
-      default:
-         mtxAbort(MTX_HERE,"%s: Unknown mode %d",inpname,mod);
+   } else {
+      mtxAbort(MTX_HERE,"%s: Unsupported file format",inpname);
    }
 }
 
@@ -569,6 +402,7 @@ int main(int argc, char **argv)
       return 0;
    }
 
+   int context = mtxBegin("Converting %s", inpname);
    while (ReadHeader()) {
       Convert();
       ++MemberCount;
@@ -576,6 +410,7 @@ int main(int argc, char **argv)
    if (MemberCount == 0) {
       MESSAGE(0,("Warning: %s is empty",inpname));
    }
+   mtxEnd(context);
 
    Cleanup();
    return 0;
@@ -632,15 +467,6 @@ The header may be given in a different format, for example
 <pre>
 MeatAxeFileInfo := "matrix field=5 rows=100 cols=100";
 </pre>
-Other header formats are supported for compatibility with older versions
-of the MeatAxe.
-
-After an old type 1 header, the format of the data follwing the header is
-fixed. There must be at most 80 characters per line, lines must be filled
-as much as possible, and each row of the matrix starts with a new input
-line. There are no blanks allowed to separate numbers. In all other modes,
-the data part consists of a sequence of integers in free format, separated
-by any combination of blanks, tabs, or newlines.
-
 */
+
 // vim:fileencoding=utf8:sw=3:ts=8:et:cin

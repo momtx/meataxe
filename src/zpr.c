@@ -14,7 +14,7 @@
 
 
 static long HdrPos;
-static long hdr[3];
+static uint32_t hdr[3];
 static FILE *dest = NULL;   /* Output file */
 static const char *inpname = NULL;
 static FILE *inpfile = NULL;
@@ -90,11 +90,11 @@ static void prmatrix()
     else if (hdr[0] < 10000) {md = 5; mx = 15;}
     else {md = 6; mx = 12;}
 
-    fprintf(dest,"matrix field=%ld rows=%ld cols=%ld\n",hdr[0],hdr[1],hdr[2]);
+    fprintf(dest,"matrix field=%ld rows=%ld cols=%ld\n",
+          (long)hdr[0],(long)hdr[1],(long)hdr[2]);
     for (loop1 = 1; loop1 <= hdr[1]; ++loop1)
     {	
-	if (ffReadRows(inpfile, m1, 1, hdr[2]) != 1)
-	    mtxAbort(MTX_HERE,"Cannot read %s",inpname);
+	ffReadRows(inpfile, m1, 1, hdr[2]);
 	iv = 1;
 	for (j1 = 0; j1 < hdr[2]; ++j1)
 	{
@@ -138,8 +138,7 @@ static void prgapmat()
    PrString("MeatAxe.Matrix := [\n");
    for (loop1 = 1; loop1 <= hdr[1]; ++loop1)
    {	
-      if (ffReadRows(inpfile,m1,1, hdr[2]) != 1) 
-         mtxAbort(MTX_HERE,"Cannot read %s",inpname);
+      ffReadRows(inpfile,m1,1, hdr[2]);
       cnt = 0;
       fprintf(dest,"[");
       for (j1 = 0; j1 < hdr[2]; ++j1)
@@ -160,7 +159,7 @@ static void prgapmat()
          }
          else
          {   if (f1 == FF_ZERO)
-            {   fprintf(dest,"0*Z(%ld)",hdr[0]);
+            {   fprintf(dest,"0*Z(%ld)",(long)hdr[0]);
                cnt += 5;
                cnt += hdr[0]>9999?5:hdr[0]>999?4:hdr[0]>99?3:hdr[0]>9?2:1;
             }
@@ -171,7 +170,7 @@ static void prgapmat()
                {   f2 = ffMul(f2,gen);
                   ++k;
                }
-               fprintf(dest,"Z(%ld)^%ld",hdr[0],k);
+               fprintf(dest,"Z(%ld)^%ld",(long)hdr[0],k);
                cnt += 4;
                cnt += hdr[0]>9999?5:hdr[0]>999?4:hdr[0]>99?3:hdr[0]>9?2:1;
                cnt += k>9999?5:k>999?4:k>99?3:k>9?2:1;
@@ -189,7 +188,7 @@ static void prgapmat()
    }
    fprintf(dest,"]");
    if (isprimefield)
-      fprintf(dest,"*Z(%ld)",hdr[0]);
+      fprintf(dest,"*Z(%ld)",(long)hdr[0]);
    fprintf(dest,";\n");
 }
 
@@ -200,18 +199,16 @@ static void prgapmat()
    ------------------------------------------------------------------ */
 
 static void prgapimat()
-
 {
-    long *row;
+    uint32_t *row;
     long loop1, j1;
     int cnt;
 
-    row = NALLOC(long,hdr[2]);
+    row = NALLOC(uint32_t,hdr[2]);
     PrString("MeatAxe.Matrix := [\n");
     for (loop1 = 1; loop1 <= hdr[1]; ++loop1)
     {	
-	if (sysReadLong32(inpfile,row,hdr[2]) != hdr[2]) 
-	    mtxAbort(MTX_HERE,"Cannot read %s",inpname);
+	sysRead32(inpfile,row,hdr[2]);
 	cnt = 0;
 	fprintf(dest,"[");
 	for (j1 = 0; j1 < hdr[2]; ++j1)
@@ -244,11 +241,11 @@ static void prgapimat()
 static void prgapperm()
 {
     long i, pos;
-    long *perm;
+    uint32_t *perm;
 
     /* Allocate memory for one permutation
       ------------------------------------ */
-    perm = NALLOC(long,hdr[1]);
+    perm = NALLOC(uint32_t,hdr[1]);
     if (perm == NULL) 
 	mtxAbort(MTX_HERE,"Cannot allocate work space");
 
@@ -257,8 +254,7 @@ static void prgapperm()
     {
     	/* Read the next permutation
 	   ------------------------- */
-	if (sysReadLong32(inpfile,perm,hdr[1]) != (int) hdr[1])
-	    mtxAbort(MTX_HERE,"Cannot read %s",inpname);
+	sysRead32(inpfile,perm,hdr[1]);
 
 	/* Print it
 	   -------- */
@@ -312,7 +308,7 @@ static void prpol()
 	mtxAbort(MTX_HERE,"Cannot read %s",inpname);
     
 
-    fprintf(dest,"polynomial field=%ld degree=%ld\n",hdr[1],hdr[2]);
+    fprintf(dest,"polynomial field=%ld degree=%ld\n",(long)hdr[1],(long)hdr[2]);
     for (i = 0; i <= p->Degree; ++i)
     {
 	PrLong(ffToInt(p->Data[i]));
@@ -358,18 +354,15 @@ static void primat()
 
 {
     long k, i;
-    long *row;
-
-    row = NALLOC(long,hdr[2]);
+    int32_t *row = NALLOC(int32_t,hdr[2]);
     if (row == NULL) 
 	mtxAbort(MTX_HERE,"Cannot allocate work space");
 
-    fprintf(dest,"integer-matrix rows=%ld cols=%ld\n",hdr[1],
-	hdr[2]);
+    fprintf(dest,"integer-matrix rows=%ld cols=%ld\n",(long)hdr[1],
+	(long)hdr[2]);
     for (i = 0; i < hdr[1]; ++i)
     {
-	if (sysReadLong32(inpfile,row,hdr[2]) != (int) hdr[2])
-	    mtxAbort(MTX_HERE,"Cannot read %s: %s",inpname);
+	sysRead32(inpfile,row,hdr[2]);
     	for (k = 0; k < hdr[2]; ++k)
     	{
     	    PrLong(row[k]);
@@ -388,13 +381,13 @@ static void primat()
 static void prmtx()
 
 {
-    if (hdr[0] > 1)
+    if (hdr[0] < 65536U)
 	prmatrix();
-    else if (hdr[0] == -1)
+    else if (hdr[0] == MTX_TYPE_PERMUTATION)
 	prperm();
-    else if (hdr[0] == -2)
+    else if (hdr[0] == MTX_TYPE_POLYNOMIAL)
 	prpol();
-    else if (hdr[0] == -8)
+    else if (hdr[0] == MTX_TYPE_INTMATRIX)
 	primat();
     else
 	mtxAbort(MTX_HERE,"Cannot print type %d in Mtx format",(int)hdr[0]);
@@ -405,13 +398,13 @@ static void PrintPermutationSummary()
 {
     if (Gap)
     {
-	printf("MeatAxe.PermutationCount:=%ld;\n",hdr[2]);
-	printf("MeatAxe.PermutationDegree:=%ld;\n",hdr[1]);
+	printf("MeatAxe.PermutationCount:=%ld;\n",(long)hdr[2]);
+	printf("MeatAxe.PermutationDegree:=%ld;\n",(long)hdr[1]);
     }
     else
     {
 	printf("%ld Permutation%s of degree %ld\n",
-	    hdr[2], hdr[2] == 1 ? "" : "s", hdr[1]);
+	    (long)hdr[2], hdr[2] == 1 ? "" : "s", (long)hdr[1]);
     }
 }
 
@@ -419,13 +412,13 @@ static void PrintMatrixSummary()
 {
     if (Gap)
     {
-	printf("MeatAxe.MatrixRows:=%ld;\n",hdr[1]);
-	printf("MeatAxe.MatrixCols:=%ld;\n",hdr[2]);
-	printf("MeatAxe.MatrixField:=%ld;\n",hdr[0]);
+	printf("MeatAxe.MatrixRows:=%ld;\n",(long)hdr[1]);
+	printf("MeatAxe.MatrixCols:=%ld;\n",(long)hdr[2]);
+	printf("MeatAxe.MatrixField:=%ld;\n",(long)hdr[0]);
     }
     else
     {
-	printf("%ld x %ld matrix over GF(%ld)\n",hdr[1],hdr[2],hdr[0]);
+	printf("%ld x %ld matrix over GF(%ld)\n",(long)hdr[1],(long)hdr[2],(long)hdr[0]);
     }
 }
 
@@ -434,11 +427,11 @@ static void PrintPolySummary()
 {
     if (Gap)
     {
-	printf("MeatAxe.PolynomialField=%ld\n",hdr[1]);
-	printf("MeatAxe.PolynomialDegree=%ld\n",hdr[2]);
+	printf("MeatAxe.PolynomialField=%ld\n",(long)hdr[1]);
+	printf("MeatAxe.PolynomialDegree=%ld\n",(long)hdr[2]);
     }
     else
-	printf("Polynomial of degree %ld over GF(%ld)\n",hdr[2],hdr[1]);
+	printf("Polynomial of degree %ld over GF(%ld)\n",(long)hdr[2],(long)hdr[1]);
 }
 
 
@@ -446,11 +439,11 @@ static void PrintImatSummary()
 {
     if (Gap)
     {
-	printf("MeatAxe.IntegerMatrixRows:=%ld;\n",hdr[1]);
-	printf("MeatAxe.IntegerMatrixCols:=%ld;\n",hdr[2]);
+	printf("MeatAxe.IntegerMatrixRows:=%ld;\n",(long)hdr[1]);
+	printf("MeatAxe.IntegerMatrixCols:=%ld;\n",(long)hdr[2]);
     }
     else
-	printf("%ld x %ld integer matrix\n",hdr[1],hdr[2]);
+	printf("%ld x %ld integer matrix\n",(long)hdr[1],(long)hdr[2]);
 }
 
 /* ------------------------------------------------------------------
@@ -489,27 +482,17 @@ static void PrintSummary()
 	sysFseek(inpfile,ftell(inpfile)+hdr[1]*hdr[2]*4);
     }
     else
-	printf("Unknown file format (%ld,%ld,%ld).\n",hdr[0],hdr[1],hdr[2]);
+	printf("Unknown file format (%ld,%ld,%ld).\n",
+              (long)hdr[0],(long)hdr[1],(long)hdr[2]);
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
-
-
-
-/* ------------------------------------------------------------------
-   ReadHeader() - Read file header. Returns 1 on success, 0 on error
-   or EOF.
-   ------------------------------------------------------------------ */
-
-static int ReadHeader(void)
-
+static int readHeader(void)
 {
     HdrPos = ftell(inpfile);
-    if (feof(inpfile)) return 0;
-    if (sysReadLong32(inpfile,hdr,3) != 3) 
-	return 0;
-    /* Check the header */
-    if (hdr[0] > 65536 || hdr[0] < -20 || hdr[1] < 0 || hdr[2] < 0)
+    if (!sysTryRead32(inpfile,hdr,3)) return 0;
+    if ((hdr[0] > 0x10000 && hdr[0] < MTX_TYPE_INTMATRIX) || hdr[1] < 0 || hdr[2] < 0)
     {
 	mtxAbort(MTX_HERE, "%s: %s (%d %d %d)\n",inpname,MTX_ERR_FILEFMT,
 	    (int)hdr[0],(int)hdr[1],(int)hdr[2]);
@@ -517,7 +500,7 @@ static int ReadHeader(void)
     return 1;
 }
 
-
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 static int Init(int argc, char **argv)
 {
@@ -564,7 +547,7 @@ int main(int argc, char **argv)
 	return 1;
     }
 
-    while (ReadHeader())
+    while (readHeader())
     {
 	if (Summary)
 	    PrintSummary();
@@ -575,7 +558,6 @@ int main(int argc, char **argv)
     }
     fclose(inpfile);
     fclose(dest);
-    MtxCleanupLibrary();
     return (EXIT_OK);
 }
 

@@ -267,9 +267,9 @@ static int readCfFile(StfData* f, const char* fn, Lat_Info* li)
 
 int latReadInfo(Lat_Info *li, const char *basename)
 {
-    MTX_ASSERT(li != NULL, -1);
-    MTX_ASSERT(basename != NULL, -1);
-    MTX_ASSERT(strlen(basename) < LAT_MAXBASENAME - 1, -1);
+    MTX_ASSERT(li != NULL);
+    MTX_ASSERT(basename != NULL);
+    MTX_ASSERT(strlen(basename) < LAT_MAXBASENAME - 1);
 
     // Initialize the data structure.
     memset(li,0,sizeof(Lat_Info));
@@ -309,7 +309,7 @@ int latWriteInfo(const Lat_Info *li)
     int tmp[LAT_MAXCF];
     char fn[LAT_MAXBASENAME + 20];
 
-    MTX_ASSERT(li != NULL, -1);
+    MTX_ASSERT(li != NULL);
 
     /* Open the file
        ------------- */
@@ -420,8 +420,8 @@ const char *latCfName(const Lat_Info *li, int cf)
     int num, dim;
 
     buf[0] = 0;
-    MTX_ASSERT(li != NULL, buf);
-    MTX_ASSERT(cf >= 0 && cf < li->NCf, buf);
+    MTX_ASSERT(li != NULL);
+    MTX_ASSERT(cf >= 0 && cf < li->NCf);
 
     /* Get dimension and number of the constituent
        ------------------------------------------- */

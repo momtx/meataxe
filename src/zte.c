@@ -119,54 +119,35 @@ static int tensormatrices()
    ------------------------------------------------------------------ */
 
 static int tensorperms(void)
-
 {
-    int a_deg = AFile->Nor;
-    int b_deg = BFile->Nor;
-    int c_deg = a_deg * b_deg;
-    MtxFile_t *f;
-    long *a_buf, *b_buf, *c_buf;
+    const uint32_t a_deg = AFile->Nor;
+    const uint32_t b_deg = BFile->Nor;
+    MTX_ASSERT((((uint64_t)a_deg * b_deg) >> 32) == 0);
+    const uint32_t c_deg = a_deg * b_deg;
     int i;
     
     MESSAGE(1,("Computing permutation tensor product:"));
     MESSAGE(1,(" %d*%d=%d\n", a_deg,b_deg,c_deg));
 
-    /* Read permutations.
-       ------------------ */
-    a_buf = NALLOC(long,a_deg);
-    b_buf = NALLOC(long,b_deg);
-    c_buf = NALLOC(long,b_deg);
-    if (a_buf == NULL || b_buf == NULL || c_buf == NULL) 
-	return -1;
-    if (mfReadLong(AFile,a_buf,a_deg) != a_deg ||
-        mfReadLong(BFile,b_buf,b_deg) != b_deg)
-    {
-	mtxAbort(MTX_HERE,"Error reading permutation");
-	return -1;
-    }
+    // Read permutations.
+    uint32_t* a_buf = NALLOC(uint32_t,a_deg);
+    uint32_t* b_buf = NALLOC(uint32_t,b_deg);
+    uint32_t* c_buf = NALLOC(uint32_t,b_deg);
+    sysRead32(AFile->File,a_buf,a_deg);
+    sysRead32(BFile->File,b_buf,b_deg);
+    permConvertLegacyFormat(a_buf,a_deg);
+    permConvertLegacyFormat(b_buf,b_deg);
 
-    /* Convert from FORMAT to C format, if necessary.
-       ---------------------------------------------- */
-    Perm_ConvertOld(a_buf,a_deg);
-    Perm_ConvertOld(b_buf,b_deg);
+    // Open output file.
+    MtxFile_t *f = mfCreate(cname,-1,c_deg,1);
 
-    /* Open output file.
-       ----------------- */
-    if ((f = mfCreate(cname,-1,c_deg,1)) == NULL)
-	return -1;
-
-    /* Calculate the tensor product
-       ---------------------------- */
+    // Calculate the tensor product
     for (i = 0; i < a_deg; ++i)
     {
 	int k;
 	for (k = 0; k < b_deg; ++k)
 	    c_buf[k] = a_buf[i] * b_deg + b_buf[k];
-        if (mfWriteLong(f,c_buf,b_deg) != b_deg)
-        {
-	    mtxAbort(MTX_HERE,"Error writing permutation");
-	    return -1;
-	}
+        sysWrite32(f->File, c_buf, b_deg);
     }
     mfClose(f);
     return 0;

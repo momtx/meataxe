@@ -42,7 +42,7 @@ int permCompare(const Perm_t *a, const Perm_t *b)
 
    // compare the entries
    // TODO: do not return -1
-   i = memcmp(a->Data,b->Data,sizeof(long) * a->Degree);
+   i = memcmp(a->Data,b->Data,sizeof(a->Data[0]) * a->Degree);
    if (i < 0) {
       return -1;
    } else if (i > 0) {

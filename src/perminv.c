@@ -20,24 +20,14 @@
 
 Perm_t *permInverse(const Perm_t *src)
 {
-   register long i;
-   register long *d, *s;
-   Perm_t *inv;
-
-   // Check arguments
    permValidate(MTX_HERE, src);
 
-   // Allocate a new permutation
-   inv = permAlloc(src->Degree);
-   if (inv == NULL) {
-      mtxAbort(MTX_HERE,"Cannot allocate result buffer");
-      return NULL;
-   }
-   d = inv->Data;
-   s = src->Data;
-
-   // Invert
-   for (i = src->Degree - 1, s = src->Data + i; i >= 0; --i, --s) {
+   Perm_t* inv = permAlloc(src->Degree);
+   uint32_t* d = inv->Data;
+   const uint32_t* s = src->Data + src->Degree;
+   for (uint32_t i = src->Degree; i > 0; ) {
+      --i;
+      --s;
       d[*s] = i;
    }
 

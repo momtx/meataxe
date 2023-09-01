@@ -24,7 +24,7 @@ void tstPrintRows(const char *name, PTR x, int nor, int noc)
    }
 }
 
-
+static char *argv0;
 static const char* tstCurrent = "";
 static int tstFailCalled = 0;
 static int tstMessageThreshold = 0;
@@ -364,6 +364,8 @@ typedef TstResult (*FieldDependentTestFunction)(int q);
 
 static int executeTest(const struct TstFoundTest* test, int field)
 {
+   mtxCleanupLibrary();
+   mtxInitLibrary(argv0);
    mtxRandomInit(52134);
    TstResult result = 0;
    tstFailCalled = 0;
@@ -392,25 +394,25 @@ static int executeTest(const struct TstFoundTest* test, int field)
 
 static void listTests(int nsel, const char* const* sel)
 {
-for (struct TstFoundTest* t = foundTests; t->f != NULL; ++t) {
-   if (!testSelected(t->name, nsel, sel)) continue;
-   printf("%s%s\n", t->name, (t->flags & TST_FLAG_PER_FIELD) ? "(q)" : "");
-}
+   for (struct TstFoundTest* t = foundTests; t->f != NULL; ++t) {
+      if (!testSelected(t->name, nsel, sel)) continue;
+      printf("%s%s\n", t->name, (t->flags & TST_FLAG_PER_FIELD) ? "(q)" : "");
+   }
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 static int cmpTests(const void* a, const void* b)
 {
-const struct TstFoundTest* ta = (const struct TstFoundTest*)a;
-const struct TstFoundTest* tb = (const struct TstFoundTest*)b;
-return strcmp(ta->name, tb->name);
+   const struct TstFoundTest* ta = (const struct TstFoundTest*)a;
+   const struct TstFoundTest* tb = (const struct TstFoundTest*)b;
+   return strcmp(ta->name, tb->name);
 }
 
 static void sortTests()
 {
-qsort(foundTests, sizeof(foundTests) / sizeof(foundTests[0]) - 1,
-      sizeof(foundTests[0]), cmpTests);
+   qsort(foundTests, sizeof(foundTests) / sizeof(foundTests[0]) - 1,
+         sizeof(foundTests[0]), cmpTests);
 }
 
 
@@ -418,22 +420,23 @@ qsort(foundTests, sizeof(foundTests) / sizeof(foundTests[0]) - 1,
 
 int main(int argc, char **argv)
 {
-MtxApplication_t *app;
+   argv0 = strdup(argv[0]);
+   MtxApplication_t *app;
 
-if ((app = appAlloc(&AppInfo,argc,argv)) == NULL) {
-   return -1;
-}
+   if ((app = appAlloc(&AppInfo,argc,argv)) == NULL) {
+      return -1;
+   }
 #if MTX_ZZZ == 1
-static const int MTX_MAX_Q = 65535;
+   static const int MTX_MAX_Q = 65535;
 #elif MTX_ZZZ == 0
-static const int MTX_MAX_Q = 256;
+   static const int MTX_MAX_Q = 256;
 #else
 #error MTX_ZZZ undefined
 #endif
 
-int field = appGetIntOption(app,"-t --print-tables",-1, 2, MTX_MAX_Q);
-if (field > 0) {
-   printTables(field);
+   int field = appGetIntOption(app,"-t --print-tables",-1, 2, MTX_MAX_Q);
+   if (field > 0) {
+      printTables(field);
       exit(0);
    }
 
@@ -453,8 +456,8 @@ if (field > 0) {
       listTests(nsel, sel);
       return 0;
    }
-   
-   tstPrintf(0,"MeatAxe Version %s\n",MtxVersion);
+
+   tstPrintf(0,"MeatAxe Version %s\n",mtxVersion());
 
    int nAvailable = 0;
    int nSelected = 0;
@@ -481,7 +484,7 @@ if (field > 0) {
       if (executeTest(t, -1) != 0)
          ++nFailed;
    }
-   
+
    tstPrintf(-2,"\nTest results: %d total, %d selected", nAvailable, nSelected);
    if (nFailed == 0)
       tstPrintf(-2, " -- no failures\n");

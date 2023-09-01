@@ -80,7 +80,8 @@ void matValidate(const struct MtxSourceLocation* src, const Matrix_t *mat)
    if (mat == NULL)
       mtxAbort(src,"NULL matrix");
    if (mat->Magic != MAT_MAGIC || mat->Field < 2 || mat->Nor < 0 || mat->Noc < 0) {
-      mtxAbort(src,"Invalid matrix (field=%d, nor=%d, noc=%d)",mat->Field, mat->Nor,mat->Noc);
+      mtxAbort(src ? src : MTX_HERE,"Invalid matrix (field=%d, nor=%d, noc=%d)",
+            mat->Field, mat->Nor,mat->Noc);
    }
 }
 
@@ -100,9 +101,9 @@ Matrix_t *matAlloc(int field, int nor, int noc)
 {
    Matrix_t *m;
 
-   MTX_ASSERT(field >= 2, NULL);
-   MTX_ASSERT(nor >= 0, NULL);
-   MTX_ASSERT(noc >= 0, NULL);
+   MTX_ASSERT(field >= 2);
+   MTX_ASSERT(nor >= 0);
+   MTX_ASSERT(noc >= 0);
 
    // Initialize the data structure
    if (ffSetField(field) != 0) {

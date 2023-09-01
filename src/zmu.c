@@ -95,16 +95,8 @@ static int multpm(void)
     for (i = 0; i < nor1; ++i)
     {	
 	ffSeekRow(bfile,perm->Data[i], noc2);
-	if (ffReadRows(bfile,row->Data, 1, noc2) != 1)
-	{
-	    mtxAbort(MTX_HERE,"Cannot read from %s",bname);
-	    return -1;
-	}
-	if (ffWriteRows(cfile,row->Data,1, noc2) != 1)
-	{
-	    mtxAbort(MTX_HERE,"Cannot write to %s",cname);
-	    return -1;
-	}
+	ffReadRows(bfile,row->Data, 1, noc2);
+	ffWriteRows(cfile,row->Data,1, noc2);
     }
 
     /* Clean up.
@@ -159,17 +151,9 @@ static int multmp(void)
        ---------------------------------- */
     for (i = 0; i < nor1; ++i)
     {
-        if (ffReadRows(afile,row_in,1, noc1) != 1)
-	{
-	    mtxAbort(MTX_HERE,"Cannot read from %s",aname);
-	    return -1;
-	}
+        ffReadRows(afile,row_in,1, noc1);
 	ffPermRow(row_in,perm->Data,noc1,row_out);
-	if (ffWriteRows(cfile,row_out,1, noc1) != 1)
-	{
-	    mtxAbort(MTX_HERE,"Cannot write to %s",cname);
-	    return -1;
-	}
+	ffWriteRows(cfile,row_out,1, noc1);
     }
 
     /* Clean up.
@@ -186,7 +170,6 @@ static int multmp(void)
    ------------------------------------------------------------------ */
 
 static int multsm(FILE *s, FILE *m, int norM, int nocM)
-
 {
     ffSetField(fl1);
     PTR ms = ffAlloc(1,1);
@@ -198,17 +181,9 @@ static int multsm(FILE *s, FILE *m, int norM, int nocM)
 	return -1;
     for (int i = 0; i < norM; ++i)
     {	
-	if (ffReadRows(m,mm,1, nocM) != 1)
-	{
-	    mtxAbort(MTX_HERE,"Cannot read from input file");
-	    return -1;
-	}
+	ffReadRows(m,mm,1, nocM);
 	ffMulRow(mm,f, nocM);
-	if (ffWriteRows(cfile,mm,1, nocM) != 1)
-	{
-	    mtxAbort(MTX_HERE,"Cannot write to %s",cname);
-	    return -1;
-	}
+	ffWriteRows(cfile,mm,1, nocM);
     }
     sysFree(mm);
     return 0;
@@ -281,17 +256,9 @@ static int multmm(void)
     const int nocOut = col2 - col1 + 1;
     for (i = 0; i < row2 - row1 + 1; ++i)
     {
-        if (ffReadRows(afile, m1, 1, noc1) != 1)
-	{
-	    mtxAbort(MTX_HERE,"Cannot read from %s",aname);
-	    return -1;
-	}
+        ffReadRows(afile, m1, 1, noc1);
 	ffMapRow(m1, m2, nor2, nocOut, out);
-	if (ffWriteRows(cfile,out,1, nocOut) != 1)
-	{
-	    mtxAbort(MTX_HERE,"Cannot write to %s",cname);
-	    return -1;
-	}
+	ffWriteRows(cfile,out,1, nocOut);
     }
 
     return 0;
@@ -322,27 +289,13 @@ static int multpp(void)
        ---------------------- */
     sysFseek(afile,0);
     a = permRead(afile);
-    if (a == NULL)
-    {
-	mtxAbort(MTX_HERE,"Cannot read permutation from %s",aname);
-	return -1;
-    }
     sysFseek(bfile,0);
     b = permRead(bfile);
-    if (b == NULL)
-    {
-	mtxAbort(MTX_HERE,"Cannot read permutation from %s",bname);
-	return -1;
-    }
 
     /* Multiply and write.
        ------------------- */
     permMul(a,b);
-    if (permSave(a,cname) != 0)
-    {
-	mtxAbort(MTX_HERE,"Cannot write to %s",cname);
-	return -1;
-    }
+    permSave(a,cname);
 
     /* Clean up.
        --------- */
@@ -354,7 +307,6 @@ static int multpp(void)
 
 
 static int ParseSpec(const char *spec, const char *name, int *pos, int *size)
-
 {
     *pos = atoi(spec);
     while (*spec != 0 && isdigit(*spec)) ++spec;

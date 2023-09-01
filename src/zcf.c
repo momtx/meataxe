@@ -104,7 +104,7 @@ int permToMat1(const Perm_t *perm, PTR row)
        ------------------------ */
     if (rc == 0)
     {
-	register const long *p = perm->Data;
+	const uint32_t *p = perm->Data;
 	int i;
 	for (i = 0; rc == 0 && i < nor; ++i)
 	{	
@@ -219,10 +219,8 @@ static int ReadRows(int req)
     MESSAGE(1,("Reading %d rows\n",to_read));
     for (i = 0; i < to_read; ++i)
     {
-	int k;
-	if (ffReadRows(InputFile,RowIn,1,noc) != 1)
-	    return -1;
-	for (k = 0; k < noc; ++k)
+	ffReadRows(InputFile,RowIn,1,noc);
+	for (int k = 0; k < noc; ++k)
 	    *tp++ = ffExtract(RowIn,k);
     }
     return to_read;

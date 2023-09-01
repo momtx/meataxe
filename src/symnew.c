@@ -101,7 +101,7 @@ static void MakeOmega(const Symmetrizer_t *s)
 static void NumToTuple(int num, int *tuple)
 {
     int i;
-    MTX_ASSERT(num >= 0 && num < WDim,);
+    MTX_ASSERT(num >= 0 && num < WDim);
     for (i = Degree - 1; i >= 0; --i)
     {
 	tuple[i] = num % VDim;
@@ -118,7 +118,7 @@ static int TupleToNum(const int *base)
 	num = num * VDim + *base;
 	++base;
     }
-    MTX_ASSERT(num >= 0 && num < WDim, 0);
+    MTX_ASSERT(num >= 0 && num < WDim);
     return num;
 }
 /*-----------------------------------------------------------*/

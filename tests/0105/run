@@ -1,6 +1,7 @@
 echo "0105 - ZCF"
 
 . ../tests/common.sh
+#set -x
 
 # testMatrix <mat> <field> <field2>
 # Convert to <field2> and back to <field>. Compare with original matrix.

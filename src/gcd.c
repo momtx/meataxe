@@ -33,6 +33,23 @@ long gcd(long a,long b)
 }
 
 
+uint32_t gcd32u(uint32_t a,uint32_t b)
+{
+   if (a == 0) {
+      return b;
+   }
+   if (b == 0) {
+      return a;
+   }
+   while ((a %= b) != 0) {
+      if ((b %= a) == 0) {
+         return a;
+      }
+   }
+   return b;
+}
+
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 /// Calculates the least common multiple of two integers.
 /// If both numbers are positive, the result is positive. If one or both numbers are negative,
@@ -48,6 +65,18 @@ long lcm(long a,long b)
       return 0;
    }
    return (a / ggt) * b;
+}
+
+uint32_t lcm32u(uint32_t a, uint32_t b)
+{
+   uint32_t ggt = gcd(a,b);
+   if (ggt == 0) {
+      return 0;
+   }
+   uint64_t lcm = (a / ggt) * (uint64_t) b;
+   if ((lcm >> 32) != 0)
+      mtxAbort(MTX_HERE, "Integer overflow");
+   return (uint32_t) lcm;
 }
 
 

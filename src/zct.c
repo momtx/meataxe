@@ -222,38 +222,26 @@ static int Init(int argc, char **argv)
    cutperm()
    ------------------------------------------------------------------ */
 
-static int cutperm()
-
+static void cutperm()
 {
     int i;
-    long *x, *y;
+    uint32_t *x, *y;
 
     if (rowlist[nrows-1][1] > noc) err('o');
 
-    /* Read permutations
-       ----------------- */
-    y = x = NALLOC(long,nor * onor);
-    if (x == NULL)
-	return -1;
+    // Read permutations
+    y = x = NALLOC(uint32_t, nor * onor);
     for (i = 0; i < nrows; ++i)
     {
 	int n = nor * (rowlist[i][1]-rowlist[i][0]+1);
-	sysFseek(InputFile,12 + (rowlist[i][0] - 1)*nor*4);
-	if (sysReadLong32(InputFile,y,n) != n)
-	{
-	    mtxAbort(MTX_HERE,"Cannot read from %s",ifilename);
-	    return -1;
-	}
+	sysFseek(InputFile,12 + (rowlist[i][0] - 1) * nor * 4);
+	sysRead32(InputFile,y,n);
 	y += n;
     }
 
-    /* Write output
-       ------------ */
-    if ((OutputFile = ffWriteHeader(ofilename,(long)-1,nor,onor)) == NULL)
-	return -1;
-    if (sysWriteLong32(OutputFile,x,onor*nor) != onor*nor)
-	return -1;
-    return 0;
+    // Write output
+    OutputFile = ffWriteHeader(ofilename,(long)-1,nor,onor);
+    sysWrite32(OutputFile, x, onor*nor);
 }
 
 
@@ -297,8 +285,7 @@ static int cutmatrix()
        ------------ */
     if ((OutputFile = ffWriteHeader(ofilename,fl,onor,onoc)) == NULL)
 	return -1;
-    if (ffWriteRows(OutputFile,x,onor, onoc) != onor)
-	return -1;
+    ffWriteRows(OutputFile,x,onor, onoc);
     return 0;
 }
 
@@ -316,7 +303,7 @@ static void Cleanup()
 int main(int argc, char **argv)
 
 {
-    int rc;
+    int rc = 0;
 
     if (Init(argc,argv) != 0)
     {
@@ -324,7 +311,7 @@ int main(int argc, char **argv)
 	return -1;
     }
     if (fl == -1)
-	rc = cutperm();
+	cutperm();
     else
 	rc = cutmatrix();
 

@@ -29,6 +29,9 @@ ZZZ=0
 # Big kernel, up to GF(2^16)  -- NOTE: THIS IS NO LONGER AVAILABLE
 #ZZZ=1
 
+# Verbose output (echo all commands)
+V=0
+
 # configuration overrides
 include Makefile.conf
 
@@ -36,7 +39,6 @@ include Makefile.conf
 # Other settings
 # ------------------------------------------------------------------------------
 
-V=0
 SILENT0=@
 SILENT1=
 SILENT=${SILENT${V}}
@@ -102,7 +104,7 @@ ${MTXBIN}/%: tmp/%.o ${MTXROOT}/lib/libmtx.a
 LIB_OBJS=\
 	args berlekmp \
 	bsand bscore bsdup bsissub bsmatch bsminus \
-	bsop bsor bsprint bsread bswrite \
+	bsop bsor bsprint bsio \
 	cfinfo \
 	charpol chbasis \
 	error \
@@ -140,7 +142,7 @@ LIB_OBJS=\
 	string \
 	sumint \
 	temap \
-	tkinfo vec2mat \
+	tkinfo types vec2mat \
 	wgen \
 	zcleanrow zcmprow zgap zpermrow \
 	zzz2 \

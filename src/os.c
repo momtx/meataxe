@@ -60,6 +60,15 @@ time_t zinittime = 0;           /**< Start time of this process. */
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
+/// Returns the smallest multiple of @a unit greater than or equal to @a x.
+
+size_t sysPad(size_t x, size_t unit)
+{
+   return x / unit + ((x % unit) ? 1 : 0);
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
 /// OS-specific initialization.
 /// This function is called during library initialization. It performs any OS-specific
 /// actions. Applications should never call this function directly. Use MtxInit() instead.
@@ -221,9 +230,9 @@ FILE *sysFopen(const char *name, const char* mode)
    }
 
    FILE *f = NULL;
-   if (useLibDir && MtxLibDir[0] != 0 && *name != '/') {
+   if (useLibDir && *name != '/') {
       char buf[300];
-      snprintf(buf,sizeof(buf),"%s/%s", MtxLibDir, name);
+      snprintf(buf,sizeof(buf),"%s/%s", mtxLibraryDirectory(), name);
       f = fopen(buf,sysMode);
    }
    if (f == NULL)

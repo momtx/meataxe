@@ -703,7 +703,7 @@ Matrix_t *spinpartstdbas(PTR vec, const long *op_table, Matrix_t *gens[],
     int part_dim, int newdim)
 
 {
-   MTX_ASSERT(gens != NULL && gens[0] != NULL, NULL);
+   MTX_ASSERT(gens != NULL && gens[0] != NULL);
     Matrix_t *mat;
     PTR ptr, row;
     int l, newpartdim;

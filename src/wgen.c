@@ -219,14 +219,14 @@ static void GenBasis(WgData_t *b, int n2, int pos)
       matFree(b->Basis[pos]);
    }
    for (x = B(n2,pos,b->Rep->NGen); *x >= 0; ++x) {
-      MTX_ASSERT(*x >= 0 && *x < b->Rep->NGen, );
+      MTX_ASSERT(*x >= 0 && *x < b->Rep->NGen);
       if (buf == NULL) {
          buf = matDup(b->Rep->Gen[*x]);
       } else {
          matMul(buf,b->Rep->Gen[*x]);
       }
    }
-   MTX_ASSERT(buf != NULL,);
+   MTX_ASSERT(buf != NULL);
    b->Basis[pos] = buf;
    b->N2[pos] = n2;
 }
@@ -247,7 +247,7 @@ const char *wgSymbolicName(WgData_t *b, long n)
    static char name[8 * (MAXLEN + 1) + 1];
    char *c = name;
 
-   MTX_ASSERT(n > 0, NULL);
+   MTX_ASSERT(n > 0);
 
    wgDescribeWord(b,n);
    int *x;
@@ -326,7 +326,7 @@ int *wgDescribeWord(WgData_t *b, long n)
    int pos = 0;
    long n1, n2;
 
-   MTX_ASSERT(n > 0, NULL);
+   MTX_ASSERT(n > 0);
    --n;
    n1 = BitTab[(int)(n % 238)];
    n2 = (int)(n / 238);
@@ -356,7 +356,7 @@ Matrix_t *wgMakeWord(WgData_t *b, long n)
    int n1, n2;
    int i;
 
-   MTX_ASSERT(n > 0, NULL);
+   MTX_ASSERT(n > 0);
    --n;
    n1 = BitTab[(int)(n % 238)];
    n2 = (int)(n / 238);

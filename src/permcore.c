@@ -33,10 +33,8 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 /// @class Perm_t
 /// @details
-/// Internally, a permutation is represented as an array of long integers containing the
-/// images of 0,1,...,n-1. Theoretically, the maximum degree is the largest number that
-/// can be stored in a long integer. However, the MeatAxe file format is restricted to
-/// 32-bit integers, and thus the largest possible degree is 2^32.
+/// Internally, a permutation is represented as an array of 32-bit integers containing the
+/// images of 0,1,...,n-1. The maximum degree is 2^32-1.
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 /// Check a permutation.
@@ -65,7 +63,7 @@ int permIsValid(const Perm_t *p)
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-/// Checks if the given permuation is valid and abort the program if the test fails.
+/// Checks if the given permuation is valid and aborts the program if the test fails.
 
 void permValidate(const struct MtxSourceLocation* src, const Perm_t *p)
 {
@@ -90,7 +88,7 @@ void permValidate(const struct MtxSourceLocation* src, const Perm_t *p)
 /// @param deg Degree.
 /// @return Pointer to the new permutation, or 0 on error.
 
-Perm_t *permAlloc(int deg)
+Perm_t *permAlloc(uint32_t deg)
 {
    Perm_t *p;
    int i;
@@ -107,7 +105,7 @@ Perm_t *permAlloc(int deg)
    }
    p->Magic = PERM_MAGIC;
    p->Degree = deg;
-   p->Data = NALLOC(long,deg);
+   p->Data = NALLOC(uint32_t,deg);
    if (p->Data == NULL) {
       sysFree(p);
       mtxAbort(MTX_HERE,"Cannot allocate permutation data");

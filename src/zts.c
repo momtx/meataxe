@@ -156,12 +156,10 @@ static int FindPivot(Matrix_t *m, tPivotEntry *piv)
 
 static void Clean(Matrix_t *mat, const Matrix_t **basis, 
     const tPivotEntry *piv, int dim)
-
 {
     int i;
 
-    MTX_ASSERT(dim == 0 || 
-	       (mat->Noc == basis[0]->Noc && mat->Nor == basis[0]->Nor),);
+    MTX_ASSERT(dim == 0 || (mat->Noc == basis[0]->Noc && mat->Nor == basis[0]->Nor));
     for (i = 0; i < dim; ++i)
     {
 	PTR x;
@@ -180,7 +178,7 @@ static void Clean2(Matrix_t *mat, const Matrix_t **basis,
 {
     int i;
 
-    MTX_ASSERT(mat->Noc == basis[0]->Noc && mat->Nor == basis[0]->Nor,);
+    MTX_ASSERT(mat->Noc == basis[0]->Noc && mat->Nor == basis[0]->Nor);
     ffMulRow(op,FF_ZERO, dim);
     for (i = 0; i < dim; ++i)
     {
@@ -198,7 +196,7 @@ static Matrix_t *Map(Matrix_t *src, int gen)
 {
     Matrix_t *a;
 
-    MTX_ASSERT(gen >= 0 && gen < NGen, NULL);
+    MTX_ASSERT(gen >= 0 && gen < NGen);
     a = matDup(GenM[gen]);
     matMul(a,src);
     matMul(a,GenN[gen]);

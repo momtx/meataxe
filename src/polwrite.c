@@ -4,92 +4,114 @@
 
 #include "meataxe.h"
 
-////////////////////////////////////////////////////////////////////////////////////////////////////
-// Local data
-
-static long tmpfl = 0;
-static long tmpdeg = 0;
-static PTR tmpvec = NULL;
-
-////////////////////////////////////////////////////////////////////////////////////////////////////
-/// Allocate temporary workspace
-
-static void mktmp(long fl, long deg)
-{
-   ffSetField(fl);
-   if ((tmpfl != fl) || (tmpdeg < deg)) {
-      if (tmpvec != NULL) { sysFree(tmpvec); }
-      tmpvec = ffAlloc(1, deg + 1);
-      tmpdeg = deg;
-      tmpfl = fl;
-   }
-}
-
-
 /// @addtogroup poly
 /// @{
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-/// Write a polynomial to a file.
-/// @see polSave()
-/// @param p Pointer to the polynomial.
-/// @param f File to write to.
-/// @return 0 on success, -1 on error.
 
-int polWrite(const Poly_t *p, FILE *f)
+/// Writes a polynomial to a file. See also @ref polSave.
+
+void polWrite(const Poly_t *p, FILE *file)
 {
-   long hdr[3];
-
    polValidate(MTX_HERE, p);
-   mktmp(p->Field,p->Degree);
-   hdr[0] = -2;
-   hdr[1] = p->Field;
-   hdr[2] = p->Degree;
-   if (sysWriteLong32(f,hdr,3) != 3) {
-      mtxAbort(MTX_HERE,"Cannot write header");
-   }
-   if (p->Degree >= 0) {
-      int i;
-      for (i = 0; i <= p->Degree; ++i) {
-         ffInsert(tmpvec,i,p->Data[i]);
-      }
-      if (ffWriteRows(f,tmpvec,1, p->Degree + 1) != 1) {
-         mtxAbort(MTX_HERE,"Cannot write data");
-      }
-   }
-   return 0;
-}
 
+   uint32_t hdr[3] = { MTX_TYPE_POLYNOMIAL, p->Field, p->Degree };
+   sysWrite32(file,hdr,3);
+   ffSetField(p->Field);
+   if (p->Degree >= 0) {
+      PTR tmp = ffAlloc(1, p->Degree + 1);
+      for (unsigned i = 0; i <= p->Degree; ++i)
+         ffInsert(tmp, i, p->Data[i]);
+      ffWriteRows(file,tmp, 1, p->Degree + 1);
+      ffFree(tmp);
+   }
+}
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-/// Write a polynomial to a File.
-/// This function creates a file, writes a single polynomial to the file and
-/// closes the file. If a f ile with the specified name already exists, it's
-/// contents are destroyed.
-/// @see PolWrite
+
+/// Writes a single polynomial to a file.
+/// If a file with e same name alread eyists, its contents are destroyed.
+/// See also @ref PolWrite
+///
 /// @param pol Polynomial to write.
 /// @param fn File name.
-/// @return 0 on success, -1 on error.
 
-int polSave(const Poly_t *pol, const char *fn)
+void polSave(const Poly_t *pol, const char *fn)
 {
-   FILE *f;
-   int result;
-
    polValidate(MTX_HERE, pol);
-   if ((f = sysFopen(fn,"wb")) == NULL) {
-      mtxAbort(MTX_HERE,"Cannot open %s",fn);
-      return -1;
-   }
-   result = polWrite(pol,f);
-   fclose(f);
-   if (result != 0) {
-      mtxAbort(MTX_HERE,"Cannot write polynomial to %s",fn);
-      return -1;
-   }
-   return result;
+
+   FILE *file = sysFopen(fn,"wb");
+   polWrite(pol,file);
+   fclose(file);
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
+/// Read a polynomial from a file.
+/// This function reads a polynomial from a file. If successful, the return
+/// value is a pointer to a new Poly_t object. The caller is responsible
+/// for deleting this polynomial with polFree() when it is no longer needed.
+/// @see polLoad()
+/// @param f File to read from.
+/// @return Pointer to the polynomial, or 0 on error.
+
+Poly_t *polRead(FILE *f)
+{
+   uint32_t hdr[3];
+   sysRead32(f,hdr,3);
+   if (hdr[0] != MTX_TYPE_POLYNOMIAL) {
+      mtxAbort(MTX_HERE,"No polynomial (type=%d)",(int)hdr[0]);
+   }
+
+   const int field = hdr[1];
+   const int degree = hdr[2];
+   ffSetField(field);
+   Poly_t* p = polAlloc(field, degree);
+   if (p->Degree > 0) {
+      PTR tmpvec = ffAlloc(1, degree + 1);
+      ffReadRows(f, tmpvec, 1, degree + 1);
+      for (size_t i = 0; i <= degree; ++i) {
+         p->Data[i] = ffExtract(tmpvec,i);
+      }
+      ffFree(tmpvec);
+   }
+   return p;
+}
+
+
+/// Read a Polynomial from a File.
+/// This function opens a file, reads a single polynomial, and closes the
+/// file. The return value is a pointer to the polynomial or NULL on
+/// error. If the file contains more than one polynomial, only the first one
+/// is read.
+///
+/// If a polynomial was successfully read, the function returns a pointer to
+/// a newly created Poly_t object. The caller is responsible for deleting
+/// this object as soon as it no longer needed.
+/// @see polRead()
+/// @param fn File name.
+/// @return Pointer to the polynomial read from the file, or 0 on error.
+
+Poly_t *polLoad(const char *fn)
+{
+   FILE *f;
+   Poly_t *p;
+
+   if ((f = sysFopen(fn,"rb")) == NULL) {
+      mtxAbort(MTX_HERE,"Cannot open %s",fn);
+      return NULL;
+   }
+   p = polRead(f);
+   fclose(f);
+   if (p == NULL) {
+      mtxAbort(MTX_HERE,"Cannot read polynomial from %s",fn);
+      return NULL;
+   }
+   return p;
+}
+
+
+/// @}
+// vim:fileencoding=utf8:sw=3:ts=8:et:cin
 
 /// @}
 // vim:fileencoding=utf8:sw=3:ts=8:et:cin

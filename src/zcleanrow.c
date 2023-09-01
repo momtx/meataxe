@@ -94,10 +94,10 @@ int ffCleanRowAndRepeat(PTR row, PTR mat, int nor, int noc, const int *piv, PTR 
    int i;
    PTR x, x2;
 
-   MTX_ASSERT(row != NULL,-1);
-   MTX_ASSERT(row2 != NULL,-1);
-   MTX_ASSERT(mat2 != NULL,-1);
-   MTX_ASSERT(piv != NULL,-1);
+   MTX_ASSERT(row != NULL);
+   MTX_ASSERT(row2 != NULL);
+   MTX_ASSERT(mat2 != NULL);
+   MTX_ASSERT(piv != NULL);
    for (i = 0, x = mat, x2 = mat2; i < nor; ++i, ffStepPtr(&x,noc), ffStepPtr(&x2,noc)) {
       FEL f = ffExtract(row,piv[i]);
       if (f != FF_ZERO) {

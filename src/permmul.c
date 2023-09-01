@@ -22,21 +22,15 @@
 
 Perm_t *permMul(Perm_t *dest, const Perm_t *src)
 {
-   register long i;
-   register long *d, *s;
-
-   // Check arguments
    permValidate(MTX_HERE, src);
    permValidate(MTX_HERE, dest);
    if (dest->Degree != src->Degree) {
       mtxAbort(MTX_HERE,"%s",MTX_ERR_INCOMPAT);
-      return NULL;
    }
 
-   // Multiply
-   d = dest->Data;
-   s = src->Data;
-   for (i = dest->Degree; i > 0; --i) {
+   uint32_t* d = dest->Data;
+   const uint32_t* const s = src->Data;
+   for (uint32_t i = dest->Degree; i > 0; --i) {
       *d = s[*d];
       ++d;
    }

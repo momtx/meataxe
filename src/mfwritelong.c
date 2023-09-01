@@ -13,29 +13,30 @@
 /// @{
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-/// Write long integers to a file.
-/// This function writes |count| long integers from buffer into a data file.
-/// If necessary, the data is converted from machine independent format into
-/// the format needed by the platform. See |sysWriteLong()| for details.
+/// Write 32-bit integers to a file.
+/// This function writes an array of 32-bit integers from @a buffer into a data file.
+/// Each integer is written in LSB first format to the file. See @ref sysWrite32 for details.
 /// @param f Pointer to the file.
 /// @param buf Data buffer.
-/// @param count Number of integers to write.
-/// @return Number of integers that were actually written. Any value other than count
-///    indicates an error.
+/// @param count Number of 32-bit integers to write.
 
-int mfWriteLong(MtxFile_t *f, const long *buf, int count)
+void mfWrite32(MtxFile_t *f, const void *buf, int count)
 {
-   int rc;
-   if (!mfIsValid(f)) {
-      return -1;
-   }
-   rc = sysWriteLong32(f->File,buf,count);
-   if (rc != count) {
-      mtxAbort(MTX_HERE,"%s: write failed",f->Name);
-   }
-   return rc;
+   mfValidate(f);
+   sysWrite32(f->File,buf,count);
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
+/// Read 32-bit integers from a file.
+/// This function reads @a count 32-bit integers from a data file into a buffer.
+/// Each integer is converted from file format (little-endian) into naive format.
+/// See @ref sysread32 for details.
+
+void mfRead32(MtxFile_t* f, void* buf, int count)
+{
+   mfValidate(f);
+   sysRead32(f->File,buf,count);
+}
 
 /// @}
 // vim:fileencoding=utf8:sw=3:ts=8:et:cin

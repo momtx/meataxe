@@ -20,19 +20,19 @@
 ///
 /// Note: @a result and @a row must not overlap.
 
-void ffPermRow(PTR row, const long *perm, int noc, PTR result)
+void ffPermRow(PTR row, const uint32_t* perm, int noc, PTR result)
 {
    register FEL f;
    register int i;
-   register const long *p = (long *)perm;
 
    // Verify that row and result do not overlap
-   MTX_ASSERT(row != result,);
-   MTX_ASSERT_DEBUG(ffGetPtr(row, 1, noc) <= result || row >= ffGetPtr(result,1, noc), );
+   MTX_ASSERT(row != result);
+   MTX_ASSERT_DEBUG(ffGetPtr(row, 1, noc) <= result || row >= ffGetPtr(result,1, noc));
 
+   const uint32_t *p = perm;
    for (i = 0; i < noc; ++i)
    {
-      MTX_ASSERT_DEBUG(*p >= 0 && *p < noc,);
+      MTX_ASSERT_DEBUG(*p >= 0 && *p < noc);
       f = ffExtract(row,i);
       ffInsert(result,*p++,f);
    }

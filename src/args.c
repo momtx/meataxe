@@ -229,7 +229,7 @@ static void PrintHelp(const MtxApplicationInfo_t *ai)
 {
    char v[100], *c;
 
-   strcpy(v,MtxVersion);
+   strcpy(v,mtxVersion());
    for (c = v; *c != 0 && *c != '$'; ++c) {
    }
    *c = 0;
@@ -248,7 +248,7 @@ static void PrintHelp(const MtxApplicationInfo_t *ai)
 
 static void PrintVersion(const MtxApplicationInfo_t *ai)
 {
-   printf("%s\n",MtxVersion);
+   printf("%s\n",mtxVersion());
 }
 
 
@@ -305,19 +305,13 @@ MtxApplication_t *appAlloc(MtxApplicationInfo_t const *ai, int argc, char **argv
    MtxMessageLevel = appGetCountedOption(a,"-V --verbose");
    MtxMessageLevel -= appGetCountedOption(a,"-Q --quiet");
 
-   /* Initialize the library
-      ---------------------- */
-   MtxInitLibrary(argv[0]);
-   if ((c = appGetTextOption(a,"-L --mtxlib",NULL)) != NULL) {
-      mtxSetLibraryDirectory(c);
+   // Initialize the library
+   if ((c = appGetTextOption(a,"-L --mtxlib",NULL)) != NULL && *c != 0) {
+      setenv("MTXLIB", strdup(c), 1);
    }
-   MtxOpt_UseOldWordGenerator = appGetOption(a,"--old-word-generator");
-   if ((time_limit = appGetIntOption(a,"-T --lime-limit",0,0,1000000)) > 0) {
-      sysSetTimeLimit(time_limit);
-   }
+   mtxInitLibrary(argv[0]);
 
-   /* Display help text
-      ----------------- */
+   // Display help text
    if (appGetOption(a,"-h --help")) {
       PrintHelp(ai);
       exit(0);
@@ -327,6 +321,11 @@ MtxApplication_t *appAlloc(MtxApplicationInfo_t const *ai, int argc, char **argv
       exit(0);
    }
   
+   // Handle common options.
+   MtxOpt_UseOldWordGenerator = appGetOption(a,"--old-word-generator");
+   if ((time_limit = appGetIntOption(a,"-T --lime-limit",0,0,1000000)) > 0) {
+      sysSetTimeLimit(time_limit);
+   }
 
    return a;
 }
@@ -352,7 +351,6 @@ int appFree(MtxApplication_t *a)
 
    MESSAGE(1,("%s: %ld.%ld seconds\n",a->AppInfo != NULL ?
               a->AppInfo->Name : "meataxe",t / 10,t % 10));
-   MtxCleanupLibrary();
    sysFree(a);
    return 0;
 }

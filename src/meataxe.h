@@ -21,36 +21,42 @@
 #define MTX_PRINTF_ATTRIBUTE(f,v)
 #endif
 
-extern char MtxVersion[];       /**< The MeatAxe version. */
 
-/** @addtogroup os
- * @{
- **/
+extern const uint32_t MTX_TYPE_PERMUTATION;
+extern const uint32_t MTX_TYPE_POLYNOMIAL;
+extern const uint32_t MTX_TYPE_BITSTRING;
+extern const uint32_t MTX_TYPE_INTMATRIX;
+
+/// @addtogroup os @{
 
 int sysCreateDirectory(const char *name);
+FILE* sysFopen(const char *name, const char*mode);
+void sysFree(void *x);
+int sysFseek(FILE *f, long pos);
+int sysFseekRelative(FILE *file, long distance);
 int sysGetPid();
 void sysInit(void);
-void *sysMalloc(size_t nbytes);
-FILE *sysFopen(const char *name, const char*mode);
-void sysFree(void *x);
-int sysFseek(FILE *f,long pos);
-int sysFseekRelative(FILE *file, long distance);
-void *sysRealloc(void *buf, size_t nbytes);
-int sysReadLong32(FILE *f, long *buf, int n);
-int sysReadLongX(FILE *f, long *buf, int n);
+void* sysMalloc(size_t nbytes);
+size_t sysPad(size_t x, size_t unit);
+void sysRead8(FILE *f, void* buf, size_t n);
+void sysRead16(FILE *f, void* buf, size_t n);
+void sysRead32(FILE *f, void* buf, size_t n);
+int sysTryRead32(FILE *f, void* buf, size_t n);
+void* sysRealloc(void *buf, size_t nbytes);
 int sysRemoveDirectory(const char *name);
 int sysRemoveFile(const char *name);
 void sysSetTimeLimit(long nsecs);
 long sysTimeUsed(void);
-int sysWriteLong32(FILE *f, const long *buf, int n);
-int sysWriteLongX(FILE *f, const long *buf, int n);
+void sysWrite8(FILE *f, const void* buf, size_t n);
+void sysWrite16(FILE *f, const void* buf, size_t n);
+void sysWrite32(FILE *f, const void* buf, size_t n);
 
 #define ALLOC(type) ((type *) sysMalloc(sizeof(type)))
 #define NALLOC(type,n) ((type *) sysMalloc((size_t)(n) * sizeof(type)))
 #define NREALLOC(x,type,n) \
    ((type *) sysRealloc(x,(size_t)(n) * sizeof(type)))
 
-/** @} **/
+// @}
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // Finite fields kernel
@@ -66,11 +72,14 @@ int sysWriteLongX(FILE *f, const long *buf, int n);
 
 #if MTX_ZZZ == 0
 
-typedef unsigned char FEL;              /**< A finite field element */
-typedef FEL *PTR;                       /**< A pointer to a row vector */
-#define FF_ZERO ((FEL)0)                /**< The zero field element */
-#define FF_ONE ((FEL)1)                 /**< The unit element */
-#define ZZZVERSION 6
+typedef unsigned char FEL;      ///< A finite field element
+typedef FEL *PTR;               ///< A pointer to a row vector
+#define FF_ZERO ((FEL)0)        ///< The zero field element
+#define FF_ONE ((FEL)1)         ///< The unit element
+#define MTX_ZZZVERSION 6
+
+#define MTX_MAXSUBFIELDORD 16	// Maximal order of subfields
+#define MTX_MAXSUBFIELDS 4      // Maximal number of subfields
 
 #elif MTX_ZZZ == 1
 
@@ -78,7 +87,7 @@ typedef uint16_t FEL;
 typedef uint16_t* PTR;
 #define FF_ZERO ((FEL)0xFFFF)
 #define FF_ONE ((FEL)0)
-#define ZZZVERSION 0x105
+#define MTX_ZZZVERSION 0x105
 
 #else
 
@@ -98,19 +107,20 @@ FEL ffDiv(FEL a, FEL b);
 FEL ffNeg(FEL a);
 FEL ffInv(FEL a);
 
-void ffAddMulRow(PTR dest, PTR src, FEL f, int noc);
+const char *ffToGap(FEL f);
 void ffAddMulRowPartial(PTR dest, PTR src, FEL f, int firstcol, int noc);
-PTR ffAddRow(PTR dest, PTR src, int noc);
+void ffAddMulRow(PTR dest, PTR src, FEL f, int noc);
 void ffAddRowPartial(PTR dest, PTR src, int first, int noc);
+PTR ffAddRow(PTR dest, PTR src, int noc);
 PTR ffAlloc(int nor, int noc);
-int ffCmpRows(PTR p1, PTR p2, int noc);
-void ffCleanRow(PTR row, PTR matrix, int nor, int noc, const int *piv);
 int ffCleanRow2(PTR row, PTR matrix, int nor, int noc, const int *piv, PTR row2);
 int ffCleanRowAndRepeat(PTR row, PTR mat, int nor, int noc, const int *piv, PTR row2, PTR mat2);
+void ffCleanRow(PTR row, PTR matrix, int nor, int noc, const int *piv);
+int ffCmpRows(PTR p1, PTR p2, int noc);
 void ffCopyRow(PTR dest, PTR src, int noc);
 FEL ffEmbed(FEL a, int subfield);
-FEL ffExtract(PTR row, int col);
 void ffExtractColumn(PTR mat,int nor,int noc,int col,PTR result);
+FEL ffExtract(PTR row, int col);
 int ffFindPivot(PTR row, FEL *mark, int noc);
 void ffFree(PTR x);
 FEL ffFromInt(int l);
@@ -118,23 +128,19 @@ PTR ffGetPtr(PTR base, int row, int noc);
 int ffMakeTables(int field);
 void ffMulRow(PTR row, FEL mark, int noc);
 FILE *ffReadHeader(const char *name, int *fld, int *nor, int *noc);
-int ffReadRows(FILE *f, PTR buf, int n, int noc);
+void ffReadRows(FILE *f, PTR buf, int n, int noc);
 FEL ffRestrict(FEL a, int subfield);
-ssize_t ffSize(int nor, int noc);
 size_t ffRowSize(int noc);
+size_t ffRowSizeUsed(int noc);
 FEL ffScalarProduct(PTR a, PTR b, int noc);
 int ffSeekRow(FILE *f, int pos, int noc);
 int ffSetField(int field);
+ssize_t ffSize(int nor, int noc);
 void ffStepPtr(PTR *x, int noc);
 void ffSwapRows(PTR dest, PTR src, int noc);
-const char *ffToGap(FEL f);
-
-/// Convert field element to integer. See @ref FfFromInt for more information.
 int ffToInt(FEL f);
-
-size_t ffRowSizeUsed(int noc);
 FILE *ffWriteHeader(const char *name, int fld, int nor, int noc);
-int ffWriteRows(FILE *f, PTR buf, int n, int noc);
+void ffWriteRows(FILE *f, PTR buf, int n, int noc);
 
 /// List of subfield orders, terminated with 0.
 extern int mtx_subfields[17];
@@ -152,7 +158,6 @@ extern FEL mtx_tffirst[256][2];
 extern FEL mtx_textract[8][256];
 extern FEL mtx_tnull[8][256];
 extern FEL mtx_tinsert[8][256];
-extern long mtx_embedord[4];
 extern FEL mtx_embed[4][16];
 extern FEL mtx_restrict[4][256];
 
@@ -176,12 +181,12 @@ void ffInsert(PTR row, int col, FEL mark);
 
 /** @} **/
 
-/* ------------------------------------------------------------------
-   Other low-level functions (zzz2.c)
-   ------------------------------------------------------------------ */
-void ffMapRow(PTR row, PTR matrix, int nor, int noc, PTR result);
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// Other low-level functions (zzz2.c)
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void ffPermRow(PTR row, const long *perm, int noc, PTR result);
+void ffMapRow(PTR row, PTR matrix, int nor, int noc, PTR result);
+void ffPermRow(PTR row, const uint32_t *perm, int noc, PTR result);
 int ffSumAndIntersection(int noc, PTR wrk1, int *nor1, int *nor2, PTR wrk2, int *piv);
 
 
@@ -189,14 +194,13 @@ int ffSumAndIntersection(int noc, PTR wrk1, int *nor1, int *nor2, PTR wrk2, int 
 // Library initialization and cleanup
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-extern int Mtx_IsInitialized;
-extern int Mtx_IsBigEndian;
 extern int MtxOpt_UseOldWordGenerator;
-extern char MtxLibDir[];
 
-int MtxInitLibrary(char* argv0);
-void MtxCleanupLibrary();
-void mtxSetLibraryDirectory(const char *dir);
+int mtxIsBigEndian();
+void mtxCleanupLibrary();
+void mtxInitLibrary(char* argv0);
+const char* mtxLibraryDirectory();
+const char* mtxVersion();
 
 /// @addtogroup str
 /// @{
@@ -292,9 +296,10 @@ const char *appCreateTempDir(MtxApplication_t *app);
    "    -T <MaxTime> ............ Set CPU time limit [s]\n" \
    "    --version ............... Show version information\n"
 
-/* ------------------------------------------------------------------
-   Messages and error handling
-   ------------------------------------------------------------------ */
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// Messages and error handling
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 // Error messages
 extern const char MTX_ERR_NOMEM[];
@@ -333,21 +338,26 @@ typedef void MtxErrorHandler_t(const struct MtxErrorInfo *);
 
 MTX_PRINTF_ATTRIBUTE(2,3)
 void mtxAbort(const struct MtxSourceLocation* sl, const char *text, ...);
+MTX_PRINTF_ATTRIBUTE(1,2)
+int mtxBegin(const char *s, ...);
+void mtxEnd(int id);
+MTX_PRINTF_ATTRIBUTE(1,2)
+char *mtxMprintf(const char* s, ...);
+char *mtxVmprintf(const char* s, va_list args);
 
 MtxErrorHandler_t *MtxSetErrorHandler(MtxErrorHandler_t *h);
 
-#define MTX_ASSERT(e, retval) do { \
+#define MTX_ASSERT(e) do { \
       if (!(e)) { \
          mtxAbort(MTX_HERE,"Assertion failed: %s",# e); \
-         return retval; \
       } \
    } while (0)
 
 #ifdef MTX_DEBUG
-#define MTX_ASSERT_DEBUG(e,retval) MTX_ASSERT(e,retval)
+#define MTX_ASSERT_DEBUG(e) MTX_ASSERT(e)
 #define MTX_FALSE_DEBUG(e) MTX_FALSE(e)
 #else
-#define MTX_ASSERT_DEBUG(e,retval)
+#define MTX_ASSERT_DEBUG(e)
 #define MTX_FALSE_DEBUG(e)
 #endif
 
@@ -376,6 +386,8 @@ long int mtxRandom(void);
 int mtxRandomInt(int max);
 long gcd(long a, long b);
 long lcm(long a, long b);
+uint32_t gcd32u(uint32_t a, uint32_t b);
+uint32_t lcm32u(uint32_t a, uint32_t b);
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // Structured text files (stfXXX.c)
@@ -426,13 +438,14 @@ typedef struct {
    char *Name;                  /**< File name. */
 } MtxFile_t;
 
+void mfValidate(const MtxFile_t *file);
 int mfIsValid(const MtxFile_t *file);
 MtxFile_t *mfOpen(const char *name);
 MtxFile_t *mfCreate(const char *name, int field, int nor, int noc);
 int mfClose(MtxFile_t *file);
-int mfReadLong(MtxFile_t *f, long *buf, int nrows);
+void mfRead32(MtxFile_t *f, void *buf, int nrows);
 int mfReadRows(MtxFile_t *f, PTR buf, int nrows);
-int mfWriteLong(MtxFile_t *f, const long *buf, int count);
+void mfWrite32(MtxFile_t *f, const void *buf, int count);
 int mfWriteRows(MtxFile_t *f, PTR buf, int nrows);
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -481,11 +494,11 @@ int matPivotize(Matrix_t *mat);
 Matrix_t *matPower(const Matrix_t *mat, long n);
 void matPrint(const char *name, const Matrix_t *m);
 Matrix_t *matRead(FILE *f);
-int matSave(const Matrix_t *mat, const char *fn);
+void matSave(const Matrix_t *mat, const char *fn);
 FEL matTrace(const Matrix_t *mat);
 Matrix_t *matTransposed(const Matrix_t *src);
 void matValidate(const struct MtxSourceLocation* sl, const Matrix_t *m);
-int matWrite(const Matrix_t *mat, FILE *f);
+void matWrite(const Matrix_t *mat, FILE *f);
 
 /* For internal use only */
 void mat_DeletePivotTable(Matrix_t *mat);
@@ -535,28 +548,27 @@ int GrMatIsValid(const GreasedMatrix_t *mat);
 
 /// A Permutation.
 typedef struct {
-   unsigned long Magic;   /**< Used internally. */
-   int Degree;            /**< Degree of the permutation. */
-   long *Data;            /**< Images of 0,1,2,... */
+   uint32_t Magic;      /**< Used internally. */
+   uint32_t Degree;     /**< Degree of the permutation. */
+   uint32_t *Data;      /**< Images of 0,1,2,... */
 } Perm_t;
 
-Perm_t *permAlloc(int deg);
+Perm_t* permAlloc(uint32_t deg);
 int permCompare(const Perm_t *a, const Perm_t *b);
+void permConvertLegacyFormat(uint32_t *data, uint32_t degree);
 Perm_t *permDup(const Perm_t *src);
 int permFree(Perm_t *p);
 Perm_t *permInverse(const Perm_t *src);
 int permIsValid(const Perm_t *p);
 Perm_t *permLoad(const char *fn);
 Perm_t *permMul(Perm_t *dest, const Perm_t *src);
-int permOrder(const Perm_t *perm);
-void permPrint(const char *name, const Perm_t *perm);
+uint32_t permOrder(const Perm_t *perm);
 Perm_t *permPower(const Perm_t *p, int n);
+void permPrint(const char *name, const Perm_t *perm);
 Perm_t *permRead(FILE *f);
-int permSave(const Perm_t *perm, const char *fn);
+void permSave(const Perm_t *perm, const char *fileName);
 void permValidate(const struct MtxSourceLocation* src, const Perm_t *p);
-int permWrite(const Perm_t *perm, FILE *f);
-
-void Perm_ConvertOld(long *data, int len);
+void permWrite(const Perm_t *perm, FILE *f);
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // Polynomials over a finite field
@@ -589,9 +601,9 @@ Poly_t *polLoad(const char *fn);
 Poly_t *polMul(Poly_t *dest, const Poly_t *src);
 void polPrint(char *name, const Poly_t *p);
 Poly_t *polRead(FILE *f);
-int polSave(const Poly_t *pol, const char *fn);
+void polSave(const Poly_t *pol, const char *fn);
 void polValidate(const struct MtxSourceLocation* sl, const Poly_t *p);
-int polWrite(const Poly_t *p, FILE *f);
+void polWrite(const Poly_t *p, FILE *f);
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // Factored polynomials
@@ -622,7 +634,7 @@ typedef struct {
    unsigned long Magic;   ///< Used internally.
    int Size;              ///< Number of bits. 
    int BufSize;           ///< Used internally for memory management. 
-   long Data[1];          ///< The bits. The least significant bit comes first.
+   unsigned long Data[1]; ///< The bits. The least significant bit comes first.
 } BitString_t;
 
 BitString_t *bsAlloc(int size);
@@ -643,7 +655,7 @@ BitString_t *bsRead(FILE *f);
 int bsSet(BitString_t* bs, int i);
 int bsTest(const BitString_t *bs, int i);
 void bsValidate(const struct MtxSourceLocation* src, const BitString_t *bs);
-int bsWrite(BitString_t *bs, FILE *f);
+void bsWrite(BitString_t *bs, FILE *f);
 
 #ifndef MTX_DEBUG
 
@@ -681,18 +693,18 @@ void setValidate(const struct MtxSourceLocation* src, const Set_t *s);
 
 typedef struct {
    unsigned long Magic;
-   int Nor;     ///< Number of rows
-   int Noc;     ///< Number of colums
-   long *Data;  ///< Marks (row by row)
+   int Nor;        ///< Number of rows
+   int Noc;        ///< Number of colums
+   int32_t *Data;  ///< Marks (row by row)
 } IntMatrix_t;
 
 IntMatrix_t *imatAlloc(int nor, int noc);
-int imatFree(IntMatrix_t *mat);
-int imatIsValid(const IntMatrix_t *m);
+void imatFree(IntMatrix_t *mat);
 IntMatrix_t *imatLoad(const char *fn);
 IntMatrix_t *imatRead(FILE *f);
-int imatSave(const IntMatrix_t *mat, const char *file_name);
-int imatWrite(const IntMatrix_t *mat, FILE *f);
+void imatSave(const IntMatrix_t *mat, const char *file_name);
+void imatValidate(const struct MtxSourceLocation* sl, const IntMatrix_t *m);
+void imatWrite(const IntMatrix_t *mat, FILE *f);
 
 /* --------------------------------------------------------------------------
    Polymorphic objects

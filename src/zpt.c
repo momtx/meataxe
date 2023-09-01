@@ -259,7 +259,7 @@ static int PastePerms()
     int i;
     int degree = 0;
     int nperms = 0;
-    long *buf;
+    uint32_t *buf;
 
     /* Calculate the total number of permutations.
        ------------------------------------------- */
@@ -287,7 +287,7 @@ static int PastePerms()
        ----------------------------- */
     if ((out = mfCreate(ofilename,-1,degree,nperms)) == NULL)
 	return -1;
-    if ((buf = NALLOC(long,degree)) == NULL)
+    if ((buf = NALLOC(uint32_t,degree)) == NULL)
 	return -1;
     for (i = 0; i < nrows; ++i)
     {
@@ -296,17 +296,9 @@ static int PastePerms()
 	    return -1;
 	for (k = 0; k < in->Noc; ++k)
 	{
-	    if (mfReadLong(in,buf,degree) != degree)
-    	    {
-		mtxAbort(MTX_HERE,"Error reading %s",in->Name);
-	    	return -1;
-	    }
-	    Perm_ConvertOld(buf,degree);
-	    if (mfWriteLong(out,buf,degree) != degree)
-    	    {
-		mtxAbort(MTX_HERE,"Error writing %s",out->Name);
-	    	return -1;
-	    }
+	    sysRead32(in->File,buf,degree);
+	    permConvertLegacyFormat(buf,degree);
+	    sysWrite32(out->File,buf,degree);
 	}
 	mfClose(in);
     }

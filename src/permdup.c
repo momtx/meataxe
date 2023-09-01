@@ -26,7 +26,7 @@ Perm_t *permDup(const Perm_t *src)
       mtxAbort(MTX_HERE,"Cannot allocate result");
       return NULL;
    }
-   memcpy(p->Data,src->Data,(size_t) src->Degree * sizeof(long));
+   memcpy(p->Data,src->Data,(size_t) src->Degree * sizeof(p->Data[0]));
    return p;
 }
 

@@ -120,7 +120,7 @@ static void init(const char *basename)
 
 {	
     int i;
-    long l[2];
+    uint32_t l[2];
     char fn[40];
     FILE *f;
 
@@ -138,7 +138,7 @@ static void init(const char *basename)
 	mtxAbort(MTX_HERE,"Cannot open %s",fn);
 	return;
     }
-    sysReadLong32(f,l,1);
+    sysRead32(f,l,1);
     xnmount = (int) l[0];
     MESSAGE(1,("Reading%s: %d mountain%s\n",fn,xnmount,xnmount == 1 ? "" : "s"));
     if (xnmount > MAXCYCL) 
@@ -170,7 +170,7 @@ static void init(const char *basename)
 	return;
     }
     MESSAGE(1,("Reading %s: ",fn));
-    sysReadLong32(f,l,1);
+    sysRead32(f,l,1);
     xndotl = (int) l[0];
     MESSAGE(1,("%d dotted line%s\n",xndotl,xndotl == 1 ? "" : "s"));
     if (xndotl > MAXDOTL) 
@@ -1172,7 +1172,6 @@ int main(int argc, char **argv)
 	MESSAGE(0,("\n"));
 	cleanupblock();
     }
-    MtxCleanupLibrary();
     return 0;
 }
 

@@ -32,7 +32,7 @@ Matrix_t *matTensor(const Matrix_t *m1, const Matrix_t *m2)
    // Check arguments
    matValidate(MTX_HERE, m1);
    matValidate(MTX_HERE, m2);
-   MTX_ASSERT(m1->Field == m2->Field,NULL);
+   MTX_ASSERT(m1->Field == m2->Field);
 
    // Allocate the result matrix and workspace
    temat = matAlloc(m1->Field,m1->Nor * m2->Nor,m1->Noc * m2->Noc);
@@ -63,7 +63,7 @@ Matrix_t *matTensor(const Matrix_t *m1, const Matrix_t *m2)
       // Initialize everything for the inner loop
       x1 = m1->Data;
       x3 = matGetPtr(temat,i2);
-      MTX_ASSERT(x3 != NULL, NULL);
+      MTX_ASSERT(x3 != NULL);
 
       // Loop through all rows of <m1>
       for (i1 = 0; i1 < m1->Nor; ++i1) {

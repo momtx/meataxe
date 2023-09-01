@@ -16,7 +16,7 @@
 MatRep_t *Rep;			/* Generators of the current constituent */
 Matrix_t *cycl = NULL;		/* List of cyclic submodules */
 long *class[MAXCYCL];		/* Classes of vectors */
-long nmountains = 0;		/* Number of mountains */
+uint32_t nmountains = 0;	/* Number of mountains */
 Matrix_t *mountlist[MAXCYCL];	/* Mountains */
 BitString_t *subof[MAXCYCL];	/* Incidence matrix */
 int cfstart[LAT_MAXCF+1];	/* First mountain of each c.f. */
@@ -104,14 +104,13 @@ static void ReadFiles(const char *basename)
 	mtxAbort(MTX_HERE,"Cannot open %s",fn);
 	return;
     }
-    sysReadLong32(f,&nmountains,1);
+    sysRead32(f,&nmountains,1);
     if (nmountains != cfstart[LI.NCf]) 
     {
 	mtxAbort(MTX_HERE,"Bad number of mountains in .inc file");
 	return;
     }
-    MESSAGE(1,("Reading incidence matrix (%ld mountains)\n",
-	nmountains));
+    MESSAGE(1,("Reading incidence matrix (%lu mountains)\n",(unsigned long) nmountains));
     fflush(stdout);
     for (i = 0; i < (int) nmountains; ++i)
 	subof[i] = bsRead(f);
@@ -473,25 +472,15 @@ static void mkdot(int cf)
    ----------------------------------------------------------------- */
 
 static void WriteResult()
-
 {
-    FILE *f;
     char fn[200];
-    int i;
-    long l;
 
     strcat(strcpy(fn,LI.BaseName),".dot");
-    MESSAGE(1,("Writing %s (%d dotted line%s)\n",
-	fn,ndotl,ndotl!=1 ? "s" : ""));
-    f = sysFopen(fn,"wb");
-    if (f == NULL) 
-    {
-	mtxAbort(MTX_HERE,"Cannot open %s",fn);
-	return;
-    }
-    l = (long) ndotl;
-    sysWriteLong32(f,&l,1);
-    for (i = 0; i < ndotl; ++i)
+    MESSAGE(1,("Writing %s (%d dotted line%s)\n", fn,ndotl,ndotl!=1 ? "s" : ""));
+    FILE* f = sysFopen(fn,"wb");
+    const uint32_t l = ndotl;
+    sysWrite32(f,&l,1);
+    for (int i = 0; i < ndotl; ++i)
 	bsWrite(dotl[i],f);
     fclose(f);
     latWriteInfo(&LI);

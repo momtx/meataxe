@@ -111,7 +111,7 @@ Poly_t *polMod(Poly_t *a, const Poly_t *b)
          for (k = 0; k <= b->Degree; ++k) {
             a->Data[i - k] = ffAdd(a->Data[i - k], ffMul(qq,b->Data[b->Degree - k]));
          }
-	 MTX_ASSERT(a->Data[i] == FF_ZERO, NULL);
+	 MTX_ASSERT(a->Data[i] == FF_ZERO);
       }
       Pol_Normalize(a);
    }

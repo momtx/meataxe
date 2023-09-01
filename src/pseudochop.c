@@ -59,7 +59,7 @@ int main(int argc, char *argv[])
     WgData_t *rep;
     Lat_Info mycfinfo;
     IntMatrix_t *OpTable;
-    MtxInitLibrary(argv[0]);
+    mtxInitLibrary(argv[0]);
     if ((App = appAlloc(&AppInfo,argc,argv)) == NULL)
 	return 1;
     if (ParseCommandLine() != 0)

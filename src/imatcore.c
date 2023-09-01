@@ -22,33 +22,24 @@
 /// but the memory block it points to has size zero.
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-/// Check an integer matrix.
-/// This function checks if the argument is a pointer to a valid
-/// integer matrix. If the matrix is o.k., the function returns 1. Otherwise,
-/// an error is signalled and, if the error handler does not terminate the
-/// program, the function returns 0.
-/// @param mat Pointer to the matrix.
-/// @return 1 if @a mat points to a valid matrix, 0 otherwise.
 
-int imatIsValid(const IntMatrix_t *mat)
+/// Checks an integer matrix and aborts the program if the marix is not valid.
+
+void imatValidate(const struct MtxSourceLocation* sl, const IntMatrix_t *mat)
 {
    if (mat == NULL) {
-      mtxAbort(MTX_HERE,"NULL matrix");
-      return 0;
+      mtxAbort(sl ? sl : MTX_HERE,"NULL matrix");
    }
-   if ((mat->Magic != IMAT_MAGIC) || (mat->Nor < 0) || (mat->Noc < 0)) {
-      mtxAbort(MTX_HERE,"Invalid matrix (nor=%d, noc=%d)",mat->Nor,mat->Noc);
-      return 0;
+   if ((mat->Magic != IMAT_MAGIC) || mat->Nor < 0 || mat->Noc < 0) {
+      mtxAbort(sl ? sl : MTX_HERE,"Invalid matrix (nor=%d, noc=%d)", mat->Nor, mat->Noc);
    }
-   return 1;
 }
 
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-/// Create a new integer matrix.
-/// This function creates a new integer matrix with |nor| rows and |noc|
-/// columns.
-/// To destroy an integer matrix, use imatFree(), not sysFree().
+
+/// Creates a new integer matrix. See also @ref imatFree.
+///
 /// @param nor Number of rows.
 /// @param noc Number of columns.
 /// @return Pointer to the new matrix or 0 on error.
@@ -57,8 +48,8 @@ IntMatrix_t *imatAlloc(int nor, int noc)
 {
    IntMatrix_t *m;
 
-   MTX_ASSERT(nor >= 0, NULL);
-   MTX_ASSERT(noc >= 0, NULL);
+   MTX_ASSERT(nor >= 0);
+   MTX_ASSERT(noc >= 0);
 
    // allocate
    m = ALLOC(IntMatrix_t);
@@ -71,7 +62,7 @@ IntMatrix_t *imatAlloc(int nor, int noc)
    m->Magic = IMAT_MAGIC;
    m->Nor = nor;
    m->Noc = noc;
-   m->Data = NALLOC(long,nor * noc);
+   m->Data = NALLOC(int32_t,nor * noc);
    if (m->Data == NULL) {
       sysFree(m);
       mtxAbort(MTX_HERE,"Cannot allocate matrix data");
@@ -82,26 +73,19 @@ IntMatrix_t *imatAlloc(int nor, int noc)
 
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-/// Delete an integer matrix.
-/// This function frees a matrix which has beed created by imatAlloc(). This
-/// implies freeing the internal data buffers as well as the IntMatrix_t
-/// structure itself.
-/// @param mat Pointer to the matrix.
-/// @return 0 on success, -1 on error.
 
-int imatFree(IntMatrix_t *mat)
+/// Destroys an integer matrix, releasing the associated memory.
+
+void imatFree(IntMatrix_t *mat)
 {
-   if (!imatIsValid(mat)) {
-      return -1;
-   }
+   imatValidate(MTX_HERE, mat);
    if (mat->Data != NULL) {
       sysFree(mat->Data);
    }
    memset(mat,0,sizeof(IntMatrix_t));
    sysFree(mat);
-   return 0;
 }
 
-
 /// @}
+
 // vim:fileencoding=utf8:sw=3:ts=8:et:cin

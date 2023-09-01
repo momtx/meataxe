@@ -220,14 +220,11 @@ static FILE *OpenTableFile(int fl)
 
 static int ReadTableFile(FILE *fd, int field)
 {
-   long hdr[5];
+   uint32_t hdr[5];
 
    /* Read header, perform some checks
       -------------------------------- */
-   if (sysReadLong32(fd,hdr,5) != 5) {
-      mtxAbort(MTX_HERE,"Cannot read table file header");
-      return -1;
-   }
+   sysRead32(fd,hdr,5);
    if ((hdr[2] != field) || (hdr[1] < 0) || (hdr[1] > field) ||
        (hdr[0] <= 1) || (hdr[2] % hdr[0] != 0) || (hdr[3] < 1) || (hdr[3] > 8)) {
       mtxAbort(MTX_HERE,"Table file is corrupted");
@@ -236,38 +233,36 @@ static int ReadTableFile(FILE *fd, int field)
    ffChar = hdr[0];
    ffGen = (FEL) hdr[1];
    MPB = hdr[3];
-   if (hdr[4] != (long) ZZZVERSION) {
+   if (hdr[4] != (long) MTX_ZZZVERSION) {
       mtxAbort(MTX_HERE,"Bad table file version: expected %d, found %d",
-                 (int)ZZZVERSION,(int)hdr[4]);
+                 (int)MTX_ZZZVERSION,(int)hdr[4]);
       fclose(fd);
       return -1;
    }
 
+   uint32_t subfields[4];
 
    /* Read tables
       ----------- */
-   if ((fread(mtx_tmult,4,sizeof(mtx_tmult) / 4,fd) != sizeof(mtx_tmult) / 4) ||
-       (fread(mtx_tadd,4,sizeof(mtx_tadd) / 4,fd) != sizeof(mtx_tadd) / 4) ||
-       (fread(mtx_tffirst,1,sizeof(mtx_tffirst),fd) != sizeof(mtx_tffirst)) ||
-       (fread(mtx_textract,1,sizeof(mtx_textract),fd) != sizeof(mtx_textract)) ||
-       (fread(mtx_taddinv,1,sizeof(mtx_taddinv),fd) != sizeof(mtx_taddinv)) ||
-       (fread(mtx_tmultinv,1,sizeof(mtx_tmultinv),fd) != sizeof(mtx_tmultinv)) ||
-       (fread(mtx_tnull,1,sizeof(mtx_tnull),fd) != sizeof(mtx_tnull)) ||
-       (fread(mtx_tinsert,1,sizeof(mtx_tinsert),fd) != sizeof(mtx_tinsert)) ||
-       (sysReadLong32(fd,mtx_embedord,4) != 4) ||
-       (fread(mtx_embed,16,4,fd) != 4) ||
-       (fread(mtx_restrict,256,4,fd) != 4)
-       ) {
-      mtxAbort(MTX_HERE,"Error reading table file");
-      return -1;
-   }
-   ffOrder = field;
+   sysRead8(fd, mtx_tmult, sizeof(mtx_tmult));
+   sysRead8(fd, mtx_tadd, sizeof(mtx_tadd));
+   sysRead8(fd, mtx_tffirst,sizeof(mtx_tffirst));
+   sysRead8(fd, mtx_textract,sizeof(mtx_textract));
+   sysRead8(fd, mtx_taddinv,sizeof(mtx_taddinv));
+   sysRead8(fd, mtx_tmultinv,sizeof(mtx_tmultinv));
+   sysRead8(fd, mtx_tnull,sizeof(mtx_tnull));
+   sysRead8(fd, mtx_tinsert,sizeof(mtx_tinsert));
+   sysRead32(fd,subfields,MTX_MAXSUBFIELDS);
+   sysRead8(fd,mtx_embed, MTX_MAXSUBFIELDS * MTX_MAXSUBFIELDORD);
+   sysRead8(fd,mtx_restrict, MTX_MAXSUBFIELDS * 256);
 
    // Copy subfields to public table
    memset(mtx_subfields, 0, sizeof(mtx_subfields));
-   for (int i = 0; i < 4 && mtx_embedord[i] >= 2; ++i) {
-      mtx_subfields[i] = (int) mtx_embedord[i];
+   for (int i = 0; i < 4 && subfields[i] >= 2; ++i) {
+      mtx_subfields[i] = (int) subfields[i];
    }
+
+   ffOrder = field;
    return 0;
 }
 
@@ -288,10 +283,12 @@ int ffSetField(int field)
    }
    fd = OpenTableFile(field);
    if (fd == NULL) {
-      mtxAbort(MTX_HERE,"Cannot open table file for GF(%d)",(int)field);
+      mtxAbort(MTX_HERE,"Cannot open table file for GF(%d)", field);
       return -1;
    }
+   const int context = mtxBegin("Loading arithmetic tables for GF(%d)", field);
    result = ReadTableFile(fd,field);
+   mtxEnd(context);
    fclose(fd);
    return result;
 }
@@ -313,7 +310,7 @@ static int lpr(int noc)
 
 size_t ffRowSize(int noc)
 {
-   MTX_ASSERT(noc >= 0, 0);
+   MTX_ASSERT(noc >= 0);
    return lpr(noc) * sizeof(long);
 }
 
@@ -341,7 +338,7 @@ size_t ffRowSizeUsed(int noc)
    if (noc == 0) {
       return 0;
    }
-   MTX_ASSERT(noc > 0, 0);
+   MTX_ASSERT(noc > 0);
    return (noc - 1) / MPB + 1;
 }
 
@@ -351,7 +348,7 @@ size_t ffRowSizeUsed(int noc)
 /// Embed an element of a subfield.
 /// @param a Element of the subfield.
 /// @param subfield Subfield order. Must be a divisor of the current field order.
-/// @return @em a, embedded into the current field. (FEL)255 on error.
+/// @return @em a, embedded into the current field.
 
 FEL ffEmbed(FEL a, int subfield)
 {
@@ -361,27 +358,25 @@ FEL ffEmbed(FEL a, int subfield)
       return a;
    }
    for (i = 0; i < 4; ++i) {
-      if (mtx_embedord[i] == subfield) {
+      if (mtx_subfields[i] == subfield) {
          if (a >= subfield) {
-	    mtxAbort(MTX_HERE,"Invalid field element %d in GF(%d)",(int) a, (int)subfield);
-	    return (FEL) 255;
+	    mtxAbort(MTX_HERE,"Invalid field element %d in GF(%d)",(int) a, subfield);
 	 }
          return mtx_embed[i][a];
       }
    }
    mtxAbort(MTX_HERE,"Cannot embed GF(%d) into GF(%d)",(int)subfield,(int)ffOrder);
-   return (FEL) 255;
+   return 0;
 }
 
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-/// Restrict a field element to a subfield.
+/// Restrict a field element to a subfield. The returned value can be used after switching to
+/// the subfield.
 ///
-/// Of course, the argument must be an element of the subfield. Otherwise the result is undefined.
-/// <tt>ffSetField(subfield)</tt>.
-/// @param a A field element which belongs to the subfield of order @a subfield.
-/// @param subfield Subfield order. Must be an integer root of the current field order.
-/// @return The representation of \a a in GF(\a subfield).
+/// The function fails (aborting the program) if
+/// * \a subfield is not an integer root of the current field order, or
+/// * the element \a a is not a member of the subfield of order \a subfield.
 
 FEL ffRestrict(FEL a, int subfield)
 {
@@ -391,12 +386,15 @@ FEL ffRestrict(FEL a, int subfield)
       return a;
    }
    for (i = 0; i < 4; ++i) {
-      if (mtx_embedord[i] == subfield) {
-         return mtx_restrict[i][a];
+      if (mtx_subfields[i] == subfield) {
+         FEL result = mtx_restrict[i][a];
+         if (result > subfield)
+            mtxAbort(MTX_HERE, "Field element is not in GF(%d) < GF(%d)", subfield, ffOrder);
+         return result;
       }
    }
-   mtxAbort(MTX_HERE,"Cannot restrict GF(%d) to GF(%d)",(int)ffOrder, (int)subfield);
-   return (FEL) 255;
+   mtxAbort(MTX_HERE,"Cannot restrict from GF(%d) to GF(%d)",ffOrder, subfield);
+   return 0;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -447,7 +445,7 @@ PTR ffAddRow(PTR dest, PTR src, int noc)
 
 void ffAddRowPartial(PTR dest, PTR src, int first, int noc)
 {
-   MTX_ASSERT(first < noc, );
+   MTX_ASSERT(first < noc);
 
    if (ffChar == 2)     /* characteristic 2 is simple... */
    {
@@ -484,7 +482,7 @@ void ffAddRowPartial(PTR dest, PTR src, int first, int noc)
 
 void ffMulRow(PTR row, FEL mark, int noc)
 {
-   MTX_ASSERT_DEBUG(isFel(mark),);
+   MTX_ASSERT_DEBUG(isFel(mark));
    if (mark == FF_ZERO) {
       memset(row, 0, ffRowSize(noc));
    } else if (mark != FF_ONE) {
@@ -505,7 +503,7 @@ void ffMulRow(PTR row, FEL mark, int noc)
 
 void ffAddMulRow(PTR dest, PTR src, FEL f, int noc)
 {
-   MTX_ASSERT_DEBUG(isFel(f),);
+   MTX_ASSERT_DEBUG(isFel(f));
    if (f == FF_ONE) {
       ffAddRow(dest,src, noc);
    }
@@ -540,8 +538,8 @@ void ffAddMulRow(PTR dest, PTR src, FEL f, int noc)
 
 void ffAddMulRowPartial(PTR dest, PTR src, FEL f, int firstcol, int noc)
 {
-   MTX_ASSERT_DEBUG(isFel(f),);
-   MTX_ASSERT_DEBUG(firstcol >= 0 && firstcol < noc,);
+   MTX_ASSERT_DEBUG(isFel(f));
+   MTX_ASSERT_DEBUG(firstcol >= 0 && firstcol < noc);
 
    if (f == FF_ONE) {
       ffAddRowPartial(dest, src, firstcol, noc);
@@ -607,7 +605,7 @@ void ffMapRow(PTR row, PTR matrix, int nor, int noc, PTR result)
    BYTE *m = (BYTE *) matrix;
 
    // Check that result and row do not overlap.
-   MTX_ASSERT(ffGetPtr(row, 1, nor) <= result || row >= ffGetPtr(result, 1, noc), );
+   MTX_ASSERT(ffGetPtr(row, 1, nor) <= result || row >= ffGetPtr(result, 1, noc));
 
    // Initialize result.
    ffMulRow(result, FF_ZERO, noc);
@@ -763,8 +761,8 @@ void ffExtractColumn(PTR mat, int nor, int noc, int col, PTR result)
 
 void ffInsert(PTR row, int col, FEL mark)
 {
-   MTX_ASSERT(col >= 0,);
-   MTX_ASSERT_DEBUG(isFel(mark),);
+   MTX_ASSERT(col >= 0);
+   MTX_ASSERT_DEBUG(isFel(mark));
 
    register BYTE *loc = (BYTE *)row + (col / MPB);
    register int idx = col % MPB;
@@ -789,7 +787,7 @@ void ffInsert(PTR row, int col, FEL mark)
 FEL ffExtract(PTR row, int col)
 {
    FEL result = mtx_textract[col % MPB][((BYTE *)row)[col / MPB]];
-   MTX_ASSERT_DEBUG(isFel(result), FF_ZERO);
+   MTX_ASSERT_DEBUG(isFel(result));
    return result;
 }
 

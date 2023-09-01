@@ -23,6 +23,23 @@ const char MTX_ERR_NARGS[] = "Bad number of arguments";
 const char MTX_ERR_NOTMATRIX[] = "Not a matrix";
 const char MTX_ERR_NOTPERM[] = "Not a permutation";
 
+struct ErrorContext {
+   char *title;
+};
+
+struct ErrorContextStack {
+   struct ErrorContext* stack;
+   int capacity;
+   int size;
+};
+
+// TODO: make context stack thread specific
+static struct ErrorContextStack contextStack = {
+  .stack = NULL,
+  .capacity = 0,
+  .size = 0
+};
+       
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 /// @addtogroup app
 /// @{
@@ -75,12 +92,18 @@ static void DefaultHandler(const struct MtxErrorInfo *e)
       LogFile = stderr;
    }
 
+   fprintf(LogFile,"\nFATAL ERROR: %s\n",e->message);
    if (e->source && e->source->file) {
       const char *baseName = strrchr(e->source->file, '/');
       baseName = baseName != NULL ? baseName + 1 : e->source->file;
-      fprintf(LogFile,"%s:%d (%s): ", baseName, e->source->line, e->source->func);
+      fprintf(LogFile,"|at %s:%d (%s)\n", baseName, e->source->line, e->source->func);
    }
-   fprintf(LogFile,"%s\n",e->message);
+   const struct ErrorContext* sp = contextStack.stack + contextStack.size;
+   while (sp > contextStack.stack) {
+      --sp;
+      fprintf(LogFile, "|in %s\n", sp->title);
+   }
+   fprintf(LogFile,"\n");
    exit(9);
 }
 
@@ -116,9 +139,69 @@ void mtxAbort(const struct MtxSourceLocation* sl, const char *text, ...)
    struct MtxErrorInfo err = { .source = sl, .message = txtbuf };
    if (ErrorHandler)
       ErrorHandler(&err);
-   else
-      DefaultHandler(&err);
+   DefaultHandler(&err);
    exit(9);
+}
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+int mtxBegin(const char *s, ...)
+{
+   struct ErrorContextStack* cs = &contextStack;
+   if (cs->size >= cs->capacity) {
+      cs->capacity = cs->size + 10;
+      cs->stack = (struct ErrorContext*) sysRealloc(cs->stack, cs->capacity);
+   }
+   struct ErrorContext* item = cs->stack + cs->size;
+   memset(item, 0, sizeof(*item));
+   va_list args;
+   va_start(args, s);
+   item->title = mtxVmprintf(s, args);
+   va_end(args);
+   return cs->size++;
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void mtxEnd(int id)
+{
+   struct ErrorContextStack* cs = &contextStack;
+   MTX_ASSERT(id + 1 == cs->size);
+   struct ErrorContext* item = cs->stack + (--cs->size);
+   sysFree(item->title);
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+char *mtxMprintf(const char* s, ...)
+{
+   va_list args;
+   va_start(args, s);
+   return mtxVmprintf(s, args);
+   va_end(args);
+}
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+char *mtxVmprintf(const char* s, va_list args)
+{
+   va_list args2;
+   va_copy(args2, args);
+   char fixedBuf[200];
+   int len = vsnprintf(fixedBuf, sizeof(fixedBuf), s, args2);
+   va_end(args2);
+   if (len < 0)
+      return NULL;
+   char* buf = NALLOC(char, len + 1);
+   if ((size_t) len < sizeof(fixedBuf)) {
+      memcpy(buf, fixedBuf, len + 1);
+   } else {
+      vsnprintf(buf, len + 1, s, args);
+   }
+   va_end(args2);
+   return buf;
 }
 
 /// @}

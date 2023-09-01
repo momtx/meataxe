@@ -46,10 +46,7 @@ int mrSave(const MatRep_t *rep, const char *basename)
       } else {
          sprintf(fn,"%s.%d",basename,i + 1);
       }
-      if (matSave(rep->Gen[i],fn) != 0) {
-         mtxAbort(MTX_HERE,"Error writing generator %d",i + 1);
-         break;
-      }
+      matSave(rep->Gen[i],fn);
    }
 
    /* Clean up.

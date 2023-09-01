@@ -75,33 +75,26 @@ static int trmat()
    ------------------------------------------------------------------ */
 
 static int trperm()
-
 {
-    long *m1, tr;
-    int degree = InputFile->Nor;
-    int k;
+    const int degree = InputFile->Nor;
 
-    m1 = NALLOC(long,degree);
+    uint32_t *m1 = NALLOC(uint32_t,degree);
     if (m1 == NULL) 
 	return -1;
 
-    if (mfReadLong(InputFile,m1,degree) != degree)
-    {
-	mtxAbort(MTX_HERE,"Error reading permutation");
-	return -1;
-    }
+    mfRead32(InputFile, m1, degree);
 
-    tr = 0;
-    for (k = 0; k < degree; ++k)
+    uint32_t tr = 0;
+    for (int k = 0; k < degree; ++k)
     {
 	if (m1[k] == k) 
 	    ++tr;
     }
 
     if (!opt_G)
-	printf("Trace is %ld\n",tr);
+	printf("Trace is %ld\n",(unsigned long)tr);
     else
-	printf("MeatAxe.Trace := [%ld];\n",tr);
+	printf("MeatAxe.Trace := [%ld];\n",(unsigned long)tr);
     return 0;
 }
 

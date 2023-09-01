@@ -82,7 +82,7 @@ Matrix_t *HomogeneousPart(MatRep_t *m, MatRep_t *s, Matrix_t *npw,
     Sdim = s->Gen[0]->Nor;
     Mdim = m->Gen[0]->Nor;
     nulldim = npw->Nor;
-    MTX_ASSERT(op->Nor == Sdim, NULL);
+    MTX_ASSERT(op->Nor == Sdim);
     V = MkStdBasis(npw,m,op);
 
     /* Make the system of equations.
@@ -131,9 +131,9 @@ Matrix_t *HomogeneousPart(MatRep_t *m, MatRep_t *s, Matrix_t *npw,
 
 /* spins up the basis of the whole S-part of M
    ------------------------------------------- */
-    MTX_ASSERT(Sdim % dimends == 0, NULL);
+    MTX_ASSERT(Sdim % dimends == 0);
     dim = gensys->Nor * (Sdim/dimends);
-    MTX_ASSERT(dim % Sdim == 0, NULL);
+    MTX_ASSERT(dim % Sdim == 0);
     nr = dim/Sdim;		
     if ((bas = matAlloc(fl, dim, Mdim)) == NULL)
     {
@@ -179,7 +179,7 @@ Matrix_t *HomogeneousPart(MatRep_t *m, MatRep_t *s, Matrix_t *npw,
 	    for (j = 0; j < nulldim; j++)	/* calculates the SB to u */
 	    {
 		FEL f;
-		MTX_ASSERT(j < gensys->Noc, NULL);
+		MTX_ASSERT(j < gensys->Noc);
 		f = ffExtract(vec,j);
 		matAddMul(sum,V[j],f);
 	    }

@@ -2,11 +2,11 @@
 // C MeatAxe - I/o for vectors and matrices.
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#include <string.h>
-#include <stdlib.h>
 #include "meataxe.h"
 
-
+#include <errno.h>
+#include <stdlib.h>
+#include <string.h>
 
 /// @addtogroup ff
 /// @{
@@ -14,34 +14,27 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 /// Read Rows
 /// This function reads 1 or more rows from a file.
-/// The row size must have been set before.
 /// @param f Pointer to File.
 /// @param buf Pointer to data buffer.
-/// @param n Number of rows to read.
-/// @return Number of rows that were actually read, or -1 on error.
+/// @param nor Number of rows to read.
+/// @param noc Row size (number of columns).
 
-int ffReadRows(FILE *f, PTR buf, int n, int noc)
+void ffReadRows(FILE *f, PTR buf, int nor, int noc)
 {
-   int i;
-   register char *b = (char *) buf;
-
-   // handle special case: NOC=0
-   if (noc == 0) {
-      return n;
+   if (noc == 0 || nor == 0) {
+      return;
    }
+   const size_t rowSizeUsed = ffRowSizeUsed(noc);
+   const size_t rowSize = ffRowSize(noc);
 
    // read rows one by one
-   for (i = 0; i < n; ++i) {
-      if (fread(b,ffRowSizeUsed(noc),1,f) != 1) {
-	  break;
+   char *b = (char *) buf;
+   for (int i = 0; i < nor; ++i) {
+      if (fread(b,rowSizeUsed,1,f) != 1) {
+         mtxAbort(MTX_HERE,"Error reading row(s) from file: %s", strerror(errno));
       }
-      b += ffRowSize(noc);
+      b += rowSize;
    }
-   if (ferror(f)) {
-      mtxAbort(MTX_HERE,"Read failed: %S");
-      return -1;
-   }
-   return i;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -50,31 +43,25 @@ int ffReadRows(FILE *f, PTR buf, int n, int noc)
 /// The row size must have been set before.
 /// @param f Pointer to File.
 /// @param buf Pointer to data buffer.
-/// @param n Number of rows to write.
-/// @return The number of rows (n), or -1 on error.
+/// @param nor Number of rows to write.
+/// @param noc Row size (number of columns).
 
-int ffWriteRows(FILE *f, PTR buf, int n, int noc)
+void ffWriteRows(FILE *f, PTR buf, int nor, int noc)
 {
-   int i;
-   register char *b = (char *) buf;
-
-   // handle special case: NOC=0
-   if (noc == 0) {
-      return n;
+   if (noc == 0 || nor == 0) {
+      return;
    }
+   size_t rowSizeUsed = ffRowSizeUsed(noc);
+   size_t rowSize = ffRowSize(noc);
 
-   // write rows one by one
-   for (i = 0; i < n; ++i) {
-      if (fwrite(b,ffRowSizeUsed(noc),1,f) != 1) {
-	  break;
+
+   const char *b = (const char *) buf;
+   for (int i = 0; i < nor; ++i) {
+      if (fwrite(b,rowSizeUsed,1,f) != 1) {
+         mtxAbort(MTX_HERE,"Error writing row(s) to file: %s", strerror(errno));
       }
-      b += ffRowSize(noc);
+      b += rowSize;
    }
-   if (ferror(f)) {
-      mtxAbort(MTX_HERE,"Write failed: %S");
-      return -1;
-   }
-   return i;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -114,31 +101,17 @@ int ffSeekRow(FILE *f, int pos, int noc)
 /// The exact meaning of the header values depends on the file type.
 /// For a matrix they are field order, number of rows and number of columns.
 /// See @ref pg_file_formats for details.
-/// @param name File name.
+/// @param fileName File name.
 /// @param field Pointer to buffer for first header entry (usually the field order).
 /// @param nor Pointer to buffer for second header entry (usually the number of rows).
 /// @param noc Pointer to buffer for third header entry (usually the number of columns).
-/// @return Pointer to open file, or 0 on error.
+/// @return Pointer to open file.
 
-FILE *ffReadHeader(const char *name, int *field, int *nor, int *noc)
+FILE *ffReadHeader(const char *fileName, int *field, int *nor, int *noc)
 {
-   FILE *fd;
-   long header[3];
-
-   /* Open the file
-      ------------- */
-   fd = sysFopen(name, "rb");
-   if (fd == NULL) {
-      return NULL;
-   }
-
-   /* Read the file header
-      -------------------- */
-   if (sysReadLong32(fd,header,3) != 3) {
-      fclose(fd);
-      mtxAbort(MTX_HERE,"%s: Error reading file header",name);
-      return NULL;
-   }
+   FILE *file = sysFopen(fileName, "rb");
+   int32_t header[3];
+   sysRead32(file, header, 3);
 
    /* Check header
       ------------ */
@@ -149,9 +122,10 @@ FILE *ffReadHeader(const char *name, int *field, int *nor, int *noc)
 #else
    #error
 #endif
-   if ((header[0] > MTX_MAX_Q) || (header[1] < 0) || (header[2] < 0)) {
-      mtxAbort(MTX_HERE,"%s: Invalid header, possibly non-MeatAxe file",name);
-      fclose(fd);
+   // TODO: check header[1..2] for all known types
+   if (header[0] > MTX_MAX_Q) {
+      mtxAbort(MTX_HERE,"%s: Invalid header, possibly not a MeatAxe file",fileName);
+      fclose(file);
       return NULL;
    }
 
@@ -161,7 +135,7 @@ FILE *ffReadHeader(const char *name, int *field, int *nor, int *noc)
    *nor = (int)header[1];
    *noc = (int)header[2];
 
-   return fd;
+   return file;
 }
 
 
@@ -174,31 +148,13 @@ FILE *ffReadHeader(const char *name, int *field, int *nor, int *noc)
 /// @param field First header entry (usually the field order).
 /// @param nor Second header entry (usually the number of rows).
 /// @param noc Third header entry (usually the number of columns).
-/// @return Pointer to open file, or |NULL| on error.
+/// @return Pointer to open file.
 
 FILE *ffWriteHeader(const char *name, int field, int nor, int noc)
 {
-   FILE *fd;
-   long header[3];
-
-   /* Open the file
-      ------------- */
-   fd = sysFopen(name,"wb");
-   if (fd == NULL) {
-      return NULL;
-   }
-
-   /* Write the file header
-      --------------------- */
-   header[0] = (long) field;
-   header[1] = (long) nor;
-   header[2] = (long) noc;
-   if (sysWriteLong32(fd,header,3) != 3) {
-      mtxAbort(MTX_HERE,"%s: Error writing file header",name);
-      fclose(fd);
-      return NULL;
-   }
-
+   FILE *fd = sysFopen(name,"wb");
+   uint32_t header[3] = {(uint32_t) field, (uint32_t) nor, (uint32_t) noc};
+   sysWrite32(fd,header,3);
    return fd;
 }
 

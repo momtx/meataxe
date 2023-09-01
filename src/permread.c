@@ -13,92 +13,68 @@
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void Perm_ConvertOld(long *data, int len)
+void permConvertLegacyFormat(uint32_t *data, uint32_t degree)
 {
-   int i;
-
-   // if point 0 exists the permutation is already in new format
-   for (i = 0; i < len; ++i) {
+   for (uint32_t i = 0; i < degree; ++i) {
       if (data[i] == 0) {
          return;
       }
    }
-
-   /* Convert.
-      --------  */
-   for (i = 0; i < len; ++i) {
+   for (int i = 0; i < degree; ++i) {
       --data[i];
    }
 }
 
-
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-/// Read a Permutation from a File.
-/// This function reads a permutation from a file. @em f must be a pointer to an
-/// open file with read permission.
-/// If a permutation was successfully read, the function returns a pointer to
-/// a newly created Perm_t object. The caller is responsible for deleting
-/// this object as soon as the permutation is no longer needed.
-/// @see permLoad()
+/// Reads a permutation from a File.
+/// This function reads a permutation from a file. The file must be opened for reading.
+/// After return the file pointer is advanced to the firts position after the permtation.
+///
+/// See also: @ref permLoad
+///
 /// @param f File to read from.
 /// @return Pointer to the permutation, or 0 on error.
 
 Perm_t *permRead(FILE *f)
 {
-   Perm_t *p;
-   long hdr[3];
-
-   if (sysReadLong32(f,hdr,3) != 3) {
-      mtxAbort(MTX_HERE,"Cannot read header");
-      return NULL;
-   }
+   int context = mtxBegin("Reading permutation");
+   int32_t hdr[3];
+   sysRead32(f,hdr,3);
    if (hdr[0] != -1) {
       mtxAbort(MTX_HERE,"%s", MTX_ERR_NOTPERM);
-      return NULL;
    }
-   p = permAlloc(hdr[1]);
-   if (p == NULL) {
-      return NULL;
-   }
-   if (sysReadLong32(f,p->Data,p->Degree) != p->Degree) {
-      permFree(p);
-      mtxAbort(MTX_HERE,"Cannot read permutation data");
-      return NULL;
-   }
-   Perm_ConvertOld(p->Data,p->Degree);
+   Perm_t* p = permAlloc(hdr[1]);
+   sysRead32(f, p->Data, p->Degree);
+   
+   permConvertLegacyFormat(p->Data, p->Degree);
    permValidate(MTX_HERE, p);
+   mtxEnd(context);
    return p;
 }
 
-
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-/// Read a permutation.
-/// This function opens a file, reads a single permutation, and closes the
-/// file. The return value is a pointer to the permutation or 0 on
-/// error. If the file contains more than one permutation, only the first one
-/// is read.
-/// If a permutation was successfully read, the function returns a pointer to
-/// a newly created Perm_t object. The caller is responsible for deleting
-/// this object as soon as the permutation is no longer needed.
-/// @see permRead()
+
+/// Reads a single permutation from a file.
+/// This function opens a file, reads a single permutation, closes the file, and returns the
+/// permutation. If the file contains more than one permutation, only the first one is read.
+/// 
+/// See also: @ref permRead
+///
 /// @param fn File name.
-/// @return Pointer to the permutation read from the file, or 0 on error.
+/// @return Pointer to the permutation.
 
 Perm_t *permLoad(const char *fn)
 {
-   FILE *f;
-   Perm_t *p;
+   int context = mtxBegin("Reading permutation: %s", fn);
 
+   FILE *f;
    if ((f = sysFopen(fn,"rb")) == NULL) {
       mtxAbort(MTX_HERE,"Cannot open %s",fn);
-      return NULL;
    }
-   p = permRead(f);
+   Perm_t* p = permRead(f);
    fclose(f);
-   if (p == NULL) {
-      mtxAbort(MTX_HERE,"Cannot read permutation from %s",fn);
-      return NULL;
-   }
+
+   mtxEnd(context);
    return p;
 }
 

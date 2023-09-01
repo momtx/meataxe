@@ -19,14 +19,14 @@ static int TestRowIo2(PTR row0, PTR row1, PTR buf, int noc)
 
    f = sysFopen(file_name,"wb");
    for (x = 0, i = 0; i < 100; ++i) {
-      ASSERT_EQ_INT(ffWriteRows(f,(x & 0x1000) ? row0 : row1, 1, noc), 1);
+      ffWriteRows(f,(x & 0x1000) ? row0 : row1, 1, noc);
       x = x * 69069 + 1;
    }
    fclose(f);
 
    f = sysFopen(file_name,"rb");
    for (x = 0, i = 0; i < 100; ++i) {
-      ASSERT_EQ_INT(ffReadRows(f,buf,1,noc), 1);
+      ffReadRows(f,buf,1,noc);
       ASSERT(ffCmpRows(buf,(x & 0x1000) ? row0 : row1, noc) == 0);
       x = x * 69069 + 1;
    }
@@ -89,7 +89,7 @@ static int TestHdr2(int nor, int noc, PTR buf1, PTR buf2)
    /* Write <buf1> into file
       ---------------------- */
    f = ffWriteHeader(file_name,ffOrder,nor,noc);
-   ASSERT_EQ_INT(ffWriteRows(f,buf1,nor,noc), nor);
+   ffWriteRows(f,buf1,nor,noc);
    fclose(f);
 
    /* Read the file header and check the value.
@@ -100,10 +100,8 @@ static int TestHdr2(int nor, int noc, PTR buf1, PTR buf2)
    ASSERT_EQ_INT(nor2, nor);
    ASSERT_EQ_INT(noc2, noc);
 
-   // Read the rows. If <noc> is not zero, we try to read one more row to check if
-   // <FfreadRows()> handles the EOF correctly. For <noc> = 0 ffReadRows() always returns
-   // the requested number of rows, so the check is not possible.
-   ASSERT_EQ_INT(ffReadRows(f,buf2,(noc == 0) ? nor : nor + 1, noc), nor);
+   // Read the rows. 
+   ffReadRows(f,buf2,nor,noc);
    fclose(f);
 
    // Compare <buf1> and <buf2>
@@ -159,7 +157,7 @@ static int TestSeek2(int nor, int noc, PTR buf1, PTR buf2)
    /* Write <buf1> into file
       ---------------------- */
    f = ffWriteHeader(file_name,ffOrder,nor,noc);
-   ASSERT_EQ_INT(ffWriteRows(f,buf1,nor, noc), nor);
+   ffWriteRows(f,buf1,nor, noc);
    fclose(f);
 
    /* Read the rows in reverse order.
@@ -169,7 +167,7 @@ static int TestSeek2(int nor, int noc, PTR buf1, PTR buf2)
    for (i = nor - 1; i >= 0; --i) {
       PTR x = (PTR)((char *)buf2 + ffSize(i, noc));
       ffSeekRow(f, i, noc2);
-      ASSERT_EQ_INT(ffReadRows(f,x,1,noc), 1);
+      ffReadRows(f,x,1,noc);
    }
    fclose(f);
 

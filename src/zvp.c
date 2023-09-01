@@ -58,7 +58,7 @@ static int nvec;                        // number of vectors obtained so far
 static int nfinished;                   // number of finished vectors
 static PTR vtable;                      // holds the vectors
 static PTR tmp;
-static long *perm[MAX_GENERATORS];      // permutations
+static uint32_t *perm[MAX_GENERATORS];      // permutations
 
 static long iseed = 0;                  // current seed vector
 int proj = 0;                           // operate on 1-spaces (-p)
@@ -183,11 +183,7 @@ static int AllocateTables()
    vecno = NALLOC(int,tabsize + 1);
    isfree = NALLOC(char,tabsize + 1);
    for (i = 0; i < NGen; ++i) {
-      perm[i] = NALLOC(long,maxvec + 1);
-      if (perm[i] == NULL) {
-         mtxAbort(MTX_HERE,"Error allocationg permutation");
-         return -1;
-      }
+      perm[i] = NALLOC(uint32_t,maxvec + 1);
    }
 
    InitHash();
@@ -315,7 +311,7 @@ static int MakeOrbit()
             ffStepPtr(&x,Seed->Noc);
          }
          // always true since the hash table is always larger than maxvec
-         MTX_ASSERT(pos != pos1, -1);
+         MTX_ASSERT(pos != pos1);
       }
 
       if (isfree[pos]) {        // new vector
@@ -390,19 +386,9 @@ static int WriteOutput()
       ------------------ */
    MESSAGE(1,("Writing permutations\n"));
    for (i = 0; i < NGen; ++i) {
-      MtxFile_t *f;
       sprintf(fn,"%s.%d",PermName,i + 1);
-      /* if ((f = mfCreate(OrbName,-1,nvec,1)) != NULL) */
-      if ((f = mfCreate(fn,-1,nvec,1)) == NULL) {
-         mtxAbort(MTX_HERE,"Cannot open %s",fn);
-         rc = -1;
-         continue;
-      }
-      if (mfWriteLong(f,perm[i],nvec) != nvec) {
-         mtxAbort(MTX_HERE,"Cannot write data");
-         rc = -1;
-         continue;
-      }
+      MtxFile_t* f = mfCreate(fn,MTX_TYPE_PERMUTATION, nvec, 1);
+      mfWrite32(f,perm[i],nvec);
       mfClose(f);
    }
    return rc;

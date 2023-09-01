@@ -79,7 +79,7 @@ long mtxRandom(void)
 
 int mtxRandomInt(int max)
 {
-   MTX_ASSERT(max > 0, 0);
+   MTX_ASSERT(max > 0);
    return (int) (mtxRandom() % max);
 }
 

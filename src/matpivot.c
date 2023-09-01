@@ -44,7 +44,7 @@ static int zmkpivot(PTR matrix, int nor, int noc, int *piv, int *ispiv)
       }
    }
 
-   MTX_ASSERT(i == noc, -1);
+   MTX_ASSERT(i == noc);
    return 0;
 }
 

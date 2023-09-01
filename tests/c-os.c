@@ -126,7 +126,7 @@ TstResult Os_FileIo()
 /* Create values between -2^31 and 2^31 */
 #define VAL(i) ((long) ((69069 * (i) + 1) & 0x7FFFFFFF) * (long) (1 - 2 * (i % 2)))
 
-static int TestIntIo1(long *buf, int bufsize, int safe)
+static int TestIntIo1(uint32_t *buf, int bufsize)
 {
    int i, k;
    FILE *f;
@@ -137,8 +137,7 @@ static int TestIntIo1(long *buf, int bufsize, int safe)
    f = sysFopen("check1","wb");
    for (i = k = 0; k < bufsize; ++i) {
       int n = (i <= bufsize - k) ? i : bufsize - k;
-      int nwritten = sysWriteLong32(f,buf + k,n);
-      ASSERT(nwritten == n);
+      sysWrite32(f, buf + k, n);
       k += n;
    }
    fclose(f);
@@ -146,15 +145,13 @@ static int TestIntIo1(long *buf, int bufsize, int safe)
    for (i = 1; i < bufsize; i += i / 10 + 1) {
       f = sysFopen("check1","rb");
       for (k = 0; k < bufsize; ) {
-         int to_read = (k + i >= bufsize + safe) ? bufsize + safe - k : i;
-         int nr = sysReadLong32(f,buf + k,to_read);
-	 ASSERT(nr >= 0);
-         ASSERT(k + nr <= bufsize);
-         k += nr;
+         int to_read = (k + i >= bufsize) ? bufsize - k : i;
+         sysRead32(f,buf + k,to_read);
+         k += to_read;
       }
       fclose(f);
       for (k = 0; k < bufsize; ++k) {
-         ASSERT(buf[k] == VAL(k));
+         ASSERT_EQ_INT(buf[k], VAL(k));
       }
    }
 
@@ -168,15 +165,13 @@ static int TestIntIo2()
 {
    FILE *f;
    char buf[16] = {1,0,0,0, 0,2,0,0, 0,0,3,0, 0,0,0,4};
-   long rb[4];
+   uint32_t rb[4];
 
    f = sysFopen("check1","wb");
    fwrite(buf,1,16,f);
    fclose(f);
    f = sysFopen("check1","rb");
-   if (sysReadLong32(f,rb,5) != 4) {
-      TST_FAIL("Read error", 0);
-   }
+   sysRead32(f,rb,4);
    fclose(f);
    ASSERT(rb[0] == 0x00000001);
    ASSERT(rb[1] == 0x00000200);
@@ -186,12 +181,14 @@ static int TestIntIo2()
    return 0;
 }
 
+// TODO: ccheck exception on EOF
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 TstResult Os_IntegerIo()
 {
-   long *buf = NALLOC(long,10000 + 2000);
-   int result = TestIntIo1(buf,10000,2000);
+   uint32_t *buf = NALLOC(uint32_t, 10000);
+   int result = TestIntIo1(buf,10000);
    result |= TestIntIo2();
    free(buf);
    return result;

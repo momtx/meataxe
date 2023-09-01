@@ -37,7 +37,7 @@ static int zmkechelon(PTR matrix, int nor, int noc, int *piv, int *ispiv)
       }
       ffCleanRow(newrow,matrix,rank,noc,piv);
       newpiv = ffFindPivot(newrow,&f, noc);
-      MTX_ASSERT(newpiv < noc, 0);
+      MTX_ASSERT(newpiv < noc);
       if (newpiv >= 0) {
          piv[rank] = newpiv;
          ispiv[newpiv] = 1;
@@ -54,7 +54,7 @@ static int zmkechelon(PTR matrix, int nor, int noc, int *piv, int *ispiv)
          piv[j++] = i;
       }
    }
-   MTX_ASSERT(j == noc, 0);
+   MTX_ASSERT(j == noc);
 
    return rank;
 }

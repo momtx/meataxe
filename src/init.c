@@ -11,30 +11,15 @@
 /// @addtosection app
 /// @{
 
-////////////////////////////////////////////////////////////////////////////////////////////////////
-/// This variable indicates if the MeatAxe library has been successfully
-/// initialized (value 1) or not (value 0).
+static int isInitialized = 0;
 
-int Mtx_IsInitialized = 0;
-
-int Mtx_IsBigEndian = 0;
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-
-/// This variable contains the name of the MeatAxe library directory.
-/// MtxLibDir can be set on the command line with the "-L" option. Otherwise, the value of the 
-/// environment variable MTXLIB is used. If neither "-L" nor MTXLIB are defined, the directory is
-/// assumed to be on the same level as the program execuable directory and named "lib". For example,
-/// if the program is "/home/user1/mtx/bin/zcp", the derived library directory would be
-/// "/home/user1/mtx/lib".
-/// If this fails, too, the current directory (".") is used.
-
-char MtxLibDir[250] = "";
+static char libDir[250] = "";
 
 int MtxOpt_UseOldWordGenerator = 0;
 
-char MtxVersion[200] = "undefined";
 
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -57,9 +42,6 @@ static void deriveDirectoryName(
          return;
       }
    }
-
-   // Fallback to current directory.
-   snprintf(buf, bufSize, ".");
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -68,15 +50,53 @@ static void setDirectories(char* argv0)
 {
    char* c;
    if ((c = getenv("MTXLIB")) != NULL) {
-      snprintf(MtxLibDir, sizeof(MtxLibDir), "%s", c);
+      snprintf(libDir, sizeof(libDir), "%s", c);
       return;
    } 
 
    char* path = realpath(argv0, NULL);
-   if (MtxLibDir[0] == 0) {
-      deriveDirectoryName(MtxLibDir, sizeof(MtxLibDir), path, 2, "lib");
-   }
+   if (libDir[0] == 0)
+      deriveDirectoryName(libDir, sizeof(libDir), path, 2, "lib");
+   if (libDir[0] == 0)
+      snprintf(libDir, sizeof(libDir), ".");
    free(path);
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+int mtxIsBigEndian()
+{
+   static int value = -1;
+   if (value == -1) {
+      union {
+         unsigned char c[sizeof(int)];
+         unsigned u;
+      } x;
+      x.u = 1;
+      value = (x.c[0] == 0);
+   }
+   return value;
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+/// Returns the MeatAxe version.
+/// This function can be called before @ref mtxInitLibrary.
+
+const char* mtxVersion()
+{
+   static char version[200] = {0};
+   if (version[0] == 0) {
+      sysInit();
+      char *v = version;
+      char *vEnd = version + sizeof(version);
+      v += snprintf(v, vEnd - v, "%s", MTX_VERSION);
+      v += snprintf(v, vEnd - v, " I%u", (unsigned) sizeof(int) * 8);
+      v += snprintf(v, vEnd - v, " L%u", (unsigned) sizeof(long) * 8);
+      v += snprintf(v, vEnd - v, " %s", mtxIsBigEndian() ? "BE" : "LE");
+      v += snprintf(v, vEnd - v, " ZZZ=%d ZZZVERSION=0x%x", MTX_ZZZ, MTX_ZZZVERSION);
+   }
+   return version;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -88,58 +108,49 @@ static void setDirectories(char* argv0)
 /// An application that uses @ref MtxInitApplication need not call this function.
 ///
 /// @a argv0 is the name of the process executable. It will be used to initialize directory names
-/// such as @ref MtxLibDir, which have a default value relative to the executable directory. If the
+/// such as @ref libDir, which have a default value relative to the executable directory. If the
 /// program name is not known, the argument may be NULL or an empty string.
-///  
-/// @c MtxInitLibrary() returns a version number which is different for each implementation of the
-/// arithmetic, or -1 on error.
 
-int MtxInitLibrary(char* argv0)
+void mtxInitLibrary(char* argv0)
 {
-   if (Mtx_IsInitialized)
-      return ZZZVERSION;
-   Mtx_IsInitialized = 1;
-
+   if (isInitialized)
+      return;
+   isInitialized = 1;
    setDirectories(argv0);
-
-   union {
-      unsigned char c[sizeof(int)];
-      unsigned u;
-   } x;
-   x.u = 1;
-   Mtx_IsBigEndian = (x.c[0] == 0);
-
    sysInit();
-
-   char *v = MtxVersion;
-   char *vEnd = MtxVersion + sizeof(MtxVersion);
-   v += snprintf(v, vEnd - v,"%s ", MTX_VERSION);
-   if (sizeof(long) == 8) v += snprintf(v, vEnd - v, " L64");
-   v += snprintf(v, vEnd - v, " %s", Mtx_IsBigEndian ? "BE" : "LE");
-   v += snprintf(v, vEnd - v, " ZZZ=%d ZZZVERSION=0x%x", MTX_ZZZ, ZZZVERSION);
-
-
-
-   return ZZZVERSION;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-/// Terminate the library.
-/// This function terminates the MeatAxe library. An application that uses
-/// appFree() need not call this function.
+/// Returns the name of the MeatAxe library directory.
+/// The returned name does not have a trailing slash, unless it is equal to "/".
+/// This function fails and aborts the program if it is called before @ref mtxInitLibrary.
 
-void MtxCleanupLibrary()
+/// The library directory is determined as follows (in the order given here):
+///
+/// * If the "-L" option is used and the argument is not an empty string, the given directory
+///   is added to the program's environment under the name MTXLIB.
+/// * If the MTXLIB environment variable is defined and not an empty string, it is used as the
+///   library directory.
+/// * If MTXLIB is not defined or empty, the library directory is derived from the executable
+///   directory by replacing the last path component with "lib". For example, if the program is
+///   "/home/user1/mtx/bin/zcp", the derived library directory would be "/home/user1/mtx/lib".
+/// * As a last resort, the current directory (".") is used.
+///
+/// There are no further checks whether the given directory exists and is usable.
+
+const char *mtxLibraryDirectory()
 {
+   MTX_ASSERT(isInitialized);
+   return libDir;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-/// Sets the library directory.
-
-void mtxSetLibraryDirectory(const char *dir)
+void mtxCleanupLibrary()
 {
-   snprintf(MtxLibDir, sizeof(MtxLibDir), "%s", dir);
+   memset(libDir, 0, sizeof(libDir));
+   isInitialized = 0;
 }
 
 /// @}

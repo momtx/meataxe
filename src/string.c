@@ -43,7 +43,7 @@ static void safe_strcpy(char *d, const char *s, size_t len)
 
 static char *mkrep(const char *s, size_t len, size_t cap)
 {
-   MTX_ASSERT(len <= cap, NULL);
+   MTX_ASSERT(len <= cap);
    if ((len == 0) && (cap == 0)) { return TXT(EMPTY); }
    size_t *rep = (size_t *) sysMalloc(cap + 1 + 3 * sizeof(size_t));
    rep[0] = 1;
@@ -134,7 +134,7 @@ void strFree(String *s)
 
 static void append(String *s, const char *src, size_t len)
 {
-   MTX_ASSERT(s->S != 0,);
+   MTX_ASSERT(s->S != 0);
    size_t const my_len = LEN(s->S);
    if ((src >= s->S) && (src <= s->S + my_len)) {
       /* Note: excl() may reallocate the buffer, adjust src accordingly. */

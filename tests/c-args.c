@@ -170,32 +170,32 @@ TstResult App_CommonOptions()
    { "-", "--quiet", "-L", "libliblib" };
    int argc = (sizeof(argv) / sizeof(argv[0]));
 
+   mtxCleanupLibrary();
    MtxApplication_t *App;
    ASSERT((App = appAlloc(NULL,argc,argv)) != NULL);
    ASSERT(MtxMessageLevel == -1);			// --quiet
-   ASSERT(!strcmp(MtxLibDir,"libliblib"));		// -L
+   ASSERT(!strcmp(mtxLibraryDirectory(),"libliblib"));	// -L
    ASSERT(appGetArguments(App,0,100) == 0);
    appFree(App);
-   strcpy(MtxLibDir,".");
    return 0;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-TstResult CommonOptions2()
+TstResult App_CommonOptions2()
 {
    static char *argv[] =
    { "-", "-V", "-VV", "--mtxlib", "LIBLIB" };
    int argc = (sizeof(argv) / sizeof(argv[0]));
 
+   mtxCleanupLibrary();
    MtxApplication_t *App;
    ASSERT((App = appAlloc(NULL,argc,argv)) != NULL);
    ASSERT_EQ_INT(MtxMessageLevel, 3);
    MtxMessageLevel = 0;
-   ASSERT(!strcmp(MtxLibDir,"LIBLIB"));
+   ASSERT(!strcmp(mtxLibraryDirectory(),"LIBLIB"));
    ASSERT(appGetArguments(App,0,100) == 0);
    appFree(App);
-   strcpy(MtxLibDir,".");
    return 0;
 }
 

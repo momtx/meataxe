@@ -76,6 +76,7 @@ static Perm_t *mkPerm(const int *a)
 static int verifyOrder(const int *data, int order)
 {
    Perm_t *p = mkPerm(data);
+   //permPrint("perm", p);
    ASSERT_EQ_INT(permOrder(p), order);
    permFree(p);
    return 0;
