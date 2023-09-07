@@ -182,7 +182,7 @@ static int Spin1(PTR seed, int seedno, const SpinUpInfo_t *info)
     /* Return success code, depending on the mode and the result 
        of the spin up 
        --------------------------------------------------------- */
-    MESSAGE(2,("SpinUp(): sub=%d, quot=%d\n",SpanDim,Dim-SpanDim));
+    //MESSAGE(2,("SpinUp(): sub=%d, quot=%d\n",SpanDim,Dim-SpanDim));
     switch (Flags & SF_MODE_MASK)
     {
 	case SF_SUB:

@@ -163,7 +163,7 @@ void RngReset()
     rng = 0;
 }
 
-static uint32_t RngNext()
+uint32_t RngNext()
 {
     rng = rng * 69069U + 107U;
     return rng;
@@ -295,66 +295,67 @@ struct TstAbortState tstAbortState = {0};
 
 static void CatchAbortHandler(const struct MtxErrorInfo *err)
 {
-if (tstAbortState.enabled) {
-   longjmp(tstAbortState.jumpTarget, 112);
-}
-tstFail(__FILE__, __LINE__, __func__, "UNEXPECTED ABORT\nabort reason: %s\nCANNOT CONTINUE TESTS, EXITING",
-      err->message);
-exit(2);
+   if (tstAbortState.enabled) {
+      longjmp(tstAbortState.jumpTarget, 112);
+   }
+   tstFail(__FILE__, __LINE__, __func__,
+         "UNEXPECTED ABORT\nabort reason: %s\nCANNOT CONTINUE TESTS, EXITING",
+         err->message);
+   exit(2);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void tstPrepareCatchAbort(const char *file, int line, const char *func, const char *estr)
 {
-tstAbortState.file = file;
-tstAbortState.line = line;
-tstAbortState.func = func;
-tstAbortState.expr = estr;
-tstAbortState.enabled = 1;
+   tstAbortState.file = file;
+   tstAbortState.line = line;
+   tstAbortState.func = func;
+   tstAbortState.expr = estr;
+   tstAbortState.enabled = 1;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void tstMissingAbort()
 {
-tstAbortState.enabled = 0;
-tstFail(tstAbortState.file, tstAbortState.line, tstAbortState.func,
-      "Did not abort as expected\nexpr: %s", tstAbortState.expr);
+   tstAbortState.enabled = 0;
+   tstFail(tstAbortState.file, tstAbortState.line, tstAbortState.func,
+         "Did not abort as expected\nexpr: %s", tstAbortState.expr);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 static int strmatch(const char *s, const char *pattern)
 {
- while (*pattern) {
-     if (*pattern == '?') {
+   while (*pattern) {
+      if (*pattern == '?') {
          if (*s == 0) return 1;
          ++s;
-     } else if (*pattern == '*') {
+      } else if (*pattern == '*') {
          while (1) {
-             if (!strmatch(s,pattern+1)) return 0;
-             if (*s == 0) return 1;
-             ++s;
+            if (!strmatch(s,pattern+1)) return 0;
+            if (*s == 0) return 1;
+            ++s;
          }
-     } else {
+      } else {
          if (*s != *pattern) return 1;
          ++s;
-     }
-     ++pattern;
- }
- return *s == 0 ? 0 : 1;
+      }
+      ++pattern;
+   }
+   return *s == 0 ? 0 : 1;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 static int testSelected(const char *name, int nsel, const char * const *sel)
 {
-if (nsel == 0) return 1;	// no selection, run all tests
-for (int i = 0; i < nsel; ++i) {
-   if (strmatch(name,sel[i]) == 0) return 1;
-}
-return 0;
+   if (nsel == 0) return 1;	// no selection, run all tests
+   for (int i = 0; i < nsel; ++i) {
+      if (strmatch(name,sel[i]) == 0) return 1;
+   }
+   return 0;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -365,6 +366,7 @@ typedef TstResult (*FieldDependentTestFunction)(int q);
 static int executeTest(const struct TstFoundTest* test, int field)
 {
    mtxCleanupLibrary();
+   unsetenv("MTXLIB");
    mtxInitLibrary(argv0);
    mtxRandomInit(52134);
    TstResult result = 0;

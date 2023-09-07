@@ -21,17 +21,20 @@
 
 /// A submodule.
 typedef struct nodestruct {
+   unsigned nodeId;
+   int baseDim;                 // Sum of dimensions of constituents below this.
    struct nodestruct *sub, *quot, *parent;
-   int dim, num;                /* Dimension and number */
+   int dim;                     // Dimension 
+   int num;                     // (irreducibles only) constituent number
+   int mult;                    // (irreducibles only) Multiplicity
    MatRep_t *Rep;               /* Generators */
    MatRep_t *TrRep;             /* Transposed generators */
-   long mult;                   /* Multiplicity */
    long spl;                    /* Degree of splitting field */
    long idword;                 /* Word used for std basis */
    Poly_t *idpol;               /* Polynomial "  "    "    */
-   Poly_t *f1, *f2;             /* characteristic Polynomial c=f1*f2*/
+   Poly_t *f1, *f2;             /* characteristic polynomial c=f1*f2*/
    int fprint[MAXFP];           /* Fingerprint */
-   Set_t *badwords;
+   BitString_t *badwords;
    Matrix_t *nsp, *nsptr;       /* Null space */
    Matrix_t *subsp;             /* Subspace */
    long ggt;                    /* g.c.d. of nullities */
@@ -40,7 +43,7 @@ typedef struct nodestruct {
    Matrix_t *word;
 } node_t;
 
-static int Chop(node_t *n);
+static void Chop(node_t *n);
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // Global variables
@@ -53,7 +56,9 @@ node_t *irred[LAT_MAXCF];   /* List of irred. constituents */
 long firstword = 1;
 int opt_G = 0;              /* GAP output */
 int opt_i = 0;              /* -i: read an existing .cfinfo file */
-Set_t *goodwords;           /* List of `good' words */
+BitString_t *goodwords;         // List of `good' words
+static unsigned nodeId = 0;     // Counter for node IDs.
+
 Lat_Info LI;                /* Data for .cfinfo */
 
 static long stat_svsplit = 0;   /* Statistics */
@@ -97,6 +102,7 @@ static node_t *CreateNode(MatRep_t *rep, node_t *parent)
    node_t *n = ALLOC(node_t);
    memset(n,0,sizeof(node_t));
 
+   n->nodeId = nodeId++;
    n->parent = parent;
    n->Rep = rep;
    n->dim = rep->Gen[0]->Nor;
@@ -104,7 +110,7 @@ static node_t *CreateNode(MatRep_t *rep, node_t *parent)
    n->mult = -1;
    n->spl = -1;
    n->idword = -1;
-   n->badwords = setAlloc();
+   n->badwords = bsAllocEmpty();
    n->nsp = n->nsptr = NULL;
    n->wg = wgAlloc(n->Rep);
    if (n->wg == NULL) {
@@ -224,7 +230,7 @@ static int IsBadWord(long w,node_t *n)
    if (n == NULL) {
       return 0;
    }
-   if (n->badwords != NULL && setContains(n->badwords,w)) {
+   if (n->badwords != NULL && bsTest(n->badwords,w)) {
       return 1;
    }
    return IsBadWord(w,n->parent);
@@ -294,7 +300,7 @@ static void WriteResult(node_t *root)
    if (opt_G) {
       printf("MeatAxe.CompositionFactors := [\n");
       for (i = 0; i < LI.NCf; ++i) {
-         printf("  [ \"%s\", %ld, %ld ]",latCfName(&LI,i),
+         printf("  [ \"%s\", %d, %ld ]",latCfName(&LI,i),
                 irred[i]->mult,irred[i]->spl);
          if (i < LI.NCf - 1) {printf(",");}
          printf("\n");
@@ -303,7 +309,7 @@ static void WriteResult(node_t *root)
    } else if (MSG0) {
       printf("\nName   Mult  SF  Fingerprint\n");
       for (i = 0; i < LI.NCf; ++i) {
-         printf("%-6s %4ld  %2ld  ",latCfName(&LI,i), irred[i]->mult,irred[i]->spl);
+         printf("%-6s %4d  %2ld  ",latCfName(&LI,i), irred[i]->mult,irred[i]->spl);
          for (k = 0; k < MAXFP; ++k) {
             printf("%d%s", irred[i]->fprint[k], (k == MAXFP - 1) ? "\n" : ",");
          }
@@ -335,30 +341,37 @@ static void WriteResult(node_t *root)
    }
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
-/* --------------------------------------------------------------------------
-   splitnode() - Split a node
+MTX_PRINTF_ATTRIBUTE(2,3)
+static void message(int level, node_t *n, const char *msg, ...)
+{
+   if (level > MtxMessageLevel) return;
+   printf("[%u:%u] ", n->nodeId, n->dim);
+   va_list args;
+   va_start(args, msg);
+   vprintf(msg, args);
+   fputc('\n', stdout);
+}
 
-   Arguments:
-     <n>: Pointer to the node to split.
-     <tr>: Indicates that it was a `dual split'
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
-   Description:
-     This function is called after a proper submodule has been found. It
-     calculates the action of the generators on both submodule and quotient,
-     and creates two new <note_t> structures for the two parts.
-     The original module, <n>, is cleaned up and <Chop()> is called with
-     both submodule and quotient.
-   -------------------------------------------------------------------------- */
+/// Splits a constituent
+/// 
+/// <n>: Pointer to the node to split.
+/// <tr>: Indicates that it was a `dual split'
+/// 
+/// This function is called after a proper submodule has been found. It
+/// calculates the action of the generators on both submodule and quotient,
+/// and creates two new <note_t> structures for the two parts.
+/// The original module, <n>, is cleaned up and <Chop()> is called with
+/// both submodule and quotient.
 
 static void splitnode(node_t *n, int tr)
 {
    MatRep_t *sub = NULL, *quot = NULL;
 
-   /* Split the module
-      ---------------- */
-   MESSAGE(0,("Split: Subspace=%d, Quotient=%d\n",
-              n->subsp->Nor,n->dim - n->subsp->Nor));
+   // Split the constituent
    Split(n->subsp,tr ? n->TrRep : n->Rep,&sub,&quot);
 
    /* If it was a dual split, subspace and quotient have been
@@ -381,7 +394,12 @@ static void splitnode(node_t *n, int tr)
    /* Make new nodes for subspace and quotient
       ---------------------------------------- */
    n->sub = CreateNode(sub,n);
+   n->sub->baseDim = n->baseDim;
    n->quot = CreateNode(quot,n);
+   n->quot->baseDim = n->baseDim + n->sub->dim;
+
+   message(0, n, "Split: Subspace=%u:%d, Quotient=%u:%d",
+         n->sub->nodeId, n->sub->dim, n->quot->nodeId, n->quot->dim );
 
    /* Project saved vectors on the quotient
       ------------------------------------- */
@@ -548,33 +566,22 @@ static int checkspl(const MatRep_t *rep, Matrix_t *nsp)
    return result;
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
-/* --------------------------------------------------------------------------
-   FindIdWord() - Find an identifying word for a module
+/// Finds an identifying word ("idword") for an irreducible constituent.
+/// An idword is an element of the group algebra with minimal nullity, i.e., the nullity equals the
+/// splitting field degree [E:F].
+/// The word is stored in n->idword, the polynomial in n->idpol, and its null-space in n->nsp.
 
-   Description:
-     This function finds an identifying word for a given irreducible module.
-     This is a word in the generators with minimal nullity, i.e., the nullity
-     equals the splitting field degree [E:F]. The word is stored in n->idword,
-     the polynomial in n->idpol, and its null-space in n->nsp.
-
-   Arguments:
-     <n>: The module
-
-   Return:
-    0 = Ok, -1 = Error.
-   -------------------------------------------------------------------------- */
-
-static int FindIdWord(node_t *n)
+static void FindIdWord(node_t *n)
 {
    long i;
    int k;
    long count = 0;
    static FPoly_t *cpol = NULL;
 
-   /* Main loop: Try all words
-      ------------------------ */
-   MESSAGE(1,("Searching idword, dim=%d\n",n->dim));
+   // Main loop: Try all words.
+   message(1, n, "Searching idword");
    for (i = 1; count <= MAXTRIES; ++i) {
       if (IsBadWord(i,n)) {
          continue;
@@ -582,7 +589,7 @@ static int FindIdWord(node_t *n)
 
       /* Make the word and its characteristic polynomial
          ----------------------------------------------- */
-      MESSAGE(2,("  Word %ld  gcd=%ld\n",i,n->ggt));
+      message(2,n,"Next word: %ld,  gcd=%ld",i,n->ggt);
       MakeWord(n,i);
       if (cpol != NULL) { fpFree(cpol);}
       cpol = charPol(n->word);
@@ -607,11 +614,11 @@ static int FindIdWord(node_t *n)
          }
 
          if (checkspl(n->Rep,n->nsp)) {
-            MESSAGE(2,("  idword = %ld\n",i));
+            message(2,n,"Idword = %ld",i);
             n->idword = i;
-            setInsert(goodwords,i);
+            bsSet(goodwords, i);
             n->idpol = polDup(cpol->Factor[k]);
-            return 0;
+            return;
          }
       }
    }
@@ -619,8 +626,6 @@ static int FindIdWord(node_t *n)
    /* Failed...
       --------- */
    mtxAbort(MTX_HERE,"FindIdWord() failed");
-   mrSave(n->Rep,"CHOPFAILED");
-   return -1;
 }
 
 
@@ -650,7 +655,7 @@ static void newirred(node_t *n)
       if (IsIsomorphic(irred[i]->Rep,LI.Cf + i,n->Rep,NULL,0)) {
          ++irred[i]->mult;
          n->num = irred[i]->num;
-         MESSAGE(0,("Irreducible (%s)\n",latCfName(&LI,i)));
+         message(0, n, "Irreducible (%s)",latCfName(&LI,i));
          CleanUpNode(n,0);
          return;
       }
@@ -678,7 +683,7 @@ static void newirred(node_t *n)
    irred[i]->mult = 1;
    LI.Cf[i].dim = irred[i]->dim;   /* cfname() needs this */
    LI.Cf[i].num = irred[i]->num;
-   MESSAGE(0,("Irreducible (%s)\n",latCfName(&LI,i)));
+   message(0, n, "Irreducible (%s)",latCfName(&LI,i));
 
    /* Make idword and change to std basis
       ----------------------------------- */
@@ -726,7 +731,7 @@ static int SplitWithSavedVectors(node_t *n)
    if (n->nsp == NULL || n->nsp->Nor == 0) {
       return 0;
    }
-   MESSAGE(1,("Trying saved vectors..."));
+   message(1, n, "Trying %lu saved vectors", (unsigned long) n->nsp->Nor);
 
    if (n->subsp != NULL) {
       matFree(n->subsp);
@@ -735,14 +740,13 @@ static int SplitWithSavedVectors(node_t *n)
    span = SpinUp(n->nsp,n->Rep,SF_EACH | SF_SUB,NULL,NULL);
    if (span->Nor > 0 && span->Nor < span->Noc) {
       n->subsp = span;
-      MESSAGE(1,("success\n"));
+      message(1, n, "Splitting with saved vectors succeeded");
       ++stat_svsplit;
       splitnode(n,0);
       return 1;
    }
-
    matFree(span);
-   MESSAGE(1,("failed\n"));
+   message(1,n,"Splitting with saved vectors failed");
    return 0;
 }
 
@@ -915,7 +919,7 @@ static int SplitWithNsp(node_t *n)
       MESSAGE(3,("Success\n"));
       n->subsp = sub;
       ++stat_nssplit;
-      setInsert(goodwords,n->wnum);
+      bsSet(goodwords, n->wnum);
       splitnode(n,0);
       return 1;
    }
@@ -992,7 +996,7 @@ static int try_poly(node_t *n, Poly_t *pol, long vfh)
             /* Module was split */
             n->subsp = sub;
             ++stat_nssplit;
-            setInsert(goodwords,n->wnum);
+            bsSet(goodwords,n->wnum);
             splitnode(n,0);
             return 1;
          }
@@ -1026,7 +1030,7 @@ static int try_poly(node_t *n, Poly_t *pol, long vfh)
    /* The module is irreducible!
       -------------------------- */
    newirred(n);
-   setInsert(goodwords,n->wnum);
+   bsSet(goodwords,n->wnum);
    ++stat_irred;
    return 1;
 }
@@ -1204,7 +1208,7 @@ static int ChopWithWord(node_t *n, long wn, int try_ex)
    int pi, done;
    FPoly_t *cpol;
 
-   MESSAGE(2,("Next word is %ld (=%s)\n",wn,wgSymbolicName(n->wg,wn)));
+   message(2,n,"Next word is %ld (=%s)",wn,wgSymbolicName(n->wg,wn));
    CharPolSeed = (CharPolSeed + 2) % n->dim;    /* BUG: '+2' for 2.3 compat. */
    MakeWord(n,wn);
    cpol = make_f1(n);           /* Make first part of c(x) */
@@ -1212,10 +1216,10 @@ static int ChopWithWord(node_t *n, long wn, int try_ex)
    /* If c(x) is irreducible, then the module is irreducible
       ------------------------------------------------------ */
    if (cpol->Factor[0]->Degree == n->dim) {
-      MESSAGE(2,("c(x) is irreducible\n"));
+      message(2,n, "c(x) is irreducible");
       newirred(n);
       ++stat_cpirred;
-      setInsert(goodwords,wn);
+      bsSet(goodwords,wn);
       fpFree(cpol);
       return 1;
    }
@@ -1244,82 +1248,95 @@ static int ChopWithWord(node_t *n, long wn, int try_ex)
 }
 
 
-/* --------------------------------------------------------------------------
-   IsLinear() - Handle 1-dimensional modules. If the module is 1-dimensional,
-   insert it into the list of irrecurcibles.
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
-   Return: 0 on success, 1 if dim > 1.
-   -------------------------------------------------------------------------- */
+/// Handle 1-dimensional modules.
+/// If the dimension is 1, marks the constituent as irrreducible and return 1. 
+/// Returns 0 otherwise.
 
-static int IsLinear(node_t *n)
+static int IsOneDimensional(node_t *n)
 {
    if (n->dim > 1) {
       return 0;
    }
-   MESSAGE(1,("Dimension is one -- irreducible!\n"));
+   message(1,n,"Dimension is one -- irreducible");
    newirred(n);
    ++stat_irred;
    return 1;
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
-/* ------------------------------------------------------------------
-   Chop() - Chop a module
-   ------------------------------------------------------------------ */
-
-static int Chop(node_t *n)
+int tryWord(node_t*n, size_t wordNo, int try_ext)
 {
-   long w;
+   if (IsBadWord(wordNo,n)) {
+      message(2,n,"Skip bad word %ld",wordNo);
+      return 0;
+   }
+   message(2,n,"Trying word %ld",wordNo);
+   if (ChopWithWord(n,wordNo,try_ext)) {
+      return 1;
+   }
+   message(2,n,"Add bad word %ld",wordNo);
+   bsSet(n->badwords, wordNo);
+   return 0;
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+/// Chops a constituent or proves that it is irreducible.
+
+static void Chop(node_t *n)
+{
    int count = 0;
 
    if (n == NULL) {
       mtxAbort(MTX_HERE,"node=NULL: %s",MTX_ERR_BADARG);
-      return -1;
    }
-   MESSAGE(0,("Chop: Dim=%d\n",n->dim));
+   message(0, n, "Chop: Dim=%d",n->dim);
 
-   /* Some special cases first: 1-dimensional, saved vectors.
-      ------------------------------------------------------- */
-   if (IsLinear(n)) {
-      return 0;
+   // Handle dimension 1.
+   if (IsOneDimensional(n)) {
+      return;
    }
+   // Try splitting with saved vectors.
    if (SplitWithSavedVectors(n)) {
-      return 0;
+      return;
    }
 
-   /* Try words. First, we try all known 'good' words (w=0,-1,-2,...),
-      then all words (w=1,2,...). Known 'bad' words are always skipped.
-      ----------------------------------------------------------------- */
-   MESSAGE(1,("Trying words\n"));
-   for (count = 0, w = 0; count < 10000000; ++count) {
-      long i;
-      if ((w <= 0) && (int)-w < goodwords->Size) {
-         i = goodwords->Data[(int) -(w--)];
-      } else {
-         if (w <= 0) {
-            w = i = firstword;          /* Start with word 1 */
-         } else {
-            i = ++w;
-         }
-         if (setContains(goodwords,w)) {   /* Do not try again */
-            continue;
-         }
+   // Try words. First, we try all known 'good' words (w=0,-1,-2,...),
+   // then all words (w=1,2,...). Known 'bad' words are always skipped.
+   message(1, n, "Trying known good words");
+   {
+      size_t wordNo = 0;
+      if (bsFirst(goodwords, &wordNo)) {
+         do {
+            if (tryWord(n, wordNo, count > 10))
+               return;
+            ++count;
+         } while (bsNext(goodwords, &wordNo));
       }
-      if (IsBadWord(i,n)) {
+   }
+
+   message(1, n, "Trying other words");
+
+   for (long wordNo = firstword; count < 10000000; ++count, ++wordNo) {
+      
+      if (bsTest(goodwords, wordNo)) {   /* Do not try again */
          continue;
       }
-      if (ChopWithWord(n,i,count > 10)) {
-         break;
-      }
-      setInsert(n->badwords,i);
+      if (tryWord(n, wordNo, count > 10))
+         return;
+      bsSet(n->badwords, wordNo);
    }
-   return 0;
+   
+   mtxAbort(MTX_HERE, "GAME OVER");
 }
 
 
 static int Init(int argc, char **argv)
 {
-   goodwords = setAlloc();
+   goodwords = bsAllocEmpty();
    memset(&LI,0,sizeof(Lat_Info));
    if ((App = appAlloc(&AppInfo,argc,argv)) == NULL) {
       return -1;

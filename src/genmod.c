@@ -94,7 +94,7 @@ static int Init(int argc, char **argv)
     	if (f == NULL)
 	    mtxAbort(MTX_HERE,"CANNOT OPEN .sub FILE");
 	bs = bsAlloc(nmount);
-    	sysFseek(f,modnum * (12 + (bs->Size + 7) / 8));	/* HACK: !!! */
+    	sysFseek(f,modnum * (12 + (bs->size + 7) / 8));	/* HACK: !!! */
 	bsFree(bs);
     	bs = bsRead(f);
     	if (MSG1)

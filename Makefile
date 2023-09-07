@@ -103,8 +103,7 @@ ${MTXBIN}/%: tmp/%.o ${MTXROOT}/lib/libmtx.a
 
 LIB_OBJS=\
 	args berlekmp \
-	bsand bscore bsdup bsissub bsmatch bsminus \
-	bsop bsor bsprint bsio \
+	bitstring \
 	cfinfo \
 	charpol chbasis \
 	error \
@@ -135,7 +134,7 @@ LIB_OBJS=\
 	polcmp polcore polderive poldiv poldup\
 	polgcd polmul polprint polread polwrite \
 	quotient random rdcfgen \
-	saction setcore setinsert settest \
+	saction \
 	spinup spinup2 \
 	split stabpwr stfcore \
 	stfread stfwrite \
@@ -171,7 +170,7 @@ TS_OBJS1=c-args c-bitstring c-cfinfo c-charpol\
 	c-ffio c-fileio c-ffmat c-ffrow c-fpoly \
 	c-grease c-kernel c-matins c-matrix c-matset\
 	c-os c-perm c-poly c-pseed c-quot c-random \
-	c-sets c-stf c-tensor c-zzz
+	c-stf c-tensor c-zzz
 
 TS_OBJS=$(TS_OBJS1:%=tmp/%.o) ${MTXROOT}/lib/libmtx.a
 
@@ -188,6 +187,7 @@ tmp/tex: tests/tex.c tmp/_mkdir
 
 tmp/c-%.o: tests/c-%.c tests/testing.h src/meataxe.h Makefile Makefile.conf
 	@echo "# CC c-$*.c -> $@"
+	${SILENT}mkdir -p tmp
 	${SILENT}$(CC) $(CFLAGS) -Itests -Isrc -c "tests/c-$*.c" -o "$@"
 
 tmp/c-zzz.o: tests/c-zzz.c tests/testing.h src/meataxe.h tmp/test_table.c Makefile Makefile.conf

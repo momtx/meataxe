@@ -24,7 +24,8 @@
 
 extern const uint32_t MTX_TYPE_PERMUTATION;
 extern const uint32_t MTX_TYPE_POLYNOMIAL;
-extern const uint32_t MTX_TYPE_BITSTRING;
+extern const uint32_t MTX_TYPE_BITSTRING_FIXED;
+extern const uint32_t MTX_TYPE_BITSTRING_DYNAMIC;
 extern const uint32_t MTX_TYPE_INTMATRIX;
 
 /// @addtogroup os @{
@@ -631,61 +632,53 @@ void fpValidate(const struct MtxSourceLocation* src, const FPoly_t *p);
 
 /// A bit string.
 typedef struct {
-   unsigned long Magic;   ///< Used internally.
-   int Size;              ///< Number of bits. 
-   int BufSize;           ///< Used internally for memory management. 
-   unsigned long Data[1]; ///< The bits. The least significant bit comes first.
+   unsigned magic;        ///< Used internally.
+   size_t size;           ///< Number of signicant bits. Only used for fixed-size bit strings!
+   size_t capacity;       ///< Maximum size.
+   uint8_t *data;         ///< The bits. Bit 0 is the LSB of data[0].
 } BitString_t;
 
-BitString_t *bsAlloc(int size);
-int bsAnd(BitString_t *dest, const BitString_t *src);
-int bsClear(BitString_t *bs, int i);
-int bsClearAll(BitString_t *bs);
+BitString_t *bsAllocEmpty(void);
+BitString_t *bsAlloc(size_t size);
+
+void bsTrim(BitString_t* bs);
+void bsResize(BitString_t* bs, size_t newSize);
+
+int bsFirst(const BitString_t* bs, size_t* i);
+int bsNext(const BitString_t* bs, size_t* i);
+
+void bsAnd(BitString_t *dest, const BitString_t *src);
+void bsClear(BitString_t *bs, size_t i);
+void bsClearAll(BitString_t *bs);
 int bsCompare(const BitString_t *a, const BitString_t *b);
-BitString_t *bsCopy(BitString_t *dest, const BitString_t *src);
+void bsCopy(BitString_t *dest, const BitString_t *src);
 BitString_t *bsDup(const BitString_t *src);
 int bsFree(BitString_t *bs);
-int bsIntersectionCount(const BitString_t *a, const BitString_t *b);
+size_t bsIntersectionCount(const BitString_t *a, const BitString_t *b);
 int bsIsSub(const BitString_t *a, const BitString_t *b);
 int bsIsValid(const BitString_t *bs);
-int bsMinus(BitString_t *dest, const BitString_t *src);
-int bsOr(BitString_t *dest, const BitString_t *src);
+void bsMinus(BitString_t *dest, const BitString_t *src);
+void bsOr(BitString_t* dest, const BitString_t* src);
 void bsPrint(const char *name, const BitString_t *bs);
 BitString_t *bsRead(FILE *f);
-int bsSet(BitString_t* bs, int i);
-int bsTest(const BitString_t *bs, int i);
+void bsSet(BitString_t* bs, size_t i);
+int bsTest(const BitString_t *bs, size_t i);
 void bsValidate(const struct MtxSourceLocation* src, const BitString_t *bs);
 void bsWrite(BitString_t *bs, FILE *f);
 
-#ifndef MTX_DEBUG
+// TODO: provide unsafe high-performance operations?
+//  BS_TEST_UNCHECKED(bs, bit)
+//  BS_SET_UNCHECKED(bs, bit)
+//  BS_CLEAR_UNCHECKED(bs, bit)
 
-#define BS_BPL (sizeof(long) * 8)
-#define bsSet(bs,i) ((bs)->Data[(i) / BS_BPL] |= 1L << ((i) % BS_BPL))
-#define bsClear(bs,i) ((bs)->Data[(i) / BS_BPL] &= ~(1L << ((i) % BS_BPL)))
-#define bsTest(bs,i) (((bs)->Data[(i) / BS_BPL] & (1L << ((i) % BS_BPL))) != 0 ? 1 : 0)
-
-#endif
-
-////////////////////////////////////////////////////////////////////////////////////////////////////
-/// Sets (subsets of Z).
-////////////////////////////////////////////////////////////////////////////////////////////////////
-
-/// A set of integers.
-typedef struct {
-   unsigned long Magic;         /**< Used internally. */
-   int Size;                    /**< Number of elements. */
-   int BufSize;                 /**< Used internally for memory management. */
-   long *Data;                  /**< The elements in ascending order. */
-} Set_t;
-
-Set_t *setAlloc();
-int setContains(const Set_t *set, long elem);
-Set_t *setDup(const Set_t *s);
-int setFree(Set_t *x);
-int setInsert(Set_t *set, long elem);
-int setIsValid(const Set_t *s);
-int setPrint(char *name, const Set_t *s);
-void setValidate(const struct MtxSourceLocation* src, const Set_t *s);
+//#ifndef MTX_DEBUG
+//
+//#define BS_BPL (sizeof(long) * 8)
+//#define bsSet(bs,i) ((bs)->Data[(i) / BS_BPL] |= 1L << ((i) % BS_BPL))
+//#define bsClear(bs,i) ((bs)->Data[(i) / BS_BPL] &= ~(1L << ((i) % BS_BPL)))
+//#define bsTest(bs,i) (((bs)->Data[(i) / BS_BPL] & (1L << ((i) % BS_BPL))) != 0 ? 1 : 0)
+//
+//#endif
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // Integer matrices.

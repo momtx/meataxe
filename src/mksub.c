@@ -153,7 +153,7 @@ static void init(const char *basename)
 	    mtxAbort(MTX_HERE,"Error reading incidence matrix");
 	    return;
 	}
-	if (xsubof[i]->Size != xnmount)
+	if (xsubof[i]->size != xnmount)
 	{
 	    mtxAbort(MTX_HERE,"Invalid bit string");
 	    return;

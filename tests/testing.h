@@ -69,14 +69,15 @@ void tstFail(const char *file, int line, const char *func, const char *msg, ...)
    do { tstFail(__FILE__, __LINE__, __func__, msg, __VA_ARGS__); return 1; } while(0)
 
 extern FEL *FTab;
-extern int NextField();
-extern void SelectField(int f);
-extern void MakeFTab();
-extern void ForEachField(const char *testName, void (*testFunction)());
+int NextField();
+void SelectField(int f);
+void MakeFTab();
+void ForEachField(const char *testName, void (*testFunction)());
 
-extern void RngReset();
-extern FEL RandomFieldElement();
-extern FEL RandomNonzeroFieldElement();
+void RngReset();
+uint32_t RngNext();
+FEL RandomFieldElement();
+FEL RandomNonzeroFieldElement();
 
 extern Matrix_t *MkMat(int nor, int noc, ...);
 

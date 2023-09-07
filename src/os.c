@@ -64,7 +64,8 @@ time_t zinittime = 0;           /**< Start time of this process. */
 
 size_t sysPad(size_t x, size_t unit)
 {
-   return x / unit + ((x % unit) ? 1 : 0);
+   size_t rem = x % unit;
+   return rem == 0 ? x : x + (unit - rem);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
