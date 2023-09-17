@@ -2,6 +2,8 @@ echo "0115 - ZTE"
 
 . ../tests/common.sh
 
+#set -x
+
 zte "${MTX_TEST_DATA_DIR}/Perm1" "${MTX_TEST_DATA_DIR}/Perm2" tmp.$$.x1 || error "ZTE failed"
 compareBinaryWithReference x1
 

@@ -96,8 +96,7 @@ int mrIsValid(const MatRep_t *rep)
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 /// Create a matrix representation.
-/// This function creates a new matrix representation for a given set of generators.
-/// The matrices in @a gen must all be  square, over the same field, and with the same dimensions.
+/// The matrices in @a gen must all be square, over the same field, and of the same size.
 /// @a flags may be zero or the special value MR_COPY_GENERATORS. In the latter case,
 /// a local copy of the generators is made, and the matrices in @a gen can
 /// be safely destroyed. If @a flags is 0, only references to the matrices
@@ -106,9 +105,9 @@ int mrIsValid(const MatRep_t *rep)
 /// will be destroyed automatically when mrFree() is called to destroy the
 /// representation.
 /// @param ngen Number of generators in @a gen.
-/// @param gen List of generators.
-/// @param flags Optional flags (see function description).
-/// @return Pointer to the new matrix representation or 0 on error.
+/// @param gen List of generators. May be NULL if @a ngen is 0.
+/// @param flags Optional flags (see description).
+/// @return Pointer to the new matrix representation
 
 // TODO: add a MR_FOREIGN_GENERATORS to prevent mrFree() from destroying the generators
 

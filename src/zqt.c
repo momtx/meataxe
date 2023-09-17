@@ -33,192 +33,127 @@ static MtxApplicationInfo_t AppInfo = {
 
 static MtxApplication_t *App = NULL;
 static int opt_i = 0;
-static const char *mname, *sname, *oname;
-static Matrix_t *Subspace = NULL;
-static MtxFile_t *InputFile = NULL;
-static MtxFile_t *OutputFile = NULL;
-static PTR InputBuffer = NULL;
-static PTR OutputBuffer = NULL;
-static int QuotientDim;
 
+static const char *fileNameS;
+static Matrix_t *S = NULL;
 
+static const char *fileNameM;
+static MtxFile_t *fileM = NULL;
+static int32_t norM = 0;
+static int32_t nocM = 0;
+static PTR bufferM = NULL;
 
-/* ------------------------------------------------------------------
-   init() - Process command line options and arguments
-   ------------------------------------------------------------------ */
+static const char *fileNameQ;
+static MtxFile_t *fileQ = NULL;
+static PTR bufferQ = NULL;
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static int Init(int argc, char **argv)
-
+static void init(int argc, char **argv)
 {
     App = appAlloc(&AppInfo,argc,argv);
-    if (App == NULL)
-	return -1;
     opt_i = appGetOption(App,"-i");
-    if (appGetArguments(App,3,3) < 0)
-	return -1;
-    sname = App->ArgV[0];
-    mname = App->ArgV[1];
-    oname = App->ArgV[2];
-    return 0;
+    appGetArguments(App,3,3);
+    fileNameS = App->ArgV[0];
+    fileNameM = App->ArgV[1];
+    fileNameQ = App->ArgV[2];
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
-
-
-/* ------------------------------------------------------------------
-   readfiles() - Read the input files, allocate tables
-   ------------------------------------------------------------------ */
-
-static int ReadFiles()
-
+static int readFiles()
 {
-    /* Read the subspace, and build the pivot table.
-       --------------------------------------------- */
-    Subspace = matLoad(sname);
-    if (Subspace == NULL)
+   // subspace
+    S = matLoad(fileNameS);
+    if (S == NULL)
 	return 1;
-    if (matPivotize(Subspace) < 0)
-    {
-	mtxAbort(MTX_HERE,"%s: %s",mname,MTX_ERR_NOTECH);
-	return 1;
-    }
+    matPivotize(S);
 
-    /* Open the input file, check compatibility, and allocate buffer.
-       -------------------------------------------------------------- */
-    InputFile = mfOpen(mname);
-    if (InputFile == NULL)
-	return 1;
-    if (InputFile->Field != Subspace->Field || InputFile->Noc != Subspace->Noc)
-    {
-	mtxAbort(MTX_HERE,"%s and %S: %s",sname,mname,MTX_ERR_INCOMPAT);
-	return 1;
-    }
-    if (opt_i && InputFile->Nor != InputFile->Noc) 
-    {
-	mtxAbort(MTX_HERE,"%s: %s",mname,MTX_ERR_NOTSQUARE);
-	return 1;
-    }
-    InputBuffer = ffAlloc(1, InputFile->Noc);
-    QuotientDim = Subspace->Noc - Subspace->Nor;
-
-    /* Open the output file and allocate buffer.
-       ----------------------------------------- */
-    OutputFile = mfCreate(oname,ffOrder,opt_i ? QuotientDim : InputFile->Nor,
-	QuotientDim);
-    OutputBuffer = ffAlloc(1, InputFile->Noc);
-
+    // matrix
+    fileM = mfOpen(fileNameM);
+    mfReadHeader(fileM);
+    if (mfObjectType(fileM) != MTX_TYPE_MATRIX)
+       mtxAbort(MTX_HERE, "%s: %s", fileNameM, MTX_ERR_NOTMATRIX);
+    norM = fileM->header[1];
+    nocM = fileM->header[2];
+    if (nocM != S->Noc)
+	mtxAbort(MTX_HERE,"%s and %s: %s",fileNameS,fileNameM,MTX_ERR_INCOMPAT);
+    if (opt_i && norM != nocM)
+       mtxAbort(MTX_HERE, "%s: %s", fileNameM, MTX_ERR_NOTSQUARE);
+    
+    bufferM = ffAlloc(1, nocM);
     return 0;
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
-
-
-
-/* ------------------------------------------------------------------
-   IsPivot() - Find out if a given column is significant or not.
-   ------------------------------------------------------------------ */
-
-static int IsPivot(int i)
-
+static int isPivot(int i)
 {
-    int k;
-    int *piv = Subspace->PivotTable;
-    int sdim = Subspace->Nor;
-    for (k = 0; k < sdim; ++k)
-    {
-	if (i == piv[k])
-	    return 1;
-    }
-    return 0;
+   uint32_t *piv = S->PivotTable;
+   uint32_t dimS = S->Nor;
+   for (uint32_t k = 0; k < dimS; ++k)
+   {
+      if (i == piv[k])
+         return 1;
+   }
+   return 0;
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
-
-
-/* ------------------------------------------------------------------
-   doit()
-   ------------------------------------------------------------------ */
-
-static int doit()
-
+static void doit()
 {
     int i;
-    int *non_pivot = Subspace->PivotTable + Subspace->Nor;
+    const uint32_t *non_pivot = S->PivotTable + S->Nor;
+    const uint32_t quotientDim = S->Noc - S->Nor;
 
-    for (i = 0; i < InputFile->Nor; ++i)
+    const uint32_t norM = fileM->header[1];
+    const uint32_t nocM = fileM->header[2];
+
+    // output file
+    fileQ = mfCreate(fileNameQ,ffOrder,opt_i ? quotientDim : norM, quotientDim);
+    bufferQ = ffAlloc(1, nocM);
+
+    for (i = 0; i < norM; ++i)
     {
-	int k;
+	mfReadRows(fileM,bufferM, 1, nocM);
 
-	/* Read one row from the input file.
-	   --------------------------------- */
-	if (mfReadRows(InputFile,InputBuffer,1) != 1)
-	{
-	    mtxAbort(MTX_HERE,"Error reading vector");
-	    return 1;
-	}
-
-	/* When calculating the action, take only `insignifican' rows.
-	   ----------------------------------------------------------- */
-	if (opt_i && IsPivot(i))
+	// When calculating the action, take only insignificant rows.
+	if (opt_i && isPivot(i))
 	    continue;
 
-	/* Clean and extract insignificant columns.
-	   ---------------------------------------- */
-	ffCleanRow(InputBuffer,Subspace->Data,Subspace->Nor,Subspace->Noc,Subspace->PivotTable);
-	ffMulRow(OutputBuffer,FF_ZERO, QuotientDim);
-	for (k = 0; k < QuotientDim; ++k)
-	    ffInsert(OutputBuffer,k,ffExtract(InputBuffer,non_pivot[k]));
+	// Clean and extract insignificant columns.
+	ffCleanRow(bufferM,S->Data,S->Nor,S->Noc,S->PivotTable);
+	ffMulRow(bufferQ,FF_ZERO, quotientDim);
+	for (uint32_t k = 0; k < quotientDim; ++k)
+	    ffInsert(bufferQ,k,ffExtract(bufferM,non_pivot[k]));
 
-	/* Write the output row.
-	   --------------------- */
-	if (mfWriteRows(OutputFile,OutputBuffer,1) != 1)
-	{
-	    mtxAbort(MTX_HERE,"Error writing vector");
-	    return 1;
-	}
-
+	// Write the output row.
+	mfWriteRows(fileQ,bufferQ, 1, quotientDim);
     }
 
-    return 0;
+    sysFree(bufferQ);
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
-
-static void Cleanup()
-
+static void cleanup()
 {
-    if (Subspace != NULL)
-	matFree(Subspace);
-    if (InputFile != NULL)
-	mfClose(InputFile);
-    if (OutputFile != NULL)
-	mfClose(OutputFile);
-    appFree(App);
+   matFree(S);
+   mfClose(fileM);
+   mfClose(fileQ);
+   appFree(App);
 }
 
-
-/* ------------------------------------------------------------------
-   main()
-   ------------------------------------------------------------------ */
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 int main(int argc, char **argv)
-
 {
-    int rc;
-    if (Init(argc,argv) != 0)
-    {
-	mtxAbort(MTX_HERE,"Initialization failed");
-	return 1;
-    }
-    if (ReadFiles() != 0)
-    {
-	mtxAbort(MTX_HERE,"Error reading files");
-	return 1;
-    }
-    rc = doit();
-    Cleanup();
-    return rc;
+    init(argc,argv);
+    readFiles();
+    doit();
+    cleanup();
+    return 0;
 }
 
 
@@ -253,11 +188,10 @@ zqt [@em Options] [-i] @em Subsp @em Matrix @em Quot
   With "-i", the action on the quotient, a (N-M)×(N-M) matrix.
 
 @section zqt_desc Description
-This program reads in a subspace and applies the canonical map to its quotient
-on a matrix. The result is written out to @em Quot.
-@em Subsp should be a matrix in semi-echelon form, and the two
-input matrices must have the same field parameter and the same number
-of columns. If this is not the case the program stops with an error message.
+This program reads in a subspace and applies the canonical map to its quotient to a matrix.
+The result is written out to @em Quot.
+@em Subsp must be a matrix in semi-echelon form and have the same number of columns as
+@em Mat.
 
 Otherwise the program reads in @em Subsp, builds a table of pivot
 columns and then proceeds, row by row, through @em Matrix. For

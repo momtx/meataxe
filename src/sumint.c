@@ -37,10 +37,10 @@
 /// @param piv Pivot table.
 /// @return 0 on success, -1 on error.
 
-int ffSumAndIntersection(int noc, PTR wrk1, int *nor1, int *nor2, PTR wrk2, int *piv)
+int ffSumAndIntersection(int noc, PTR wrk1, uint32_t *nor1, uint32_t *nor2, PTR wrk2, uint32_t *piv)
 {
-    int dim1 = *nor1, dim2 = *nor2;
-    int i, k, sumdim;
+    uint32_t dim1 = *nor1, dim2 = *nor2;
+    uint32_t i, k, sumdim;
     PTR x1, x2, y1, y2, sec;
 
 
@@ -65,11 +65,11 @@ int ffSumAndIntersection(int noc, PTR wrk1, int *nor1, int *nor2, PTR wrk2, int 
     for (i = 0; i < dim1 + dim2; ++i, ffStepPtr(&x1, noc), ffStepPtr(&x2, noc))
     {
 	FEL f;
-	int p;
+	uint32_t p;
 	if (ffCleanRowAndRepeat(x1,wrk1,k,noc, piv,x2,wrk2)) {
 	   return -1;
 	}
-	if ((p = ffFindPivot(x1,&f,noc)) < 0)
+	if ((p = ffFindPivot(x1,&f,noc)) == MTX_NVAL)
 	   continue;	/* Null row - ignore */
 	if (k < i)
 	{
@@ -87,9 +87,9 @@ int ffSumAndIntersection(int noc, PTR wrk1, int *nor1, int *nor2, PTR wrk2, int 
     for (i = sumdim; i < dim1 + dim2; ++i, ffStepPtr(&x2, noc))
     {
 	FEL f;
-	int p;
+	uint32_t p;
 	ffCleanRow(x2,sec,k - sumdim,noc,piv + sumdim);
-	if ((p = ffFindPivot(x2,&f,noc)) < 0)
+	if ((p = ffFindPivot(x2,&f,noc)) == MTX_NVAL)
 	    continue;
 	if (i > k)
 	    ffCopyRow(y2,x2, noc);

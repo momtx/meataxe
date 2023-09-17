@@ -17,10 +17,9 @@ int matFindPivot(const Matrix_t *mat, int *row, int *col, FEL *f)
 {
    int i;
    for (i = 0; i < mat->Nor; ++i) {
-      int piv;
       FEL g;
-      piv = ffFindPivot(matGetPtr(mat,i),&g,mat->Noc);
-      if (piv >= 0) {
+      uint32_t piv = ffFindPivot(matGetPtr(mat,i),&g,mat->Noc);
+      if (piv != MTX_NVAL) {
          if (f != NULL) { *f = g; }
          *row = i;
          *col = piv;

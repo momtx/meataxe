@@ -50,11 +50,6 @@ FPoly_t *fpMulP(FPoly_t *dest, const Poly_t *src, int pwr)
          int newsize = dest->BufSize + 5;
          Poly_t **x = NREALLOC(dest->Factor,Poly_t *,newsize);
          int *e = NREALLOC(dest->Mult,int,newsize);
-
-         if ((e == NULL) || (x == NULL)) {
-            mtxAbort(MTX_HERE,"Cannot grow: %S");
-            return NULL;
-         }
          dest->Factor = x;
          dest->Mult = e;
          dest->BufSize = newsize;

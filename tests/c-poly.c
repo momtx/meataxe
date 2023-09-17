@@ -144,7 +144,7 @@ static int TestPolAdd1(int fl)
    b = polAlloc(fl,0);
    c = polAlloc(fl,0);
    polAdd(a,b);
-   if (polCompare(a,c) != 0) { TST_FAIL("polAdd(a,0)!=a failed", 0); }
+   ASSERT(polCompare(a,c) == 0);
    polFree(a);
    polFree(b);
    polFree(c);

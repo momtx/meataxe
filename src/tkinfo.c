@@ -45,11 +45,9 @@ static int ReadVector(StfData *f, const char *c,
      <f>: Data file. Must be opened for reading.
      <tki>: Pointer to a <TkData_t> structure where data is stored.
    
-   Return:
-     0 = ok, -1 = Error
    -------------------------------------------------------------------------- */
 
-static int ParseTKInfoFile(StfData *f, TkData_t *tki)
+static void ParseTKInfoFile(StfData *f, TkData_t *tki)
 {
     /* Fill the data structure with zeros
        --------------------------------- */
@@ -58,10 +56,7 @@ static int ParseTKInfoFile(StfData *f, TkData_t *tki)
     /* Read header
        ----------- */
     if (stfReadLine(f) || strcmp(stfGetName(f),"TKInfo"))
-    {
 	mtxAbort(MTX_HERE,"File header not found in .tki file");
-	return -1;
-    }
 
     /* Read data
        --------- */
@@ -77,19 +72,13 @@ static int ParseTKInfoFile(StfData *f, TkData_t *tki)
 	{
 	    stfGetInt(f,&tki->Dim);
 	    if (tki->Dim < 0 || tki->Dim > 1000000)
-	    {
-		fprintf(stderr,"Illegal dimension in .tki file\n");
-		return -1;
-	    }
+		mtxAbort(MTX_HERE,"Illegal dimension in .tki file");
 	}
 	else if (!strcmp(c,"TKInfo.NCf"))
 	{
 	    stfGetInt(f,&tki->NCf);
 	    if (tki->NCf < 1 || tki->NCf > LAT_MAXCF)
-	    {
-		fprintf(stderr,"Illegal number of constituents in .tki file");
-		return -1;
-	    }
+		mtxAbort(MTX_HERE,"Illegal number of constituents in .tki file");
 	}
 	else if (ReadVector(f,c,"TKInfo.CfIndexM",tki->NCf,tki->CfIndex[0]))
 	    continue;
@@ -98,8 +87,6 @@ static int ParseTKInfoFile(StfData *f, TkData_t *tki)
     }
 
     /* TODO: check cf mapping */
-
-    return 0;
 }
 
 
@@ -108,34 +95,18 @@ static int ParseTKInfoFile(StfData *f, TkData_t *tki)
 /// This function reads the contents of a .tki file and puts the data into a
 /// TkData_t structure.
 /// @param tki Pointer to a TkData_t structure where the data is stored.
-/// @param name File name without ".tki" extension (which is appended 
-///    automatically).
-/// @return 0 on success, -1 on error.
+/// @param name File name without ".tki" extension (which is appended automatically).
 
-int tkReadInfo(TkData_t *tki, const char *name)
+void tkReadInfo(TkData_t *tki, const char *name)
 {
-    char fn[500];
-    StfData *f;
-    int result = 0;
     memset(tki,0,sizeof(TkData_t));
 
-    /* Open input file
-       --------------- */
-    strcat(strcpy(fn,name),".tki");
-    if ((f = stfOpen(fn,"r")) == NULL)
-    {
-	mtxAbort(MTX_HERE,"Cannot open %s for reading\n",fn);
-	return -1;
-    }
+    char fn[500];
+    snprintf(fn, sizeof(fn), "%s.tki", name);
+    StfData* f = stfOpen(fn,"r");
 
-    /* Read data from file
-       ------------------- */
-    result = ParseTKInfoFile(f,tki);
-
-    /* Close input file
-       ---------------- */
+    ParseTKInfoFile(f,tki);
     stfClose(f);
-    return result;
 }
 
 

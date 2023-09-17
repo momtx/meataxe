@@ -92,13 +92,12 @@ Matrix_t *matTensor(const Matrix_t *m1, const Matrix_t *m2)
             }
          }
 
-         // Next row of <m1>
-         x1 = (PTR)((char *)x1 + m1->RowSize);
-         x3 = (PTR)((char *)x3 + m2->Nor * temat->RowSize);
+         ffStepPtr(&x1, m1->Noc);
+
+         x3 = ffGetPtr(x3, m2->Nor, temat->Noc);
       }
 
-      // Next row of <m2>
-      x2 = (PTR)((char *)x2 + m2->RowSize);
+      ffStepPtr(&x2, m2->Noc);
    }
 
    // Clean up

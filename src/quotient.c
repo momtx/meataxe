@@ -39,7 +39,7 @@
 Matrix_t *QProjection(const Matrix_t *subspace, const Matrix_t *vectors)
 {
    int i, sdim, qdim;
-   int *non_piv;
+   uint32_t *non_piv;
    Matrix_t *result;
    PTR tmp;
 
@@ -106,7 +106,6 @@ Matrix_t *QAction(const Matrix_t *subspace, const Matrix_t *gen)
 {
    int k;
    int dim, sdim, qdim;
-   int *piv, *non_piv;
 
    /* Check arguments.
       ---------------- */
@@ -136,8 +135,8 @@ Matrix_t *QAction(const Matrix_t *subspace, const Matrix_t *gen)
       matFree(action);
       return NULL;
    }
-   piv = subspace->PivotTable;
-   non_piv = piv + subspace->Nor;
+   const uint32_t* const piv = subspace->PivotTable;
+   const uint32_t* const non_piv = piv + subspace->Nor;
    for (k = 0; k < qdim; ++k) {
       int l;
       PTR qx = matGetPtr(action,k);

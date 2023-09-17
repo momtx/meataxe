@@ -46,28 +46,10 @@ static Matrix_t *basis = NULL;		/* Basis corresponding to Loewy series */
 
 
 
-/* --------------------------------------------------------------------------
-   ParseCommandLine() - Process command line options and arguments
-   -------------------------------------------------------------------------- */
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static int ParseCommandLine()
-
+static void ReadConstituents()
 {
-    MaxLen = appGetIntOption(App,"-l --max-length",0,0,1000);
-    if (appGetArguments(App,1,1) != 1)
-	return -1;
-    return 0;
-}
-
-
-/* --------------------------------------------------------------------------
-   ReadConstituents() - Read generators and optables for all constituents
-   -------------------------------------------------------------------------- */
-
-static int ReadConstituents()
-
-{
-
     int i;
     char fn[200];
 
@@ -77,8 +59,6 @@ static int ReadConstituents()
 	   --------------- */
 	sprintf(fn,"%s%s.std", LI.BaseName,latCfName(&LI,i));
 	CfRep[i] = mrLoad(fn,LI.NGen);
-	if (CfRep[i] == NULL)
-	    return -1;
 
 	/* Read spinup script for standard basis
 	   ------------------------------------- */
@@ -100,48 +80,28 @@ static int ReadConstituents()
 	MESSAGE(1,("Taking seed vectors from %s\n",fn));
 	seed[i] = matLoad(fn);
     }
-    return 0;
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
-
-
-/* --------------------------------------------------------------------------
-   Init() - Program initialization
-   -------------------------------------------------------------------------- */
-
-static int Init(int argc, char **argv)
-
+static void init(int argc, char **argv)
 {
-    /* Process the command line
-       ------------------------ */
-    if ((App = appAlloc(&AppInfo,argc,argv)) == NULL)
-	return -1;
-    if (ParseCommandLine() != 0)
-    {
-	mtxAbort(MTX_HERE,"Error in command line");
-	return -1;
-    }
+    App = appAlloc(&AppInfo,argc,argv);
+    MaxLen = appGetIntOption(App,"-l --max-length",0,0,1000);
+    appGetArguments(App,1,1);
 
-    /* Read input files
-       ---------------- */
-    if (latReadInfo(&LI,App->ArgV[0]) != 0)
-	return -1;
-    if ((Rep = mrLoad(App->ArgV[0],LI.NGen)) == NULL)
-	return -1;
-    if (ReadConstituents() != 0)
-	return -1;
+    latReadInfo(&LI,App->ArgV[0]);
+    Rep = mrLoad(App->ArgV[0],LI.NGen);
+    ReadConstituents();
     Dimension = Rep->Gen[0]->Nor;
 
     WGen = wgAlloc(Rep);
     LI.NSocles = 0;
-
-    return 0;
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 static void WriteBasis(const Matrix_t *basis)
-
 {
     char name[200];
     sprintf(name, "%s.soc",App->ArgV[0]);
@@ -149,42 +109,24 @@ static void WriteBasis(const Matrix_t *basis)
     matSave(basis,name);
 }
 
-
-
 static int NextLayer()
-
 {
-    int *cfvec;
-    Matrix_t *bas, *echbas;
-    int i, j;
-    int flag;
-    Matrix_t *basi;
+    Matrix_t *echbas;
+    int flag = 0;
+    Matrix_t *basi = NULL;
 
     SocDim = 0;
-    if ((bas = matAlloc(ffOrder,Dimension,Dimension)) == NULL)
-    {
-	mtxAbort(MTX_HERE,"Cannot allocate basis matrix");
-	return -1;
-    }
+    Matrix_t* bas = matAlloc(ffOrder,Dimension,Dimension);
+    int* cfvec = NALLOC(int,LI.NCf);
 
-    if ((cfvec = NALLOC(int,LI.NCf)) == NULL)
-    {
-	mtxAbort(MTX_HERE,"Cannot allocate vector table");
-	return -1;
-    }
-
-
-    for (j = 0; j < LI.NCf; j++)
+    for (int j = 0; j < LI.NCf; j++)
     {
 	Matrix_t *sed;
 	int dimendS;
 	Matrix_t *partbas;
 
         if (LI.Cf[j].peakword <= 0)
-	{
             mtxAbort(MTX_HERE,"Missing peak word for constituent %d - run pwkond!",j);
-	    return -1;
-	}
 	
 	sed = seed[j];
 	dimendS = LI.Cf[j].spl;
@@ -220,7 +162,7 @@ static int NextLayer()
     ++SocLen;
     MESSAGE(0,("Socle %d: %d =",SocLen,SocDim));
     flag = 0;
-    for (j = 0; j < LI.NCf; j++)
+    for (int j = 0; j < LI.NCf; j++)
     {
 	if (cfvec[j] <= 0) 
 	    continue;
@@ -262,34 +204,27 @@ static int NextLayer()
         return 1;
     }
 
-    
-    
-    /* Extend the basis of the socle to a basis of the whole module.
-       ------------------------------------------------------------- */
+    // Extend the basis of the socle to a basis of the whole module.
     echbas = matAlloc(bas->Field,bas->Noc,bas->Noc);
     matCopyRegion(echbas,0,0,bas,0,0,-1,-1);
     matEchelonize(bas);
-    for (i = bas->Nor; i < bas->Noc; ++i)
+    for (uint32_t i = bas->Nor; i < bas->Noc; ++i)
 	ffInsert(matGetPtr(echbas,i),bas->PivotTable[i],FF_ONE);
     matFree(bas);
     bas = echbas;
 
-	    
-
-/* multiplying the last two basischanges
-   ------------------------------------- */
+    // multiplying the last two basis changes
     if (basis == NULL)
 	basis = matDup(bas);
     else
     {
-	Matrix_t *mat, *stgen;
 
-	mat = matCutRows(basis,basis->Nor - Dimension,Dimension);
-	stgen = matDup(bas);
+	Matrix_t* mat = matCutRows(basis,basis->Nor - Dimension,Dimension);
+	Matrix_t* stgen = matDup(bas);
 	matMul(stgen, mat);
 	matCopyRegion(basis,basis->Nor - Dimension,0,stgen,0,0,Dimension,-1);
-	matFree(mat);
 	matFree(stgen);
+	matFree(mat);
     }
 
 /* ------------------------------------------------------
@@ -310,7 +245,7 @@ static int NextLayer()
 
 /* the kernels
    ----------- */
-    for (j = 0; j < LI.NCf; j++)
+    for (int j = 0; j < LI.NCf; j++)
     {
 	Matrix_t *tmp;
 	if (seed[j] == NULL)
@@ -324,7 +259,7 @@ static int NextLayer()
 
     /* the generators
        -------------- */
-    for (i = 0; i < LI.NGen; i++)
+    for (int i = 0; i < LI.NGen; i++)
     {
         Matrix_t *stgen = matDup(bas);
         matMul(stgen,Rep->Gen[i]);
@@ -347,15 +282,9 @@ static int NextLayer()
 
 int main( int argc, char **argv)
 {
+    init(argc,argv);
+
     int rc;
-
-    if (Init(argc,argv) != 0)
-    {
-	mtxAbort(MTX_HERE,"Program initialization failed");
-	return 1;
-    }
-
-
     while ((rc = NextLayer()) == 0);
     if (rc < 0)
     {
@@ -372,7 +301,7 @@ int main( int argc, char **argv)
 	MESSAGE(0,("Warning: Calculation aborted at dimension %d of %d\n",
 	    SocDim,Dimension));
     }
-    if (App != NULL) appFree(App);
+    appFree(App);
     return 0;
 }
 

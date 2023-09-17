@@ -5,13 +5,9 @@
 #include "meataxe.h"
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-// Local data
-
-
-////////////////////////////////////////////////////////////////////////////////////////////////////
 /// Extend buffer.
 
-static int resize(Poly_t *p, int newdeg)
+static void resize(Poly_t *p, int newdeg)
 {
    int i;
    FEL *x;
@@ -19,10 +15,6 @@ static int resize(Poly_t *p, int newdeg)
    if (p->Degree < newdeg) {
       if (p->BufSize < newdeg + 1) {    // Allocate new buffer
          x = NREALLOC(p->Data,FEL,newdeg + 1);
-         if (x == NULL) {
-            mtxAbort(MTX_HERE,"Cannot extend polynomial");
-            return 1;
-         }
          p->Data = x;
          p->BufSize = newdeg + 1;
       }
@@ -31,7 +23,6 @@ static int resize(Poly_t *p, int newdeg)
       }
       p->Degree = newdeg;
    }
-   return 0;
 }
 
 
@@ -52,19 +43,14 @@ Poly_t *polAdd(Poly_t *dest, const Poly_t *src)
 
    polValidate(MTX_HERE, src);
    polValidate(MTX_HERE, dest);
-   if (dest->Field != src->Field) {
+   if (dest->Field != src->Field)
       mtxAbort(MTX_HERE,"%s",MTX_ERR_INCOMPAT);
-      return NULL;
-   }
    if ((i = src->Degree) == -1) {
       return dest;      // src = 0 
 
    }
    ffSetField(src->Field);
-   if (resize(dest,i)) {
-      mtxAbort(MTX_HERE,"Cannot resize: %S");
-      return NULL;
-   }
+   resize(dest,i);
    s = src->Data;
    d = dest->Data;
    for (; i >= 0; --i) {

@@ -6,13 +6,8 @@
 #include "meataxe.h"
 
 
-/* ------------------------------------------------------------------
-   Global data
-   ------------------------------------------------------------------ */
-
-
-static const char *aname, *bname, *cname;	/* File names */
-static MtxFile_t *AFile, *BFile;
+static const char *fileNameA, *fileNameB, *fileNameC;
+static MtxFile_t *fileA, *fileB;
 
 
 static MtxApplicationInfo_t AppInfo = { 
@@ -36,81 +31,63 @@ static MtxApplication_t *App = NULL;
    tensormatrices() - Calculate the tensor product of two matrices
    ------------------------------------------------------------------ */
 
-static int tensormatrices()
-
+static void tensormatrices()
 {
-    PTR m1, m2, m3;
-    int a_nor = AFile->Nor;
-    int a_noc = AFile->Noc;
-    int b_nor = BFile->Nor;
-    int b_noc = BFile->Noc;
-    int c_nor = a_nor * b_nor;
-    int c_noc = a_noc * b_noc;
-    int ai;
-    MtxFile_t *f;
+    const uint32_t field = fileA->header[0];
+    const uint32_t norA = fileA->header[1];
+    const uint32_t nocA = fileA->header[2];
+    const uint32_t norB = fileB->header[1];
+    const uint32_t nocB = fileB->header[2];
+    const uint32_t norC = norA * norB;
+    const uint32_t nocC = nocA * nocB;
 
 
     MESSAGE(1,("Computing matrix tensor product:"));
     MESSAGE(1,(" (%d,%d)*(%d,%d)=(%d,%d)\n", 
-	a_nor,a_noc,b_nor,b_noc,c_nor,c_noc));
+	norA,nocA,norB,nocB,norC,nocC));
 
-    /* Allocate buffers.
-       ----------------- */
-    ffSetField(AFile->Field);
-    m1 = ffAlloc(1, a_noc);
-    m2 = ffAlloc(b_nor, b_noc);
-    m3 = ffAlloc(1, c_noc);
-    if (m1 == NULL || m2 == NULL || m3 == NULL)
-	return -1;
+    // Allocate buffers.
+    ffSetField(field);
+    PTR m1 = ffAlloc(1, nocA);
+    PTR m2 = ffAlloc(norB, nocB);
+    PTR m3 = ffAlloc(1, nocC);
 
-    /* Read the second matrix (B).
-       --------------------------- */
-    if (mfReadRows(BFile,m2,b_nor) != b_nor) 
-	return -1;
+    // Read the second matrix (B).
+    mfReadRows(fileB,m2,norB,nocB);
 
-    /* Open the outpt file.
-       -------------------- */
-    if ((f = mfCreate(cname,ffOrder,c_nor,c_noc)) == NULL)
-	return -1;
+    // Open the outpt file.
+    MtxFile_t *fileC = mfCreate(fileNameC,ffOrder,norC,nocC);
 
-    /* Calculate the tensor product.
-       ----------------------------- */
-    for (ai = 0; ai < a_nor; ++ai)
+    // Calculate the tensor product.
+    for (uint32_t ai = 0; ai < norA; ++ai)
     {
 	int bi;
 	PTR bp;
 
-	/* Read the next row from A.
-	   ------------------------- */
-	if (mfReadRows(AFile,m1,1) != 1)
-	    break;
+	// Read the next row from A.
+	mfReadRows(fileA,m1,1,norA);
 
 	bp = m2;
-	for (bi = 0; bi < b_nor; ++bi)
+	for (bi = 0; bi < norB; ++bi)
 	{
 	    int aj, cj;
 	    cj = 0;
-	    for (aj = 0; aj < a_noc; ++aj)
+	    for (aj = 0; aj < nocA; ++aj)
 	    {
 		FEL f = ffExtract(m1,aj);
 		int bj;
-		for (bj = 0; bj < b_noc; ++bj)
+		for (bj = 0; bj < nocB; ++bj)
 		{
 		    FEL g = ffExtract(bp,bj);
 		    ffInsert(m3,cj,ffMul(f,g));
 		    ++cj;
 		}
 	    }
-	    if (mfWriteRows(f,m3,1) != 1)
-	    {
-		mtxAbort(MTX_HERE,"Error writing output file");
-		return -1;
-	    }
-	    ffStepPtr(&bp, b_noc);
+	    mfWriteRows(fileC,m3,1,nocC);
+	    ffStepPtr(&bp, nocB);
 	}
     }
-    mfClose(f);
-    return 0;
+    mfClose(fileC);
 }
 
 
@@ -120,8 +97,8 @@ static int tensormatrices()
 
 static int tensorperms(void)
 {
-    const uint32_t a_deg = AFile->Nor;
-    const uint32_t b_deg = BFile->Nor;
+    const uint32_t a_deg = fileA->header[1];
+    const uint32_t b_deg = fileB->header[1];
     MTX_ASSERT((((uint64_t)a_deg * b_deg) >> 32) == 0);
     const uint32_t c_deg = a_deg * b_deg;
     int i;
@@ -133,13 +110,13 @@ static int tensorperms(void)
     uint32_t* a_buf = NALLOC(uint32_t,a_deg);
     uint32_t* b_buf = NALLOC(uint32_t,b_deg);
     uint32_t* c_buf = NALLOC(uint32_t,b_deg);
-    sysRead32(AFile->File,a_buf,a_deg);
-    sysRead32(BFile->File,b_buf,b_deg);
+    sysRead32(fileA->File,a_buf,a_deg);
+    sysRead32(fileB->File,b_buf,b_deg);
     permConvertLegacyFormat(a_buf,a_deg);
     permConvertLegacyFormat(b_buf,b_deg);
 
     // Open output file.
-    MtxFile_t *f = mfCreate(cname,-1,c_deg,1);
+    MtxFile_t *f = mfCreate(fileNameC,-1,c_deg,1);
 
     // Calculate the tensor product
     for (i = 0; i < a_deg; ++i)
@@ -153,92 +130,62 @@ static int tensorperms(void)
     return 0;
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static int OpenFiles()
-
+static void doit()
 {
-    if ((AFile = mfOpen(aname)) == NULL ||
-	(BFile = mfOpen(bname)) == NULL)
-    {
-	mtxAbort(MTX_HERE,"Error opening input file");
-	return -1;
+    fileA = mfOpen(fileNameA);
+    mfReadHeader(fileA);
+    const uint32_t objectType = mfObjectType(fileA);
+    if (objectType != MTX_TYPE_MATRIX && objectType != MTX_TYPE_PERMUTATION) {
+	mtxAbort(MTX_HERE,"%s: unsupported object type 0x%lx",
+              fileNameA,(unsigned long) objectType);
     }
-    if (AFile->Field != -1 && AFile->Field < 2)
-    {
-	mtxAbort(MTX_HERE,"%s: Invalid file type %d",aname,AFile->Field);
-	return -1;
+
+    fileB = mfOpen(fileNameB);
+    mfReadHeader(fileB);
+    if (mfObjectType(fileB) != objectType) {
+	mtxAbort(MTX_HERE,"%s and %s: %s",fileNameA,fileNameB,MTX_ERR_INCOMPAT);
     }
-    if (AFile->Field != BFile->Field)
-    {
-	mtxAbort(MTX_HERE,"%s and %s: %s",aname,bname,MTX_ERR_INCOMPAT);
-	return -1;
+    if (objectType == MTX_TYPE_MATRIX) {
+       if (fileB->header[0] != fileA->header[0]) {
+          mtxAbort(MTX_HERE,"%s and %s: %s (different fields)",
+                fileNameA,fileNameB,MTX_ERR_INCOMPAT);
+       }
+       tensormatrices();
+    } else {
+       tensorperms();
     }
-    return 0;
+    mfClose(fileA);
+    mfClose(fileB);
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
-
-static int Init(int argc, char **argv)
-
+static void init(int argc, char **argv)
 {
-    /* Process command line options and arguments.
-       ------------------------------------------- */
-    if ((App = appAlloc(&AppInfo,argc,argv)) == NULL)
-	return -1;
-    if (appGetArguments(App,3,3) != 3)
-	return -1;
-    aname = App->ArgV[0];
-    bname = App->ArgV[1];
-    cname = App->ArgV[2];
-
-    /* Open the input file.
-       -------------------- */
-    if (OpenFiles() != 0)
-	return -1;
-
-    return 0;
+    App = appAlloc(&AppInfo,argc,argv);
+    appGetArguments(App,3,3);
+    fileNameA = App->ArgV[0];
+    fileNameB = App->ArgV[1];
+    fileNameC = App->ArgV[2];
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
-
-
-
-
-static void Cleanup()
-
+static void cleanup()
 {
-    if (App != NULL)
-	appFree(App);
-    if (AFile != NULL)
-	mfClose(AFile);
-    if (BFile != NULL)
-	mfClose(BFile);
+   appFree(App);
 }
 
-
-
-
-/* ------------------------------------------------------------------
-   main()
-   ------------------------------------------------------------------ */
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 int main(int argc, char **argv)
-
 {
-    int rc = 0;
-
-    if (Init(argc,argv) != 0)
-    {
-	mtxAbort(MTX_HERE,"Initialization failed");
-	return 1;
-    }
-    if (AFile->Field == -1)
-	rc = tensorperms();
-    else
-	rc = tensormatrices();
-    Cleanup();
-    if (rc != 0) rc = 1;
-    return rc;
+    init(argc,argv);
+    doit();
+    cleanup();
+    return 0;
 }
 
 /**

@@ -14,11 +14,10 @@ for f in $TEST_FIELDS ; do
     cmp "${MTX_TEST_DATA_DIR}/Mat$f" tmp.$$.x || error "ZUK with trivial orbits: wrong result"
 done
 
-
 cat > tmp.$$.orbs.txt << EOT
-integer matrix rows=1 cols=26
+integer-matrix rows=1 cols=26
 0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 0 23
-integer matrix rows=1 cols=24
+integer-matrix rows=1 cols=24
 2 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 2
 EOT
 zcv -Q tmp.$$.orbs.txt tmp.$$.orbs || error "ZCV failed"

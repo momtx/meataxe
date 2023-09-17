@@ -40,10 +40,9 @@ Matrix_t *matTransposed(const Matrix_t *src)
 #else
          ffInsert(d,k,ffExtract(s,i));
 #endif
-         s = (PTR)((char*) s + src->RowSize);
+         ffStepPtr(&s, src->Noc);
       }
-      /*d = ffGetPtr(d,1,dest->Noc);*/
-      d = (PTR)((char*) d + dest->RowSize);
+      ffStepPtr(&d, dest->Noc);
 
    }
    return dest;

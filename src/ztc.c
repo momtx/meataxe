@@ -7,15 +7,10 @@
 #include <stdlib.h>
 
 
-
-/* ------------------------------------------------------------------
-   Global data
-   ------------------------------------------------------------------ */
-
-
 static int opt_G = 0;		/* GAP output */
 static MtxFile_t *InputFile = NULL;
 static const char *inpname = NULL;
+static MtxApplication_t *App = NULL;
 
 static MtxApplicationInfo_t AppInfo = { 
 "ztc", "Trace", 
@@ -33,142 +28,78 @@ MTX_COMMON_OPTIONS_DESCRIPTION
 "    <File> .................. I The matrix or permutation\n"
 };
 
-static MtxApplication_t *App = NULL;
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
-
-
-
-/* ------------------------------------------------------------------
-   trmat() - Trace of a matrix
-   ------------------------------------------------------------------ */
-
-static int trmat()
+static void trmat()
 {
-    FEL tr;
-    int i, max;
-    PTR m1;
-
-    ffSetField(InputFile->Field); 
-    m1 = ffAlloc(1, InputFile->Noc);
-    tr = FF_ZERO;
-    if ((max = InputFile->Nor) > InputFile->Noc) 
-	max = InputFile->Noc;
-    for (i = 0; i < max; ++i)
+    ffSetField(InputFile->header[0]); 
+    const uint32_t nor = InputFile->header[1];
+    const uint32_t noc = InputFile->header[2];
+    const uint32_t min = nor < noc ? nor : noc;
+    PTR m1 = ffAlloc(1, noc);
+    FEL tr = FF_ZERO;
+    for (uint32_t i = 0; i < min; ++i)
     {
-	if (mfReadRows(InputFile,m1,1) != 1)
-	{
-	    mtxAbort(MTX_HERE,"Cannot read ipnut file");
-	    return -1;
-	}
+	mfReadRows(InputFile,m1,1,noc);
 	tr = ffAdd(tr,ffExtract(m1,i));
     }
-    if (!opt_G)		/* Standard output */
-	printf("Trace is %d\n",ffToInt(tr));
-    else		/* GAP output */
+    if (!opt_G)
+	printf("Trace is %lu\n",(unsigned long) ffToInt(tr));
+    else
         printf("MeatAxe.Trace := %s;\n",ffToGap(tr));
-    return 0;
+    sysFree(m1);
 }
 
-
-/* ------------------------------------------------------------------
-   trperm() - Trace of a permutation (= number of fixed points)
-   ------------------------------------------------------------------ */
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 static int trperm()
 {
-    const int degree = InputFile->Nor;
-
+    const uint32_t degree = InputFile->header[1];
     uint32_t *m1 = NALLOC(uint32_t,degree);
-    if (m1 == NULL) 
-	return -1;
-
     mfRead32(InputFile, m1, degree);
-
     uint32_t tr = 0;
     for (int k = 0; k < degree; ++k)
     {
 	if (m1[k] == k) 
 	    ++tr;
     }
+    sysFree(m1);
 
     if (!opt_G)
-	printf("Trace is %ld\n",(unsigned long)tr);
+	printf("Trace is %lu\n",(unsigned long)tr);
     else
-	printf("MeatAxe.Trace := [%ld];\n",(unsigned long)tr);
+	printf("MeatAxe.Trace := [%lu];\n",(unsigned long)tr);
     return 0;
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static int Init(int argc, char **argv)
-
+static void init(int argc, char **argv)
 {
-    /* Process command line options and arguments.
-       ------------------------------------------- */
-    if ((App = appAlloc(&AppInfo,argc,argv)) == NULL)
-	return -1;
+    App = appAlloc(&AppInfo,argc,argv);
     opt_G = appGetOption(App,"-G --gap");
     if (opt_G) MtxMessageLevel = -100;
-    if (appGetArguments(App,1,1) != 1)
-	return -1;
+    appGetArguments(App,1,1);
     inpname = App->ArgV[0];
-
-    /* Open the input file.
-       -------------------- */
-    if ((InputFile = mfOpen(inpname)) == NULL)
-    {
-	mtxAbort(MTX_HERE,"Error opening input file");
-	return -1;
-    }
-    if (InputFile->Field >= 2)
-    {
-        MESSAGE(1,("Input is a %dx%d matrix over GF(%d)\n",InputFile->Nor,
-	    InputFile->Noc,InputFile->Field));
-    }
-    else if (InputFile->Field == -1)
-    {
-        MESSAGE(1,("Input is a permutation of degree %d\n",InputFile->Nor));
-    }
-    else
-    {
-	mtxAbort(MTX_HERE,"%s: Unknown type %d",inpname,InputFile->Field);
-	return -1;
-    }
-
-    return 0;
 }
 
-
-static void Cleanup()
-
-{
-    if (App != NULL)
-	appFree(App);
-    if (InputFile != NULL)
-	mfClose(InputFile);
-}
-
-
-/* ------------------------------------------------------------------
-   main()
-   ------------------------------------------------------------------ */
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 int main(int argc, char **argv)
-
-
 {
-    int rc = 0;
-
-    if (Init(argc,argv) != 0)
-    {
-	mtxAbort(MTX_HERE,"Initialization failed");
-	return 1;
-    }
-    if (InputFile->Field == -1) 
-	rc = trperm() != 0 ? 1 : 0;
-    else
-	rc = trmat() != 0 ? 1 : 0;
-    Cleanup();
-    return rc;
+   init(argc,argv);
+   InputFile = mfOpen(inpname);
+   mfReadHeader(InputFile);
+   const uint32_t objectType = mfObjectType(InputFile);
+   if (objectType == MTX_TYPE_MATRIX)
+      trmat();
+   else if (objectType == MTX_TYPE_PERMUTATION)
+      trperm();
+   else
+      mtxAbort(MTX_HERE,"%s: Unknown object type 0x%lx",inpname,(unsigned long)objectType);
+   appFree(App);
+   mfClose(InputFile);
+   return 0;
 }
 
 

@@ -66,24 +66,19 @@ TstResult Matrix_ThrowsOnDoubleFree()
 
 static int ChkEch(Matrix_t *mat)
 {
-   int i;
-
-   for (i = 0; i < mat->Nor; ++i) {
+   for (uint32_t i = 0; i < mat->Nor; ++i) {
       PTR p = matGetPtr(mat,i);
-      int k;
       FEL f;
 
       ASSERT_EQ_INT(ffFindPivot(p,&f,mat->Noc), mat->PivotTable[i]);
-      for (k = 0; k < i; ++k) {
+      for (uint32_t k = 0; k < i; ++k) {
 	 ASSERT_EQ_INT(ffExtract(p,mat->PivotTable[k]), FF_ZERO);
       }
    }
-   for (i = mat->Nor; i < mat->Noc; ++i) {
-      int k;
-      int piv = mat->PivotTable[i];
-      ASSERT(piv >= 0);
+   for (uint32_t i = mat->Nor; i < mat->Noc; ++i) {
+      uint32_t piv = mat->PivotTable[i];
       ASSERT(piv < mat->Noc);
-      for (k = 0; k < i; ++k) {
+      for (uint32_t k = 0; k < i; ++k) {
 	 ASSERT(mat->PivotTable[k] != piv);
       }
    }
@@ -317,7 +312,7 @@ static int TestNullSpace2(int dim)
    matMul(b,a);
    for (int i = 0; i < b->Nor; ++i) {
       FEL f;
-      ASSERT(ffFindPivot(matGetPtr(b,i),&f, b->Noc) == -1);
+      ASSERT(ffFindPivot(matGetPtr(b,i),&f, b->Noc) == MTX_NVAL);
    }
    matFree(a);
    matFree(b);

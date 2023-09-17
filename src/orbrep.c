@@ -62,12 +62,12 @@ static int ReadPermutations()
     Degree = Perm[0]->Degree;
     if (Seed < 0 || Seed >= Degree)
     {
-	mtxAbort(MTX_HERE,"Illegal seed point, valid range is 1..%d.",Degree+1);
+	mtxAbort(MTX_HERE,"Illegal seed point, valid range is 1..%ld.",Degree+1);
 	return -1;
     }
     if (Stop < 0 || Stop >= Degree)
     {
-	mtxAbort(MTX_HERE,"Illegal stop point, valid range is 1..%d.",Degree+1);
+	mtxAbort(MTX_HERE,"Illegal stop point, valid range is 1..%ld.",Degree+1);
 	return -1;
     }
 
@@ -157,7 +157,7 @@ static int MakeOrbit()
 	    }
 	}
     }
-    mtxAbort(MTX_HERE,"Stop point %d not in orbit\n",Stop+1);
+    mtxAbort(MTX_HERE,"Stop point %d not in orbit",Stop+1);
     return -1;
 }
 

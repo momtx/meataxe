@@ -35,8 +35,8 @@ int matOrder(const Matrix_t *mat)
    const int nor = mat->Nor;
    PTR const m1 = ffAlloc(nor, nor);
    PTR const basis = ffAlloc(nor + 1, nor);
-   int * const piv = NALLOC(int,nor + 1);
-   char * const done = NALLOC(char,nor);
+   uint32_t* const piv = NALLOC(uint32_t ,nor + 1);
+   char* const done = NALLOC(char,nor);
    PTR const v1 = ffAlloc(1, nor);
    PTR const v2 = ffAlloc(1, nor);
    PTR const v3 = ffAlloc(1, nor);
@@ -88,7 +88,7 @@ int matOrder(const Matrix_t *mat)
                }
                ffStepPtr(&bptr, nor);
             }
-            if ((piv[dim] = ffFindPivot(bend,&f1, nor)) >= 0) {
+            if ((piv[dim] = ffFindPivot(bend,&f1, nor)) != MTX_NVAL) {
                done[piv[dim]] = 1;
                ++dim;
                ffStepPtr(&bend, nor);

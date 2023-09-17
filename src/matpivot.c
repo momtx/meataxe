@@ -15,30 +15,23 @@
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static int zmkpivot(PTR matrix, int nor, int noc, int *piv, int *ispiv)
+static int zmkpivot(PTR matrix, uint32_t nor, uint32_t noc, uint32_t *piv, uint8_t *ispiv)
 {
-   PTR x;
-   int i, k;
-
-   memset(ispiv,0,sizeof(int) * noc);
-
-   /* Build the pivot table in <piv>.
-      Keep track of assigned pivot columns in <ispiv>.
-      ------------------------------------------------ */
-   for (i = 0, x = matrix; i < nor && i < noc; ++i, ffStepPtr(&x, noc)) {
+   // Extract the pivot columns to «piv».
+   memset(ispiv,0,sizeof(uint8_t) * noc);
+   PTR x = matrix;
+   uint32_t i = 0;
+   for (i = 0; i < nor && i < noc; ++i, ffStepPtr(&x, noc)) {
       FEL f;
-      int newpiv = ffFindPivot(x,&f, noc);
-      if (ispiv[newpiv]) {
+      uint32_t newpiv = ffFindPivot(x,&f, noc);
+      if (newpiv == MTX_NVAL || ispiv[newpiv])
          mtxAbort(MTX_HERE, "%s", MTX_ERR_NOTECH);
-         return -1;
-      }
       piv[i] = newpiv;
       ispiv[newpiv] = 1;
    }
 
-   /* Insert the non-pivot columns
-      ---------------------------- */
-   for (k = 0; k < noc; ++k) {
+   // Append the non-pivot columns
+   for (uint32_t k = 0; k < noc; ++k) {
       if (!ispiv[k]) {
          piv[i++] = k;
       }
@@ -50,41 +43,20 @@ static int zmkpivot(PTR matrix, int nor, int noc, int *piv, int *ispiv)
 
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-/// Reduce to echelon form.
-/// This function builds the pivot table of a matrix. Unlike matEchelonize()
-/// this function assumes that @a mat is already in echelon form.
-/// @param mat Pointer to the matrix.
-/// @return 0 on success, -1 on error.
+/// Create pivot table.
+/// This function creates or updates the pivot table of a matrix. Unlike @c matEchelonize() this
+/// function assumes that @a mat is already in echelon form. If it is not, @c matPivotize() fails
+/// and aborts the program.
 
-int matPivotize(Matrix_t *mat)
+void matPivotize(Matrix_t *mat)
 {
-   int *newtab;
-   static int *is_pivot = NULL;
-   static int maxnoc = -1;
-
-   // check argument
    matValidate(MTX_HERE, mat);
 
-   // (re-)allocate pivot table
-   newtab = NREALLOC(mat->PivotTable,int,mat->Noc);
-   if (newtab == NULL) {
-      mtxAbort(MTX_HERE,"Cannot allocate pivot table (size %d)",mat->Noc);
-      return -1;
-   }
-   mat->PivotTable = newtab;
-   if (mat->Noc > maxnoc) {
-      int *new_is_piv = NREALLOC(is_pivot,int,mat->Noc);
-      if (new_is_piv == NULL) {
-         mtxAbort(MTX_HERE,"Cannot allocate temporary table");
-         return -1;
-      }
-      is_pivot = new_is_piv;
-      maxnoc = mat->Noc;
-   }
-
-   // build the pivot table
+   mat->PivotTable = NREALLOC(mat->PivotTable,uint32_t,mat->Noc);
+   uint8_t *isPivot = NALLOC(uint8_t, mat->Noc);
    ffSetField(mat->Field);
-   return zmkpivot(mat->Data,mat->Nor,mat->Noc,mat->PivotTable,is_pivot);
+   zmkpivot(mat->Data,mat->Nor,mat->Noc,mat->PivotTable,isPivot);
+   sysFree(isPivot);
 }
 
 

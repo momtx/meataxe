@@ -66,25 +66,22 @@ static void WriteWord(StfData *f, long w, Poly_t *p)
 /// Reads a word number and the associated polynomial.
 /// @return 0 on success, -1 on error
 
-static int ReadWord(StfData *f, long *w, Poly_t **p, const char *fn)
+static void ReadWord(StfData *f, long *w, Poly_t **p, const char *fn)
 {
     int fl, deg;  
     int i;
 
     if (stfMatch(f," [")) {
 	mtxAbort(MTX_HERE,"%s: missing '['",fn);
-	return -1;
     }
     stfGetInt(f,&i);
     *w = i;
     if (stfMatch(f,",")) {
 	mtxAbort(MTX_HERE,"%s: missing ','",fn);
-	return -1;
     }
     stfGetInt(f,&fl);
     if (stfMatch(f,",")) {
 	mtxAbort(MTX_HERE,"%s: missing ','",fn);
-	return -1;
     }
     stfGetInt(f,&deg);
     if (deg == -1) {
@@ -97,7 +94,6 @@ static int ReadWord(StfData *f, long *w, Poly_t **p, const char *fn)
             if (stfMatch(f,",")) 
 	    {
 		mtxAbort(MTX_HERE,"%s: missing ','",fn);
-		return -1;
 	    }
 	    stfGetInt(f,&coeff);
 	    (*p)->Data[i] = ffFromInt(coeff);
@@ -105,9 +101,7 @@ static int ReadWord(StfData *f, long *w, Poly_t **p, const char *fn)
     }
     if (stfMatch(f,"]")) {
 	mtxAbort(MTX_HERE,"%s: missing ']'",fn);
-	return -1;
     }
-    return 0;
 }
 
 
@@ -115,7 +109,7 @@ static int ReadWord(StfData *f, long *w, Poly_t **p, const char *fn)
 	else if (!strcmp(c,name))\
 	{\
 	    if (stfMatch(f," ["))\
-	    { mtxAbort(MTX_HERE,"Error in cfinfo file: Missing '['"); return -1; }\
+	    { mtxAbort(MTX_HERE,"Error in cfinfo file: Missing '['"); }\
 	    for (int i = 0; i < li->NCf; ++i) \
 	    {\
 		int val = 0;\
@@ -125,20 +119,17 @@ static int ReadWord(StfData *f, long *w, Poly_t **p, const char *fn)
 		li->Cf[i].fld = val;\
 	    }\
 	    if (stfMatch(f,"]"))\
-	    { mtxAbort(MTX_HERE,"Error in cfinfo file: Missing ']'"); return -1; }\
+	    { mtxAbort(MTX_HERE,"Error in cfinfo file: Missing ']'"); }\
 	}
 
 
-static int readCfFile(StfData* f, const char* fn, Lat_Info* li)
+static void readCfFile(StfData* f, const char* fn, Lat_Info* li)
 {
 
     /* Read header
        ----------- */
     if (stfReadLine(f) || strcmp(stfGetName(f),"CFInfo"))
-    {
 	mtxAbort(MTX_HERE,"%s: %s",fn,MTX_ERR_FILEFMT);
-	return -1;
-    }
 
     /* Read data
        --------- */
@@ -165,39 +156,23 @@ static int readCfFile(StfData* f, const char* fn, Lat_Info* li)
 	else if (!strcmp(c,"CFInfo.IdWord"))
 	{
 	    if (stfMatch(f," [") != 0) 
-	    {
 		mtxAbort(MTX_HERE,"%s: Missing '['",fn);
-		return -1;
-	    }
 	    for (int i = 0; i < li->NCf; ++i)
 	    {
-		if (ReadWord(f,&(li->Cf[i].idword),&(li->Cf[i].idpol),fn) != 0) {
-		    return -1;
-		}
+		ReadWord(f,&(li->Cf[i].idword),&(li->Cf[i].idpol),fn);
 		if (stfMatch(f,i < li->NCf - 1 ? "," : "];") != 0)
-		{
 		    mtxAbort(MTX_HERE,"%s: %s",fn,MTX_ERR_FILEFMT);
-		    return -1;
-		}
 	    }
 	}
 	else if (!strcmp(c,"CFInfo.PeakWord"))
 	{
 	    if (stfMatch(f," [") != 0) 
-	    {
 		mtxAbort(MTX_HERE,"%s: %s",fn,MTX_ERR_FILEFMT);
-		return -1;
-	    }
 	    for (int i = 0; i < li->NCf; ++i)
 	    {
-		if (ReadWord(f,&(li->Cf[i].peakword),&(li->Cf[i].peakpol),fn) != 0) {
-		    return -1;
-		}
+		ReadWord(f,&(li->Cf[i].peakword),&(li->Cf[i].peakpol),fn);
 		if (stfMatch(f,i < li->NCf - 1 ? "," : "];") != 0)
-		{
 		    mtxAbort(MTX_HERE,"%s: %s",fn,MTX_ERR_FILEFMT);
-		    return -1;
-		}
 	    }
 	}
 	else if (!strcmp(c,"CFInfo.LoewyLength"))   /* for compatibility */
@@ -207,10 +182,7 @@ static int readCfFile(StfData* f, const char* fn, Lat_Info* li)
 	else if (!strcmp(c,"CFInfo.Socles"))
 	{
 	    if (stfMatch(f," [") != 0) 
-	    {
 		mtxAbort(MTX_HERE,"%s: %s",fn,MTX_ERR_FILEFMT);
-		return -1;
-	    }
 	    for (int i = 0; stfMatch(f,"];"); ++i)
 	    {
 		int mult[LAT_MAXCF];
@@ -218,10 +190,7 @@ static int readCfFile(StfData* f, const char* fn, Lat_Info* li)
 		if (i > 0) stfMatch(f,",");
 		stfGetVector(f,&count,mult);
 		if (count != li->NCf)
-		{
 		    mtxAbort(MTX_HERE,"%s: %s",fn,MTX_ERR_FILEFMT);
-		    return -1;
-		}
 		latAddSocle(li,mult);
 	    }
 	}
@@ -230,10 +199,7 @@ static int readCfFile(StfData* f, const char* fn, Lat_Info* li)
 	else if (!strcmp(c,"CFInfo.Heads"))
 	{
 	    if (stfMatch(f," [") != 0) 
-	    {
 		mtxAbort(MTX_HERE,"%s: %s",fn,MTX_ERR_FILEFMT);
-		return -1;
-	    }
 	    for (int i = 0; stfMatch(f,"];"); ++i)
 	    {
 		int mult[LAT_MAXCF];
@@ -241,20 +207,13 @@ static int readCfFile(StfData* f, const char* fn, Lat_Info* li)
 		if (i > 0) stfMatch(f,",");
 		stfGetVector(f,&count,mult);
 		if (count != li->NCf)
-		{
 		    mtxAbort(MTX_HERE,"%s: %s",fn,MTX_ERR_FILEFMT);
-		    return -1;
-		}
 		latAddHead(li,mult);
 	    }
 	}
 	else
-	{
 	    mtxAbort(MTX_HERE,"%s: %s",fn,MTX_ERR_FILEFMT);
-	    return -1;
-	}
     }
-    return 0;
 }
 
 
@@ -265,7 +224,7 @@ static int readCfFile(StfData* f, const char* fn, Lat_Info* li)
 /// @param basename Base name (without the trailing ".cfinfo").
 /// @return 0 on success, -1 on error.
 
-int latReadInfo(Lat_Info *li, const char *basename)
+void latReadInfo(Lat_Info *li, const char *basename)
 {
     MTX_ASSERT(li != NULL);
     MTX_ASSERT(basename != NULL);
@@ -283,14 +242,12 @@ int latReadInfo(Lat_Info *li, const char *basename)
     StfData *f = stfOpen(fn,"r");
     if (f == NULL) {
 	mtxAbort(MTX_HERE,"Cannot open %s",fn);
-	result = -1;
     } else {
-       result = readCfFile(f, fn, li);
+       readCfFile(f, fn, li);
     }
     stfClose(f);
     if (result == 0)
        mtxMessage(1,"Read %s: %d composition factors",fn,li->NCf);
-    return result;
 }
 
 

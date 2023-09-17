@@ -61,20 +61,14 @@ static int Init(int argc, char **argv)
 
     App = appAlloc(&AppInfo,argc,argv);
     opt_m = appGetOption(App,"-m --mountain");
-    if (appGetArguments(App,2,2) < 0)
-	return -1;
+    appGetArguments(App,2,2);
     ModuleName = App->ArgV[0];
     modnum = atoi(App->ArgV[1]);
-    if (latReadInfo(&LI,ModuleName) != 0)
-    {
-	mtxAbort(MTX_HERE,"Error reading %s.cfinfo",ModuleName);
-	return -1;
-    }
+    latReadInfo(&LI,ModuleName);
 
     /* Read the generators and mountains.
        ---------------------------------- */
-    if ((Rep = mrLoad(ModuleName,LI.NGen)) == NULL)
-	return -1;
+    Rep = mrLoad(ModuleName,LI.NGen);
     mountains = matLoad(strcat(strcpy(fn,LI.BaseName),".v"));
     nmount = mountains->Nor;
     MESSAGE(1,("%d mountains\n",nmount));

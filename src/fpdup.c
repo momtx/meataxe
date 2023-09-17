@@ -43,15 +43,6 @@ FPoly_t *fpDup(const FPoly_t *src)
    for (i = 0; i < src->NFactors; ++i) {
       new_mult[i] = src->Mult[i];
       new_factor[i] = polDup(src->Factor[i]);
-      if (new_factor[i] == NULL) {
-         while (--i >= 0) {
-            polFree(new_factor[i]);
-         }
-         sysFree(new_factor);
-         sysFree(new_mult);
-         mtxAbort(MTX_HERE,"Cannot duplicate polynomial",MTX_ERR_NOMEM);
-         return NULL;
-      }
    }
 
    /* Create a new factored polynomial

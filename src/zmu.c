@@ -19,13 +19,7 @@
 static MtxApplicationInfo_t AppInfo = { 
 "zmu", "Multiply", 
 "SYNTAX\n"
-"    zmu [-r <Row>[.<#Rows>]] [-c <Col>[.<#Cols>]] <A> <B> <Result>\n"
-"\n"
-"OPTIONS\n"
-"    -r and -c can be used for piecewise matrix multiplication\n"
-"    E.g., `-r1 -c2' selects the upper right part. By default,\n"
-"    <#Rows> = <#Cols> = 2, i.e., the result is divided into\n"
-"    four pieces.\n"
+"    zmu <A> <B> <Result>\n"
 "\n"
 "FILES\n"
 "    <A> and <B> are the objects to be multiplied. Their product\n"
@@ -41,149 +35,104 @@ static MtxApplicationInfo_t AppInfo = {
 };
 
 
-static MtxApplication_t *App = NULL;
-static const char *aname, *bname, *cname;	/* File names */
-static FILE *afile = NULL; 
-static FILE *bfile = NULL;
-static FILE *cfile = NULL;		    /* File handles */
-static int fl1, fl2;			    /* Field order */
-static int nor1, noc1, nor2, noc2;	    /* Matrix dimensions */
-int nrows = 1, thisrow = 1;		    /* Arguments to -r option */
-int ncols = 1, thiscol = 1;		    /* Arguments to -c option */
+static MtxApplication_t* App = NULL;
+static const char* fileNameA;
+static const char* fileNameB;
+static const char* fileNameC;
+static MtxFile_t* fileA = NULL; 
+static MtxFile_t* fileB = NULL;
+static MtxFile_t* fileC = NULL;
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
-
-
-/* ------------------------------------------------------------------
-   multpm() - Multiply permutation by matrix
-   ------------------------------------------------------------------ */
+// Multiply permutation * matrix
 
 static int multpm(void)
-
 {
-    int i;
-    Perm_t *perm;
-    Matrix_t *row;
+    const uint32_t degreeA = fileA->header[1];
+    const uint32_t fieldB = fileB->header[0];
+    const uint32_t norB = fileB->header[1];
+    const uint32_t nocB = fileB->header[2];
+    if (degreeA != norB) 
+	mtxAbort(MTX_HERE,"%s and %s: %s",fileNameA,fileNameB,MTX_ERR_INCOMPAT);
 
-    if (nor1 != nor2) 
-    {
-	mtxAbort(MTX_HERE,"%s and %s: %s",aname,bname,MTX_ERR_INCOMPAT);
-	return -1;
-    }
+    // read input files
+    Perm_t* permA = permReadData(fileA->File, fileA->header);
+    Matrix_t *matrixB = matAlloc(fieldB, norB, nocB);
 
-    /* Read the permutation (A).
-       ------------------------- */
-    sysFseek(afile,0);
-    perm = permRead(afile);
-    if (perm == NULL)
-    {
-	mtxAbort(MTX_HERE,"Cannot read permutation from %s",aname);
-	return -1;
-    }
-
-    /* Allocate workspace (one row of <B>).
-       ------------------------------------ */
-    row = matAlloc(fl2,1,noc2);
-
-    /* Open the output file.
-       --------------------- */
-    if ((cfile = ffWriteHeader(cname,fl2,nor2,noc2)) == NULL)
-	return -1;
-
-    /* Write out the rows of <B> in the order defined by <A>.
-       ------------------------------------------------------ */
-    for (i = 0; i < nor1; ++i)
+    // Write out the rows of <B> in the order defined by <A>.
+    fileC = mfCreate(fileNameC,fieldB, norB, nocB);
+    for (uint32_t i = 0; i < degreeA; ++i)
     {	
-	ffSeekRow(bfile,perm->Data[i], noc2);
-	ffReadRows(bfile,row->Data, 1, noc2);
-	ffWriteRows(cfile,row->Data,1, noc2);
+       PTR row = ffGetPtr(matrixB->Data, permA->Data[i], nocB);
+       mfWriteRows(fileC, row, 1, nocB);
     }
 
-    /* Clean up.
-       --------- */
-    matFree(row);
-    permFree(perm);
+    permFree(permA);
+    matFree(matrixB);
     return 0;
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
-/* ------------------------------------------------------------------
-   multmp() - Multiply matrix by permutation
-   ------------------------------------------------------------------ */
+/// Multiply matrix * permutation
 
-static int multmp(void)
-
+static void multmp(void)
 {
-    Perm_t *perm;
-    Matrix_t *buffer;
-    PTR row_in, row_out;
-    int i;
+   const uint32_t fieldA = fileA->header[0];
+   const uint32_t norA = fileA->header[1];
+   const uint32_t nocA = fileA->header[2];
+   const uint32_t degreeB = fileB->header[1];
+   if (nocA != degreeB) 
+      mtxAbort(MTX_HERE,"%s and %s: %s", fileNameA, fileNameB, MTX_ERR_INCOMPAT);
 
-    if (noc1 != nor2) 
-    {
-	mtxAbort(MTX_HERE,"%s and %s: %s",aname,bname,MTX_ERR_INCOMPAT);
-	return -1;
-    }
+   // Read the permutation (B)
+   Perm_t* perm = permReadData(fileB->File, fileB->header);
 
-    /* Read the permutation (B).
-       ------------------------- */
-    sysFseek(bfile,0);
-    perm = permRead(bfile);
-    if (perm == NULL)
-    {
-	mtxAbort(MTX_HERE,"Cannot read permutation from %s",bname);
-	return -1;
-    }
+   // Allocate workspace (two rows of A).
+   ffSetField(fieldA);
+   PTR row_in = ffAlloc(2, nocA);
+   PTR row_out = ffGetPtr(row_in, 1, nocA);
 
-    /* Allocate workspace (two rows of A).
-       ----------------------------------- */
-    buffer = matAlloc(fl1,2,noc1);
-    row_in = matGetPtr(buffer,0);
-    row_out = matGetPtr(buffer,1);
+   // Create the output file.
+   fileC = mfCreate(fileNameC,fieldA, norA, nocA);
 
-    /* Create the output file.
-       ----------------------- */
-    if ((cfile = ffWriteHeader(cname,fl1,nor1,noc1)) == NULL)
-	return -1;
+   // Process A row by row. Permute the marks of each row according to B.
+   for (uint32_t i = 0; i < norA; ++i)
+   {
+      mfReadRows(fileA, row_in, 1, nocA);
+      ffPermRow(row_in, perm->Data, nocA, row_out);
+      mfWriteRows(fileC, row_out,1, nocA);
+   }
 
-    /* Process A row by row. Permute the 
-       marks of each row according to B.
-       ---------------------------------- */
-    for (i = 0; i < nor1; ++i)
-    {
-        ffReadRows(afile,row_in,1, noc1);
-	ffPermRow(row_in,perm->Data,noc1,row_out);
-	ffWriteRows(cfile,row_out,1, noc1);
-    }
-
-    /* Clean up.
-       --------- */
-    matFree(buffer);
-    permFree(perm);
-    return 0;
+   permFree(perm);
+   ffFree(row_in);
 }
 
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
-/* ------------------------------------------------------------------
-   multsm() - Multiply scalar with matrix
-   ------------------------------------------------------------------ */
+// Multiply scalar with matrix.
 
-static int multsm(FILE *s, FILE *m, int norM, int nocM)
+static int multsm(MtxFile_t* fileS, MtxFile_t* fileM)
 {
-    ffSetField(fl1);
+    const uint32_t field = fileS->header[0];
+    ffSetField(field);
     PTR ms = ffAlloc(1,1);
-    ffReadRows(s,ms,1,1);
+    mfReadRows(fileS,ms,1,1);
     const FEL f = ffExtract(ms,0);
+    ffFree(ms);
+
+    const uint32_t norM = fileM->header[1];
+    const uint32_t nocM = fileM->header[2];
     PTR mm = ffAlloc(1, nocM);
 	
-    if ((cfile = ffWriteHeader(cname,fl1,norM,nocM)) == NULL)
-	return -1;
+    fileC = mfCreate(fileNameC,field ,norM,nocM);
     for (int i = 0; i < norM; ++i)
     {	
-	ffReadRows(m,mm,1, nocM);
-	ffMulRow(mm,f, nocM);
-	ffWriteRows(cfile,mm,1, nocM);
+	mfReadRows(fileM, mm, 1, nocM);
+	ffMulRow(mm, f, nocM);
+	mfWriteRows(fileC, mm,1, nocM);
     }
     sysFree(mm);
     return 0;
@@ -195,224 +144,116 @@ static int multsm(FILE *s, FILE *m, int norM, int nocM)
    multmm() - Multiply two matrices
    ------------------------------------------------------------------ */
 
-static int multmm(void)
+static void multmm(void)
 {
-    PTR m1, m2, tmp, out;
-    int row1, row2;	/* Range of rows */
-    int col1, col2;	/* Range of columns */
-    int i, k;
-    int diffsize;
+    uint32_t fieldA = fileA->header[0];
+    if (fileB->header[0] != fieldA)
+	mtxAbort(MTX_HERE,"%s and %s: %s (different fields)",fileNameA,fileNameB, MTX_ERR_INCOMPAT);
 
-    if (fl1 != fl2)
-	mtxAbort(MTX_HERE,"%s and %s: %s (different fields)",aname,bname, MTX_ERR_INCOMPAT);
+    const uint32_t norA =  fileA->header[1];
+    const uint32_t nocA =  fileA->header[2];
+    const uint32_t norB =  fileB->header[1];
+    const uint32_t nocB =  fileB->header[2];
 
-    if (noc1 == 1 && nor1 == 1)
-	return multsm(afile,bfile,nor2,noc2);
-    else if (noc2 == 1 && nor2 == 1)
-	return multsm(bfile,afile,nor1,noc1);
-    if (noc1 != nor2) 
-	mtxAbort(MTX_HERE,"%s and %s: %s",aname,bname,MTX_ERR_INCOMPAT);
-    if ((long) nrows > nor1 || (long) ncols > noc2) 
-	mtxAbort(MTX_HERE,"Matrix too small");
-    row1 = (nor1 / nrows) * (thisrow - 1);
-    row2 = (nor1 / nrows) * thisrow - 1;
-    col1 = (noc2 / ncols) * (thiscol - 1);
-    col2 = (noc2 / ncols) * thiscol - 1;
-
-    /* First matrix
-       ------------ */
-    ffSetField(fl1);
-    m1 = ffAlloc(1, noc1);
-    ffSeekRow(afile,row1, noc1);
-
-    /* Read second matrix
-       ------------------ */
-    tmp = ffAlloc(1, noc2);
-    const int colspan = col2 - col1 + 1;
-    diffsize = ffRowSize(colspan);
-    m2 = ffAlloc(nor2, colspan);
-    out = ffAlloc(1, colspan);
-    if (colspan < noc2)
-    {
-	PTR x = m2;
-	for (i = 1; i <= nor2; ++i)
-	{
-	    ffReadRows(bfile, tmp, 1, noc2);
-	    for (k = col1; k <= col2; ++k)
-		ffInsert(x,k - col1,ffExtract(tmp,k));
-	    x = (PTR)((char *)x + diffsize);
-	}
+    if (norA == 1 && nocA == 1) {
+	multsm(fileA,fileB);
+        return;
     }
-    else
-    {
-	ffReadRows(bfile,m2,nor2, noc2);
+    if (norB == 1 && nocB == 1) {
+	multsm(fileB,fileA);
+        return;
     }
+    if (nocA != norB) 
+	mtxAbort(MTX_HERE,"%s and %s: %s",fileNameA,fileNameB,MTX_ERR_INCOMPAT);
+   
+    ffSetField(fieldA);
+    PTR rowA = ffAlloc(1, nocA);
+    PTR matrixB = ffAlloc(norB, nocB);
+    mfReadRows(fileB,matrixB, norB, nocB);
+    PTR rowC = ffAlloc(1, nocB);
 
-    /* Multiply and write result
-       ------------------------- */
-    if ((cfile = ffWriteHeader(cname,fl1,row2-row1+1,col2-col1+1)) == NULL)
-	return -1;
-
-    const int nocOut = col2 - col1 + 1;
-    for (i = 0; i < row2 - row1 + 1; ++i)
+    fileC = mfCreate(fileNameC, fieldA, norA, nocB);
+    for (uint32_t i = 0; i < norA; ++i)
     {
-        ffReadRows(afile, m1, 1, noc1);
-	ffMapRow(m1, m2, nor2, nocOut, out);
-	ffWriteRows(cfile,out,1, nocOut);
+        mfReadRows(fileA, rowA, 1, nocA);
+	ffMapRow(rowA, matrixB, norB, nocB, rowC);
+	mfWriteRows(fileC,rowC, 1, nocB);
     }
-
-    return 0;
+    sysFree(rowC);
+    sysFree(matrixB);
+    sysFree(rowA);
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
-/* ------------------------------------------------------------------
-   multpp() - Multiply two permutations
-   ------------------------------------------------------------------ */
+// Multiply two permutations
 
-static int multpp(void)
-
+static void multpp(void)
 {
-    Perm_t *a, *b;
+    Perm_t *permA = permReadData(fileA->File, fileA->header);
+    Perm_t *permB = permReadData(fileB->File, fileB->header);
+          
+    permMul(permA,permB);
+    permSave(permA,fileNameC);
 
-    if (fl1 != fl2) 
-    {
-	mtxAbort(MTX_HERE,"%s and %s: %s",aname,bname,MTX_ERR_INCOMPAT);
-	return -1;
-    }
-    if (fl1 != -1) 
-    {
-	mtxAbort(MTX_HERE,"Monomials are not supported");
-	return -1;
-    }
-
-    /* Read the permutations.
-       ---------------------- */
-    sysFseek(afile,0);
-    a = permRead(afile);
-    sysFseek(bfile,0);
-    b = permRead(bfile);
-
-    /* Multiply and write.
-       ------------------- */
-    permMul(a,b);
-    permSave(a,cname);
-
-    /* Clean up.
-       --------- */
-    permFree(a);
-    permFree(b);
-    return 0;    
+    permFree(permA);
+    permFree(permB);
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
-
-static int ParseSpec(const char *spec, const char *name, int *pos, int *size)
+static void init(int argc, char **argv)
 {
-    *pos = atoi(spec);
-    while (*spec != 0 && isdigit(*spec)) ++spec;
-    if (*spec == '.' || *spec == '/')
-	*size = atoi(spec+1);
-    else
-	*size = 2;
-
-    if (*pos < 1 || *pos > *size)
-    {
-	mtxAbort(MTX_HERE,"Invalid %s specification",name);
-	return -1;
-    }
-    return 0;
-}
-
-
-static int Init(int argc, char **argv)
-{
-    const char *c;
-
     App = appAlloc(&AppInfo,argc,argv);
-    if (App == NULL)
-	return -1;
+    appGetArguments(App,3,3);
 
-    /* Command line options.
-       --------------------- */
-    if ((c = appGetTextOption(App,"-c",NULL)) != NULL)
-	ParseSpec(c,"column",&thiscol,&ncols);
-    if ((c = appGetTextOption(App,"-r",NULL)) != NULL)
-	ParseSpec(c,"row",&thisrow,&nrows);
-    if (appGetArguments(App,3,3) < 0)
-	return -1;
+    fileNameA = App->ArgV[0];
+    fileNameB = App->ArgV[1];
+    fileNameC = App->ArgV[2];
+    if (!strcmp(fileNameA,fileNameC) || !strcmp(fileNameB,fileNameC))
+	mtxAbort(MTX_HERE,"Output file would overwrite input file");
 
-    /* Command line arguments.
-       ----------------------- */
-    aname = App->ArgV[0];
-    bname = App->ArgV[1];
-    cname = App->ArgV[2];
-    if (!strcmp(aname,cname) || !strcmp(bname,cname))
-    {
-	mtxAbort(MTX_HERE,"Identical file names not allowed");
-	return -1;
-    }
-
-    return 0;
-
+    // Open input files
+    fileA = mfOpen(fileNameA);
+    mfReadHeader(fileA);
+    fileB = mfOpen(fileNameB);
+    mfReadHeader(fileB);
 }
 
-
-static int OpenFiles()
-
-{
-    afile = ffReadHeader(aname,&fl1,&nor1,&noc1);
-    if (afile == NULL) 
-	return -1;
-    bfile = ffReadHeader(bname,&fl2,&nor2,&noc2);
-    if (bfile == NULL) 
-	return -1;
-    return 0;
-}
-
-
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 static void Cleanup()
-
 {
-    if (afile != NULL)
-	fclose(afile);
-    if (bfile != NULL)
-        fclose(bfile);
-    if (cfile != NULL)
-	fclose(cfile);
-    appFree(App);
+   mfClose(fileA);
+   mfClose(fileB);
+   if (fileC != NULL) 
+      mfClose(fileC);
+   appFree(App);
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 int main(int argc, char **argv)
 {   
-    int result;
+    init(argc,argv);
 
-    if (Init(argc,argv) != 0)
-	return -1;
-
-    if (OpenFiles() != 0)
-	return -1;
-
-    /* Call the appropriate multiplication function.
-       --------------------------------------------- */
-    if (fl1 < 0 && fl2  < 0) 
-	result = multpp(); 
-    else if (fl1 > 1 && fl2 > 1) 
-	result = multmm(); 
-    else if (fl1 > 1 && fl2 == -1) 
-	result = multmp(); 
-    else if (fl1 == -1 && fl2  > 1) 
-	result = multpm(); 
+    // Call the appropriate multiplication function.
+    const uint32_t typeA = mfObjectType(fileA);
+    const uint32_t typeB = mfObjectType(fileB);
+    if (typeA == MTX_TYPE_PERMUTATION && typeB == typeA)
+	multpp(); 
+    else if (typeA == MTX_TYPE_MATRIX && typeB == typeA)
+	multmm(); 
+    else if (typeA == MTX_TYPE_MATRIX && typeB == MTX_TYPE_PERMUTATION) 
+	multmp(); 
+    else if (typeA == MTX_TYPE_PERMUTATION && typeB == MTX_TYPE_MATRIX)
+	multpm(); 
     else
-    {
-	mtxAbort(MTX_HERE,"%s and %s: %s",aname,bname,MTX_ERR_INCOMPAT);
-	result = 1;
-    }
+	mtxAbort(MTX_HERE,"%s and %s: %s",fileNameA,fileNameB,MTX_ERR_INCOMPAT);
 
     Cleanup();
 
-    return result;
+    return 0;
 }
 
 

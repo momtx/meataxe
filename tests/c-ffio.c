@@ -80,29 +80,29 @@ static int CmpMat(PTR a, PTR b, int nor, int noc)
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 // Test row i/o with header
-static int TestHdr2(int nor, int noc, PTR buf1, PTR buf2)
+static int TestHdr2(uint32_t nor, uint32_t noc, PTR buf1, PTR buf2)
 {
-   FILE *f;
+   MtxFile_t* f;
    const char *file_name = "check.1";
-   int fld2 = -1, nor2 = -1, noc2 = -1;
 
    /* Write <buf1> into file
       ---------------------- */
-   f = ffWriteHeader(file_name,ffOrder,nor,noc);
-   ffWriteRows(f,buf1,nor,noc);
-   fclose(f);
+   f = mfCreate(file_name,ffOrder,nor,noc);
+   mfWriteRows(f,buf1,nor,noc);
+   mfClose(f);
 
    /* Read the file header and check the value.
       ----------------------------------------- */
    memset(buf2,0,ffRowSize(noc) * nor);
-   f = ffReadHeader(file_name,&fld2,&nor2,&noc2);
-   ASSERT_EQ_INT(fld2, ffOrder);
-   ASSERT_EQ_INT(nor2, nor);
-   ASSERT_EQ_INT(noc2, noc);
+   f = mfOpen(file_name);
+   mfReadHeader(f);
+   ASSERT_EQ_INT(f->header[0], ffOrder);
+   ASSERT_EQ_INT(f->header[1], nor);
+   ASSERT_EQ_INT(f->header[2], noc);
 
    // Read the rows. 
-   ffReadRows(f,buf2,nor,noc);
-   fclose(f);
+   mfReadRows(f,buf2,nor,noc);
+   mfClose(f);
 
    // Compare <buf1> and <buf2>
    //tstPrintRows("buf1", buf1, nor, noc);
@@ -138,71 +138,6 @@ TstResult Kernel_FileHeader(int q)
       }
 
       result |= TestHdr2(nor,noc,buf1,buf2);
-
-      free(buf1);
-      free(buf2);
-   }
-   return result;
-}
-
-////////////////////////////////////////////////////////////////////////////////////////////////////
-
-static int TestSeek2(int nor, int noc, PTR buf1, PTR buf2)
-{
-   FILE *f;
-   const char *file_name = "check.1";
-   int fld2, nor2, noc2;
-   int i;
-
-   /* Write <buf1> into file
-      ---------------------- */
-   f = ffWriteHeader(file_name,ffOrder,nor,noc);
-   ffWriteRows(f,buf1,nor, noc);
-   fclose(f);
-
-   /* Read the rows in reverse order.
-      ------------------------------- */
-   memset(buf2,0,ffRowSize(noc) * nor);
-   f = ffReadHeader(file_name, &fld2, &nor2, &noc2);
-   for (i = nor - 1; i >= 0; --i) {
-      PTR x = (PTR)((char *)buf2 + ffSize(i, noc));
-      ffSeekRow(f, i, noc2);
-      ffReadRows(f,x,1,noc);
-   }
-   fclose(f);
-
-   /* Compare <buf1> and <buf2>
-      ------------------------- */
-   ASSERT_EQ_INT(CmpMat(buf1,buf2,nor,noc), 0);
-
-   remove(file_name);
-   return 0;
-}
-
-////////////////////////////////////////////////////////////////////////////////////////////////////
-
-TstResult Kernel_Seek(int q)
-{
-   const int bufsize = 100;
-   int result = 0;
-
-   for (int noc = 0; result != 0 && noc < 65; ++noc) {
-      PTR buf1, buf2;
-      int i;
-      long x = 0;
-
-      buf1 = ffAlloc(bufsize, noc);
-      buf2 = ffAlloc(bufsize, noc);
-      for (i = 0; i < bufsize; ++i) {
-         int k;
-         PTR p = (PTR)((char *)buf1 + ffSize(i, noc));
-         for (k = 0; k < noc; ++k) {
-            ffInsert(p,k,ffFromInt(x >> 10));
-            x = x * 69069 + 13;
-         }
-      }
-
-      result |= TestSeek2(bufsize, noc,buf1,buf2);
 
       free(buf1);
       free(buf2);

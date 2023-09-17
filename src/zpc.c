@@ -164,7 +164,7 @@ static int init(int argc, char **argv)
        -------------------- */
     for (i = 1; i <= nperm; ++i)
     {
-	if ((f = mfOpen(genname[i])) == NULL)
+	if ((f = mfOpenAndReadHeader(genname[i])) == NULL)
 	    return -1;
 	if (f->Field != -1 || f->Noc != 1)
 	{
@@ -190,7 +190,7 @@ static int init(int argc, char **argv)
 
     /* Seed
        ---- */
-    if ((f = mfOpen(seedname)) == NULL)
+    if ((f = mfOpenAndReadHeader(seedname)) == NULL)
 	return -1;
     if (f->Field != -1) 
     {

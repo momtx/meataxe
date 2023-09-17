@@ -82,14 +82,14 @@ int main(int argc, char **argv)
 	mtxAbort(MTX_HERE,"Initialization failed");
 	return -1;
     }
-    x = XLoad(iname);
+    x = objLoad(iname);
     if (x == NULL)
 	return -1;
-    y = XInverse(x);
+    y = objInverse(x);
     if (y != NULL)
-    rc = XSave(y,oname);
-    XFree(x);
-    XFree(y);
+    rc = objSave(y,oname);
+    objFree(x);
+    objFree(y);
     Cleanup();
 
     return rc;

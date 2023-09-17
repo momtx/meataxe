@@ -20,7 +20,7 @@ int ffChar = 0;
 /// May be used in expressions but must never modified directly. To change the field,
 /// use ffSetField().
 
-int ffOrder = -1;
+uint32_t ffOrder = 0xFFFFFFFFU;
 
 /// Field generator.
 /// This variable contains a generator for the multiplicative group of the current field.

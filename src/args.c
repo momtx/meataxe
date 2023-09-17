@@ -65,31 +65,6 @@
 /// One option ("-l") has an additional integer argument, @a level. The value
 /// of @a level must be between 0 and 100. If not specified by the user,
 /// a default value of 42 is used.
-///
-/// @par Temporary Directories  TODO: move to appCreateTempDir()
-/// If an application needs a temporary directory to store interdediate files,
-/// it can use appCreateTempDir(). This function creates a new directory and
-/// returns its name. The directory will be removed when the application object
-/// is destroyed, i.e., in |appFree()|. Note that the application must not leave
-/// any file in the temporary directory. Otherwise, a run-time error is generated
-/// when appFree() tries to remove the directory.
-/// The following code example shows how to use appCreateTempDir():
-/// @code
-/// int main(int argc, char **argv)
-/// {
-///     MtxApplication_t *app = appAlloc(argc,argv,&appinfo);
-///     const char *tmpdir = appCreateTempDir(app);
-///     ...
-///
-///     sprintf(file_name,"%s/%s",tempdir,"test");
-///     matSave(mat,fn);
-///     ...
-///     sysRemoveFile(fn);
-///
-///     appFree(app);
-///     return 0;
-/// }
-/// @endcode
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -333,26 +308,14 @@ MtxApplication_t *appAlloc(MtxApplicationInfo_t const *ai, int argc, char **argv
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 /// End an application.
-/// This function terminates a MeatAxe application. It should be called
-/// immediately before the |main()| function exits. |appFree()| removes
-/// any temporary directory created with |appCreateTempDir()|. If the
-/// directory is not empty at this point, a run-time error will result.
-/// @return 0 on success, -1 on error.
+/// This function terminates a MeatAxe application. It should be called when the program ends.
 
-int appFree(MtxApplication_t *a)
+void appFree(MtxApplication_t *a)
 {
    long t = sysTimeUsed();
-
-   /* Remove the temporary directory.
-      ------------------------------- */
-   if (a->TempDirName[0] != 0) {
-      sysRemoveDirectory(a->TempDirName);
-   }
-
    MESSAGE(1,("%s: %ld.%ld seconds\n",a->AppInfo != NULL ?
               a->AppInfo->Name : "meataxe",t / 10,t % 10));
    sysFree(a);
-   return 0;
 }
 
 
@@ -590,44 +553,6 @@ int appGetArguments(MtxApplication_t *app, int min_argc, int max_argc)
    }
    return app->ArgC;
 }
-
-
-/// Create a temporary directory.
-/// This function creates a new, empty directory for use by the application.
-/// The location of this directory is system dependent. When the application
-/// objects is destroyed, the temporary directory will be removed
-/// automatically, if there are no files left in it.
-/// After successfull creation of the directory, the function returns the
-/// directory name. The return value is a pointer to an internal buffer,
-/// which must not be modified by the application. If the directory cannot be
-/// created for some reason, the return value is 0.
-///
-/// If the application calls %appCreateTempDir() more than once, only the
-/// first call actually creates a directory. The later calls just return the
-/// name of the directory already created.
-/// @param app Pointer to the application object.
-/// @return Directory name or 0 on error.
-
-const char *appCreateTempDir(MtxApplication_t *app)
-{
-   /* Check if we have already created a temporary directory.
-      ------------------------------------------------------- */
-   if (app->TempDirName[0] != 0) {
-      return app->TempDirName;
-   }
-
-   /* Make the directory.
-      ------------------- */
-   sprintf(app->TempDirName,"mtxtmp.%5.5d",sysGetPid());
-   if (sysCreateDirectory(app->TempDirName) != 0) {
-      mtxAbort(MTX_HERE,"Cannot create temporary directory");
-      app->TempDirName[0] = 0;
-      return NULL;
-   }
-
-   return app->TempDirName;
-}
-
 
 /// @}
 

@@ -34,19 +34,16 @@ int mrAddGenerator(MatRep_t *rep, Matrix_t *gen, int flags)
     if (!mrIsValid(rep))
     {
 	mtxAbort(MTX_HERE,"rep: %s",MTX_ERR_BADARG);
-	return -1;
     }
     if (gen->Nor != gen->Noc)
     {
 	mtxAbort(MTX_HERE,"gen: %s",MTX_ERR_NOTSQUARE);
-	return -1;
     }
     if (rep->NGen > 0)
     {
 	if (gen->Field != rep->Gen[0]->Field || gen->Nor != rep->Gen[0]->Nor)
 	{
 	    mtxAbort(MTX_HERE,"%s",MTX_ERR_INCOMPAT);
-	    return -1;
 	}
     }
 
@@ -56,7 +53,6 @@ int mrAddGenerator(MatRep_t *rep, Matrix_t *gen, int flags)
     if (new_gen == NULL)
     {
 	mtxAbort(MTX_HERE,"Cannot extend matrix list");
-	return -1;
     }
 
     /* Make a copy of the generator, if requested
@@ -65,16 +61,12 @@ int mrAddGenerator(MatRep_t *rep, Matrix_t *gen, int flags)
     {
 	gen = matDup(gen);
         if (gen == NULL)
-	{
 	    mtxAbort(MTX_HERE,"Cannot copy generator");
-	    return -1;
-	}
     }
 
     new_gen[rep->NGen] = gen;
     rep->Gen = new_gen;
     ++rep->NGen;
-
     return 0;
 }
 

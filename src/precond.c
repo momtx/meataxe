@@ -65,7 +65,6 @@ static int Init(int argc, char **argv)
 
 {
     int i;
-    int fl1, nor1, noc1, fl2, nor2, noc2;
     char fn[LAT_MAXBASENAME+20];
 
     /* Initialize global data
@@ -87,17 +86,8 @@ static int Init(int argc, char **argv)
        --------------- */
     strncpy(TKInfo.NameM,App->ArgV[1],sizeof(TKInfo.NameM)-1);
     strncpy(TKInfo.NameN,App->ArgV[2],sizeof(TKInfo.NameN)-1);
-    if (latReadInfo(&InfoM,App->ArgV[1]) != 0)
-    {
-	mtxAbort(MTX_HERE,"Error reading %s.cfinfo",App->ArgV[1]);
-	return -1;
-    }
-    if (latReadInfo(&InfoN,App->ArgV[2]) != 0)
-    {
-	mtxAbort(MTX_HERE,"Error reading %s.cfinfo",App->ArgV[2]);
-	return -1;
-    }
-
+    latReadInfo(&InfoM,App->ArgV[1]);
+    latReadInfo(&InfoN,App->ArgV[2]);
 
     /* Initialize the TKInfo structure
        ------------------------------- */
@@ -125,9 +115,17 @@ static int Init(int argc, char **argv)
     /* Print start message
        ------------------- */
     sprintf(fn,"%s.1",InfoM.BaseName);
-    fclose(ffReadHeader(fn,&fl1,&nor1,&noc1));
+    MtxFile_t* f = mfOpen(fn);
+    mfReadHeader(f);
+    int nor1 = f->header[1];
+    mfClose(f);
+
     sprintf(fn,"%s.1",InfoN.BaseName);
-    fclose(ffReadHeader(fn,&fl2,&nor2,&noc2));
+    f = mfOpen(fn);
+    mfReadHeader(f);
+    int nor2 = f->header[1];
+    mfClose(f);
+
     MESSAGE(0,("Beginning pre-condensation of dimension %d x %d = %d\n",
 	nor1,nor2,nor1*nor2));
     return 0;

@@ -59,8 +59,8 @@ static IntMatrix_t *OpTable[LAT_MAXCF];    /* Operations, written to <Op> */
 Matrix_t *intersect(Matrix_t *mat1, Matrix_t *mat2)
 {
     PTR wrk1, wrk2;
-    int nor1 = mat1->Nor, nor2 = mat2->Nor;
-    int *piv = NALLOC(int,nor1 + nor2);
+    uint32_t nor1 = mat1->Nor, nor2 = mat2->Nor;
+    uint32_t *piv = NALLOC(uint32_t,nor1 + nor2);
     Matrix_t *result;
 
     wrk1 = ffAlloc(nor1 + nor2, mat1->Noc);
@@ -97,61 +97,38 @@ static void Dualize(MatRep_t *rep)
     }
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
-
-
-static int ReadFiles()
-
+static void ReadFiles()
 {
-    int i;
-
-    /* Read input files.
-       ----------------- */
     Name = App->ArgV[0];
-    if (latReadInfo(&Info,Name) != 0)
-	return -1;
+    latReadInfo(&Info,Name);
     if (!Head)
 	Info.NHeads = 0;
 
-    /* Read the generators for the module.
-       ----------------------------------- */
+    // Read the generators for the module and the constituents.
     Rep = mrLoad(Name,Info.NGen);
-    if (Rep == NULL)
-	return -1;
-
-    
-    for (i = 0; i < Info.NCf; ++i)
+    for (int i = 0; i < Info.NCf; ++i)
     {
 	char fn[200];
-	/* Read generators
-	   --------------- */
 	sprintf(fn,"%s%s.std", Info.BaseName,latCfName(&Info,i));
 	CfRep[i] = mrLoad(fn,Info.NGen);
-	if (CfRep[i] == NULL)
-	    return -1;
     }
-
-    return 0;
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
-
-static int Init(int argc, char **argv)
-
+static void init(int argc, char **argv)
 {
     int headno, maxlen;
 
     /* Process command line options.
        ----------------------------- */
-    if ((App = appAlloc(&AppInfo,argc,argv)) == NULL)
-	return -1;
+    App = appAlloc(&AppInfo,argc,argv);
     headno = appGetIntOption(App,"-H --head",-1,1,1000);
     maxlen = appGetIntOption(App,"-l --max-length",-1,1,1000);
     if (headno != -1 && maxlen != -1)
-    {
 	mtxAbort(MTX_HERE,"'-l' and '-H' cannot be used together");
-	return -1;
-    }
     if (headno != -1)
     {
 	Head = 1;
@@ -162,14 +139,8 @@ static int Init(int argc, char **argv)
 
     /* Process command line arguments.
        ------------------------------- */
-    if (appGetArguments(App,1,1) != 1)
-	return -1;
-    if (ReadFiles() != 0)
-    {
-	mtxAbort(MTX_HERE,"Error reading input files");
-	return 1;
-    }
-    return 0;
+    appGetArguments(App,1,1);
+    ReadFiles();
 }
 
 
@@ -222,32 +193,17 @@ int main(int argc, char **argv)
 	     *soc2 = NULL, *rad2, *echbas;
     WgData_t *rep;
 
-    if (Init(argc,argv) != 0)
-    {
-	mtxAbort(MTX_HERE,"Initialization failed");
-	return 1;
-    }
+    init(argc,argv);
     if (DualizeConstituents() != 0)
-    {
 	mtxAbort(MTX_HERE,"Error while dualizing constituents");
-	return 1;
-    }
-
 
     while(1) 
     {
 	Matrix_t *bas, *basi;
 	cfvec = NALLOC(int,Info.NCf);
 	bas = matAlloc(ffOrder, Rep->Gen[0]->Nor, Rep->Gen[0]->Noc);
-	if (cfvec == NULL || bas == NULL)
-	{
-	    mtxAbort(MTX_HERE,"Cannot allocate work space");
-	    return 1;
-	}
 
-/* -------------------------------------------------------------
-   determining the nullspace of the peakwords in the dual module
-   ------------------------------------------------------------- */
+        // determining the nullspace of the peakwords in the dual module
 	rep = wgAlloc(Rep);
 	for (j = 0; j < Info.NCf; j++)
 	{

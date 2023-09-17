@@ -18,7 +18,7 @@
    ------------------------------------------------------------------ */
 
 
-static FILE *src = NULL; 		/* Input file */
+static FILE *src; 		        /* Input file */
 static Matrix_t *Matrix;		/* Matrix A */
 static Matrix_t *W;			/* f(A) */
 static Poly_t *Poly;
@@ -87,6 +87,9 @@ static int Init(int argc, char **argv)
 	    else
 		src = stdin;
 	    break;
+        case 1:
+            src = stdin;
+            break;
     }
     matname = App->ArgV[0];
     if ((Matrix = matLoad(matname)) == NULL)
@@ -269,9 +272,9 @@ zev @em Options [-G] @em Matrix [@em Poly [@em Group]]
 @section zev_desc Description
 This program reads a matrix from @em Matrix and a list of polynomials
 from @em Poly (or from the standard input).
-For each input polynomial, it evaluates that function
-of the input matrix, calculates the nullity, and puts out this nullity,
-divided by the degree, along with a text from the input.
+For each input polynomial, it inserts the matrix into the polynomial,
+calculates the nullity, and puts out this nullity, divided by the degree,
+along with a text from the input.
 
 The program was specifically designed to assist in the calculation of
 the Brauer characters of diagonalizable matrices, with the text giving

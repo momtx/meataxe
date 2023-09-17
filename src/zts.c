@@ -142,7 +142,7 @@ static int FindPivot(Matrix_t *m, tPivotEntry *piv)
 	int col;
 	FEL f;
 	col = ffFindPivot(rowptr,&f,m->Noc);
-	if (col >= 0)
+	if (col != MTX_NVAL)
 	{
 	    piv->Row = row;
 	    piv->Col = col;
@@ -289,7 +289,7 @@ static void WriteSubspace()
     for (i = 0; i < Dim; ++i)
     {
 	matToVec(row,Basis[i]);
-	mfWriteRows(f,row,1);
+	mfWriteRows(f,row,1,TpDim);
     }
     mfClose(f);
     ffFree(row);
@@ -310,7 +310,7 @@ static void CalculateAction1(int gen, const char *file_name)
 	Matrix_t *image = Map(Basis[i],gen);
 	Clean2(image,(const Matrix_t **)Basis,Piv,Dim,rowptr);
 	matFree(image);
-	mfWriteRows(f,rowptr,1);
+	mfWriteRows(f,rowptr,1,Dim);
     }
     ffFree(rowptr);
     mfClose(f);

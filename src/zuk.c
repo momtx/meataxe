@@ -28,189 +28,108 @@ MTX_COMMON_OPTIONS_DESCRIPTION
 "    <Result> ................ O Uncondensed vectors\n"
 };
 
-static MtxApplication_t *App = NULL;
-static const char *vecname, *orbname, *resname;
-static IntMatrix_t *Orbits = NULL;
-static IntMatrix_t *OrbitSizes = NULL;
-static MtxFile_t *InputFile = NULL;
-static MtxFile_t *OutputFile = NULL;
-static PTR InputBuffer = NULL;
-static PTR OutputBuffer = NULL;
-static int Degree, NOrbits;
+static MtxApplication_t *app = NULL;
+static const char *fileNameInp;
+static const char *fileNameOrbits;
+static const char *fileNameOut;
+static IntMatrix_t *orbits = NULL;
+static IntMatrix_t *orbitSizes = NULL;
+static MtxFile_t *fileInp = NULL;
+static MtxFile_t *fileOut = NULL;
+static PTR rowInp = NULL;
+static PTR rowOut = NULL;
+static uint32_t degree;
+static uint32_t nOrbits = 0;    // number of orbits (= input vector size)
+static uint32_t nVectors = 0;
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
-/* ------------------------------------------------------------------
-   uncondense()
-   ------------------------------------------------------------------ */
-
-static int uncondense()
-
+static void readOrbits()
 {
-    long i;
-
-    /* Uncondense row by row
-       --------------------- */
-    for (i = 0; i < InputFile->Nor; ++i)
-    {
-	long k;
-
-	if (mfReadRows(InputFile,InputBuffer,1) != 1)
-	{
-	    mtxAbort(MTX_HERE,"Error reading vector from %s",InputFile->Name);
-	    return -1;
-	}
-
-	ffMulRow(OutputBuffer,FF_ZERO, Degree);
-
-	for (k = 0; k < NOrbits; ++k)
-	{
-	    int l;
-	    FEL f = ffExtract(InputBuffer,k);
-	    int count = OrbitSizes->Data[k];
-	    for (l = 0; count > 0 && l < Degree; ++l)
-	    {
-		if (Orbits->Data[l] == k)
-		{
-		    ffInsert(OutputBuffer,l,f);
-		    --count;
-		}
-	    }
-	}
-	
-	if (mfWriteRows(OutputFile,OutputBuffer,1) != 1)
-	    return -1;
-    }
-    return 0;
+   MtxFile_t* orbitsFile = mfOpen(fileNameOrbits);
+   orbits = imatRead(orbitsFile);
+   orbitSizes = imatRead(orbitsFile);
+   degree = orbits->Noc;
+   nOrbits = orbitSizes->Noc;
+   mfClose(orbitsFile);
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
-
-/* ------------------------------------------------------------------
-   ReadOrbits() - Read the orbit table file.
-   ------------------------------------------------------------------ */
-
-static int ReadOrbits()
-
+static void openFiles()
 {
-    FILE *orbfile;
+   // Vector input file.
+   fileInp = mfOpen(fileNameInp);
+   mfReadHeader(fileInp);
+   if (mfObjectType(fileInp) != MTX_TYPE_MATRIX)
+      mtxAbort(MTX_HERE,"%s: %s",fileNameInp,MTX_ERR_NOTMATRIX);
+   if (fileInp->header[2] != nOrbits)
+      mtxAbort(MTX_HERE,"%s and %s: %s",fileNameInp,fileNameOrbits,MTX_ERR_INCOMPAT);
+   nVectors = fileInp->header[1];
+   ffSetField(fileInp->header[0]);
+   rowInp = ffAlloc(1, nOrbits);
 
-    MESSAGE(1,("Reading orbits from %s",orbname));
-    if ((orbfile = sysFopen(orbname,"rb")) == NULL)
-	return -1;
-    Orbits = imatRead(orbfile);
-    if (Orbits == NULL)
-    {
-	mtxAbort(MTX_HERE,"Error reading orbit table from %s",orbname);
-	return -1;
-    }
-    OrbitSizes = imatRead(orbfile);
-    if (OrbitSizes == NULL)
-    {
-	mtxAbort(MTX_HERE,"Error reading orbit sizes table from %s",orbname);
-	return -1;
-    }
-    Degree = Orbits->Noc;
-    NOrbits = OrbitSizes->Noc;
-    return 0;
+    // Vector output file.
+    fileOut = mfCreate(fileNameOut,ffOrder,nVectors,degree);
+    rowOut = ffAlloc(1, degree);
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
-
-
-/* ------------------------------------------------------------------
-   OpenFiles() - Open input and output vector files.
-   ------------------------------------------------------------------ */
-
-static int OpenFiles()
-
+static void uncondense()
 {
-    /* Open the vector file and allocate row buffer.
-       --------------------------------------------- */
-    if ((InputFile = mfOpen(vecname)) == NULL)
-	return -1;
-    if (InputFile->Field < 2)
-    {
-	mtxAbort(MTX_HERE,"%s: %s",vecname,MTX_ERR_NOTMATRIX);
-	return -1;
-    }
-    if (InputFile->Noc != NOrbits)
-    {
-	mtxAbort(MTX_HERE,"%s and %s: %s",vecname,orbname,MTX_ERR_INCOMPAT);
-	return -1;
-    }
-    ffSetField(InputFile->Field);
-    InputBuffer = ffAlloc(1, NOrbits);
+   for (uint32_t i = 0; i < nVectors; ++i) {
+      mfReadRows(fileInp, rowInp, 1, nOrbits);
 
-    /* Open the output file and allocate output buffer.
-       ------------------------------------------------ */
-    MESSAGE(0,("Output is %d x %d\n",InputFile->Nor,Degree));
-    OutputFile = mfCreate(resname,ffOrder,InputFile->Nor,Degree);
-    if (OutputFile == NULL)
-	return -1;
-    OutputBuffer = ffAlloc(1, Degree);
+      ffMulRow(rowOut, FF_ZERO, degree);
+      for (uint32_t k = 0; k < nOrbits; ++k) {
+         int l;
+         FEL f = ffExtract(rowInp, k);
+         int count = orbitSizes->Data[k];
+         for (l = 0; count > 0 && l < degree; ++l) {
+            if (orbits->Data[l] == k) {
+               ffInsert(rowOut, l, f);
+               --count;
+            }
+         }
+      }
 
-    return 0;
+      mfWriteRows(fileOut, rowOut, 1, degree);
+   }
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
-/* ------------------------------------------------------------------
-   Init() - Program initialization.
-   ------------------------------------------------------------------ */
-
-static int Init(int argc, char **argv)
-
+static void init(int argc, char **argv)
 {
-    App = appAlloc(&AppInfo,argc,argv);
-    if (App == NULL)
-	return -1;
-    if (appGetArguments(App,3,3) < 0)
-	return -1;
-    vecname = App->ArgV[0];
-    orbname = App->ArgV[1];
-    resname = App->ArgV[2];
-
-    if (ReadOrbits() != 0)
-    {
-	mtxAbort(MTX_HERE,"Error reading orbits");
-	return -1;
-    }
-    if (OpenFiles() != 0)
-    {
-	mtxAbort(MTX_HERE,"Error opening files");
-	return -1;
-    }
-    return 0;
+   app = appAlloc(&AppInfo,argc,argv);
+   appGetArguments(app,3,3);
+   fileNameInp = app->ArgV[0];
+   fileNameOrbits = app->ArgV[1];
+   fileNameOut = app->ArgV[2];
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
-
-static void Cleanup()
-
+static void cleanup()
 {
-    if (InputFile != NULL) mfClose(InputFile);
-    if (OutputFile != NULL) mfClose(OutputFile);
-    if (Orbits != NULL) imatFree(Orbits);
-    if (OrbitSizes != NULL) imatFree(OrbitSizes);
-    appFree(App);
+   mfClose(fileInp);
+   mfClose(fileOut);
+   imatFree(orbits);
+   imatFree(orbitSizes);
+   appFree(app);
 }
 
-
-/* ------------------------------------------------------------------
-   main()
-   ------------------------------------------------------------------ */
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 int main(int argc, char **argv)
-
 {
-    int rc;
-    if (Init(argc,argv) != 0)
-    {
-	mtxAbort(MTX_HERE,"Initialization failed");
-	return 1;
-    }
-    rc = uncondense();
-    Cleanup();
-    return rc;
+   init(argc,argv);
+   readOrbits();
+   openFiles();
+   uncondense();
+   cleanup();
+   return 0;
 }
 
 

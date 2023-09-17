@@ -94,18 +94,12 @@ static MtxApplication_t *App = NULL;
    deleted.
    -------------------------------------------------------------------------- */
 
-static int AddConstituent(MatRep_t *cf, CfInfo *info, int modno, int cfno)
+static void AddConstituent(MatRep_t *cf, CfInfo *info, int modno, int cfno)
 {
    int i, m;
    for (i = 0; i < NumCf; ++i) {
-      int rc;
-      rc = IsIsomorphic(CfList[i].Gen,CfList[i].Info,cf,NULL,0);
-      if (rc < 0) {
-         return -1;
-      }
-      if (rc) {
+      if (IsIsomorphic(CfList[i].Gen,CfList[i].Info,cf,NULL,0))
          break;
-      }
    }
 
    if (i < NumCf) { /* Constituent was already in the list */
@@ -126,7 +120,6 @@ static int AddConstituent(MatRep_t *cf, CfInfo *info, int modno, int cfno)
    CfList[i].Mult++;
    MESSAGE(1,("%s%s is constituent %d\n",ModList[modno].Info.BaseName,
               latCfName(&ModList[modno].Info,cfno),i));
-   return i;
 }
 
 
@@ -138,12 +131,11 @@ static int AddConstituent(MatRep_t *cf, CfInfo *info, int modno, int cfno)
    module to the global constituent list and sets up the constituent map.
    -------------------------------------------------------------------------- */
 
-static int AddConstituents(int mod)
+static void AddConstituents(int mod)
 {
    Lat_Info *li = &ModList[mod].Info;
    int i;
    for (i = 0; i < li->NCf; ++i) {
-      int index;
       char fn[sizeof(li->BaseName) + 100];
       MatRep_t *cf;
         #pragma GCC diagnostic push
@@ -152,39 +144,22 @@ static int AddConstituents(int mod)
       snprintf(fn, sizeof(fn), "%s%s",li->BaseName,latCfName(li,i));
         #pragma GCC diagnostic pop
       cf = mrLoad(fn,li->NGen);
-      if (cf == NULL) {
-         return -1;
-      }
-      index = AddConstituent(cf,li->Cf + i,mod,i);
-      if (index < 0) {
-         return -1;                 /* Error */
-      }
+      AddConstituent(cf,li->Cf + i,mod,i);
    }
-   return 0;
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
-/* --------------------------------------------------------------------------
-   LoadConstituents() - Load the generators on all constituents.
-   -------------------------------------------------------------------------- */
-
-static int LoadConstituents()
+static void loadConstituents()
 {
-   int i;
-
-   for (i = 0; i < NumMods; ++i) {
-      if (AddConstituents(i) < 0) {
-         mtxAbort(MTX_HERE,"Error while loading constituents for %s",
-                    ModList[i].Info.BaseName);
-         return -1;
-      }
+   for (int i = 0; i < NumMods; ++i) {
+      AddConstituents(i);
    }
 
    /* Sort the constituents by dimension to speed up the peak word search.
       -------------------------------------------------------------------- */
-   for (i = 0; i < NumCf; ++i) {
-      int k;
-      for (k = i + 1; k < NumCf; ++k) {
+   for (int i = 0; i < NumCf; ++i) {
+      for (int k = i + 1; k < NumCf; ++k) {
          if (CfList[i].Info->dim > CfList[k].Info->dim) {
             struct cf_struct tmp = CfList[i];
             CfList[i] = CfList[k];
@@ -192,52 +167,41 @@ static int LoadConstituents()
          }
       }
    }
-   return 0;
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static int IsCompatible(int i)
+static void checkCompatibility(int i)
 {
-   if ((ModList[i].Info.NGen != ModList[0].Info.NGen)
-       || (ModList[i].Info.Field != ModList[0].Info.Field)) {
-      mtxAbort(MTX_HERE,"%s and %s: %d",App->ArgV[0],App->ArgV[i],
-                 MTX_ERR_INCOMPAT);
-      return 0;
+   const Lat_Info* infoI = &ModList[i].Info;
+   const Lat_Info* info0 = &ModList[0].Info;
+   if (infoI->NGen != info0->NGen || infoI->Field != info0->Field) {
+      mtxAbort(MTX_HERE,"%s and %s: %s",App->ArgV[0],App->ArgV[i], MTX_ERR_INCOMPAT);
    }
-   return 1;
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
-/* --------------------------------------------------------------------------
-   LoadModules() - Load the .cfinfo files and generators of the modules.
-   -------------------------------------------------------------------------- */
+/// Loads the .cfinfo files and generators of all modules.
 
-static int LoadModules()
+static void loadModules()
 {
-   int i;
-
    /* Set the number of modules.
       -------------------------- */
    NumMods = App->ArgC;
    if (NumMods > MAX_MODULES) {
       mtxAbort(MTX_HERE,"Too many modules (max. %d allowed)",MAX_MODULES);
-      return -1;
    }
 
    /* Read the .cfinfo files and load the generators (if needed).
       ----------------------------------------------------------- */
-   for (i = 0; i < NumMods; ++i) {
-      int k;
-      if (latReadInfo(&ModList[i].Info,App->ArgV[i]) != 0) {
-         return -1;
-      }
-      if (!IsCompatible(i)) {
-         return -1;
-      }
+   for (int i = 0; i < NumMods; ++i) {
+      latReadInfo(&ModList[i].Info,App->ArgV[i]);
+      checkCompatibility(i);
 
       /* Clear any existing peak words.
          ------------------------------ */
-      for (k = 0; k < ModList[i].Info.NCf; ++k) {
+      for (int k = 0; k < ModList[i].Info.NCf; ++k) {
          ModList[i].Info.Cf[k].peakword = -1;
       }
 
@@ -252,8 +216,6 @@ static int LoadModules()
          }
       }
    }
-
-   return 0;
 }
 
 
@@ -277,48 +239,38 @@ static void gkond(const Lat_Info *li, int i, Matrix_t *b, Matrix_t *k,
 }
 
 
-/* ------------------------------------------------------------------
-   Standardize() - Bringe Kompositionsfaktor auf Standardform.
-   Schreibt die neuen Erzeuger in XXX.std.n und die Operationen in
-   XXX.op.
-   ------------------------------------------------------------------ */
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+/// Transforms a constituent to standard basis. Writes the generators to XXX.std.N and the standard
+/// basis spinup script to XXX.op.
+/// Note: the generators in CfList[cf] remain unchanged!
 
 static void Standardize(int cf)
 {
-   int k, m;
-   Matrix_t *sb;
-   IntMatrix_t *script = NULL;
-   Matrix_t *std[MAXGEN];
-
-   /* Make the spin-up script for the standard basis and
-      transform the generators.
-      -------------------------------------------------- */
+   // Make the standard basis and spinup script. Transform the generators.
    MESSAGE(0,("  Transforming to standard basis\n"));
-   sb = SpinUp(CfList[cf].PWNullSpace,CfList[cf].Gen,
-               SF_FIRST | SF_CYCLIC | SF_STD,&script,NULL);
-   ChangeBasisOLD(sb,CfList[cf].Gen->NGen,
-                  (const Matrix_t **)CfList[cf].Gen->Gen,std);
+   IntMatrix_t *script = NULL;
+   Matrix_t* sb =
+      SpinUp(CfList[cf].PWNullSpace,CfList[cf].Gen, SF_FIRST | SF_CYCLIC | SF_STD,&script,NULL);
+   MatRep_t* stdRep = mrChangeBasis2(CfList[cf].Gen, sb);
    matFree(sb);
 
-   /* Write the transformed generators and the spin-up script.
-      -------------------------------------------------------- */
-   for (m = 0; m < CfList[cf].Mult; ++m) {
+   // Write the transformed generators and the spin-up script.
+   for (int m = 0; m < CfList[cf].Mult; ++m) {
       char fn[200];
       Lat_Info *li = &ModList[CfList[cf].CfMap[m][0]].Info;
       int i = CfList[cf].CfMap[m][1];
       sprintf(fn,"%s%s.op",li->BaseName,latCfName(li,i));
       MESSAGE(2,("Write operations to %s\n",fn));
       imatSave(script,fn);
-      for (k = 0; k < li->NGen; ++k) {
+      for (int k = 0; k < li->NGen; ++k) {
          sprintf(fn,"%s%s.std.%d",li->BaseName,latCfName(li,i),k + 1);
          MESSAGE(2,(" %s",fn));
-         matSave(std[k],fn);
+         matSave(stdRep->Gen[k],fn);
       }
    }
 
-   for (k = 0; k < ModList[0].Info.NGen; ++k) {
-      matFree(std[k]);
-   }
+   mrFree(stdRep);
    imatFree(script);
 }
 
@@ -461,7 +413,7 @@ static String GapPrintWord(const WgData_t *b, long n)
          long gen = *x++;
          if (!first) { strAppend(&buffer, ",");}
          first = 0;
-         strAppendF(&buffer,"%d", gen + 1);
+         strAppendF(&buffer,"%ld", gen + 1);
       } while (*x != -1);
       strAppend(&buffer, "]");
       ++x;
@@ -628,7 +580,7 @@ static void parselist(const char *c, long list[][2], int *count)
 }
 
 
-static int ParseCommandLine()
+static void parseCommandLine()
 {
    const char *c;
 
@@ -644,41 +596,25 @@ static int ParseCommandLine()
    while ((c = appGetTextOption(App,"-i --include",NULL)) != NULL) {
       parselist(c,include,&ninclude);
    }
-   if (appGetArguments(App,1,MAX_MODULES) < 0) {
-      return -1;
-   }
+   appGetArguments(App,1,MAX_MODULES);
    if (opt_G) {
       MtxMessageLevel = -100;
    }
-   return 0;
 }
 
 
-static int Init(int argc, char **argv)
+static void init(int argc, char **argv)
 {
-   if ((App = appAlloc(&AppInfo,argc,argv)) == NULL) {
-      return -1;
-   }
-   if (ParseCommandLine() != 0) {
-      return -1;
-   }
+   App = appAlloc(&AppInfo,argc,argv);
+   parseCommandLine();
    MESSAGE(0,("*** PEAK WORD CONDENSATION ***\n\n"));
 
-   if (LoadModules() != 0) {
-      return -1;
-   }
-   if (LoadConstituents() != 0) {
-      return -1;
-   }
+   loadModules();
+   loadConstituents();
    PeakWordsMissing = NumCf;
-
-   return 0;
 }
 
-
-/* ------------------------------------------------------------------
-   try() - Try another word
-   ------------------------------------------------------------------ */
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 static void addid(Matrix_t *m, FEL f)
 {
@@ -816,7 +752,7 @@ static int try_p(long w)
          continue;                      /* We already have a peak word */
       }
       word = wgMakeWord(CfList[i].Wg,w);
-      mp = minPol(word);
+      mp = minpol(word);
       if (MSG3) {
          printf("Constituent %d, minpol =\n",i);
          fpPrint(NULL,mp);
@@ -889,10 +825,7 @@ int main(int argc, char **argv)
    int i;
    long w;
 
-   if (Init(argc,argv) != 0) {
-      mtxAbort(MTX_HERE,"Initialization failed");
-      return 1;
-   }
+   init(argc,argv);
 
    /* Find peak words
       --------------- */

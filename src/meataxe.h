@@ -15,18 +15,19 @@
 #define MTX_VERSION "2.5.0-UNSTABLE"
 
 
-#if defined GCC
+#if defined __GNUC__
 #define MTX_PRINTF_ATTRIBUTE(f,v) __attribute__((format(printf,f,v)))
 #else
 #define MTX_PRINTF_ATTRIBUTE(f,v)
 #endif
 
-
+extern const uint32_t MTX_TYPE_MATRIX;
 extern const uint32_t MTX_TYPE_PERMUTATION;
 extern const uint32_t MTX_TYPE_POLYNOMIAL;
 extern const uint32_t MTX_TYPE_BITSTRING_FIXED;
 extern const uint32_t MTX_TYPE_BITSTRING_DYNAMIC;
 extern const uint32_t MTX_TYPE_INTMATRIX;
+extern const uint32_t MTX_TYPE_BEGIN;
 
 /// @addtogroup os @{
 
@@ -73,7 +74,7 @@ void sysWrite32(FILE *f, const void* buf, size_t n);
 
 #if MTX_ZZZ == 0
 
-typedef unsigned char FEL;      ///< A finite field element
+typedef uint8_t FEL;            ///< A finite field element
 typedef FEL *PTR;               ///< A pointer to a row vector
 #define FF_ZERO ((FEL)0)        ///< The zero field element
 #define FF_ONE ((FEL)1)         ///< The unit element
@@ -90,15 +91,19 @@ typedef uint16_t* PTR;
 #define FF_ONE ((FEL)0)
 #define MTX_ZZZVERSION 0x105
 
+#define MTX_MAXSUBFIELDS 16     // Maximal number of subfields (14, actually)
+
 #else
 
 #error "MTX_ZZZ undefined"
 
 #endif
 
-extern int ffOrder;
+extern uint32_t ffOrder;
 extern int ffChar;
 extern FEL ffGen;
+
+#define MTX_NVAL ((uint32_t)0xFFFFFFFF)
 
 /* Arithmetic */
 FEL ffAdd(FEL a, FEL b);
@@ -114,33 +119,31 @@ void ffAddMulRow(PTR dest, PTR src, FEL f, int noc);
 void ffAddRowPartial(PTR dest, PTR src, int first, int noc);
 PTR ffAddRow(PTR dest, PTR src, int noc);
 PTR ffAlloc(int nor, int noc);
-int ffCleanRow2(PTR row, PTR matrix, int nor, int noc, const int *piv, PTR row2);
-int ffCleanRowAndRepeat(PTR row, PTR mat, int nor, int noc, const int *piv, PTR row2, PTR mat2);
-void ffCleanRow(PTR row, PTR matrix, int nor, int noc, const int *piv);
+int ffCleanRow2(PTR row, PTR matrix, int nor, int noc, const uint32_t *piv, PTR row2);
+int ffCleanRowAndRepeat(
+      PTR row, PTR mat, int nor, int noc, const uint32_t *piv, PTR row2, PTR mat2);
+void ffCleanRow(PTR row, PTR matrix, int nor, int noc, const uint32_t* piv);
 int ffCmpRows(PTR p1, PTR p2, int noc);
 void ffCopyRow(PTR dest, PTR src, int noc);
 FEL ffEmbed(FEL a, int subfield);
 void ffExtractColumn(PTR mat,int nor,int noc,int col,PTR result);
 FEL ffExtract(PTR row, int col);
-int ffFindPivot(PTR row, FEL *mark, int noc);
+uint32_t ffFindPivot(PTR row, FEL *mark, int noc);
 void ffFree(PTR x);
 FEL ffFromInt(int l);
 PTR ffGetPtr(PTR base, int row, int noc);
 int ffMakeTables(int field);
 void ffMulRow(PTR row, FEL mark, int noc);
-FILE *ffReadHeader(const char *name, int *fld, int *nor, int *noc);
 void ffReadRows(FILE *f, PTR buf, int n, int noc);
 FEL ffRestrict(FEL a, int subfield);
 size_t ffRowSize(int noc);
 size_t ffRowSizeUsed(int noc);
 FEL ffScalarProduct(PTR a, PTR b, int noc);
-int ffSeekRow(FILE *f, int pos, int noc);
 int ffSetField(int field);
 ssize_t ffSize(int nor, int noc);
 void ffStepPtr(PTR *x, int noc);
 void ffSwapRows(PTR dest, PTR src, int noc);
 int ffToInt(FEL f);
-FILE *ffWriteHeader(const char *name, int fld, int nor, int noc);
 void ffWriteRows(FILE *f, PTR buf, int n, int noc);
 
 /// List of subfield orders, terminated with 0.
@@ -162,11 +165,11 @@ extern FEL mtx_tinsert[8][256];
 extern FEL mtx_embed[4][16];
 extern FEL mtx_restrict[4][256];
 
-#define ffAdd(a,b) ((FEL)mtx_tadd[(int)(unsigned char)a][(int)(unsigned char)b])
+#define ffAdd(a,b) ((FEL)mtx_tadd[(uint8_t)a][(uint8_t)b])
 #define ffDiv(a,b) ffMul((a),ffInv(b))
-#define ffInv(a) (mtx_tmultinv[(int)(unsigned char)a])
-#define ffMul(a,b) ((FEL)mtx_tmult[(int)(unsigned char)a][(int)(unsigned char)b])
-#define ffNeg(a) (mtx_taddinv[(int)(unsigned char)a])
+#define ffInv(a) (mtx_tmultinv[(uint8_t)a])
+#define ffMul(a,b) ((FEL)mtx_tmult[(uint8_t)a][(uint8_t)b])
+#define ffNeg(a) (mtx_taddinv[(uint8_t)a])
 #define ffSub(a,b) ffAdd((a),ffNeg(b))
 
 void ffInsert(PTR row, int col, FEL mark);
@@ -188,7 +191,7 @@ void ffInsert(PTR row, int col, FEL mark);
 
 void ffMapRow(PTR row, PTR matrix, int nor, int noc, PTR result);
 void ffPermRow(PTR row, const uint32_t *perm, int noc, PTR result);
-int ffSumAndIntersection(int noc, PTR wrk1, int *nor1, int *nor2, PTR wrk2, int *piv);
+int ffSumAndIntersection(int noc, PTR wrk1, uint32_t *nor1, uint32_t *nor2, PTR wrk2, uint32_t *piv);
 
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -274,11 +277,10 @@ typedef struct {
    unsigned long IsDone[APP_MAX_ARGS];          /**< Used internally. */
    const char *OptArg;                          /**< Used internally. */
    int OptInd;                                  /**< Used internally. */
-   char TempDirName[200];                       /**< Directory fr temporary files. */
 } MtxApplication_t;
 
 MtxApplication_t *appAlloc(MtxApplicationInfo_t const *ai, int argc, char **argv);
-int appFree(MtxApplication_t *a);
+void appFree(MtxApplication_t *a);
 int appGetOption(MtxApplication_t *app, const char *spec);
 int appGetCountedOption(MtxApplication_t *app, const char *spec);
 const char *appGetTextOption(MtxApplication_t *app, const char *spec,
@@ -286,7 +288,6 @@ const char *appGetTextOption(MtxApplication_t *app, const char *spec,
 int appGetIntOption(MtxApplication_t *app, const char *spec, int dflt,
                     int min, int max);
 int appGetArguments(MtxApplication_t *app, int min_argc, int max_argc);
-const char *appCreateTempDir(MtxApplication_t *app);
 
 #define MTX_COMMON_OPTIONS_SYNTAX \
    "[<Options>]"
@@ -431,23 +432,25 @@ int stfMatch(StfData *f, const char *pattern);
 
 /// MeatAxe data file object.
 typedef struct {
-   unsigned long Magic;         /**< Used internally. */
-   int Field;                   /**< Field order or type id. */
-   int Nor;                     /**< Number of rows. */
-   int Noc;                     /**< Number of columns. */
-   FILE *File;                  /**< File to read frmo/write to. */
-   char *Name;                  /**< File name. */
+   unsigned long Magic;         ///< Used internally.
+   uint32_t header[3];          ///< Last read/written object header.
+   FILE *File;                  ///< File handle.
+   char *Name;                  ///< File name.
 } MtxFile_t;
 
-void mfValidate(const MtxFile_t *file);
+void mfClose(MtxFile_t *file);
+MtxFile_t* mfCreate(const char *name, uint32_t field, uint32_t nor, uint32_t noc);
 int mfIsValid(const MtxFile_t *file);
-MtxFile_t *mfOpen(const char *name);
-MtxFile_t *mfCreate(const char *name, int field, int nor, int noc);
-int mfClose(MtxFile_t *file);
-void mfRead32(MtxFile_t *f, void *buf, int nrows);
-int mfReadRows(MtxFile_t *f, PTR buf, int nrows);
-void mfWrite32(MtxFile_t *f, const void *buf, int count);
-int mfWriteRows(MtxFile_t *f, PTR buf, int nrows);
+MtxFile_t* mfOpen(const char *name);
+void mfRead32(MtxFile_t *file, void *buf, int nrows);
+void mfReadRows(MtxFile_t *f, PTR buf, uint32_t nor, uint32_t noc);
+void mfSkip(MtxFile_t *file, size_t nBytes);
+int mfTryReadHeader(MtxFile_t* file);
+void mfReadHeader(MtxFile_t* file);
+uint32_t mfObjectType(const MtxFile_t* file);
+void mfValidate(const struct MtxSourceLocation* src, const MtxFile_t *file);
+void mfWrite32(MtxFile_t *file, const void *buf, int count);
+void mfWriteRows(MtxFile_t *file, PTR buf, uint32_t nrows, uint32_t noc);
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // Matrices over a finite field.
@@ -456,14 +459,11 @@ int mfWriteRows(MtxFile_t *f, PTR buf, int nrows);
 /// A matrix over a finite field.
 typedef struct {
    unsigned long Magic;  ///< @private
-   //void* next;           ///< @private
-   //void** prev;          ///< @private
    int Field;            ///< Field order.
    int Nor;              ///< Number of rows.
    int Noc;              ///< Number of columns.
    PTR Data;             ///< Data, organized as array of rows.
-   size_t RowSize;       ///< Size (in bytes) of one row.
-   int *PivotTable;      ///< Pivot table (if matrix is in echelon form).
+   uint32_t *PivotTable; ///< Pivot table (if matrix is in echelon form).
 } Matrix_t;
 
 Matrix_t *matAdd(Matrix_t *dest, const Matrix_t *src);
@@ -491,10 +491,11 @@ Matrix_t *matNullSpace(const Matrix_t *mat);
 Matrix_t *matNullSpace_(Matrix_t *mat, int flags);
 Matrix_t *matNullSpace__(Matrix_t *mat);
 int matOrder(const Matrix_t *mat);
-int matPivotize(Matrix_t *mat);
+void matPivotize(Matrix_t *mat);
 Matrix_t *matPower(const Matrix_t *mat, long n);
 void matPrint(const char *name, const Matrix_t *m);
 Matrix_t *matRead(FILE *f);
+Matrix_t *matReadData(FILE *f, const uint32_t header[3]);
 void matSave(const Matrix_t *mat, const char *fn);
 FEL matTrace(const Matrix_t *mat);
 Matrix_t *matTransposed(const Matrix_t *src);
@@ -566,7 +567,8 @@ Perm_t *permMul(Perm_t *dest, const Perm_t *src);
 uint32_t permOrder(const Perm_t *perm);
 Perm_t *permPower(const Perm_t *p, int n);
 void permPrint(const char *name, const Perm_t *perm);
-Perm_t *permRead(FILE *f);
+Perm_t* permRead(FILE *f);
+Perm_t* permReadData(FILE *f, const uint32_t header[3]);
 void permSave(const Perm_t *perm, const char *fileName);
 void permValidate(const struct MtxSourceLocation* src, const Perm_t *p);
 void permWrite(const Perm_t *perm, FILE *f);
@@ -602,6 +604,7 @@ Poly_t *polLoad(const char *fn);
 Poly_t *polMul(Poly_t *dest, const Poly_t *src);
 void polPrint(char *name, const Poly_t *p);
 Poly_t *polRead(FILE *f);
+Poly_t *polReadData(FILE *f, const uint32_t header[3]);
 void polSave(const Poly_t *pol, const char *fn);
 void polValidate(const struct MtxSourceLocation* sl, const Poly_t *p);
 void polWrite(const Poly_t *p, FILE *f);
@@ -694,25 +697,26 @@ typedef struct {
 IntMatrix_t *imatAlloc(int nor, int noc);
 void imatFree(IntMatrix_t *mat);
 IntMatrix_t *imatLoad(const char *fn);
-IntMatrix_t *imatRead(FILE *f);
+IntMatrix_t *imatRead(MtxFile_t* file);
 void imatSave(const IntMatrix_t *mat, const char *file_name);
 void imatValidate(const struct MtxSourceLocation* sl, const IntMatrix_t *m);
 void imatWrite(const IntMatrix_t *mat, FILE *f);
 
-/* --------------------------------------------------------------------------
-   Polymorphic objects
-   -------------------------------------------------------------------------- */
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// Polymorphic objects
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void *XDup(void *a);
-int XIsCompatible(void *a, void *b);
-void XFree(void *a);
-void *XInverse(void *a);
-void *XLoad(const char *fn);
-void XMul(void *a, void *b);
-long XOrder(void *a);
-void *XPower(void *a, int n);
-int XSave(void *a, const char *fn);
+void *objDup(void *a);
+int objCanMultiply(void *a, void *b);
+void objFree(void *a);
+void *objInverse(void *a);
+void *objLoad(const char *fn);
+void objMul(void *a, void *b);
+long objOrder(void *a);
+void *objPower(void *a, int n);
+int objSave(void *a, const char *fn);
 
+   
 /* --------------------------------------------------------------------------
    Matrix sets
    -------------------------------------------------------------------------- */
@@ -757,7 +761,8 @@ typedef struct {
 
 int mrAddGenerator(MatRep_t *rep, Matrix_t *gen, int flags);
 MatRep_t *mrAlloc(int ngen, Matrix_t **gen, int flags);
-int mrChangeBasis(MatRep_t *rep, const Matrix_t *trans);
+void mrChangeBasis(MatRep_t *rep, const Matrix_t *trans);
+MatRep_t* mrChangeBasis2(const MatRep_t *rep, const Matrix_t *trans);
 int mrIsValid(const MatRep_t *rep);
 int mrFree(MatRep_t *rep);
 MatRep_t *mrLoad(const char *basename, int ngen);
@@ -855,12 +860,37 @@ FPoly_t *Factorization(const Poly_t *pol);
 // Characteristic and minimal polynomials
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-extern long CharPolSeed; // TODO: remove
+struct CharpolState 
+{
+   uint32_t magic;
+   enum CharpolMode {PM_CHARPOL, PM_MINPOL} mode;
 
-Poly_t *charPolFactor(const Matrix_t *mat);
-FPoly_t *charPol(const Matrix_t *mat);
-Poly_t *minPolFactor(const Matrix_t *mat);
-FPoly_t *minPol(const Matrix_t *mat);
+   long fl;      // field order
+   long vsDim;   // vector space dimension
+   long *piv;    // Pivot table
+   char *ispiv;  // Pivot flags
+   PTR mat;      // The matrix
+   PTR A;        // Work space (for spin-up)
+   PTR B;        // Work space II (coefficients)
+   long dim;     // Dimension reached so far (sum of cyclic subspace dimensions)
+   long n;       // Dimension of cyclic subspace
+   long seed;    // Number of seed vector for the first cyclic subspace
+
+   // Minimal polynomial on the current subspace dimension. Unused in PM_CHARPOL mode.
+   Poly_t* partialMinPol;  
+};
+typedef struct CharpolState Charpol_t;
+
+
+Charpol_t* charpolAlloc(const Matrix_t* matrix, enum CharpolMode mode, long seed);
+void charpolFree(struct CharpolState* state);
+
+Poly_t *charpolFactor(Charpol_t* state);
+FPoly_t *charpol(const Matrix_t *mat);
+
+Poly_t *minpolFactor(Charpol_t* state);
+FPoly_t *minpol(const Matrix_t *mat);
+FPoly_t *minpolS(const Matrix_t *mat, long seed);
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // Submodule lattice functions
@@ -902,7 +932,7 @@ typedef struct {
    int *Head;                           /**< Mult. of constituents in Heads */
 } Lat_Info;
 
-int latReadInfo(Lat_Info *li, const char *basename);
+void latReadInfo(Lat_Info *li, const char *basename);
 int latWriteInfo(const Lat_Info *li);
 const char *latCfName(const Lat_Info *li, int cf);
 int latAddHead(Lat_Info *li, int *mult);
@@ -938,7 +968,7 @@ typedef struct {
    int CfIndex[2][LAT_MAXCF];           /**< Constituent number */
 } TkData_t;
 
-int tkReadInfo(TkData_t *tki, const char *name);
+void tkReadInfo(TkData_t *tki, const char *name);
 int tkWriteInfo(TkData_t *tki, const char *name);
 
 /* !!!!!!!!!!!!!!! 2.3 STUFF below !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! */
@@ -995,10 +1025,6 @@ LdLattice_t *ldAlloc(int num_nodes);
 int ldFree(LdLattice_t *l);
 int ldAddIncidence(LdLattice_t *lat, int sub, int sup);
 int ldSetPositions(LdLattice_t *l);
-
-/* OLD STUFF */
-int ChangeBasisOLD(const Matrix_t *M, int ngen, const Matrix_t *gen[],
-                   Matrix_t *newgen[]);
 
 #endif  /* !defined(_MEATAXE_H_) */
 

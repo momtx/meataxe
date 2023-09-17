@@ -43,62 +43,35 @@ MTX_COMMON_OPTIONS_DESCRIPTION
 static MtxApplication_t *App = NULL;
 
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
-
-/* ------------------------------------------------------------------
-   init() - Process command line options and arguments
-   ------------------------------------------------------------------ */
-
-static int Init(int argc, char **argv)
-
+static void init(int argc, char **argv)
 {
-    int i;
 
     App = appAlloc(&AppInfo,argc,argv);
-    if (App == NULL)
-	return -1;
 
-    /* Process command line options.
-       ----------------------------- */
     opt_G = appGetOption(App,"-G --gap");
     opt_s = appGetOption(App,"-s --summary");
     if (opt_G) MtxMessageLevel = -100;
-
-    /* Process arguments.
-       ------------------ */
-    if (appGetArguments(App,2,MAXGEN+1) < 0)
-	return -1;
+    appGetArguments(App,2,MAXGEN+1);
     Count = atoi(App->ArgV[0]);
     if (Count < 1)
-    {
 	mtxAbort(MTX_HERE,"Invalid count '%s' (try --help)",App->ArgV[0]);
-	return -1;
-    }
 
-    /* Read the generators
-       ------------------- */
+    // Read the generators
     NGen = App->ArgC - 1;
-    for (i = 0; i < NGen; ++i)
+    for (int i = 0; i < NGen; ++i)
     {
-	Gen[i] = XLoad(App->ArgV[i+1]);
-	if (i > 0 && !XIsCompatible(Gen[0],Gen[i]))
+	Gen[i] = objLoad(App->ArgV[i+1]);
+	if (i > 0 && !objCanMultiply(Gen[0],Gen[i]))
 	{
 	    mtxAbort(MTX_HERE,"%s and %s: %s",App->ArgV[1],App->ArgV[i+1],
 		MTX_ERR_INCOMPAT);
 	}
     }
-
-    return 0;
 }
 
 
-
-
-static void Cleanup()
-
-{
-    appFree(App);
-}
 
 
 
@@ -106,21 +79,18 @@ static void Cleanup()
 long Order[MAXORDERS+1];
 int CountTab[MAXORDERS+1];
 
-
 static void RandomOrders()
-
 {
     int n;
     void *m = NULL;
 
-    m = XDup(Gen[0]);
+    m = objDup(Gen[0]);
     mtxRandomInit(0);
     if (opt_G)
 	printf("MeatAxe.RandomOrders := [");
     for (n = 0; n < Count; ++n)
     {
-	long o;
-	o = XOrder(m);
+	long o = objOrder(m);
 	if (opt_s)
 	{
 	    int i;
@@ -139,7 +109,7 @@ static void RandomOrders()
     	    if (opt_G && n < Count - 1) 
 		printf(",");
 	}
-	XMul(m,Gen[mtxRandomInt(NGen)]);
+	objMul(m,Gen[mtxRandomInt(NGen)]);
     }
     if (opt_G)
 	printf("];\n");
@@ -179,28 +149,14 @@ static void RandomOrders()
     }
 }
 
-
-
-
-
-
-/* ------------------------------------------------------------------
-   main()
-   ------------------------------------------------------------------ */
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 int main(int argc, char **argv)
-
 {
-    if (Init(argc,argv) != 0)
-    {
-	mtxAbort(MTX_HERE,"Initialization failed");
-	return 1;
-    }
-
+    init(argc,argv);
     RandomOrders();
-
-    Cleanup();
-    return EXIT_OK;
+    appFree(App);
+    return 0;
 }
 
 /**

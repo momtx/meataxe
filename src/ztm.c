@@ -28,11 +28,13 @@ static MtxApplicationInfo_t AppInfo = {
 MTX_COMMON_OPTIONS_DESCRIPTION
 };
 static MtxApplication_t *App = NULL;
-static const char *AName, *BName;	/* Matrices */
-static const char *VName, *RName;	/* Vectors, Result */
-static Matrix_t *mat1=NULL, *mat2=NULL;	/* Matrices */
-static MtxFile_t *vecfile = NULL, 
-    *resultfile = NULL;
+static const char *fileNameA, *fileNameB;	/* Matrices */
+static const char *fileNameVin, *fileNameVout;	/* Vectors, Result */
+static Matrix_t *matrixA=NULL, *matrixB=NULL;	/* Matrices */
+static MtxFile_t *fileVin = NULL, 
+    *fileVout = NULL;
+static uint32_t nocV = 0;               // Tensor product dimension
+
 
 
 /* ------------------------------------------------------------------
@@ -90,165 +92,105 @@ static void matToVec(Matrix_t *mat, PTR vec)
 }
 
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
-
-static int ReadMatrices()
+static void readMatrices()
 {
-    /* Read matrices and check compatibility.
-       -------------------------------------- */
-    mat1 = matLoad(AName);
-    mat2 = matLoad(BName);
-    if (mat1 == NULL || mat2 == NULL)
+    matrixA = matLoad(fileNameA);
+    matrixB = matLoad(fileNameB);
+    if (matrixA == NULL || matrixB == NULL)
     {
 	mtxAbort(MTX_HERE,"Error reading matrices");
-	return -1;
     }
-    if (mat1->Nor != mat1->Noc)
+    if (matrixA->Nor != matrixA->Noc)
     {
-	mtxAbort(MTX_HERE,"%s: %s",AName,MTX_ERR_NOTSQUARE);
-	return -1;
+	mtxAbort(MTX_HERE,"%s: %s",fileNameA,MTX_ERR_NOTSQUARE);
     }
-    if (mat2->Nor != mat2->Noc)
+    if (matrixB->Nor != matrixB->Noc)
     {
-	mtxAbort(MTX_HERE,"%s: %s",BName,MTX_ERR_NOTSQUARE);
-	return -1;
+	mtxAbort(MTX_HERE,"%s: %s",fileNameB,MTX_ERR_NOTSQUARE);
     }
-    if (mat1->Field != mat2->Field)
+    if (matrixA->Field != matrixB->Field)
     {
-	mtxAbort(MTX_HERE,"%s and %s: %s",AName,BName,MTX_ERR_INCOMPAT);
-	return -1;
+	mtxAbort(MTX_HERE,"%s and %s: %s",fileNameA,fileNameB,MTX_ERR_INCOMPAT);
     }
-    MESSAGE(1,("%s: %dx%d matrix over GF(%d)\n", AName,mat1->Nor,mat1->Noc,mat1->Field));
-    MESSAGE(1,("%s: %dx%d matrix over GF(%d)\n", BName,mat2->Nor,mat2->Noc,mat2->Field));
-    return 0;
+    nocV = matrixA->Noc * matrixB->Noc;
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static int OpenVectorFiles()
+static void openVectorFiles()
 {
-    /* Open the <Vectors> file and check the header.
-       --------------------------------------------- */
-    vecfile = mfOpen(VName);
-    if (vecfile == NULL)
-	return -1;
-    if (vecfile->Field != mat1->Field 
-	|| vecfile->Noc != mat1->Noc * mat2->Noc)
-    {
-	mtxAbort(MTX_HERE,"%s and %s/%s: %s",VName,AName,BName,MTX_ERR_INCOMPAT);
-	return -1;
-    }
-    MESSAGE(1,("%s: %dx%d matrix over GF(%d)\n",VName,vecfile->Nor,vecfile->Noc,vecfile->Field));
+    // Open the input vectors file.
+    fileVin = mfOpen(fileNameVin);
+    mfReadHeader(fileVin);
+    if (mfObjectType(fileVin) != MTX_TYPE_MATRIX)
+	mtxAbort(MTX_HERE,"%s: %s",fileNameVin,MTX_ERR_NOTMATRIX);
+    if (fileVin->header[0] != matrixA->Field || fileVin->header[2] != nocV)
+	mtxAbort(MTX_HERE,"%s and %s/%s: %s",fileNameVin,fileNameA,fileNameB,MTX_ERR_INCOMPAT);
     
-    /* Create output file.
-       ------------------- */
-    resultfile = mfCreate(RName,vecfile->Field,vecfile->Nor,vecfile->Noc);
-    if (resultfile == NULL)
-	return -1;
-
-    return 0;
+    // Create output file.
+    fileVout = mfCreate(fileNameVout,fileVin->header[0],fileVin->header[1],nocV);
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static int Init(int argc, char **argv)
-
+static void init(int argc, char **argv)
 {
-
-    /* Process command line options and arguments.
-       ------------------------------------------- */
-    if ((App = appAlloc(&AppInfo,argc,argv)) == NULL)
-	return -1;
-    if (appGetArguments(App,4,4) != 4)
-	return -1;
-    AName = App->ArgV[0];
-    BName = App->ArgV[1];
-    VName = App->ArgV[2];
-    RName = App->ArgV[3];
-
-    if (ReadMatrices() != 0)
-	return -1;
-    if (OpenVectorFiles() != 0)
-	return -1;
-
-    return 0;
+    App = appAlloc(&AppInfo,argc,argv);
+    appGetArguments(App,4,4);
+    fileNameA = App->ArgV[0];
+    fileNameB = App->ArgV[1];
+    fileNameVin = App->ArgV[2];
+    fileNameVout = App->ArgV[3];
+    readMatrices();
+    openVectorFiles();
 }
 
-
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 static void Cleanup()
-
 {
-    if (App != NULL)
-	appFree(App);
-    if (resultfile != NULL)
-	mfClose(resultfile);
-    if (vecfile != NULL)
-	mfClose(vecfile);
+   appFree(App);
+   mfClose(fileVout);
+   mfClose(fileVin);
 }
 
-
-
-/* ------------------------------------------------------------------
-   main()
-   ------------------------------------------------------------------ */
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 int main(int argc, char **argv)
-
 {  
-    Matrix_t *mat1tr;
-    PTR tmp;
-    long i;
+    init(argc,argv);
 
+    // Transpose first matrix 
+    Matrix_t *matrixATr = matTransposed(matrixA);
+    matFree(matrixA);
 
-    if (Init(argc,argv) != 0)
-    {
-	mtxAbort(MTX_HERE,"Initialization failed");
-	return 1;
-    }
+    // Allocate buffer for one vector
+    PTR tmp = ffAlloc(1, nocV);
 
-    /* Transpose first matrix 
-       ---------------------- */
-    mat1tr = matTransposed(mat1);
-    matFree(mat1);
-
-    /* Allocate buffer for one vector
-       ------------------------------ */
-    tmp = ffAlloc(1, vecfile->Noc);
-
-    /* Process <Vectors> one by one
-       ---------------------------- */
-    for (i = 0; i < vecfile->Nor; ++i)
+    // Process input vectors one by one.
+    for (uint32_t i = 0; i < fileVin->header[1]; ++i)
     {
 	Matrix_t *mat3, *newmat;
 
-        /* Read on evector and convert to matrix.
-           -------------------------------------- */
-        if (mfReadRows(vecfile,tmp,1) != 1)
-	{
-	    mtxAbort(MTX_HERE,"Error reading vector");
-	    return 1;
-	}
-        mat3 = VecToMat(tmp,ffOrder,mat1tr->Nor,mat2->Nor);
+        // Read one vector and convert to matrix.
+        mfReadRows(fileVin,tmp,1, nocV);
+        mat3 = VecToMat(tmp, ffOrder, matrixATr->Nor, matrixB->Nor);
        
-        /* Multiply from both sides.
-           ------------------------- */
-	newmat = matDup(mat1tr);
+        // Multiply from both sides.
+	newmat = matDup(matrixATr);
 	matMul(newmat,mat3);
-	matMul(newmat,mat2);
+	matMul(newmat,matrixB);
 
-        /* Turn matrix into vector and write out
-           ------------------------------------- */
+        // Turn matrix into vector and write out
         matToVec(newmat,tmp);
-        if (mfWriteRows(resultfile,tmp,1) != 1)
-	{
-	    mtxAbort(MTX_HERE,"Error writing vector");
-	    return 1;
-	}
+        mfWriteRows(fileVout,tmp,1, nocV);
 
-        /* Free memory
-           ----------- */
         matFree(mat3);
         matFree(newmat);
     }
+    sysFree(tmp);
    
     Cleanup();
     return 0;

@@ -404,7 +404,7 @@ FEL ffEmbed(FEL a, int subfield)
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-int ffFindPivot(PTR row,FEL *mark, int noc)
+uint32_t ffFindPivot(PTR row,FEL *mark, int noc)
 {
    register long i;
    register PTR p = row;
@@ -415,7 +415,7 @@ int ffFindPivot(PTR row,FEL *mark, int noc)
          return i;
       }
    }
-   return -1;
+   return MTX_NVAL;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////

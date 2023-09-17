@@ -28,17 +28,15 @@
 ///
 /// @return The dimension of the null-space, or -1 on error.
 
-static long znullsp(PTR matrix, int nor, int noc, int *piv, PTR nsp, int flags)
+static long znullsp(PTR matrix, int nor, int noc, uint32_t *piv, PTR nsp, int flags)
 {
    PTR x, y, a, b;
-   int i;
-   long dim;
    FEL f;
 
    // initialize result with identity
    x = nsp;
-   for (i = 0; i < nor; ++i) {
-      piv[i] = -1;
+   for (uint32_t i = 0; i < nor; ++i) {
+      piv[i] = MTX_NVAL;
       ffMulRow(x,FF_ZERO, nor);
       ffInsert(x,i,FF_ONE);
       ffStepPtr(&x, nor);
@@ -47,12 +45,12 @@ static long znullsp(PTR matrix, int nor, int noc, int *piv, PTR nsp, int flags)
    // gaussian elimination
    x = matrix;
    y = nsp;
-   for (i = 0; i < nor; ++i) {
+   for (uint32_t i = 0; i < nor; ++i) {
       PTR xx = matrix, yy = nsp;
-      long k, p;
+      uint32_t k, p;
 
       for (k = 0; k < i; ++k) {
-         if (((p = piv[k]) >= 0) && ((f = ffExtract(x,p)) != FF_ZERO)) {
+         if (((p = piv[k]) != MTX_NVAL) && ((f = ffExtract(x,p)) != FF_ZERO)) {
             f = ffNeg(ffDiv(f,ffExtract(xx,p)));
             ffAddMulRow(x,xx,f, noc);
             ffAddMulRow(y,yy,f, nor);
@@ -66,11 +64,11 @@ static long znullsp(PTR matrix, int nor, int noc, int *piv, PTR nsp, int flags)
    }
 
    // step 2: reduce the null space to echelon form.
-   dim = 0;
+   uint32_t dim = 0;
    x = y = nsp;
    a = b = matrix;
-   for (i = 0; i < nor; ++i) {
-      if (piv[i] == -1) {
+   for (uint32_t i = 0; i < nor; ++i) {
+      if (piv[i] == MTX_NVAL) {
          if (y != x) 
             ffCopyRow(y,x, nor);
          if (flags) {
@@ -111,33 +109,20 @@ Matrix_t *matNullSpace_(Matrix_t *mat, int flags)
    // check arguments
    matValidate(MTX_HERE, mat);
 
-   // allocate workspace
+   // allocate workspace (sets the field as side effect)
    nsp = matAlloc(mat->Field,mat->Nor,mat->Nor);
-   if (nsp == NULL) {
-      return NULL;
-   }
-   nsp->PivotTable = NREALLOC(nsp->PivotTable,int,mat->Nor);
-   if (nsp->PivotTable == NULL)
-   {
-       matFree(nsp);
-       return NULL;
-   }
+   nsp->PivotTable = NREALLOC(nsp->PivotTable,uint32_t,mat->Nor);
 
    // calculate the null-space
    dim = znullsp(mat->Data,mat->Nor,mat->Noc,nsp->PivotTable,nsp->Data,flags);
-   if (dim == -1)
-   {
-      matFree(nsp);
-      return NULL;
-   }
    if (flags) {
       sysFree(nsp->PivotTable);
       nsp->PivotTable = NULL;
    }
 
-   // resize the result buffer to its actual size
+   // trim result buffer
    nsp->Nor = dim;
-   nsp->Data = (PTR) sysRealloc(nsp->Data,nsp->RowSize * dim);
+   nsp->Data = (PTR) sysRealloc(nsp->Data,ffRowSize(nsp->Noc) * dim);
 
    return nsp;
 }

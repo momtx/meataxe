@@ -18,105 +18,77 @@ MTX_COMMON_OPTIONS_DESCRIPTION
 };
 static MtxApplication_t *App = NULL;
 
+const char* SpcName = NULL;
+const char* MatName = NULL;
+const char* OpName = NULL;
+const char* ClName = NULL;
+static Matrix_t* Space = NULL;
+static MtxFile_t* matrixFile = NULL;
+static MtxFile_t* cleanedFile = NULL;
+static MtxFile_t* opFile = NULL;
+static uint32_t noc = 0;
+static uint32_t spaceNor = 0;
+static uint32_t matrixNor = 0;
 
-const char *SpcName = NULL, *MatName = NULL, *OpName = NULL, *ClName = NULL;
-static Matrix_t *Space;
-static MtxFile_t *Matrix, *Cleaned, *Op;
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
-
-static int Clean1()
-
+static void clean()
 {
-    PTR op, row;
-    int j;
-    int rc = 0;
+   matPivotize(Space);
+   PTR op = ffAlloc(1,spaceNor);
+   PTR row = ffAlloc(1, noc);
 
-    /* Check compatibility.
-       -------------------- */
-    if (Matrix->Noc != Space->Noc || Matrix->Field != Space->Field)
-    {
-	mtxAbort(MTX_HERE,"%s and %s: %s",SpcName,MatName,MTX_ERR_INCOMPAT);
-	return 1;
-    }
-
-    /* Build the pivot table.
-       ---------------------- */
-    if (matPivotize(Space) != 0)
-    {
-	mtxAbort(MTX_HERE,"%s: %s",SpcName,MTX_ERR_NOTECH);
-	return -1;
-    }
-
-    /* Allocate work space.
-       -------------------- */
-    if ((op = ffAlloc(1,Space->Nor)) == NULL)
-	rc = -1;
-    if ((row = ffAlloc(1, Space->Noc)) == NULL)
-	rc = -1;
-
-    /* Process the matrix row by row.
-       ------------------------------ */
-    for (j = 0; rc == 0 && j < Matrix->Nor; ++j)
-    {
-	if (mfReadRows(Matrix,row,1) != 1)
-	    rc = -1;
-	ffCleanRow2(row,Space->Data,Space->Nor,Space->Noc,Space->PivotTable,op);
-	if (mfWriteRows(Cleaned,row,1) != 1)
-	    rc = -1;
-	if (mfWriteRows(Op,op,1) != 1)
-	    rc = -1;
-	ffMulRow(op,FF_ZERO, Space->Noc);
-    }
-
-    /* Clean up.
-       --------- */
-    if (op != NULL)
-	sysFree(op);
-    if (row != NULL)
-	sysFree(row);
-
-    return rc;
+   for (uint32_t j = 0; j < matrixNor; ++j)
+   {
+      mfReadRows(matrixFile, row, 1, noc);
+      ffMulRow(op, FF_ZERO, spaceNor);
+      ffCleanRow2(row,Space->Data,spaceNor,noc,Space->PivotTable,op);
+      mfWriteRows(cleanedFile,row,1, noc);
+      mfWriteRows(opFile,op,1,spaceNor);
+   }
+   sysFree(op);
+   sysFree(row);
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
-
-int main(int argc, char **argv)
-
+static void init(int argc, char **argv)
 {
-    int rc;
-
-
-    if ((App = appAlloc(&AppInfo,argc,argv)) == NULL)
-	return -1;
-    if (appGetArguments(App,4,4) < 0)
-	return -1;
+    App = appAlloc(&AppInfo,argc,argv);
+    appGetArguments(App,4,4);
     SpcName = App->ArgV[0];
     MatName = App->ArgV[1];
     ClName = App->ArgV[2];
     OpName = App->ArgV[3];
 
-    if ((Space = matLoad(SpcName)) == NULL)
-	rc = -1;
-    if ((Matrix = mfOpen(MatName)) == NULL)
-	rc = -1;
-    if ((Cleaned = mfCreate(ClName,ffOrder,Matrix->Nor,Matrix->Noc)) == NULL)
-	rc = -1;
-    if ((Op = mfCreate(OpName,ffOrder,Matrix->Nor,Space->Nor)) == NULL)
-	rc = -1;
+    Space = matLoad(SpcName);
+    noc = Space->Noc;
+    spaceNor = Space->Nor;
 
-    /* Clean.
-       ------ */
-    rc = Clean1();
+    matrixFile = mfOpen(MatName);
+    mfReadHeader(matrixFile);
+    if (matrixFile->header[0] != Space->Field || matrixFile->header[2] != noc)
+       mtxAbort(MTX_HERE, "%s and %s: %s", SpcName, MatName, MTX_ERR_INCOMPAT);
+    matrixNor = matrixFile->header[1];
 
-    /* Clean up.
-       --------- */
-    if (Space != NULL) matFree(Space);
-    if (Matrix != NULL) mfClose(Matrix);
-    if (Cleaned != NULL) mfClose(Cleaned);
-    if (Op != NULL) mfClose(Op);
-    if (App != NULL) appFree(App);
+    cleanedFile = mfCreate(ClName,ffOrder,matrixNor,noc);
+    opFile = mfCreate(OpName,ffOrder,matrixNor,spaceNor);
+}
 
-    return rc;
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+int main(int argc, char **argv)
+{
+   init(argc, argv);
+   clean();
+
+   matFree(Space);
+   mfClose(matrixFile);
+   mfClose(cleanedFile);
+   mfClose(opFile);
+   appFree(App);
+
+   return 0;
 }
 
 

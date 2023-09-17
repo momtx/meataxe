@@ -36,11 +36,11 @@ MTX_COMMON_OPTIONS_DESCRIPTION
 
 static const char *orbname, *permname, *kondname;
 static MtxFile_t *kondfile;
-static int fl = -1;	/* Field order, 0 = integer condensation */
+static int fieldOrder = -1;	/* Field order, 0 = integer condensation */
 static int ppow;	/* l.c.m. of the p-parts of orbit sizes */
 static int Degree;	/* Degree of the permutation */
-static IntMatrix_t *Orbits;
-static IntMatrix_t *OrbitSizes;
+static IntMatrix_t *orbits;
+static IntMatrix_t *orbitSizes;
 static int NOrbits;
 static PTR hsz;
 static Perm_t *Perm;	/* The permutation to be condensed */
@@ -67,88 +67,60 @@ static int Init(int argc, char **argv)
     if (appGetArguments(App,4,4) < 0)
 	return -1;
     if (!strcmp(App->ArgV[0],"Z"))
-	fl = 0;
+	fieldOrder = 0;
     else
-	fl = atoi(App->ArgV[0]);
+	fieldOrder = atoi(App->ArgV[0]);
     orbname = App->ArgV[1];
     permname = App->ArgV[2];
     kondname = App->ArgV[3];
     return 0;
 }
 
-
-
-
-/* ------------------------------------------------------------------
-   readdata() - Open and read input files
-   ------------------------------------------------------------------ */
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 static int readdata()
-
 {
-    FILE *orbfile;
-    int i, n;
+   int i, n;
 
-    /* Read the orbit file.
-       -------------------- */
-    if ((orbfile = sysFopen(orbname,"rb")) == NULL)
-	return -1;
-    Orbits = imatRead(orbfile);
-    if (Orbits == NULL)
-    {
-	mtxAbort(MTX_HERE,"Error reading orbit table from %s",orbname);
-	return -1;
-    }
-    OrbitSizes = imatRead(orbfile);
-    if (OrbitSizes == NULL)
-    {
-	mtxAbort(MTX_HERE,"Error reading orbit sizes table from %s",orbname);
-	return -1;
-    }
-    NOrbits = OrbitSizes->Noc;
+   // Read the orbit file.
+   MtxFile_t* fileOrb = mfOpen(orbname);
+   orbits = imatRead(fileOrb);
+   orbitSizes = imatRead(fileOrb);
+   NOrbits = orbitSizes->Noc;
+   mfClose(fileOrb);
 
-    /* Read the permutation.
-       --------------------- */
-    Perm = permLoad(permname);
-    if (Perm == NULL)
-	return -1;
-    if (Perm->Degree != Orbits->Noc)
-    {
-	mtxAbort(MTX_HERE,"%s and %s: %s\n",permname,orbname,MTX_ERR_INCOMPAT);
-	    return -1;
-    }
-    Degree = Perm->Degree;
+   // Read the permutation.
+   Perm = permLoad(permname);
+   if (Perm->Degree != orbits->Noc)
+      mtxAbort(MTX_HERE, "%s and %s: %s", permname, orbname, MTX_ERR_INCOMPAT);
+   Degree = Perm->Degree;
 
-    /* Set field and allocate output buffer.
-       ------------------------------------- */
-    if (fl != 0)		/* Condensation ofer GF(q) */
-    {
-	ffSetField(fl);
-	MESSAGE(1,("Condensation over GF(%d), characteristic is %d\n",
-	    fl,ffChar));
-    	m1 = ffAlloc(1, NOrbits);
-    	hsz = ffAlloc(1, NOrbits);
+   // Set field and allocate output buffer.
+   if (fieldOrder != 0) {               /* Condensation over GF(q) */
+      ffSetField(fieldOrder);
+      MESSAGE(1, ("Condensation over GF(%d), characteristic is %d\n",
+                  fieldOrder, ffChar));
+      m1 = ffAlloc(1, NOrbits);
+      hsz = ffAlloc(1, NOrbits);
 
-    	/* Find the largest power of the characteristic
-           which divides any of the orbit sizes
-           -------------------------------------------- */
-        ppow = ffChar;
-    	for (i = 0; i < NOrbits; ++i)
-    	{
-	    n = OrbitSizes->Data[i];
-	    while (n % ppow == 0)
-	    	ppow *= ffChar;
-    	}
-    	ppow /= ffChar;
-    	MESSAGE(0,("p-part taken has order %d\n",ppow));
-    }
-    else			/* Condensation over Z */
-    {
-	MESSAGE(1,("Condensation over Z\n"));
-	RowZ = NALLOC(uint32_t,NOrbits);
-    }
+      /* Find the largest power of the characteristic
+         which divides any of the orbit sizes
+         -------------------------------------------- */
+      ppow = ffChar;
+      for (i = 0; i < NOrbits; ++i) {
+         n = orbitSizes->Data[i];
+         while (n % ppow == 0) {
+            ppow *= ffChar;
+         }
+      }
+      ppow /= ffChar;
+      MESSAGE(0, ("p-part taken has order %d\n", ppow));
+   } else {                     /* Condensation over Z */
+      MESSAGE(1, ("Condensation over Z\n"));
+      RowZ = NALLOC(uint32_t, NOrbits);
+   }
 
-    return 0;
+   return 0;
 }
 
 
@@ -164,7 +136,7 @@ static void init2()
     ffMulRow(hsz,FF_ZERO, NOrbits);
     for (i = 0; i < NOrbits; ++i)
     {	
-	int l = (int) OrbitSizes->Data[i];
+	int l = (int) orbitSizes->Data[i];
 	if (l % ppow == 0)
 	    f = ffInv(ffFromInt((l / ppow) % ffChar));
 	else
@@ -189,10 +161,10 @@ int main(int argc, char **argv)
 	mtxAbort(MTX_HERE,"Error reading input files");
 	return 1;
     }
-    if (fl != 0)
+    if (fieldOrder != 0)
     {
 	init2();
-    	if ((kondfile = mfCreate(kondname,fl,NOrbits,NOrbits)) == NULL)
+    	if ((kondfile = mfCreate(kondname,fieldOrder,NOrbits,NOrbits)) == NULL)
 	    return 1;
     }
     else
@@ -208,7 +180,7 @@ int main(int argc, char **argv)
 
 	/* Clear the output buffer.
 	   ------------------------ */
-	if (fl != 0) {
+	if (fieldOrder != 0) {
 	    ffMulRow(m1,FF_ZERO, NOrbits);
         }
 	else
@@ -218,16 +190,16 @@ int main(int argc, char **argv)
 	{
 	    int image_orbit;
 	    FEL f;
-	    if (Orbits->Data[pt] != orbit)	    /* Ignore other orbits */
+	    if (orbits->Data[pt] != orbit)	    /* Ignore other orbits */
 		continue;
 
 	    /* Find out to which orbit <pt> is mapped.
 	       --------------------------------------- */
-	    image_orbit = Orbits->Data[Perm->Data[pt]];
+	    image_orbit = orbits->Data[Perm->Data[pt]];
 
 	    /* Update the condensed row.
 	       ------------------------- */
-	    if (fl != 0)
+	    if (fieldOrder != 0)
 	    {
 		f = ffExtract(m1,image_orbit);
 		f = ffAdd(f,ffExtract(hsz,image_orbit));
@@ -241,8 +213,8 @@ int main(int argc, char **argv)
 
 	/* Write one row to the output file.
 	   --------------------------------- */
-	if (fl != 0)
-	    mfWriteRows(kondfile,m1,1);
+	if (fieldOrder != 0)
+	    mfWriteRows(kondfile,m1,1, NOrbits);
 	else
 	    mfWrite32(kondfile, RowZ, NOrbits);
     }

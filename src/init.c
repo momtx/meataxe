@@ -118,6 +118,8 @@ void mtxInitLibrary(char* argv0)
    isInitialized = 1;
    setDirectories(argv0);
    sysInit();
+   if (sizeof(size_t) < sizeof(uint32_t))
+      mtxAbort(MTX_HERE, "Unsupported platform");
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////

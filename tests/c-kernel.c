@@ -92,16 +92,14 @@ TstResult Kernel_Field_Inversion(int q)
 
 TstResult Kernel_Field_Distributivity(int q)
 {
-   //puts(__func__);
    const int step = ffOrder / 257 + 1;
 
    for (int ai = 0; ai < (int)ffOrder; ai += step) {
       const FEL a = FTab[ai];
       for (int bi = ai; bi < (int)ffOrder; bi += step) {
          const FEL b = FTab[bi];
-         for (int ci = ci; ci < (int)ffOrder; ci += step) {
+         for (int ci = bi; ci < (int)ffOrder; ci += step) {
             const FEL c = FTab[ci];
-
             const FEL ab = ffMul(a,b);
             const FEL ac = ffMul(a,c);
             ASSERT_EQ_INT(ffAdd(ab,ac), ffMul(a, ffAdd(b, c))); // a * b + a * c = a * (b + c)
@@ -121,7 +119,6 @@ TstResult Kernel_Field_CommutativityAndAssociativity(int q)
       const FEL a = FTab[ai];
       for (int bi = ai; bi < (int)ffOrder; bi += step) {
          const FEL b = FTab[bi];
-
          {
             const FEL ab = ffAdd(a,b);
             const FEL ba = ffAdd(b,a);
@@ -253,11 +250,11 @@ static int TestFindPiv2(PTR row, int noc)
    }
 
    // test each column
-   for (int i = 0; i < noc; ++i) {
+   for (uint32_t i = 0; i < noc; ++i) {
       for (int k = 1; k < ffOrder; ++k) {
          ffInsert(row,i,FTab[k]);
 	 FEL pivotElement;
-	 const int pivotColumn = ffFindPivot(row,&pivotElement, noc);
+	 const uint32_t pivotColumn = ffFindPivot(row,&pivotElement, noc);
          ASSERT_EQ_INT(pivotColumn, i);
 	 ASSERT_EQ_INT(pivotElement, FTab[k]);
       }
@@ -266,23 +263,22 @@ static int TestFindPiv2(PTR row, int noc)
 
    // empty row
    FEL dummy;
-   ASSERT_EQ_INT(ffFindPivot(row,&dummy, noc), -1);
+   ASSERT_EQ_INT(ffFindPivot(row,&dummy, noc), MTX_NVAL);
    return 0;
 }
 
 static int TestFindPiv3(PTR row, int noc)
 {
-   int i;
-
    ffMulRow(row,FF_ZERO, noc);
-   for (i = noc - 1; i > 0; --i) {
+   for (uint32_t i = noc; i > 0; ) {
+      --i;
       ffInsert(row,i,FF_ONE);
       FEL pivotValue;
-      const int pivotColumn = ffFindPivot(row,&pivotValue, noc);
+      const uint32_t pivotColumn = ffFindPivot(row,&pivotValue, noc);
       ASSERT_EQ_INT(pivotColumn , i);
 
       // reduce row size below pivot column and try again
-      ASSERT_EQ_INT(ffFindPivot(row,&pivotValue, i), -1);
+      ASSERT_EQ_INT(ffFindPivot(row,&pivotValue, i), MTX_NVAL);
    }
    return 0;
 }
@@ -556,12 +552,12 @@ TstResult Kernel_RowOps_MulRowPadsWithZero(int q)
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static int TestStepPtr(PTR x, int noc)
+static int TestStepPtr(PTR x, uint32_t noc)
 {
    PTR xx = x;
    ffStepPtr(&xx, noc);
    if ((char *)xx != (char *)x + ffRowSize(noc)) {
-      TST_FAIL("Pointer increment error",0);
+      TST_FAIL("Pointer increment error (noc=%u)", (unsigned) noc);
    }
    return 0;
 }
@@ -605,7 +601,7 @@ TstResult Kernel_RowOps_RowSize(int q)
       }
       int diff = rs - ffRowSizeUsed(noc);
       if ((diff < 0) || (diff >= sizeof(long))) {
-         TST_FAIL("ffRowSize() and ffRowSizeUsed() differ too much",0);
+         TST_FAIL("ffRowSize() and ffRowSizeUsed() differ too much (noc=%d)", noc);
       }
    }
    return 0;
@@ -624,15 +620,15 @@ static int TestCmpRows2(PTR m1, PTR m2, int noc)
       int k;
       for (k = 0; k < noc; ++k) {
          if (ffCmpRows(m2,m1, noc) != 0) {
-            TST_FAIL("Rows are different",0);
+            TST_FAIL("Rows are different (noc=%d)",noc);
          }
          ffInsert(m1,k,FTab[i]);
          if (ffCmpRows(m2,m1, noc) == 0) {
-            TST_FAIL("Rows are still equal",0);
+            TST_FAIL("Rows are still equal (noc=%d)",noc);
          }
          ffInsert(m2,k,FTab[i]);
          if (ffCmpRows(m2,m1, noc) != 0) {
-            TST_FAIL("Rows are still different", 0);
+            TST_FAIL("Rows are still different (noc=%d)",noc);
          }
       }
    }

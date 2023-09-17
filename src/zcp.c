@@ -21,8 +21,6 @@ static int opt_G = 0;			/* GAP output */
 static int opt_f = 0;			/* Factorize the result */
 static int opt_m = 0;			/* Minimal polynomial */
 static int opt_p = 0;			/* Return a single polynomial */
-static FPoly_t *cpol;			/* Char. polynomial (with -f) */
-static Poly_t *cpol1;			/* Char. polynomial (with -p) */
 
 
 static MtxApplicationInfo_t AppInfo = { 
@@ -38,27 +36,24 @@ MTX_COMMON_OPTIONS_DESCRIPTION
 "    -G ...................... GAP output\n"
 "    -m ...................... Calculate the minimal polynomial\n"
 "    -f ...................... Factor the polynomial\n"
-"    -p ...................... Multiply factors, print a single polynomial\n"
+"    -p ...................... Do not factorize, print a single polynomial\n"
 "\n"
 "FILES\n"
 "    <File> .................. I A square matrix\n"
 };
 
 static MtxApplication_t *App = NULL;
-
+static int first = 1;
 
 
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static int Init(int argc, char **argv)
-
+static void init(int argc, char **argv)
 {	
-    if ((App = appAlloc(&AppInfo,argc,argv)) == NULL)
-	return -1;
+    App = appAlloc(&AppInfo,argc,argv);
 
-    /* Parse command line
-       ------------------ */
+    // Parse command line
     opt_G = appGetOption(App,"-G --gap");
     opt_f = appGetOption(App,"-f --factorize");
     opt_m = appGetOption(App,"-m --minimal-polynomial");
@@ -67,28 +62,17 @@ static int Init(int argc, char **argv)
        mtxAbort(MTX_HERE, "-f and -p cannot be combined");
     }
     if (opt_G) MtxMessageLevel = -100;
-    if (appGetArguments(App,1,1) != 1)
-	return -1;
+    appGetArguments(App,1,1);
     fname = App->ArgV[0];
 
-    /* Read the matrix
-       --------------- */
+    // Read the matrix
     mat = matLoad(fname);
-    if (mat == NULL)
-	return -1;
-
-    return 0;
 }
-
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static int first;
-
-static void write_init()
-
+static void writeBegin()
 {
-    first = 1;
     if (opt_m)
     {
     	if (opt_G)
@@ -107,65 +91,60 @@ static void write_init()
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static void write_end()
+static void writeEnd()
 {
-   int i;
-
    if (opt_G)
       printf("];\n");
-   else if (opt_f) {
-      for (i = 0; i < cpol->NFactors; ++i)
-      {
-         printf("(");
-         polPrint(NULL,cpol->Factor[i]);
-         printf(")^%d\n",cpol->Mult[i]);
-      }
-   }
-   else if (opt_p) {
-      polPrint(NULL,cpol1);
-      printf("\n");
-   }
 }
-
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static void write_one(const Poly_t *pol)
+static void writeP(const Poly_t *pol)
 { 
     if (opt_G) {
-	int i;
 	if (!first)
 	    printf(",\n");
+        first = 0;
 	printf("[");
-	for (i = 0; i < pol->Degree; ++i)
-	    printf("%s,",ffToGap(pol->Data[i]));
-	printf("%s]",ffToGap(pol->Data[i]));
-    }
-    else if (opt_p) {
-       polMul(cpol1,pol);
-    }
-    else if (opt_f) {
-	FPoly_t *f = Factorization(pol);
-	fpMul(cpol,f);
-	fpFree(f);
+	for (int i = 0; i <= pol->Degree; ++i)
+	    printf(i == 0 ? "%s" : ",%s",ffToGap(pol->Data[i]));
+	printf("]");
     }
     else {
 	polPrint(NULL,pol);
 	printf("\n");
     }
-    first = 0;
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+static void writeF(const FPoly_t *fpol)
+{ 
+   for (int i = 0; i < fpol->NFactors; ++i) {
+      const Poly_t* const factor = fpol->Factor[i];
+      const int exp = fpol->Mult[i];
+      if (opt_G) {
+         if (!first)
+            printf(",\n");
+         first = 0;
+         printf("[[");
+         for (int i = 0; i < factor->Degree; ++i)
+            printf("%s,",ffToGap(factor->Data[i]));
+         printf("%s], %d]",ffToGap(factor->Data[i]), exp);
+      } else {
+         printf("(");
+         polPrint(NULL,factor);
+         printf(")^%d\n",exp);
+      }
+   }
+}
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 static void Cleanup()
-
 {
     if (mat != NULL)
 	matFree(mat);
-    if (cpol != NULL)
-	fpFree(cpol);
     if (App != NULL)
 	appFree(App);
 }
@@ -175,40 +154,33 @@ static void Cleanup()
 
 int main(int argc, char **argv)
 {	
-    Poly_t *p;
-    int rc = 0;
+    init(argc,argv);
+    writeBegin();
 
-    if (Init(argc,argv) != 0)
-    {
-	mtxAbort(MTX_HERE,"Initialization failed");
-	return -1;
+    if (!opt_f) {
+       // Partial factorization (default) or single polynomial
+       Charpol_t* state = charpolAlloc(mat, opt_m ? PM_MINPOL : PM_CHARPOL, 0);
+       Poly_t *poly = polAlloc(mat->Field, 0);
+       Poly_t *factor;
+       while ((factor = charpolFactor(state)) != NULL) {
+          if (opt_p)
+             polMul(poly, factor);
+          else
+             writeP(factor);
+          polFree(factor);
+       }
+       if (opt_p)
+          writeP(poly);
+       polFree(poly);
+    } else if (opt_f) {
+       // Full factorization
+       FPoly_t* poly = opt_m ? minpol(mat) : charpol(mat);
+       writeF(poly);
     }
-    if (opt_f) 
-	cpol = fpAlloc();
-    else if (opt_p)
-        cpol1 = polAlloc(mat->Field, 0);
-    write_init();
-    if (opt_m)
-    {
-    	for (p = minPolFactor(mat); p != NULL; p = minPolFactor(NULL))
-	{
-	    write_one(p);
-	    polFree(p);
-	}
-    }
-    else
-    {
-    	for (p = charPolFactor(mat); p != NULL; p = charPolFactor(NULL))
-	{
-	    write_one(p);
-	    polFree(p);
-	}
-    }
-    write_end();
 
-
+    writeEnd();
     Cleanup();
-    return rc;
+    return 0;
 }
 
 
@@ -242,14 +214,19 @@ Input matrix
 @section zcp_desc Description
 
 This program reads in a square matrix and calculates its characteristic or
-minimal polynomial. With no options, the characteristic polynomial is
-computed in a partially factored form (see below). With "-m" the polynomial
-is split into irreducible factors. 
-Without "-G", the output is in text format. Each line contains one
-factor of the characteristic or minimal polynomial.
-The "-G" option may be used to generate output which
-is readable by the GAP computer program. The output, then, is a
-sequence of sequences of finite field elements, representing the
+minimal polynomial.
+
+With no options, the characteristic polynomial is computed in a partially factored
+form (see below). Factors are in general reducible, and the same factor may occur
+multiple times at random positions.
+
+With "-f" the polynomial is split into irreducible factors.
+
+With "-p" all factor are combined and a single polynomial is printed.
+
+By default the output is in text format with each factor on a separate line.
+The "-G" option may be used to generate output which is readable by the GAP program.
+In GAP mode, the is a sequence of sequences of finite field elements, representing the
 coefficients of the factors in ascending order.
 
 @section zcp_impl Implementation Details

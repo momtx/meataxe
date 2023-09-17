@@ -66,8 +66,7 @@ int main(int argc, char *argv[])
 	return 1;
 
     /* Read <ref>.cfinfo */
-    if (latReadInfo(&mycfinfo,App->ArgV[1]) != 0)
-	return -1;
+    latReadInfo(&mycfinfo,App->ArgV[1]);
 
     /* Read generators of <mod>, and set up the word generator */
     gens = mrLoad(App->ArgV[0],mycfinfo.NGen);

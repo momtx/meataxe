@@ -74,14 +74,14 @@ TstResult Kernel_MapRow(int q)
 static int TestSumInter1(int noc)
 {
    PTR w1, w2;
-   int *piv;
-   int nor1, nor2;
-   int i, k;
+   uint32_t *piv;
+   uint32_t nor1, nor2;
+   uint32_t i, k;
 
    nor1 = nor2 = noc;
    w1 = ffAlloc(nor1 + nor2, noc);
    w2 = ffAlloc(nor1 + nor2, noc);
-   piv = NALLOC(int,nor1 + nor2);
+   piv = NALLOC(uint32_t,nor1 + nor2);
    k = 0;
    for (i = 0; i < nor1; ++i) {
       PTR x = ffGetPtr(w1,i,noc);
@@ -134,10 +134,10 @@ static int TestSumInter1(int noc)
 // Checks that u is a subspace of v. As a side effect,
 // - v is echelonized 
 // - u is cleared (all rows set to zero).
-static int CheckIsSubspace(int noc, PTR u, int udim, PTR v, int vdim)
+static int CheckIsSubspace(uint32_t noc, PTR u, uint32_t udim, PTR v, uint32_t vdim)
 {
-   int *piv = NALLOC(int,vdim);
-   int i, vrank;
+   uint32_t *piv = NALLOC(uint32_t,vdim);
+   uint32_t i, vrank;
    PTR x, y, row;
 
    //printf("CheckIsSubspace\n");
@@ -151,10 +151,9 @@ static int CheckIsSubspace(int noc, PTR u, int udim, PTR v, int vdim)
    vrank = 0;
    for (i = 0, x = v; i < vdim; ++i, ffStepPtr(&x, noc)) {
       FEL f;
-      int p;
       ffCleanRow(x,v,vrank,noc,piv);
-      p = ffFindPivot(x,&f,noc);
-      if (p < 0) {
+      uint32_t p = ffFindPivot(x,&f,noc);
+      if (p == MTX_NVAL) {
          continue;
       }
       if (i > vrank) {
@@ -173,7 +172,7 @@ static int CheckIsSubspace(int noc, PTR u, int udim, PTR v, int vdim)
       FEL f;
       ffCopyRow(row,x, noc);
       ffCleanRow(row,v,vrank,noc,piv);
-      ASSERT(ffFindPivot(row,&f, noc) < 0);
+      ASSERT(ffFindPivot(row,&f, noc) == MTX_NVAL);
    }
    sysFree(row);
    sysFree(piv);
@@ -187,10 +186,9 @@ static int CheckIsSubspace(int noc, PTR u, int udim, PTR v, int vdim)
 static int TestSumInter2(int noc)
 {
    PTR v, w, wrk1, wrk2, x;
-   int *piv;
-   int nor1, nor2;
-   int vdim, wdim;
-   int i, k;
+   uint32_t nor1, nor2;
+   uint32_t vdim, wdim;
+   uint32_t i, k;
 
    /* Allocate buffers.
       ----------------- */
@@ -200,10 +198,9 @@ static int TestSumInter2(int noc)
    w = ffAlloc(wdim, noc);
    wrk1 = ffAlloc(nor1 + nor2, noc);
    wrk2 = ffAlloc(nor1 + nor2, noc);
-   piv = NALLOC(int,nor1 + nor2);
+   uint32_t *piv = NALLOC(uint32_t,nor1 + nor2);
 
-   MESSAGE(2,("TestSumInter2: q=%d, noc=%d, vnor=%d wnor=%d\n",
-	       ffOrder, noc, vdim, wdim));
+   MESSAGE(2,("TestSumInter2: q=%d, noc=%d, vnor=%d wnor=%d\n", ffOrder, noc, vdim, wdim));
 
    /* Fill with random values.
       ------------------------ */

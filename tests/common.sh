@@ -9,6 +9,8 @@ error()
 }
 
 MTX_TESTCASE_DIR="${0%/run}"
+MTX_TESTCASE_NO="${MTX_TESTCASE_DIR##*/}"
+MTX_TESTCASE_NO="${MTX_TESTCASE_NO%-*}"
 
 
 [ -n "$MTX_ZZZ" ] || error "\$MTX_ZZZ is not defined"

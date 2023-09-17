@@ -26,6 +26,28 @@ void permConvertLegacyFormat(uint32_t *data, uint32_t degree)
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
+
+/// Reads a permutation using a given object header.
+/// This function reads the permutation data (points), assuming the header has already been read
+/// and is passed as second argument.
+///
+/// @param f File to read from.
+/// @param header The object header.
+/// @return Pointer to the permutation.
+
+Perm_t *permReadData(FILE *f, const uint32_t header[3])
+{
+   if (header[0] != MTX_TYPE_PERMUTATION) {
+      mtxAbort(MTX_HERE,"%s",MTX_ERR_NOTPERM);
+   }
+   Perm_t* p = permAlloc(header[1]);
+   sysRead32(f, p->Data, p->Degree);
+   permConvertLegacyFormat(p->Data, p->Degree);
+   permValidate(MTX_HERE, p);
+   return p;
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
 /// Reads a permutation from a File.
 /// This function reads a permutation from a file. The file must be opened for reading.
 /// After return the file pointer is advanced to the firts position after the permtation.
@@ -37,19 +59,9 @@ void permConvertLegacyFormat(uint32_t *data, uint32_t degree)
 
 Perm_t *permRead(FILE *f)
 {
-   int context = mtxBegin("Reading permutation");
-   int32_t hdr[3];
-   sysRead32(f,hdr,3);
-   if (hdr[0] != -1) {
-      mtxAbort(MTX_HERE,"%s", MTX_ERR_NOTPERM);
-   }
-   Perm_t* p = permAlloc(hdr[1]);
-   sysRead32(f, p->Data, p->Degree);
-   
-   permConvertLegacyFormat(p->Data, p->Degree);
-   permValidate(MTX_HERE, p);
-   mtxEnd(context);
-   return p;
+   uint32_t header[3];
+   sysRead32(f,header,3);
+   return permReadData(f, header);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////

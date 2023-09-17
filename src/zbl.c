@@ -51,53 +51,36 @@ static int Init(int argc, char **argv)
 
 int main(int argc, char *argv[])
 {
-    int fl;
-    PTR m1;
-    int nor, noc, i, j;
-    FILE *inp, *out;
-
     if (Init(argc, (char **)argv) != 0)
     {
 	mtxAbort(MTX_HERE,"Initialization failed");
 	return 1;
     }
 
-    /* Open the input file.
-       -------------------- */
-    if ((inp = ffReadHeader(iname,&fl,&nor,&noc)) == NULL)
-	return 1;
-    if (fl < 1)
-    {
-	mtxAbort(MTX_HERE,"%s: %s",iname,MTX_ERR_NOTMATRIX);
-	return 1;
-    }
+    // Open files.
+    MtxFile_t* inputFile = mfOpen(iname);
+    mfReadHeader(inputFile);
+    if (mfObjectType(inputFile) != MTX_TYPE_MATRIX)
+	mtxAbort(MTX_HERE,"%s: %s", iname, MTX_ERR_NOTMATRIX);
+    ffSetField(inputFile->header[0]);
+    const uint32_t fieldOrder = inputFile->header[0];
+    const uint32_t nor = inputFile->header[1];
+    const uint32_t noc = inputFile->header[2];
+    MtxFile_t* outputFile = mfCreate(oname, fieldOrder, nor, noc);
 
-    /* Allocate workspace.
-       ------------------- */
-    ffSetField(fl);
-    m1 = ffAlloc(1, noc);
-
-    /* Open the output file.
-       --------------------- */
-    if ((out = ffWriteHeader(oname,fl,nor,noc)) == NULL)
+    // Do the job.
+    PTR m1 = ffAlloc(1, noc);
+    for (uint32_t i = 0; i < nor; ++i)
     {
-	return 1;
-    }
-
-    /* Do the job.
-       ----------- */
-    for (i = 1; i <= nor; ++i)
-    {
-	ffReadRows(inp,m1,1,noc);
-	for (j = i + 1; j <= noc; ++j)
+	mfReadRows(inputFile, m1, 1, noc);
+	for (uint32_t j = i + 1; j < noc; ++j)
 	    ffInsert(m1,j,FF_ZERO);
-	ffWriteRows(out,m1,1,noc);
+	mfWriteRows(outputFile, m1, 1, noc);
     }
+    sysFree(m1);
 
-    /* Clean up.
-       --------- */
-    fclose(inp);
-    fclose(out);
+    mfClose(inputFile);
+    mfClose(outputFile);
     return 0;
 }
 
@@ -139,11 +122,10 @@ and writes out the result. For example:
 12100012101201012012  12100000000000000000
 12120212121012012012  12120200000000000000
 </pre>
-Notice that the input matrix need not be square, and the output
-matrix has always the same dimensions as the input matrix.
+The input matrix need not be square, and the output matrix has always the same dimensions as the
+input matrix.
 
-If file names are omitted, the matrix is read from G1
-and output goes to P2.
+If file names are omitted, the matrix is read from G1 and output goes to P2.
 
 The purpose of this program is to enable the MeatAxe to check if an irreducible representation
 in characteristic 2 fixes a quadratic form. This job is not particularly simple -- in many ways

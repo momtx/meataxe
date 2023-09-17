@@ -47,13 +47,11 @@ Matrix_t *matMul(Matrix_t *dest, const Matrix_t *src)
    for (i = 0; i < dest->Nor; ++i) {
       ffMapRow(x,src->Data,src->Nor,src->Noc,tmp);
       ffStepPtr(&tmp, src->Noc);
-/*	x = ffGetPtr(x,1,dest->Noc);*/
-      x = (PTR)((char*) x + dest->RowSize);
+      ffStepPtr(&x, dest->Noc);
    }
    sysFree(dest->Data);
    dest->Data = result;
    dest->Noc = src->Noc;
-   dest->RowSize = ffRowSize(src->Noc);
 
    mat_DeletePivotTable(dest);
 
@@ -61,4 +59,5 @@ Matrix_t *matMul(Matrix_t *dest, const Matrix_t *src)
 }
 
 /// @}
+
 // vim:fileencoding=utf8:sw=3:ts=8:et:cin

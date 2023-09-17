@@ -14,11 +14,11 @@
 
 
 static const char *iname, *oname;
-static FILE *InputFile = NULL;
-static MtxFile_t *out = NULL;	    /* Output file */
-static int fl;			    /* Field parameter of input file */
-static int fl2;			    /* Field to convert to */
-static int nor, noc;		    /* Parameters of input file */
+static MtxFile_t* inputFile = NULL;
+static MtxFile_t *outputFile = NULL;
+static int inputFieldOrder;
+static int outputFieldOrder;
+//static int nor, noc;		    /* Parameters of input file */
 
 
 static MtxApplicationInfo_t AppInfo = { 
@@ -37,342 +37,175 @@ MTX_COMMON_OPTIONS_DESCRIPTION
 
 static MtxApplication_t *App = NULL;
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
-
-
-
-/* ------------------------------------------------------------------
-   checkfl() - Check if GF(fl) < GF(fl2)
-   ------------------------------------------------------------------ */
-
-static int checkfl()
-
+static void checkFieldOrders()
 {	
-    int f;
-	
-    if (fl2 < 2)
-    {
-    	mtxAbort(MTX_HERE,"Invalid field order %d",fl2);
-	return -1;
+    if (outputFieldOrder < 2)
+    	mtxAbort(MTX_HERE,"Invalid target field order %d",(int) outputFieldOrder);
+
+    if (outputFieldOrder == inputFieldOrder) {
+    	mtxAbort(MTX_HERE,"%s is already over GF(%d)",iname, (int) outputFieldOrder);
     }
-    if (fl == -1) 
-	return 3;
-    if (fl == fl2) 
-    {
-	mtxAbort(MTX_HERE,"%s is already over GF(%d)",iname,fl);
-	return -1;
+       
+    int *sfp = mtx_subfields;
+    if (outputFieldOrder > inputFieldOrder) {
+       ffSetField(outputFieldOrder);
+       while (*sfp >= 2 && *sfp != inputFieldOrder) 
+          ++sfp;
+    } else {
+       ffSetField(inputFieldOrder);
+       while (*sfp >= 2 && *sfp != outputFieldOrder) 
+          ++sfp;
     }
-    else if (fl < fl2)
-    {	
-	for (f = fl2; f % fl == 0; f /= fl);
-	if (f == 1) 
-	    return 1;
-	else 
-	{
-	    mtxAbort(MTX_HERE,"Cannot change from GF(%d) to GF(%d)",fl,fl2);
-	    return -1;
-	}
-    }
-    else if (fl > fl2)
-    {	
-	for (f = fl; f % fl2 == 0; f /= fl2);
-	if (f == 1) 
-	    return 1;
-	else 
-	{
-	    mtxAbort(MTX_HERE,"Cannot change from GF(%d) to GF(%d)",fl,fl2);
-	    return -1;
-	}
-    }
-    return 0;
+    if (*sfp < 2)
+       mtxAbort(MTX_HERE,"Cannot change from GF(%d) to GF(%d)",inputFieldOrder,outputFieldOrder);
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
-
-
-int permToMat1(const Perm_t *perm, PTR row)
-
+static void convertPermutationToMatrix()
 {
-    int rc = 0;
+   ffSetField(outputFieldOrder);
+   Perm_t *perm = permReadData(inputFile->File, inputFile->header);
+   const uint32_t nor = perm->Degree;
+   PTR row = ffAlloc(1, nor);
 
-    /* Create the output file.
-       ----------------------- */
-    if ((out = mfCreate(oname,fl2,nor,nor)) == NULL)
-	rc = -1;
-
-    /* Convert the permutation.
-       ------------------------ */
-    if (rc == 0)
-    {
-	const uint32_t *p = perm->Data;
-	int i;
-	for (i = 0; rc == 0 && i < nor; ++i)
-	{	
-	    ffMulRow(row,FF_ZERO, nor);
-	    ffInsert(row,p[i],FF_ONE);
-	    if (mfWriteRows(out,row,1) != 1)
-		rc = -1;
-	}
-    }
-    if (rc == 0)
-	MESSAGE(0,("Converted to GF(%d)\n",fl2));
-    return 0;
+   outputFile = mfCreate(oname, outputFieldOrder, nor, nor);
+   const uint32_t *p = perm->Data;
+   for (uint32_t i = 0; i < nor; ++i)
+   {	
+      ffMulRow(row,FF_ZERO, nor);
+      ffInsert(row,p[i],FF_ONE);
+      mfWriteRows(outputFile,row,1, nor);
+   }
+   permFree(perm);
+   sysFree(row);
+   MESSAGE(0,("Converted to GF(%d)\n",outputFieldOrder));
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
-
-
-/* ------------------------------------------------------------------
-   permmat() - Convert permutation -> matrix
-   ------------------------------------------------------------------ */
-
-int permmat()
-
+static void changeField()
 {
-    Perm_t *perm = NULL;
-    PTR row = NULL;
-    int rc = 0;
+   inputFieldOrder = inputFile->header[0];
+   const uint32_t nor = inputFile->header[1];
+   const uint32_t noc = inputFile->header[2];
+   checkFieldOrders();
 
-    /* Read the permutation.
-       --------------------- */
-    sysFseek(InputFile,0);
-    perm = permRead(InputFile);
-    if (perm == NULL)
-	rc = -1;
+   // Allocate buffers
+   static const size_t MAX_ROWS = 1000;       // chunk size
+   FEL *bufTmp = NALLOC(FEL,MAX_ROWS * noc);  // MAX_ROWS * noc unpacked field elements
+   ffSetField(inputFieldOrder);
+   PTR bufInp = ffAlloc(MAX_ROWS, noc);       // MAX_ROWS rows
+   ffSetField(outputFieldOrder);
+   PTR bufOut = ffAlloc(MAX_ROWS, noc);       // MAX_ROWS rows
 
-    /* Allocate workspace.
-       ------------------- */
-    if (rc == 0)
-    {
-	ffSetField(fl2);
-	row = ffAlloc(1, nor);
-    }
+   outputFile = mfCreate(oname,outputFieldOrder,nor,noc);
 
-    /* Convert the permutation.
-       ------------------------ */
-    if (rc == 0)
-	rc = permToMat1(perm, row);
+   // Process data in chunks of MAX_ROWS rows.
+   for (uint32_t rowsLeft = nor; rowsLeft > 0; )
+   {
+      // Read next chunk of rows into buffer.
+      const uint32_t rowsRead = (rowsLeft <= MAX_ROWS) ? rowsLeft : MAX_ROWS;
+      ffSetField(inputFieldOrder);
+      mfReadRows(inputFile,bufInp,nor,noc);
 
-    /* Clean up.
-       --------- */
-    if (perm != NULL) permFree(perm);
-    if (row != NULL) sysFree(row);
+      // Unpack input rows
+      {
+         PTR row = bufInp;
+         FEL* bp = bufTmp;
+         for (size_t r = rowsRead; r > 0; --r) {
+            for (size_t c = 0; c < noc; ++c) {
+               *bp++ = ffExtract(row, c);
+            }
+            ffStepPtr(&row, noc);
+         }
+      }
 
-    return rc;
+      // Convert to target field.
+      FEL* const bufEnd = bufTmp + (size_t) rowsRead * noc;
+      if (inputFieldOrder < outputFieldOrder) {
+         ffSetField(outputFieldOrder);
+         for (FEL * bp = bufTmp; bp < bufEnd; ++bp)
+            *bp = ffEmbed(*bp, inputFieldOrder);
+      } else {
+         ffSetField(inputFieldOrder);
+         for (FEL * bp = bufTmp; bp < bufEnd; ++bp)
+            *bp = ffRestrict(*bp, outputFieldOrder);
+      }
+
+      // Pack into output buffer.
+      ffSetField(outputFieldOrder);
+      {
+         PTR row = bufOut;
+         FEL* bp = bufTmp;
+         for (size_t r = rowsRead; r > 0; --r) {
+            for (size_t c = 0; c < noc; ++c) {
+               ffInsert(row, c, *bp++);
+            }
+            ffStepPtr(&row, noc);
+         }
+      }
+
+      // Write output rows
+      mfWriteRows(outputFile, bufOut, rowsRead, noc);
+
+      rowsLeft -= rowsRead;
+   }
+
+   sysFree(bufOut);
+   sysFree(bufTmp);
+   sysFree(bufInp);
+
+   if (inputFieldOrder < outputFieldOrder)
+      MESSAGE(0,("Embedded into GF(%d)\n",outputFieldOrder));
+   else
+      MESSAGE(0,("Restricted to GF(%d)\n",outputFieldOrder));
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
-
-
-
-
-static int BufNRows = 0;
-static FEL *Buf = NULL;
-static PTR RowIn = NULL;
-static PTR RowOut = NULL;
-
-static int AllocateBuffer()
-
+static void init(int argc, char **argv)
 {
-    BufNRows = 1000000 / (sizeof(FEL) * noc);
-    if (BufNRows < 1)
-    {
-	mtxAbort(MTX_HERE,"Matrix is too big");
-	return -1;
-    }
-    Buf = NALLOC(FEL,BufNRows * noc);
-    if (Buf == NULL)
-	return -1;
-    ffSetField(fl);
-    if ((RowIn = ffAlloc(1, noc)) == NULL)
-	return -1;
-    ffSetField(fl2);
-    if ((RowOut = ffAlloc(1, noc)) == NULL)
-	return -1;
-    return 0;
-}
-
-
-
-static void FreeBuffer()
-
-{
-    if (Buf != NULL)
-	sysFree(Buf);
-    if (RowIn != NULL)
-	sysFree(RowIn);
-    if (RowOut != NULL)
-	sysFree(RowOut);
-}
-
-
-static int ReadRows(int req)
-{
-    int to_read;
-    int i;
-    FEL *tp;
-
-    if ((to_read = req) > BufNRows)
-	to_read = BufNRows;
-    ffSetField(fl);
-    tp = Buf;
-    MESSAGE(1,("Reading %d rows\n",to_read));
-    for (i = 0; i < to_read; ++i)
-    {
-	ffReadRows(InputFile,RowIn,1,noc);
-	for (int k = 0; k < noc; ++k)
-	    *tp++ = ffExtract(RowIn,k);
-    }
-    return to_read;
-}
-
-
-static int WriteRows(int nrows)
-{
-    int i;
-    FEL *tp;
-
-    ffSetField(fl2);
-    tp = Buf;
-    MESSAGE(1,("Writing %d rows\n",nrows));
-    for (i = 0; i < nrows; ++i)
-    {
-	int k;
-	for (k = 0; k < noc; ++k)
-	    ffInsert(RowOut,k,*tp++);
-	if (mfWriteRows(out,RowOut,1) != 1)
-	    return -1;
-    }
-    return 0;
-}
-
-
-
-
-static int ChangeField()
-{
-    int rc = 0;
-    int i;
-
-    /* Allocate work space and create output file.
-       ------------------------------------------- */
-    rc = AllocateBuffer();
-    if (rc == 0)
-    {
-	if ((out = mfCreate(oname,fl2,nor,noc)) == NULL)
-	    rc = -1;
-    }
-
-    /* Convert.
-       -------- */
-    for (i = 0; rc == 0 && i < nor; )
-    {
-	FEL *rp = Buf;
-	int rows_read = ReadRows(nor - i);
-	int k;
-	if (rows_read <= 0)
-	    break;
-
-	/* Convert the marks in <Buf> to GF(<fl2>).
-	   ---------------------------------------- */
-	MESSAGE(1,("Converting\n"));
-	if (fl < fl2)
-	{
-	    ffSetField(fl2);
-	    for (rp = Buf, k = 0; k < rows_read * noc; ++k, ++rp)
-		*rp = ffEmbed(*rp,fl);
-	}
-	else
-	{
-	    ffSetField(fl);
-	    for (rp = Buf, k = 0; k < rows_read * noc; ++k, ++rp)
-		*rp = ffRestrict(*rp,fl2);
-	}
-
-	if (WriteRows(rows_read) != 0)
-	    rc = -1;
-	i += rows_read;
-    }
-    if (i < nor)
-	rc = -1;
-
-    FreeBuffer();
-    if (rc == 0)
-    {
-	if (fl < fl2)
-	    MESSAGE(0,("Embedded into GF(%d)\n",fl2));
-	else
-	    MESSAGE(0,("Restricted to GF(%d)\n",fl2));
-    }
-    return rc;
-}
-
-static int Init(int argc, char **argv)
-
-{
-    /* Process command line options and arguments.
-       ------------------------------------------- */
-    if ((App = appAlloc(&AppInfo,argc,argv)) == NULL)
-	return -1;
-    if (appGetArguments(App,3,3) != 3)
-	return -1;
-    fl2 = atol(App->ArgV[0]);
+    App = appAlloc(&AppInfo,argc,argv);
+    appGetArguments(App,3,3);
+    outputFieldOrder = atol(App->ArgV[0]);
     iname = App->ArgV[1];
     oname = App->ArgV[2];
-
-    return 0;
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
-
-static void Cleanup()
-
+static void cleanUp()
 {
     if (App != NULL)
 	appFree(App);
-    if (InputFile != NULL)
-	fclose(InputFile);
-    if (out != NULL)
-	mfClose(out);
+    if (inputFile != NULL)
+	mfClose(inputFile);
+    if (outputFile != NULL)
+	mfClose(outputFile);
 }
 
-
-
-/* ------------------------------------------------------------------
-   main()
-   ------------------------------------------------------------------ */
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 int main(int argc, char **argv)
 
 {
-    int rc = 0;
+    init(argc,argv);
 
-    if (Init(argc,argv) != 0)
-	return -1;
+    inputFile = mfOpen(iname);
+    mfReadHeader(inputFile);
+    uint32_t objType = mfObjectType(inputFile);
+    if (objType == MTX_TYPE_MATRIX)
+       changeField();
+    else if (objType == MTX_TYPE_PERMUTATION)
+       convertPermutationToMatrix();
+    else
+       mtxAbort(MTX_HERE, "%s: unsupported object type", iname);
 
-    if ((InputFile = ffReadHeader(iname,&fl,&nor,&noc)) == NULL)
-	rc = -1;
-
-    /* Convert
-       ------- */
-    if (rc == 0)
-    {
-	switch (checkfl())
-	{	
-	    case 1:	/* Embed into larger field */
-		rc = ChangeField();
-		break;
-	    case 3:
-		rc = permmat();
-		break;
-	}
-	if (rc != 0)
-	    mtxAbort(MTX_HERE,"Conversion failed");
-    }
-
-    Cleanup();
-
-    return rc;
+    cleanUp();
+    return 0;
 }
 
 
@@ -422,7 +255,7 @@ there are two kinds of conversions available:
 For matrices, the conversion is done in two steps. First,
 all entries of the matrix are converted to integers.
 Then, they are mapped to the new field and reassembled into rows.
-The result is written out row by row.
+The result is written outputFile row by row.
 
 In case of permutations the output matrix is generated row by
 row by inserting ones at the positions specified by the

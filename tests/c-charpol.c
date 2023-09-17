@@ -35,10 +35,12 @@ TstResult CharacteristicPolynomial()
              1,0,0,0,0,0,    0,1,1,0,0,0,    0,0,0,0,1,0,
              0,0,1,1,0,0,    0,0,0,0,0,1,    0,0,0,0,1,1);
 
-   result |= CheckPoly(charPolFactor(a) ,1,1,1);
-   result |= CheckPoly(charPolFactor(NULL),4,0,1,0,0,1);
-   result |= CheckPoly(charPolFactor(NULL),1,1,1);
-   ASSERT(charPolFactor(NULL) == NULL);
+   Charpol_t* state = charpolAlloc(a, PM_CHARPOL, 0);
+   result |= CheckPoly(charpolFactor(state) ,1,1,1);
+   result |= CheckPoly(charpolFactor(state),4,0,1,0,0,1);
+   result |= CheckPoly(charpolFactor(state),1,1,1);
+   ASSERT(charpolFactor(state) == NULL);
+   charpolFree(state);
    matFree(a);
    return result;
 }

@@ -41,6 +41,7 @@ typedef struct nodestruct {
    WgData_t *wg;                /* Used by the word generator */
    long wnum;
    Matrix_t *word;
+   Charpol_t* cpState;
 } node_t;
 
 static void Chop(node_t *n);
@@ -48,6 +49,16 @@ static void Chop(node_t *n);
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // Global variables
 ////////////////////////////////////////////////////////////////////////////////////////////////////
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+/// Seed for Characteristic Polynomial.
+/// This variable is used by charPolFactor() to select the first
+/// seed vector. By default, CharPolSeed has the value 0, i.e., the
+/// first seed vector is (1,0,...,0). Assigning the value 1 selects
+/// the start vector (0,1,...,0) in all subsequent calls to
+/// charPolFactor().
+
+static long CharPolSeed = 0; 
 
 node_t *root;               /* Root node of the constituent tree */
 long opt_deglimit = -1;     /* Max. degree of irred. polynomials */
@@ -146,6 +157,7 @@ static void CleanUpNode(node_t *n, int complete)
    MATFREE(n->word);
    if (n->f1 != NULL) { polFree(n->f1); n->f1 = NULL; }
    if (n->f2 != NULL) { polFree(n->f2); n->f2 = NULL; }
+   if (n->cpState != NULL) { charpolFree(n->cpState); n->cpState = NULL; }
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -343,7 +355,7 @@ static void WriteResult(node_t *root)
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-MTX_PRINTF_ATTRIBUTE(2,3)
+MTX_PRINTF_ATTRIBUTE(3,4)
 static void message(int level, node_t *n, const char *msg, ...)
 {
    if (level > MtxMessageLevel) return;
@@ -426,7 +438,7 @@ static void splitnode(node_t *n, int tr)
 
 static Matrix_t *extendbasis(Matrix_t *basis, Matrix_t *space)
 {
-   long i, j, piv;
+   long i, j;
    long dimb = basis->Nor;
    long dims = space->Nor;
    PTR tmp, x, y;
@@ -443,8 +455,8 @@ static Matrix_t *extendbasis(Matrix_t *basis, Matrix_t *space)
    /* Clean with basis
       ---------------- */
    for (i = 0, x = tmp; i < dimb; ffStepPtr(&x, basis->Noc), ++i) {
-      piv = ffFindPivot(x,&f,basis->Noc);
-      if (piv == -1) {
+      const uint32_t piv = ffFindPivot(x,&f,basis->Noc);
+      if (piv == MTX_NVAL) {
          mtxAbort(MTX_HERE,"extendbasis(): zero vector in basis");
       }
       y = x;
@@ -458,7 +470,7 @@ static Matrix_t *extendbasis(Matrix_t *basis, Matrix_t *space)
       --------------------------- */
 /*    x = ffGetPtr(tmp,dimb,basis->Noc);*/
    x = (PTR)((char*)tmp + ffSize(dimb, basis->Noc));
-   for (j = 0; ffFindPivot(x,&f,basis->Noc) == -1; ++j, ffStepPtr(&x, basis->Noc)) {
+   for (j = 0; ffFindPivot(x,&f,basis->Noc) == MTX_NVAL; ++j, ffStepPtr(&x, basis->Noc)) {
    }
    free(tmp);
    if (j > dims) {
@@ -468,34 +480,32 @@ static Matrix_t *extendbasis(Matrix_t *basis, Matrix_t *space)
    return matCutRows(space,j,1);
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
-/* ------------------------------------------------------------------
-   checkspl() - Checks if a given representation's splitting field
-   has degree [E:F] = dim(V), where V is a given subspace (usually
-   the kernel of an algebra element).
-
-   Returns 1 if [E:F]=dim(V) or zero otherwise.
-   ------------------------------------------------------------------ */
+/// Checks if a given representation's splitting field has degree [E:F] = dim(V),
+/// where V is a given subspace (usually the kernel of an algebra element).
+/// Returns 1 if [E:F]=dim(V) or zero otherwise.
 
 #define MAXENDO 10      /* Max. dimension of endomorphism ring */
 
 static int checkspl(const MatRep_t *rep, Matrix_t *nsp)
 {
-   Matrix_t *sb1, *sb2;         /* Standard bases */
-   Matrix_t *g1[MAXGEN];        /* Generators in standard basis sb1 */
-   Matrix_t *g2[MAXGEN];        /* Generators in standard basis sb2 */
-   MatRep_t *endo;
+   Matrix_t *sb1;         // Standard bases
+   //Matrix_t *g1[MAXGEN];        /* Generators in standard basis sb1 */
+   MatRep_t* sr1 = NULL;        // representation in standard basis sb1
+   //Matrix_t *g2[MAXGEN];        /* Generators in standard basis sb2 */
+   MatRep_t* sr2 = NULL;        // representation in standard basis sb2
    int i, result = 0;
 
    MESSAGE(2,("checkspl(): nsp=%d\n",nsp->Nor));
-   /* Take the first vector from nsp and change to standard basis.
-      ------------------------------------------------------------ */
+
+   // Take the first vector from nsp and change to standard basis.
    sb1 = SpinUp(nsp,rep,SF_FIRST | SF_CYCLIC | SF_STD,NULL,NULL);
    MTX_ASSERT(sb1 != NULL && sb1->Nor == sb1->Noc);
-   ChangeBasisOLD(sb1,LI.NGen,(const Matrix_t **)rep->Gen,g1);
-   endo = mrAlloc(0,NULL,0);
+   sr1 = mrChangeBasis2(rep, sb1);
 
-   sb2 = NULL;  /* Mark as unused */
+   MatRep_t *endo = mrAlloc(0,NULL,0);
+   Matrix_t *sb2 = NULL;
    while (1) {
       Matrix_t *v2, *subsp;
 
@@ -512,23 +522,20 @@ static int checkspl(const MatRep_t *rep, Matrix_t *nsp)
          break;
       }
 
-      /* Take a vector which is not in span(v1)
-         and make again the standard basis.
-         --------------------------------------- */
+      // Take a vector which is not in «subsp» and make the standard basis again.
       MESSAGE(3,("1st spin-up not successful\n"));
       if (sb2 != NULL) {        /* Clean up first */
-         int j;
          matFree(sb2);
-         for (j = 0; j < LI.NGen; ++j) {
-            matFree(g2[j]);
-         }
+         sb2 = NULL;
+         mrFree(sr2);
+         sr2 = NULL;
       }
       v2 = extendbasis(subsp,nsp);      /* Get vector */
       matFree(subsp);
       sb2 = SpinUp(v2,rep,SF_FIRST | SF_CYCLIC | SF_STD,NULL,NULL);
       MTX_ASSERT(sb2 != NULL && sb2->Nor == sb2->Noc);
       matFree(v2);
-      ChangeBasisOLD(sb2,rep->NGen,(const Matrix_t **)rep->Gen,g2);
+      sr2 = mrChangeBasis2(rep, sb2);
 
       /* Compare the two representations. If they are different,
          we know that the splitting field degree must be smaller
@@ -536,12 +543,13 @@ static int checkspl(const MatRep_t *rep, Matrix_t *nsp)
          -------------------------------------------------------- */
       result = 1;
       for (i = 0; result != 0 && i < LI.NGen; ++i) {
-         if (matCompare(g1[i],g2[i]) != 0) {
+         //if (matCompare(g1[i],g2[i]) != 0) {
+         if (matCompare(sr1->Gen[i],sr2->Gen[i]) != 0) {
             result = 0;
          }
       }
-      if (result == 0) { break; /* Not successfull */
-
+      if (result == 0) {
+         break; /* Not successfull */
       }
       /* They are identical, i.e., we have found an endomorphism.
          Put it into the list and try the next vector.
@@ -552,18 +560,36 @@ static int checkspl(const MatRep_t *rep, Matrix_t *nsp)
    /* Clean up
       -------- */
    matFree(sb1);
-   for (i = 0; i < LI.NGen; ++i) {
-      matFree(g1[i]);
-   }
+   mrFree(sr1);
    if (sb2 != NULL) {
       matFree(sb2);
-      for (i = 0; i < LI.NGen; ++i) {
-         matFree(g2[i]);
-      }
+      mrFree(sr2);
    }
    mrFree(endo);
+
    MESSAGE(3,("checkspl(): result = %d\n",result));
    return result;
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+static FPoly_t *charpolS(const Matrix_t *mat, long seed)
+{
+   // Note: this function should be removed. It exists only to keep the chop output
+   // identical to earlier versions of the MeatAxe.
+   matValidate(MTX_HERE, mat);
+   Charpol_t* state = charpolAlloc(mat, PM_CHARPOL, seed);
+
+   FPoly_t *cpol = fpAlloc();
+   Poly_t *p;
+   for (p = charpolFactor(state); p != NULL; p = charpolFactor(state)) {
+      FPoly_t *factors = Factorization(p);
+      polFree(p);
+      fpMul(cpol,factors);
+      fpFree(factors);
+   }
+   charpolFree(state);
+   return cpol;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -591,8 +617,11 @@ static void FindIdWord(node_t *n)
          ----------------------------------------------- */
       message(2,n,"Next word: %ld,  gcd=%ld",i,n->ggt);
       MakeWord(n,i);
+
       if (cpol != NULL) { fpFree(cpol);}
-      cpol = charPol(n->word);
+      cpol = charpolS(n->word, CharPolSeed);
+      if (CharPolSeed >= n->word->Nor) CharPolSeed = 0;
+
       if (MSG3) { fpPrint("  c(x)",cpol);}
       for (k = 0; k < (int) cpol->NFactors; ++k) {
          n->ggt = gcd(n->ggt,cpol->Mult[k] * cpol->Factor[k]->Degree);
@@ -685,8 +714,7 @@ static void newirred(node_t *n)
    LI.Cf[i].num = irred[i]->num;
    message(0, n, "Irreducible (%s)",latCfName(&LI,i));
 
-   /* Make idword and change to std basis
-      ----------------------------------- */
+   // Make idword and change to std basis
    MATFREE(n->nsp);
    if (n->idword == -1) {
       FindIdWord(n);
@@ -701,7 +729,7 @@ static void newirred(node_t *n)
    LI.Cf[i].spl = n->spl = n->nsp->Nor;
    b = SpinUp(n->nsp,n->Rep,SF_FIRST | SF_CYCLIC | SF_STD,NULL,NULL);
    MTX_ASSERT(b != NULL && b->Nor == b->Noc);
-   ChangeBasisOLD(b,LI.NGen,(const Matrix_t **)n->Rep->Gen,n->Rep->Gen);
+   mrChangeBasis(n->Rep, b);
    matFree(b);
 
    /* Write out the generators
@@ -816,13 +844,12 @@ static void make_kern(node_t *n, Poly_t *p)
 
 int make_trkern(node_t *n, Poly_t *p)
 {
-   Matrix_t *mt;
-   Poly_t *pt, *cof;
    int result = -1;
 
-   mt = matTransposed(n->word);
-   pt = charPolFactor(mt);
-   cof = polDivMod(pt,p);
+   Matrix_t* mt = matTransposed(n->word);
+   Charpol_t* state = charpolAlloc(mt, PM_CHARPOL, CharPolSeed);
+   Poly_t* pt = charpolFactor(state);
+   Poly_t* cof = polDivMod(pt,p);
    if (pt->Degree == -1) {              /* Glueck gehabt! */
       Matrix_t *seed = matAlloc(ffOrder,1,n->dim);
       ffInsert(seed->Data,CharPolSeed,FF_ONE);
@@ -835,8 +862,17 @@ int make_trkern(node_t *n, Poly_t *p)
    }
    polFree(cof);
    polFree(pt);
+   charpolFree(state);
    matFree(mt);
    return result;
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+static void initCharpol(node_t* n, enum CharpolMode mode, long seed)
+{
+   if (n->cpState) charpolFree(n->cpState);
+   n->cpState = charpolAlloc(n->word, PM_CHARPOL, seed);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -848,10 +884,14 @@ static FPoly_t *make_f1(node_t *n)
    FPoly_t *cpol;
    int i, k;
 
-   if (n->f2 != NULL) { polFree(n->f2);}
-   n->f2 = NULL;
-   if (n->f1 != NULL) { polFree(n->f1);}
-   n->f1 = charPolFactor(n->word);
+   if (n->f1 != NULL) { polFree(n->f1); n->f1 = NULL;}
+   if (n->f2 != NULL) { polFree(n->f2); n->f2 = NULL;}
+
+   initCharpol(n, PM_CHARPOL, CharPolSeed);
+
+   n->f1 = charpolFactor(n->cpState);
+   if (CharPolSeed >= n->word->Nor) CharPolSeed = 0;    // TODO: remove (changes tests?)
+
    cpol = Factorization(n->f1);
 
    // Sort the factors by ascending multiplicity.
@@ -880,31 +920,29 @@ static FPoly_t *make_f1(node_t *n)
 /// first factor (i.e. the characteristic polynomial on the first cyclic subspace) has already been
 /// calculated. The remaining factors are stored in «n->f2».
 
-static void make_f2(node_t *n)  /* Make f2 */
+static void make_f2(node_t *n)
 {
-   Poly_t *f;
 
-   if (n->f2 != NULL) {
-      return;
-   }
+   if (n->f2 != NULL)
+      return; // already calculated
+   
    n->f2 = polAlloc(n->f1->Field,0);
-   while ((f = charPolFactor(NULL)) != NULL) {
+   Poly_t *f;
+   while ((f = charpolFactor(n->cpState)) != NULL) {
       polMul(n->f2,f);
       polFree(f);
    }
    if (MSG3) {
       FPoly_t *x = Factorization(n->f2);
-      fpPrint("  f2(x)",x);
+      fpPrint("f2(x)",x);
       fpFree(x);
    }
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
-/* --------------------------------------------------------------------------
-   SplitWithNsp() - Try to split the module with the kernel in <n->nsp>.
-
-   Return: 1 = success, 0 = failed
-   -------------------------------------------------------------------------- */
+/// Tries to split the module with the kernel in «n->nsp».
+/// Returns 1 on success, 0 on failure
 
 static int SplitWithNsp(node_t *n)
 {
@@ -1349,7 +1387,7 @@ static int Init(int argc, char **argv)
    firstword = appGetIntOption(App,"-s",1,1,100000);
    LI.NGen = appGetIntOption(App,"-g",2,1,MAXGEN);
    opt_deglimit = appGetIntOption(App,"-d",-1,-1,100);
-   opt_nullimit = appGetIntOption(App,"-n",ffOrder > 10 ? 2 : 3,1,20);
+   opt_nullimit = appGetIntOption(App,"-n", 3, 1, 20);
    if (appGetArguments(App,1,1) != 1) {
       return -1;
    }

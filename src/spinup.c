@@ -46,16 +46,16 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // Local data
 
-static int Dim = 0;			/* Dimension of the whole space */
-static int *Piv = NULL;			/* Pivot table */
-static const Matrix_t *Seed = NULL;	/* Seed space */
-static Matrix_t *Span = NULL;		/* Span */
-static int SpanDim = 0;			/* Dimension of the span */
-static int Flags = 0;			/* Flags */
-static int NGen;			/* Number of generators */
-static const Matrix_t **Gen;		/* Generators */
-static const Perm_t **GenP;		/* Generators (permutation mode) */
-static Matrix_t *StdSpan = NULL;	/* Span */
+static int Dim = 0;			// Dimension of the whole space
+static uint32_t *Piv = NULL;		// Pivot table
+static const Matrix_t *Seed = NULL;	// Seed space
+static Matrix_t *Span = NULL;		// Span
+static int SpanDim = 0;			// Dimension of the span
+static int Flags = 0;			// Flags
+static int NGen;			// Number of generators 
+static const Matrix_t **Gen;		// Generators
+static const Perm_t **GenP;		// Generators (permutation mode)
+static Matrix_t *StdSpan = NULL;	// Span
 static int32_t *Script = NULL;
 
 #define OPVEC(i) Script[2*(i)]
@@ -115,7 +115,7 @@ static int Spin1(PTR seed, int seedno, const SpinUpInfo_t *info)
 	OPVEC(SpanDim) = seedno;
 	OPGEN(SpanDim) = -1;	/* -1 means it's a seed vector */
     }
-    if ((Piv[SpanDim] = ffFindPivot(put,&f,Span->Noc)) >= 0)
+    if ((Piv[SpanDim] = ffFindPivot(put,&f,Span->Noc)) != MTX_NVAL)
     {
 	++SpanDim;
 	ffStepPtr(&put, Dim);
@@ -170,7 +170,7 @@ static int Spin1(PTR seed, int seedno, const SpinUpInfo_t *info)
 	/* Clean the result with the existing basis
 	   ---------------------------------------- */
 	ffCleanRow(put,Span->Data,SpanDim,Span->Noc, Piv);
-	if ((Piv[SpanDim] = ffFindPivot(put,&f,Span->Noc)) >= 0)
+	if ((Piv[SpanDim] = ffFindPivot(put,&f,Span->Noc)) != MTX_NVAL)
 	{
 	    num_tries = 0;
 	    ++SpanDim;
@@ -291,7 +291,7 @@ static int Init0(const Matrix_t *seed, int flags, IntMatrix_t **script,
 
 
     SpanDim = 0;
-    Piv = NREALLOC(Piv,int,Dim+2);
+    Piv = NREALLOC(Piv,uint32_t,Dim+2);
     if (Piv == NULL)
     {
 	mtxAbort(MTX_HERE,"Cannot allocate pivot table");

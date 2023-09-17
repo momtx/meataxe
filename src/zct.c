@@ -9,7 +9,7 @@
 #include <stdlib.h>
 
 
-#define MAXPIECES 10
+#define MAXPIECES 100
 
 
 /* ------------------------------------------------------------------
@@ -38,86 +38,51 @@ MTX_COMMON_OPTIONS_DESCRIPTION
 
 static MtxApplication_t *App = NULL;
 
-static int nrows = 0;
-static long rowlist[MAXPIECES][2];
-static int ncols = 0;
-static long collist[MAXPIECES][2];
-static const char *savedpos;
-static const char *ifilename;
-static const char *ofilename;
-static int fl, nor, noc;
-static int onor, onoc;
-static FILE *InputFile, *OutputFile;
+static int nRowRanges = 0;
+static uint32_t rowlist[MAXPIECES][2];
+static int nColRanges = 0;
+static uint32_t collist[MAXPIECES][2];
 
+static const char* inputFileName;
+static const char* outputFileName;
+static uint32_t nor, noc;
+static uint32_t onor, onoc;
+static MtxFile_t* inputFile;
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
-/* ------------------------------------------------------------------
-   err() - Print error message and exit
-   ------------------------------------------------------------------ */
-
-static void err(int c)
-
+static int list(uint32_t x[MAXPIECES][2], const char **cp)
 {   
-    fprintf(stderr,"ZCT ERROR - ");
-    switch (c)
-    {	
-	case 'a':
-	    fprintf(stderr,"BAD RANGE\n");
-	    break;
-	case 'x':
-	    fprintf(stderr,"TOO MANY PIECES\n");
-	    break;
-	case 'P':
-	    fprintf(stderr,"CANNOT CUT COLUMNS FROM A PERMUTATION\n");
-	    break;
-	case 'o':
-	    fprintf(stderr,"CANNOT CUT THE REQUESTED PIECE\n");
-	    break;
-    }
-    exit(EXIT_ERR);
+   const char* c = *cp;
+   int n = 0;
+
+   while (isdigit(*c))
+   {
+      if (n >= MAXPIECES) 
+         mtxAbort(MTX_HERE,"Too many row/column ranges (max=%d)", (int)MAXPIECES);
+      x[n][0] = (uint32_t) atol(c);
+      while (isdigit(*c)) ++c;
+      if (*c == '-')
+      {	++c;
+         if (!isdigit(*c))
+         {
+            mtxAbort(MTX_HERE,"Invalid range (missing number after '-')");
+         }
+         x[n][1] = (uint32_t) atol(c);
+         while (isdigit(*c)) ++c;
+      }
+      else
+         x[n][1]= x[n][0];
+      if (*c == ',') ++c;
+      if (x[n][1] < x[n][0]) 
+         mtxAbort(MTX_HERE,"Invalid range \"%d-%d\"", x[n][0], x[n][1]);
+      ++n;
+   }
+   *cp = c;
+   return n;
 }
 
-
-/* ------------------------------------------------------------------
-   list() - Scan a list of rows/columns
-   ------------------------------------------------------------------ */
-
-static int list(long x[MAXPIECES][2], const char *c)
-
-{   
-    int n = 0;
-
-    while (isdigit(*c))
-    {
-	if (n >= MAXPIECES) err('x');
-	x[n][0] = atol(c);
-	while (isdigit(*c)) ++c;
-	if (*c == '-')
-	{	++c;
-		if (!isdigit(*c))
-		{
-    	    	    mtxAbort(MTX_HERE,"Invalid range (missing number after '-')");
-		    return -1;
-		}
-		x[n][1] = atol(c);
-		while (isdigit(*c)) ++c;
-	}
-	else
-		x[n][1]= x[n][0];
-	if (*c == ',') ++c;
-	if (x[n][1] < x[n][0]) err('a');
-	++n;
-    }
-    savedpos = c;
-    return n;
-}
-
-
-
-
-/* ------------------------------------------------------------------
-   parseargs()
-   ------------------------------------------------------------------ */
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 static int parseargs()
 
@@ -130,193 +95,108 @@ static int parseargs()
     /* Process the <Range> argument
        ---------------------------- */
     c = App->ArgV[0];
-    nrows = list(rowlist,c);
-    c = savedpos;
+    nRowRanges = list(rowlist,&c);
     if (*c != 0)
     {
         if (*c != ':' && *c != ';')
-	{
 	    mtxAbort(MTX_HERE,"Invalid range (':' or ';' expected)");
-	    return -1;
-	}
         ++c;
-        ncols = list(collist,c);
+        nColRanges = list(collist,&c);
     }
 
     /* Process file names
        ------------------ */
-    ifilename = App->ArgV[1];
-    ofilename = App->ArgV[2];
+    inputFileName = App->ArgV[1];
+    outputFileName = App->ArgV[2];
 
     return 0;
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
-
-/* ------------------------------------------------------------------
-   init()
-   ------------------------------------------------------------------ */
-
-static int init()
-
+static void init(int argc, char **argv)
 {
-    int i;
+    App = appAlloc(&AppInfo,argc,argv);
+    parseargs();
+
 	
-    if ((InputFile = ffReadHeader(ifilename,&fl,&nor,&noc)) == NULL)
-	return -1;
-    if (fl == -1)	/* Is it a permutation? */
-    {	
-	if (ncols > 0) err('P');
+    inputFile = mfOpen(inputFileName);
+    mfReadHeader(inputFile);
+    uint32_t objectType = mfObjectType(inputFile);
+	
+    if (objectType != MTX_TYPE_MATRIX) {
+       mtxAbort(MTX_HERE,"%s: unsupported object type 0x%lx",
+             inputFileName, (unsigned long) objectType);
     }
-    else
-    {	
-	if (ncols == 0)
-	{	
-	    ncols = 1;
-	    collist[0][0] = 1;
-	    collist[0][1] = noc;
-	}
+    nor = inputFile->header[1];
+    noc = inputFile->header[2];
+
+    if (nColRanges == 0) {	
+          nColRanges = 1;
+          collist[0][0] = 1;
+          collist[0][1] = noc;
+    }
+    if (nRowRanges == 0) {	
+          nRowRanges = 1;
+          rowlist[0][0] = 1;
+          rowlist[0][1] = nor;
+    }
+    onor = 0;
+    for (uint32_t i = 0; i < nRowRanges; ++i) {
+       onor += rowlist[i][1]-rowlist[i][0]+1;
+       if (rowlist[i][1] > nor)
+          mtxAbort(MTX_HERE, "Row index out of range: %d > %u", rowlist[i][1], (unsigned) nor);
+    }
+    onoc = 0;
+    for (uint32_t i = 0; i < nColRanges; ++i) {
+       onoc += collist[i][1]-collist[i][0]+1;
+       if (collist[i][1] > nor)
+          mtxAbort(MTX_HERE, "Column index out of range: %d > %u", rowlist[i][1], (unsigned)nor);
     }
 
-    if (nrows == 0)
-	onor = nor;
-    else
-    {	
-	onor = 0;
-	for (i = 0; i < nrows; ++i)
-	    onor += rowlist[i][1]-rowlist[i][0]+1;
-    }
-    if (ncols == 0)
-	onoc = noc;
-    else
-    {	
-	onoc = 0;
-	for (i = 0; i < ncols; ++i)
-	    onoc += collist[i][1]-collist[i][0]+1;
-    }
-
-    return 0;
 }
 
-
-
-
-static int Init(int argc, char **argv)
-
-{
-    if ((App = appAlloc(&AppInfo,argc,argv)) == NULL)
-	return -1;
-    if (parseargs() != 0)
-	return -1;
-    if (init() != 0)
-	return -1;
-    return 0;
-}
-
-
-
-
-
-
-/* ------------------------------------------------------------------
-   cutperm()
-   ------------------------------------------------------------------ */
-
-static void cutperm()
-{
-    int i;
-    uint32_t *x, *y;
-
-    if (rowlist[nrows-1][1] > noc) err('o');
-
-    // Read permutations
-    y = x = NALLOC(uint32_t, nor * onor);
-    for (i = 0; i < nrows; ++i)
-    {
-	int n = nor * (rowlist[i][1]-rowlist[i][0]+1);
-	sysFseek(InputFile,12 + (rowlist[i][0] - 1) * nor * 4);
-	sysRead32(InputFile,y,n);
-	y += n;
-    }
-
-    // Write output
-    OutputFile = ffWriteHeader(ofilename,(long)-1,nor,onor);
-    sysWrite32(OutputFile, x, onor*nor);
-}
-
-
-/* ------------------------------------------------------------------
-   cutmatrix()
-   ------------------------------------------------------------------ */
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 static int cutmatrix()
+{   
+   ffSetField(inputFile->header[0]);
+   PTR inputRow = ffAlloc(1, noc);
+   PTR outputRow = ffAlloc(1, onoc);
+   MtxFile_t* outputFile = mfCreate(outputFileName,inputFile->header[0],onor,onoc);
 
-{   int i, ii;
-    int k, kk, pos;
-    PTR x,y,row;
-
-    if (rowlist[nrows-1][1] > nor) err('o');
-    if (collist[ncols-1][1] > noc) err('o');
-    ffSetField(fl);
-    row = ffAlloc(1, noc);
-    x = ffAlloc(onor, onoc);
-    y = x;
-    for (i = 0; i < nrows; ++i)
-    {	
-	ffSeekRow(InputFile, rowlist[i][0]-1, noc);
-	for (k = 0; k <= rowlist[i][1]-rowlist[i][0]; ++k)
-	{   
-	    ffReadRows(InputFile,row,1, noc);
-	    pos = 0;
-	    ffMulRow(y,FF_ZERO, onoc);
-	    for (ii = 0; ii < ncols; ++ii)
-	    {
-		for (kk = collist[ii][0]-1; kk < collist[ii][1]; ++kk)
-		{   FEL f = ffExtract(row,kk);
-		    ffInsert(y,pos,f);
-		    ++pos;
-		}
-	    }
-	    ffStepPtr(&y, onoc);
-	}
-    }
-
-    /* Write output
-       ------------ */
-    if ((OutputFile = ffWriteHeader(ofilename,fl,onor,onoc)) == NULL)
-	return -1;
-    ffWriteRows(OutputFile,x,onor, onoc);
-    return 0;
+   for (int i = 0; i < nRowRanges; ++i)
+   {	
+      const uint32_t row0 = rowlist[i][0]-1;
+      sysFseek(inputFile->File, 0);
+      mfReadHeader(inputFile);
+      sysFseekRelative(inputFile->File, ffRowSizeUsed(noc) * row0);
+      for (uint32_t j = rowlist[i][1]-row0; j > 0; --j) {
+         mfReadRows(inputFile, inputRow, 1, noc);
+         ffMulRow(outputRow, FF_ZERO, onoc);
+         uint32_t colOut = 0;
+         for (int k = 0; k < nColRanges; ++k) {
+            for (uint32_t colIn = collist[k][0]-1; colIn <= collist[k][1]-1; ++colIn) {
+               FEL f = ffExtract(inputRow, colIn);
+               ffInsert(outputRow, colOut++, f);
+            }
+         }
+         mfWriteRows(outputFile, outputRow, 1, onoc);
+      }
+   }
+   mfClose(outputFile);
+   return 0;
 }
 
-static void Cleanup()
-
-{
-    if (OutputFile != NULL)
-	fclose(OutputFile);
-    if (InputFile != NULL)
-	fclose(InputFile);
-    appFree(App);
-}
-
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 int main(int argc, char **argv)
-
 {
-    int rc = 0;
-
-    if (Init(argc,argv) != 0)
-    {
-	mtxAbort(MTX_HERE,"Initialization failed");
-	return -1;
-    }
-    if (fl == -1)
-	cutperm();
-    else
-	rc = cutmatrix();
-
-    Cleanup();
-    return rc;
+   init(argc,argv);
+   cutmatrix();
+   mfClose(inputFile);
+   appFree(App);
+   return 0;
 }
 
 
@@ -336,29 +216,25 @@ List of rows to cut.
 @par @em Columns
 List of columns to cut.
 @par @em Input
-Input matrix or permutation.
+Input matrix.
 @par @em Output
-Output file.
+Output Matrix.
 
 @section zct_inp Input Files
 @par @em Input
-Input matrix or permutations.
+Input matrix.
 
 @section zct_out Output Files
 @par @em Output
-Output file.
+Output matrix.
 
 
 @section zct_desc Description
-This program cuts a piece, specified by @em Rows and @em Columns,
-out of the file @em Input, and writes the piece to @em Output.
-The input may be a matrix or a set of permutations.
-Both @em Rows and @em Columns are lists of positive
-integers or ranges (e.g., "13-25") separated by commas.
-If the input is a matrix, the corresponding rows and columns are cut,
-and the resulting rectangular pieces
-are combined into one rectangular matrix which is written to the
-output file.
+This program cuts one or more pieces, specified by @em Rows and @em Columns, out of a matrix
+and combines the pieces to a new matrix which is written to the output file.
+
+Both @em Rows and @em Columns are lists of positive integers or ranges (e.g., "13-25")
+separated by commas. Ranges can be given in any order, and may be overlapping.
 If the columns list is omitted, all columns of the selected rows are cut.
 
 Here are some examples. Assume the input is the following 5 by 10 matrix
@@ -408,18 +284,6 @@ would perform the following operation on a 4 by 4 matrix:
 3 3 4 4          2 2 1 1
 3 3 4 4          2 2 1 1
 </pre>
-With permutations the program works in the same way as with
-matrices.  Each permutation is treated as a row. The @em Columns
-list must be empty in  this case, because @b zct can cut only entire
-permutations.
-
-
-@section zct_impl Implementation Details
-The number of entries in the @em Rows and @em Columns list
-must not be greater than 10. One row (or permutation, respectively)
-of the input file and the whole result of the cut must fit into
-memory.
-
-
 */
+
 // vim:fileencoding=utf8:sw=3:ts=8:et:cin

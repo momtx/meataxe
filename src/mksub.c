@@ -34,8 +34,8 @@ int blnum;			/* Number of current block */
 int blsize;			/* Block size */
 int block[LAT_MAXCF];		/* Block members */
 
-int firstm[LAT_MAXCF+1];		/* First mountain */
-int firstdl[LAT_MAXCF+1];		/* First dotted line */
+int firstm[LAT_MAXCF+1];	/* First mountain */
+int firstdl[LAT_MAXCF+1];	/* First dotted line */
 
 
 /* Data read from input files
@@ -109,35 +109,19 @@ MTX_COMMON_OPTIONS_DESCRIPTION
 
 static MtxApplication_t *App = NULL;
 
-
-
-
-/* -----------------------------------------------------------------
-   init() - Read .cfinfo and .inc file
-   ----------------------------------------------------------------- */
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 static void init(const char *basename)
-
 {	
     int i;
     uint32_t l[2];
     char fn[40];
     FILE *f;
 
-    if (latReadInfo(&LI,basename) != 0)
-    {
-	mtxAbort(MTX_HERE,"Error reading %s.cfinfo",basename);
-	return;
-    }
+    latReadInfo(&LI,basename);
     
-    /* Read incidence matrix
-       --------------------- */
+    // Read incidence matrix
     f = sysFopen(strcat(strcpy(fn,LI.BaseName),".inc"),"r");
-    if (f == NULL) 
-    {
-	mtxAbort(MTX_HERE,"Cannot open %s",fn);
-	return;
-    }
     sysRead32(f,l,1);
     xnmount = (int) l[0];
     MESSAGE(1,("Reading%s: %d mountain%s\n",fn,xnmount,xnmount == 1 ? "" : "s"));
@@ -161,14 +145,8 @@ static void init(const char *basename)
     }
     fclose(f);
 
-    /* Read dotted lines
-       ----------------- */
+    // Read dotted lines
     f = sysFopen(strcat(strcpy(fn,LI.BaseName),".dot"),"rb");
-    if (f == NULL) 
-    {
-	mtxAbort(MTX_HERE,"Cannot open %s",fn);
-	return;
-    }
     MESSAGE(1,("Reading %s: ",fn));
     sysRead32(f,l,1);
     xndotl = (int) l[0];
@@ -189,14 +167,8 @@ static void init(const char *basename)
     fclose(f);
     y = bsAlloc(xnmount);
 
-    /* Read dimensions
-       --------------- */
+    // Read dimensions
     f = sysFopen(strcat(strcpy(fn,LI.BaseName),".mnt"),"r");
-    if (f == NULL) 
-    {
-	mtxAbort(MTX_HERE,"Cannot open %s",fn);
-	return;
-    }
     MESSAGE(1,("Reading %s\n",fn));
     for (i = 0; i < xnmount; ++i)
     {
@@ -225,12 +197,10 @@ static void init(const char *basename)
    ----------------------------------------------------------------- */
 
 static void init2()
-
 {
     int i;
 
-    /* Set firstm and firstdl
-       ---------------------- */
+    // Set firstm and firstdl
     firstm[0] = 0;
     firstdl[0] = 0;
     for (i = 0; i < LI.NCf; ++i)
@@ -239,23 +209,19 @@ static void init2()
 	firstdl[i+1] = firstdl[i] + LI.Cf[i].ndotl;
     }
 
-    /* Initialize done[]
-       ----------------- */
+    // Initialize done[]
     for (i = 0; i < LI.NCf; ++i) done[i] = 0;
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
-/* -----------------------------------------------------------------
-   isotype() - Finde den Isomorphietyp eines gegebenen Mountains.
-   ----------------------------------------------------------------- */
+/// Determine the isomorphism type of a mountain.
 
 static int isotype(int mnt)
-
 {
     int m;
-
     for (m = 0; (mnt -= LI.Cf[block[m]].nmount) >= 0; ++m);
-    return (block[m]);
+    return block[m];
 }
 
 

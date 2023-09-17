@@ -69,7 +69,7 @@ Matrix_t *SAction(const Matrix_t *subspace, const Matrix_t *gen)
       // clean the image with the subspace and store coefficients
       int rc = ffCleanRow2(tmp,subspace->Data,sdim,dim,subspace->PivotTable,yi);
       MTX_ASSERT(rc == 0);
-      if (ffFindPivot(tmp,&f,dim) >= 0) {
+      if (ffFindPivot(tmp,&f,dim) != MTX_NVAL) {
          mtxAbort(MTX_HERE,"Split(): Subspace not invariant");
 	 sysFree(tmp);
 	 matFree(action);

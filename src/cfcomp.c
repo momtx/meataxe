@@ -39,15 +39,10 @@ static int Init(int argc, char **argv)
    int i;
 
    App = appAlloc(&AppInfo,argc,argv);
-   if (appGetArguments(App,2,2000) < 0) {
-      return -1;
-   }
-   if (latReadInfo(&InfoA,App->ArgV[0]) != 0) {
-      return -1;
-   }
+   appGetArguments(App,2,2000);
+   latReadInfo(&InfoA,App->ArgV[0]);
 
-   /* Read the generators for each composition factor
-      ----------------------------------------------- */
+   // Read the generators for each composition factor
    for (i = 0; i < InfoA.NCf; ++i) {
       sprintf(fn,"%s%s",InfoA.BaseName,latCfName(&InfoA,i));
       MESSAGE(1,("Reading %s\n",fn));

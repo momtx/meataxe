@@ -319,22 +319,13 @@ static void setColors(const char *opt_text_ptr)
     }
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
-/* ------------------------------------------------------------------
-   Init()
-   ------------------------------------------------------------------ */
-
-static int Init(int argc, char **argv)
-
+static void init(int argc, char **argv)
 {	
     const char *c;
 
-
-    /* Parse command line
-       ------------------ */
-
-    if ((App = appAlloc(&AppInfo,argc,argv)) == NULL)
-	return -1;
+    App = appAlloc(&AppInfo,argc,argv);
     block = appGetIntOption(App,"-b",-1,0,-1);
     if (appGetOption(App,"-G"))
 	OutputMode = O_GAP;
@@ -354,8 +345,7 @@ static int Init(int argc, char **argv)
 		break;
     }
 
-    if (latReadInfo(&LI,name) != 0)
-	mtxAbort(MTX_HERE,"Error reading %s.cfinfo",name);
+    latReadInfo(&LI,name);
     if (block > 0)
     {
 	snprintf(ifilename, sizeof(ifilename), "%s.gra.%ld",name,block);
@@ -366,7 +356,6 @@ static int Init(int argc, char **argv)
 	snprintf(ifilename, sizeof(ifilename), "%s.gra",name);
 	snprintf(ofilename, sizeof(ofilename), "%s.ps",name);
     }
-    return 0;
 }
 
 
@@ -697,16 +686,11 @@ Edge(p,vertexliste[from[i]],vertexliste[to[i]]);
 }
 
 
-
-
-/* ------------------------------------------------------------------
-   main()
-   ------------------------------------------------------------------ */
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 int main(int argc, char *argv[])
 {
-    if (Init(argc,argv) != 0)
-	return 1;
+    init(argc,argv);
     readfile();
     buildroot();
     ldSetPositions(Lattice);

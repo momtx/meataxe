@@ -14,9 +14,10 @@
 
 
 static int GrpLibFormat = 0;    /* File is in Group Library Format */
-static int fl;
+static uint32_t fl;
 static int mod;
-static int nor,noc;
+static uint32_t nor;
+static uint32_t noc;
 static FILE *src = NULL;                /* Input file */
 static FILE *out;                       /* Output file */
 static char lbuf[MAXLINE] = {0};        /* Input line buffer */
@@ -121,8 +122,7 @@ static int32_t readlong()
 }
 
 
-/////////////////////////////////////////////////////////////////////////////////////////////////////
-/// Write a header consisting of three integers
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 static void WriteHeader(uint32_t a, uint32_t b, uint32_t c)
 {
@@ -130,8 +130,40 @@ static void WriteHeader(uint32_t a, uint32_t b, uint32_t c)
    sysWrite32(out,hdr,3);
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
-/////////////////////////////////////////////////////////////////////////////////////////////////////
+static const char* strPrefix(const char* s, const char* prefix)
+{
+   if (s == NULL || prefix == NULL)
+      return NULL;
+   while (*prefix != 0 && *s == *prefix) {
+      ++s;
+      ++prefix;
+   }
+   return (*prefix == 0) ? s : NULL;
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+static int parse32u(uint32_t* var, const char *s, const char* prefix)
+{
+   const char* valueStr = strPrefix(s, prefix);
+   if (valueStr == NULL) return 0;
+      
+   char* end = NULL;
+   unsigned long value = strtoul(valueStr, &end, 10);
+   if (*valueStr != 0 && *end == 0) {
+      if (value <= 0xFFFFFFFFU) {
+         *var = (uint32_t) value;
+         return 1;
+      }
+   }
+   
+   mtxAbort(MTX_HERE, "%s: invalid number in object header: \"%s\"", inpname, s);
+   return 0;
+}
+         
+////////////////////////////////////////////////////////////////////////////////////////////////////
 /// Convert matrix
 
 static void ConvertMatrix()
@@ -174,7 +206,6 @@ static void ConvertIntMatrix()
    free(x);
 }
 
-
 /////////////////////////////////////////////////////////////////////////////////////////////////////
 
 /// Convert permutation (new format)
@@ -187,9 +218,6 @@ static void ConvertPermutation()
 
    MESSAGE(0,("Permutation on %d points\n",nor));
    buf = NALLOC(uint32_t,nor);
-   if (buf == NULL) {
-      mtxAbort(MTX_HERE,"Cannot allocate permutation: %S");
-   }
    WriteHeader(MTX_TYPE_PERMUTATION, nor, 1);
 
    for (i = 0; i < nor; ++i) {
@@ -212,9 +240,7 @@ static void ConvertPolynomial()
 
    MESSAGE(0,("Polynomial of degree %d over GF(%d)\n",nor,fl));
    p = polAlloc(fl,nor);
-   if ((out = sysFopen(outname,"wb")) == NULL) {
-      mtxAbort(MTX_HERE,"Cannot open %s: %S",outname);
-   }
+   out = sysFopen(outname,"wb");
    for (i = 0; i <= nor; ++i) {
       long kk = readlong();
       p->Data[i] = ffFromInt(kk);
@@ -255,15 +281,14 @@ static int ReadHeader(void)
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////
+
 /// Convert one member.
 
 static void Convert(void)
 {
    char *c;
 
-   /* Check for new file format
-      ------------------------- */
-
+   // Check for new file format
    if ((c = strstr(lbuf,"MeatAxeFileInfo")) != NULL) {
       char *d = lbuf;
       for (c += 15; *c != 0 && *c != '"'; ++c) {
@@ -279,67 +304,67 @@ static void Convert(void)
    }
 
    if (!strncmp(lbuf,"matrix",6)) {
-      char *c;
-      fl = nor = noc = -1;
-      for (c = strtok(lbuf + 6," \t\n"); c != NULL; c = strtok(NULL," \t\n")) {
-         if (!strncmp(c,"field=",6)) { fl = atol(c + 6); } else if (!strncmp(c,"nor=",4)) {
-            nor = atol(c + 4);
-         } else if (!strncmp(c,"rows=",5)) {
-            nor = atol(c + 5);
-         } else if (!strncmp(c,"noc=",4)) {
-            noc = atol(c + 4);
-         } else if (!strncmp(c,"cols=",5)) {
-            noc = atol(c + 5);
-         } else { mtxAbort(MTX_HERE,"%s: Bad file format",inpname); }
+      fl = nor = noc = MTX_NVAL;
+      for (char* c = strtok(lbuf + 6," \t\n"); c != NULL; c = strtok(NULL," \t\n")) {
+         if (parse32u(&fl, c, "field=")) continue;
+         if (parse32u(&nor, c, "nor=")) continue;
+         if (parse32u(&nor, c, "rows=")) continue;
+         if (parse32u(&noc, c, "noc=")) continue;
+         if (parse32u(&noc, c, "cols=")) continue;
+         mtxAbort(MTX_HERE,"%s: Bad object header: \"%s\"", inpname, c);
       }
-      if ((nor == -1) || (noc == -1) || (fl == -1)) { mtxAbort(MTX_HERE,"%s: Bad file format",inpname); }
+      if ((nor == MTX_NVAL)
+            || (noc == MTX_NVAL)
+            || (fl == MTX_NVAL)) {
+         mtxAbort(MTX_HERE,"%s: Bad file format (missing header field)",inpname);
+      }
       readline();
       ConvertMatrix();
       return;
    }
-   if (!strncmp(lbuf,"integer matrix",14)
-       || !strncmp(lbuf,"integer-matrix",14)) {
+   if (!strncmp(lbuf,"integer matrix",14) || !strncmp(lbuf,"integer-matrix",14)) {
       char *c;
-      fl = nor = noc = -1;
+      nor = noc = MTX_NVAL;
       for (c = strtok(lbuf + 14," \t\n"); c != NULL; c = strtok(NULL," \t\n")) {
-         if (!strncmp(c,"nor=",4)) { nor = atol(c + 4); } else if (!strncmp(c,"rows=",5)) {
-            nor = atol(c + 5);
-         } else if (!strncmp(c,"noc=",4)) {
-            noc = atol(c + 4);
-         } else if (!strncmp(c,"cols=",5)) {
-            noc = atol(c + 5);
-         } else { mtxAbort(MTX_HERE,"%s: Bad file format",inpname); }
+         if (parse32u(&nor, c, "nor=")) continue;
+         if (parse32u(&nor, c, "rows=")) continue;
+         if (parse32u(&noc, c, "noc=")) continue;
+         if (parse32u(&noc, c, "cols=")) continue;
+         mtxAbort(MTX_HERE,"%s: Bad object header: \"%s\"", inpname, c);
       }
-      if ((nor == -1) || (noc == -1)) { mtxAbort(MTX_HERE,"%s: Bad header format",inpname); }
+      if (nor == MTX_NVAL || noc == MTX_NVAL) {
+         mtxAbort(MTX_HERE,"%s: Bad file format (missing header field)",inpname);
+      }
       readline();
       ConvertIntMatrix();
       return;
    } else if (!strncmp(lbuf,"permutation",11)) {
       char *c;
-      fl = nor = -1;
+      fl = nor = MTX_NVAL;
       noc = 1;
       for (c = strtok(lbuf + 11," \t\n"); c != NULL; c = strtok(NULL," \t\n")) {
-         if (!strncmp(c,"degree=",7)) { nor = atol(c + 7); } else if (!strncmp(c,"deg=",4)) {
-            nor = atol(c + 4);
-         } else { mtxAbort(MTX_HERE,"%s: Bad header format",inpname); }
+         if (parse32u(&nor, c, "degree=")) continue;
+         if (parse32u(&nor, c, "deg=")) continue;
+         mtxAbort(MTX_HERE,"%s: Bad object header: \"%s\"", inpname, c);
       }
-      if (nor == -1) { mtxAbort(MTX_HERE,"%s: Bad header format",inpname); }
+      if (nor == MTX_NVAL) {
+         mtxAbort(MTX_HERE,"%s: Bad file format (missing header field)",inpname);
+      }
       readline();
       ConvertPermutation();
       return;
    } else if (!strncmp(lbuf,"polynomial",10)) {
       char *c;
-      fl = nor = -1;
+      fl = nor = MTX_NVAL;
       noc = 1;
       for (c = strtok(lbuf + 11," \t\n"); c != NULL; c = strtok(NULL," \t\n")) {
-         if (!strncmp(c,"degree=",7)) { nor = atol(c + 7); } else if (!strncmp(c,"deg=",4)) {
-            nor = atol(c + 4);
-         } else if (!strncmp(c,"field=",6)) {
-            fl = atol(c + 6);
-         } else { mtxAbort(MTX_HERE,"%s: Bad polynomial header format",inpname); }
+         if (parse32u(&nor, c, "degree=")) continue;
+         if (parse32u(&nor, c, "deg=")) continue;
+         if (parse32u(&fl, c, "field=")) continue;
+         mtxAbort(MTX_HERE,"%s: Bad object header: \"%s\"", inpname, c);
       }
-      if ((nor < 0) || (fl < 2)) {
-         mtxAbort(MTX_HERE,"%s: Bad header: fl=%d, deg=%d",inpname,fl,nor);
+      if (fl == MTX_NVAL || noc == MTX_NVAL) {
+         mtxAbort(MTX_HERE,"%s: Bad file format (missing header field)",inpname);
       }
       readline();
       ConvertPolynomial();

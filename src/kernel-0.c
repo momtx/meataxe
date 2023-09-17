@@ -796,14 +796,14 @@ FEL ffExtract(PTR row, int col)
 /// Find pivot column.
 /// This function finds the first non-zero mark in a row vector.
 /// The mark is stored into <tt>*mark</tt> and its position (counting from 0) is returned.
-/// If the whole vector is zero, %ffFindPivot()
-/// returns -1 and leaves <tt>*mark</tt> unchanged.
+/// If the whole vector is zero, <tt>ffFindPivot()</tt> returns @ref MTX_NVAL and
+/// leaves <tt>*mark</tt> unchanged.
 /// @param row Pointer to the row vector (@a noc columns).
 /// @param mark Buffer for pivot element.
 /// @param noc Number of columns.
 /// @return Index of the first non-zero entry in @a row or -1 if all entries are zero.
 
-int ffFindPivot(PTR row, FEL *mark, int noc)
+uint32_t ffFindPivot(PTR row, FEL *mark, int noc)
 {
    register long *l = (long *) row;
    register int idx;
@@ -813,7 +813,7 @@ int ffFindPivot(PTR row, FEL *mark, int noc)
    for (idx = 0; idx < LPR && *l == 0; ++idx, ++l) {
    }
    if (idx == LPR) {
-      return -1;        // all zero
+      return MTX_NVAL;        // all zero
    }
    idx = idx * sizeof(long) * MPB;
    m = (BYTE *)l;
@@ -823,7 +823,7 @@ int ffFindPivot(PTR row, FEL *mark, int noc)
    }
    idx += mtx_tffirst[*m][1];
    if (idx >= noc) {          // Ignore garbage in padding bytes
-      return -1;
+      return MTX_NVAL;
    }
    *mark = mtx_tffirst[*m][0];
    return idx;

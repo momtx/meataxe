@@ -11,7 +11,7 @@
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static int zmkechelon(PTR matrix, int nor, int noc, int *piv, int *ispiv)
+static int zmkechelon(PTR matrix, int nor, int noc, uint32_t *piv, int *ispiv)
 {
    PTR x, newrow;
    int i, j, rank;
@@ -29,16 +29,13 @@ static int zmkechelon(PTR matrix, int nor, int noc, int *piv, int *ispiv)
    rank = 0;
    newrow = matrix;
    for (i = 0, x = matrix; i < nor && rank < noc; ++i, ffStepPtr(&x, noc)) {
-      int newpiv;
-      FEL f;
-
       if (rank < i) {
          ffCopyRow(newrow,x, noc);
       }
       ffCleanRow(newrow,matrix,rank,noc,piv);
-      newpiv = ffFindPivot(newrow,&f, noc);
-      MTX_ASSERT(newpiv < noc);
-      if (newpiv >= 0) {
+      FEL f;
+      uint32_t newpiv = ffFindPivot(newrow,&f, noc);
+      if (newpiv != MTX_NVAL) {
          piv[rank] = newpiv;
          ispiv[newpiv] = 1;
          ++rank;
@@ -76,7 +73,6 @@ static int zmkechelon(PTR matrix, int nor, int noc, int *piv, int *ispiv)
 int matEchelonize(Matrix_t *mat)
 {
    int rank;
-   int *newtab;
    static int *is_pivot = NULL;
    static int maxnoc = -1;
 
@@ -88,12 +84,7 @@ int matEchelonize(Matrix_t *mat)
       |Noc| should never change without releasing the pivot table, but
       this would be a really nasty bug....
       ----------------------------------------------------------------- */
-   newtab = NREALLOC(mat->PivotTable,int,mat->Noc);
-   if (newtab == NULL) {
-      mtxAbort(MTX_HERE,"Cannot allocate pivot table (size %d)",mat->Noc);
-      return -1;
-   }
-   mat->PivotTable = newtab;
+   mat->PivotTable = NREALLOC(mat->PivotTable,uint32_t,mat->Noc);
    if (mat->Noc > maxnoc) {
       int *new_is_piv = NREALLOC(is_pivot,int,mat->Noc);
       if (new_is_piv == NULL) {

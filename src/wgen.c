@@ -413,18 +413,11 @@ WgData_t *wgAlloc(const MatRep_t *rep)
    int k;
    WgData_t *b;
 
-   /* Check the Arguments
-      ------------------- */
    if (CheckArgs(rep) != 0) {
       return NULL;
    }
 
-   /* Create a new data structure
-      ---------------------------  */
-   if ((b = ALLOC(WgData_t)) == NULL) {
-      mtxAbort(MTX_HERE,"Cannot allocate word generator data: %S");
-      return NULL;
-   }
+   b = ALLOC(WgData_t);
 
    /* Initialize the members
       ---------------------- */

@@ -84,7 +84,7 @@ Matrix_t *matCut(const Matrix_t *src, int row1, int col1, int nrows, int ncols)
          }
       }
       ffStepPtr(&d, ncols);
-      s = (PTR)((char *)s + src->RowSize);
+      ffStepPtr(&s, src->Noc);
    }
 
    return result;

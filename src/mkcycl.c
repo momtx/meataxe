@@ -47,65 +47,25 @@ int NCyclic;			/* Number of cyclic submodules found */
 Matrix_t *Cyclic[MAXCYCL];	/* List of cyclic submodules */
 Lat_Info LI;			/* Data from .cfinfo file */
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
-
-/* --------------------------------------------------------------------------
-   ParseCommandLine() - Process command line options and arguments
-   -------------------------------------------------------------------------- */
-
-static int ParseCommandLine()
+static void init(int argc, char **argv)
 {
+    App = appAlloc(&AppInfo,argc,argv);
     opt_G = appGetOption(App,"-G --gap");
     if (opt_G) 
 	MtxMessageLevel = -100;
-    if (appGetArguments(App,1,1) != 1)
-	return -1;
-    return 0;
-}
-
-
-
-/* --------------------------------------------------------------------------
-   Init() - Program initialization
-
-   This function initializes all global variables.
-   -------------------------------------------------------------------------- */
-
-static int Init(int argc, char **argv)
-{
-    /* Parse command line
-       ------------------ */
-    if ((App = appAlloc(&AppInfo,argc,argv)) == NULL)
-	return -1;
-    if (ParseCommandLine() != 0)
-    {
-	mtxAbort(MTX_HERE,"Error in command line");
-	return -1;
-    }
-
-    /* Read the .cfinfo file
-       --------------------- */
+    appGetArguments(App,1,1);
     MESSAGE(0,("\n*** FIND CYCLIC SUBMODULES ***\n\n"));
-    if (latReadInfo(&LI,App->ArgV[0]) != 0)
-    {
-	mtxAbort(MTX_HERE,"Error reading %s",App->ArgV[0]);
-	return -1;
-    }
-    return 0;
+    latReadInfo(&LI,App->ArgV[0]);
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
-
-/* --------------------------------------------------------------------------
-   Spinup() - Spin up one seed vector
-
-   This function spins up one seed vector and compares the resulting module
-   with the list of cyclic submodules found so far. If the module is new, it
-   is added to the list.
-   -------------------------------------------------------------------------- */
+/// This function spins up one seed vector and compares the resulting module with the list of
+/// cyclic submodules found so far. If the module is new, it is added to the list.
 
 static void Spinup(Matrix_t *seed)
-
 {
     Matrix_t *sub;
     int i;
@@ -232,16 +192,12 @@ void FindCyclic(int cf)
     mrFree(Rep);
 }
 
-
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 int main(int argc, char *argv[])
-
 {
-    int i;
-
-    if (Init(argc, argv) != 0)
-	return -1;
-    for (i = 0; i < LI.NCf; ++i)
+    init(argc, argv);
+    for (int i = 0; i < LI.NCf; ++i)
 	FindCyclic(i);
     if (MtxMessageLevel >= 0)
         printf("\n");

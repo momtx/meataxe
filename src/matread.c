@@ -5,12 +5,25 @@
 #include "meataxe.h"
 #include <stdlib.h>
 
-////////////////////////////////////////////////////////////////////////////////////////////////////
-// Local data
-
-
 /// @addtogroup mat
 /// @{
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+/// Read matrix contents from a file.
+/// @param f File to read from.
+/// @param header The object header.
+/// @return Pointer to the matrix, or 0 on error.
+
+Matrix_t *matReadData(FILE *f, const uint32_t header[3])
+{
+   if (header[0] >= MTX_TYPE_BEGIN) {
+      mtxAbort(MTX_HERE,"%s",MTX_ERR_NOTMATRIX);
+   }
+   Matrix_t* m = matAlloc(header[0],header[1],header[2]);
+   ffReadRows(f,m->Data,m->Nor, m->Noc);
+   return m;
+}
+
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 /// Read a matrix from a file.
@@ -19,14 +32,9 @@
 
 Matrix_t *matRead(FILE *f)
 {
-   int32_t hdr[3];
-   sysRead32(f,hdr,3);
-   if (hdr[0] < 2) {
-      mtxAbort(MTX_HERE,"%s",MTX_ERR_NOTMATRIX);
-   }
-   Matrix_t* m = matAlloc(hdr[0],hdr[1],hdr[2]);
-   ffReadRows(f,m->Data,m->Nor, m->Noc);
-   return m;
+   uint32_t header[3];
+   sysRead32(f,header,3);
+   return matReadData(f, header);
 }
 
 

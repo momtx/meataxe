@@ -124,7 +124,7 @@ LIB_OBJS=\
 	matpivot\
 	matprint matpwr matread mattr mattrace matwrite \
 	message \
-	mfcore mfread mfreadlong mfwrite mfwritelong \
+	mfcore \
 	mkendo\
 	mmulscal mraddgen mrcore mrread mrtranspose mrwrite \
 	msclean mscore \

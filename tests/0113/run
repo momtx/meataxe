@@ -1,8 +1,5 @@
 echo "0113 - ZSY"
-
 . ../tests/common.sh
-
-#set -x
 
 # Permutations
 

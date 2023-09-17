@@ -436,13 +436,14 @@ int main(int argc, char **argv)
 #error MTX_ZZZ undefined
 #endif
 
-   int field = appGetIntOption(app,"-t --print-tables",-1, 2, MTX_MAX_Q);
-   if (field > 0) {
+   int field = appGetIntOption(app,"-t --print-tables",MTX_NVAL, 2, MTX_MAX_Q);
+   if (field != MTX_NVAL) {
       printTables(field);
       exit(0);
    }
 
-   if ((field = appGetIntOption(app,"-f --field",-1, 2, MTX_MAX_Q)) >= 0) {
+   field = appGetIntOption(app,"-f --field",MTX_NVAL, 2, MTX_MAX_Q);
+   if (field != MTX_NVAL) {
       UseFixedField(field);
    }
    const int listOnly = appGetOption(app,"-l --list-tests" );

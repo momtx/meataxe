@@ -64,8 +64,8 @@ void polValidate(const struct MtxSourceLocation* src, const Poly_t *pol)
    if (pol == NULL)
       mtxAbort(src,"NULL polynomial");
    if (pol->Magic != POLY_MAGIC || pol->Degree < -1 || pol->Field < 2) {
-      mtxAbort(src,"Invalid polynomial (magic=0x%x, field=%d, deg=%d)",
-            pol->Magic, pol->Field, pol->Degree);
+      mtxAbort(src,"Invalid polynomial (magic=0x%lx, field=%d, deg=%d)",
+            (unsigned long) pol->Magic, pol->Field, pol->Degree);
    }
    if (pol->Data == NULL || pol->BufSize < 0) {
       mtxAbort(src,"Invalid polynomial (data=0x%lx, size=%d)",

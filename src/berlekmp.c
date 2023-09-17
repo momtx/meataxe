@@ -12,41 +12,34 @@
 /// Internal representation of a factor.
 typedef struct { Poly_t *p; long n; } factor_t;
 
-/* ------------------------------------------------------------------
-   factorsquarefree() - Squarefree factorization.
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
-   This function factors a polynomial into square-free, but not
-   necessarily irreducible, factors. The factors are stored in a
-   list of <factor_t> structures. A pointer to this list is passed
-   back to the caller. The list is terminated by a ``factor'' with
-   p=NULL, n=0.
-
-   Return: List of factors.
-   ------------------------------------------------------------------ */
+/// Squarefree factorization.
+///
+/// Returns a factorization of the given polynomial into squarefree factors.
+/// The returned list is terminated by an entry with p=NULL, n=0.
 
 static factor_t *factorsquarefree(const Poly_t *pol)
 {
-    long int e,j,k,ltmp,tdeg,exp;
-    Poly_t *t0, *t, *w, *v;
+    long int j,k,tdeg;
+    Poly_t *t, *w, *v;
     FEL *tbuf, *t0buf;
-    factor_t *list;
 
-    /* Initialize variables
-       -------------------- */
     ffSetField(pol->Field);
-    for (exp = 0, ltmp = ffOrder; ltmp % ffChar == 0; ++exp, ltmp /= ffChar);
-    t0 = polDup(pol);
-    e = 1;
+    uint32_t exp = 0;       // Degree of F over its prime field.
+    for (uint32_t ltmp = 1; ltmp != ffChar; ++exp, ltmp *= ffChar);
+
+    Poly_t* t0 = polDup(pol);
+    uint32_t e = 1;
 
     // Allocate the list of factors. There can be at most <pol->Degree>
     // factors, but we need one extra entry to terminate the list.
-    int nfactors = 0;
-    list = NALLOC(factor_t,pol->Degree + 1);
+    size_t nfactors = 0;
+    factor_t *factors = NALLOC(factor_t,pol->Degree + 1);
 
     /* Main loop
        --------- */
-    while (t0->Degree > 0)
-    {
+    while (t0->Degree > 0) {
 	Poly_t *der = polDerive(polDup(t0));
         t = polGcd(t0,der);
 	polFree(der);
@@ -63,12 +56,12 @@ static factor_t *factorsquarefree(const Poly_t *pol)
 	      	k++;
 	    }
 	    w = polGcd(t,v);
-	    list[nfactors].p = polDivMod(v,w);
-	    list[nfactors].n = e * k;
-	    if (list[nfactors].p->Degree > 0)
+	    factors[nfactors].p = polDivMod(v,w);
+	    factors[nfactors].n = e * k;
+	    if (factors[nfactors].p->Degree > 0)
 	       	++nfactors;			/* add to output */
 	    else
-	    	polFree(list[nfactors].p);	/* discard const. */
+	    	polFree(factors[nfactors].p);	/* discard const. */
             polFree(v);
 	    v = w;
 	    tmp = polDivMod(t,v);
@@ -81,7 +74,7 @@ static factor_t *factorsquarefree(const Poly_t *pol)
       	tdeg = t->Degree;
       	e *= ffChar;
       	if ( tdeg % ffChar != 0 )
-	    mtxAbort(MTX_HERE,"error in t, degree not div. by prime \n");
+	    mtxAbort(MTX_HERE,"error in t, degree not divisible by prime");
       	t0 = polAlloc(ffOrder,tdeg/ffChar);
       	t0buf = t0->Data;
       	tbuf = t->Data;
@@ -113,11 +106,12 @@ static factor_t *factorsquarefree(const Poly_t *pol)
     }
     polFree(t0);
 
-    /* Terminate the list
-       ------------------ */
-    list[nfactors].p = NULL;
-    list[nfactors].n = 0;
-    return list;
+    // Terminate the list
+    MTX_ASSERT(nfactors <= pol->Degree);
+    factors = NREALLOC(factors, factor_t, nfactors + 1);
+    factors[nfactors].p = NULL;
+    factors[nfactors].n = 0;
+    return factors;
 }
 		      
 

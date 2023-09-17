@@ -377,7 +377,7 @@ static int WriteOutput()
       }
       for (i = 0; i < nvec; ++i) {
          PTR x = ffGetPtr(vtable,vecpos[i],Seed->Noc);
-         mfWriteRows(f,x,1);
+         mfWriteRows(f, x, 1, Seed->Noc);
       }
       mfClose(f);
    }

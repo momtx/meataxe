@@ -83,117 +83,87 @@ MTX_COMMON_OPTIONS_DESCRIPTION
 static MtxApplication_t *App = NULL;
 
 
-
-
-
 /* ------------------------------------------------------------------
    ReadGenerators() - Read the generators into <Rep>
    ------------------------------------------------------------------ */
 
-static int ReadGenerators()
-
+static void readGenerators()
 {
-    int i;
-    MtxFile_t *f;
+   int i;
 
-    f = mfOpen(GenName[0]);
-    Permutations = f->Field == -1;
-    mfClose(f);
+   {
+      MtxFile_t *f = mfOpen(GenName[0]);
+      mfReadHeader(f);
+      uint32_t objectType = mfObjectType(f);
+      if (objectType == MTX_TYPE_PERMUTATION)
+         Permutations = 1;
+      if (objectType == MTX_TYPE_MATRIX) {
+         Permutations = 0;
+         ffSetField(f->header[0]);
+      }
+      else {
+         mtxAbort(MTX_HERE, "%s: unsupported object type 0x%lx",
+               GenName[0], (unsigned long) objectType);
+      }
+      mfClose(f);
+   }
 
-    if (Permutations)
-    {
-	if (SubName != NULL || QuotName != NULL)
-	{
-	    mtxAbort(MTX_HERE,"'-s' and '-q' are not supported for permutations");
-	    return -1;
-	}
-	for (i = 0; i < ngen; ++i)
-	{
-	    Perm[i] = permLoad(GenName[i]);
-	    if (Perm[i] == NULL)
-		return -1;
-	}
-        Dim = Perm[0]->Degree;
-    }
-    else
-    {
-	if ((Rep = mrAlloc(0,NULL,0)) == NULL)
-	    return -1;
-	for (i = 0; i < ngen; ++i)
-	{
-	    Matrix_t *gen;
-	    gen = matLoad(GenName[i]);
-	    if (gen == NULL)
-		return -1;
-	    if (mrAddGenerator(Rep,gen,0) != 0)
-	    {
-		mtxAbort(MTX_HERE,"%s: cannot load generator",GenName[i]);
-		return -1;
-	    }
-	}
-        Dim = Rep->Gen[0]->Noc;
-    }
-    return 0;
+   if (Permutations)
+   {
+      if (SubName != NULL || QuotName != NULL)
+         mtxAbort(MTX_HERE,"'-s' and '-q' are not supported for permutations");
+      for (i = 0; i < ngen; ++i)
+      {
+         Perm[i] = permLoad(GenName[i]);
+      }
+      Dim = Perm[0]->Degree;
+   }
+   else
+   {
+      Rep = mrAlloc(0,NULL,0);
+      for (i = 0; i < ngen; ++i)
+      {
+         Matrix_t *gen = matLoad(GenName[i]);
+         mrAddGenerator(Rep,gen,0);
+      }
+      Dim = Rep->Gen[0]->Noc;
+   }
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
-
-
-/* --------------------------------------------------------------------------
-   ReadSeed() - Read the seed vector file
-   -------------------------------------------------------------------------- */
-
-static int ReadSeed()
+static void readSeed()
 {
-    MtxFile_t *sf;
-    int skip = 0;
-    int num_seed;
-
-    if ((sf = mfOpen(SeedName)) == NULL)
-	return -1;
-    if (sf->Field < 2) 
-    {
+    MtxFile_t *sf = mfOpen(SeedName);
+    mfReadHeader(sf);
+    if (mfObjectType(sf) != MTX_TYPE_MATRIX)
 	mtxAbort(MTX_HERE,"%s: %s",SeedName,MTX_ERR_NOTMATRIX);
-	return -1;
-    }
+    const uint32_t field = sf->header[0];
+    const int norSeed = sf->header[1];
+    const int nocSeed = sf->header[2];
+
     if (Permutations)
-    {
-	ffSetField(sf->Field);
-    }
-    if (sf->Noc != Dim || sf->Field != ffOrder)
-    {
+	ffSetField(field);
+    if (nocSeed != Dim || sf->header[0] != ffOrder)
 	mtxAbort(MTX_HERE,"%s and %s: %s",GenName[0],SeedName,MTX_ERR_INCOMPAT);
-	return -1;
+    
+    size_t skip = 0;
+    if (!TryLinearCombinations && SeedVecNo > 0) {
+       // skip the first «SeedVecNo» rows
+       if ((skip = SeedVecNo - 1) > norSeed)
+          skip = norSeed;
+       sysFseekRelative(sf->File, skip * ffRowSize(nocSeed));
     }
-    if (!TryLinearCombinations && SeedVecNo > 0)
-	skip = SeedVecNo - 1;
-    ffSeekRow(sf->File,skip, Dim);
-    if (TryOneVector)
-	num_seed = 1;
-    else
-	num_seed = sf->Nor - skip;
+    uint32_t num_seed = TryOneVector ? 1 : norSeed - skip;
+
     Seed = matAlloc(ffOrder,num_seed,Dim);
-    if (Seed == NULL)
-	return -1;
-    if (mfReadRows(sf,Seed->Data,Seed->Nor) != Seed->Nor)
-    {
-	mtxAbort(MTX_HERE,"Error reading seed vectors");
-	return -1;
-    }
+    mfReadRows(sf,Seed->Data,norSeed,Dim);
     mfClose(sf);
-    return 0;
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
-
-
-
-/* ------------------------------------------------------------------
-   init_args()
-   ------------------------------------------------------------------ */
-
-static int init_args()
-
+static void init_args()
 {
     int i;
 
@@ -215,10 +185,7 @@ static int init_args()
     SeedVecNo = appGetIntOption(App,"-n",0,1,10000000);
 
     if (MaxDim != -1 && (FindClosure || FindCyclicVector))
-    {
 	mtxAbort(MTX_HERE,"'-d' cannot be used together with '-c' or '-e'");
-	return -1;
-    }
 
     if (   FindClosure
 	&& (FindCyclicVector || TryOneVector || TryLinearCombinations)
@@ -226,19 +193,16 @@ static int init_args()
     if (FindCyclicVector && FindClosure)
     {
 	mtxAbort(MTX_HERE,"'-c' cannot be combined with any of '-e', '-1', '-m'");
-	return -1;
     }
 
 
     if (TryLinearCombinations && TryOneVector)
     {
 	mtxAbort(MTX_HERE,"Options '-n' and '-1' cannot be used together");
-	return -1;
     }
     if (TryLinearCombinations && SeedVecNo > 0)
     {
 	mtxAbort(MTX_HERE,"Options '-m' and '-n' cannot be used together");
-	return -1;
     }
 
 
@@ -250,8 +214,7 @@ static int init_args()
     if (ngen == -1)
     {
 	ngen = 2;
-	if (appGetArguments(App,3,3) < 0)
-	    return -1;
+	appGetArguments(App,3,3);
 	GenName[0] = App->ArgV[0];
 	GenName[1] = App->ArgV[1];
 	SeedName =  App->ArgV[2];
@@ -259,8 +222,7 @@ static int init_args()
     else
     {
 	char buf[200];
-	if (appGetArguments(App,2,2) < 0)
-	    return -1;
+	appGetArguments(App,2,2);
 	SeedName =  App->ArgV[1];
 	for (i = 0; i < ngen; ++i)
 	{
@@ -270,8 +232,6 @@ static int init_args()
 	    strcpy(c,buf);
 	}
     }
-
-    return 0;
 }
 
 
@@ -334,18 +294,12 @@ static int WriteResult()
 
 
 
-static int Init(int argc, char **argv)
-
+static void init(int argc, char **argv)
 {
-    if ((App = appAlloc(&AppInfo,argc,argv)) == NULL)
-	return -1;
-    if (init_args() != 0)
-	return -1;
-    if (ReadGenerators() != 0)
-	return -1;
-    if (ReadSeed() != 0)
-	return -1;
-    return 0;
+    App = appAlloc(&AppInfo,argc,argv);
+    init_args();
+    readGenerators();
+    readSeed();
 }
 
 
@@ -363,17 +317,12 @@ static void Cleanup()
 
 
 int main(int argc, char **argv)
-
 {
     IntMatrix_t **optab = NULL;
     int flags;
     SpinUpInfo_t SpInfo;
 
-    if (Init(argc,argv) != 0)
-    {
-	mtxAbort(MTX_HERE,"Initialization failed");
-	return 1;
-    }
+    init(argc,argv);
 
     if (OpName != NULL)
 	optab = &OpTable;

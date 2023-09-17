@@ -8,9 +8,6 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // Local data
 
-
-#define PERM_MAGIC 0x30f8326b
-
 /// @defgroup perm Permutations
 /// @details
 /// In the MeatAxe, a permutation of degree n operates on {0,1,...,n-1} and is represented
@@ -49,7 +46,7 @@ int permIsValid(const Perm_t *p)
    if (p == NULL) {
       return 0;
    }
-   if (p->Magic != PERM_MAGIC || p->Degree < 0 || p->Data == NULL) {
+   if (p->Magic != MTX_TYPE_PERMUTATION || p->Degree < 0 || p->Data == NULL) {
       return 0;
    }
    for (int i = 0; i < p->Degree; ++i) {
@@ -70,7 +67,7 @@ void permValidate(const struct MtxSourceLocation* src, const Perm_t *p)
    if (p == NULL) {
       mtxAbort(src,"NULL permutation");
    }
-   if (p->Magic != PERM_MAGIC || p->Degree < 0 || p->Data == NULL) {
+   if (p->Magic != MTX_TYPE_PERMUTATION || p->Degree < 0 || p->Data == NULL) {
       mtxAbort(src,"Invalid permutation (magic=%d, deg=%d)", p->Magic, p->Degree);
    }
    for (int i = 0; i < p->Degree; ++i) {
@@ -103,7 +100,7 @@ Perm_t *permAlloc(uint32_t deg)
       mtxAbort(MTX_HERE,"Cannot allocate Perm_t structure");
       return NULL;
    }
-   p->Magic = PERM_MAGIC;
+   p->Magic = MTX_TYPE_PERMUTATION;
    p->Degree = deg;
    p->Data = NALLOC(uint32_t,deg);
    if (p->Data == NULL) {

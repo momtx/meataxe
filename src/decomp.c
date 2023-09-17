@@ -46,21 +46,20 @@ static Matrix_t *head = NULL;
 static int TransformGenerators = 0;	/* -t: Transform into decomp. basis */
 static int WriteAction = 0;		/* -a: Write action on components */
 
-static int ParseArgs()
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
+static void ParseArgs()
 {
     TransformGenerators = appGetOption(App,"-t");
     WriteAction = appGetOption(App,"-a");
-    if (appGetArguments(App,2,2) < 0)
-	return -1;
+    appGetArguments(App,2,2);
     ModName = App->ArgV[0];
     EndoName = App->ArgV[1];
-    return 0;
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static int ReadFiles()
-
+static void ReadFiles()
 {
     char fn[200];
     Matrix_t *tmp, *tmp2;
@@ -68,11 +67,9 @@ static int ReadFiles()
 
     /* Read the .cfinfo files and calculate some dimensions.
        ----------------------------------------------------- */
-    if (latReadInfo(&ModInfo,ModName) != 0)
-        return -1;
+    latReadInfo(&ModInfo,ModName);
     sprintf(fn,"%s.lrr",EndoName);
-    if (latReadInfo(&LrrInfo,fn) != 0)
-        return -1;
+    latReadInfo(&LrrInfo,fn);
     moddim = 0;
     for (i = 0; i < ModInfo.NCf; ++i)
 	moddim += ModInfo.Cf[i].dim * ModInfo.Cf[i].mult;
@@ -87,52 +84,33 @@ static int ReadFiles()
     {
 	mtxAbort(MTX_HERE,"The head (%d) is bigger than the ring itself (%d)!",
 		headdim,enddim);
-	return -1;
     }
     MESSAGE(1,("dim(M)=%d, dim(E)=%d, dim(Head)=%d\n",moddim,enddim,headdim));
 
-    /* Read the basis of the head.
-       --------------------------- */
+    // Read the basis of the head.
     sprintf(fn,"%s.lrr.soc",EndoName);
     MESSAGE(1,("Loading socle basis\n"));
-    if ((tmp = matLoad(fn)) == NULL)
-	return -1;
+    tmp = matLoad(fn);
     tmp2 = matInverse(tmp);
     matFree(tmp);
     tmp = matTransposed(tmp2);
     matFree(tmp2);
     head = matCutRows(tmp,0,headdim);
-
-    return 0;
 }
 
 
 
 
-static int Init(int argc, char **argv)
+static void Init(int argc, char **argv)
 {
-    if ((App = appAlloc(&AppInfo,argc,argv)) == NULL)                           
-        return -1;
-    if (ParseArgs() != 0)
-        return -1;
-    if (ReadFiles() != 0)
-        return -1;
-    return 0;
+    App = appAlloc(&AppInfo,argc,argv);
+    ParseArgs();
+    ReadFiles();
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
-
-static void Cleanup()
-
-{
-    appFree(App);
-}
-
-
-
-
-static int WriteOutput(Matrix_t *bas)
-
+static void WriteOutput(Matrix_t *bas)
 {
     char name[200];
     MatRep_t *rep = NULL;
@@ -150,17 +128,8 @@ static int WriteOutput(Matrix_t *bas)
     {
 	MESSAGE(1,("Transforming the generators\n"));
 	sprintf(name,"%s.std",ModName);
-	rep = mrLoad(name,ModInfo.NGen);
-	if (rep == NULL)
-	{
-	    mtxAbort(MTX_HERE,"Cannot load generators");
-	    return 1;
-	}
-	if (mrChangeBasis(rep,bas) != 0)
-	{
-	    mtxAbort(MTX_HERE,"Error changing basis");
-	    return 1;
-	}
+	rep = mrLoad(name, ModInfo.NGen);
+	mrChangeBasis(rep,bas);
 	if (TransformGenerators)
 	{
 	    sprintf(name,"%s.dec",ModName);
@@ -194,15 +163,12 @@ static int WriteOutput(Matrix_t *bas)
 	    }
 	}
     }
-
-    return 0;
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 int main(int argc, char **argv)
-
 {
-    int rc = 0;
     int i, j, l, num, dim = 0;
     Matrix_t *bas, *partbas = NULL, *mat, *ker;
     PTR headptr;
@@ -210,12 +176,7 @@ int main(int argc, char **argv)
     char name[200];
     FPoly_t *pol = NULL;
 
-                                                                                
-    if (Init(argc,argv) != 0)                                                   
-    {                                                                           
-        mtxAbort(MTX_HERE,"Initialization failed");                                     
-        return 1;                                                               
-    }                                                                           
+    Init(argc,argv);
 
 /* -------------------------------------------------------
    makes the corresponding element of the endomorphismring
@@ -254,7 +215,7 @@ int main(int argc, char **argv)
 
 		if (pol != NULL)
 		    fpFree(pol);
-		pol = charPol(partbas);
+		pol = charpol(partbas);
 	    }
 	    while (LrrInfo.Cf[i].dim != 1 && pol->NFactors == 1 
 		&& pol->Factor[0]->Degree == 1
@@ -300,11 +261,11 @@ int main(int argc, char **argv)
 
 
 
-    rc = WriteOutput(bas);
+    WriteOutput(bas);
 
 
-    Cleanup();
-    return rc;
+    appFree(App);
+    return 0;
 }
 
 

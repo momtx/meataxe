@@ -30,127 +30,76 @@ MTX_COMMON_OPTIONS_DESCRIPTION
 
 static MtxApplication_t *App = NULL;
 static const char *iname, *oname;
-static MtxFile_t *ifile, *ofile;
-static PTR m1;				/* Workspace, one row */
+static MtxFile_t* ifile;
+static MtxFile_t* ofile;
 
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static int Init(int argc, char **argv)
-
+static void init(int argc, char **argv)
 {
-    /* Parse command line
-       ------------------ */
-    if ((App = appAlloc(&AppInfo,argc,argv)) == NULL)
-	return -1;
-    if (appGetArguments(App,2,2) < 0)
-	return -1;
+    App = appAlloc(&AppInfo,argc,argv);
+    appGetArguments(App,2,2);
     iname = App->ArgV[0];
     oname = App->ArgV[1];
-    return 0;
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
-
-
-static int OpenFiles()
+static void openFiles()
 {
-    /* Open the input file
-       ------------------- */
-    if ((ifile = mfOpen(iname)) == NULL)
-	return -1;
-    if (ifile->Field < 2) 
-    {
+    ifile = mfOpen(iname);
+    mfReadHeader(ifile);
+    if (mfObjectType(ifile) != MTX_TYPE_MATRIX)
 	mtxAbort(MTX_HERE,"%s: %s",iname,MTX_ERR_NOTMATRIX);
-	return -1;
-    }
-    ffSetField(ifile->Field); 
-    MESSAGE(0,("Characteristic is %d\n",ffChar));
-
-    /* Open output file, allocate memory.
-       ---------------------------------- */
-    if ((ofile = mfCreate(oname,ifile->Field,ifile->Nor,ifile->Noc)) == NULL)
-    {
-	mtxAbort(MTX_HERE,"Cannot create output file");
-	return -1;
-    }
-    m1 = ffAlloc(1, ifile->Noc);
-    if (m1 == NULL)
-	return -1;
-    return 0;
+    ffSetField(ifile->header[0]); 
+    MESSAGE(0,("Characteristic is %lu\n",(unsigned long) ffChar));
+    ofile = mfCreate(oname,ifile->header[0],ifile->header[1],ifile->header[2]);
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
-
-static void Cleanup()
-
+static void cleanup()
 {
-    if (ifile != NULL)
-	mfClose(ifile);
-    if (ofile != NULL)
-	mfClose(ofile);
-    sysFree(m1);
-    if (App != NULL)
-	appFree(App);
+   mfClose(ifile);
+   mfClose(ofile);
+   appFree(App);
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static int FrobeniusMap()
-
+static void frobeniusMap()
 {
-    int i;
+    const uint32_t nor = ifile->header[1];
+    const uint32_t noc = ifile->header[2];
+    PTR m1 = ffAlloc(1, noc);
 
-    /* Apply the frobenius map to each entry.
-       -------------------------------------- */
-    for (i = 0; i < ifile->Nor; ++i)
+    for (uint32_t i = 0; i < nor; ++i)
     {
-	int k;
-	if (mfReadRows(ifile,m1,1) != 1)
-	{
-	    mtxAbort(MTX_HERE,"Error reading %s",iname);
-	    return 1;
-	}
-	for (k = 0; k < ifile->Noc; ++k)
+	mfReadRows(ifile,m1,1, noc);
+	for (uint32_t k = 0; k < noc; ++k)
 	{
 	    FEL f1 = ffExtract(m1,k);
 	    FEL f2 = f1;
-	    int n;
-	    for (n = ffChar - 1; n != 0; --n)
+	    for (uint32_t n = ffChar - 1; n != 0; --n)
 		f2 = ffMul(f1,f2);
 	    ffInsert(m1,k,f2);
 	}
-	if (mfWriteRows(ofile,m1,1) != 1)
-	{
-	    mtxAbort(MTX_HERE,"Error writing %s",oname);
-	    return 1;
-	}
+	mfWriteRows(ofile,m1,1,noc);
     }
-
-    return 0;
+    sysFree(m1);
 }
 
-
-
-/* ------------------------------------------------------------------
-   main()
-   ------------------------------------------------------------------ */
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 int main(int argc, char **argv)
-
 {
-    if (Init(argc,argv) != 0)
-    {
-	mtxAbort(MTX_HERE,"Initialization failed");
-	return 1;
-    }
-    if (OpenFiles() != 0)
-	return 1;
-    if (FrobeniusMap() != 0)
-	return 1;
-    Cleanup();
+    init(argc,argv);
+    openFiles();
+    frobeniusMap();
+    cleanup();
     return 0;
 }
-
-
 
 /**
 @page prog_zfr zfr - Frobenius Automorphism

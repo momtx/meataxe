@@ -120,6 +120,32 @@ TstResult Os_FileIo()
    return 0;
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+TstResult Os_Seek()
+{
+   uint32_t data[10];
+   const size_t nData = sizeof(data) / sizeof(data[0]);
+   for (size_t i = 0; i < nData; ++i) data[i]  = i;
+
+   const char *fileName = "check.1";
+   FILE *file = sysFopen(fileName, "w+b");
+   sysWrite32(file, data, nData);
+
+   sysFseek(file, (nData / 3) * sizeof(data[0]));
+   uint32_t buf;
+   sysRead32(file, &buf, 1);
+   ASSERT_EQ_INT(buf, nData / 3);
+
+   sysFseekRelative(file, (nData / 3) * sizeof(data[0]));
+   sysRead32(file, &buf, 1);
+   ASSERT_EQ_INT(buf, 2 * nData / 3 + 1);
+
+   fclose(file); 
+   remove(fileName);
+   return 0;
+}
+
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 

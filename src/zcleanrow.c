@@ -26,7 +26,7 @@
 /// @param nor Number of columns in @a row and @a matrix.
 /// @param piv The pivot table.
 
-void ffCleanRow(PTR row, PTR matrix, int nor, int noc, const int *piv)
+void ffCleanRow(PTR row, PTR matrix, int nor, int noc, const uint32_t *piv)
 {
    PTR x;
    int i;
@@ -53,10 +53,11 @@ void ffCleanRow(PTR row, PTR matrix, int nor, int noc, const int *piv)
 /// @param mat Matrix to clean with.
 /// @param nor Number of rows.
 /// @param piv Pivot table for @em matrix.
-/// @param row2 Pointer to row where the operations are recorded.
+/// @param row2 Pointer to row where the operations are recorded. Must be filled with zeroes
+///    by the caller!
 /// @return 0 on success, -1 on error (if any of the pointer arguments is NULL).
 
-int ffCleanRow2(PTR row, PTR mat, int nor, int noc, const int *piv, PTR row2)
+int ffCleanRow2(PTR row, PTR mat, int nor, int noc, const uint32_t *piv, PTR row2)
 {
    int i;
    PTR x;
@@ -89,7 +90,7 @@ int ffCleanRow2(PTR row, PTR mat, int nor, int noc, const int *piv, PTR row2)
 /// @param mat2 Matrix to the second matrix.
 /// @return 0 on success, -1 on error.
 
-int ffCleanRowAndRepeat(PTR row, PTR mat, int nor, int noc, const int *piv, PTR row2, PTR mat2)
+int ffCleanRowAndRepeat(PTR row, PTR mat, int nor, int noc, const uint32_t *piv, PTR row2, PTR mat2)
 {
    int i;
    PTR x, x2;

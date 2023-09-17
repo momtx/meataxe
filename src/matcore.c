@@ -43,7 +43,7 @@
 /// @class Matrix_t
 /// @brief
 /// The @c Data field is a pointer to the matrix elements, organized as an array
-/// of rows. Note that the size of a row (@c RowSize field) is different from the number
+/// of rows. Note that the size of a row is different from the number
 /// of columns because more than one mark can be packed into a byte, and rows are always
 /// padded to a multiple of sizeof(long).
 /// Both Nor and Noc may be zero. In this case, Data ist still a valid pointer, but the
@@ -52,19 +52,13 @@
 /// of columns. There is no global field order or row length as at the kernel layer.
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-// Local data
-
-
-#define MAT_MAGIC 0x6233af91
-
-////////////////////////////////////////////////////////////////////////////////////////////////////
 
 /// Returns true if the given matrix is valid.
 
 int matIsValid(const Matrix_t *mat)
 {
    return mat != NULL
-      && mat->Magic == MAT_MAGIC 
+      && mat->Magic == MTX_TYPE_MATRIX 
       && mat->Field >= 2 
       && mat->Nor >= 0 
       && mat->Noc >= 0;
@@ -79,7 +73,7 @@ void matValidate(const struct MtxSourceLocation* src, const Matrix_t *mat)
 {
    if (mat == NULL)
       mtxAbort(src,"NULL matrix");
-   if (mat->Magic != MAT_MAGIC || mat->Field < 2 || mat->Nor < 0 || mat->Noc < 0) {
+   if (mat->Magic != MTX_TYPE_MATRIX || mat->Field < 2 || mat->Nor < 0 || mat->Noc < 0) {
       mtxAbort(src ? src : MTX_HERE,"Invalid matrix (field=%d, nor=%d, noc=%d)",
             mat->Field, mat->Nor,mat->Noc);
    }
@@ -119,13 +113,12 @@ Matrix_t *matAlloc(int field, int nor, int noc)
    }
 
    // Initialize the data structure
-   m->Magic = MAT_MAGIC;
+   m->Magic = MTX_TYPE_MATRIX;
    m->Field = field;
    m->Nor = nor;
    m->Noc = noc;
    m->PivotTable = NULL;
    m->Data = ffAlloc(nor, noc);
-   m->RowSize = ffRowSize(noc);
    if (m->Data == NULL) {
       sysFree(m);
       mtxAbort(MTX_HERE,"Cannot allocate matrix data");
@@ -157,7 +150,8 @@ PTR matGetPtr(const Matrix_t *mat, int row)
       return NULL;
    }
 #endif
-   return (PTR)((char *) mat->Data + mat->RowSize * row);
+   ffSetField(mat->Field);
+   return ffGetPtr(mat->Data, row, mat->Noc);
 }
 
 

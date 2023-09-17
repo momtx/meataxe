@@ -14,7 +14,7 @@
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static int CheckArgs(int ngen, Matrix_t  **gen1, const CfInfo *info1, Matrix_t **gen2, int use_pw)
+static void checkArgs(int ngen, Matrix_t  **gen1, const CfInfo *info1, Matrix_t **gen2, int use_pw)
 {
    int j;
 
@@ -28,41 +28,33 @@ static int CheckArgs(int ngen, Matrix_t  **gen1, const CfInfo *info1, Matrix_t *
       if (gen1[j]->Nor != gen1[j]->Noc)
       {
          mtxAbort(MTX_HERE,"gen1[%d]: Matrix not square",j);
-         return -1;
       }
       if (gen2[j]->Nor != gen2[j]->Noc)
       {
          mtxAbort(MTX_HERE,"gen2[%d]: Matrix not square",j);
-         return -1;
       }
       if (gen1[j]->Field != gen1[0]->Field || gen1[j]->Nor != gen1[0]->Nor)
       {
          mtxAbort(MTX_HERE,"gen1[%d]: Incompatible matrix",j);
-         return -1;
       }
       if (gen2[j]->Field != gen1[0]->Field)
       {
          mtxAbort(MTX_HERE,"gen2[%d]: Incompatible matrix",j);
-         return -1;
       }
    }
 
    if (info1->dim != gen1[0]->Nor)
    {
       mtxAbort(MTX_HERE,"Inconsistent cfinfo data");
-      return -1;
    }
    if (use_pw && info1->peakword == 0)
    {
       mtxAbort(MTX_HERE,"No peak word available");
-      return -1;
    }
    if (!use_pw && info1->idword == 0)
    {
       mtxAbort(MTX_HERE,"No id word available");
-      return -1;
    }
-   return 0;
 }
 
 
@@ -90,7 +82,7 @@ static int CheckArgs(int ngen, Matrix_t  **gen1, const CfInfo *info1, Matrix_t *
 /// @param rep2 The second representation.
 /// @param trans Buffer for basis transformation matrix, or NULL.
 /// @param use_pw If different from zero, use peak word instead of the identifying word.
-/// @return 1 if the representations are isomorphic, 0 otherwise, -1 on error.
+/// @return 1 if the representations are isomorphic, 0 otherwise
 
 int IsIsomorphic(const MatRep_t *rep1, const CfInfo *info1,
     		 const MatRep_t *rep2, Matrix_t  **trans, int use_pw)
@@ -100,8 +92,7 @@ int IsIsomorphic(const MatRep_t *rep1, const CfInfo *info1,
     Matrix_t  *word, *m, *seed, *b, *bi;
     int result;
 
-    if (CheckArgs(rep1->NGen,rep1->Gen,info1,rep2->Gen,use_pw) != 0)
-	return -1;
+    checkArgs(rep1->NGen,rep1->Gen,info1,rep2->Gen,use_pw);
  
     /* Check if the dimensions are equal
        --------------------------------- */

@@ -96,10 +96,8 @@ int matCopyRegion(Matrix_t *dest, int destrow, int destcol,
          ffInsert(d,destcol + k - col1,ffExtract(s,k));
 #endif
       }
-      /*s = ffGetPtr(s,1,src->Noc);*/
-      s = (PTR)((char *)s + src->RowSize);
-      /*d = ffGetPtr(d,1,dest->Noc);*/
-      d = (PTR)((char *)d + dest->RowSize);
+      ffStepPtr(&s, src->Noc);
+      ffStepPtr(&d, dest->Noc);
    }
 
    mat_DeletePivotTable(dest);

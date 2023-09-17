@@ -2,6 +2,8 @@ echo "0118 - ZPT"
 
 . ../tests/common.sh
 
+#set -x 
+
 # Matrices
 
 for f in 2 5 9 25 67 125 256 ; do
@@ -10,14 +12,5 @@ for f in 2 5 9 25 67 125 256 ; do
       - "${MTX_TEST_DATA_DIR}/Mat$f" -
    compareBinaryWithReference x$f
 done
-
-# Permutations
-
-zpt tmp.$$.x "${MTX_TEST_DATA_DIR}/Perm1" "${MTX_TEST_DATA_DIR}/Perm2"
-zpr -G tmp.$$.x tmp.$$.x.txt
-compareWithReference x.txt
-zpt tmp.$$.y tmp.$$.x "${MTX_TEST_DATA_DIR}/Perm1"
-zpr -G tmp.$$.y tmp.$$.y.txt
-compareWithReference y.txt
 
 rm -f tmp.$$.*

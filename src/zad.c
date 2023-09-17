@@ -33,171 +33,106 @@ static MtxApplication_t *App = NULL;
 
 #define MTX_MAX_INPUT 20
 int NInput;			    /* Number of input matrices */
-FILE *Input[MTX_MAX_INPUT] = {0};	    /* Input matrices */
+MtxFile_t* Input[MTX_MAX_INPUT] = {0};
 int Subtract[MTX_MAX_INPUT];
-int Field = -1, Nor = -1, Noc = -1;
+uint32_t Field = 0;
+uint32_t Nor = 0;
+uint32_t Noc = 0;
 PTR Buf1, Buf2;			    /* Working buffer */
-FILE *Output = NULL;		    /* Output file */
+MtxFile_t *Output = NULL;
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static int CheckHeader(const char *fn, int fl, int nor, int noc)
-
+static void init(int argc, char **argv)
 {
-    static const char *fn0 = NULL;
-
-    if (fl < 2) 
-    {
-	mtxAbort(MTX_HERE,"%s: %s",fn,MTX_ERR_NOTMATRIX);
-	return -1;
-    }
-    if (Nor == -1)
-    {
-	Nor = nor;
-	Noc = noc;
-	Field = fl;
-	fn0 = fn;
-    }
-    else if (fl != Field || nor != Nor || noc != Noc)
-    {
-	mtxAbort(MTX_HERE,"%s and %s: %s",fn0,fn,MTX_ERR_INCOMPAT);
-	return -1;
-    }
-    return 0;
-}
-
-
-
-/* ------------------------------------------------------------------
-   Init()
-   ------------------------------------------------------------------ */
-
-static int Init(int argc, char **argv)
-
-{
-    int i;
-
-    if ((App = appAlloc(&AppInfo,argc,argv)) == NULL)
-	return -1;
-
-    /* Parse command line.
-       ------------------- */
-    if (appGetArguments(App,3,MTX_MAX_INPUT + 1) < 0)
-	return -1;
+    App = appAlloc(&AppInfo,argc,argv);
+    appGetArguments(App,3,MTX_MAX_INPUT + 1);
     NInput = App->ArgC - 1;
 
-    /* Open the input files
-       -------------------- */
-    for (i = 0; i < NInput; ++i)
+    // Open the input files
+    for (int i = 0; i < NInput; ++i)
     {
-	int nor2, noc2, fl2;
 	const char *file_name = App->ArgV[i];
 	Subtract[i] = *file_name == '-';
 	if (*file_name == '-' || *file_name == '+')
 	    ++file_name;
-	Input[i] = ffReadHeader(file_name,&fl2,&nor2,&noc2);
-	if (Input[i] == NULL)
-	    return -1;
-	if (CheckHeader(file_name,fl2,nor2,noc2) != 0)
-	    return -1;
+	Input[i] = mfOpen(file_name);
+	mfReadHeader(Input[i]);
+
+        if (mfObjectType(Input[i]) != MTX_TYPE_MATRIX) {
+           mtxAbort(MTX_HERE, "%s: %s (type=0x%lx)",
+                 Input[i]->Name,
+                 MTX_ERR_NOTMATRIX,
+                 (long)Input[i]->header[0]);
+        }
+        if (i == 0)
+        {
+           Field = Input[i]->header[0];
+           Nor = Input[i]->header[1];
+           Noc = Input[i]->header[2];
+        }
+        else if (Input[i]->header[0] != Field
+              || Input[i]->header[1] != Nor || Input[i]->header[2] != Noc) {
+           mtxAbort(MTX_HERE,"%s and %s: %s",Input[0]->Name,Input[i]->Name,MTX_ERR_INCOMPAT);
+        }
     }
 
-    /* Open the output file.
-       --------------------- */
-    Output = ffWriteHeader(App->ArgV[App->ArgC - 1],Field,Nor,Noc);
-    if (Output == NULL)
-	return -1;
+    // Open the output file.
+    Output = mfCreate(App->ArgV[App->ArgC - 1], Field, Nor, Noc);
 
-    /* Allocate workspace
-       ------------------ */
+    // Allocate workspace
     ffSetField(Field);
     Buf1 = ffAlloc(1, Noc);
     Buf2 = ffAlloc(1, Noc);
-    if (Buf1 == NULL || Buf2 == NULL)
-	return -1;
-
-    return 0;
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
-
-
-/* ------------------------------------------------------------------
-   CleanUp()
-   ------------------------------------------------------------------ */
-
-static void CleanUp()
-
+static void cleanUp()
 {
-    int i;
-
-    /* Close all files.
-       ---------------- */
-    for (i = 0; i < NInput; ++i)
-    {
-	if (Input[i] != NULL)
-	    fclose(Input[i]);
-    }
-    if (Output != NULL)
-	fclose(Output);
+    // Close all files.
+    for (int i = 0; i < NInput; ++i)
+       mfClose(Input[i]);
+    mfClose(Output);
  
-    /* Free workspace.
-       --------------- */
-    if (Buf1 != NULL) sysFree(Buf1);
-    if (Buf2 != NULL) sysFree(Buf2);
-    if (App != NULL) appFree(App);
+    // Free workspace.
+    sysFree(Buf1);
+    sysFree(Buf2);
+    appFree(App);
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
-
-static int AddMatrices()
+static void addMatrices()
 {
-    int i;
-    FEL MinusOne = ffNeg(FF_ONE);
+    const FEL MinusOne = ffNeg(FF_ONE);
 
-    /* Process the matrices row by row.
-       -------------------------------- */
-    for (i = Nor; i > 0; --i)
+    for (uint32_t i = Nor; i > 0; --i)
     {
-	int k;
-
-	/* Read a row from the first matrix.
-	   --------------------------------- */
-	ffReadRows(Input[0],Buf1,1, Noc);
+	mfReadRows(Input[0],Buf1, 1, Noc);
 	if (Subtract[0])
-	    ffMulRow(Buf1,MinusOne, Noc);
-
-	/* Add or subtract rows from the other matrices.
-	   --------------------------------------------- */
-	for (k = 1; k < NInput; ++k)
+	    ffMulRow(Buf1, MinusOne, Noc);
+	for (int k = 1; k < NInput; ++k)
 	{
-	    ffReadRows(Input[k],Buf2,1, Noc);
+	    mfReadRows(Input[k],Buf2, 1, Noc);
 	    if (Subtract[k])
 		ffAddMulRow(Buf1,Buf2,MinusOne, Noc);
 	    else
 		ffAddRow(Buf1,Buf2, Noc);
 	}
 
-	/* Write the result to the output file.
-	   ------------------------------------ */
-	ffWriteRows(Output,Buf1,1, Noc);
+	mfWriteRows(Output, Buf1, 1, Noc);
     }
-    return 0;
 }
 
-
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 int main(int argc, char **argv)
-
 {
-    int rc;
-    if (Init(argc, argv) != 0)
-    {
-	mtxAbort(MTX_HERE,"Initialization failed");
-	return 1;
-    }
-    rc = AddMatrices();
-    CleanUp();
-    return rc;
+    init(argc, argv);
+    addMatrices();
+    cleanUp();
+    return 0;
 }
 
 

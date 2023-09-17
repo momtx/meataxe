@@ -79,17 +79,12 @@ static MtxApplication_t *App = NULL;
    ----------------------------------------------------------------- */
 
 static void ReadFiles(const char *basename)
-
 {
     FILE *f;
     char fn[200];
     int i;
 
-    if (latReadInfo(&LI,basename) != 0)
-    {
-	mtxAbort(MTX_HERE,"Error reading %s.cfinfo",basename);
-	return;
-    }
+    latReadInfo(&LI,basename);
 
     cfstart[0] = 0;
     for (i = 1; i <= LI.NCf; ++i)
@@ -99,17 +94,9 @@ static void ReadFiles(const char *basename)
        ------------------------- */
     sprintf(fn,"%s.inc",LI.BaseName);
     f = sysFopen(fn,"rb");
-    if (f == NULL) 
-    {
-	mtxAbort(MTX_HERE,"Cannot open %s",fn);
-	return;
-    }
     sysRead32(f,&nmountains,1);
     if (nmountains != cfstart[LI.NCf]) 
-    {
 	mtxAbort(MTX_HERE,"Bad number of mountains in .inc file");
-	return;
-    }
     MESSAGE(1,("Reading incidence matrix (%lu mountains)\n",(unsigned long) nmountains));
     fflush(stdout);
     for (i = 0; i < (int) nmountains; ++i)
@@ -127,35 +114,22 @@ static void ReadFiles(const char *basename)
     sprintf(fn,"%s.mnt",LI.BaseName);
     MESSAGE(1,("Reading classes (%s)\n",fn));
     f = sysFopen(fn,"r");
-    if (f == NULL) 
-    {
-	mtxAbort(MTX_HERE,"Cannot open %s",fn);
-	return;
-    }
     for (i = 0; i < nmountains; ++i)
     {
 	long mno, mdim, nvec, *p;
 	int k;
-	if (fscanf(f,"%ld%ld%ld",&mno,&mdim,&nvec) != 3 ||
-	    mno != i || nvec < 1  || mdim < 1)
-	{
+	if (fscanf(f,"%ld%ld%ld",&mno,&mdim,&nvec) != 3 || mno != i || nvec < 1  || mdim < 1) {
 	    mtxAbort(MTX_HERE,"Invalid .mnt file");
-	    return;
 	}
 	p = class[i] = NALLOC(long,nvec+2);
 	*p++ = nvec;
-	for (k = 0; k < nvec; ++k, ++p)
-	{
-	    if (fscanf(f,"%ld",p) != 1 || *p < 1)
-	    {
+	for (k = 0; k < nvec; ++k, ++p) {
+	    if (fscanf(f,"%ld",p) != 1 || *p < 1) {
 		mtxAbort(MTX_HERE,"Invalid .mnt file");
-		return;
 	    }
 	}
-	if (fscanf(f,"%ld",p) != 1 || *p != -1)
-	{
+	if (fscanf(f,"%ld",p) != 1 || *p != -1) {
 	    mtxAbort(MTX_HERE,"Invalid .mnt file");
-	    return;
 	}
     }
 }

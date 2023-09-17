@@ -112,34 +112,26 @@ static void ReadQMatrices()
      0 = ok, -1 = error
    -------------------------------------------------------------------------- */
 
-static int Init(int argc, char **argv)
-
+static void Init(int argc, char **argv)
 {
     /* Initialize the MeatAxe library, process command line
        ---------------------------------------------------- */
-    if ((App = appAlloc(&AppInfo,argc,argv)) == NULL)
-	return -1;
-    if (appGetArguments(App,3,3) != 3)
-	return -1;
+    App = appAlloc(&AppInfo,argc,argv);
+    appGetArguments(App,3,3);
 
     /* Read input files
        ---------------- */
     TkiName = App->ArgV[0];
-    if (tkReadInfo(&TkInfo,TkiName) != 0)
-	return -1;
-    if (latReadInfo(&InfoM,TkInfo.NameM) != 0 ||
-        latReadInfo(&InfoN,TkInfo.NameN) != 0)
-	return -1;
+    tkReadInfo(&TkInfo,TkiName);
+    latReadInfo(&InfoM,TkInfo.NameM);
+    latReadInfo(&InfoN,TkInfo.NameN);
     CondMat = matLoad(App->ArgV[1]);
-    if (CondMat == NULL)
-	return -1;
 
     /* Other initializations
        --------------------- */
     UncondName = App->ArgV[2];
     AllocateResult();
     ReadQMatrices();
-    return 0;
 }
 
 
@@ -282,16 +274,9 @@ static void Uncondense(int row)
    -------------------------------------------------------------------------- */
 
 int main(int argc, char **argv)
-
 {
-    int row;
-
-    if (Init(argc,argv) != 0)
-    {
-	mtxAbort(MTX_HERE,"Initialization failed");
-	return 1;
-    }
-    for (row = 0; row < CondMat->Nor; ++row)
+    Init(argc,argv);
+    for (int row = 0; row < CondMat->Nor; ++row)
 	Uncondense(row);
     matSave(UncondMat,UncondName);
     if (App != NULL)

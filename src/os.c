@@ -44,10 +44,11 @@
 
 #endif
 
+#include <errno.h>
+#include <stdarg.h>
+#include <stdlib.h>
 #include <string.h>
 #include <time.h>
-#include <stdlib.h>
-#include <stdarg.h>
 
 /* ------------------------------------------------------------------
    Global data
@@ -242,7 +243,7 @@ FILE *sysFopen(const char *name, const char* mode)
    }
 
    if (f == NULL && raiseError) {
-      mtxAbort(MTX_HERE,"%s (mode=%s): %S",name, sysMode);
+      mtxAbort(MTX_HERE,"Cannot open %s (mode=%s): %s",name, sysMode, strerror(errno));
    }
    return f;
 }
@@ -254,7 +255,7 @@ FILE *sysFopen(const char *name, const char* mode)
 /// This function sets the file pointer to a given position. If pos is greater than or equal to
 /// zero, it is interpreted as an absolute position (relative to start of file). If @c pos is
 /// negative, the file pointer is moved to the end of file.
-/// @see sysFseekRelative(), ffSeekRow()
+/// @see sysFseekRelative()
 /// @param file File handle.
 /// @param pos New position of file pointer.
 /// @return 0 on success, nonzero otherwise.
@@ -268,6 +269,20 @@ int sysFseek(FILE *file, long pos)
    }
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+/// Set file pointer relative to current position.
+/// This function moves the file pointer by a given number of bytes, which may be positive
+/// or negative.
+/// @param file The file handle.
+/// @param distance The number of bytes by which the file pointer shall be moved.
+/// @return 0 on success, nonzero on error.
+/// @see sysFseek()
+
+int sysFseekRelative(FILE *file, long distance)
+{
+   return fseek(file,distance,SEEK_CUR);
+}
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -329,22 +344,6 @@ int sysCreateDirectory(const char *name)
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-/// Set file pointer relative to current position.
-/// This function moves the file pointer by a given number of bytes, which may be positive
-/// or negative.
-/// @param file The file handle.
-/// @param distance The number of bytes by which the file pointer shall be moved.
-/// @return 0 on success, nonzero on error.
-/// @see sysFseek(), ffSeekRow()
-
-int sysFseekRelative(FILE *file, long distance)
-{
-   return fseek(file,distance,SEEK_CUR);
-}
-
-
-////////////////////////////////////////////////////////////////////////////////////////////////////
-
 /// Allocate memory.
 /// This function works like @c malloc(), but the return value is never NULL, even if @a nbytes is
 /// 0. The allocated memory region is initialized with zeroes.
@@ -381,7 +380,7 @@ void *sysRealloc(void *buf, size_t nbytes)
    }
    x = realloc(buf,nbytes);
    if (x == NULL) {
-      mtxAbort(MTX_HERE,"Cannot reallocate %l bytes: %S",(long) nbytes);
+      mtxAbort(MTX_HERE,"Cannot reallocate %lu bytes: %s",(long) nbytes, strerror(errno));
    }
    //printf("realloc(0x%p, %lu)=0x%p\n", buf, (unsigned long) nbytes, x);
    return x;

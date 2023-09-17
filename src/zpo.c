@@ -80,17 +80,17 @@ static void Cleanup()
 
 static int CalcPower()
 {
-    void *x = XLoad(App->ArgV[0]);
+    void *x = objLoad(App->ArgV[0]);
     void *y;
 
     if (x == NULL)
 	return -1;
-    y = XPower(x,Power);
+    y = objPower(x,Power);
     if (y == NULL)
 	return -1;
-    XSave(y,App->ArgV[2]);
-    XFree(x);
-    XFree(y);
+    objSave(y,App->ArgV[2]);
+    objFree(x);
+    objFree(y);
     return 0;
 
 }

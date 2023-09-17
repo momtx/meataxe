@@ -27,7 +27,7 @@
 /// repectively.
 /// @param basename Base file name for generators.
 /// @param ngen Number of generators.
-/// @return Pointer to the representation, or 0 on error.
+/// @return Pointer to the representation.
 
 MatRep_t *mrLoad(const char *basename, int ngen)
 {
@@ -41,17 +41,9 @@ MatRep_t *mrLoad(const char *basename, int ngen)
    fn = sysMalloc(strlen(basename) + 10);
    if (fn == NULL) {
       mtxAbort(MTX_HERE,"Cannot allocate buffer");
-      return NULL;
    }
 
-   /* Allocate the Representation
-      --------------------------- */
    mr = mrAlloc(0,NULL,0);
-   if (mr == NULL) {
-      mtxAbort(MTX_HERE,"Cannot allocate representation");
-      sysFree(fn);
-      return NULL;
-   }
 
    /* Read the generators
       ------------------- */
@@ -63,12 +55,8 @@ MatRep_t *mrLoad(const char *basename, int ngen)
       } else {
          sprintf(fn,"%s.%d",basename,i + 1);
       }
-      if (((gen = matLoad(fn)) == NULL) || (mrAddGenerator(mr,gen,0) != 0)) {
-         mtxAbort(MTX_HERE,"Cannot load generator");
-         mrFree(mr);
-         sysFree(fn);
-         return NULL;
-      }
+      gen = matLoad(fn);
+      mrAddGenerator(mr,gen,0);
    }
 
    sysFree(fn);

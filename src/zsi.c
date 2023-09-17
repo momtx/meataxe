@@ -14,10 +14,10 @@
    ------------------------------------------------------------------ */
 
 
-static int NorA, NorB;
-static int Noc;
-static int *Piv;
-static PTR Wrk1, Wrk2;
+static uint32_t norA, norB;
+static uint32_t noc;
+static uint32_t *Piv;
+static PTR wrk1, wrk2;
 static const char *aname, *bname, *sumname, *intname;
 
 
@@ -39,137 +39,75 @@ MTX_COMMON_OPTIONS_DESCRIPTION
 
 static MtxApplication_t *App = NULL;
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
-/* ------------------------------------------------------------------
-   WritefFles() - Write out the result
-   ------------------------------------------------------------------ */
-
-static int WriteFiles()
+static void writeFiles()
 {	
-    MtxFile_t *of;
-    
-    MESSAGE(0,("Sum %d, Intersection %d\n",NorA,NorB));
-    MESSAGE(1,("Writing sum to %s\n",sumname));
-    if ((of = mfCreate(sumname,ffOrder,NorA,Noc)) == NULL)
-	return -1;
-    if (mfWriteRows(of,Wrk1,NorA) != NorA)
-	return -1;
+    MESSAGE(0,("Sum %d, Intersection %d\n",norA,norB));
+
+    MtxFile_t* of = mfCreate(sumname,ffOrder,norA,noc);
+    mfWriteRows(of,wrk1,norA, noc);
     mfClose(of);
 
-    MESSAGE(1,("Writing intersection to %s\n",intname));
-    if ((of = mfCreate(intname,ffOrder,NorB,Noc)) == NULL)
-	return -1;
-    if (mfWriteRows(of,ffGetPtr(Wrk2,NorA,Noc),NorB) != NorB)
-	return -1;
+    of = mfCreate(intname,ffOrder,norB,noc);
+    mfWriteRows(of,ffGetPtr(wrk2,norA,noc),norB, noc);
     mfClose(of);
-
-    return 0;
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
-
-/* ------------------------------------------------------------------
-   ReadFile() - Read the two spaces.
-   ------------------------------------------------------------------ */
-
-static int ReadFiles()
+static void readFiles()
 {
-    MtxFile_t *af, *bf;
+    MtxFile_t* af = mfOpen(aname);
+    mfReadHeader(af);
+    if (mfObjectType(af) != MTX_TYPE_MATRIX)
+       mtxAbort(MTX_HERE, "%s: %s", aname, MTX_ERR_NOTMATRIX);
+    norA = af->header[1];
+    noc = af->header[2];
 
-    /* Open files and check headers.
-       ----------------------------- */
-    if ((af = mfOpen(aname)) == NULL || (bf = mfOpen(bname)) == NULL)
-    {
-	mtxAbort(MTX_HERE,"Cannot open input file");
-	return -1;
-    }
-    if (af->Field < 2)
-    {
-	mtxAbort(MTX_HERE,"%s: %s",aname,MTX_ERR_NOTMATRIX);
-	return -1;
-    }
-    if (af->Field != bf->Field || af->Noc != bf->Noc)
-    {
+    MtxFile_t* bf = mfOpen(bname);
+    mfReadHeader(bf);
+    if (mfObjectType(bf) != MTX_TYPE_MATRIX)
+       mtxAbort(MTX_HERE, "%s: %s", bname, MTX_ERR_NOTMATRIX);
+    norB = bf->header[1];
+    if (bf->header[0] != af->header[0] || bf->header[2] != noc)
 	mtxAbort(MTX_HERE,"%s and %s: %s",aname,bname,MTX_ERR_INCOMPAT);
-	return -1;
-    }
     
-    /* Allocate work space.
-       -------------------- */
-    ffSetField(af->Field);
-    Noc = af->Noc;
-    NorA = af->Nor;
-    NorB = bf->Nor;
-    Wrk1 = ffAlloc(NorA + NorB, Noc);
-    Wrk2 = ffAlloc(NorA + NorB, Noc);
-    Piv = NALLOC(int,NorA+NorB);
-    if (Wrk1 == NULL || Wrk2 == NULL || Piv == NULL)
-	return -1;
+    // Allocate work spaces.
+    ffSetField(af->header[0]);
+    wrk1 = ffAlloc(norA + norB, noc);
+    wrk2 = ffAlloc(norA + norB, noc);
+    Piv = NALLOC(uint32_t,norA+norB);
 
-    /* Read files.
-       ----------- */
-    MESSAGE(1,("Reading input files\n"));
-    if (mfReadRows(af,Wrk1,NorA) != NorA ||
-	mfReadRows(bf,ffGetPtr(Wrk1,NorA,Noc),NorB) != NorB)
-    {
-	mtxAbort(MTX_HERE,"Error reading input file");
-	return -1;
-    }
+    // Read both subspaces into wrk1.
+    mfReadRows(af,wrk1,norA,noc);
+    mfReadRows(bf,ffGetPtr(wrk1,norA,noc),norB, noc);
 
     mfClose(af);
     mfClose(bf);
-    return 0;
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
-
-static int Init(int argc, char **argv)
-
+static void init(int argc, char **argv)
 {
-    /* Parse command line
-       ------------------ */
-    if ((App = appAlloc(&AppInfo,argc,argv)) == NULL)
-	return -1;
-    if (appGetArguments(App,4,4) < 0)
-	return -1;
+    App = appAlloc(&AppInfo,argc,argv);
+    appGetArguments(App,4,4);
     aname = App->ArgV[0];
     bname = App->ArgV[1];
     sumname = App->ArgV[2];
     intname = App->ArgV[3];
-
-    if (ReadFiles() != 0)
-	return -1;
-
-    return 0;
 }
 
-
-static void Cleanup()
-
-{
-    appFree(App);
-}
-
-/* ------------------------------------------------------------------
-   main()
-   ------------------------------------------------------------------ */
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 int main(int argc, char **argv)
 {
-
-    if (Init(argc,argv) != 0)
-    {
-	mtxAbort(MTX_HERE,"Initialization failed");
-	return 1;
-    }
-    if (ffSumAndIntersection(Noc, Wrk1,&NorA,&NorB,Wrk2,Piv) != 0)
-    {
-	mtxAbort(MTX_HERE,"Internal error");
-	return 1;
-    }
-    if (WriteFiles() != 0)
-	mtxAbort(MTX_HERE,"Error writing output files");
-    Cleanup();
+    init(argc,argv);
+    readFiles();
+    ffSumAndIntersection(noc, wrk1, &norA, &norB, wrk2, Piv);
+    writeFiles();
+    appFree(App);
     return 0;
 }
 

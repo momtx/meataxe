@@ -46,6 +46,37 @@ void polSave(const Poly_t *pol, const char *fn)
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
+
+/// Reads a polynomial using a given object header.
+///
+/// This function reads the polynomial coefficients, assuming the header has already been read
+/// and is passed as second argument.
+///
+/// @param f File to read from.
+/// @param header The object header.
+/// @return Pointer to the polynomial-
+
+Poly_t *polReadData(FILE *f, const uint32_t header[3])
+{
+   if (header[0] != MTX_TYPE_POLYNOMIAL)
+      mtxAbort(MTX_HERE,"Bad object type 0x%lx, expected polynomial",(unsigned long)header[0]);
+
+   const int field = (int) header[1];
+   const size_t degree = header[2];
+   ffSetField(field);
+   Poly_t* polynomial = polAlloc(field, degree);
+   if (polynomial->Degree > 0) {
+      PTR tmpvec = ffAlloc(1, degree + 1);
+      ffReadRows(f, tmpvec, 1, degree + 1);
+      for (size_t i = 0; i <= degree; ++i) {
+         polynomial->Data[i] = ffExtract(tmpvec,i);
+      }
+      ffFree(tmpvec);
+   }
+   return polynomial;
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
 /// Read a polynomial from a file.
 /// This function reads a polynomial from a file. If successful, the return
 /// value is a pointer to a new Poly_t object. The caller is responsible

@@ -81,7 +81,7 @@ int IsSubspace(const Matrix_t *sub, const Matrix_t *space, int ngen)
 	FEL f;
 	ffCopyRow(tmp,y, space->Noc);
 	ffCleanRow(tmp,space->Data,spcdim,space->Noc, space->PivotTable);
-        if (ffFindPivot(tmp,&f, space->Noc) >= 0) 
+        if (ffFindPivot(tmp,&f, space->Noc) != MTX_NVAL) 
 	    break;
     }
 

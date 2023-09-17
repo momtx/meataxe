@@ -54,88 +54,50 @@ static MtxApplication_t *App = NULL;
 int opt_G = 0;	    /* GAP output */
 
 
-/* -----------------------------------------------------------------
-   ReadFiles() - Read generators and images of peak words
-   ----------------------------------------------------------------- */
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+/// Read generators and images of peak words
 
 static void ReadFiles(const char *basename)
-
 {
-    char fn[200];
-    int i;
-
-    if (latReadInfo(&LI,basename) != 0)
-    {
-	mtxAbort(MTX_HERE,"Error reading %s.cfinfo",basename);
-	return;
-    }
-
-    /* Load the generators 
-       ------------------- */
+    latReadInfo(&LI,basename);
     Rep = mrLoad(LI.BaseName,LI.NGen);
-    if (Rep == NULL)
-    {
-	mtxAbort(MTX_HERE,"Cannot load generators");
-	return;
-    }
 
-    /* Load the .im matrices
-       --------------------- */
-    for (i = 0; i < LI.NCf; ++i)
+    // Load the .im matrices
+    for (int i = 0; i < LI.NCf; ++i)
     {
+        char fn[200];
 	sprintf(fn,"%s%s.im",LI.BaseName,latCfName(&LI,i));
 	bild[i] = matLoad(fn);
 	matEchelonize(bild[i]);
     }
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
-/* -------------------------------------------------------------------------
-   Init() - Program initialization
-   ------------------------------------------------------------------------- */
-
-static int Init(int argc, char **argv)
-
+static void init(int argc, char **argv)
 {
-    if ((App = appAlloc(&AppInfo,argc,argv)) == NULL)
-	return -1;
-
-    /* Parse command line
-       ------------------ */
+    App = appAlloc(&AppInfo,argc,argv);
     opt_G = appGetOption(App,"-G --gap");
     if (opt_G) 
 	MtxMessageLevel = -100;
-    if (appGetArguments(App,1,1) != 1)
-	return -1;
+    appGetArguments(App,1,1);
     MESSAGE(0,("\n*** INCIDENCE MATRIX ***\n\n"));
-
     ReadFiles(App->ArgV[0]);
-    return 0;
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
-
-/* -----------------------------------------------------------------
-   WriteMountains() - Write mountains, dimensions and classes.
-
-   This function writes the output files `XXX.v' and `XXX.mnt'.
-   ----------------------------------------------------------------- */
+/// Write mountains, dimensions and classes (files XXX.v and XXX.mnt)
 
 static void WriteMountains()
-
 {
-    FILE *f;
     char fn[200];
     int i;
 
     /* Write dimensions and classes
        ---------------------------- */
-    f= sysFopen(strcat(strcpy(fn,LI.BaseName),".mnt"),"w");
-    if (f == NULL) 
-    {
-	mtxAbort(MTX_HERE,"Cannot create %s: %S",fn);
-	return;
-    }
+    FILE* f = sysFopen(strcat(strcpy(fn,LI.BaseName),".mnt"),"w");
     MESSAGE(1,("Writing dimensions and classes to %s\n",fn));
     for (i = 0; i < nmount; ++i)
     {
@@ -151,17 +113,14 @@ static void WriteMountains()
        --------------- */
     strcat(strcpy(fn,LI.BaseName),".v");
     MESSAGE(1,("Writing mountains to %s\n",fn));
-    if ((f = ffWriteHeader(fn,ffOrder,nmount,Rep->Gen[0]->Noc)) == NULL)
-    {
-	mtxAbort(MTX_HERE,"Cannot create file %s: %S",fn);
-	return;
-    }
+    MtxFile_t* mountainsFile = mfCreate(fn,ffOrder,nmount,Rep->Gen[0]->Noc);
     for (i = 0; i < nmount; ++i)
     {
-	ffWriteRows(f,mountlist[i]->Data,1, mountlist[i]->Noc);
-	matFree(mountlist[i]);	/* We don't need them for step 2*/
+	mfWriteRows(mountainsFile,mountlist[i]->Data, 1, mountlist[i]->Noc);
+	matFree(mountlist[i]);	// We don't need them for step 2*
+        mountlist[i] = NULL;
     }
-    fclose(f);
+    mfClose(mountainsFile);
 }
 
 
@@ -465,18 +424,14 @@ static void WriteResultGAP()
 int main(int argc, char **argv)
 
 {
-    if (Init(argc,argv) != 0)
-    {
-	mtxAbort(MTX_HERE,"Initialization failed");
-	return -1;
-    }
+    init(argc,argv);
     FindMountains();
     WriteMountains();
     CalculateIncidences();
     WriteIncidenceMatrix();
     if (opt_G) 
 	WriteResultGAP();
-    if (App != NULL) appFree(App);
+    appFree(App);
     return 0;
 }
 

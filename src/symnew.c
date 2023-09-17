@@ -373,90 +373,46 @@ static void CalculateSAction(PTR mat)
 	MapVector(n,mat,v);
 	fprintf(stderr,".");
 	SvClean2(v,(const SvVector_t **)SBasis,SDim,img);
-	mfWriteRows(OutputFile,img,1);
+	mfWriteRows(OutputFile, img, 1, noc);
     }
     sysFree(img);
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
-
-
-
-
-
-
-/* ------------------------------------------------------------------
-   init() - Initialize everything, read input files, allocate memory
-   ------------------------------------------------------------------ */
-
-static int Prepare()
+static void prepare()
 {
-    long i;
-    MtxFile_t *f;
-
-    /* Open the input file and check the header.
-       ----------------------------------------- */
-    if ((f = mfOpen(iname)) == NULL)
-    {
-	mtxAbort(MTX_HERE,"Error opening input file");
-	return 1;
-    }
-    if (f->Field < 2)
-    {
+    MtxFile_t *f = mfOpen(iname);
+    mfReadHeader(f);
+    if (mfObjectType(f) != MTX_TYPE_MATRIX)
 	mtxAbort(MTX_HERE,"%s: %s",iname,MTX_ERR_NOTMATRIX);
-	return 1;
-    }
-    if (f->Nor != f->Noc)
-    {
+    fl = f->header[0];
+    nor = f->header[1];
+    noc = f->header[2];
+    if (nor != noc)
 	mtxAbort(MTX_HERE,"%s: %s",iname,MTX_ERR_NOTSQUARE);
-	return 1;
-    }
-    fl = f->Field;
-    nor = f->Nor;
-    noc = f->Noc;
 
     ffSetField(fl); 
     m1 = ffAlloc(nor, noc);
-    mfReadRows(f,m1,nor);
+    mfReadRows(f, m1, nor, noc);
 
-    /* Set up pointers to the rows of the input matrix
-       ----------------------------------------------- */
+    // Set up pointers to the rows of the input matrix
     row = NALLOC(PTR,nor);
-    if (row == NULL)
-       return -1;
-    for (i = 0; i < nor; ++i)
-    {	
-       row[i] = m1;
-       ffStepPtr(&m1, noc);
-    }
+    for (uint32_t i = 0; i < nor; ++i)
+       row[i] = ffGetPtr(m1, i, noc);
     mfClose(f);
 
-    /*BuildTables(&M3,nor);
-    BuildTables(&S2,nor);
-      */
     BuildTables(&E3,nor);
 
-
-    /* Allocate the output buffer
-       -------------------------- */
     MESSAGE(0,("Output is %d x %d\n",SDim,SDim));
     OutputFile = mfCreate(oname,fl,SDim,SDim);
-
-
-    return 0;
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
-
-static int Init(int argc, char **argv)
+static int init(int argc, char **argv)
 {
-    const char *arg3;
-
-    /* Process command line options.
-       ----------------------------- */
     App = appAlloc(&AppInfo,argc,argv);
-    if (App == NULL)
-	return -1;
     opt_G = appGetOption(App,"-G --gap");
     if (opt_G)
 	MtxMessageLevel = -100;
@@ -467,7 +423,7 @@ static int Init(int argc, char **argv)
 	return -1;
     iname = App->ArgV[1];
     oname = App->ArgV[2];
-    arg3 = App->ArgV[0];
+    const char *arg3 = App->ArgV[0];
     if (!strcmp(arg3,"e2")) mode = M_E2;
     else if (!strcmp(arg3,"e3")) mode = M_E3;
     else if (!strcmp(arg3,"e4")) mode = M_E4;
@@ -494,13 +450,8 @@ static int Init(int argc, char **argv)
 
 int main(int argc, char **argv)
 {
-    if (Init(argc,argv) != 0)
-    {
-	mtxAbort(MTX_HERE,"Initialization failed");
-	return 1;
-    }
-    if (Prepare() != 0)
-	return 1;
+    init(argc,argv);
+    prepare();
     CalculateSAction(row[0]);
     mfClose(OutputFile);
     appFree(App);

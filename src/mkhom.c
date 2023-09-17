@@ -66,7 +66,7 @@ static Matrix_t ***posimages;        /* a basis of the possible images of the
                                                                    basis pieces */
 static int *kerdim;
 static Matrix_t *esys;
-static int *esyspiv;
+static uint32_t *esyspiv;
 static int maxnumMgens = 0;
 static int numMgens = 0;
 
@@ -172,7 +172,7 @@ int zgensbasis(PTR seed, int noc, int seedcount, int ngen, Matrix_t *gen[], PTR 
       OPGEN(k) = 0;
    }
    myzcleanrow(xk, space, transf->Data, partdim, noc, piv_table);
-   if ((piv_table[partdim] = ffFindPivot(xk, &f, noc)) < 0)
+   if ((piv_table[partdim] = ffFindPivot(xk, &f, noc)) == MTX_NVAL)
    {
       transfptr = matGetPtr(transf,partdim);
       ffMulRow(transfptr,FF_ZERO, noc);
@@ -194,7 +194,7 @@ int zgensbasis(PTR seed, int noc, int seedcount, int ngen, Matrix_t *gen[], PTR 
       /* Clean and check if we got a new vector
          -------------------------------------- */
       myzcleanrow(xk, space, transf->Data, partdim, noc, piv_table);
-      if ((piv_table[partdim] = ffFindPivot(xk, &f, noc)) >= 0)
+      if ((piv_table[partdim] = ffFindPivot(xk, &f, noc)) != MTX_NVAL)
       {
          if (op_table != NULL)
          {
@@ -239,7 +239,7 @@ int zgensbasis(PTR seed, int noc, int seedcount, int ngen, Matrix_t *gen[], PTR 
 }
 
 
-long independent(Matrix_t *bas[], Matrix_t *mat, int dim, int **piv_table, 
+long independent(Matrix_t *bas[], Matrix_t *mat, int dim, uint32_t **piv_table, 
     const long nummodgens, PTR dep)
 
 {
@@ -261,13 +261,13 @@ long independent(Matrix_t *bas[], Matrix_t *mat, int dim, int **piv_table,
 	}
         matAddMul(mat,bas[i],ffNeg(f));
     }
-    piv_table[dim][0] = -1;
+    piv_table[dim][0] = MTX_NVAL;
     if (nummodgens == -1 || big)
     {
         matptr = mat->Data;
-        for (j = 0; j < mat->Nor && piv_table[dim][0] < 0; j++)
+        for (j = 0; j < mat->Nor && piv_table[dim][0] == MTX_NVAL; j++)
         {
-            if ((piv_table[dim][1] = ffFindPivot(matptr, &f, mat->Noc)) >= 0)
+            if ((piv_table[dim][1] = ffFindPivot(matptr, &f, mat->Noc)) != MTX_NVAL)
                 piv_table[dim][0] = j;
             ffStepPtr(&matptr,mat->Noc);
         }
@@ -276,19 +276,20 @@ long independent(Matrix_t *bas[], Matrix_t *mat, int dim, int **piv_table,
     {
         int row = 0;
         matptr = mat->Data;
-        for (j = 0; j < nummodgens && piv_table[dim][0] < 0; j++)
+        for (j = 0; j < nummodgens && piv_table[dim][0] == MTX_NVAL; j++)
         {
-            if ((piv_table[dim][1] = ffFindPivot(matptr, &f, mat->Noc)) >= 0)
+            if ((piv_table[dim][1] = ffFindPivot(matptr, &f, mat->Noc)) != MTX_NVAL)
                 piv_table[dim][0] = row;
            matptr = ffGetPtr(matptr, dims[j], mat->Noc);
            row += dims[j];
         }
     }
 
-    if (piv_table[dim][0] >= 0 && dep != NULL)
+    const int isIndependent = piv_table[dim][0] != MTX_NVAL;
+    if (isIndependent && dep != NULL)
         ffInsert(dep, dim, FF_ONE);
-    MESSAGE(2,("independent(): result=%d\n",piv_table[dim][0] >= 0));
-    return piv_table[dim][0] >= 0;
+    MESSAGE(2,("independent(): result=%d\n",isIndependent));
+    return isIndependent;
 }
 
 
@@ -341,8 +342,10 @@ Matrix_t **ringgens(Matrix_t *basis[], long n, long nummodgens, Matrix_t *regrep
     char side, int big, Matrix_t **stdbas, long *op_table, Matrix_t **Ngen)
 
 {
-    int max = 0, next = 0, i, j, dim = 0, 
-        **piv_table, **bpiv, **baspiv, d, g, *genind;
+    int max = 0, next = 0, i, j, dim = 0, d, g, *genind;
+    uint32_t **piv_table;
+    uint32_t **bpiv;
+    uint32_t **baspiv;
     Matrix_t **gens, *mat;
     PTR *regptr;
     FEL coeff;
@@ -353,22 +356,22 @@ Matrix_t **ringgens(Matrix_t *basis[], long n, long nummodgens, Matrix_t *regrep
         mtxAbort(MTX_HERE,"Invalid side='%c'",side);
         return NULL;
     }
-    if (   (piv_table = NALLOC(int *,n + 1)) == NULL
-        || (baspiv = NALLOC(int *,n + 1)) == NULL)
+    if (   (piv_table = NALLOC(uint32_t *,n + 1)) == NULL
+        || (baspiv = NALLOC(uint32_t *,n + 1)) == NULL)
         return NULL;
 
     for (i = 0; i <= n; i++)
     {
-        if (   (piv_table[i] = NALLOC(int,2)) == NULL
-            || (baspiv[i] = NALLOC(int,2)) == NULL)
+        if (   (piv_table[i] = NALLOC(uint32_t,2)) == NULL
+            || (baspiv[i] = NALLOC(uint32_t,2)) == NULL)
             return NULL;
     }
     if (   (genind = NALLOC(int,n)) == NULL
         || (gens = NALLOC(Matrix_t *,n + 1)) == NULL
         || (regptr = NALLOC(PTR,n)) == NULL
-        || (bpiv = NALLOC(int *,2)) == NULL
-        || (bpiv[0] = NALLOC(int,2)) == NULL
-        || (bpiv[1] = NALLOC(int,2)) == NULL)
+        || (bpiv = NALLOC(uint32_t *,2)) == NULL
+        || (bpiv[0] = NALLOC(uint32_t,2)) == NULL
+        || (bpiv[1] = NALLOC(uint32_t,2)) == NULL)
         return NULL;
 
 /* -----------------------------
@@ -574,26 +577,17 @@ static int ParseArgs()
     return 0;
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
-
-static int ReadFiles()
+static void ReadFiles()
 {
-    /* Read the .cfinfo files.
-       ----------------------- */
-    if (latReadInfo(&MInfo,MName) != 0)
-        return -1;
+    latReadInfo(&MInfo,MName);
 
-    /* Load the generators.
-       -------------------- */
     MESSAGE(1,("Reading generators\n"));
-    if ((MRep = mrLoad(MInfo.BaseName,MInfo.NGen)) == NULL)
-        return -1;
+    MRep = mrLoad(MInfo.BaseName,MInfo.NGen);
     dimM = MRep->Gen[0]->Noc;
     if (comp)
-    {
-        if ((NRep = mrLoad(NName,MInfo.NGen)) == NULL)
-            return -1;
-    }
+        NRep = mrLoad(NName,MInfo.NGen);
     else
         NRep = MRep;
 
@@ -605,81 +599,59 @@ static int ReadFiles()
         char fn[200];
         sprintf(fn, "%s.rad",MName);
         MESSAGE(1,("Reading the head (%s)\n",fn));
-        if((tmp = matLoad(fn)) == NULL)
-            return -1;
-        if((rad = matCutRows(tmp, hd, dimM - hd)) == NULL)
-            return -1;
+        tmp = matLoad(fn);
+        rad = matCutRows(tmp, hd, dimM - hd);
         matEchelonize(rad);
         rad->Data = (PTR) sysRealloc(rad->Data, ffSize(dimM, tmp->Noc));
         matFree(tmp);
     }
-
-    return 0;
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
-
-
-
-static int AllocateWorkspace()
+static void AllocateWorkspace()
 {
-    int i;
-
-    if (   (basis = ffAlloc(dimM + 1, dimM)) == NULL
-        || (space = ffAlloc(dimM + 1, dimM)) == NULL)
-        return -1;
-    if ((piv = NALLOC(int,dimM + 2)) == NULL)
-        return -1;
-    if ((op = NALLOC(long,2 * dimM + 2)) == NULL)
-        return -1;
-    if (   (stdgen = NALLOC(PTR,MInfo.NGen)) == NULL 
-        || (stdtab = NALLOC(long *,MInfo.NGen)) == NULL)
-        return -1;
-    for (i = 0; i < MInfo.NGen; i++)
+    basis = ffAlloc(dimM + 1, dimM);
+    space = ffAlloc(dimM + 1, dimM);
+    piv = NALLOC(int,dimM + 2);
+    op = NALLOC(long,2 * dimM + 2);
+    stdgen = NALLOC(PTR,MInfo.NGen);
+    stdtab = NALLOC(long *,MInfo.NGen);
+    
+    for (int i = 0; i < MInfo.NGen; i++)
     {
-        if (   (stdgen[i] = ffAlloc(0, dimM)) == NULL
-            || (stdtab[i] = ALLOC(long)) == NULL)
-            return -1;
+        stdgen[i] = ffAlloc(0, dimM);
+        stdtab[i] = ALLOC(long);
         stdtab[i][0] = 0;
     }
 
 /* NEW PART
    -------- */
-    for (i = 0; i < MInfo.NCf; i++)
+    for (int i = 0; i < MInfo.NCf; i++)
         maxnumMgens += MInfo.Cf[i].mult;
-    if ((posimages = NALLOC(Matrix_t **, maxnumMgens)) == NULL
-    || (dims = NALLOC(int, maxnumMgens)) == NULL
-    || (kerdim= NALLOC(int, maxnumMgens)) == NULL
-    || (esyspiv = NALLOC(int, maxnumMgens* NRep->Gen[0]->Nor)) == NULL
-    || (esys = matAlloc(ffOrder, 0, 0)) == NULL)
-        return 1;
+    posimages = NALLOC(Matrix_t **, maxnumMgens);
+    dims = NALLOC(int, maxnumMgens);
+    kerdim= NALLOC(int, maxnumMgens);
+    esyspiv = NALLOC(uint32_t, maxnumMgens* NRep->Gen[0]->Nor);
+    esys = matAlloc(ffOrder, 0, 0);
 
 /* END OF NEW PART
    --------------- */
-    return 0;
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static int Init(int argc, char **argv)
-
+static void init(int argc, char **argv)
 {
-    if ((App = appAlloc(&AppInfo,argc,argv)) == NULL)
-        return -1;
-    if (ParseArgs() != 0)
-        return -1;
-    if (ReadFiles() != 0)
-        return -1;
-    if (AllocateWorkspace() != 0)
-    {
-        mtxAbort(MTX_HERE,"Cannot allocate work space");
-        return -1;
-    }
-    return 0;
+    App = appAlloc(&AppInfo,argc,argv);
+    ParseArgs();
+    ReadFiles();
+    AllocateWorkspace();
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 static void Cleanup()
-
 {
     if (MRep != NULL)
         mrFree(MRep);
@@ -688,16 +660,9 @@ static void Cleanup()
     appFree(App);
 }
 
-
-
-
-
-
-
-/* =========================================================================
-   spinpartstdbas() spin up a newdim dimensional part of the 
-   spinning basis generated by vec beginning at partdim
-   ========================================================================= */
+////////////////////////////////////////////////////////////////////////////////////////////////////
+   
+/// spin up a newdim dimensional part of the spinning basis generated by vec beginning at partdim
 
 Matrix_t *spinpartstdbas(PTR vec, const long *op_table, Matrix_t *gens[], 
     int part_dim, int newdim)
@@ -723,11 +688,11 @@ Matrix_t *spinpartstdbas(PTR vec, const long *op_table, Matrix_t *gens[],
     return mat;
 }
 
-/* =========================================================================
-   veccont() checks if vec is contained in the subspace generated by mat
-   ========================================================================= */
+////////////////////////////////////////////////////////////////////////////////////////////////////
+   
+// checks if vec is contained in the subspace generated by mat
 
-int veccont(Matrix_t *mat, PTR vec, int *pivot_table)
+int veccont(Matrix_t *mat, PTR vec, uint32_t *pivot_table)
 {
     PTR v;
     FEL f;
@@ -736,13 +701,12 @@ int veccont(Matrix_t *mat, PTR vec, int *pivot_table)
     v = ffAlloc(1, mat->Noc);
     ffCopyRow(v,vec, mat->Noc);
     ffCleanRow(v,mat->Data,mat->Nor,mat->Noc,pivot_table);
-    is_contained = ffFindPivot(v,&f, mat->Noc) < 0;
+    is_contained = ffFindPivot(v,&f, mat->Noc) == MTX_NVAL;
     sysFree(v);
     return is_contained;
 }
 
-
-
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 static int MakeKernels(int cf, Matrix_t **ker1, Matrix_t **ker2)
 
@@ -815,11 +779,7 @@ int main(int argc, char **argv)
     Lat_Info end_info;
 
 
-    if (Init(argc,argv) != 0)
-    {
-        mtxAbort(MTX_HERE,"Initialization failed");
-        return 1;
-    }
+    init(argc,argv);
 
 
     /* Main loop: for each constituent of M.
@@ -853,7 +813,7 @@ int main(int argc, char **argv)
             if (hd)
             {
                 ffCleanRow(echkerptr, rad->Data, rad->Nor, dimM, rad->PivotTable);
-                if((ffFindPivot(echkerptr, &f, dimM)) < 0)
+                if ((ffFindPivot(echkerptr, &f, dimM)) == MTX_NVAL)
                 {
                     ffStepPtr(&echkerptr, dimM);
                     continue;
@@ -883,7 +843,7 @@ int main(int argc, char **argv)
                     ffCopyRow(radptr, basptr, dimM);
                     ffCleanRow(radptr, rad->Data, rad->Nor, dimM, rad->PivotTable);
                     rad->PivotTable[rad->Nor] = ffFindPivot(radptr, &f, dimM);
-                    if(rad->PivotTable[rad->Nor] >= 0)
+                    if(rad->PivotTable[rad->Nor] != MTX_NVAL)
                     {
                         rad->Nor++;
                         ffStepPtr(&radptr, dimM);
@@ -1016,7 +976,7 @@ int main(int argc, char **argv)
                     {
                         ffCleanRow(partptr, esys->Data , oldNor, partesys->Noc, esyspiv);
 
-                        if ((esyspiv[oldNor] = ffFindPivot(partptr, &f, partesys->Noc)) >= 0)
+                        if ((esyspiv[oldNor] = ffFindPivot(partptr, &f, partesys->Noc)) != MTX_NVAL)
                         {
                             ffCopyRow(esysptr, partptr, partesys->Noc);
                             if ((++oldNor) > esys->Noc) 

@@ -11,11 +11,7 @@
    ------------------------------------------------------------------ */
 
 
-static const char *iname, *oname;
-static int fl;
-static PTR m1, m2;
-static int nor, noc, j;
-static FILE *f;
+static const char *fileNameIn, *fileNameOut;
 
 
 static MtxApplicationInfo_t AppInfo = { 
@@ -37,92 +33,34 @@ MTX_COMMON_OPTIONS_DESCRIPTION
 
 static MtxApplication_t *App = NULL;
 
-
-
-static int ReadMatrix()
-
-{
-
-    /* Read matrix
-       ----------- */
-    if ((f = ffReadHeader(iname,&fl,&nor,&noc)) == NULL)
-	return 1;
-    if (fl < 2) 
-    {
-	mtxAbort(MTX_HERE,"%s: %s",iname,MTX_ERR_NOTMATRIX);
-	return 1;
-    }
-    ffSetField(fl);
-    m1 = ffAlloc(nor, noc);
-    ffReadRows(f,m1,nor, noc);
-    fclose(f);
-    return 0;
-}
-
-
-
-static int Init(int argc, char **argv)
-
-{
-    App = appAlloc(&AppInfo,argc,argv);
-    if (App == NULL)
-	return -1;
-
-    /* Command line.
-       ------------- */
-    if (appGetArguments(App,2,2) < 0)
-	return -1;
-    iname = App->ArgV[0];
-    oname = App->ArgV[1];
-
-    if (ReadMatrix() != 0)
-	return 1;
-    return 0;
-}
-
-
-static void Cleanup()
-
-{
-    appFree(App);
-}
-
-
-
-
-
-
-/* ------------------------------------------------------------------
-   main()
-   ------------------------------------------------------------------ */
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 int main(int argc, char **argv)
-
 {
-    if (Init(argc,argv) != 0)
-    {
-	mtxAbort(MTX_HERE,"Initialization failed");
-	return 1;
-    }
+    App = appAlloc(&AppInfo,argc,argv);
+    appGetArguments(App,2,2);
+    fileNameIn = App->ArgV[0];
+    fileNameOut = App->ArgV[1];
 
-    /* Transpose
-       --------- */
-    m2 = ffAlloc(1, nor);
-    if ((f = ffWriteHeader(oname, fl, noc, nor)) == NULL)
-    {
-	mtxAbort(MTX_HERE,"Cannot open output file");
-	return 1;
-    }
-    for (j = 0; j < noc; ++j)
-    {
-	ffMulRow(m2, FF_ZERO, nor);	/* Fill with zeros */
-	ffExtractColumn(m1, nor, noc, j, m2);
-	ffWriteRows(f, m2, 1, nor);
-    }
-    fclose(f);
+    Matrix_t* matrixInp = matLoad(fileNameIn);
+    const uint32_t field = matrixInp->Field;
+    const uint32_t norIn = matrixInp->Nor;
+    const uint32_t nocIn = matrixInp->Noc;
+    const PTR matrixIn = matrixInp->Data;
 
-    Cleanup();
-    return EXIT_OK;
+    PTR rowOut = ffAlloc(1, norIn);
+    MtxFile_t* fileOut = mfCreate(fileNameOut, field, nocIn, norIn);
+    for (uint32_t j = 0; j < nocIn; ++j)
+    {
+	ffMulRow(rowOut, FF_ZERO, norIn);
+	ffExtractColumn(matrixIn, norIn, nocIn, j, rowOut);
+	mfWriteRows(fileOut, rowOut, 1, norIn);
+    }
+    mfClose(fileOut);
+    sysFree(rowOut);
+    matFree(matrixInp);
+    appFree(App);
+    return 0;
 }
 
 

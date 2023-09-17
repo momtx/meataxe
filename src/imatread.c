@@ -14,42 +14,33 @@
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-/// Read an integer matrix from a file.
-/// This function reads an integer matrix from a file.
-/// @see imatLoad()
-/// @param f File to read from.
-/// @return Pointer to the matrix, or 0 on error.
+/// Reads an integer matrix from a file. See also @ref imatLoad.
 
-IntMatrix_t *imatRead(FILE *f)
+IntMatrix_t* imatRead(MtxFile_t* file)
 {
-   uint32_t fileHeader[3];
-   sysRead32(f,fileHeader,3);
-   if (fileHeader[0] != MTX_TYPE_INTMATRIX)
-      mtxAbort(MTX_HERE,"Not an integer matrix (type 0x%lx)", (unsigned long) fileHeader[0]);
-   IntMatrix_t *m = imatAlloc(fileHeader[1],fileHeader[2]);
-   sysRead32(f,m->Data,m->Nor * m->Noc);
+   mfReadHeader(file);
+   if (mfObjectType(file) != MTX_TYPE_INTMATRIX) {
+      mtxAbort(MTX_HERE, "%s: unexpected object type 0x%lx (expected integer matrix)",
+               file->Name, (unsigned long) file->header[0]);
+   }
+   IntMatrix_t* m = imatAlloc(file->header[1], file->header[2]);
+   mfRead32(file, m->Data, m->Nor * m->Noc);
    return m;
 }
-
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 /// Read an integer matrix from a file.
-/// This function opens a file, reads a single integer matrix, and closes
-/// the file. To read more than one matrix from a file, use imatRead().
+/// This function opens a file, reads a single integer matrix, and closes the file.
+/// See also use @ref imatRead.
 /// @param fn File name.
-/// @return Pointer to the matrix, or 0 on error.
+/// @return Pointer to the matrix.
 
 IntMatrix_t *imatLoad(const char *fn)
 {
-   FILE *f;
-   IntMatrix_t *m;
-
-   if ((f = sysFopen(fn,"rb")) == 0) {
-      return 0;
-   }
-   m = imatRead(f);
-   fclose(f);
+   MtxFile_t* file = mfOpen(fn);
+   IntMatrix_t* m = imatRead(file);
+   mfClose(file);
    return m;
 }
 
