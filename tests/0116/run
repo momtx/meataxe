@@ -2,21 +2,18 @@ echo "0116 - ZPR -G"
 
 . ../tests/common.sh
 
-zpr -G "${MTX_TEST_DATA_DIR}/Perm1" tmp.$$.p1
+zpr -G "${MTX_TEST_DATA_DIR}/Perm1" p1
 compareWithReference p1
 
-zpr -G "${MTX_TEST_DATA_DIR}/Perm2" tmp.$$.p2
+zpr -G "${MTX_TEST_DATA_DIR}/Perm2" p2
 compareWithReference p2
 
-zpr -G "${MTX_TEST_DATA_DIR}/Mat2" tmp.$$.x2
+zpr -G "${MTX_TEST_DATA_DIR}/Mat2" x2
 compareWithReference x2
 
-zpr -G "${MTX_TEST_DATA_DIR}/Mat25" tmp.$$.x25
+zpr -G "${MTX_TEST_DATA_DIR}/Mat25" x25
 compareWithReference x25
 
-zpr -G "${MTX_TEST_DATA_DIR}/Mat67" tmp.$$.x67
+zpr -G "${MTX_TEST_DATA_DIR}/Mat67" x67
 compareWithReference x67
 
-
-# Clean up
-rm -f tmp.$$.*

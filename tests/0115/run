@@ -4,30 +4,27 @@ echo "0115 - ZTE"
 
 #set -x
 
-zte "${MTX_TEST_DATA_DIR}/Perm1" "${MTX_TEST_DATA_DIR}/Perm2" tmp.$$.x1 || error "ZTE failed"
+zte "${MTX_TEST_DATA_DIR}/Perm1" "${MTX_TEST_DATA_DIR}/Perm2" x1 || error "ZTE failed"
 compareBinaryWithReference x1
 
-zte "${MTX_TEST_DATA_DIR}/Mat2" "${MTX_TEST_DATA_DIR}/Mat2" tmp.$$.x2 || error "ZTE failed"
+zte "${MTX_TEST_DATA_DIR}/Mat2" "${MTX_TEST_DATA_DIR}/Mat2" x2 || error "ZTE failed"
 compareBinaryWithReference x2
 
-zte "${MTX_TEST_DATA_DIR}/Mat5" "${MTX_TEST_DATA_DIR}/Mat5" tmp.$$.x3 || error "ZTE failed"
+zte "${MTX_TEST_DATA_DIR}/Mat5" "${MTX_TEST_DATA_DIR}/Mat5" x3 || error "ZTE failed"
 compareBinaryWithReference x3
 
-zte "${MTX_TEST_DATA_DIR}/Mat9" "${MTX_TEST_DATA_DIR}/Mat9" tmp.$$.x4 || error "ZTE failed"
+zte "${MTX_TEST_DATA_DIR}/Mat9" "${MTX_TEST_DATA_DIR}/Mat9" x4 || error "ZTE failed"
 compareBinaryWithReference x4
 
-zte "${MTX_TEST_DATA_DIR}/Mat25" "${MTX_TEST_DATA_DIR}/Mat25" tmp.$$.x5 || error "ZTE failed"
+zte "${MTX_TEST_DATA_DIR}/Mat25" "${MTX_TEST_DATA_DIR}/Mat25" x5 || error "ZTE failed"
 compareBinaryWithReference x5
 
-zte "${MTX_TEST_DATA_DIR}/Mat67" "${MTX_TEST_DATA_DIR}/Mat67" tmp.$$.x6 || error "ZTE failed"
+zte "${MTX_TEST_DATA_DIR}/Mat67" "${MTX_TEST_DATA_DIR}/Mat67" x6 || error "ZTE failed"
 compareBinaryWithReference x6
 
-zte "${MTX_TEST_DATA_DIR}/Mat125" "${MTX_TEST_DATA_DIR}/Mat125" tmp.$$.x7 || error "ZTE failed"
+zte "${MTX_TEST_DATA_DIR}/Mat125" "${MTX_TEST_DATA_DIR}/Mat125" x7 || error "ZTE failed"
 compareBinaryWithReference x7
 
-zte "${MTX_TEST_DATA_DIR}/Mat256" "${MTX_TEST_DATA_DIR}/Mat256" tmp.$$.x8 || error "ZTE failed"
+zte "${MTX_TEST_DATA_DIR}/Mat256" "${MTX_TEST_DATA_DIR}/Mat256" x8 || error "ZTE failed"
 compareBinaryWithReference x8
 
-
-# Clean up
-rm -f tmp.$$.*

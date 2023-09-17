@@ -536,7 +536,7 @@ TstResult Kernel_RowOps_MulRow(int q)
 
 TstResult Kernel_RowOps_MulRowPadsWithZero(int q)
 {
-   ffSetField(2);
+   ffSetField(q);
    PTR x = ffAlloc(1, 1);
    uint8_t* const begin = (uint8_t*) x;
    uint8_t* const pad = begin + ffRowSizeUsed(1);

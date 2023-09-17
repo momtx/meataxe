@@ -2,23 +2,21 @@ echo "0212 - soc (A5 regular GF(2)-module)"
 
 . ../tests/common.sh
 
-cp "${MTX_TEST_DATA_DIR}/a5reg.1" tmp.$$.a5reg.1
-cp "${MTX_TEST_DATA_DIR}/a5reg.2" tmp.$$.a5reg.2
-chop -Q -g 2 tmp.$$.a5reg || error "CHOP failed"
-pwkond -Qt tmp.$$.a5reg || error "PWKOND failed"
-mkhom -Q -l tmp.$$.a5reg tmp.$$.a5reg tmp.$$.end ||  error "MKHOM failed"
+cp "${MTX_TEST_DATA_DIR}/a5reg.1" a5reg.1
+cp "${MTX_TEST_DATA_DIR}/a5reg.2" a5reg.2
+chop -Q -g 2 a5reg || error "CHOP failed"
+pwkond -Qt a5reg || error "PWKOND failed"
+mkhom -Q -l a5reg a5reg end ||  error "MKHOM failed"
 
-chop -Q -i tmp.$$.end.lrr  || error "CHOP failed"    
-pwkond -Qt tmp.$$.end.lrr  || error "PWKOND failed"    
-soc -Q -l 1 tmp.$$.end.lrr  || error "SOC failed"    
-decomp -Q -a tmp.$$.a5reg tmp.$$.end || error "decomp failed"    
+chop -Q -i end.lrr  || error "CHOP failed"    
+pwkond -Qt end.lrr  || error "PWKOND failed"    
+soc -Q -l 1 end.lrr  || error "SOC failed"    
+decomp -Q -a a5reg end || error "decomp failed"    
 
-cmp tmp.$$.a5reg.cfinfo "${MTX_TESTCASE_DIR}/a5reg.cfinfo.expected"
-cmp tmp.$$.end.lrr.cfinfo "${MTX_TESTCASE_DIR}/end.lrr.cfinfo.expected"
+cmp a5reg.cfinfo "${MTX_TESTCASE_DIR}/a5reg.cfinfo.expected"
+cmp end.lrr.cfinfo "${MTX_TESTCASE_DIR}/end.lrr.cfinfo.expected"
 
 compareBinaryWithReference end.gens.1
 compareBinaryWithReference end.gens.2
 compareBinaryWithReference end.gens.3
 
-# Clean up
-rm -f tmp.$$.*

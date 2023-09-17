@@ -5,19 +5,17 @@ echo "0201 - Submodules of ac"
 #set -x 
 quiet="-Q"
 
-cp ${MTX_TEST_DATA_DIR}/ac.1 tmp.$$.ac.1
-cp ${MTX_TEST_DATA_DIR}/ac.2 tmp.$$.ac.2
+cp ${MTX_TEST_DATA_DIR}/ac.1 ac.1
+cp ${MTX_TEST_DATA_DIR}/ac.2 ac.2
 
-chop ${quiet} tmp.$$.ac || error "CHOP failed"
-pwkond ${quiet} -t tmp.$$.ac || error "PWKOND failed"
-mkcycl ${quiet} tmp.$$.ac || error "MKCYCL FAILED"
-mkinc ${quiet} tmp.$$.ac || error "MKINC FAILED"
-mkdotl ${quiet} tmp.$$.ac || error "MKDOTL FAILED"
-mksub ${quiet} tmp.$$.ac || error "MKSUB FAILED"
+chop ${quiet} ac || error "CHOP failed"
+pwkond ${quiet} -t ac || error "PWKOND failed"
+mkcycl ${quiet} ac || error "MKCYCL FAILED"
+mkinc ${quiet} ac || error "MKINC FAILED"
+mkdotl ${quiet} ac || error "MKDOTL FAILED"
+mksub ${quiet} ac || error "MKSUB FAILED"
 
-cmp tmp.$$.ac.cfinfo ${MTX_TESTCASE_DIR}/ac.cfinfo.expected
-cmp tmp.$$.ac.out ${MTX_TESTCASE_DIR}/ac.out.expected
-cmp tmp.$$.ac.lat ${MTX_TESTCASE_DIR}/ac.lat.expected
-cmp tmp.$$.ac.gra ${MTX_TESTCASE_DIR}/ac.gra.expected
-
-rm -f tmp.$$.*
+compareWithReference ac.cfinfo
+compareWithReference ac.out
+compareWithReference ac.lat
+compareWithReference ac.gra

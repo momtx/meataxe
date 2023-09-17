@@ -2,10 +2,8 @@ echo "0119 - ZEF/ZCL"
 
 . ../tests/common.sh
 
-zef -Q "${MTX_TEST_DATA_DIR}/ac.1" tmp.$$.spc1
-zcl tmp.$$.spc1 "${MTX_TEST_DATA_DIR}/ac.2" tmp.$$.cleaned tmp.$$.ops
+zef -Q "${MTX_TEST_DATA_DIR}/ac.1" spc1
+zcl spc1 "${MTX_TEST_DATA_DIR}/ac.2" cleaned ops
 
-cmp tmp.$$.cleaned "${MTX_TESTCASE_DIR}/cleaned.expected"
-cmp tmp.$$.ops "${MTX_TESTCASE_DIR}/ops.expected"
-
-rm -f tmp.$$.*
+compareBinaryWithReference cleaned
+compareBinaryWithReference ops

@@ -4,7 +4,7 @@ echo "0114 - ZCP"
 
 #set -x
 
-rm -f tmp.$$.zcp.log
+rm -f zcp.log
 
 for f in \
   a5reg.1 a5reg.2 ac.1 ac.2 C0.1 C0.2 m11.1 m11.2 \
@@ -12,25 +12,23 @@ for f in \
   Ru-K378.1 Ru-K378.2 Ru-K378.3 Ru-K378.4 \
   Ru-M378.1 Ru-M378.2 \
   Th-m.1 Th-m.2 Th-m.3 Th-r.1 Th-r.1; do
-   echo "--------------------------------------------------------------------------------" >> tmp.$$.zcp.log
-   echo "----- zcp $f" >> tmp.$$.zcp.log
-   zcp ${MTX_TEST_DATA_DIR}/$f >> tmp.$$.zcp.log || error "ZCP $f failed"
-   echo "----- zcp -f $f" >> tmp.$$.zcp.log
-   zcp -f ${MTX_TEST_DATA_DIR}/$f >> tmp.$$.zcp.log || error "ZCP -f $f failed"
-   echo "----- zcp -m -f $f" >> tmp.$$.zcp.log
-   zcp -m -f ${MTX_TEST_DATA_DIR}/$f >> tmp.$$.zcp.log || error "ZCP -m -f $f failed"
-   echo "----- zcp -G $f" >> tmp.$$.zcp.log
-   zcp -G ${MTX_TEST_DATA_DIR}/$f >> tmp.$$.zcp.log || error "ZCP -G $f failed"
+   echo "--------------------------------------------------------------------------------" >> zcp.log
+   echo "----- zcp $f" >> zcp.log
+   zcp ${MTX_TEST_DATA_DIR}/$f >> zcp.log || error "ZCP $f failed"
+   echo "----- zcp -f $f" >> zcp.log
+   zcp -f ${MTX_TEST_DATA_DIR}/$f >> zcp.log || error "ZCP -f $f failed"
+   echo "----- zcp -m -f $f" >> zcp.log
+   zcp -m -f ${MTX_TEST_DATA_DIR}/$f >> zcp.log || error "ZCP -m -f $f failed"
+   echo "----- zcp -G $f" >> zcp.log
+   zcp -G ${MTX_TEST_DATA_DIR}/$f >> zcp.log || error "ZCP -G $f failed"
 done
 
-#zcp ${MTX_TEST_DATA_DIR}/ac.1 > tmp.$$.zcp.log || error "ZCP failed"
-#zcp -f ${MTX_TEST_DATA_DIR}/ac.1 >> tmp.$$.zcp.log || error "ZCP failed"
-#zcp -G ${MTX_TEST_DATA_DIR}/ac.1 >> tmp.$$.zcp.log || error "ZCP failed"
-#zcp ${MTX_TEST_DATA_DIR}/ac.2 >> tmp.$$.zcp.log || error "ZCP failed"
-#zcp -f ${MTX_TEST_DATA_DIR}/ac.2 >> tmp.$$.zcp.log || error "ZCP failed"
-#zcp -G ${MTX_TEST_DATA_DIR}/ac.2 >> tmp.$$.zcp.log || error "ZCP failed"
+#zcp ${MTX_TEST_DATA_DIR}/ac.1 > zcp.log || error "ZCP failed"
+#zcp -f ${MTX_TEST_DATA_DIR}/ac.1 >> zcp.log || error "ZCP failed"
+#zcp -G ${MTX_TEST_DATA_DIR}/ac.1 >> zcp.log || error "ZCP failed"
+#zcp ${MTX_TEST_DATA_DIR}/ac.2 >> zcp.log || error "ZCP failed"
+#zcp -f ${MTX_TEST_DATA_DIR}/ac.2 >> zcp.log || error "ZCP failed"
+#zcp -G ${MTX_TEST_DATA_DIR}/ac.2 >> zcp.log || error "ZCP failed"
 
 compareWithReference zcp.log
 
-# Clean up
-rm -f tmp.$$.*

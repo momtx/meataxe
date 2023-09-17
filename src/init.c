@@ -53,13 +53,13 @@ static void setDirectories(char* argv0)
       snprintf(libDir, sizeof(libDir), "%s", c);
       return;
    } 
-
-   char* path = realpath(argv0, NULL);
-   if (libDir[0] == 0)
-      deriveDirectoryName(libDir, sizeof(libDir), path, 2, "lib");
+   if (libDir[0] == 0) {
+      char* exePath = realpath(sysGetExecutableName(argv0), NULL);
+      deriveDirectoryName(libDir, sizeof(libDir), exePath, 2, "lib");
+      free(exePath);
+   }
    if (libDir[0] == 0)
       snprintf(libDir, sizeof(libDir), ".");
-   free(path);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////

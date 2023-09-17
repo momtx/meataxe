@@ -19,10 +19,6 @@
    OS_NO_ITIMER ............ no interval timers
    -------------------------------------------------------------------------- */
 
-/* --------------------------------------------------------------------------
-   Include files
-   -------------------------------------------------------------------------- */
-
 #include "meataxe.h"
 
 #if defined (_WIN32)
@@ -419,6 +415,35 @@ int sysGetPid()
    return pid;
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+const char* sysGetExecutableName(const char* argv0)
+{
+   static char *result = NULL;
+   if (result != NULL)
+      return result;
+
+   if (strchr(argv0,'/') != NULL)
+      return argv0;
+   const char* p = getenv("PATH");
+
+   char exeName[2048];
+
+   while (1) {
+      while (*p == ':') ++p;
+      if (*p == 0) break;
+      const char *bop = p;
+      while (*p != 0 && *p != ':') ++p;
+      int len = p - bop;
+
+      snprintf(exeName, sizeof(exeName), "%.*s/%s", len, bop, argv0);
+      if (access(exeName, X_OK) == 0) {
+         result = strdup(exeName);
+         return result;
+      }
+   }
+   return argv0;
+}
 
 /// @}
 // vim:fileencoding=utf8:sw=3:ts=8:et:cin

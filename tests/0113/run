@@ -3,24 +3,22 @@ echo "0113 - ZSY"
 
 # Permutations
 
-zsy -Q e2 "${MTX_TEST_DATA_DIR}/Perm1" tmp.$$.p1
+zsy -Q e2 "${MTX_TEST_DATA_DIR}/Perm1" p1
 compareBinaryWithReference p1
 
-zsy -Q e3 "${MTX_TEST_DATA_DIR}/Perm1" tmp.$$.p2
+zsy -Q e3 "${MTX_TEST_DATA_DIR}/Perm1" p2
 compareBinaryWithReference p2
 
 # Matrices
 
-zsy -Q s2 "${MTX_TEST_DATA_DIR}/Mat2" tmp.$$.m2s2
+zsy -Q s2 "${MTX_TEST_DATA_DIR}/Mat2" m2s2
 compareBinaryWithReference m2s2
 
-zct 1-5:1-7 "${MTX_TEST_DATA_DIR}/Mat67" tmp.$$.m67
-zsy -Q e3 tmp.$$.m67 tmp.$$.m67e3
+zct 1-5:1-7 "${MTX_TEST_DATA_DIR}/Mat67" m67
+zsy -Q e3 m67 m67e3
 compareBinaryWithReference m67e3
 
-zct 1-5:1-6 "${MTX_TEST_DATA_DIR}/Mat25" tmp.$$.m25
-zsy -Q e4 tmp.$$.m25 tmp.$$.m25e4
+zct 1-5:1-6 "${MTX_TEST_DATA_DIR}/Mat25" m25
+zsy -Q e4 m25 m25e4
 compareBinaryWithReference m25e4
 
-# Clean up
-rm -f tmp.$$.*

@@ -3,46 +3,43 @@ echo "0117 - ZMW"
 . ../tests/common.sh
 
 cp "${MTX_TEST_DATA_DIR}"/m11.? .
-zmw -Q 1 m11.1 m11.2 tmp.$$.m11.w1
+zmw -Q 1 m11.1 m11.2 m11.w1
 compareBinaryWithReference m11.w1 
-zmw -Q -g 2 2           m11 tmp.$$.m11.w2 tmp.$$.m11.nsp2
+zmw -Q -g 2 2           m11 m11.w2 m11.nsp2
 compareBinaryWithReference m11.w2
 compareBinaryWithReference m11.nsp2
-zmw -Q -g 2 30000       m11 tmp.$$.m11.w30000
+zmw -Q -g 2 30000       m11 m11.w30000
 compareBinaryWithReference m11.w30000
-zmw -Q -g 2 30000/1,1   m11 tmp.$$.m11.w30000a
+zmw -Q -g 2 30000/1,1   m11 m11.w30000a
 compareBinaryWithReference m11.w30000a
-zmw -Q -g 2 30000/1,0,1 m11 tmp.$$.m11.w30000b
+zmw -Q -g 2 30000/1,0,1 m11 m11.w30000b
 compareBinaryWithReference m11.w30000b
 
 
 cp "${MTX_TEST_DATA_DIR}"/C0.? .
-zmw -Q 1 C0.1 C0.2 tmp.$$.C0.w1
+zmw -Q 1 C0.1 C0.2 C0.w1
 compareBinaryWithReference C0.w1 
-zmw -Q -g 2 2           C0 tmp.$$.C0.w2 tmp.$$.C0.nsp2
+zmw -Q -g 2 2           C0 C0.w2 C0.nsp2
 compareBinaryWithReference C0.w2
 compareBinaryWithReference C0.nsp2 
-zmw -Q -g 2 30000       C0 tmp.$$.C0.w30000
+zmw -Q -g 2 30000       C0 C0.w30000
 compareBinaryWithReference C0.w30000
-zmw -Q -g 2 30000/1,1   C0 tmp.$$.C0.w30000a
+zmw -Q -g 2 30000/1,1   C0 C0.w30000a
 compareBinaryWithReference C0.w30000a
-zmw -Q -g 2 30000/1,0,1 C0 tmp.$$.C0.w30000b
+zmw -Q -g 2 30000/1,0,1 C0 C0.w30000b
 compareBinaryWithReference C0.w30000b
 
 
 cp "${MTX_TEST_DATA_DIR}"/Ru-K378.? .
-zmw -Q -g 4 1           Ru-K378 tmp.$$.Ru-K378.w1
+zmw -Q -g 4 1           Ru-K378 Ru-K378.w1
 compareBinaryWithReference Ru-K378.w1
-zmw -Q -g 4 2           Ru-K378 tmp.$$.Ru-K378.w2 tmp.$$.Ru-K378.nsp2
+zmw -Q -g 4 2           Ru-K378 Ru-K378.w2 Ru-K378.nsp2
 compareBinaryWithReference Ru-K378.w2
 compareBinaryWithReference Ru-K378.nsp2
-zmw -Q -g 4 30000       Ru-K378 tmp.$$.Ru-K378.w30000
+zmw -Q -g 4 30000       Ru-K378 Ru-K378.w30000
 compareBinaryWithReference Ru-K378.w30000
-zmw -Q -g 4 30000/1,1   Ru-K378 tmp.$$.Ru-K378.w30000a
+zmw -Q -g 4 30000/1,1   Ru-K378 Ru-K378.w30000a
 compareBinaryWithReference Ru-K378.w30000a
-zmw -Q -g 4 30000/1,0,1 Ru-K378 tmp.$$.Ru-K378.w30000b
+zmw -Q -g 4 30000/1,0,1 Ru-K378 Ru-K378.w30000b
 compareBinaryWithReference Ru-K378.w30000b
 
-
-# Clean up
-rm -f tmp.$$.*

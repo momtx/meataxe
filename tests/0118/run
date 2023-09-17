@@ -7,10 +7,9 @@ echo "0118 - ZPT"
 # Matrices
 
 for f in 2 5 9 25 67 125 256 ; do
-   zpt -Q -r 2 -c 3 tmp.$$.x$f \
+   zpt -Q -r 2 -c 3 x$f \
       "${MTX_TEST_DATA_DIR}/Mat$f" - "${MTX_TEST_DATA_DIR}/Mat$f" \
       - "${MTX_TEST_DATA_DIR}/Mat$f" -
    compareBinaryWithReference x$f
 done
 
-rm -f tmp.$$.*

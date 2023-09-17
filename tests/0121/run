@@ -2,13 +2,10 @@ echo "0121 - ZEV"
 
 . ../tests/common.sh
 
-set -x
+#set -x
 
 for f in Th-m.1 Th-m.2 Th-m.3; do
-   zev "${MTX_TEST_DATA_DIR}/$f" "${MTX_TESTCASE_DIR}/poly.txt" > "tmp.$$.$f.ev"
+   zev "${MTX_TEST_DATA_DIR}/$f" "${MTX_TESTCASE_DIR}/poly.txt" > "$f.ev"
    compareWithReference "$f.ev"
 done
 
-
-# Clean up
-rm -f tmp.$$.*

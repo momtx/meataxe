@@ -10,12 +10,10 @@ for f in 2 5 9 25 67 125 256 ; do
     zsi -Q m n s2 i2 || exit 1
     zsi -Q "${MTX_TEST_DATA_DIR}/Mat$f" m s3 i3 || exit 1
     zsi -Q q m s4 i4 || exit 1
-    zpt -Q -r 8 -c 1 tmp.$$.x$f s1 s2 s3 s4 i1 i2 i3 i4 || exit 1
+    zpt -Q -r 8 -c 1 x$f s1 s2 s3 s4 i1 i2 i3 i4 || exit 1
     rm -f m n q s1 s2 i1 i2 s3 i3 s4 i4
 
-    zpr tmp.$$.x$f tmp.$$.x$f.txt
-    cmp tmp.$$.x$f.txt "${MTX_TESTCASE_DIR}/x$f.txt.expected"
+    zpr x$f x$f.txt
+    cmp x$f.txt "${MTX_TESTCASE_DIR}/x$f.txt.expected"
 done
 
-# Clean up
-rm -f tmp.$$.*

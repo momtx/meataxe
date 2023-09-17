@@ -2,21 +2,19 @@ echo "0110 - ZMO/ZKD"
 
 . ../tests/common.sh
 
-cp "${MTX_TEST_DATA_DIR}/Perm1" tmp.$$.x.1
-cp "${MTX_TEST_DATA_DIR}/Perm2" tmp.$$.y.1
-zmo -Q -g 1 tmp.$$.x tmp.$$.xorb
-zmo -Q -g 1 tmp.$$.y tmp.$$.yorb
+cp "${MTX_TEST_DATA_DIR}/Perm1" x.1
+cp "${MTX_TEST_DATA_DIR}/Perm2" y.1
+zmo -Q -g 1 x xorb
+zmo -Q -g 1 y yorb
 
-zkd -Q 2 tmp.$$.xorb tmp.$$.y.1 tmp.$$.yk2
-zkd -Q 2 tmp.$$.yorb tmp.$$.x.1 tmp.$$.xk2
+zkd -Q 2 xorb y.1 yk2
+zkd -Q 2 yorb x.1 xk2
 
-zkd -Q 67 tmp.$$.xorb tmp.$$.y.1 tmp.$$.yk67
-zkd -Q 67 tmp.$$.yorb tmp.$$.x.1 tmp.$$.xk67
+zkd -Q 67 xorb y.1 yk67
+zkd -Q 67 yorb x.1 xk67
 
 for f in xk2 xk67 yk2 yk67; do
-   zpr tmp.$$.$f tmp.$$.$f.txt
-   cmp tmp.$$.$f.txt "${MTX_TESTCASE_DIR}/$f.txt.expected"
+   zpr $f $f.txt
+   cmp $f.txt "${MTX_TESTCASE_DIR}/$f.txt.expected"
 done
 
-# Clean up
-rm -f tmp.$$.*

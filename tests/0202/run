@@ -1,0 +1,29 @@
+echo "0202 - CFCOMP"
+
+. ../tests/common.sh
+
+cp ${MTX_TEST_DATA_DIR}/ac.1 ac.1
+cp ${MTX_TEST_DATA_DIR}/ac.2 ac.2
+
+chop -Q ac || error "CHOP failed"
+
+CF="1a 1b 6a 6b 13a 13b 15a 15b 20a"
+
+rm -f output
+
+for cf in $CF; do
+   # Use a+b as basis transformation
+   zad ac$cf.1 ac$cf.2 trafo
+   ziv trafo trafoi
+
+   # Transform generators to new basis
+   for i in 1 2; do
+      zmu trafoi ac$cf.$i tmp
+      zmu tmp trafo x$cf.$i
+   done
+      
+   # Test transformed constituent using cfcomp
+   cfcomp ac x$cf >> output
+done
+
+compareWithReference output

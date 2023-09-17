@@ -1,33 +1,47 @@
 echo "0200 - Submodules of m11"
 
+#set -x
 . ../tests/common.sh
 
-cp "${MTX_TEST_DATA_DIR}/m11.1" tmp.$$.m11.1
-cp "${MTX_TEST_DATA_DIR}/m11.2" tmp.$$.m11.2
 
-chop -Q tmp.$$.m11 || error "CHOP failed"
-cmp tmp.$$.m11.cfinfo "${MTX_TESTCASE_DIR}/cfinfo_after_chop.expected"
+cp "${MTX_TEST_DATA_DIR}/m11.1" m11.1
+cp "${MTX_TEST_DATA_DIR}/m11.2" m11.2
 
-pwkond -Qt tmp.$$.m11 || error "PWKOND failed"
-cmp tmp.$$.m11.cfinfo "${MTX_TESTCASE_DIR}/cfinfo_after_pwkond.expected"
+chop -Q m11 || error "CHOP failed"
+compareWithReference m11.cfinfo cfinfo_after_chop.expected
 
-mkcycl -Q tmp.$$.m11 || error "MKCYCL FAILED"
+pwkond -Qt m11 || error "PWKOND failed"
+compareWithReference m11.cfinfo cfinfo_after_pwkond.expected
 
-mkinc -Q tmp.$$.m11 || error "MKINC FAILED"
-cmp tmp.$$.m11.mnt "${MTX_TESTCASE_DIR}/mnt.expected"
+mkcycl -Q m11 || error "MKCYCL FAILED"
 
-mkdotl -Q tmp.$$.m11 || error "MKDOTL FAILED"
-cmp tmp.$$.m11.cfinfo "${MTX_TESTCASE_DIR}/cfinfo_after_mkdotl.expected"
+mkinc -Q m11 || error "MKINC FAILED"
+compareWithReference m11.mnt
 
-mksub -Q tmp.$$.m11 || error "MKSUB FAILED"
-cmp tmp.$$.m11.out "${MTX_TESTCASE_DIR}/m11.out.expected"
-cmp tmp.$$.m11.lat "${MTX_TESTCASE_DIR}/m11.lat.expected"
-cmp tmp.$$.m11.gra "${MTX_TESTCASE_DIR}/m11.gra.expected"
+mkdotl -Q m11 || error "MKDOTL FAILED"
+compareWithReference m11.cfinfo cfinfo_after_mkdotl.expected
 
-soc -Q tmp.$$.m11 || error "SOC failed"
-rad -Q tmp.$$.m11 || error "RAD failed"
-cmp tmp.$$.m11.cfinfo "${MTX_TESTCASE_DIR}/cfinfo_after_socrad.expected"
+mksub -Q m11 || error "MKSUB FAILED"
+compareWithReference m11.out
+compareWithReference m11.lat
+compareWithReference m11.gra
 
+soc -Q m11 || error "SOC failed"
+rad -Q m11 || error "RAD failed"
+compareWithReference m11.cfinfo cfinfo_after_socrad.expected
 
-# Clean up
-rm -f tmp.$$.* 
+# Generate one submodule
+genmod -Q m11 13
+compareBinaryWithReference m11.s13
+
+# Check that it's actually a submodule
+for gen in 1 2; do
+   zmu m11.s13 m11.$gen img
+   zcl m11.s13 img imgcl imgops
+   zef -Q imgcl m11.s13.img.$gen
+   compareBinaryWithReference m11.s13.img.$gen
+done
+
+# Generate one mountain
+genmod -Q -m m11 7
+compareBinaryWithReference m11.m7

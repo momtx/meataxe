@@ -36,6 +36,7 @@ FILE* sysFopen(const char *name, const char*mode);
 void sysFree(void *x);
 int sysFseek(FILE *f, long pos);
 int sysFseekRelative(FILE *file, long distance);
+const char* sysGetExecutableName(const char* argv0);
 int sysGetPid();
 void sysInit(void);
 void* sysMalloc(size_t nbytes);

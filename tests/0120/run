@@ -4,8 +4,6 @@ echo "0120 - ZFR"
 
 FILES="Mat2 Mat5 Mat25 Mat125 Mat256"
 for f in $FILES; do
-   zfr -Q "$MTX_TEST_DATA_DIR/$f" "tmp.$$.${f}out"
-   compareWithReference ${f}out
+   zfr -Q "$MTX_TEST_DATA_DIR/$f" "${f}out"
+   compareBinaryWithReference ${f}out
 done
-
-rm -f tmp.$$.*

@@ -3,19 +3,17 @@ echo "0211 - Tensor condensation of Th (dim = 248)"
 . ../tests/common.sh
 
 
-cp "${MTX_TEST_DATA_DIR}/Th-r.1" tmp.$$.Th-r.1
-cp "${MTX_TEST_DATA_DIR}/Th-r.2" tmp.$$.Th-r.2
-cp "${MTX_TEST_DATA_DIR}/Th-m.1" tmp.$$.Th-m.1
-cp "${MTX_TEST_DATA_DIR}/Th-m.2" tmp.$$.Th-m.2
-cp "${MTX_TEST_DATA_DIR}/Th-m.3" tmp.$$.Th-m.3
+cp "${MTX_TEST_DATA_DIR}/Th-r.1" Th-r.1
+cp "${MTX_TEST_DATA_DIR}/Th-r.2" Th-r.2
+cp "${MTX_TEST_DATA_DIR}/Th-m.1" Th-m.1
+cp "${MTX_TEST_DATA_DIR}/Th-m.2" Th-m.2
+cp "${MTX_TEST_DATA_DIR}/Th-m.3" Th-m.3
 
-chop -Q -g 3 tmp.$$.Th-m || error "CHOP failed"
-pwkond -Qbt tmp.$$.Th-m || error "PWKOND failed"
-precond -Q tp tmp.$$.Th-m tmp.$$.Th-m || error "PRECOND failed"
-tcond -Q -g 2 tp tmp.$$.Th-r tmp.$$.Th-r tmp.$$.result || error "TCOND failed"
+chop -Q -g 3 Th-m || error "CHOP failed"
+pwkond -Qbt Th-m || error "PWKOND failed"
+precond -Q tp Th-m Th-m || error "PRECOND failed"
+tcond -Q -g 2 tp Th-r Th-r result || error "TCOND failed"
 
 compareBinaryWithReference result.1
 compareBinaryWithReference result.2
 
-# Clean up
-rm -f tmp.$$.*

@@ -2,13 +2,11 @@ echo "0109 - ZMO"
 
 . ../tests/common.sh
 
-cp "${MTX_TEST_DATA_DIR}/Perm1" tmp.$$.x.1
-cp "${MTX_TEST_DATA_DIR}/Perm2" tmp.$$.x.2
+cp "${MTX_TEST_DATA_DIR}/Perm1" x.1
+cp "${MTX_TEST_DATA_DIR}/Perm2" x.2
 
 for seed in 1 2 5 12; do
-   zmo -Q -s "$seed" tmp.$$.x tmp.$$.orb$seed
+   zmo -Q -s "$seed" x orb$seed
    compareBinaryWithReference orb$seed
 done
 
-# Clean up
-rm -f tmp.$$.*

@@ -111,7 +111,6 @@ static int Init(int argc, char **argv)
    ----------------------------------------------------------------- */
 
 static void sp()
-
 {
     int i;
     Matrix_t *m, *subsp;
@@ -135,7 +134,7 @@ static void sp()
     MESSAGE(0,("Submodule has dimension %d\n",subsp->Nor));
     sprintf(fn,"%s.%c%d",LI.BaseName,opt_m ? 'm' : 's',modnum);
     matSave(subsp,fn);
-    MESSAGE(0,("Module written to `%s'\n",fn));
+    MESSAGE(0,("Module written to %s\n",fn));
 }
 
 

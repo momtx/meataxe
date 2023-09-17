@@ -2,30 +2,28 @@ echo "0112 - ZUK"
 
 . ../tests/common.sh
 
-cat > tmp.$$.orbs.txt << EOT
+cat > orbs.txt << EOT
 integer matrix rows=1 cols=24
 0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23
 integer matrix rows=1 cols=24
 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1
 EOT
-zcv -Q tmp.$$.orbs.txt tmp.$$.orbs || error "ZCV failed"
+zcv -Q orbs.txt orbs || error "ZCV failed"
 for f in $TEST_FIELDS ; do
-    zuk -Q "${MTX_TEST_DATA_DIR}/Mat$f" tmp.$$.orbs tmp.$$.x || error "ZUK failed"
-    cmp "${MTX_TEST_DATA_DIR}/Mat$f" tmp.$$.x || error "ZUK with trivial orbits: wrong result"
+    zuk -Q "${MTX_TEST_DATA_DIR}/Mat$f" orbs x || error "ZUK failed"
+    cmp "${MTX_TEST_DATA_DIR}/Mat$f" x || error "ZUK with trivial orbits: wrong result"
 done
 
-cat > tmp.$$.orbs.txt << EOT
+cat > orbs.txt << EOT
 integer-matrix rows=1 cols=26
 0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 0 23
 integer-matrix rows=1 cols=24
 2 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 2
 EOT
-zcv -Q tmp.$$.orbs.txt tmp.$$.orbs || error "ZCV failed"
+zcv -Q orbs.txt orbs || error "ZCV failed"
 for f in 2 5 9 25 67 125 256 ; do
-    zuk -Q "${MTX_TEST_DATA_DIR}/Mat$f" tmp.$$.orbs tmp.$$.x$f || error "ZUK failed"
-    zpr tmp.$$.x$f tmp.$$.x$f.txt 
-    cmp tmp.$$.x$f.txt "${MTX_TESTCASE_DIR}/x$f.txt.expected"
+    zuk -Q "${MTX_TEST_DATA_DIR}/Mat$f" orbs x$f || error "ZUK failed"
+    zpr x$f x$f.txt 
+    cmp x$f.txt "${MTX_TESTCASE_DIR}/x$f.txt.expected"
 done
 
-# Clean up
-rm -f tmp.$$.*

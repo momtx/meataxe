@@ -4,16 +4,16 @@ echo "0210 - Tensor condensation of Ru (dim = 378)"
 
 quiet="-Q"
 
-cp "${MTX_TEST_DATA_DIR}/Ru-K378.1" tmp.$$.Ru-K378.1
-cp "${MTX_TEST_DATA_DIR}/Ru-K378.2" tmp.$$.Ru-K378.2
-cp "${MTX_TEST_DATA_DIR}/Ru-K378.3" tmp.$$.Ru-K378.3
-cp "${MTX_TEST_DATA_DIR}/Ru-K378.4" tmp.$$.Ru-K378.4
-cp "${MTX_TEST_DATA_DIR}/Ru-M378.1" tmp.$$.Ru-M378.1
-cp "${MTX_TEST_DATA_DIR}/Ru-M378.2" tmp.$$.Ru-M378.2
-chop ${quiet} -g 4 tmp.$$.Ru-K378 || error "CHOP failed"
-pwkond ${quiet} -bt tmp.$$.Ru-K378 || error "PWKOND failed"
-precond ${quiet} tmp.$$.tp tmp.$$.Ru-K378 tmp.$$.Ru-K378 || error "PRECOND failed"
-tcond ${quiet} -g 2 tmp.$$.tp tmp.$$.Ru-M378 tmp.$$.Ru-M378 tmp.$$.result || error "TCOND failed"
+cp "${MTX_TEST_DATA_DIR}/Ru-K378.1" Ru-K378.1
+cp "${MTX_TEST_DATA_DIR}/Ru-K378.2" Ru-K378.2
+cp "${MTX_TEST_DATA_DIR}/Ru-K378.3" Ru-K378.3
+cp "${MTX_TEST_DATA_DIR}/Ru-K378.4" Ru-K378.4
+cp "${MTX_TEST_DATA_DIR}/Ru-M378.1" Ru-M378.1
+cp "${MTX_TEST_DATA_DIR}/Ru-M378.2" Ru-M378.2
+chop ${quiet} -g 4 Ru-K378 || error "CHOP failed"
+pwkond ${quiet} -bt Ru-K378 || error "PWKOND failed"
+precond ${quiet} tp Ru-K378 Ru-K378 || error "PRECOND failed"
+tcond ${quiet} -g 2 tp Ru-M378 Ru-M378 result || error "TCOND failed"
 
 compareBinaryWithReference Ru-K37816a.1
 compareBinaryWithReference Ru-K37816a.2
@@ -25,7 +25,3 @@ compareBinaryWithReference Ru-K37824a.2
 compareBinaryWithReference result.1
 compareBinaryWithReference result.2
 
-
-# Clean up
-# --------
-rm -f tmp.$$.*

@@ -22,4 +22,8 @@ unpack a new version of the MeatAxe.
 
 ## Documentation
 
-The current documentation for version 2.4 is available under http://momtx.github.io/meataxe
+Documentation snapshots are available under http://momtx.github.io/meataxe
+If doxygen is available, you can build the documentation from the sources with
+
+    make doc
+

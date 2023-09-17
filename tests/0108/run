@@ -3,27 +3,25 @@ echo "0108 - ZAD/ZMU"
 . ../tests/common.sh
 
 for f in $TEST_FIELDS ; do
-    zmu "${MTX_TEST_DATA_DIR}/Mat$f" "${MTX_TEST_DATA_DIR}/Mat$f" tmp.$$.a
-    zad "${MTX_TEST_DATA_DIR}/Mat$f" tmp.$$.a tmp.$$.b$f
-    zpr tmp.$$.b$f tmp.$$.b$f.txt
-    cmp tmp.$$.b$f.txt "${MTX_TESTCASE_DIR}/b$f.txt.expected"
+    zmu "${MTX_TEST_DATA_DIR}/Mat$f" "${MTX_TEST_DATA_DIR}/Mat$f" a
+    zad "${MTX_TEST_DATA_DIR}/Mat$f" a b$f
+    zpr b$f b$f.txt
+    cmp b$f.txt "${MTX_TESTCASE_DIR}/b$f.txt.expected"
 done
 
-cp ${MTX_TEST_DATA_DIR}/Mat5 tmp.$$.x
-zad tmp.$$.x tmp.$$.x tmp.$$.x tmp.$$.x tmp.$$.x tmp.$$.null
-zpr tmp.$$.null tmp.$$.null.txt
-cmp tmp.$$.null.txt "${MTX_TESTCASE_DIR}/null.txt.expected"
+cp ${MTX_TEST_DATA_DIR}/Mat5 x
+zad x x x x x null
+zpr null null.txt
+cmp null.txt "${MTX_TESTCASE_DIR}/null.txt.expected"
 
-zad tmp.$$.x -tmp.$$.x tmp.$$.x -tmp.$$.x tmp.$$.x tmp.$$.a
-cmp tmp.$$.x tmp.$$.a || error "x-x+x-x+x is different from x"
-zad -- -tmp.$$.x tmp.$$.x -tmp.$$.x tmp.$$.x -tmp.$$.x tmp.$$.a tmp.$$.b
-zpr tmp.$$.b tmp.$$.b.txt
-cmp tmp.$$.b.txt "${MTX_TESTCASE_DIR}/b.txt.expected"
+zad x -x x -x x a
+cmp x a || error "x-x+x-x+x is different from x"
+zad -- -x x -x x -x a b
+zpr b b.txt
+cmp b.txt "${MTX_TESTCASE_DIR}/b.txt.expected"
 
-zmu ${MTX_TEST_DATA_DIR}/Perm1 ${MTX_TEST_DATA_DIR}/Perm2 tmp.$$.c
-zpr tmp.$$.c tmp.$$.c.txt
-cmp tmp.$$.c.txt "${MTX_TESTCASE_DIR}/c.txt.expected"
+zmu ${MTX_TEST_DATA_DIR}/Perm1 ${MTX_TEST_DATA_DIR}/Perm2 c
+zpr c c.txt
+cmp c.txt "${MTX_TESTCASE_DIR}/c.txt.expected"
 
 
-# Clean up
-rm -f tmp.$$.*

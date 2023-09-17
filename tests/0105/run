@@ -10,9 +10,9 @@ testMatrix()
    mat="$1"
    field1="$2"
    field2="$3"
-   zcf -Q "$field2" "${MTX_TEST_DATA_DIR}/$mat" tmp.$$.a
-   zcf -Q "$field1" tmp.$$.a tmp.$$.b
-   cmp tmp.$$.b "${MTX_TEST_DATA_DIR}/$mat"
+   zcf -Q "$field2" "${MTX_TEST_DATA_DIR}/$mat" a
+   zcf -Q "$field1" a b
+   cmp b "${MTX_TEST_DATA_DIR}/$mat"
 }
 
 testMatrix Mat2 2 4
@@ -23,14 +23,10 @@ testMatrix Mat5 5 125
 testMatrix Mat9 9 3
 
 
-zcf -Q 2 "${MTX_TEST_DATA_DIR}/Perm1" tmp.$$.Perm1_2
-zpr tmp.$$.Perm1_2 tmp.$$.Perm1_2.txt
-cmp tmp.$$.Perm1_2.txt "${MTX_TESTCASE_DIR}/Perm1_2.txt.expected"
+zcf -Q 2 "${MTX_TEST_DATA_DIR}/Perm1" Perm1_2
+zpr Perm1_2 Perm1_2.txt
+cmp Perm1_2.txt "${MTX_TESTCASE_DIR}/Perm1_2.txt.expected"
 
-zcf -Q 67 "${MTX_TEST_DATA_DIR}/Perm1" tmp.$$.Perm1_67
-zpr tmp.$$.Perm1_67 tmp.$$.Perm1_67.txt
-cmp tmp.$$.Perm1_67.txt "${MTX_TESTCASE_DIR}/Perm1_67.txt.expected"
-
-
-# Clean up
-rm -f tmp.$$.*
+zcf -Q 67 "${MTX_TEST_DATA_DIR}/Perm1" Perm1_67
+zpr Perm1_67 Perm1_67.txt
+cmp Perm1_67.txt "${MTX_TESTCASE_DIR}/Perm1_67.txt.expected"

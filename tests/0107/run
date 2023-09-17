@@ -4,9 +4,9 @@ echo "0107 - ZTR"
 
 testTranspose()
 {
-   ztr "${MTX_TEST_DATA_DIR}/$1" tmp.$$.$1_tr
-   zpr tmp.$$.$1_tr tmp.$$.$1_tr.txt
-   cmp tmp.$$.$1_tr.txt "${MTX_TESTCASE_DIR}/$1_tr.txt.expected"
+   ztr "${MTX_TEST_DATA_DIR}/$1" $1_tr
+   zpr $1_tr $1_tr.txt
+   cmp $1_tr.txt "${MTX_TESTCASE_DIR}/$1_tr.txt.expected"
 }
 
 testTranspose Mat2
@@ -15,6 +15,3 @@ testTranspose Mat125
 if [ "$MTX_ZZZ" -eq 1 ]; then
    testTranspose Mat625
 fi
-
-# Clean up
-rm -f tmp.$$.*
