@@ -30,7 +30,7 @@ static void ExtractNrs(PTR v,GreasedMatrix_t *M)
    unsigned char *p = v;
    register long *q;
    register int curtab = 0;
-   register int i = M->Nor / M->GrRows;
+   register int i = M->nor / M->grRows;
 
    if (extrtablen < i + 16) { /* some reserve! */
       if (extractednrs) { sysFree(extractednrs); }
@@ -49,16 +49,16 @@ static void ExtractNrs(PTR v,GreasedMatrix_t *M)
 
       while (i > 0) {
          /* tabnr = 0; */
-         x = M->ExtrTab->tabs[curtab][*p++];
+         x = M->extrTab->tabs[curtab][*p++];
          {
-            register int k = M->ExtrTab->nrvals[curtab];
+            register int k = M->extrTab->nrvals[curtab];
             while (k--) {
                *q++ = y + *x++;
                y = 0;
                i--;
             }
          }
-         if (++curtab < M->ExtrTab->nrtabs) {
+         if (++curtab < M->extrTab->nrtabs) {
             y += *x; /* remember last part for "carry" */
          } else {
             curtab = 0;
@@ -78,25 +78,25 @@ static void CleverMapRow(PTR v,GreasedMatrix_t *M,PTR w)
    register long *nr;
    register long i;
    long curcol;
-   PTR p = M->PrecalcData;
+   PTR p = M->precalcData;
 
    ExtractNrs(v,M);    /* extracts numbers into global table */
-   ffMulRow(w,FF_ZERO, M->Noc);   /* Clear result */
-   curcol = M->Nor / M->GrRows;   /* only used later and for i init */
+   ffMulRow(w,FF_ZERO, M->noc);   /* Clear result */
+   curcol = M->nor / M->grRows;   /* only used later and for i init */
    nr = extractednrs;
    for (i = curcol; i > 0; i--) {
       /* for all greasing blocks */
       if (*nr) { /* not the zero vector */
-         ffAddRow(w,ffGetPtr(p,*nr - 1, M->Noc), M->Noc);
+         ffAddRow(w,ffGetPtr(p,*nr - 1, M->noc), M->noc);
       }
-      p = ffGetPtr(p,M->GrBlockSize, M->Noc);
+      p = ffGetPtr(p,M->grBlockSize, M->noc);
       nr++;
    }
-   curcol = curcol * M->GrRows;
-   for (i = M->Nor % M->GrRows; i > 0; i--) {
+   curcol = curcol * M->grRows;
+   for (i = M->nor % M->grRows; i > 0; i--) {
       /* do the rest */
-      ffAddMulRow(w,p,ffExtract(v,curcol++),M->Noc);
-      ffStepPtr(&p, M->Noc);
+      ffAddMulRow(w,p,ffExtract(v,curcol++),M->noc);
+      ffStepPtr(&p, M->noc);
    }
 }
 
@@ -122,32 +122,32 @@ void GrMapRow(PTR v,GreasedMatrix_t *M, PTR w)
       mtxAbort(MTX_HERE,"GrMapRow(): Invalid argument(s)");
       return;
    }
-   ffSetField(M->Field);
+   ffSetField(M->field);
 
    /* Handle some special cases.
       -------------------------- */
-   if (M->ExtrTab) {            /* We use our clever extraction */
+   if (M->extrTab) {            /* We use our clever extraction */
       CleverMapRow(v,M,w);
       return;
    }
-   if (M->GrRows == 0) {        /* Greasig is switched off */
-      ffMapRow(v,M->PrecalcData,M->Nor,M->Noc,w);
+   if (M->grRows == 0) {        /* Greasig is switched off */
+      ffMapRow(v,M->precalcData,M->nor,M->noc,w);
       return;
    }
 
-   ffMulRow(w,FF_ZERO, M->Noc);   /* Clear result */
+   ffMulRow(w,FF_ZERO, M->noc);   /* Clear result */
    curcol = 0;                  /* start with the first column of `v' */
-   p = M->PrecalcData;          /* start at the beginning of the table */
+   p = M->precalcData;          /* start at the beginning of the table */
 
-   if (M->Field == 2) {
+   if (M->field == 2) {
       register signed char *q = (signed char *) v;
       register signed char buf = *q++;
       register long wmask;     /* used to alter nr */
-      for (i = M->Nor / M->GrRows; i > 0; i--) {  /* for all greasing blocks */
+      for (i = M->nor / M->grRows; i > 0; i--) {  /* for all greasing blocks */
          /* Calculate the number for the first lookup: */
          nr = 0;
          wmask = 1;
-         for (j = M->GrRows - 1; j >= 0; j--) {
+         for (j = M->grRows - 1; j >= 0; j--) {
             if (buf < 0) {    /* a bit is set */
                nr |= wmask;
             }
@@ -159,17 +159,17 @@ void GrMapRow(PTR v,GreasedMatrix_t *M, PTR w)
             }
          }
          if (nr) {     /* not the zero vector */
-            p = ffGetPtr(p,nr - 1,M->Noc);   /* now p points to the right linear combination */
-            ffAddRow(w,p, M->Noc);
-            p = ffGetPtr(p,M->GrBlockSize - nr + 1, M->Noc);
+            p = ffGetPtr(p,nr - 1,M->noc);   /* now p points to the right linear combination */
+            ffAddRow(w,p, M->noc);
+            p = ffGetPtr(p,M->grBlockSize - nr + 1, M->noc);
          } else {
-            p = ffGetPtr(p,M->GrBlockSize, M->Noc);
+            p = ffGetPtr(p,M->grBlockSize, M->noc);
          }
       }
-      for (i = M->Nor % M->GrRows; i > 0; i--) {
+      for (i = M->nor % M->grRows; i > 0; i--) {
          /* do the rest */
-         if (buf < 0) { ffAddRow(w,p, M->Noc); }
-         ffStepPtr(&p, M->Noc);
+         if (buf < 0) { ffAddRow(w,p, M->noc); }
+         ffStepPtr(&p, M->noc);
          if ((++curcol & 0x7) == 0) {
             buf = *q++;
          } else {
@@ -178,24 +178,24 @@ void GrMapRow(PTR v,GreasedMatrix_t *M, PTR w)
       }
    } else {
       /* not GF(2) */
-      for (i = M->Nor / M->GrRows; i > 0; i--) {  /* for all greasing blocks */
+      for (i = M->nor / M->grRows; i > 0; i--) {  /* for all greasing blocks */
          /* Calculate the number for the first lookup: */
          nr = 0;
-         for (j = M->GrRows - 1; j >= 0; j--) { /* add j to curcol */
-            nr = nr * M->Field + ffToInt(ffExtract(v,curcol + j));
+         for (j = M->grRows - 1; j >= 0; j--) { /* add j to curcol */
+            nr = nr * M->field + ffToInt(ffExtract(v,curcol + j));
          }
          if (nr) {     /* not the zero vector */
-            p = ffGetPtr(p,nr - 1, M->Noc);   /* now p points to the right linear combination */
-            ffAddRow(w,p, M->Noc);
-            p = ffGetPtr(p,M->GrBlockSize - nr + 1, M->Noc);
+            p = ffGetPtr(p,nr - 1, M->noc);   /* now p points to the right linear combination */
+            ffAddRow(w,p, M->noc);
+            p = ffGetPtr(p,M->grBlockSize - nr + 1, M->noc);
          } else {
-            p = ffGetPtr(p,M->GrBlockSize, M->Noc);
+            p = ffGetPtr(p,M->grBlockSize, M->noc);
          }
-         curcol += M->GrRows;
+         curcol += M->grRows;
       }
-      for (i = M->Nor % M->GrRows; i > 0; i--) {  /* do the rest */
-         ffAddMulRow(w,p,ffExtract(v,curcol++),M->Noc);
-         ffStepPtr(&p, M->Noc);
+      for (i = M->nor % M->grRows; i > 0; i--) {  /* do the rest */
+         ffAddMulRow(w,p,ffExtract(v,curcol++),M->noc);
+         ffStepPtr(&p, M->noc);
       }
    }
 }

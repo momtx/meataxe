@@ -41,7 +41,7 @@ static void calculateMatrixOrder()
 {
    PTR m1, v;
    PTR base, bend;
-   int dim;
+   uint32_t dim;
    uint32_t* piv;
    char* ispiv;
    int ord;
@@ -69,10 +69,8 @@ static void calculateMatrixOrder()
 
       /* Find the next seed vector
          ------------------------- */
-      int i = 0;
-      while (i < noc && ispiv[i]) {
-         ++i;
-      }
+      uint32_t i = 0;
+      while (i < noc && ispiv[i]) ++i;
       MTX_ASSERT(i < noc);
       ffMulRow(bend,FF_ZERO, noc);
       ffInsert(bend,i,FF_ONE);
@@ -80,24 +78,22 @@ static void calculateMatrixOrder()
       /* Calculate order on the cyclic subspace
          -------------------------------------- */
       do {
-         PTR b;
-         FEL f;
-         int pv;
 
          /* Save the vector and extend the basis,
             if the vector is linearly independent.
             -------------------------------------- */
          ffCopyRow(v,bend, noc);
          if (!closed) {
-            b = base;
+            PTR b = base;
             for (i = 0; i < dim; ++i) {
-               f = ffExtract(bend,piv[i]);
+               FEL f = ffExtract(bend,piv[i]);
                if (f != FF_ZERO) {
                   ffAddMulRow(bend,b,ffNeg(ffDiv(f,ffExtract(b,piv[i]))),noc);
                }
                ffStepPtr(&b,noc);
             }
-            pv = ffFindPivot(bend,&f, noc);
+            FEL f;
+            uint32_t pv = ffFindPivot(bend,&f, noc);
             if (pv != MTX_NVAL) {
                piv[dim++] = pv;
                ispiv[pv] = 1;
@@ -152,7 +148,7 @@ static void calculatePermutationOrder()
       printf("MeatAxe.Orders := [");
    }
    for (uint32_t i = 1; i <= numberOfPermutations; ++i) {
-      Perm_t* perm = permReadData(file->File, file->header);
+      Perm_t* perm = permReadData(file->file, file->header);
       uint32_t order = permOrder(perm);
       permFree(perm);
       if (order < 0) {
@@ -183,7 +179,7 @@ static void init(int argc, char** argv)
 
    // Process arguments.
    appGetArguments(App,1,1);
-   fileName = App->ArgV[0];
+   fileName = App->argV[0];
 }
 
 

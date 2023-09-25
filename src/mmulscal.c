@@ -27,13 +27,13 @@ Matrix_t *matMulScalar(Matrix_t *dest, FEL coeff)
     }
     else
     {
-	PTR dp = dest->Data;
+	PTR dp = dest->data;
 	int n;
-	ffSetField(dest->Field);
-	for (n = dest->Nor; n > 0; --n)
+	ffSetField(dest->field);
+	for (n = dest->nor; n > 0; --n)
 	{
-	    ffMulRow(dp, coeff, dest->Noc);
-	    ffStepPtr(&dp, dest->Noc);
+	    ffMulRow(dp, coeff, dest->noc);
+	    ffStepPtr(&dp, dest->noc);
 	}
     }
     return dest;

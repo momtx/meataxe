@@ -31,13 +31,13 @@ Perm_t *permPower(const Perm_t *p, int n)
       return NULL;
    }
 
-   Perm_t* q = permAlloc(p->Degree);
+   Perm_t* q = permAlloc(p->degree);
    
-   uint32_t* xp = p->Data;
-   uint32_t* xq = q->Data;
+   uint32_t* xp = p->data;
+   uint32_t* xq = q->data;
 
    // calculate the n-th power
-   for (uint32_t i = 0; i < p->Degree; ++i) {
+   for (uint32_t i = 0; i < p->degree; ++i) {
       uint32_t k = i;
       for (uint32_t l = n; l > 0; --l) {
          k = xp[k];

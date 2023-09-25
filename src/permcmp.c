@@ -36,13 +36,13 @@ int permCompare(const Perm_t *a, const Perm_t *b)
 
    // compare degrees
    // TODO: do not return -1
-   if ((i = a->Degree - b->Degree) != 0) {
+   if ((i = a->degree - b->degree) != 0) {
       return i;
    }
 
    // compare the entries
    // TODO: do not return -1
-   i = memcmp(a->Data,b->Data,sizeof(a->Data[0]) * a->Degree);
+   i = memcmp(a->data,b->data,sizeof(a->data[0]) * a->degree);
    if (i < 0) {
       return -1;
    } else if (i > 0) {

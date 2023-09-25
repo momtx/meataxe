@@ -54,18 +54,18 @@ static void init(int argc, char **argv)
     opt_s = appGetOption(App,"-s --summary");
     if (opt_G) MtxMessageLevel = -100;
     appGetArguments(App,2,MAXGEN+1);
-    Count = atoi(App->ArgV[0]);
+    Count = atoi(App->argV[0]);
     if (Count < 1)
-	mtxAbort(MTX_HERE,"Invalid count '%s' (try --help)",App->ArgV[0]);
+	mtxAbort(MTX_HERE,"Invalid count '%s' (try --help)",App->argV[0]);
 
     // Read the generators
-    NGen = App->ArgC - 1;
+    NGen = App->argC - 1;
     for (int i = 0; i < NGen; ++i)
     {
-	Gen[i] = objLoad(App->ArgV[i+1]);
+	Gen[i] = objLoad(App->argV[i+1]);
 	if (i > 0 && !objCanMultiply(Gen[0],Gen[i]))
 	{
-	    mtxAbort(MTX_HERE,"%s and %s: %s",App->ArgV[1],App->ArgV[i+1],
+	    mtxAbort(MTX_HERE,"%s and %s: %s",App->argV[1],App->argV[i+1],
 		MTX_ERR_INCOMPAT);
 	}
     }

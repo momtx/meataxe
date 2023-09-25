@@ -38,8 +38,8 @@ static int Init(int argc, char **argv)
     if (appGetArguments(App,2,2) < 0)
 	return -1;
     
-    iname = App->ArgV[0];
-    oname = App->ArgV[1];
+    iname = App->argV[0];
+    oname = App->argV[1];
     return 0;
 }
 

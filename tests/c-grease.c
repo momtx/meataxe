@@ -12,17 +12,17 @@
 
 static int TestGrMapRow1(Matrix_t *m, int gr_level)
 {
-   Matrix_t *input = RndMat(ffOrder,m->Nor,m->Nor);
+   Matrix_t *input = RndMat(ffOrder,m->nor,m->nor);
    GreasedMatrix_t *gm = GrMatAlloc(m,gr_level);
-   PTR res_std = ffAlloc(1, m->Noc);
-   PTR res_grease = ffAlloc(1, m->Noc);
+   PTR res_std = ffAlloc(1, m->noc);
+   PTR res_grease = ffAlloc(1, m->noc);
    int i;
 
-   for (i = 0; i < m->Nor; ++i) {
+   for (i = 0; i < m->nor; ++i) {
       PTR vec = matGetPtr(input,i);
-      ffMapRow(vec,m->Data,m->Nor,m->Noc, res_std);
+      ffMapRow(vec,m->data,m->nor,m->noc, res_std);
       GrMapRow(vec,gm,res_grease);
-      ASSERT_EQ_INT(ffCmpRows(res_grease,res_std,m->Noc), 0);
+      ASSERT_EQ_INT(ffCmpRows(res_grease,res_std,m->noc), 0);
    }
    sysFree(res_std);
    sysFree(res_grease);

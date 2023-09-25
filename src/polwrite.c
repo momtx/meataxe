@@ -15,14 +15,14 @@ void polWrite(const Poly_t *p, FILE *file)
 {
    polValidate(MTX_HERE, p);
 
-   uint32_t hdr[3] = { MTX_TYPE_POLYNOMIAL, p->Field, p->Degree };
+   uint32_t hdr[3] = { MTX_TYPE_POLYNOMIAL, p->field, p->degree };
    sysWrite32(file,hdr,3);
-   ffSetField(p->Field);
-   if (p->Degree >= 0) {
-      PTR tmp = ffAlloc(1, p->Degree + 1);
-      for (unsigned i = 0; i <= p->Degree; ++i)
-         ffInsert(tmp, i, p->Data[i]);
-      ffWriteRows(file,tmp, 1, p->Degree + 1);
+   ffSetField(p->field);
+   if (p->degree >= 0) {
+      PTR tmp = ffAlloc(1, p->degree + 1);
+      for (unsigned i = 0; i <= p->degree; ++i)
+         ffInsert(tmp, i, p->data[i]);
+      ffWriteRows(file,tmp, 1, p->degree + 1);
       ffFree(tmp);
    }
 }
@@ -65,11 +65,11 @@ Poly_t *polReadData(FILE *f, const uint32_t header[3])
    const size_t degree = header[2];
    ffSetField(field);
    Poly_t* polynomial = polAlloc(field, degree);
-   if (polynomial->Degree > 0) {
+   if (polynomial->degree >= 0) {
       PTR tmpvec = ffAlloc(1, degree + 1);
       ffReadRows(f, tmpvec, 1, degree + 1);
       for (size_t i = 0; i <= degree; ++i) {
-         polynomial->Data[i] = ffExtract(tmpvec,i);
+         polynomial->data[i] = ffExtract(tmpvec,i);
       }
       ffFree(tmpvec);
    }
@@ -97,11 +97,11 @@ Poly_t *polRead(FILE *f)
    const int degree = hdr[2];
    ffSetField(field);
    Poly_t* p = polAlloc(field, degree);
-   if (p->Degree > 0) {
+   if (p->degree > 0) {
       PTR tmpvec = ffAlloc(1, degree + 1);
       ffReadRows(f, tmpvec, 1, degree + 1);
       for (size_t i = 0; i <= degree; ++i) {
-         p->Data[i] = ffExtract(tmpvec,i);
+         p->data[i] = ffExtract(tmpvec,i);
       }
       ffFree(tmpvec);
    }

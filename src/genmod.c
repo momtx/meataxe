@@ -62,15 +62,15 @@ static int Init(int argc, char **argv)
     App = appAlloc(&AppInfo,argc,argv);
     opt_m = appGetOption(App,"-m --mountain");
     appGetArguments(App,2,2);
-    ModuleName = App->ArgV[0];
-    modnum = atoi(App->ArgV[1]);
+    ModuleName = App->argV[0];
+    modnum = atoi(App->argV[1]);
     latReadInfo(&LI,ModuleName);
 
     /* Read the generators and mountains.
        ---------------------------------- */
     Rep = mrLoad(ModuleName,LI.NGen);
     mountains = matLoad(strcat(strcpy(fn,LI.BaseName),".v"));
-    nmount = mountains->Nor;
+    nmount = mountains->nor;
     MESSAGE(1,("%d mountains\n",nmount));
     
 
@@ -117,21 +117,21 @@ static void sp()
     PTR p;
     char fn[200];
 
-    m = matAlloc(ffOrder,nmount,Rep->Gen[0]->Noc);
-    p = m->Data;
+    m = matAlloc(ffOrder,nmount,Rep->Gen[0]->noc);
+    p = m->data;
     for (i = 0; i < nmount; ++i)
     {
 	if (bsTest(bs,i))
 	{
-	    PTR q = ffGetPtr(mountains->Data,i, Rep->Gen[0]->Noc);
-	    ffCopyRow(p,q, Rep->Gen[0]->Noc);
-	    ffStepPtr(&p, Rep->Gen[0]->Noc);
+	    PTR q = ffGetPtr(mountains->data,i, Rep->Gen[0]->noc);
+	    ffCopyRow(p,q, Rep->Gen[0]->noc);
+	    ffStepPtr(&p, Rep->Gen[0]->noc);
 	}
     }
     matEchelonize(m);
-    MESSAGE(0,("Seed space has dimension %d\n",m->Nor));
+    MESSAGE(0,("Seed space has dimension %d\n",m->nor));
     subsp = SpinUp(m,Rep,SF_EACH|SF_COMBINE,NULL,NULL);
-    MESSAGE(0,("Submodule has dimension %d\n",subsp->Nor));
+    MESSAGE(0,("Submodule has dimension %d\n",subsp->nor));
     sprintf(fn,"%s.%c%d",LI.BaseName,opt_m ? 'm' : 's',modnum);
     matSave(subsp,fn);
     MESSAGE(0,("Module written to %s\n",fn));

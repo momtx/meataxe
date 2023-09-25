@@ -64,7 +64,7 @@ static void ReadFiles(const char *basename)
     Rep = mrLoad(LI.BaseName,LI.NGen);
 
     // Load the .im matrices
-    for (int i = 0; i < LI.NCf; ++i)
+    for (int i = 0; i < LI.nCf; ++i)
     {
         char fn[200];
 	sprintf(fn,"%s%s.im",LI.BaseName,latCfName(&LI,i));
@@ -83,7 +83,7 @@ static void init(int argc, char **argv)
 	MtxMessageLevel = -100;
     appGetArguments(App,1,1);
     MESSAGE(0,("\n*** INCIDENCE MATRIX ***\n\n"));
-    ReadFiles(App->ArgV[0]);
+    ReadFiles(App->argV[0]);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -113,10 +113,10 @@ static void WriteMountains()
        --------------- */
     strcat(strcpy(fn,LI.BaseName),".v");
     MESSAGE(1,("Writing mountains to %s\n",fn));
-    MtxFile_t* mountainsFile = mfCreate(fn,ffOrder,nmount,Rep->Gen[0]->Noc);
+    MtxFile_t* mountainsFile = mfCreate(fn,ffOrder,nmount,Rep->Gen[0]->noc);
     for (i = 0; i < nmount; ++i)
     {
-	mfWriteRows(mountainsFile,mountlist[i]->Data, 1, mountlist[i]->Noc);
+	mfWriteRows(mountainsFile,mountlist[i]->data, 1, mountlist[i]->noc);
 	matFree(mountlist[i]);	// We don't need them for step 2*
         mountlist[i] = NULL;
     }
@@ -141,7 +141,7 @@ static int newmountain(Matrix_t *vec, int cf)
        the condensed module where it came from.
        ----------------------------------------- */
     span = SpinUp(vec,Rep,SF_FIRST|SF_SUB,NULL,NULL);
-    MESSAGE(2,("Next vector spins up to %d\n",span->Nor));
+    MESSAGE(2,("Next vector spins up to %d\n",span->nor));
     backproj = QProjection(bild[cf],span);
     matEchelonize(backproj);
 
@@ -149,7 +149,7 @@ static int newmountain(Matrix_t *vec, int cf)
        ----------------------------- */
     for (i = moffset[cf]; i < nmount; ++i)
     {
-	if (backproj->Nor == proj[i][cf]->Nor)
+	if (backproj->nor == proj[i][cf]->nor)
 	{
 	    int issub = IsSubspace(proj[i][cf],backproj,0);
 	    if (issub == -1)
@@ -174,10 +174,10 @@ static int newmountain(Matrix_t *vec, int cf)
 	    mtxAbort(MTX_HERE,"TOO MANY MOUNTAINS, INCREASE MAXCYCL");
 	    return -1;
 	}
-	proj[nmount] = NALLOC(Matrix_t *,LI.NCf);
+	proj[nmount] = NALLOC(Matrix_t *,LI.nCf);
 
     	MESSAGE(2,("New Mountain %d\n",(int)i));
-	for (k = 0; k < LI.NCf; ++k)
+	for (k = 0; k < LI.nCf; ++k)
 	{
     	    MESSAGE(3,("Projecting on %d\n",k));
 	    if (k == cf)
@@ -189,7 +189,7 @@ static int newmountain(Matrix_t *vec, int cf)
 	    }
 	}
 	mountlist[nmount] = vec;
-	MountDim[nmount] = span->Nor;
+	MountDim[nmount] = span->nor;
 	++nmount;
 	matFree(span);
 	return 1;
@@ -212,7 +212,7 @@ static int newmountain(Matrix_t *vec, int cf)
 static void makeclass(int mnt, int cf, Matrix_t *vectors)
 
 {
-    char *tmp = NALLOC(char,vectors->Nor+2);
+    char *tmp = NALLOC(char,vectors->nor+2);
     Matrix_t *vec;
     int k;
     int *p;
@@ -220,7 +220,7 @@ static void makeclass(int mnt, int cf, Matrix_t *vectors)
 
     nvec = 0;
     MESSAGE(2,("Making equivalence class\n"));
-    for (k = 0; k < vectors->Nor; ++k)
+    for (k = 0; k < vectors->nor; ++k)
     {
 	vec = matCutRows(vectors,k,1);
 	tmp[k] = 0;
@@ -236,7 +236,7 @@ static void makeclass(int mnt, int cf, Matrix_t *vectors)
 
     p = Class[mnt] = NALLOC(int,nvec+2);
     *p++ = nvec;
-    for (k = 0; k < vectors->Nor; ++k)
+    for (k = 0; k < vectors->nor; ++k)
     {
 	if (tmp[k]) 
 	    *p++ = k;
@@ -261,7 +261,7 @@ static void FindMountains()
 
     MESSAGE(0,("Step 1 (Mountains)\n"));
     nmount = 0;
-    for (cf = 0; cf < LI.NCf; ++cf)	/* For each irreducible */
+    for (cf = 0; cf < LI.nCf; ++cf)	/* For each irreducible */
     {
 	MESSAGE(0,("  %s%s: ",LI.BaseName,latCfName(&LI,cf)));
 
@@ -275,7 +275,7 @@ static void FindMountains()
 	/* Try each vector
 	   --------------- */
 	moffset[cf] = nmount;
-	for (i = 0; i < vectors->Nor; ++i)
+	for (i = 0; i < vectors->nor; ++i)
 	{
 	    if (i % 50 == 0)
 		MESSAGE(1,("[%d] ",i));
@@ -356,10 +356,10 @@ static void CalculateIncidences()
 		bsSet(subof[k],i);
 	    if (isubk)
 		bsSet(subof[i],k);
-	    if (cfk < LI.NCf && k == moffset[cfk+1]-1)
+	    if (cfk < LI.nCf && k == moffset[cfk+1]-1)
 		++cfk;
     	}
-    	if (cfi < LI.NCf && i == moffset[cfi+1]-1)
+    	if (cfi < LI.nCf && i == moffset[cfi+1]-1)
 	    ++cfi;
     }
 }

@@ -257,9 +257,9 @@ void strPrintF(String *s, const char *fmt, ...);
  **/
 
 typedef struct {
-   const char *Name;            /**< Program name. */
-   const char *Description;     /**< One-line description of the program. */
-   const char *Help;            /**< Help text. */
+   const char *name;            ///< Program name.
+   const char *description;     ///< One-line description of the program.
+   const char *help;            ///< Help text.
 } MtxApplicationInfo_t;
 
 /// Application data.
@@ -269,15 +269,16 @@ typedef struct {
 /// See also @ref AppAlloc
 
 typedef struct {
-   MtxApplicationInfo_t const *AppInfo;         /**< Program name and description. */
-   int OrigArgC;                                /**< Original argc from main(). */
-   char **OrigArgV;                             /**< Original argv from main(). */
-   int ArgC;                                    /**< Number of arguments. */
-   char **ArgV;                                 /**< Arguments. */
-   int OptEnd;                                  /**< Used internally. */
-   unsigned long IsDone[APP_MAX_ARGS];          /**< Used internally. */
-   const char *OptArg;                          /**< Used internally. */
-   int OptInd;                                  /**< Used internally. */
+   MtxApplicationInfo_t const *AppInfo; ///< Program name and description.
+   int context;                         ///< Used internally
+   int origArgC;                        ///< Original argc from main().
+   char **origArgV;                     ///< Original argv from main().
+   int argC;                            ///< Number of arguments.
+   char **argV;                         ///< Arguments.
+   int optEnd;                          ///< Used internally.
+   unsigned long isDone[APP_MAX_ARGS];  ///< Used internally.
+   const char *optArg;                  ///< Used internally.
+   int optInd;                          ///< Used internally.
 } MtxApplication_t;
 
 MtxApplication_t *appAlloc(MtxApplicationInfo_t const *ai, int argc, char **argv);
@@ -320,29 +321,34 @@ extern const char MTX_ERR_NARGS[];
 extern const char MTX_ERR_NOTMATRIX[];
 extern const char MTX_ERR_NOTPERM[];
 
-/// Defines a source code location. Used for error messages.
+/// Describes a source code location. Used for error messages.
 struct MtxSourceLocation {
    const char* file;    ///< The source file name.
    int line;            ///< The line number.
    const char* func;    ///< The function name.
 };
 
-/// The current source code location.
-#define MTX_HERE &(struct MtxSourceLocation) \
-   {.file = __FILE__, .line = __LINE__, .func = __func__}
+/// Provides a source code location descriptor.
+/// Both @a file and @func must be pointers to static constant strings.
+const struct MtxSourceLocation* mtxSourceLocation(const char* file, int line, const char* func);
+
+/// The current source code location
+#define MTX_HERE (&(const struct MtxSourceLocation){__FILE__, __LINE__, __func__}) 
 
 /// Run-time error information.
 struct MtxErrorInfo {
-   const struct MtxSourceLocation* source;
+   struct MtxSourceLocation source;
    const char *message;
 };
 
 typedef void MtxErrorHandler_t(const struct MtxErrorInfo *);
+typedef const char* MtxErrorContextProvider(void* userData);
 
 MTX_PRINTF_ATTRIBUTE(2,3)
-void mtxAbort(const struct MtxSourceLocation* sl, const char *text, ...);
-MTX_PRINTF_ATTRIBUTE(1,2)
-int mtxBegin(const char *s, ...);
+void mtxAbort(const struct MtxSourceLocation *sl, const char *text, ...);
+MTX_PRINTF_ATTRIBUTE(2,3)
+int mtxBegin(const struct MtxSourceLocation *sl, const char *s, ...);
+int mtxBeginScope(MtxErrorContextProvider ec, void* userData);
 void mtxEnd(int id);
 MTX_PRINTF_ATTRIBUTE(1,2)
 char *mtxMprintf(const char* s, ...);
@@ -400,12 +406,12 @@ uint32_t lcm32u(uint32_t a, uint32_t b);
 /// This structure is used for reading from and writing to structured text files.
  
 typedef struct {
-   FILE *File;          /**< The stream we're using */
-   char *LineBuf;       /**< Buffers one 'line' */
-   char *GetPtr;        /**< Current input position */
-   int LineBufSize;     /**< Current buffer size */
-   int OutPos;          /**< Number of chars in current line (writing only) */
-   int LineNo;          /**< Current line number (reading and writing) */
+   FILE *file;          /**< The stream we're using */
+   char *lineBuf;       /**< Buffers one 'line' */
+   char *getPtr;        /**< Current input position */
+   int lineBufSize;     /**< Current buffer size */
+   int outPos;          /**< Number of chars in current line (writing only) */
+   int lineNo;          /**< Current line number (reading and writing) */
 } StfData;
 
 int stfBeginEntry(StfData *f, const char *name);
@@ -428,15 +434,15 @@ int stfWriteVector(StfData *f, const char *name, int size, const int *value);
 int stfMatch(StfData *f, const char *pattern);
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-// MeatAxe binary data files
+// Binary data files
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-/// MeatAxe data file object.
+/// Binary data file object.
 typedef struct {
-   unsigned long Magic;         ///< Used internally.
+   unsigned long typeId;        ///< Used internally.
    uint32_t header[3];          ///< Last read/written object header.
-   FILE *File;                  ///< File handle.
-   char *Name;                  ///< File name.
+   FILE *file;                  ///< File handle.
+   char *name;                  ///< File name.
 } MtxFile_t;
 
 void mfClose(MtxFile_t *file);
@@ -459,12 +465,12 @@ void mfWriteRows(MtxFile_t *file, PTR buf, uint32_t nrows, uint32_t noc);
 
 /// A matrix over a finite field.
 typedef struct {
-   unsigned long Magic;  ///< @private
-   int Field;            ///< Field order.
-   int Nor;              ///< Number of rows.
-   int Noc;              ///< Number of columns.
-   PTR Data;             ///< Data, organized as array of rows.
-   uint32_t *PivotTable; ///< Pivot table (if matrix is in echelon form).
+   unsigned long typeId; ///< @private
+   int field;            ///< Field order.
+   int nor;              ///< Number of rows.
+   int noc;              ///< Number of columns.
+   PTR data;             ///< Data, organized as array of rows.
+   uint32_t *pivotTable; ///< Pivot table (if matrix is in echelon form).
 } Matrix_t;
 
 Matrix_t *matAdd(Matrix_t *dest, const Matrix_t *src);
@@ -506,37 +512,34 @@ void matWrite(const Matrix_t *mat, FILE *f);
 /* For internal use only */
 void mat_DeletePivotTable(Matrix_t *mat);
 
-/* ------------------------------------------------------------------
-   Greased matrices
-   ------------------------------------------------------------------ */
+////////////////////////////////////////////////////////////////////////////////////////////////////
+/// Greased matrices
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
-/**
-** Extraction table for greasing.
-** This  structure is used internally for all greased matrix operations.
-**/
+/// Extraction table for greasing.
+/// This  structure is used internally for all greased matrix operations.
 
 typedef struct {
-   long ***tabs;  /* tables for different remainders
-                     of byte numbers mod grrows */
-   int *nrvals;   /* number of values produced by each table */
-   int nrtabs;    /* number of tables used */
+   long ***tabs;  // tables for different remainders of byte numbers mod grrows
+   int *nrvals;   // number of values produced by each table
+   int nrtabs;    // number of tables used
 } GrExtractionTable_t;
 
 const GrExtractionTable_t *GrGetExtractionTable(int fl,int grrows);
 
-/**
-** A greased matrix.
-**/
+/// A greased matrix.
 
 typedef struct {
-   unsigned long Magic;
-   int Field, Nor, Noc;
-   int GrRows;                  /* Grease level (# of rows, 0=no grease) */
-   int GrBlockSize;             /* Vectors per block (= Field^GrRows) */
-   int NumVecs;                 /* Total number of vectors in <PrecalcData> */
-   PTR PrecalcData;             /* Precalculated data */
+   unsigned long typeId;
+   int field;
+   int nor;
+   int noc;
+   int grRows;                  /* Grease level (# of rows, 0=no grease) */
+   int grBlockSize;             /* Vectors per block (= Field^GrRows) */
+   int numVecs;                 /* Total number of vectors in <PrecalcData> */
+   PTR precalcData;             /* Precalculated data */
    const GrExtractionTable_t
-   *ExtrTab;                    /* Extraction table */
+   *extrTab;                    /* Extraction table */
    int MPB;                     /* Number of marks per byte */
 } GreasedMatrix_t;
 
@@ -551,9 +554,9 @@ int GrMatIsValid(const GreasedMatrix_t *mat);
 
 /// A Permutation.
 typedef struct {
-   uint32_t Magic;      /**< Used internally. */
-   uint32_t Degree;     /**< Degree of the permutation. */
-   uint32_t *Data;      /**< Images of 0,1,2,... */
+   uint32_t typeId;     ///< Used internally.
+   uint32_t degree;     ///< Degree of the permutation.
+   uint32_t *data;      ///< Images of 0,1,2,...
 } Perm_t;
 
 Perm_t* permAlloc(uint32_t deg);
@@ -580,17 +583,16 @@ void permWrite(const Perm_t *perm, FILE *f);
 
 /// A polynomial.
 typedef struct {
-   unsigned long Magic; /**< Used internally. */
-   int Field;           /**< Field order. */
-   int Degree;          /**< Degree of the polynomial. */
-   FEL *Data;           /**< Coefficients. Degree+1 values, starting with the
-                             constant term. */
-   int BufSize;         /**< Used internally for memory management. */
+   unsigned long typeId;///< Used internally.
+   uint32_t field;      ///< Field order.
+   int32_t degree;      ///< Degree of the polynomial.
+   FEL *data;           ///< Coefficients. Degree+1 values, starting with the constant term.
+   int bufSize;         ///< Used internally for memory management.
 }
 Poly_t;
 
 Poly_t *polAdd(Poly_t *dest, const Poly_t *src);
-Poly_t *polAlloc(int fl, int n);
+Poly_t *polAlloc(uint32_t field, int32_t degree);
 int polCompare(const Poly_t *a, const Poly_t *b);
 Poly_t *polDerive(Poly_t *pol);
 Poly_t *polDivMod(Poly_t *a, const Poly_t *b);
@@ -615,11 +617,11 @@ void polWrite(const Poly_t *p, FILE *f);
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 typedef struct {
-   unsigned long Magic; /**< Used internally. */
-   int NFactors;        /**< Number of different irreducible factors. */
-   int BufSize;         /**< Used internally for memory management. */
-   Poly_t **Factor;     /**< List of irreducible factors. */
-   int *Mult;           /**< Multiplicity of each factor. */
+   unsigned long typeId;///< Used internally.
+   int NFactors;        ///< Number of different irreducible factors.
+   int BufSize;         ///< Used internally for memory management.
+   Poly_t **Factor;     ///< List of irreducible factors.
+   int *Mult;           ///< Multiplicity of each factor.
 } FPoly_t;
 
 FPoly_t *fpAlloc();
@@ -636,7 +638,7 @@ void fpValidate(const struct MtxSourceLocation* src, const FPoly_t *p);
 
 /// A bit string.
 typedef struct {
-   unsigned magic;        ///< Used internally.
+   unsigned typeId;       ///< Used internally.
    size_t size;           ///< Number of signicant bits. Only used for fixed-size bit strings!
    size_t capacity;       ///< Maximum size.
    uint8_t *data;         ///< The bits. Bit 0 is the LSB of data[0].
@@ -678,9 +680,9 @@ void bsWrite(BitString_t *bs, FILE *f);
 //#ifndef MTX_DEBUG
 //
 //#define BS_BPL (sizeof(long) * 8)
-//#define bsSet(bs,i) ((bs)->Data[(i) / BS_BPL] |= 1L << ((i) % BS_BPL))
-//#define bsClear(bs,i) ((bs)->Data[(i) / BS_BPL] &= ~(1L << ((i) % BS_BPL)))
-//#define bsTest(bs,i) (((bs)->Data[(i) / BS_BPL] & (1L << ((i) % BS_BPL))) != 0 ? 1 : 0)
+//#define bsSet(bs,i) ((bs)->data[(i) / BS_BPL] |= 1L << ((i) % BS_BPL))
+//#define bsClear(bs,i) ((bs)->data[(i) / BS_BPL] &= ~(1L << ((i) % BS_BPL)))
+//#define bsTest(bs,i) (((bs)->data[(i) / BS_BPL] & (1L << ((i) % BS_BPL))) != 0 ? 1 : 0)
 //
 //#endif
 
@@ -689,10 +691,10 @@ void bsWrite(BitString_t *bs, FILE *f);
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 typedef struct {
-   unsigned long Magic;
-   int Nor;        ///< Number of rows
-   int Noc;        ///< Number of colums
-   int32_t *Data;  ///< Marks (row by row)
+   unsigned long typeId;
+   int nor;        ///< Number of rows
+   int noc;        ///< Number of colums
+   int32_t *data;  ///< Marks (row by row)
 } IntMatrix_t;
 
 IntMatrix_t *imatAlloc(int nor, int noc);
@@ -737,7 +739,7 @@ typedef struct {
 ** A set of matrices.
 **/
 typedef struct {
-   unsigned long Magic;
+   unsigned long typeId;
    int Len;
    MatrixSetElement_t *List;
 } MatrixSet_t;
@@ -753,7 +755,7 @@ int msIsValid(const MatrixSet_t *set);
    -------------------------------------------------------------------------- */
 
 typedef struct {
-   unsigned long Magic;
+   unsigned long typeId;
    int NGen;
    Matrix_t **Gen;
 } MatRep_t;
@@ -863,7 +865,7 @@ FPoly_t *Factorization(const Poly_t *pol);
 
 struct CharpolState 
 {
-   uint32_t magic;
+   uint32_t typeId;
    enum CharpolMode {PM_CHARPOL, PM_MINPOL} mode;
 
    long fl;      // field order
@@ -911,10 +913,10 @@ FPoly_t *minpolS(const Matrix_t *mat, long seed);
 
 typedef struct {
    long dim, num, mult;
-   long idword;                 /* Identifying word */
-   Poly_t *idpol;
-   long peakword;               /* Peak word */
-   Poly_t *peakpol;
+   long idWord;                 /* Identifying word */
+   Poly_t *idPol;
+   long peakWord;               /* Peak word */
+   Poly_t *peakPol;
    long nmount;                 /* Number of mountains */
    long ndotl;                  /* Number of dotted lines */
    long spl;                    /* Degree of splitting field */
@@ -923,9 +925,9 @@ CfInfo;
 
 typedef struct {
    char BaseName[LAT_MAXBASENAME];      /**< Base name */
-   int Field;                           /**< Field order */
+   int field;                           /**< Field order */
    int NGen;                            /**< Number of generators */
-   int NCf;                             /**< Number of irred. constituents */
+   int nCf;                             /**< Number of irred. constituents */
    CfInfo Cf[LAT_MAXCF];                /**< Data for irred. constituents */
    int NSocles;                         /**< Loewy length */
    int *Socle;                          /**< Mult. of constituents in socles */
@@ -962,11 +964,11 @@ MatRep_t *latReadCfGens(Lat_Info *info, int cf, int flags);
 **/
 
 typedef struct {
-   char NameM[LAT_MAXBASENAME];         /**< Name of right factor */
-   char NameN[LAT_MAXBASENAME];         /**< Name of left factor */
-   int Dim;                             /**< Dimension of condensed module */
-   int NCf;                             /**< Number of relevant constituents */
-   int CfIndex[2][LAT_MAXCF];           /**< Constituent number */
+   char nameM[LAT_MAXBASENAME];         /**< Name of right factor */
+   char nameN[LAT_MAXBASENAME];         /**< Name of left factor */
+   int dim;                             /**< Dimension of condensed module */
+   int nCf;                             /**< Number of relevant constituents */
+   int cfIndex[2][LAT_MAXCF];           /**< Constituent number */
 } TkData_t;
 
 void tkReadInfo(TkData_t *tki, const char *name);

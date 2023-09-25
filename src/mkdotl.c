@@ -87,7 +87,7 @@ static void ReadFiles(const char *basename)
     latReadInfo(&LI,basename);
 
     cfstart[0] = 0;
-    for (i = 1; i <= LI.NCf; ++i)
+    for (i = 1; i <= LI.nCf; ++i)
 	cfstart[i] = cfstart[i-1] + (int)(LI.Cf[i-1].nmount);
 
     /* Read the incidence matrix
@@ -95,7 +95,7 @@ static void ReadFiles(const char *basename)
     sprintf(fn,"%s.inc",LI.BaseName);
     f = sysFopen(fn,"rb");
     sysRead32(f,&nmountains,1);
-    if (nmountains != cfstart[LI.NCf]) 
+    if (nmountains != cfstart[LI.nCf]) 
 	mtxAbort(MTX_HERE,"Bad number of mountains in .inc file");
     MESSAGE(1,("Reading incidence matrix (%lu mountains)\n",(unsigned long) nmountains));
     fflush(stdout);
@@ -147,18 +147,18 @@ static void mkmount(int i)
     PTR x, y;
     long *p;
 
-    seed = matAlloc(cycl->Field,class[i][0],cycl->Noc);
-    x = seed->Data;
+    seed = matAlloc(cycl->field,class[i][0],cycl->noc);
+    x = seed->data;
     for (p = class[i] + 1; *p > 0; ++p)
     {
-	if (*p < 1 || *p > cycl->Nor)
+	if (*p < 1 || *p > cycl->nor)
 	{
 	    mtxAbort(MTX_HERE,"BAD VECTOR IN CLASS");
 	    return;
 	}
 	y = matGetPtr(cycl,*p - 1);
-	ffCopyRow(x,y, cycl->Noc);
-	ffStepPtr(&x, cycl->Noc);
+	ffCopyRow(x,y, cycl->noc);
+	ffStepPtr(&x, cycl->noc);
     }
 
     mountlist[i] = SpinUp(seed,Rep,SF_EACH|SF_COMBINE,NULL,NULL);
@@ -231,10 +231,10 @@ static Matrix_t *sum(int i, int k)
     Matrix_t *s;
     int dim_i, dim_k;
 
-    dim_i = mountlist[i]->Nor;
-    dim_k = mountlist[k]->Nor;
+    dim_i = mountlist[i]->nor;
+    dim_k = mountlist[k]->nor;
 
-    s = matAlloc(ffOrder,dim_i + dim_k,mountlist[i]->Noc);
+    s = matAlloc(ffOrder,dim_i + dim_k,mountlist[i]->noc);
 
     matCopyRegion(s,0,0,mountlist[i],0,0,dim_i,-1);
     matCopyRegion(s,dim_i,0,mountlist[k],0,0,dim_k,-1);
@@ -244,7 +244,7 @@ static Matrix_t *sum(int i, int k)
     /* Remember the dimension of the sum. We use this information 
        later to avoid unnecessary recalculations.
        ----------------------------------------------------------- */
-    sumdim[i][k] = sumdim[k][i] = s->Nor;
+    sumdim[i][k] = sumdim[k][i] = s->nor;
     return s;
 }
 
@@ -291,7 +291,7 @@ static void FindMaxMountains(Matrix_t *span, BitString_t *bs)
     {
 	Matrix_t *tmp = matDup(mountlist[m]);
 	matClean(tmp,span);
-	if (tmp->Nor == 0)	    /* Mountain is countained in <span> */
+	if (tmp->nor == 0)	    /* Mountain is countained in <span> */
 	    bsSet(bs,m);
 	matFree(tmp);
     }
@@ -352,12 +352,12 @@ static void trydot(int i, int k, int beg, int next)
 	{
 	    if (!bsTest(dot,m)) 
 		continue;
-	    if (sumdim[l][m] != 0 && sumdim[l][m] != span->Nor)
+	    if (sumdim[l][m] != 0 && sumdim[l][m] != span->nor)
 	    	abort = 1;
 	    else
 	    {	
 		sp = sum(l,m);
-		abort = (sp->Nor != span->Nor) || !IsSubspace(span,sp,0);
+		abort = (sp->nor != span->nor) || !IsSubspace(span,sp,0);
 		matFree(sp);
 	    }
 	}
@@ -504,7 +504,7 @@ static int Init(int argc, char **argv)
 	return -1;
     MESSAGE(0,("*** DOTTED LINES ***\n\n"));
 
-    ReadFiles(App->ArgV[0]);
+    ReadFiles(App->argV[0]);
     return 0;
 }
 
@@ -522,13 +522,13 @@ int main(int argc, char *argv[])
 
     if (Init(argc,argv) != 0)
 	return -1;
-    for (i = 0; i < LI.NCf; ++i)
+    for (i = 0; i < LI.nCf; ++i)
     {
 	nextcf(i);
 	mkdot(i);
 	LI.Cf[i].ndotl = ndotl - nn;
 	MESSAGE(0,("%s%s: %d vectors, %ld mountains, %ld dotted line%s\n",
-	    LI.BaseName,latCfName(&LI,i),  cycl->Nor,LI.Cf[i].nmount,
+	    LI.BaseName,latCfName(&LI,i),  cycl->nor,LI.Cf[i].nmount,
 	    LI.Cf[i].ndotl, LI.Cf[i].ndotl != 1 ? "s": ""));
 	nn = ndotl;
 	CleanupCf();

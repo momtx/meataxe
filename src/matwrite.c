@@ -21,10 +21,10 @@
 void matWrite(const Matrix_t *mat, FILE *f)
 {
    matValidate(MTX_HERE, mat);
-   uint32_t hdr[3] = {mat->Field, mat->Nor, mat->Noc};
+   uint32_t hdr[3] = {mat->field, mat->nor, mat->noc};
    sysWrite32(f,hdr,3);
-   ffSetField(mat->Field);
-   ffWriteRows(f, mat->Data, mat->Nor, mat->Noc);
+   ffSetField(mat->field);
+   ffWriteRows(f, mat->data, mat->nor, mat->noc);
 }
 
 

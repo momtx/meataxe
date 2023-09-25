@@ -53,12 +53,12 @@ TstResult MatrixSet_Allocation(int q)
     ASSERT(set != NULL);
     m1 = RndMat(ffOrder,10,20);
     m2 = RndMat(ffOrder,10,20);
-    magic = m1->Magic;
+    magic = m1->typeId;
     ASSERT(msCleanAndAppend(set,m1) == 0);
     ASSERT(msCleanAndAppend(set,m2) == 0);
     ASSERT(msFree(set) == 0);
-    ASSERT(m1->Magic != magic);
-    ASSERT(m2->Magic != magic);
+    ASSERT(m1->typeId != magic);
+    ASSERT(m2->typeId != magic);
     return 0;
 }
 

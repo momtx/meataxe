@@ -17,7 +17,7 @@ static const uint32_t CHARPOL_MAGIC = 0xb92bbdc5;
 
 void charpolValidate(const struct MtxSourceLocation* src, Charpol_t* cp)
 {
-   if (cp == NULL || cp->magic != CHARPOL_MAGIC)
+   if (cp == NULL || cp->typeId != CHARPOL_MAGIC)
       mtxAbort(src,"Invalid charpol state");
 }
 
@@ -33,15 +33,15 @@ void charpolValidate(const struct MtxSourceLocation* src, Charpol_t* cp)
 Charpol_t* charpolAlloc(const Matrix_t* matrix, enum CharpolMode mode, long seed)
 {
    matValidate(MTX_HERE, matrix);
-   if (matrix->Nor != matrix->Noc) {
+   if (matrix->nor != matrix->noc) {
       mtxAbort(MTX_HERE,"%s",MTX_ERR_NOTSQUARE);
    }
    Charpol_t* state = ALLOC(Charpol_t);
    
-   state->magic = CHARPOL_MAGIC;
+   state->typeId = CHARPOL_MAGIC;
    state->mode = mode;
-   state->fl = matrix->Field;
-   state->vsDim = matrix->Nor;
+   state->fl = matrix->field;
+   state->vsDim = matrix->nor;
    ffSetField(state->fl);
    state->mat = ffAlloc(state->vsDim, state->vsDim);
    state->A = ffAlloc(state->vsDim + 1, state->vsDim);
@@ -51,7 +51,7 @@ Charpol_t* charpolAlloc(const Matrix_t* matrix, enum CharpolMode mode, long seed
        
    // TODO: provide option to suppress copy and use the original matrix.
    // This should always done in charPol() and may be useful for charPolFactor().
-   memcpy(state->mat,matrix->Data,ffSize(state->vsDim,state->vsDim));
+   memcpy(state->mat,matrix->data,ffSize(state->vsDim,state->vsDim));
    memset(state->ispiv,0,(size_t)(state->vsDim + 2));
 
    state->seed = seed < state->vsDim ? seed : 0;
@@ -90,9 +90,9 @@ static Poly_t *mkpoly(struct CharpolState* state)
    Poly_t *pol = polAlloc(state->fl,state->n);
    PTR x = ffGetPtr(state->B,state->n, state->vsDim);
    for (int k = 0; k < state->n; ++k) {
-      pol->Data[k] = ffExtract(x,k);
+      pol->data[k] = ffExtract(x,k);
    }
-   pol->Data[state->n] = FF_ONE;
+   pol->data[state->n] = FF_ONE;
    return pol;
 }
 

@@ -10,8 +10,8 @@
 // Local data
 
 
-#define IS_MATRIX(x) (((Matrix_t *)x)->Magic == MTX_TYPE_MATRIX)
-#define IS_PERMUTATION(x) (((Perm_t *)x)->Magic == MTX_TYPE_PERMUTATION)
+#define IS_MATRIX(x) (((Matrix_t *)x)->typeId == MTX_TYPE_MATRIX)
+#define IS_PERMUTATION(x) (((Perm_t *)x)->typeId == MTX_TYPE_PERMUTATION)
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -115,12 +115,12 @@ int objCanMultiply(void *a, void *b)
    if (IS_MATRIX(a)) {
       Matrix_t *am = (Matrix_t *) a;
       Matrix_t *bm = (Matrix_t *) b;
-      return IS_MATRIX(b) && am->Field == bm->Field && am->Nor == bm->Nor
-             && am->Noc == bm->Noc;
+      return IS_MATRIX(b) && am->field == bm->field && am->nor == bm->nor
+             && am->noc == bm->noc;
    } else {
       Perm_t *ap = (Perm_t *) a;
       Perm_t *bp = (Perm_t *) b;
-      return !IS_MATRIX(b) && ap->Degree == bp->Degree;
+      return !IS_MATRIX(b) && ap->degree == bp->degree;
    }
 }
 

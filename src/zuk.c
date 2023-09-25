@@ -49,8 +49,8 @@ static void readOrbits()
    MtxFile_t* orbitsFile = mfOpen(fileNameOrbits);
    orbits = imatRead(orbitsFile);
    orbitSizes = imatRead(orbitsFile);
-   degree = orbits->Noc;
-   nOrbits = orbitSizes->Noc;
+   degree = orbits->noc;
+   nOrbits = orbitSizes->noc;
    mfClose(orbitsFile);
 }
 
@@ -85,9 +85,9 @@ static void uncondense()
       for (uint32_t k = 0; k < nOrbits; ++k) {
          int l;
          FEL f = ffExtract(rowInp, k);
-         int count = orbitSizes->Data[k];
+         int count = orbitSizes->data[k];
          for (l = 0; count > 0 && l < degree; ++l) {
-            if (orbits->Data[l] == k) {
+            if (orbits->data[l] == k) {
                ffInsert(rowOut, l, f);
                --count;
             }
@@ -104,9 +104,9 @@ static void init(int argc, char **argv)
 {
    app = appAlloc(&AppInfo,argc,argv);
    appGetArguments(app,3,3);
-   fileNameInp = app->ArgV[0];
-   fileNameOrbits = app->ArgV[1];
-   fileNameOut = app->ArgV[2];
+   fileNameInp = app->argV[0];
+   fileNameOrbits = app->argV[1];
+   fileNameOut = app->argV[2];
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////

@@ -17,13 +17,13 @@
 FEL matTrace(const Matrix_t *mat)
 {
    matValidate(MTX_HERE, mat);
-   ffSetField(mat->Field);
+   ffSetField(mat->field);
    FEL trace = FF_ZERO;
-   PTR x = mat->Data;
-   const int maxi = mat->Nor > mat->Noc ? mat->Noc : mat->Nor;
+   PTR x = mat->data;
+   const int maxi = mat->nor > mat->noc ? mat->noc : mat->nor;
    for (int i = 0; i < maxi; ++i) {
       trace = ffAdd(trace,ffExtract(x,i));
-      ffStepPtr(&x, mat->Noc);
+      ffStepPtr(&x, mat->noc);
    }
    return trace;
 }

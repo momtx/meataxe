@@ -94,7 +94,7 @@ static int parseargs()
 
     /* Process the <Range> argument
        ---------------------------- */
-    c = App->ArgV[0];
+    c = App->argV[0];
     nRowRanges = list(rowlist,&c);
     if (*c != 0)
     {
@@ -106,8 +106,8 @@ static int parseargs()
 
     /* Process file names
        ------------------ */
-    inputFileName = App->ArgV[1];
-    outputFileName = App->ArgV[2];
+    inputFileName = App->argV[1];
+    outputFileName = App->argV[2];
 
     return 0;
 }
@@ -168,9 +168,9 @@ static int cutmatrix()
    for (int i = 0; i < nRowRanges; ++i)
    {	
       const uint32_t row0 = rowlist[i][0]-1;
-      sysFseek(inputFile->File, 0);
+      sysFseek(inputFile->file, 0);
       mfReadHeader(inputFile);
-      sysFseekRelative(inputFile->File, ffRowSizeUsed(noc) * row0);
+      sysFseekRelative(inputFile->file, ffRowSizeUsed(noc) * row0);
       for (uint32_t j = rowlist[i][1]-row0; j > 0; --j) {
          mfReadRows(inputFile, inputRow, 1, noc);
          ffMulRow(outputRow, FF_ZERO, onoc);

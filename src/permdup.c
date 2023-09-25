@@ -21,12 +21,12 @@
 Perm_t *permDup(const Perm_t *src)
 {
    permValidate(MTX_HERE, src);
-   Perm_t *p = permAlloc(src->Degree);
+   Perm_t *p = permAlloc(src->degree);
    if (p == NULL) {
       mtxAbort(MTX_HERE,"Cannot allocate result");
       return NULL;
    }
-   memcpy(p->Data,src->Data,(size_t) src->Degree * sizeof(p->Data[0]));
+   memcpy(p->data,src->data,(size_t) src->degree * sizeof(p->data[0]));
    return p;
 }
 

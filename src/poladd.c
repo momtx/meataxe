@@ -4,31 +4,27 @@
 
 #include "meataxe.h"
 
+/// @addtogroup poly
+/// @{
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-/// Extend buffer.
 
-static void resize(Poly_t *p, int newdeg)
+static void grow(Poly_t *p, int newdeg)
 {
-   int i;
-   FEL *x;
-
-   if (p->Degree < newdeg) {
-      if (p->BufSize < newdeg + 1) {    // Allocate new buffer
-         x = NREALLOC(p->Data,FEL,newdeg + 1);
-         p->Data = x;
-         p->BufSize = newdeg + 1;
+   if (p->degree < newdeg) {
+      if (p->bufSize < newdeg + 1) {
+         p->bufSize = newdeg + 1;
+         p->data = NREALLOC(p->data, FEL, p->bufSize);
       }
-      for (i = p->Degree + 1; i <= newdeg; ++i) {
-         p->Data[i] = FF_ZERO;
+      for (int32_t i = p->degree + 1; i <= newdeg; ++i) {
+         p->data[i] = FF_ZERO;
       }
-      p->Degree = newdeg;
+      p->degree = newdeg;
    }
 }
 
-
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-/// @addtogroup poly
-/// @{
+
 /// Add polynomials.
 /// This function adds @em src to @em dest.
 /// The polynomials must be over the same field.
@@ -38,22 +34,18 @@ static void resize(Poly_t *p, int newdeg)
 
 Poly_t *polAdd(Poly_t *dest, const Poly_t *src)
 {
-   FEL *s, *d;
-   int i;
-
    polValidate(MTX_HERE, src);
    polValidate(MTX_HERE, dest);
-   if (dest->Field != src->Field)
+   if (dest->field != src->field)
       mtxAbort(MTX_HERE,"%s",MTX_ERR_INCOMPAT);
-   if ((i = src->Degree) == -1) {
+   if (src->degree == -1) {
       return dest;      // src = 0 
-
    }
-   ffSetField(src->Field);
-   resize(dest,i);
-   s = src->Data;
-   d = dest->Data;
-   for (; i >= 0; --i) {
+   ffSetField(src->field);
+   grow(dest,src->degree);
+   FEL* s = src->data;
+   FEL* d = dest->data;
+   for (int32_t i = src->degree; i >= 0; --i) {
       *d = ffAdd(*d,*s++);
       ++d;
    }
@@ -61,6 +53,6 @@ Poly_t *polAdd(Poly_t *dest, const Poly_t *src)
    return dest;
 }
 
-
 /// @}
+
 // vim:fileencoding=utf8:sw=3:ts=8:et:cin

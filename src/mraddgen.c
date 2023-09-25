@@ -35,13 +35,13 @@ int mrAddGenerator(MatRep_t *rep, Matrix_t *gen, int flags)
     {
 	mtxAbort(MTX_HERE,"rep: %s",MTX_ERR_BADARG);
     }
-    if (gen->Nor != gen->Noc)
+    if (gen->nor != gen->noc)
     {
 	mtxAbort(MTX_HERE,"gen: %s",MTX_ERR_NOTSQUARE);
     }
     if (rep->NGen > 0)
     {
-	if (gen->Field != rep->Gen[0]->Field || gen->Nor != rep->Gen[0]->Nor)
+	if (gen->field != rep->Gen[0]->field || gen->nor != rep->Gen[0]->nor)
 	{
 	    mtxAbort(MTX_HERE,"%s",MTX_ERR_INCOMPAT);
 	}

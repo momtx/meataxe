@@ -116,7 +116,7 @@ static void readGenerators()
       {
          Perm[i] = permLoad(GenName[i]);
       }
-      Dim = Perm[0]->Degree;
+      Dim = Perm[0]->degree;
    }
    else
    {
@@ -126,7 +126,7 @@ static void readGenerators()
          Matrix_t *gen = matLoad(GenName[i]);
          mrAddGenerator(Rep,gen,0);
       }
-      Dim = Rep->Gen[0]->Noc;
+      Dim = Rep->Gen[0]->noc;
    }
 }
 
@@ -152,12 +152,12 @@ static void readSeed()
        // skip the first «SeedVecNo» rows
        if ((skip = SeedVecNo - 1) > norSeed)
           skip = norSeed;
-       sysFseekRelative(sf->File, skip * ffRowSize(nocSeed));
+       sysFseekRelative(sf->file, skip * ffRowSize(nocSeed));
     }
     uint32_t num_seed = TryOneVector ? 1 : norSeed - skip;
 
     Seed = matAlloc(ffOrder,num_seed,Dim);
-    mfReadRows(sf,Seed->Data,norSeed,Dim);
+    mfReadRows(sf,Seed->data,norSeed,Dim);
     mfClose(sf);
 }
 
@@ -215,19 +215,19 @@ static void init_args()
     {
 	ngen = 2;
 	appGetArguments(App,3,3);
-	GenName[0] = App->ArgV[0];
-	GenName[1] = App->ArgV[1];
-	SeedName =  App->ArgV[2];
+	GenName[0] = App->argV[0];
+	GenName[1] = App->argV[1];
+	SeedName =  App->argV[2];
     }
     else
     {
 	char buf[200];
 	appGetArguments(App,2,2);
-	SeedName =  App->ArgV[1];
+	SeedName =  App->argV[1];
 	for (i = 0; i < ngen; ++i)
 	{
 	    char *c;
-	    sprintf(buf,"%s.%d",App->ArgV[0],i+1);
+	    sprintf(buf,"%s.%d",App->argV[0],i+1);
 	    GenName[i] = c = sysMalloc(strlen(buf)+1);
 	    strcpy(c,buf);
 	}
@@ -264,13 +264,13 @@ static int WriteAction()
 
 static int WriteResult()
 {
-    if (Span->Nor < Dim && (Standard || FindCyclicVector))
-	MESSAGE(0,("ZSP: Warning: Span is only %d of %d\n",Span->Nor,Dim));
-    else if (Span->Nor == Dim && TryLinearCombinations)
+    if (Span->nor < Dim && (Standard || FindCyclicVector))
+	MESSAGE(0,("ZSP: Warning: Span is only %d of %d\n",Span->nor,Dim));
+    else if (Span->nor == Dim && TryLinearCombinations)
 	MESSAGE(0,("ZSP: Warning: No invariant subspace found\n"));
     else
     {
-	MESSAGE(0,("Subspace %d, quotient %d\n",Span->Nor, Span->Noc - Span->Nor));
+	MESSAGE(0,("Subspace %d, quotient %d\n",Span->nor, Span->noc - Span->nor));
     }
 
     /* Write the invariant subspace.

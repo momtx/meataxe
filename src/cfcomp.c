@@ -36,10 +36,10 @@ static void init(int argc, char **argv)
 
    app = appAlloc(&AppInfo,argc,argv);
    appGetArguments(app,2,2000);
-   latReadInfo(&infoA,app->ArgV[0]);
+   latReadInfo(&infoA,app->argV[0]);
 
    // Read the generators for each composition factor
-   for (i = 0; i < infoA.NCf; ++i) {
+   for (i = 0; i < infoA.nCf; ++i) {
       sprintf(fn,"%s%s",infoA.BaseName,latCfName(&infoA,i));
       MESSAGE(1,("Reading %s\n",fn));
       irredA[i] = mrLoad(fn,infoA.NGen);
@@ -50,7 +50,7 @@ static void init(int argc, char **argv)
 
 static void cleanup()
 {
-   for (int i = 0; i < infoA.NCf; ++i) {
+   for (int i = 0; i < infoA.nCf; ++i) {
       mrFree(irredA[i]);
    }
    appFree(app);
@@ -60,8 +60,8 @@ static void cleanup()
 
 static void findEquiv(const char *name)
 {
-   for (int i = 0; i < infoA.NCf; ++i) {
-      if (repB->Gen[0]->Nor != irredA[i]->Gen[0]->Nor) {
+   for (int i = 0; i < infoA.nCf; ++i) {
+      if (repB->Gen[0]->nor != irredA[i]->Gen[0]->nor) {
          continue;
       }
       if (IsIsomorphic(irredA[i],infoA.Cf + i,repB,NULL,0)) {
@@ -86,8 +86,8 @@ static void compare(const char *nameB)
 int main(int argc, char *argv[])
 {
    init(argc,argv);
-   for (int i = 1; i < app->ArgC; ++i) {
-      compare(app->ArgV[i]);
+   for (int i = 1; i < app->argC; ++i) {
+      compare(app->argV[i]);
    }
    cleanup();
    return 0;

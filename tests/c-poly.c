@@ -21,7 +21,7 @@ Poly_t *RndPol(int fl, int mindeg, int maxdeg)
    deg = mtxRandomInt(maxdeg - mindeg + 1) + mindeg;
    p = polAlloc(fl,deg);
    for (i = 0; i <= deg - 1; ++i) {
-      p->Data[i] = ffFromInt(mtxRandomInt(ffOrder));
+      p->data[i] = ffFromInt(mtxRandomInt(ffOrder));
    }
    return p;
 }
@@ -42,12 +42,12 @@ TstResult Polynomial_Alloc(int q)
    for (i = 0; i < NPOLY; ++i) {
       int k;
       ASSERT(polIsValid(p[i]));
-      ASSERT(p[i]->Degree == deg[i]);
-      for (k = 0; k < p[i]->Degree; ++k) {
-         ASSERT(p[i]->Data[k] == FF_ZERO);
+      ASSERT(p[i]->degree == deg[i]);
+      for (k = 0; k < p[i]->degree; ++k) {
+         ASSERT(p[i]->data[k] == FF_ZERO);
       }
-      if (p[i]->Degree >= 0) {
-         ASSERT(p[i]->Data[p[i]->Degree] == FF_ONE);
+      if (p[i]->degree >= 0) {
+         ASSERT(p[i]->data[p[i]->degree] == FF_ONE);
       }
    }
    for (i = 0; i < NPOLY; ++i) {
@@ -115,13 +115,13 @@ static int TestPolCompare1(int fl)
    b = polAlloc(fl,deg);
    ASSERT(polCompare(a,b) == 0);
    for (i = 0; i < deg; ++i) {
-      a->Data[i] = FF_ONE;
+      a->data[i] = FF_ONE;
       ASSERT(polCompare(a,b) != 0);
-      b->Data[i] = FF_ONE;
+      b->data[i] = FF_ONE;
       ASSERT(polCompare(a,b) == 0);
    }
    if (ffGen != FF_ONE) {
-      a->Data[deg] = ffGen;
+      a->data[deg] = ffGen;
       ASSERT(polCompare(a,b) != 0);
    }
    polFree(a);
@@ -164,9 +164,9 @@ static int TestPolAdd2(int fl)
       polAdd(a,b);
       polFree(b);
    }
-   ASSERT_EQ_INT(a->Degree, 10);
+   ASSERT_EQ_INT(a->degree, 10);
    for (i = 0; i <= 10; ++i) {
-      ASSERT_EQ_INT(a->Data[i], FF_ONE);
+      ASSERT_EQ_INT(a->data[i], FF_ONE);
    }
    polFree(a);
    return 0;
@@ -193,7 +193,7 @@ static int TestPolMul1()
    a = polAlloc(ffOrder,1);
    b = polAlloc(ffOrder,-1);
    polMul(a,b);
-   ASSERT_EQ_INT(a->Degree,-1);
+   ASSERT_EQ_INT(a->degree,-1);
    polFree(a);
    polFree(b);
 
@@ -202,9 +202,9 @@ static int TestPolMul1()
    a = polAlloc(ffOrder,1);
    b = polAlloc(ffOrder,0);
    polMul(a,b);
-   ASSERT_EQ_INT(a->Degree, 1);
-   ASSERT_EQ_INT(a->Data[0], FF_ZERO);
-   ASSERT_EQ_INT(a->Data[1], FF_ONE);
+   ASSERT_EQ_INT(a->degree, 1);
+   ASSERT_EQ_INT(a->data[0], FF_ZERO);
+   ASSERT_EQ_INT(a->data[1], FF_ONE);
    polFree(a);
    polFree(b);
 
@@ -212,15 +212,15 @@ static int TestPolMul1()
       ----------------------------------- */
    a = polAlloc(ffOrder,1);
    b = polAlloc(ffOrder,3);
-   a->Data[0] = FF_ONE;
-   b->Data[1] = ffNeg(FF_ONE);
+   a->data[0] = FF_ONE;
+   b->data[1] = ffNeg(FF_ONE);
    polMul(a,b);
-   ASSERT_EQ_INT(a->Degree, 4);
-   ASSERT_EQ_INT(a->Data[0], FF_ZERO);
-   ASSERT_EQ_INT(a->Data[1], ffNeg(FF_ONE));
-   ASSERT_EQ_INT(a->Data[2], ffNeg(FF_ONE));
-   ASSERT_EQ_INT(a->Data[3], FF_ONE);
-   ASSERT_EQ_INT(a->Data[4], FF_ONE);
+   ASSERT_EQ_INT(a->degree, 4);
+   ASSERT_EQ_INT(a->data[0], FF_ZERO);
+   ASSERT_EQ_INT(a->data[1], ffNeg(FF_ONE));
+   ASSERT_EQ_INT(a->data[2], ffNeg(FF_ONE));
+   ASSERT_EQ_INT(a->data[3], FF_ONE);
+   ASSERT_EQ_INT(a->data[4], FF_ONE);
    polFree(a);
    polFree(b);
    return 0;
@@ -296,7 +296,7 @@ TstResult Polynomial_Gcd()
       ASSERT(polCompare(gcd,result[1]) == 0);
       ASSERT(polMod(a,gcd) != NULL);
       ASSERT(polMod(b,gcd) != NULL);
-      ASSERT(a->Degree <= 0 && b->Degree <= 0);
+      ASSERT(a->degree <= 0 && b->degree <= 0);
 
       polFree(a);
       polFree(b);

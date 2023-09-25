@@ -58,10 +58,10 @@
 int matIsValid(const Matrix_t *mat)
 {
    return mat != NULL
-      && mat->Magic == MTX_TYPE_MATRIX 
-      && mat->Field >= 2 
-      && mat->Nor >= 0 
-      && mat->Noc >= 0;
+      && mat->typeId == MTX_TYPE_MATRIX 
+      && mat->field >= 2 
+      && mat->nor >= 0 
+      && mat->noc >= 0;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -73,9 +73,9 @@ void matValidate(const struct MtxSourceLocation* src, const Matrix_t *mat)
 {
    if (mat == NULL)
       mtxAbort(src,"NULL matrix");
-   if (mat->Magic != MTX_TYPE_MATRIX || mat->Field < 2 || mat->Nor < 0 || mat->Noc < 0) {
+   if (mat->typeId != MTX_TYPE_MATRIX || mat->field < 2 || mat->nor < 0 || mat->noc < 0) {
       mtxAbort(src ? src : MTX_HERE,"Invalid matrix (field=%d, nor=%d, noc=%d)",
-            mat->Field, mat->Nor,mat->Noc);
+            mat->field, mat->nor,mat->noc);
    }
 }
 
@@ -113,13 +113,13 @@ Matrix_t *matAlloc(int field, int nor, int noc)
    }
 
    // Initialize the data structure
-   m->Magic = MTX_TYPE_MATRIX;
-   m->Field = field;
-   m->Nor = nor;
-   m->Noc = noc;
-   m->PivotTable = NULL;
-   m->Data = ffAlloc(nor, noc);
-   if (m->Data == NULL) {
+   m->typeId = MTX_TYPE_MATRIX;
+   m->field = field;
+   m->nor = nor;
+   m->noc = noc;
+   m->pivotTable = NULL;
+   m->data = ffAlloc(nor, noc);
+   if (m->data == NULL) {
       sysFree(m);
       mtxAbort(MTX_HERE,"Cannot allocate matrix data");
       return NULL;
@@ -141,17 +141,17 @@ PTR matGetPtr(const Matrix_t *mat, int row)
 #ifdef MTX_DEBUG
    matValidate(MTX_HERE, mat);
 #ifdef PARANOID
-   if ((row < 0) || (row >= mat->Nor))
+   if ((row < 0) || (row >= mat->nor))
 #else
-   if ((row < 0) || (row > mat->Nor + 5))
+   if ((row < 0) || (row > mat->nor + 5))
 #endif
    {
       mtxAbort(MTX_HERE,"row=%d: %s",row,MTX_ERR_BADARG);
       return NULL;
    }
 #endif
-   ffSetField(mat->Field);
-   return ffGetPtr(mat->Data, row, mat->Noc);
+   ffSetField(mat->field);
+   return ffGetPtr(mat->data, row, mat->noc);
 }
 
 
@@ -164,9 +164,9 @@ PTR matGetPtr(const Matrix_t *mat, int row)
 
 void mat_DeletePivotTable(Matrix_t *mat)
 {
-   if (mat->PivotTable != NULL) {
-      sysFree(mat->PivotTable);
-      mat->PivotTable = NULL;
+   if (mat->pivotTable != NULL) {
+      sysFree(mat->pivotTable);
+      mat->pivotTable = NULL;
    }
 }
 
@@ -182,8 +182,8 @@ int matFree(Matrix_t *mat)
 {
    matValidate(MTX_HERE, mat);
    mat_DeletePivotTable(mat);
-   if (mat->Data != NULL) {
-      sysFree(mat->Data);
+   if (mat->data != NULL) {
+      sysFree(mat->data);
    }
    memset(mat,0,sizeof(Matrix_t));
    sysFree(mat);

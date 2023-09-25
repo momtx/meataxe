@@ -65,24 +65,24 @@ static void ParseTKInfoFile(StfData *f, TkData_t *tki)
 	const char *c = stfGetName(f);
 	if (c == NULL) continue;
 	if (!strcmp(c,"TKInfo.NameM"))
-	    stfGetString(f,tki->NameM,sizeof(tki->NameM));
+	    stfGetString(f,tki->nameM,sizeof(tki->nameM));
         else if (!strcmp(c,"TKInfo.NameN"))
-	    stfGetString(f,tki->NameN,sizeof(tki->NameN));
+	    stfGetString(f,tki->nameN,sizeof(tki->nameN));
 	else if (!strcmp(c,"TKInfo.Dim"))
 	{
-	    stfGetInt(f,&tki->Dim);
-	    if (tki->Dim < 0 || tki->Dim > 1000000)
+	    stfGetInt(f,&tki->dim);
+	    if (tki->dim < 0 || tki->dim > 1000000)
 		mtxAbort(MTX_HERE,"Illegal dimension in .tki file");
 	}
 	else if (!strcmp(c,"TKInfo.NCf"))
 	{
-	    stfGetInt(f,&tki->NCf);
-	    if (tki->NCf < 1 || tki->NCf > LAT_MAXCF)
+	    stfGetInt(f,&tki->nCf);
+	    if (tki->nCf < 1 || tki->nCf > LAT_MAXCF)
 		mtxAbort(MTX_HERE,"Illegal number of constituents in .tki file");
 	}
-	else if (ReadVector(f,c,"TKInfo.CfIndexM",tki->NCf,tki->CfIndex[0]))
+	else if (ReadVector(f,c,"TKInfo.CfIndexM",tki->nCf,tki->cfIndex[0]))
 	    continue;
-	else if (ReadVector(f,c,"TKInfo.CfIndexN",tki->NCf,tki->CfIndex[1]))
+	else if (ReadVector(f,c,"TKInfo.CfIndexN",tki->nCf,tki->cfIndex[1]))
 	    continue;
     }
 
@@ -131,15 +131,15 @@ int tkWriteInfo(TkData_t *tki, const char *name)
     }
 
     stfWriteValue(f,"TKInfo","rec()");
-    stfWriteString(f,"TKInfo.NameM",tki->NameM);
-    stfWriteString(f,"TKInfo.NameN",tki->NameN);
-    stfWriteInt(f,"TKInfo.Dim",tki->Dim);
-    stfWriteInt(f,"TKInfo.NCf",tki->NCf);
-    stfWriteVector(f,"TKInfo.CfIndexM",tki->NCf,tki->CfIndex[0]);
-    stfWriteVector(f,"TKInfo.CfIndexN",tki->NCf,tki->CfIndex[1]);
+    stfWriteString(f,"TKInfo.NameM",tki->nameM);
+    stfWriteString(f,"TKInfo.NameN",tki->nameN);
+    stfWriteInt(f,"TKInfo.Dim",tki->dim);
+    stfWriteInt(f,"TKInfo.NCf",tki->nCf);
+    stfWriteVector(f,"TKInfo.CfIndexM",tki->nCf,tki->cfIndex[0]);
+    stfWriteVector(f,"TKInfo.CfIndexN",tki->nCf,tki->cfIndex[1]);
 
     stfClose(f);
-    MESSAGE(1,("Wrote %s: NCf=%d\n",fn,tki->NCf));
+    MESSAGE(1,("Wrote %s: NCf=%d\n",fn,tki->nCf));
     return result;
 }
 

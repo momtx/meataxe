@@ -421,9 +421,9 @@ static int init(int argc, char **argv)
        ------------------ */
     if (appGetArguments(App,3,3) < 0)
 	return -1;
-    iname = App->ArgV[1];
-    oname = App->ArgV[2];
-    const char *arg3 = App->ArgV[0];
+    iname = App->argV[1];
+    oname = App->argV[2];
+    const char *arg3 = App->argV[0];
     if (!strcmp(arg3,"e2")) mode = M_E2;
     else if (!strcmp(arg3,"e3")) mode = M_E3;
     else if (!strcmp(arg3,"e4")) mode = M_E4;

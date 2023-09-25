@@ -38,7 +38,7 @@ Matrix_t *matId(int fl, int nor)
    }
 
    // Set diagonal elements to 1
-   for (i = 0, x = m->Data; i < nor; ++i, ffStepPtr(&x, nor)) {
+   for (i = 0, x = m->data; i < nor; ++i, ffStepPtr(&x, nor)) {
       ffInsert(x,i,FF_ONE);
    }
 

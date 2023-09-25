@@ -23,16 +23,16 @@ Matrix_t *matTransposed(const Matrix_t *src)
    Matrix_t *dest;
 
    matValidate(MTX_HERE, src);
-   dest = matAlloc(src->Field,src->Noc,src->Nor);
+   dest = matAlloc(src->field,src->noc,src->nor);
    if (dest == NULL) {
       mtxAbort(MTX_HERE,"Cannot allocate result");
       return NULL;
    }
-   d = dest->Data;
-   for (i = 0; i < src->Noc; ++i) {
+   d = dest->data;
+   for (i = 0; i < src->noc; ++i) {
       int k;
-      s = src->Data;
-      for (k = 0; k < src->Nor; ++k) {
+      s = src->data;
+      for (k = 0; k < src->nor; ++k) {
 #if defined(MTX_DEBUG) && defined(PARANOID)
          FEL f;
          f = ffExtract(s,i);
@@ -40,9 +40,9 @@ Matrix_t *matTransposed(const Matrix_t *src)
 #else
          ffInsert(d,k,ffExtract(s,i));
 #endif
-         ffStepPtr(&s, src->Noc);
+         ffStepPtr(&s, src->noc);
       }
-      ffStepPtr(&d, dest->Noc);
+      ffStepPtr(&d, dest->noc);
 
    }
    return dest;

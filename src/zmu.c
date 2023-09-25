@@ -57,14 +57,14 @@ static int multpm(void)
 	mtxAbort(MTX_HERE,"%s and %s: %s",fileNameA,fileNameB,MTX_ERR_INCOMPAT);
 
     // read input files
-    Perm_t* permA = permReadData(fileA->File, fileA->header);
+    Perm_t* permA = permReadData(fileA->file, fileA->header);
     Matrix_t *matrixB = matAlloc(fieldB, norB, nocB);
 
     // Write out the rows of <B> in the order defined by <A>.
     fileC = mfCreate(fileNameC,fieldB, norB, nocB);
     for (uint32_t i = 0; i < degreeA; ++i)
     {	
-       PTR row = ffGetPtr(matrixB->Data, permA->Data[i], nocB);
+       PTR row = ffGetPtr(matrixB->data, permA->data[i], nocB);
        mfWriteRows(fileC, row, 1, nocB);
     }
 
@@ -87,7 +87,7 @@ static void multmp(void)
       mtxAbort(MTX_HERE,"%s and %s: %s", fileNameA, fileNameB, MTX_ERR_INCOMPAT);
 
    // Read the permutation (B)
-   Perm_t* perm = permReadData(fileB->File, fileB->header);
+   Perm_t* perm = permReadData(fileB->file, fileB->header);
 
    // Allocate workspace (two rows of A).
    ffSetField(fieldA);
@@ -101,7 +101,7 @@ static void multmp(void)
    for (uint32_t i = 0; i < norA; ++i)
    {
       mfReadRows(fileA, row_in, 1, nocA);
-      ffPermRow(row_in, perm->Data, nocA, row_out);
+      ffPermRow(row_in, perm->data, nocA, row_out);
       mfWriteRows(fileC, row_out,1, nocA);
    }
 
@@ -190,8 +190,8 @@ static void multmm(void)
 
 static void multpp(void)
 {
-    Perm_t *permA = permReadData(fileA->File, fileA->header);
-    Perm_t *permB = permReadData(fileB->File, fileB->header);
+    Perm_t *permA = permReadData(fileA->file, fileA->header);
+    Perm_t *permB = permReadData(fileB->file, fileB->header);
           
     permMul(permA,permB);
     permSave(permA,fileNameC);
@@ -207,9 +207,9 @@ static void init(int argc, char **argv)
     App = appAlloc(&AppInfo,argc,argv);
     appGetArguments(App,3,3);
 
-    fileNameA = App->ArgV[0];
-    fileNameB = App->ArgV[1];
-    fileNameC = App->ArgV[2];
+    fileNameA = App->argV[0];
+    fileNameB = App->argV[1];
+    fileNameC = App->argV[2];
     if (!strcmp(fileNameA,fileNameC) || !strcmp(fileNameB,fileNameC))
 	mtxAbort(MTX_HERE,"Output file would overwrite input file");
 

@@ -124,7 +124,7 @@ TstResult Kernel_FileHeader(int q)
    for (noc = 0; noc < 65 && result == 0; ++noc) {
       PTR buf1, buf2;
       int i;
-      long x = 0;
+      uint32_t x = 0;
 
       buf1 = ffAlloc(nor, noc);
       buf2 = ffAlloc(nor, noc);
@@ -132,7 +132,7 @@ TstResult Kernel_FileHeader(int q)
          int k;
          PTR p = (PTR)((char *) buf1 + ffSize(i, noc));
          for (k = 0; k < noc; ++k) {
-            ffInsert(p,k,ffFromInt(x >> 10));
+            ffInsert(p,k,ffFromInt((x >> 10) % ffOrder));
             x = x * 69069 + 13;
          }
       }

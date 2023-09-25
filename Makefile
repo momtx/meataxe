@@ -247,13 +247,13 @@ info:
 .PHONY: doc
 
 docDir = doc/${MTXVERSION}
-docDocs = src/changelog.doc src/meataxe.doc src/sections.doc
+docDocs = src/changelog.dox src/mainpage.dox src/sections.dox src/error_handling.dox
 docProducts = ${docDir}/index.html ${docDir}/pages.html ${docDir}/classes.html
 
 doc ${docProducts}: \
    etc/Doxyfile etc/layout.xml $(PROGRAMS:%=src/%.c) $(LIB_OBJS:%=src/%.c) \
    src/meataxe.h  \
-   ${docDocs} src/meataxe.doc src/changelog.doc
+   ${docDocs} 
 	cp etc/Doxyfile tmp/Doxyfile.auto
 	echo "PROJECT_NUMBER=${MTXVERSION}" >>tmp/Doxyfile.auto
 	echo "OUTPUT_DIRECTORY=${docDir}" >>tmp/Doxyfile.auto
@@ -279,7 +279,7 @@ EXPORTED_FILES =\
   $(LIB_OBJS:%=src/%.c)\
   src/meataxe.h src/genconfig.c\
   Makefile README.md COPYING\
-  src/meataxe.doc src/changelog.doc\
+  src/meataxe.md src/changelog.md
 
 tar: all doc
 	rm -f meataxe-${MTXVERSION} meataxe-${MTXVERSION}.tar meataxe-${MTXVERSION}.tar.gz \

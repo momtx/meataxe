@@ -32,9 +32,9 @@ void mrChangeBasis(MatRep_t *rep, const Matrix_t *trans)
 
     if (rep->NGen <= 0)
 	return;
-    if (trans->Field != rep->Gen[0]->Field || 
-	trans->Nor != rep->Gen[0]->Nor ||
-	trans->Noc != rep->Gen[0]->Noc)
+    if (trans->field != rep->Gen[0]->field || 
+	trans->nor != rep->Gen[0]->nor ||
+	trans->noc != rep->Gen[0]->noc)
     {
 	mtxAbort(MTX_HERE,"%s",MTX_ERR_INCOMPAT);
     }
@@ -69,7 +69,7 @@ MatRep_t* mrChangeBasis2(const MatRep_t *rep, const Matrix_t *trans)
    if (rep->NGen <= 0)
       return result;
    Matrix_t* g0 = rep->Gen[0];
-   if (trans->Field != g0->Field || trans->Nor != g0->Nor || trans->Noc != g0->Noc)
+   if (trans->field != g0->field || trans->nor != g0->nor || trans->noc != g0->noc)
       mtxAbort(MTX_HERE,"%s",MTX_ERR_INCOMPAT);
    Matrix_t* bi = matInverse(trans);
    for (int i = 0; i < rep->NGen; ++i)

@@ -166,14 +166,14 @@ static int init(int argc, char **argv)
     {
 	if ((f = mfOpenAndReadHeader(genname[i])) == NULL)
 	    return -1;
-	if (f->Field != -1 || f->Noc != 1)
+	if (f->field != -1 || f->noc != 1)
 	{
 	    mtxAbort(MTX_HERE,"%s: %s",genname[i],MTX_ERR_NOTPERM);
 	    return -1;
 	}
 	if (i == 1)
-	    npoints = f->Nor;
-	else if (f->Nor != npoints)
+	    npoints = f->nor;
+	else if (f->nor != npoints)
 	{
 	    mtxAbort(MTX_HERE,"%s and %s: %s",genname[1],genname[i],MTX_ERR_INCOMPAT);
 	    return -1;
@@ -192,10 +192,10 @@ static int init(int argc, char **argv)
        ---- */
     if ((f = mfOpenAndReadHeader(seedname)) == NULL)
 	return -1;
-    if (f->Field != -1) 
+    if (f->field != -1) 
     {
 	mtxAbort(MTX_HERE,"%s: %s (found type %d, expected -1)",seedname,
-	    MTX_ERR_FILEFMT,(int)f->Field);
+	    MTX_ERR_FILEFMT,(int)f->field);
     }
     if (!opt_b)
     {	
@@ -204,7 +204,7 @@ static int init(int argc, char **argv)
     }
     else
     {	
-	blksize = f->Nor;
+	blksize = f->nor;
 	nblocks = npoints / blksize;
 	if (npoints % blksize != 0)
 	{
@@ -220,12 +220,9 @@ static int init(int argc, char **argv)
 	return -1;
     mfClose(f);
 
-    /* Allocate tables
-       --------------- */
-    if ((orb = NALLOC(long,npoints+1)) == NULL 
-	|| (num = NALLOC(long,npoints+1)) == NULL
-       )
-       return -1;
+    // Allocate tables
+    orb = NALLOC(long,npoints+1);
+    num = NALLOC(long,npoints+1);
     for (i = 0; i < npoints; ++i)
     {
 	orb[i] = -1;
@@ -296,8 +293,7 @@ static int writeresult()
 
     /* Calculate action on other orbits (not with -b option)
        ----------------------------------------------------- */
-    if ((s = NALLOC(long,cosize+1)) == NULL)
-	return -1;
+    s = NALLOC(long,cosize+1);
     for (i = 1; i <= nperm; ++i)
     {	
 	p = perm[i];

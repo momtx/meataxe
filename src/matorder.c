@@ -26,13 +26,13 @@ int matOrder(const Matrix_t *mat)
 {
    // Check arguments
    matValidate(MTX_HERE, mat);
-   if (mat->Nor != mat->Noc) {
+   if (mat->nor != mat->noc) {
       mtxAbort(MTX_HERE,"%s",MTX_ERR_NOTSQUARE);
       return -1;
    }
 
-   ffSetField(mat->Field);
-   const int nor = mat->Nor;
+   ffSetField(mat->field);
+   const int nor = mat->nor;
    PTR const m1 = ffAlloc(nor, nor);
    PTR const basis = ffAlloc(nor + 1, nor);
    uint32_t* const piv = NALLOC(uint32_t ,nor + 1);
@@ -57,7 +57,7 @@ int matOrder(const Matrix_t *mat)
    int tord;
    int ord;
 
-   memcpy(m1,mat->Data,ffSize(nor,nor));
+   memcpy(m1,mat->data,ffSize(nor,nor));
    memset(done,0,nor);
    tord = ord = 1;
    int dim = 0;

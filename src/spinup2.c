@@ -16,7 +16,7 @@
 static int ArgsAreValid(const Matrix_t *seed, const MatRep_t *rep, const IntMatrix_t *script)
 {
     imatValidate(MTX_HERE, script);
-    if (script->Noc != 2)
+    if (script->noc != 2)
 	mtxAbort(MTX_HERE,"Invalid script");
     matValidate(MTX_HERE, seed);
     if (!mrIsValid(rep) || rep->NGen <= 0)
@@ -24,7 +24,7 @@ static int ArgsAreValid(const Matrix_t *seed, const MatRep_t *rep, const IntMatr
 	mtxAbort(MTX_HERE,"Invalid representation");
 	return 0;
     }
-    if (seed->Noc != rep->Gen[0]->Noc || seed->Field != rep->Gen[0]->Field)
+    if (seed->noc != rep->Gen[0]->noc || seed->field != rep->Gen[0]->field)
     {
 	mtxAbort(MTX_HERE,"seed and rep: %s",MTX_ERR_INCOMPAT);
 	return 0;
@@ -52,23 +52,23 @@ Matrix_t *SpinUpWithScript(const Matrix_t *seed, const MatRep_t *rep, const IntM
 
     /* Spin up
        ------- */
-    ffSetField(seed->Field);
-    const int32_t *op = script->Data;
-    Matrix_t *basis = matAlloc(ffOrder,script->Nor,seed->Noc);
-    for (int i = 0; i < script->Nor; ++i)
+    ffSetField(seed->field);
+    const int32_t *op = script->data;
+    Matrix_t *basis = matAlloc(ffOrder,script->nor,seed->noc);
+    for (int i = 0; i < script->nor; ++i)
     {
     	int vecno = (int) op[2 * i];
 	int vecgen = (int) op[2 * i + 1];
 	PTR vec = matGetPtr(basis,i);
 	if (vecgen < 0)
 	{
-	    if (vecno < 1 || vecno > seed->Nor)
+	    if (vecno < 1 || vecno > seed->nor)
 	    {
 	    	mtxAbort(MTX_HERE,"Seed vector number (%d) out of range (%d)",
-		    vecno,seed->Nor);
+		    vecno,seed->nor);
 	    }
             else {
-               ffCopyRow(vec,matGetPtr(seed,vecno - 1),seed->Noc);
+               ffCopyRow(vec,matGetPtr(seed,vecno - 1),seed->noc);
             }
 	}
 	else
@@ -80,7 +80,7 @@ Matrix_t *SpinUpWithScript(const Matrix_t *seed, const MatRep_t *rep, const IntM
 	    	mtxAbort(MTX_HERE,"Invalid generator number %d at position %d",
 		    vecgen,i);
 	    }
-	    ffMapRow(matGetPtr(basis,vecno),rep->Gen[vecgen]->Data,seed->Noc,seed->Noc,vec);
+	    ffMapRow(matGetPtr(basis,vecno),rep->Gen[vecgen]->data,seed->noc,seed->noc,vec);
 	}
     }
     return basis;
@@ -99,12 +99,12 @@ Matrix_t *SpinUpWithScript(const Matrix_t *seed, const MatRep_t *rep, const IntM
 int ConvertSpinUpScript(IntMatrix_t *script)
 {
     int k;
-    int32_t *op = script->Data;
+    int32_t *op = script->data;
 
-    if (script->Nor == 0 || op[1] < 0)
+    if (script->nor == 0 || op[1] < 0)
 	return 0;
 
-    for (k = 0; k < script->Nor; ++k)
+    for (k = 0; k < script->nor; ++k)
     {
 	if (op[2*k+1] == 0)
 	{

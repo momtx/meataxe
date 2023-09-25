@@ -53,8 +53,8 @@ static void ParseArgs()
     TransformGenerators = appGetOption(App,"-t");
     WriteAction = appGetOption(App,"-a");
     appGetArguments(App,2,2);
-    ModName = App->ArgV[0];
-    EndoName = App->ArgV[1];
+    ModName = App->argV[0];
+    EndoName = App->argV[1];
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -71,11 +71,11 @@ static void ReadFiles()
     sprintf(fn,"%s.lrr",EndoName);
     latReadInfo(&LrrInfo,fn);
     moddim = 0;
-    for (i = 0; i < ModInfo.NCf; ++i)
+    for (i = 0; i < ModInfo.nCf; ++i)
 	moddim += ModInfo.Cf[i].dim * ModInfo.Cf[i].mult;
 
     enddim = headdim = 0;
-    for (i = 0; i < LrrInfo.NCf; i++)
+    for (i = 0; i < LrrInfo.nCf; i++)
     {
 	enddim += LrrInfo.Cf[i].dim * LrrInfo.Cf[i].mult;
 	headdim += LrrInfo.Cf[i].dim * LrrInfo.Cf[i].dim / LrrInfo.Cf[i].spl;
@@ -147,7 +147,7 @@ static void WriteOutput(Matrix_t *bas)
 	for (i = 0; i < rep->NGen; i++)
 	{
 	    int k, block_start = 0;
-	    for (k = 0; k < LrrInfo.NCf; k++)
+	    for (k = 0; k < LrrInfo.nCf; k++)
 	    {
 		int l;
 		for (l = 0; l < LrrInfo.Cf[k].dim / LrrInfo.Cf[k].spl; l++)
@@ -183,8 +183,8 @@ int main(int argc, char **argv)
    ------------------------------------------------------- */
 
     bas = matAlloc(ffOrder,moddim,moddim);
-    headptr = head->Data;
-    for (i = 0; i < LrrInfo.NCf; i++)
+    headptr = head->data;
+    for (i = 0; i < LrrInfo.nCf; i++)
     {
 	MESSAGE(1,("Next constituent is %s%s\n",LrrInfo.BaseName,
 	    latCfName(&LrrInfo,i)));
@@ -218,16 +218,16 @@ int main(int argc, char **argv)
 		pol = charpol(partbas);
 	    }
 	    while (LrrInfo.Cf[i].dim != 1 && pol->NFactors == 1 
-		&& pol->Factor[0]->Degree == 1
-		&& pol->Factor[0]->Data[0] == FF_ZERO 
-		&& pol->Factor[0]->Data[1] == FF_ONE); /* i.e.,charpol == x^enddim */
+		&& pol->Factor[0]->degree == 1
+		&& pol->Factor[0]->data[0] == FF_ZERO 
+		&& pol->Factor[0]->data[1] == FF_ONE); /* i.e.,charpol == x^enddim */
 	    headptr = ffGetPtr(headptr,num, enddim);
 
 
             /* Make the stable kernel.
                ----------------------- */
 	    StablePower_(partbas,NULL,&ker);
-	    compdim[i] = moddim - ker->Nor;
+	    compdim[i] = moddim - ker->nor;
 	    for (l = i - 1; l >= 0 && compdim[i] != compdim[l]; l--)
 		;
 	    if (l >= 0)
@@ -245,7 +245,7 @@ int main(int argc, char **argv)
 	    #ifdef MTX_DEBUG
 	    #endif
 	    matCopyRegion(bas,dim,0,partbas,0,0,-1,-1);
-	    dim += partbas->Nor;
+	    dim += partbas->nor;
 	}
     }
     matFree(partbas);
@@ -253,7 +253,7 @@ int main(int argc, char **argv)
     if (dim != moddim)
     {
 	mtxAbort(MTX_HERE,"Something is wrong - dimension mismatch (%d vs. %d)", dim, moddim);
-	for (i = 0; i < LrrInfo.NCf; i++)
+	for (i = 0; i < LrrInfo.nCf; i++)
     	    printf("%d  ", compdim[i]);
     	printf("\n");
 	return 1;

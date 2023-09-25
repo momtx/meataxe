@@ -27,8 +27,8 @@ Matrix_t *matAddMul(Matrix_t *dest, const Matrix_t *src, FEL coeff)
    // Check arguments
    matValidate(MTX_HERE,src);
    matValidate(MTX_HERE,dest);
-   if ((dest->Field != src->Field) || (dest->Nor != src->Nor) ||
-       (dest->Noc != src->Noc)) {
+   if ((dest->field != src->field) || (dest->nor != src->nor) ||
+       (dest->noc != src->noc)) {
       mtxAbort(MTX_HERE,"%s",MTX_ERR_INCOMPAT);
       return NULL;
    }
@@ -37,13 +37,13 @@ Matrix_t *matAddMul(Matrix_t *dest, const Matrix_t *src, FEL coeff)
       matAdd(dest,src);
    }
    else if (coeff != FF_ZERO) {
-      PTR dp = dest->Data, sp = src->Data;
+      PTR dp = dest->data, sp = src->data;
       int n;
-      ffSetField(src->Field);
-      for (n = src->Nor; n > 0; --n) {
-         ffAddMulRow(dp,sp,coeff,src->Noc);
-         ffStepPtr(&dp, src->Noc);
-         ffStepPtr(&sp, src->Noc);
+      ffSetField(src->field);
+      for (n = src->nor; n > 0; --n) {
+         ffAddMulRow(dp,sp,coeff,src->noc);
+         ffStepPtr(&dp, src->noc);
+         ffStepPtr(&sp, src->noc);
       }
    }
    return dest;

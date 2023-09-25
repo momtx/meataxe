@@ -54,8 +54,8 @@ static int Init(int argc, char **argv)
     if (opt_G) MtxMessageLevel = -100;
     if (appGetArguments(App,2,2) != 2)
 	return -1;
-    iname = App->ArgV[0];
-    oname = App->ArgV[1];
+    iname = App->argV[0];
+    oname = App->argV[1];
 
     return 0;
 }
@@ -103,10 +103,10 @@ int main(int argc, char **argv)
 	/* Normalize.
 	   ---------- */
 	int i;
-	for (i = 0; i < Mat->Nor; ++i)
+	for (i = 0; i < Mat->nor; ++i)
 	{
 	    PTR rp = matGetPtr(Mat,i);
-	    ffMulRow(rp,ffInv(ffExtract(rp,Mat->PivotTable[i])),Mat->Noc);
+	    ffMulRow(rp,ffInv(ffExtract(rp,Mat->pivotTable[i])),Mat->noc);
 	}
     }
     if (rc == 0)
@@ -116,9 +116,9 @@ int main(int argc, char **argv)
     if (rc == 0)
     {
 	if (opt_G)
-	    printf("MeatAxe.Rank := %d;\n",Mat->Nor);
+	    printf("MeatAxe.Rank := %d;\n",Mat->nor);
 	else
-	    MESSAGE(0,("RANK %d\n",Mat->Nor));
+	    MESSAGE(0,("RANK %d\n",Mat->nor));
     }
     Cleanup();
     return rc;

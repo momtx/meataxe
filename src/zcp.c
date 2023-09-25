@@ -63,7 +63,7 @@ static void init(int argc, char **argv)
     }
     if (opt_G) MtxMessageLevel = -100;
     appGetArguments(App,1,1);
-    fname = App->ArgV[0];
+    fname = App->argV[0];
 
     // Read the matrix
     mat = matLoad(fname);
@@ -106,8 +106,8 @@ static void writeP(const Poly_t *pol)
 	    printf(",\n");
         first = 0;
 	printf("[");
-	for (int i = 0; i <= pol->Degree; ++i)
-	    printf(i == 0 ? "%s" : ",%s",ffToGap(pol->Data[i]));
+	for (int i = 0; i <= pol->degree; ++i)
+	    printf(i == 0 ? "%s" : ",%s",ffToGap(pol->data[i]));
 	printf("]");
     }
     else {
@@ -128,9 +128,9 @@ static void writeF(const FPoly_t *fpol)
             printf(",\n");
          first = 0;
          printf("[[");
-         for (int i = 0; i < factor->Degree; ++i)
-            printf("%s,",ffToGap(factor->Data[i]));
-         printf("%s], %d]",ffToGap(factor->Data[i]), exp);
+         for (int i = 0; i < factor->degree; ++i)
+            printf("%s,",ffToGap(factor->data[i]));
+         printf("%s], %d]",ffToGap(factor->data[i]), exp);
       } else {
          printf("(");
          polPrint(NULL,factor);
@@ -160,7 +160,7 @@ int main(int argc, char **argv)
     if (!opt_f) {
        // Partial factorization (default) or single polynomial
        Charpol_t* state = charpolAlloc(mat, opt_m ? PM_MINPOL : PM_CHARPOL, 0);
-       Poly_t *poly = polAlloc(mat->Field, 0);
+       Poly_t *poly = polAlloc(mat->field, 0);
        Poly_t *factor;
        while ((factor = charpolFactor(state)) != NULL) {
           if (opt_p)

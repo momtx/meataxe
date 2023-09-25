@@ -52,10 +52,10 @@ void matPivotize(Matrix_t *mat)
 {
    matValidate(MTX_HERE, mat);
 
-   mat->PivotTable = NREALLOC(mat->PivotTable,uint32_t,mat->Noc);
-   uint8_t *isPivot = NALLOC(uint8_t, mat->Noc);
-   ffSetField(mat->Field);
-   zmkpivot(mat->Data,mat->Nor,mat->Noc,mat->PivotTable,isPivot);
+   mat->pivotTable = NREALLOC(mat->pivotTable,uint32_t,mat->noc);
+   uint8_t *isPivot = NALLOC(uint8_t, mat->noc);
+   ffSetField(mat->field);
+   zmkpivot(mat->data,mat->nor,mat->noc,mat->pivotTable,isPivot);
    sysFree(isPivot);
 }
 

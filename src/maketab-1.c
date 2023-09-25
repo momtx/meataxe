@@ -635,7 +635,7 @@ static void writeTables()
 
 int ffMakeTables(int field)
 {
-   const int context = mtxBegin("Generating arithmetic tables for GF(%d)", field);
+   const int context = mtxBegin(MTX_HERE, "Generating arithmetic tables for GF(%d)", field);
    MTX_ASSERT(sizeof(int) >= 4); // required to avoid overflows
    MTX_ASSERT(sizeof(FEL) == 2);
    init(field);

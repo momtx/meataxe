@@ -63,11 +63,11 @@ int stfClose(StfData *f)
    if (f == NULL) {
       return -1;
    }
-   if (f->File != NULL) {
-      fclose(f->File);
+   if (f->file != NULL) {
+      fclose(f->file);
    }
-   if (f->LineBuf != NULL) {
-      free(f->LineBuf);
+   if (f->lineBuf != NULL) {
+      free(f->lineBuf);
    }
    memset(f,0,sizeof(StfData));
    free(f);
@@ -85,9 +85,9 @@ int stfClose(StfData *f)
 static int stfInitData(StfData *f)
 {
    memset(f,0,sizeof(StfData));
-   f->LineBufSize = 250;
-   f->LineBuf = NALLOC(char,f->LineBufSize);
-   if (f->LineBuf == NULL) {
+   f->lineBufSize = 250;
+   f->lineBuf = NALLOC(char,f->lineBufSize);
+   if (f->lineBuf == NULL) {
       mtxAbort(MTX_HERE,"Cannot allocate line buffer");
       return -1;
    }
@@ -118,8 +118,8 @@ StfData *stfOpen(const char *name, const char* mode)
    }
 
    // open the file
-   f->File = sysFopen(name, mode);
-   if (f->File == NULL) {
+   f->file = sysFopen(name, mode);
+   if (f->file == NULL) {
       stfClose(f);
       return NULL;
    }

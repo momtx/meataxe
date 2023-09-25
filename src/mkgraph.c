@@ -335,13 +335,13 @@ static void init(int argc, char **argv)
 	MtxMessageLevel = -1000;
     upper = lower = -1;
     appGetArguments(App,1,3);
-    switch (App->ArgC)
+    switch (App->argC)
     {	case 3:
-		upper = atoi(App->ArgV[2]);
+		upper = atoi(App->argV[2]);
 	case 2:
-		lower = atoi(App->ArgV[1]);
+		lower = atoi(App->argV[1]);
 	case 1:
-		strcpy(name,App->ArgV[0]);
+		strcpy(name,App->argV[0]);
 		break;
     }
 
@@ -557,7 +557,7 @@ void writelegend()
     int i;
 
     fprintf(psfile,"%% Legend\n%% -------\nnewpath\n");
-    for (i = 0; i < LI.NCf; ++i)
+    for (i = 0; i < LI.nCf; ++i)
     {
 	fprintf(psfile,
 	    "lineColor %s setdash %1.1f %1.1f moveto 60 0 rlineto stroke\n",

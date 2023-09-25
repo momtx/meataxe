@@ -27,15 +27,15 @@ void matPrint(const char *name, const Matrix_t *m)
    long i, k;
 
    matValidate(MTX_HERE, m);
-   ffSetField(m->Field);
-   x = m->Data;
+   ffSetField(m->field);
+   x = m->data;
    if (name != NULL) { printf("%s=\n",name); }
-   for (i = 0; i < m->Nor; ++i) {
-      for (k = 0; k < m->Noc; ++k) {
+   for (i = 0; i < m->nor; ++i) {
+      for (k = 0; k < m->noc; ++k) {
          printf("%d",ffToInt(ffExtract(x,k)));
       }
       printf("\n");
-      ffStepPtr(&x, m->Noc);
+      ffStepPtr(&x, m->noc);
    }
 }
 

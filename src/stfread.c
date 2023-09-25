@@ -29,40 +29,40 @@ int stfReadLine(StfData *f)
     int len;
     int tlen = 0;
 
-    f->GetPtr = "";
-    while (!feof(f->File))
+    f->getPtr = "";
+    while (!feof(f->file))
     {
 	lbuf[0] = 0;
-	if (fgets(lbuf,sizeof(lbuf),f->File) == NULL)
+	if (fgets(lbuf,sizeof(lbuf),f->file) == NULL)
 	    break;
-	++f->LineNo;
+	++f->lineNo;
 	len = strlen(lbuf);
 	if (lbuf[len-1] == '\n') 
 	    --len;
 	if (len <= 0) continue;
 	if (lbuf[0] == '#') continue;
-	if (tlen + len >= f->LineBufSize)
+	if (tlen + len >= f->lineBufSize)
 	{
 	    char *newbuf;
 	    int newsize = tlen + len + 5;
-	    newbuf = NREALLOC(f->LineBuf,char,newsize);
+	    newbuf = NREALLOC(f->lineBuf,char,newsize);
 	    if (newbuf == NULL)
 		return -1;
-	    f->LineBuf = newbuf;
-	    f->LineBufSize = newsize;
+	    f->lineBuf = newbuf;
+	    f->lineBufSize = newsize;
 	}
-	strcpy(f->LineBuf + tlen,lbuf);
+	strcpy(f->lineBuf + tlen,lbuf);
 	tlen += len;
 
-	ch = fgetc(f->File);
+	ch = fgetc(f->file);
 	if (ch != '\t' && ch != EOF)
 	{
-	    ungetc(ch,f->File);
+	    ungetc(ch,f->file);
 	    break;
 	}
     }
-    f->LineBuf[tlen] = 0;
-    return f->LineBuf[0] != 0 ? 0 : -1;
+    f->lineBuf[tlen] = 0;
+    return f->lineBuf[0] != 0 ? 0 : -1;
 }
 
 
@@ -83,10 +83,10 @@ const char *stfGetName(StfData *f)
 {
     char *c, *name;
     
-    f->GetPtr = NULL;
+    f->getPtr = NULL;
 
     /* Skip leading whitespace */
-    for (c = f->LineBuf; *c != 0 && isspace(*c); ++c);
+    for (c = f->lineBuf; *c != 0 && isspace(*c); ++c);
     if (*c == 0) return NULL;
 
     /* Parse name */
@@ -94,7 +94,7 @@ const char *stfGetName(StfData *f)
     while (*c != 0 && !isspace(*c)) ++c;
     if (*c == 0)
     {
-	f->GetPtr = c;
+	f->getPtr = c;
 	return name;
     }
     else
@@ -103,7 +103,7 @@ const char *stfGetName(StfData *f)
     /* Skip " := " */
     *c++ = 0;
     while (*c != 0 && (isspace(*c) || *c == ':' || *c == '=')) ++c;
-    f->GetPtr = c;
+    f->getPtr = c;
 
     return name;
 }
@@ -142,7 +142,7 @@ const char *stfGetName(StfData *f)
 
 int stfGetInt(StfData *f, int *buf)
 {
-    char *c = f->GetPtr;
+    char *c = f->getPtr;
     int neg = 0;
 
     if (c == NULL)
@@ -161,7 +161,7 @@ int stfGetInt(StfData *f, int *buf)
     /* Parse number */
     if (!isdigit(*c)) 
     {
-	mtxAbort(MTX_HERE,"Invalid integer: %.20s",f->GetPtr);
+	mtxAbort(MTX_HERE,"Invalid integer: %.20s",f->getPtr);
 	return -1;
     }
     *buf = 0;
@@ -174,7 +174,7 @@ int stfGetInt(StfData *f, int *buf)
 	*buf = -*buf;
 
     /* Done */
-    f->GetPtr = c;
+    f->getPtr = c;
     return 0;
 }
 
@@ -198,7 +198,7 @@ int stfGetString(StfData *f, char *buf, size_t bufsize)
 
     /* Find start of string.
        --------------------- */
-    for (c = f->GetPtr; *c != 0 && *c != '"' && isspace(*c); ++c)
+    for (c = f->getPtr; *c != 0 && *c != '"' && isspace(*c); ++c)
 	;
     if (*c != '"')
     {
@@ -225,7 +225,7 @@ int stfGetString(StfData *f, char *buf, size_t bufsize)
 		case '"': *c++ = '"'; break;
 		default:
 		    mtxAbort(MTX_HERE,"Line %d: Invalid escape sequence in string",
-			f->LineNo);
+			f->lineNo);
 		    return -1;
 	    }
 	    ++d;
@@ -235,7 +235,7 @@ int stfGetString(StfData *f, char *buf, size_t bufsize)
     }
     if (*d != '"')
     {
-	mtxAbort(MTX_HERE,"Line %d: Unexpected end of line in string",f->LineNo);
+	mtxAbort(MTX_HERE,"Line %d: Unexpected end of line in string",f->lineNo);
 	return -1;
     }
 
@@ -243,7 +243,7 @@ int stfGetString(StfData *f, char *buf, size_t bufsize)
        ------------------ */
     if (bufsize < c - s + 1)
     {
-	mtxAbort(MTX_HERE,"Line %d: Buffer too small",f->LineNo);
+	mtxAbort(MTX_HERE,"Line %d: Buffer too small",f->lineNo);
 	return -1;
     }
 
@@ -276,7 +276,7 @@ int stfGetString(StfData *f, char *buf, size_t bufsize)
 
 int stfMatch(StfData *f, const char *pattern)
 {
-    char *b = f->GetPtr;
+    char *b = f->getPtr;
 
     if (b == NULL)
 	return -1;
@@ -298,7 +298,7 @@ int stfMatch(StfData *f, const char *pattern)
     }
     if (*pattern == 0)
     {	
-	f->GetPtr = b;
+	f->getPtr = b;
 	return 0;
     }
     return -1;
@@ -345,24 +345,24 @@ int stfMatch(StfData *f, const char *pattern)
 
 int stfGetVector(StfData *f, int *bufsize, int *buf)
 {
-    char *c = f->GetPtr;
+    char *c = f->getPtr;
     int i;
     if (buf == NULL || bufsize == NULL || *bufsize <= 0)
 	return -1;
     
     if (stfMatch(f," ["))
-	return (f->GetPtr = c, -1);
+	return (f->getPtr = c, -1);
     for (i = 0; i < *bufsize; ++i, ++buf)
     {
 	if (stfMatch(f," ]") == 0)
 	    break;
 	if (i > 0 && stfMatch(f,","))
-	    return (f->GetPtr = c, -1);
+	    return (f->getPtr = c, -1);
 	if (stfGetInt(f,buf))
 	    break;
     }
     if (i >= *bufsize && stfMatch(f,"]"))
-	return (f->GetPtr = c, -1);
+	return (f->getPtr = c, -1);
     *bufsize = i;
     return 0;
 }

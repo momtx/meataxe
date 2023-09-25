@@ -21,9 +21,9 @@ Perm_t *RndPerm(int degree)
       a = mtxRandomInt(degree);
       b = mtxRandomInt(degree);
       if (a != b) {
-         int c = p->Data[a];
-         p->Data[a] = p->Data[b];
-         p->Data[b] = c;
+         int c = p->data[a];
+         p->data[a] = p->data[b];
+         p->data[b] = c;
       }
    }
    return p;
@@ -44,9 +44,9 @@ TstResult Perm_AllocFree()
    for (i = 0; i < NPERM; ++i) {
       int k;
       permValidate(MTX_HERE, p[i]);
-      ASSERT(p[i]->Degree == deg[i]);
-      for (k = 0; k < p[i]->Degree; ++k) {
-         ASSERT(p[i]->Data[k] == k);
+      ASSERT(p[i]->degree == deg[i]);
+      for (k = 0; k < p[i]->degree; ++k) {
+         ASSERT(p[i]->data[k] == k);
       }
    }
    for (i = 0; i < NPERM; ++i) {
@@ -66,8 +66,8 @@ static Perm_t *mkPerm(const int *a)
    int i;
    for (i = 0; a[i] >= 0; ++i);
    Perm_t *p = permAlloc(i);
-   for (i = 0; i < p->Degree; ++i)
-      p->Data[i] = a[i];
+   for (i = 0; i < p->degree; ++i)
+      p->data[i] = a[i];
    return p;
 }
 
@@ -130,7 +130,7 @@ TstResult Perm_Power()
 
    for (i = 0; i < 20; ++i) {
       Perm_t *p3 = permPower(p1,i);
-      Perm_t *p2 = permAlloc(p1->Degree);
+      Perm_t *p2 = permAlloc(p1->degree);
       int k;
       for (k = 0; k < i; ++k) {
          permMul(p2,p1);
@@ -153,8 +153,8 @@ TstResult Perm_Inverse()
       Perm_t *p1 = RndPerm(i % 200 + 1);
       Perm_t *p2 = permInverse(p1);
       permMul(p2,p1);
-      for (k = 0; k < p2->Degree; ++k) {
-         ASSERT(p2->Data[k] == k);
+      for (k = 0; k < p2->degree; ++k) {
+         ASSERT(p2->data[k] == k);
       }
       permFree(p1);
       permFree(p2);

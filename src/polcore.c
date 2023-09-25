@@ -8,9 +8,6 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // Local data
 
-
-#define POLY_MAGIC 0x355A3207
-
 /// @defgroup poly Polynomials
 /// @details
 /// The MeatAxe can work with polynomials over a finite field. A polynomial is represented
@@ -42,14 +39,14 @@
 
 int polIsValid(const Poly_t *p)
 {
-   if (p == NULL || p->Magic != POLY_MAGIC) {
+   if (p == NULL || p->typeId != MTX_TYPE_POLYNOMIAL) {
       return 0;
    }
-   const int deg = p->Degree;
-   if (deg < -1 || p->Field < 2 || p->Data == NULL || p->BufSize < 0) {
+   const int deg = p->degree;
+   if (deg < -1 || p->field < 2 || p->data == NULL || p->bufSize < 0) {
       return 0;
    }
-   if (deg >= 0 && p->Data[deg] == FF_ZERO) {
+   if (deg >= 0 && p->data[deg] == FF_ZERO) {
       return 0;
    }
    return 1;
@@ -57,68 +54,57 @@ int polIsValid(const Poly_t *p)
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-/// Checks if the given polynimial is valid and aborts the program if the test fails.
+/// Checks if the given polynomial is valid and aborts the program if the test fails.
 
-void polValidate(const struct MtxSourceLocation* src, const Poly_t *pol)
+void polValidate(const struct MtxSourceLocation* src, const Poly_t* pol)
 {
-   if (pol == NULL)
-      mtxAbort(src,"NULL polynomial");
-   if (pol->Magic != POLY_MAGIC || pol->Degree < -1 || pol->Field < 2) {
-      mtxAbort(src,"Invalid polynomial (magic=0x%lx, field=%d, deg=%d)",
-            (unsigned long) pol->Magic, pol->Field, pol->Degree);
+   if (pol == NULL) {
+      mtxAbort(src, "NULL polynomial");
    }
-   if (pol->Data == NULL || pol->BufSize < 0) {
-      mtxAbort(src,"Invalid polynomial (data=0x%lx, size=%d)",
-            (unsigned long)pol->Data, pol->BufSize);
+   if (pol->typeId != MTX_TYPE_POLYNOMIAL || pol->degree < -1 || pol->field < 2) {
+      mtxAbort(src, "Invalid polynomial (typeId=0x%lx, field=%lu, deg=%ld)",
+               (unsigned long) pol->typeId, (unsigned long) pol->field, (long) pol->degree);
    }
-   if (pol->Degree >= 0 && pol->Data[pol->Degree] == FF_ZERO) {
-      mtxAbort(src,"Invalid polynomial (leading coefficient is zero)");
+   if (pol->data == NULL || pol->bufSize < 0) {
+      mtxAbort(src, "Invalid polynomial (data=0x%lx, size=%d)",
+               (unsigned long)pol->data, pol->bufSize);
+   }
+   if (pol->degree >= 0 && pol->data[pol->degree] == FF_ZERO) {
+      mtxAbort(src, "Invalid polynomial (leading coefficient is zero)");
    }
 }
-
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
+
 /// Allocate a polynomial
 /// This function creates the polynomial p(x)=x^n over the current field.
-/// If n is negative, a zero polynomial is created. The return value is a
-/// pointer to a newly allocated Poly_t structure. The caller is responsible
-/// for releasing memory by calling polFree() when the polynomial is no
-/// longer needed.
-/// @param fl Field order.
-/// @param n Degree of the polynomial.
+/// If n is negative, a zero polynomial (degree -1) is created. The return value is a pointer to a
+/// newly allocated Poly_t structure. The caller is responsible for releasing memory by calling
+/// @ref polFree when the polynomial is no longer needed.
+/// @param field Field order.
+/// @param degree Degree of the polynomial.
 /// @return Pointer to a new Poly_t structure
 
-Poly_t *polAlloc(int fl, int n)
+Poly_t* polAlloc(uint32_t field, int32_t degree)
 {
-   Poly_t *x;
-   int i, s;
+   if (degree < 0) {degree = -1;}
+   MTX_ASSERT(degree < (int32_t) 2147483647L);
 
-   if (n < 0) {
-      n = -1;
+   ffSetField(field);
+   Poly_t* x = ALLOC(Poly_t);
+   x->typeId = MTX_TYPE_POLYNOMIAL;
+   x->field = field;
+   x->degree = degree;
+   x->bufSize = degree + 1;
+   x->data = NALLOC(FEL, x->bufSize);
+   for (int32_t i = 0; i < degree; ++i) {
+      x->data[i] = FF_ZERO;
    }
-   if ((s = n + 1) < 1) {
-      s = 1;
+   if (degree >= 0) {
+      x->data[degree] = FF_ONE;
    }
-
-   ffSetField(fl);
-   if ((x = ALLOC(Poly_t)) == NULL) {
-      mtxAbort(MTX_HERE,"Cannot allocate polynomial");
-   }
-   x->Magic = POLY_MAGIC;
-   x->Field = fl;
-   x->Degree = n;
-   x->BufSize = s;
-   if ((x->Data = NALLOC(FEL,s)) == NULL) {
-      sysFree(x);
-      mtxAbort(MTX_HERE,"Cannot allocate polynomial data");
-   }
-   for (i = 0; i < (int) s - 1; ++i) {
-      x->Data[i] = FF_ZERO;
-   }
-   x->Data[s - 1] = FF_ONE;
    return x;
 }
-
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 /// Free a polynomial
@@ -129,7 +115,7 @@ Poly_t *polAlloc(int fl, int n)
 int polFree(Poly_t *x)
 {
    polValidate(MTX_HERE, x);
-   sysFree(x->Data);
+   sysFree(x->data);
    memset(x,0,sizeof(Poly_t));
    sysFree(x);
    return 0;
@@ -142,11 +128,11 @@ int polFree(Poly_t *x)
 
 void Pol_Normalize(Poly_t *p)
 {
-   int i = p->Degree;
-   while (i >= 0 && p->Data[i] == FF_ZERO) {
+   int i = p->degree;
+   while (i >= 0 && p->data[i] == FF_ZERO) {
       --i;
    }
-   p->Degree = i;
+   p->degree = i;
 }
 
 

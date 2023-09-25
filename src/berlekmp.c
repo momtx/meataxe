@@ -25,7 +25,7 @@ static factor_t *factorsquarefree(const Poly_t *pol)
     Poly_t *t, *w, *v;
     FEL *tbuf, *t0buf;
 
-    ffSetField(pol->Field);
+    ffSetField(pol->field);
     uint32_t exp = 0;       // Degree of F over its prime field.
     for (uint32_t ltmp = 1; ltmp != ffChar; ++exp, ltmp *= ffChar);
 
@@ -35,17 +35,17 @@ static factor_t *factorsquarefree(const Poly_t *pol)
     // Allocate the list of factors. There can be at most <pol->Degree>
     // factors, but we need one extra entry to terminate the list.
     size_t nfactors = 0;
-    factor_t *factors = NALLOC(factor_t,pol->Degree + 1);
+    factor_t *factors = NALLOC(factor_t,pol->degree + 1);
 
     /* Main loop
        --------- */
-    while (t0->Degree > 0) {
+    while (t0->degree > 0) {
 	Poly_t *der = polDerive(polDup(t0));
         t = polGcd(t0,der);
 	polFree(der);
         v = polDivMod(t0,t);
         polFree(t0); 
-        for (k = 0; v->Degree > 0; )
+        for (k = 0; v->degree > 0; )
 	{
 	    Poly_t *tmp;
 	    if ( ++k % ffChar == 0 )
@@ -58,7 +58,7 @@ static factor_t *factorsquarefree(const Poly_t *pol)
 	    w = polGcd(t,v);
 	    factors[nfactors].p = polDivMod(v,w);
 	    factors[nfactors].n = e * k;
-	    if (factors[nfactors].p->Degree > 0)
+	    if (factors[nfactors].p->degree > 0)
 	       	++nfactors;			/* add to output */
 	    else
 	    	polFree(factors[nfactors].p);	/* discard const. */
@@ -71,14 +71,14 @@ static factor_t *factorsquarefree(const Poly_t *pol)
 	polFree(v);
 
 	/* shrink the polynomial */
-      	tdeg = t->Degree;
+      	tdeg = t->degree;
       	e *= ffChar;
       	if ( tdeg % ffChar != 0 )
 	    mtxAbort(MTX_HERE,"error in t, degree not divisible by prime");
       	t0 = polAlloc(ffOrder,tdeg/ffChar);
-      	t0buf = t0->Data;
-      	tbuf = t->Data;
-      	for (j = t0->Degree; j >= 0; --j)
+      	t0buf = t0->data;
+      	tbuf = t->data;
+      	for (j = t0->degree; j >= 0; --j)
 	{
 	    FEL el, el1;
 	    long lexp;
@@ -107,7 +107,7 @@ static factor_t *factorsquarefree(const Poly_t *pol)
     polFree(t0);
 
     // Terminate the list
-    MTX_ASSERT(nfactors <= pol->Degree);
+    MTX_ASSERT(nfactors <= pol->degree);
     factors = NREALLOC(factors, factor_t, nfactors + 1);
     factors[nfactors].p = NULL;
     factors[nfactors].n = 0;
@@ -123,12 +123,12 @@ static factor_t *factorsquarefree(const Poly_t *pol)
 
 static Matrix_t *makekernel(const Poly_t *pol)
 {
-    FEL* const pbuf = pol->Data;
-    const long pdeg = pol->Degree;
+    FEL* const pbuf = pol->data;
+    const long pdeg = pol->degree;
     int k, xshift;
-    const long fl = pol->Field;
+    const long fl = pol->field;
     Matrix_t* materg = matAlloc(fl,pdeg,pdeg);
-    PTR rowptr = materg->Data;
+    PTR rowptr = materg->data;
     MESSAGE(3,("makekernel: fl=%ld pdeg=%ld\n", fl, pdeg));
 
     FEL* xbuf = NALLOC(FEL,pdeg+1);
@@ -176,45 +176,45 @@ static Matrix_t *makekernel(const Poly_t *pol)
 
 static Poly_t **berlekamp(const Poly_t *pol, const Matrix_t  *kernel)
 {
-    PTR vec = kernel->Data;
+    PTR vec = kernel->data;
     int i;
 
-    Poly_t** list = NALLOC(Poly_t *,kernel->Nor+1);
-    Poly_t** list2 = NALLOC(Poly_t *,kernel->Nor+1);
+    Poly_t** list = NALLOC(Poly_t *,kernel->nor+1);
+    Poly_t** list2 = NALLOC(Poly_t *,kernel->nor+1);
     list[0] = polDup(pol);
     int nfactors = 1;
-    Poly_t* t = polAlloc(kernel->Field,kernel->Noc-1);
+    Poly_t* t = polAlloc(kernel->field,kernel->noc-1);
 
     /* Loop through all kernel vectors */
-    for (int j = 2; j <= kernel->Nor; ++j)
+    for (int j = 2; j <= kernel->nor; ++j)
     {
 	int ngcd = 0;
-	ffStepPtr(&vec, kernel->Noc);			/* Next vector */
-	if (nfactors == kernel->Nor) 
+	ffStepPtr(&vec, kernel->noc);			/* Next vector */
+	if (nfactors == kernel->nor) 
 	    break;	/* Done? */
-	for (i = 0; i < kernel->Noc; ++i)
-	    t->Data[i] = ffExtract(vec,i);
-	for (i = kernel->Noc-1; t->Data[i] == FF_ZERO; --i);
-	t->Degree = i;
+	for (i = 0; i < kernel->noc; ++i)
+	    t->data[i] = ffExtract(vec,i);
+	for (i = kernel->noc-1; t->data[i] == FF_ZERO; --i);
+	t->degree = i;
 	for (i = 0; i < nfactors; )
 	{
 	    long s;
-	    if (list[i]->Degree <= 1) {++i; continue;}
+	    if (list[i]->degree <= 1) {++i; continue;}
 	    for (s = 0; s < ffOrder; ++s)
 	    {
 		Poly_t *gcd;
 
-		t->Data[0] = ffFromInt(s);
+		t->data[0] = ffFromInt(s);
 		MTX_ASSERT(i >= 0 && i < nfactors);
 		gcd = polGcd(list[i],t);
-		if (gcd->Degree >= 1)
+		if (gcd->degree >= 1)
 		{
-		    MTX_ASSERT(ngcd >= 0 && ngcd < kernel->Nor+1);
+		    MTX_ASSERT(ngcd >= 0 && ngcd < kernel->nor+1);
 		    list2[ngcd++] = gcd;
 		}
 		else
 		    polFree(gcd);
-		if (ngcd == kernel->Nor) break;	/* Done? */
+		if (ngcd == kernel->nor) break;	/* Done? */
 	    }
 	    if (ngcd > 0)
 	    {
@@ -227,14 +227,14 @@ static Poly_t **berlekamp(const Poly_t *pol, const Matrix_t  *kernel)
 	    }
 	    else
 		++i;
-	    if (nfactors == kernel->Nor) break;		/* Done? */
+	    if (nfactors == kernel->nor) break;		/* Done? */
 	}
 	if (ngcd > 0)
 	{
 	    int p;
 	    for (p = 0; p < ngcd; ++p)
 	    {
-		MTX_ASSERT(nfactors >= 0 && nfactors < kernel->Nor+1);
+		MTX_ASSERT(nfactors >= 0 && nfactors < kernel->nor+1);
 	        list[nfactors++] = list2[p];
 	    }
 	}
@@ -242,9 +242,9 @@ static Poly_t **berlekamp(const Poly_t *pol, const Matrix_t  *kernel)
     polFree(t);
     sysFree(list2);
 
-    MTX_ASSERT(nfactors >= 0 && nfactors < kernel->Nor+1);
+    MTX_ASSERT(nfactors >= 0 && nfactors < kernel->nor+1);
     list[nfactors] = NULL;	/* Terminate the list */
-    MTX_ASSERT(nfactors == kernel->Nor);
+    MTX_ASSERT(nfactors == kernel->nor);
     return list;
 }
 
@@ -328,10 +328,10 @@ int main(void)
 	    printf("%d\n",count);
 	    fflush(stdout);
 	}
-	memset(p->Data,0,21);
-	p->Data[20] = FF_ONE;
+	memset(p->data,0,21);
+	p->data[20] = FF_ONE;
 	for (i = mtxRandomInt(20); i > 0; --i)
-	    p->Data[RandInt(20)] = ffFromInt(mtxRandomInt(5));
+	    p->data[RandInt(20)] = ffFromInt(mtxRandomInt(5));
 	/*polprint("p",p);*/
 	ff = f = polFactorization(p);
 	q = polAlloc(5,0);

@@ -41,23 +41,23 @@ Matrix_t *matCut(const Matrix_t *src, int row1, int col1, int nrows, int ncols)
       --------------- */
    matValidate(MTX_HERE, src);
    if (nrows == -1) {
-      nrows = src->Nor - row1;
+      nrows = src->nor - row1;
    }
    if (ncols == -1) {
-      ncols = src->Noc - col1;
+      ncols = src->noc - col1;
    }
-   if ((row1 < 0) || (nrows < 0) || (row1 + nrows > src->Nor)) {
+   if ((row1 < 0) || (nrows < 0) || (row1 + nrows > src->nor)) {
       mtxAbort(MTX_HERE,"Source row index out of bounds");
       return NULL;
    }
-   if ((col1 < 0) || (ncols < 0) || (col1 + ncols > src->Noc)) {
+   if ((col1 < 0) || (ncols < 0) || (col1 + ncols > src->noc)) {
       mtxAbort(MTX_HERE,"Source column index out of bounds");
       return NULL;
    }
 
    /* Allocate a new matrix for the result
       ------------------------------------ */
-   result = matAlloc(src->Field,nrows,ncols);
+   result = matAlloc(src->field,nrows,ncols);
    if (result == NULL) {
       return NULL;
    }
@@ -71,7 +71,7 @@ Matrix_t *matCut(const Matrix_t *src, int row1, int col1, int nrows, int ncols)
    if (s == NULL) {
       return NULL;
    }
-   d = result->Data;
+   d = result->data;
 
    /* Copy the requested data
       ----------------------- */
@@ -84,7 +84,7 @@ Matrix_t *matCut(const Matrix_t *src, int row1, int col1, int nrows, int ncols)
          }
       }
       ffStepPtr(&d, ncols);
-      ffStepPtr(&s, src->Noc);
+      ffStepPtr(&s, src->noc);
    }
 
    return result;

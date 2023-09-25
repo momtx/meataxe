@@ -91,7 +91,7 @@ TstResult Cfinfo_BadIdWord()
    const Tst_TempFile* const tf = TstCreateTemporaryFile(".cfinfo",FILE_DATA);
    Lat_Info info;
    ASSERT_ABORT(latReadInfo(&info, tf->base_name));
-   ASSERT(info.NCf == 1);
+   ASSERT(info.nCf == 1);
    Tst_RemoveTempFiles();
    return 0;
 }

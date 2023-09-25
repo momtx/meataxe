@@ -4,6 +4,11 @@
 
 @page changelog Release Notes
 
+@section r2_5_x Release 2.5.X
+Removed suport for old text file formats.
+Added "large field" arithmetic (q < 65535).
+
+
 @section r2_4_x Release 2.4.X
 @par Jan-2015
 Refactoring of tests (work in progress).

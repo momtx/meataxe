@@ -58,7 +58,7 @@ int msIsValid(const MatrixSet_t *set)
     int field, nor, noc;
 #endif
 
-    if (set == NULL || set->Magic != MS_MAGIC)
+    if (set == NULL || set->typeId != MS_MAGIC)
     {
 	mtxAbort(MTX_HERE,"Invalid matrix set at 0x%lx",(long) set);
 	return 0;
@@ -84,12 +84,12 @@ int msIsValid(const MatrixSet_t *set)
 	}
 	if (i == 0)
 	{
-	    field = l->Matrix->Field;
-	    nor = l->Matrix->Nor;
-	    noc = l->Matrix->Noc;
+	    field = l->Matrix->field;
+	    nor = l->Matrix->nor;
+	    noc = l->Matrix->noc;
 	}
-	else if (field != l->Matrix->Field ||
-	    nor != l->Matrix->Nor || noc != l->Matrix->Noc)
+	else if (field != l->Matrix->field ||
+	    nor != l->Matrix->nor || noc != l->Matrix->noc)
 	{
 	    mtxAbort(MTX_HERE,"Invalid matrix set: Matrix %d and %d: %s",
 		i,i-1,MTX_ERR_INCOMPAT);
@@ -130,7 +130,7 @@ MatrixSet_t *msAlloc()
 	return NULL;
     }
     memset(x,0,sizeof(*x));
-    x->Magic = MS_MAGIC;
+    x->typeId = MS_MAGIC;
     return x;
 }
 

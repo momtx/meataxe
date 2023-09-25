@@ -2,6 +2,12 @@ echo "0010 - Data file conversion"
 
 . ../tests/common.sh
 
+zcv -Q "$MTX_TEST_DATA_DIR/../text/polynomials.txt" polynomials
+cmp polynomials "$MTX_TEST_DATA_DIR/polynomials"
+zpr polynomials polynomials.txt
+cmp polynomials.txt "$MTX_TEST_DATA_DIR/../text/polynomials.txt"
+
+
 for f in $MTX_TEST_DATA_DIR/*; do
    baseName="${f##*/}"
    zpr "$f" "${baseName}.txt"

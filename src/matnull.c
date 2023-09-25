@@ -110,19 +110,19 @@ Matrix_t *matNullSpace_(Matrix_t *mat, int flags)
    matValidate(MTX_HERE, mat);
 
    // allocate workspace (sets the field as side effect)
-   nsp = matAlloc(mat->Field,mat->Nor,mat->Nor);
-   nsp->PivotTable = NREALLOC(nsp->PivotTable,uint32_t,mat->Nor);
+   nsp = matAlloc(mat->field,mat->nor,mat->nor);
+   nsp->pivotTable = NREALLOC(nsp->pivotTable,uint32_t,mat->nor);
 
    // calculate the null-space
-   dim = znullsp(mat->Data,mat->Nor,mat->Noc,nsp->PivotTable,nsp->Data,flags);
+   dim = znullsp(mat->data,mat->nor,mat->noc,nsp->pivotTable,nsp->data,flags);
    if (flags) {
-      sysFree(nsp->PivotTable);
-      nsp->PivotTable = NULL;
+      sysFree(nsp->pivotTable);
+      nsp->pivotTable = NULL;
    }
 
    // trim result buffer
-   nsp->Nor = dim;
-   nsp->Data = (PTR) sysRealloc(nsp->Data,ffRowSize(nsp->Noc) * dim);
+   nsp->nor = dim;
+   nsp->data = (PTR) sysRealloc(nsp->data,ffRowSize(nsp->noc) * dim);
 
    return nsp;
 }

@@ -70,12 +70,12 @@ long MakeSeedVector(const Matrix_t *basis, long lastno, PTR vec)
    }
 
    // Make the seed vector
-   ffSetField(basis->Field);
-   ffMulRow(vec,FF_ZERO, basis->Noc);
-   for (j = 0, x = nextno; x != 0 && j < basis->Nor; ++j, x /= ffOrder) {
+   ffSetField(basis->field);
+   ffMulRow(vec,FF_ZERO, basis->noc);
+   for (j = 0, x = nextno; x != 0 && j < basis->nor; ++j, x /= ffOrder) {
       FEL co = ffFromInt(x % ffOrder);
       if (co != FF_ZERO) {
-         ffAddMulRow(vec,matGetPtr(basis,j),co, basis->Noc);
+         ffAddMulRow(vec,matGetPtr(basis,j),co, basis->noc);
       }
    }
 

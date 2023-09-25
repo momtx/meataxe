@@ -72,15 +72,15 @@ static int Init(int argc, char **argv)
     if (opt_G) MtxMessageLevel = -100;
     if (appGetArguments(App,1,3) < 0)
 	return -1;
-    switch (App->ArgC)
+    switch (App->argC)
     {
 	case 3:
-	    strcpy(grpname,App->ArgV[2]);
+	    strcpy(grpname,App->argV[2]);
 	    /* NO BREAK! */
 	case 2:
-	    if (strcmp(App->ArgV[1],"-"))
+	    if (strcmp(App->argV[1],"-"))
 	    {
-		src = sysFopen(App->ArgV[1],"rb");
+		src = sysFopen(App->argV[1],"rb");
 		if (src == NULL)
 		    return -1;
 	    }
@@ -91,15 +91,15 @@ static int Init(int argc, char **argv)
             src = stdin;
             break;
     }
-    matname = App->ArgV[0];
+    matname = App->argV[0];
     if ((Matrix = matLoad(matname)) == NULL)
 	return -1;
-    if (Matrix->Nor != Matrix->Noc)
+    if (Matrix->nor != Matrix->noc)
     {
 	mtxAbort(MTX_HERE,"%s: %s",matname,MTX_ERR_NOTSQUARE);
 	return -1;
     }
-    ffSetField(Matrix->Field);
+    ffSetField(Matrix->field);
     return 0;
 }
 
@@ -213,7 +213,7 @@ int getnextpol(void)
 	polFree(Poly);
     Poly = polAlloc(ffOrder,deg);
     for (i = 0; i <= deg; ++i)
-	Poly->Data[i] = poly[i];
+	Poly->data[i] = poly[i];
 
     return 1;
 }

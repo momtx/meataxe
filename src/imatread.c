@@ -21,10 +21,10 @@ IntMatrix_t* imatRead(MtxFile_t* file)
    mfReadHeader(file);
    if (mfObjectType(file) != MTX_TYPE_INTMATRIX) {
       mtxAbort(MTX_HERE, "%s: unexpected object type 0x%lx (expected integer matrix)",
-               file->Name, (unsigned long) file->header[0]);
+               file->name, (unsigned long) file->header[0]);
    }
    IntMatrix_t* m = imatAlloc(file->header[1], file->header[2]);
-   mfRead32(file, m->Data, m->Nor * m->Noc);
+   mfRead32(file, m->data, m->nor * m->noc);
    return m;
 }
 

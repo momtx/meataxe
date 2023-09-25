@@ -20,7 +20,7 @@ Matrix_t *matReadData(FILE *f, const uint32_t header[3])
       mtxAbort(MTX_HERE,"%s",MTX_ERR_NOTMATRIX);
    }
    Matrix_t* m = matAlloc(header[0],header[1],header[2]);
-   ffReadRows(f,m->Data,m->Nor, m->Noc);
+   ffReadRows(f,m->data,m->nor, m->noc);
    return m;
 }
 

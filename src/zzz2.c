@@ -20,7 +20,7 @@ int ffChar = 0;
 /// May be used in expressions but must never modified directly. To change the field,
 /// use ffSetField().
 
-uint32_t ffOrder = 0xFFFFFFFFU;
+uint32_t ffOrder = MTX_NVAL;
 
 /// Field generator.
 /// This variable contains a generator for the multiplicative group of the current field.
@@ -29,28 +29,26 @@ FEL ffGen = 0;
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-/// Allocate memory and initialize
-/// This function allocates a block of memory for a vector (if @em nrows is 1)
-/// or a matrix over the current field. Memory is initialized to zero as described in @ref ffMulRow.
-/// @a nrows may be zero, in which case the function returns a memory block of
-/// size zero which must be freed using ffFree().
-/// @param nor Number of rows (may be zero).
-/// @return Pointer to the memory block.
+/// Allocate row vectors.
+/// This function allocates a block of memory for «nor» row vectors of size «noc» over the current
+/// field (see «ffSetField()». The rows are initialized with zeroes as described in «ffMulRow()».
+/// The memory must be released with «sysFree()» when it is no longer needed. The return value is
+/// never NULL, even if «nor» or «noc» is zero.
 
-PTR ffAlloc(int nrows, int noc)
+PTR ffAlloc(int nor, int noc)
 {
    register long i;
-   MTX_ASSERT(nrows >= 0);
+   MTX_ASSERT(nor >= 0);
    MTX_ASSERT(noc >= 0);
 
    const size_t rowSize = ffRowSize(noc);
-   const size_t req = rowSize * (size_t) nrows;
+   const size_t req = rowSize * (size_t) nor;
 
    PTR p = (PTR) sysMalloc(req);
 
    // Initialize all rows with zeroes.
    char* q = (char *) p;
-   for (i = nrows; i > 0; --i) {
+   for (i = nor; i > 0; --i) {
       ffMulRow((PTR) q, FF_ZERO, noc);
       q += rowSize;
    }
@@ -66,9 +64,7 @@ PTR ffAlloc(int nrows, int noc)
 
 void ffFree(PTR x)
 {
-   if (x != NULL) {
-      free(x);
-   }
+   sysFree(x);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////

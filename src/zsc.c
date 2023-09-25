@@ -50,8 +50,8 @@ static int ngen = 2;		/* Number of generators */
 static MatRep_t *Rep;		/* The generators */
 static Matrix_t *Seed;		/* Seed vectors */
 
-#define OPVEC(i) OpTable->Data[i * 2]
-#define OPGEN(i) OpTable->Data[i * 2 + 1]
+#define OPVEC(i) OpTable->data[i * 2]
+#define OPGEN(i) OpTable->data[i * 2 + 1]
 
 /* --------------------------------------------------------------------------
    ReadFiles() - Read input files
@@ -71,8 +71,8 @@ static int ReadFiles()
     Rep = mrLoad(GenName,ngen);
     if (Rep == NULL)
 	return -1;
-    fl = Rep->Gen[0]->Field;
-    nor = Rep->Gen[0]->Nor;
+    fl = Rep->Gen[0]->field;
+    nor = Rep->Gen[0]->nor;
 
     /* Read the script.
        ---------------- */
@@ -81,13 +81,13 @@ static int ReadFiles()
     if (OpTable == NULL)
 	return -1;
     ConvertSpinUpScript(OpTable);   /* 2.3 compatibility */
-    if (OpTable->Noc != 2)
+    if (OpTable->noc != 2)
     {
 	mtxAbort(MTX_HERE,"%s: bad number of columns",OpName);
 	return -1;
     }
    /* Das ist doch unsinnig! J.M. */
-   /* if (OpTable->Nor != nor)
+   /* if (OpTable->nor != nor)
     {
 	mtxAbort(MTX_HERE,"%s: bad number of rows",OpName);
 	return -1;
@@ -100,7 +100,7 @@ static int ReadFiles()
 	mtxAbort(MTX_HERE,"Illegal script (does not start with seed vector)");
     if (OPVEC(0) != 1)
 	MESSAGE(0,("Note: script does not start with first vector"));
-    for (i = 1; i < OpTable->Nor; ++i)
+    for (i = 1; i < OpTable->nor; ++i)
     {
 	if (OPGEN(i) == -1)
 	    mtxAbort(MTX_HERE,"Illegal skript (more than 1 seed vector)");
@@ -116,12 +116,12 @@ static int ReadFiles()
     Seed = matLoad(SeedName);
     if (Seed == NULL)
 	return -1;
-    if (Seed->Noc != nor || Seed->Field != fl)
+    if (Seed->noc != nor || Seed->field != fl)
     {
 	mtxAbort(MTX_HERE,"%s.1 and %s: %s",GenName,SeedName,MTX_ERR_INCOMPAT);
 	return 1;
     }
-    MESSAGE(1,("%s: %d seed vectors\n",SeedName,Seed->Nor));
+    MESSAGE(1,("%s: %d seed vectors\n",SeedName,Seed->nor));
     return 0;
 }
 
@@ -145,10 +145,10 @@ static int Init(int argc, char **argv)
        ---------- */
     if (appGetArguments(App,3,4) < 0)
 	return -1;
-    OpName = App->ArgV[2];
-    SeedName = App->ArgV[1];
-    GenName = App->ArgV[0];
-    OutName = App->ArgC > 3 ? App->ArgV[3] : SeedName;
+    OpName = App->argV[2];
+    SeedName = App->argV[1];
+    GenName = App->argV[0];
+    OutName = App->argC > 3 ? App->argV[3] : SeedName;
 
     /* Read input files.
        ----------------- */
@@ -179,7 +179,7 @@ int main(int argc, char *argv[])
 
     /* Spinup each seed vector.
        ------------------------ */
-    for (seedno = 0; seedno < Seed->Nor; ++seedno)
+    for (seedno = 0; seedno < Seed->nor; ++seedno)
     {
 	char fn[200];
 	Matrix_t *seed_vec = matCutRows(Seed,seedno,1);

@@ -42,7 +42,7 @@ int *width, *height;
 
 static const char *mkname(int r, int c)
 {
-    return App->ArgV[r * ncols + c + 1];
+    return App->argV[r * ncols + c + 1];
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -59,14 +59,14 @@ static void init(int argc, char **argv)
     if (nrows == 1 && ncols == 1)
     {
 	appGetArguments(App,2,1000);
-	nrows = App->ArgC - 1;
+	nrows = App->argC - 1;
     }
     else
     {
     	int names_needed = nrows * ncols + 1;
     	appGetArguments(App,names_needed,names_needed);
     }
-    ofilename = App->ArgV[0];
+    ofilename = App->argV[0];
     width = NALLOC(int,ncols);
     height = NALLOC(int,nrows);
 

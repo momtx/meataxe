@@ -1,8 +1,5 @@
-# vim:fileencoding=utf8
-
-/**
-
-@mainpage The C MeatAxe
+The C MeatAxe                         {#mainpage}
+=============
 
 The MeatAxe is a set of programs for working with matrices over
 finite fields. Its primary purpose is the calculation of modular
@@ -571,4 +568,33 @@ first bit of the string.
 @section sec_fileformats_text Text Files
 @todo old format
 @todo new format
+
+
+Error Handling
+--------------
+
+Most MeatAxe functions perform additional checks to detect errors caused
+by invalid arguments, corrupted files or wrong assumptions made by the
+caller (e.g. trying to load a permutation from a file which contains a matrix).
+If an error occurs, a message is written to stderr and the program is terminated.
+A custom error handler can be used to implement an alternative error reporting
+method. However, the process will always be terminated.
+
+Raising Errors
+--------------
+
+@ref mtxAbort
+@ref MTX_HERE
+@ref MtxSourceLocation
+
+
+Providing Context Information
+-----------------------------
+
+@ref mtxBegin
+@ref mtxEnd
+
+
+Custom Error Handlers
+---------------------
 

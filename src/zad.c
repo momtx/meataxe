@@ -47,12 +47,12 @@ static void init(int argc, char **argv)
 {
     App = appAlloc(&AppInfo,argc,argv);
     appGetArguments(App,3,MTX_MAX_INPUT + 1);
-    NInput = App->ArgC - 1;
+    NInput = App->argC - 1;
 
     // Open the input files
     for (int i = 0; i < NInput; ++i)
     {
-	const char *file_name = App->ArgV[i];
+	const char *file_name = App->argV[i];
 	Subtract[i] = *file_name == '-';
 	if (*file_name == '-' || *file_name == '+')
 	    ++file_name;
@@ -61,7 +61,7 @@ static void init(int argc, char **argv)
 
         if (mfObjectType(Input[i]) != MTX_TYPE_MATRIX) {
            mtxAbort(MTX_HERE, "%s: %s (type=0x%lx)",
-                 Input[i]->Name,
+                 Input[i]->name,
                  MTX_ERR_NOTMATRIX,
                  (long)Input[i]->header[0]);
         }
@@ -73,12 +73,12 @@ static void init(int argc, char **argv)
         }
         else if (Input[i]->header[0] != Field
               || Input[i]->header[1] != Nor || Input[i]->header[2] != Noc) {
-           mtxAbort(MTX_HERE,"%s and %s: %s",Input[0]->Name,Input[i]->Name,MTX_ERR_INCOMPAT);
+           mtxAbort(MTX_HERE,"%s and %s: %s",Input[0]->name,Input[i]->name,MTX_ERR_INCOMPAT);
         }
     }
 
     // Open the output file.
-    Output = mfCreate(App->ArgV[App->ArgC - 1], Field, Nor, Noc);
+    Output = mfCreate(App->argV[App->argC - 1], Field, Nor, Noc);
 
     // Allocate workspace
     ffSetField(Field);

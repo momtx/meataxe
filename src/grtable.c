@@ -18,7 +18,6 @@
 static GrExtractionTable_t *BuildExtractionTable(int fl,int grrows)
 {
    int MPB;                     /* marks per byte */
-   GrExtractionTable_t *t;      /* the result */
    unsigned char c[4];          /* buffer for calculations */
    long flpowtab[17];           /* powers of fl */
    long *w;                     /* to write into tables */
@@ -27,10 +26,7 @@ static GrExtractionTable_t *BuildExtractionTable(int fl,int grrows)
    int restbits;
    static const char no_mem[] = "Not enough memory for extraction table";
 
-   if ((t = ALLOC(GrExtractionTable_t)) == NULL) {
-      mtxAbort(MTX_HERE,no_mem);
-      return NULL;
-   }
+   GrExtractionTable_t *t = ALLOC(GrExtractionTable_t);
 
    /* Note that sizeof(long)*2*8*5*3 will be divisable by MPB*sizeof(long)*2,
       so a vector of this length will completely use all zsize(..) bytes.
@@ -55,10 +51,7 @@ static GrExtractionTable_t *BuildExtractionTable(int fl,int grrows)
    }
 
    for (l = 0; l < t->nrtabs; l++) {
-      if ((t->tabs[l] = NALLOC(long*,256)) == NULL) {
-         mtxAbort(MTX_HERE,no_mem);
-         return NULL;
-      }
+      t->tabs[l] = NALLOC(long*,256);
 
       /* Calculate the number of values completed in this byte: */
       nrvals = 0;     /* we count the number of values */
@@ -84,10 +77,7 @@ static GrExtractionTable_t *BuildExtractionTable(int fl,int grrows)
          if ((l < 0) || (l > t->nrtabs)) {
             mtxAbort(MTX_HERE,"Invalid table number %d",l);
          }
-         if ((t->tabs[l][*c] = NALLOC(long,nrvals + 1)) == NULL) {
-            mtxAbort(MTX_HERE,no_mem);
-            return NULL;
-         }
+         t->tabs[l][*c] = NALLOC(long,nrvals + 1);
 
          /* now distribute the different values in i to the table: */
          w = t->tabs[l][*c];

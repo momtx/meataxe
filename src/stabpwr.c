@@ -33,7 +33,7 @@ int StablePower_(Matrix_t *mat, int *pwr, Matrix_t **ker)
 {
    // check the arguments.
    matValidate(MTX_HERE, mat);
-   if (mat->Nor != mat->Noc) {
+   if (mat->nor != mat->noc) {
       mtxAbort(MTX_HERE,"%s",MTX_ERR_NOTSQUARE);
    }
 
@@ -53,7 +53,7 @@ int StablePower_(Matrix_t *mat, int *pwr, Matrix_t **ker)
        return -1;
    }
 
-   while (k2->Nor > k1->Nor) {
+   while (k2->nor > k1->nor) {
       p *= 2;
       matFree(k1);
       k1 = k2;

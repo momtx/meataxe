@@ -30,8 +30,8 @@ void imatValidate(const struct MtxSourceLocation* sl, const IntMatrix_t *mat)
    if (mat == NULL) {
       mtxAbort(sl ? sl : MTX_HERE,"NULL matrix");
    }
-   if ((mat->Magic != IMAT_MAGIC) || mat->Nor < 0 || mat->Noc < 0) {
-      mtxAbort(sl ? sl : MTX_HERE,"Invalid matrix (nor=%d, noc=%d)", mat->Nor, mat->Noc);
+   if ((mat->typeId != IMAT_MAGIC) || mat->nor < 0 || mat->noc < 0) {
+      mtxAbort(sl ? sl : MTX_HERE,"Invalid matrix (nor=%d, noc=%d)", mat->nor, mat->noc);
    }
 }
 
@@ -59,11 +59,11 @@ IntMatrix_t *imatAlloc(int nor, int noc)
    }
 
    // initialize
-   m->Magic = IMAT_MAGIC;
-   m->Nor = nor;
-   m->Noc = noc;
-   m->Data = NALLOC(int32_t,nor * noc);
-   if (m->Data == NULL) {
+   m->typeId = IMAT_MAGIC;
+   m->nor = nor;
+   m->noc = noc;
+   m->data = NALLOC(int32_t,nor * noc);
+   if (m->data == NULL) {
       sysFree(m);
       mtxAbort(MTX_HERE,"Cannot allocate matrix data");
       return NULL;
@@ -79,8 +79,8 @@ IntMatrix_t *imatAlloc(int nor, int noc)
 void imatFree(IntMatrix_t *mat)
 {
    imatValidate(MTX_HERE, mat);
-   if (mat->Data != NULL) {
-      sysFree(mat->Data);
+   if (mat->data != NULL) {
+      sysFree(mat->data);
    }
    memset(mat,0,sizeof(IntMatrix_t));
    sysFree(mat);

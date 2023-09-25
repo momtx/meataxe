@@ -18,7 +18,7 @@ static void normalize(Poly_t *p, FEL f)
    if (f == FF_ONE) {
       return;
    }
-   for (buf = p->Data, i = (int) p->Degree; i >= 0; --i, ++buf) {
+   for (buf = p->data, i = (int) p->degree; i >= 0; --i, ++buf) {
       if (*buf != FF_ZERO) {
          *buf = ffDiv(*buf,f);
       }
@@ -49,32 +49,32 @@ Poly_t *polGcd(const Poly_t *a, const Poly_t *b)
    // check arguments
    polValidate(MTX_HERE, a);
    polValidate(MTX_HERE, b);
-   if (a->Field != b->Field) {
+   if (a->field != b->field) {
       mtxAbort(MTX_HERE,"%s",MTX_ERR_INCOMPAT);
       return NULL;
    }
 
    // Handle special cases
-   if (a->Degree == -1) {
-      if (b->Degree == -1) {
+   if (a->degree == -1) {
+      if (b->degree == -1) {
          mtxAbort(MTX_HERE,"%s",MTX_ERR_DIV0);
          return NULL;
       }
       return polDup(b);
-   } else if (b->Degree == -1) {
+   } else if (b->degree == -1) {
       return polDup(a);
    }
 
    // calculate g.c.d.
-   ffSetField(a->Field);
-   if (a->Degree < b->Degree) {
+   ffSetField(a->field);
+   if (a->degree < b->degree) {
       p = polDup(b);
       q = polDup(a);
    } else {
       p = polDup(a);
       q = polDup(b);
    }
-   while (q->Degree >= 0) {
+   while (q->degree >= 0) {
       if (polMod(p,q) == NULL) {
          return NULL;
       }
@@ -85,7 +85,7 @@ Poly_t *polGcd(const Poly_t *a, const Poly_t *b)
    polFree(q);
 
    // normalize the result
-   if ((f = p->Data[p->Degree]) != FF_ONE) {
+   if ((f = p->data[p->degree]) != FF_ONE) {
       normalize(p,f);
    }
 
@@ -124,19 +124,19 @@ int polGcdEx(const Poly_t *a, const Poly_t *b, Poly_t **result)
    if (result == NULL) {
       return mtxAbort(MTX_HERE,"result: %s",MTX_ERR_BADARG), -1;
    }
-   if (a->Field != b->Field) {
+   if (a->field != b->field) {
       return mtxAbort(MTX_HERE,"%s",MTX_ERR_INCOMPAT), -1;
    }
 
-   alessb = a->Degree < b->Degree;
+   alessb = a->degree < b->degree;
    p = polDup(alessb ? b : a);
    q = polDup(alessb ? a : b);
-   pb = polAlloc(a->Field,alessb ? 0 : -1);
-   qa = polAlloc(a->Field,alessb ? 0 : -1);
-   pa = polAlloc(a->Field,alessb ? -1 : 0);
-   qb = polAlloc(a->Field,alessb ? -1 : 0);
+   pb = polAlloc(a->field,alessb ? 0 : -1);
+   qa = polAlloc(a->field,alessb ? 0 : -1);
+   pa = polAlloc(a->field,alessb ? -1 : 0);
+   qb = polAlloc(a->field,alessb ? -1 : 0);
 
-   while (q->Degree >= 0) {
+   while (q->degree >= 0) {
       int i;
       Poly_t *tmp, *atmp, *btmp;
       Poly_t *m = polDivMod(p,q);
@@ -146,8 +146,8 @@ int polGcdEx(const Poly_t *a, const Poly_t *b, Poly_t **result)
 
       atmp = polDup(qa);
       btmp = polDup(qb);
-      for (i = 0; i <= m->Degree; ++i) {
-         m->Data[i] = ffSub(FF_ZERO,m->Data[i]);
+      for (i = 0; i <= m->degree; ++i) {
+         m->data[i] = ffSub(FF_ZERO,m->data[i]);
       }
       polMul(atmp,m);
       polMul(btmp,m);
@@ -166,7 +166,7 @@ int polGcdEx(const Poly_t *a, const Poly_t *b, Poly_t **result)
    }
 
    // normalize the result
-   if ((f = p->Data[p->Degree]) != FF_ONE) {
+   if ((f = p->data[p->degree]) != FF_ONE) {
       normalize(p,f);
       normalize(pa,f);
       normalize(pb,f);

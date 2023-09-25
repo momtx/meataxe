@@ -1,0 +1,60 @@
+polynomial field=9 degree=-1
+polynomial field=9 degree=0
+1
+polynomial field=9 degree=0
+1
+polynomial field=9 degree=50
+0 1 2 3 4 5 6 7 8 0 1 2 3 4 5 6 7 8 0 1 2 3 4 5 6 7 8 0 1 2 3 4 5 6 7 8 0 1 2 3
+ 4 5 6 7 8 0 1 2 3 4 5
+polynomial field=3 degree=0
+1
+polynomial field=3 degree=1
+2 1
+polynomial field=3 degree=2
+2 2 1
+polynomial field=3 degree=3
+0 1 2 1
+polynomial field=3 degree=4
+2 0 1 2 1
+polynomial field=3 degree=5
+1 2 0 1 2 1
+polynomial field=3 degree=6
+0 1 2 0 1 2 1
+polynomial field=3 degree=7
+2 0 1 2 0 1 2 1
+polynomial field=3 degree=8
+1 2 0 1 2 0 1 2 1
+polynomial field=3 degree=9
+0 1 2 0 1 2 0 1 2 1
+polynomial field=3 degree=10
+2 0 1 2 0 1 2 0 1 2 1
+polynomial field=3 degree=11
+1 2 0 1 2 0 1 2 0 1 2 1
+polynomial field=3 degree=12
+0 1 2 0 1 2 0 1 2 0 1 2 1
+polynomial field=3 degree=13
+2 0 1 2 0 1 2 0 1 2 0 1 2 1
+polynomial field=3 degree=14
+1 2 0 1 2 0 1 2 0 1 2 0 1 2 1
+polynomial field=3 degree=15
+0 1 2 0 1 2 0 1 2 0 1 2 0 1 2 1
+polynomial field=3 degree=16
+2 0 1 2 0 1 2 0 1 2 0 1 2 0 1 2 1
+polynomial field=3 degree=17
+1 2 0 1 2 0 1 2 0 1 2 0 1 2 0 1 2 1
+polynomial field=3 degree=18
+0 1 2 0 1 2 0 1 2 0 1 2 0 1 2 0 1 2 1
+polynomial field=3 degree=19
+2 0 1 2 0 1 2 0 1 2 0 1 2 0 1 2 0 1 2 1
+polynomial field=3 degree=20
+1 2 0 1 2 0 1 2 0 1 2 0 1 2 0 1 2 0 1 2 1
+polynomial field=3 degree=21
+0 1 2 0 1 2 0 1 2 0 1 2 0 1 2 0 1 2 0 1 2 1
+polynomial field=3 degree=22
+2 0 1 2 0 1 2 0 1 2 0 1 2 0 1 2 0 1 2 0 1 2 1
+polynomial field=3 degree=23
+1 2 0 1 2 0 1 2 0 1 2 0 1 2 0 1 2 0 1 2 0 1 2 1
+polynomial field=3 degree=24
+0 1 2 0 1 2 0 1 2 0 1 2 0 1 2 0 1 2 0 1 2 0 1 2 1
+polynomial field=3 degree=25
+2 0 1 2 0 1 2 0 1 2 0 1 2 0 1 2 0 1 2 0 1 2 0 1 2 1

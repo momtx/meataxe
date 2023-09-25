@@ -42,7 +42,7 @@ static void clean()
    {
       mfReadRows(matrixFile, row, 1, noc);
       ffMulRow(op, FF_ZERO, spaceNor);
-      ffCleanRow2(row,Space->Data,spaceNor,noc,Space->PivotTable,op);
+      ffCleanRow2(row,Space->data,spaceNor,noc,Space->pivotTable,op);
       mfWriteRows(cleanedFile,row,1, noc);
       mfWriteRows(opFile,op,1,spaceNor);
    }
@@ -56,18 +56,18 @@ static void init(int argc, char **argv)
 {
     App = appAlloc(&AppInfo,argc,argv);
     appGetArguments(App,4,4);
-    SpcName = App->ArgV[0];
-    MatName = App->ArgV[1];
-    ClName = App->ArgV[2];
-    OpName = App->ArgV[3];
+    SpcName = App->argV[0];
+    MatName = App->argV[1];
+    ClName = App->argV[2];
+    OpName = App->argV[3];
 
     Space = matLoad(SpcName);
-    noc = Space->Noc;
-    spaceNor = Space->Nor;
+    noc = Space->noc;
+    spaceNor = Space->nor;
 
     matrixFile = mfOpen(MatName);
     mfReadHeader(matrixFile);
-    if (matrixFile->header[0] != Space->Field || matrixFile->header[2] != noc)
+    if (matrixFile->header[0] != Space->field || matrixFile->header[2] != noc)
        mtxAbort(MTX_HERE, "%s and %s: %s", SpcName, MatName, MTX_ERR_INCOMPAT);
     matrixNor = matrixFile->header[1];
 

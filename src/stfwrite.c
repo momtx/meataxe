@@ -25,18 +25,18 @@ int stfPut(StfData *f, const char *text)
     if (len == 0)
 	return 0;
 
-    if ((f->OutPos + len) > MaxCharsPerLine)
+    if ((f->outPos + len) > MaxCharsPerLine)
     {
-	fputs("\n\t",f->File);
-	f->OutPos = 8;
-	++f->LineNo;
+	fputs("\n\t",f->file);
+	f->outPos = 8;
+	++f->lineNo;
     }
-    fputs(text,f->File);
-    f->OutPos += len;
+    fputs(text,f->file);
+    f->outPos += len;
     if (text[len-1] == '\n')
     {
-	f->OutPos = 0;
-	++f->LineNo;
+	f->outPos = 0;
+	++f->lineNo;
     }
     return 0;
 }
@@ -95,7 +95,7 @@ int stfPutVector(StfData *f, int size, const int *value)
     int i;
     if (value == NULL || size < 0 || size > 100000)
 	return -1;
-    if (f == NULL || f->File == NULL)
+    if (f == NULL || f->file == NULL)
 	return -1;
     stfPut(f,"[");
     for (i = 0; i < size; ++i)
@@ -144,7 +144,7 @@ int stfBeginEntry(StfData *f, const char *name)
 {
     if (name == NULL)
 	return -1;
-    if (f == NULL || f->File == NULL)
+    if (f == NULL || f->file == NULL)
 	return -1;
     if (stfPut(f,name) || stfPut(f," := "))
 	return -1;
@@ -163,7 +163,7 @@ int stfBeginEntry(StfData *f, const char *name)
 
 int stfEndEntry(StfData *f)
 {
-    if (f == NULL || f->File == NULL)
+    if (f == NULL || f->file == NULL)
 	return -1;
     return stfPut(f,";\n");
 }
@@ -190,7 +190,7 @@ int stfWriteValue(StfData *f, const char *name, const char *value)
 {
     if (name == NULL || value == NULL)
 	return -1;
-    if (f == NULL || f->File == NULL)
+    if (f == NULL || f->file == NULL)
 	return -1;
     if (stfBeginEntry(f,name) != 0)
 	return -1;
@@ -225,7 +225,7 @@ int stfWriteString(StfData *f, const char *name, const char *value)
 	mtxAbort(MTX_HERE,"name or value invalid");
 	return -1;
     }
-    if (f == NULL || f->File == NULL)
+    if (f == NULL || f->file == NULL)
     {
 	mtxAbort(MTX_HERE,"Invalid file");
 	return -1;
@@ -258,7 +258,7 @@ int stfWriteInt(StfData *f, const char *name, int value)
 {
     if (name == NULL)
 	return -1;
-    if (f == NULL || f->File == NULL)
+    if (f == NULL || f->file == NULL)
     {
 	mtxAbort(MTX_HERE,"f: %s",MTX_ERR_BADARG);
 	return -1;
@@ -295,7 +295,7 @@ int stfWriteVector(StfData *f, const char *name, int size, const int *value)
 {
     if (name == NULL || value == NULL || size < 0 || size > 100000)
 	return -1;
-    if (f == NULL || f->File == NULL)
+    if (f == NULL || f->file == NULL)
 	return -1;
     if (stfBeginEntry(f,name) != 0)
 	return -1;

@@ -72,17 +72,17 @@ static int ReadGenerators()
     {
 	char fn[200];
 	if (NGen != -1)
-	    sprintf(fn,"%s.%d",App->ArgV[1],i + 1);
+	    sprintf(fn,"%s.%d",App->argV[1],i + 1);
 	else
-	    strcpy(fn,App->ArgV[1 + i]);
+	    strcpy(fn,App->argV[1 + i]);
 	if ((Gen[i] = matLoad(fn)) == NULL)
 	    return -1;
 	if (i > 0)
 	{
-	    if (Gen[i]->Field != Gen[0]->Field 
-		|| Gen[i]->Nor != Gen[0]->Nor || Gen[i]->Noc != Gen[0]->Noc)
+	    if (Gen[i]->field != Gen[0]->field 
+		|| Gen[i]->nor != Gen[0]->nor || Gen[i]->noc != Gen[0]->noc)
 	    {
-		mtxAbort(MTX_HERE,"%s and %s: %s",App->ArgV[1],App->ArgV[i+1],
+		mtxAbort(MTX_HERE,"%s and %s: %s",App->argV[1],App->argV[i+1],
 		    MTX_ERR_INCOMPAT);
 	    }
 	}
@@ -147,7 +147,7 @@ static int ParseWord(const char *spec)
 	{
 	    if (!isdigit(*spec) && (*spec != '-' || !isdigit(spec[1])))
 		return -1;
-	    Poly->Data[deg--] = ffFromInt(atoi(spec));
+	    Poly->data[deg--] = ffFromInt(atoi(spec));
 	    while (*spec == '-' || isdigit(*spec)) 
 		++spec;
 	    if (*spec == ',')
@@ -198,16 +198,16 @@ static int Init(int argc, char **argv)
     min_num_args = (NGen == -1) ? 3 : 2;
     if (appGetArguments(App,min_num_args,min_num_args + 2) < 0)
 	return -1;
-    if (App->ArgC > min_num_args)
-	WordFileName = App->ArgV[min_num_args];
-    if (App->ArgC > min_num_args + 1)
-	NspFileName = App->ArgV[min_num_args + 1];
+    if (App->argC > min_num_args)
+	WordFileName = App->argV[min_num_args];
+    if (App->argC > min_num_args + 1)
+	NspFileName = App->argV[min_num_args + 1];
 
     /* Other initialization.
        --------------------- */
     if (ReadGenerators() != 0)
 	return -1;
-    if (ParseWord(App->ArgV[0]) != 0)
+    if (ParseWord(App->argV[0]) != 0)
     {
 	mtxAbort(MTX_HERE,"Invalid word/polynomial specification");
 	return -1;
@@ -256,7 +256,7 @@ static int MakeWord()
 	    Matrix_t *nsp = matNullSpace_(w,0);
 	    if (WordNo2 == -1)
 		matSave(nsp,NspFileName);
-	    MESSAGE(0,("%8d",nsp->Nor));
+	    MESSAGE(0,("%8d",nsp->nor));
 	    matFree(nsp);
 	}
 	else

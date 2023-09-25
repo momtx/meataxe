@@ -54,9 +54,9 @@ static int Init(int argc, char **argv)
        ------------------ */
     if (appGetArguments(App,1,2) < 0)
 	return -1;
-    matname = App->ArgV[0];
-    if (App->ArgC > 1)
-	nspname = App->ArgV[1];
+    matname = App->argV[0];
+    if (App->argC > 1)
+	nspname = App->argV[1];
 
     /* Read the matrix.
        ---------------- */
@@ -92,13 +92,13 @@ int main(int argc, char **argv)
 	    return 1;
         MESSAGE(1,("Writing null-space to %s\n",nspname));
 	matSave(null_space,nspname);
-	nspdim = null_space->Nor;
+	nspdim = null_space->nor;
     }
     else
     {
-	int old_nor = Matrix->Nor;
+	int old_nor = Matrix->nor;
 	matEchelonize(Matrix);
-	nspdim = old_nor - Matrix->Nor;
+	nspdim = old_nor - Matrix->nor;
     }
 
 

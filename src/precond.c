@@ -80,28 +80,28 @@ static int Init(int argc, char **argv)
     opt_s = appGetOption(App,"-s");
     if (appGetArguments(App,3,3) != 3)
 	return -1;
-    strcpy(TkiName,App->ArgV[0]);
+    strcpy(TkiName,App->argV[0]);
 
     /* Read info files
        --------------- */
-    strncpy(TKInfo.NameM,App->ArgV[1],sizeof(TKInfo.NameM)-1);
-    strncpy(TKInfo.NameN,App->ArgV[2],sizeof(TKInfo.NameN)-1);
-    latReadInfo(&InfoM,App->ArgV[1]);
-    latReadInfo(&InfoN,App->ArgV[2]);
+    strncpy(TKInfo.nameM,App->argV[1],sizeof(TKInfo.nameM)-1);
+    strncpy(TKInfo.nameN,App->argV[2],sizeof(TKInfo.nameN)-1);
+    latReadInfo(&InfoM,App->argV[1]);
+    latReadInfo(&InfoN,App->argV[2]);
 
     /* Initialize the TKInfo structure
        ------------------------------- */
-    TKInfo.NCf = 0;
+    TKInfo.nCf = 0;
     for (i = 0; i < LAT_MAXCF; ++i)
-	TKInfo.CfIndex[0][i] = TKInfo.CfIndex[1][i] = -1;
+	TKInfo.cfIndex[0][i] = TKInfo.cfIndex[1][i] = -1;
 
     /* Some additional checks on input files
        ------------------------------------- */
-    if (InfoM.Field != InfoN.Field)
+    if (InfoM.field != InfoN.field)
     {
 	mtxAbort(MTX_HERE,"Incompatible representations: %s is over GF(%d), "
-	   "%s is over GF(%d)",InfoM.BaseName,InfoM.Field,InfoN.BaseName,
-	   InfoN.Field);
+	   "%s is over GF(%d)",InfoM.BaseName,InfoM.field,InfoN.BaseName,
+	   InfoN.field);
 	return -1;
     }
     if (InfoM.NGen != InfoN.NGen)
@@ -165,10 +165,10 @@ static int IsDual(int mj, MatRep_t *rep_m, int nj)
        ------------------------------------------------ */
     MESSAGE(2,(" (%s%s)",InfoN.BaseName,latCfName(&InfoN,nj)));
     rep_n = latReadCfGens(&InfoN,nj,LAT_RG_INVERT|LAT_RG_TRANSPOSE
-	| (InfoN.Cf[nj].peakword >= 0 ? LAT_RG_STD : 0));
+	| (InfoN.Cf[nj].peakWord >= 0 ? LAT_RG_STD : 0));
     
-    result = IsIsomorphic(rep_m,minfo,rep_n,Trans + TKInfo.NCf,
-	minfo->peakword >= 0);
+    result = IsIsomorphic(rep_m,minfo,rep_n,Trans + TKInfo.nCf,
+	minfo->peakWord >= 0);
     mrFree(rep_n);
     return result;
 }
@@ -199,7 +199,7 @@ static int FindConstituentInN(int mj, MatRep_t *rep_m)
 
     /* Main loop: for each constituent of N
        ------------------------------------ */
-    for (nj = 0; nj < InfoN.NCf; ++nj)
+    for (nj = 0; nj < InfoN.nCf; ++nj)
     {
 	/* Discard constituents which are already linked
 	   --------------------------------------------- */
@@ -249,10 +249,10 @@ static void MkEndo(const MatRep_t *rep, const CfInfo *cf,
     /* Make the peak word kernel
        ------------------------- */
     wg = wgAlloc(rep);
-    pw = wgMakeWord(wg,cf->idword);
+    pw = wgMakeWord(wg,cf->idWord);
     wgFree(wg);
-    nsp = matNullSpace__(matInsert(pw,cf->idpol));
-    MTX_ASSERT(nsp->Nor == cf->spl);
+    nsp = matNullSpace__(matInsert(pw,cf->idPol));
+    MTX_ASSERT(nsp->nor == cf->spl);
     matFree(pw);
 
     /* Calculate a basis of the the endomorphism ring
@@ -283,8 +283,8 @@ static void MakeQ(int n, int spl, const Matrix_t **endo)
 
 {		  
     int i;
-    int dim = endo[0]->Nor;
-    Matrix_t *q = matAlloc(endo[0]->Field,spl,dim*dim);
+    int dim = endo[0]->nor;
+    Matrix_t *q = matAlloc(endo[0]->field,spl,dim*dim);
     char fn[200];
     for (i = 0; i < spl; ++i)
     {
@@ -301,7 +301,7 @@ static void MakeQ(int n, int spl, const Matrix_t **endo)
     MESSAGE(2,("Writing %s\n",fn));
 
 #if 0
-    if (InfoM.Cf[TKInfo.CfIndex[0][n]].peakword < 0)
+    if (InfoM.Cf[TKInfo.cfIndex[0][n]].peakWord < 0)
 	matMulScalar(q,FF_ZERO);
 #endif
 
@@ -315,8 +315,8 @@ static void MakeQ(int n, int spl, const Matrix_t **endo)
 static FEL matProd(Matrix_t *a, Matrix_t *b)
 {
     FEL f = FF_ZERO;
-    for (int i = 0; i < a->Nor; ++i)
-	f = ffAdd(f,ffScalarProduct(matGetPtr(a,i),matGetPtr(b,i),a->Noc));
+    for (int i = 0; i < a->nor; ++i)
+	f = ffAdd(f,ffScalarProduct(matGetPtr(a,i),matGetPtr(b,i),a->noc));
     return f;
 }
 
@@ -354,7 +354,7 @@ static void MakePQ(int n, int mj, int nj)
     /* Read the generators for the constituent of M and make the
        endomorphism ring.
        --------------------------------------------------------- */
-    rep_m = latReadCfGens(&InfoM,mj,InfoM.Cf[mj].peakword >= 0 ? LAT_RG_STD : 0);
+    rep_m = latReadCfGens(&InfoM,mj,InfoM.Cf[mj].peakWord >= 0 ? LAT_RG_STD : 0);
     MESSAGE(2,("Calculating endomorphism ring\n"));
     MkEndo(rep_m,InfoM.Cf + mj,endo,MAXENDO);
     mrFree(rep_m);
@@ -434,7 +434,7 @@ static void MakePQ(int n, int mj, int nj)
     sprintf(fn,"%s.p.%d",TkiName,n+1);
     MESSAGE(2,("Writing %s\n",fn));
 #if 0
-    if (InfoM.Cf[mj].peakword < 0)
+    if (InfoM.Cf[mj].peakWord < 0)
 	matMulScalar(p,FF_ZERO);
 #endif
     matSave(p,fn);
@@ -456,7 +456,7 @@ static void MakePQ(int n, int mj, int nj)
      This function calculates the dimension of the condensed tensor product.
 
    Remarks:
-     The dimension is stored into <TKInfo.Dim>.
+     The dimension is stored into <TKInfo.dim>.
    -------------------------------------------------------------------------- */
 
 static void CalcDim()
@@ -464,14 +464,14 @@ static void CalcDim()
 {
     int i;
 
-    TKInfo.Dim = 0;
-    for (i = 0; i < TKInfo.NCf; ++i)
+    TKInfo.dim = 0;
+    for (i = 0; i < TKInfo.nCf; ++i)
     {
-	int m = TKInfo.CfIndex[0][i];
-	int n = TKInfo.CfIndex[1][i];
-	TKInfo.Dim += InfoM.Cf[m].mult * InfoN.Cf[n].mult * InfoM.Cf[m].spl;
+	int m = TKInfo.cfIndex[0][i];
+	int n = TKInfo.cfIndex[1][i];
+	TKInfo.dim += InfoM.Cf[m].mult * InfoN.Cf[n].mult * InfoM.Cf[m].spl;
     }
-    MESSAGE(0,("Dimension of condensed module = %d\n",TKInfo.Dim));
+    MESSAGE(0,("Dimension of condensed module = %d\n",TKInfo.dim));
 }
 
 
@@ -492,12 +492,12 @@ int main(int argc, char **argv)
 
     /* Main loop: for all constituents of M
        ------------------------------------ */
-    for (mj = 0; mj < InfoM.NCf; mj++)
+    for (mj = 0; mj < InfoM.nCf; mj++)
     {
 	MatRep_t *rep_m;	    /* Generators for const. of M */
 	int nj;
 
-	if (InfoM.Cf[mj].peakword < 0)
+	if (InfoM.Cf[mj].peakWord < 0)
 	{
 	    MESSAGE(0,("WARNING: No peak word word available for %s%s\n",
 		InfoM.BaseName,latCfName(&InfoM,mj)));
@@ -507,7 +507,7 @@ int main(int argc, char **argv)
 	/* Read the generators for the <mj>-th contituent of M, and find
 	   the corresponding (=contragredient) constituent in N.
 	   ------------------------------------------------------------- */
-	rep_m = latReadCfGens(&InfoM,mj,InfoM.Cf[mj].peakword >= 0 ? LAT_RG_STD : 0);
+	rep_m = latReadCfGens(&InfoM,mj,InfoM.Cf[mj].peakWord >= 0 ? LAT_RG_STD : 0);
 	nj = FindConstituentInN(mj,rep_m);
 
 	/* Calculate the P and Q matrix for this constituent
@@ -516,10 +516,10 @@ int main(int argc, char **argv)
 	{
 	    MESSAGE(0,(" <--> %s%s\n",InfoN.BaseName,
 		latCfName(&InfoN,nj)));
-	    TKInfo.CfIndex[0][TKInfo.NCf] = mj;
-	    TKInfo.CfIndex[1][TKInfo.NCf] = nj;
-	    MakePQ(TKInfo.NCf,mj,nj);
-	    TKInfo.NCf++;
+	    TKInfo.cfIndex[0][TKInfo.nCf] = mj;
+	    TKInfo.cfIndex[1][TKInfo.nCf] = nj;
+	    MakePQ(TKInfo.nCf,mj,nj);
+	    TKInfo.nCf++;
 	}
 	else
 	    MESSAGE(0,(" not found in %s\n",InfoN.BaseName));
@@ -556,7 +556,7 @@ precond @em Options @em Info @em M @em N
 @section precond_inp Input Files
 @par @em M.cfinfo, @em N.cfinfo
   Constituent information.
-@par @em MCf.std.1, @em MCf.std.2, ..., @em NCf.std.1, @em NCf.std.2, ...
+@par @em MCf.std.1, @em MCf.std.2, ..., @em nCf.std.1, @em nCf.std.2, ...
   Standard generators of the condensation subgroup H for each constituent.
 
 @section precond_out Output Files

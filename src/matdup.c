@@ -24,12 +24,12 @@ Matrix_t *matDup(const Matrix_t *src)
    Matrix_t *m;
 
    matValidate(MTX_HERE, src);
-   m = matAlloc(src->Field,src->Nor,src->Noc);
+   m = matAlloc(src->field,src->nor,src->noc);
    if (m == NULL) {
       mtxAbort(MTX_HERE,"Cannot allocate matrix");
       return NULL;
    }
-   memcpy(m->Data,src->Data,ffSize(src->Nor, src->Noc));
+   memcpy(m->data,src->data,ffSize(src->nor, src->noc));
    return m;
 }
 

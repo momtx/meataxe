@@ -28,20 +28,20 @@ int matClean(Matrix_t *mat, const Matrix_t *sub)
       ------------------- */
    matValidate(MTX_HERE, mat);
    matValidate(MTX_HERE, sub);
-   if ((mat->Field != sub->Field) || (mat->Noc != sub->Noc)) {
+   if ((mat->field != sub->field) || (mat->noc != sub->noc)) {
       mtxAbort(MTX_HERE,"%s",MTX_ERR_INCOMPAT);
       return -1;
    }
-   if (sub->PivotTable == NULL) {
+   if (sub->pivotTable == NULL) {
       mtxAbort(MTX_HERE,"Subspace: %s",MTX_ERR_NOTECH);
       return -1;
    }
 
    /* Clean
       ----- */
-   for (i = 0; i < mat->Nor; ++i) {
+   for (i = 0; i < mat->nor; ++i) {
       PTR m = matGetPtr(mat,i);
-      ffCleanRow(m,sub->Data,sub->Nor,sub->Noc, sub->PivotTable);
+      ffCleanRow(m,sub->data,sub->nor,sub->noc, sub->pivotTable);
    }
 
    /* Reduce to echelon form
@@ -49,7 +49,7 @@ int matClean(Matrix_t *mat, const Matrix_t *sub)
    if (matEchelonize(mat) < 0) {
       return -1;
    }
-   return mat->Nor;
+   return mat->nor;
 }
 
 

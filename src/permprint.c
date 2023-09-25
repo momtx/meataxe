@@ -52,8 +52,8 @@ void permPrint(const char *name, const Perm_t *perm)
    }
 
    // print the permutation
-   const uint32_t deg = perm->Degree;
-   const uint32_t* p = perm->Data;
+   const uint32_t deg = perm->degree;
+   const uint32_t* p = perm->data;
 
    uint8_t* done = NALLOC(uint8_t, deg);
    uint8_t* seed = done - 1;

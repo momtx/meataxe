@@ -57,7 +57,7 @@ TstResult QuotientProjection2(int q)
          proj = QProjection(sub,vec);
          matEchelonize(proj);
 	 ASSERT(IsSubspace(proj,quot,0));
-	 ASSERT(proj->Nor <= quot->Nor);
+	 ASSERT(proj->nor <= quot->nor);
          matFree(vec);
          matFree(proj);
       }

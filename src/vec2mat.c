@@ -33,18 +33,18 @@ Matrix_t *VectorToMatrix(Matrix_t *vecs, int n, int noc)
    /* Check arguments.
       ---------------- */
    matValidate(MTX_HERE, vecs);
-   if ((noc > vecs->Noc) || (vecs->Noc % noc != 0)) {
-      mtxAbort(MTX_HERE,"noc=%d (vec:%d): %s",noc,vecs->Noc,MTX_ERR_BADARG);
+   if ((noc > vecs->noc) || (vecs->noc % noc != 0)) {
+      mtxAbort(MTX_HERE,"noc=%d (vec:%d): %s",noc,vecs->noc,MTX_ERR_BADARG);
       return NULL;
    }
 
    /* Convert the vector.
       ------------------- */
-   result = matAlloc(vecs->Field,vecs->Noc / noc,noc);
+   result = matAlloc(vecs->field,vecs->noc / noc,noc);
    if (result == NULL) {
       return NULL;
    }
-   for (i = 0; i < result->Nor; ++i) {
+   for (i = 0; i < result->nor; ++i) {
       if (matCopyRegion(result,i,0, vecs,n,i * noc,1,noc) != 0) {
          mtxAbort(MTX_HERE,"Copy failed");
 	 return NULL;

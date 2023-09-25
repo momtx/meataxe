@@ -25,33 +25,33 @@ static void checkArgs(int ngen, Matrix_t  **gen1, const CfInfo *info1, Matrix_t 
    {
       matValidate(MTX_HERE, gen1[j]);
       matValidate(MTX_HERE, gen2[j]);
-      if (gen1[j]->Nor != gen1[j]->Noc)
+      if (gen1[j]->nor != gen1[j]->noc)
       {
          mtxAbort(MTX_HERE,"gen1[%d]: Matrix not square",j);
       }
-      if (gen2[j]->Nor != gen2[j]->Noc)
+      if (gen2[j]->nor != gen2[j]->noc)
       {
          mtxAbort(MTX_HERE,"gen2[%d]: Matrix not square",j);
       }
-      if (gen1[j]->Field != gen1[0]->Field || gen1[j]->Nor != gen1[0]->Nor)
+      if (gen1[j]->field != gen1[0]->field || gen1[j]->nor != gen1[0]->nor)
       {
          mtxAbort(MTX_HERE,"gen1[%d]: Incompatible matrix",j);
       }
-      if (gen2[j]->Field != gen1[0]->Field)
+      if (gen2[j]->field != gen1[0]->field)
       {
          mtxAbort(MTX_HERE,"gen2[%d]: Incompatible matrix",j);
       }
    }
 
-   if (info1->dim != gen1[0]->Nor)
+   if (info1->dim != gen1[0]->nor)
    {
       mtxAbort(MTX_HERE,"Inconsistent cfinfo data");
    }
-   if (use_pw && info1->peakword == 0)
+   if (use_pw && info1->peakWord == 0)
    {
       mtxAbort(MTX_HERE,"No peak word available");
    }
-   if (!use_pw && info1->idword == 0)
+   if (!use_pw && info1->idWord == 0)
    {
       mtxAbort(MTX_HERE,"No id word available");
    }
@@ -64,8 +64,8 @@ static void checkArgs(int ngen, Matrix_t  **gen1, const CfInfo *info1, Matrix_t 
 /// |rep1| and |rep2| must be two matrix representations over the same field,
 /// and with the same number of generators. Furthermore,
 /// to compare the representations, the function needs an identifying word
-/// for the first representation, i.e., the fields |info1->idword|, 
-/// |info1->idpol| and |info1->spl| must be set, and the generators in 
+/// for the first representation, i.e., the fields |info1->idWord|, 
+/// |info1->idPol| and |info1->spl| must be set, and the generators in 
 /// |rep1| must be in standard basis with respect to the identifying word.
 /// If |use_pw| is nonzero, the peak word is used instead of the idword.
 /// In this case, |rep1| must of course be in standard basis with respect 
@@ -96,18 +96,18 @@ int IsIsomorphic(const MatRep_t *rep1, const CfInfo *info1,
  
     /* Check if the dimensions are equal
        --------------------------------- */
-    if (rep1->Gen[0]->Nor != rep2->Gen[0]->Nor)
+    if (rep1->Gen[0]->nor != rep2->Gen[0]->nor)
 	return 0;
 
     /* Make the idword on representation 2
        ----------------------------------- */
     wg = wgAlloc(rep2);
-    word = wgMakeWord(wg,use_pw ? info1->peakword : info1->idword);
-    m = matInsert(word,use_pw ? info1->peakpol : info1->idpol);
+    word = wgMakeWord(wg,use_pw ? info1->peakWord : info1->idWord);
+    m = matInsert(word,use_pw ? info1->peakPol : info1->idPol);
     matFree(word);
     wgFree(wg);
     seed = matNullSpace__(m);
-    if (seed->Nor != info1->spl)
+    if (seed->nor != info1->spl)
     {	
 	matFree(seed);
 	return 0;
@@ -117,7 +117,7 @@ int IsIsomorphic(const MatRep_t *rep1, const CfInfo *info1,
        ----------------------- */
     b = SpinUp(seed,rep2,SF_FIRST|SF_CYCLIC|SF_STD,NULL,NULL);
     matFree(seed);
-    if (b->Nor != b->Noc)
+    if (b->nor != b->noc)
     {
 	matFree(b);
 	return 0;

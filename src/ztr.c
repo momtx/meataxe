@@ -39,14 +39,14 @@ int main(int argc, char **argv)
 {
     App = appAlloc(&AppInfo,argc,argv);
     appGetArguments(App,2,2);
-    fileNameIn = App->ArgV[0];
-    fileNameOut = App->ArgV[1];
+    fileNameIn = App->argV[0];
+    fileNameOut = App->argV[1];
 
     Matrix_t* matrixInp = matLoad(fileNameIn);
-    const uint32_t field = matrixInp->Field;
-    const uint32_t norIn = matrixInp->Nor;
-    const uint32_t nocIn = matrixInp->Noc;
-    const PTR matrixIn = matrixInp->Data;
+    const uint32_t field = matrixInp->field;
+    const uint32_t norIn = matrixInp->nor;
+    const uint32_t nocIn = matrixInp->noc;
+    const PTR matrixIn = matrixInp->data;
 
     PTR rowOut = ffAlloc(1, norIn);
     MtxFile_t* fileOut = mfCreate(fileNameOut, field, nocIn, norIn);

@@ -57,21 +57,13 @@ static unsigned short Gen;           // Generator of the multiplicative group
 
 #if defined(MTX_DEBUG)
 
-#define CHECKRANGE(x,lo,hi) if ((x) < (lo) || (x) > (hi)) { \
-      fprintf(stderr,"%ld <= %ld <= %ld ?\n",(long)(lo), \
-              (long)(x),(long)(hi)); \
-      mtxAbort(MTX_HERE,"RANGE CHECK ERROR");}
-#define CHECKFILE(x)  CHECKRANGE(file,0,MAXFILES)
 #define CHECKFEL(x) { \
       if ((x) != 0xFFFF && ((x) > Q - 2)) \
-      mtxAbort(MTX_HERE,"range check error"); \
+      mtxAbort(MTX_HERE,"invalid field element"); \
 }
 
 #else
 
-#define CHECKRANGE(x,lo,hi)
-#define CHECKCOL(x)
-#define CHECKFILE(x)
 #define CHECKFEL(x)
 
 #endif
@@ -165,7 +157,7 @@ static int LoadTables(int fieldOrder)
 {
    static char fileName[50];
    snprintf(fileName, sizeof(fileName), "p%5.5d.zzz", fieldOrder);
-   const int context = mtxBegin("Loading arithmetic tables: %s", fileName);
+   const int context = mtxBegin(MTX_HERE, "Loading arithmetic tables: %s", fileName);
    int rc = LoadTables_(fieldOrder, fileName);
    mtxEnd(context);
    return rc;

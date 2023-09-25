@@ -59,10 +59,10 @@ static int Init(int argc, char **argv)
        ------------------ */
     if (appGetArguments(App,3,3) < 0)
 	return -1;
-    if (!strncmp(App->ArgV[1],"pwr",3))
-        Power = atoi(App->ArgV[1] + 3);		/* ZSM compatibility (pwrN) */
+    if (!strncmp(App->argV[1],"pwr",3))
+        Power = atoi(App->argV[1] + 3);		/* ZSM compatibility (pwrN) */
     else
-        Power = atoi(App->ArgV[1]);
+        Power = atoi(App->argV[1]);
 
     return 0;
 }
@@ -80,7 +80,7 @@ static void Cleanup()
 
 static int CalcPower()
 {
-    void *x = objLoad(App->ArgV[0]);
+    void *x = objLoad(App->argV[0]);
     void *y;
 
     if (x == NULL)
@@ -88,7 +88,7 @@ static int CalcPower()
     y = objPower(x,Power);
     if (y == NULL)
 	return -1;
-    objSave(y,App->ArgV[2]);
+    objSave(y,App->argV[2]);
     objFree(x);
     objFree(y);
     return 0;

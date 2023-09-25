@@ -135,7 +135,7 @@ static void AddConstituents(int mod)
 {
    Lat_Info *li = &ModList[mod].Info;
    int i;
-   for (i = 0; i < li->NCf; ++i) {
+   for (i = 0; i < li->nCf; ++i) {
       char fn[sizeof(li->BaseName) + 100];
       MatRep_t *cf;
         #pragma GCC diagnostic push
@@ -175,8 +175,8 @@ static void checkCompatibility(int i)
 {
    const Lat_Info* infoI = &ModList[i].Info;
    const Lat_Info* info0 = &ModList[0].Info;
-   if (infoI->NGen != info0->NGen || infoI->Field != info0->Field) {
-      mtxAbort(MTX_HERE,"%s and %s: %s",App->ArgV[0],App->ArgV[i], MTX_ERR_INCOMPAT);
+   if (infoI->NGen != info0->NGen || infoI->field != info0->field) {
+      mtxAbort(MTX_HERE,"%s and %s: %s",App->argV[0],App->argV[i], MTX_ERR_INCOMPAT);
    }
 }
 
@@ -188,7 +188,7 @@ static void loadModules()
 {
    /* Set the number of modules.
       -------------------------- */
-   NumMods = App->ArgC;
+   NumMods = App->argC;
    if (NumMods > MAX_MODULES) {
       mtxAbort(MTX_HERE,"Too many modules (max. %d allowed)",MAX_MODULES);
    }
@@ -196,22 +196,22 @@ static void loadModules()
    /* Read the .cfinfo files and load the generators (if needed).
       ----------------------------------------------------------- */
    for (int i = 0; i < NumMods; ++i) {
-      latReadInfo(&ModList[i].Info,App->ArgV[i]);
+      latReadInfo(&ModList[i].Info,App->argV[i]);
       checkCompatibility(i);
 
       /* Clear any existing peak words.
          ------------------------------ */
-      for (int k = 0; k < ModList[i].Info.NCf; ++k) {
-         ModList[i].Info.Cf[k].peakword = -1;
+      for (int k = 0; k < ModList[i].Info.nCf; ++k) {
+         ModList[i].Info.Cf[k].peakWord = -1;
       }
 
       /* Read the generators, set up ss bases and word generators.
          --------------------------------------------------------- */
       if (!opt_n || opt_k || opt_b) {
-         ModList[i].Rep = mrLoad(App->ArgV[i],ModList[i].Info.NGen);
+         ModList[i].Rep = mrLoad(App->argV[i],ModList[i].Info.NGen);
          ModList[i].Wg = wgAlloc(ModList[i].Rep);
          if (opt_b) {
-            int dim = ModList[i].Rep->Gen[0]->Nor;
+            int dim = ModList[i].Rep->Gen[0]->nor;
             ModList[i].SsBasis = matAlloc(ffOrder,dim,dim);
          }
       }
@@ -283,7 +283,7 @@ static int CfPosition(const Lat_Info *li, int cf)
 {
    int pos = 0;
    int i;
-   MTX_ASSERT(cf >= 0 && cf < li->NCf);
+   MTX_ASSERT(cf >= 0 && cf < li->nCf);
    for (i = 0; i < cf; ++i) {
       pos += li->Cf[i].dim * li->Cf[i].mult;
    }
@@ -305,12 +305,12 @@ static void kond(int mod, int cf)
    /* Make the peak word, find its stable power,
       and calculate both kernel and image.
       ------------------------------------------ */
-   peakword = wgMakeWord(ModList[mod].Wg,li->Cf[cf].peakword);
-   matInsert_(peakword,li->Cf[cf].peakpol);
+   peakword = wgMakeWord(ModList[mod].Wg,li->Cf[cf].peakWord);
+   matInsert_(peakword,li->Cf[cf].peakPol);
    pw = matDup(peakword);
    StablePower_(peakword,&pwr,&kern);
-   MESSAGE(0,("pwr=%d, nul=%d, ",pwr,kern->Nor));
-   if (kern->Nor != li->Cf[cf].mult * li->Cf[cf].spl) {
+   MESSAGE(0,("pwr=%d, nul=%d, ",pwr,kern->nor));
+   if (kern->nor != li->Cf[cf].mult * li->Cf[cf].spl) {
       mtxAbort(MTX_HERE,"Something is wrong here!");
    }
    matEchelonize(peakword);
@@ -353,7 +353,7 @@ static void kond(int mod, int cf)
       seed = matNullSpace_(pw,0);
       partbas = SpinUp(seed,ModList[mod].Rep,SF_EACH | SF_COMBINE | SF_STD,NULL,NULL);
       matFree(seed);
-      MESSAGE(0,(", %d basis vectors",partbas->Nor));
+      MESSAGE(0,(", %d basis vectors",partbas->nor));
       if (matCopyRegion(ModList[mod].SsBasis,pos,0,partbas,0,0,-1,-1) != 0) {
          mtxAbort(MTX_HERE,"Error making basis - '%s' is possibly not semisimple",
                     li->BaseName);
@@ -390,10 +390,10 @@ static String GapPrintPoly(const Poly_t *pol)
    String s = strAlloc(10);
    int i;
    strAppend(&s, "[");
-   for (i = 0; i < pol->Degree; ++i) {
-      strAppendF(&s,"%s,",ffToGap(pol->Data[i]));
+   for (i = 0; i < pol->degree; ++i) {
+      strAppendF(&s,"%s,",ffToGap(pol->data[i]));
    }
-   strAppendF(&s,"%s]",ffToGap(pol->Data[i]));
+   strAppendF(&s,"%s]",ffToGap(pol->data[i]));
    return s;
 }
 
@@ -459,13 +459,13 @@ static void WriteOutput(int final)
       for (m = 0; m < NumMods; ++m) {
          const Lat_Info * const ModInfo = &ModList[m].Info;
          printf("# module: %s\n[\n", ModInfo->BaseName);
-         for (i = 0; i < ModInfo->NCf; ++i) {
+         for (i = 0; i < ModInfo->nCf; ++i) {
             const CfInfo * const Cf = ModInfo->Cf + i;
             printf("    # irreducible factor: %s\n", latCfName(ModInfo,i));
-            String ws = GapPrintWord(CfList[i].Wg,Cf->peakword);
-            String ps = GapPrintPoly(Cf->peakpol);
-            printf("    [ %ld, %s, %s ]%s\n", Cf->peakword, ws.S, ps.S,
-                   i == ModInfo->NCf - 1 ? "" : ",");
+            String ws = GapPrintWord(CfList[i].Wg,Cf->peakWord);
+            String ps = GapPrintPoly(Cf->peakPol);
+            printf("    [ %ld, %s, %s ]%s\n", Cf->peakWord, ws.S, ps.S,
+                   i == ModInfo->nCf - 1 ? "" : ",");
             strFree(&ws);
             strFree(&ps);
          }
@@ -486,8 +486,8 @@ static void WriteOutput(int final)
 static void CopyPeakWordToAllModules(int i)
 {
    CfInfo *info = CfList[i].Info;
-   const Poly_t *pp = info->peakpol;
-   const int pw = info->peakword;
+   const Poly_t *pp = info->peakPol;
+   const int pw = info->peakWord;
    int k;
 
    MESSAGE(0,("Peak word for"));
@@ -498,8 +498,8 @@ static void CopyPeakWordToAllModules(int i)
                  ModList[mod].Info.BaseName,latCfName(&ModList[mod].Info,l)));
       /* Copy peak word and peak polynomial to the other modules */
       if (k > 0) {
-         ModList[mod].Info.Cf[l].peakword = pw;
-         ModList[mod].Info.Cf[l].peakpol = polDup(pp);
+         ModList[mod].Info.Cf[l].peakWord = pw;
+         ModList[mod].Info.Cf[l].peakPol = polDup(pp);
       }
    }
    MESSAGE(0,(" is %d (%s)",pw,wgSymbolicName(CfList[i].Wg,pw)));
@@ -623,7 +623,7 @@ static void addid(Matrix_t *m, FEL f)
    if (f == FF_ZERO) {
       return;
    }
-   for (i = 0, x = m->Data; i < m->Nor; ++i, ffStepPtr(&x, m->Noc)) {
+   for (i = 0, x = m->data; i < m->nor; ++i, ffStepPtr(&x, m->noc)) {
       ffInsert(x,i,ffAdd(ffExtract(x,i),f));
    }
 }
@@ -648,7 +648,7 @@ static int try2(long w, FEL f)
          return -1;
       }
       if (nul == CfList[i].Info->spl) {
-         if ((ppos >= 0) || (CfList[i].Info->peakword > 0)) {
+         if ((ppos >= 0) || (CfList[i].Info->peakWord > 0)) {
             matFree(word);
             MESSAGE(3,("failed\n"));
             return -1;      /* Nullity should be 0 */
@@ -668,7 +668,7 @@ static int try2(long w, FEL f)
    if (ppos > -1) { /* we have found a new peak word */
       Poly_t *pp;
       Matrix_t *word;
-      CfList[ppos].Info->peakword = w;
+      CfList[ppos].Info->peakWord = w;
 
       /* Rechne nochmals den Nullraum aus (wir brauchen
          ihn spaeter fuer die Standardform.
@@ -680,8 +680,8 @@ static int try2(long w, FEL f)
       /* Erzeuge das Peakpolynom (hier immer vom Grad 1)
          ----------------------------------------------- */
       pp = polAlloc(ffOrder,1);
-      pp->Data[0] = f;
-      CfList[ppos].Info->peakpol = pp;
+      pp->data[0] = f;
+      CfList[ppos].Info->peakPol = pp;
       PeakWordFound(ppos);
    }
    return ppos;
@@ -748,7 +748,7 @@ static int try_p(long w)
       FPoly_t *mp;
       int k;
 
-      if (CfList[i].Info->peakword > 0) {
+      if (CfList[i].Info->peakWord > 0) {
          continue;                      /* We already have a peak word */
       }
       word = wgMakeWord(CfList[i].Wg,w);
@@ -758,7 +758,7 @@ static int try_p(long w)
          fpPrint(NULL,mp);
       }
       for (k = 0; k < (int) mp->NFactors; ++k) {
-         if (mp->Factor[k]->Degree * mp->Mult[k] == CfList[i].Info->spl) {
+         if (mp->Factor[k]->degree * mp->Mult[k] == CfList[i].Info->spl) {
             Matrix_t *wp, *wp2;
             long nul;
 
@@ -784,8 +784,8 @@ static int try_p(long w)
       }
 
       if (k < (int) mp->NFactors) {
-         CfList[i].Info->peakword = w;
-         CfList[i].Info->peakpol = polDup(mp->Factor[k]);
+         CfList[i].Info->peakWord = w;
+         CfList[i].Info->peakPol = polDup(mp->Factor[k]);
          CfList[i].PWNullSpace = matNullSpace__(matInsert(word,mp->Factor[k]));
          PeakWordFound(i);
       } else {

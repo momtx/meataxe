@@ -80,7 +80,7 @@ static void init(int argc, char **argv)
     opt_G = appGetOption(App,"-G --gap");
     if (opt_G) MtxMessageLevel = -100;
     appGetArguments(App,1,1);
-    inpname = App->ArgV[0];
+    inpname = App->argV[0];
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////

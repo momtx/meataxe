@@ -66,13 +66,13 @@ static int Init(int argc, char **argv)
        ------------- */
     if (appGetArguments(App,4,4) < 0)
 	return -1;
-    if (!strcmp(App->ArgV[0],"Z"))
+    if (!strcmp(App->argV[0],"Z"))
 	fieldOrder = 0;
     else
-	fieldOrder = atoi(App->ArgV[0]);
-    orbname = App->ArgV[1];
-    permname = App->ArgV[2];
-    kondname = App->ArgV[3];
+	fieldOrder = atoi(App->argV[0]);
+    orbname = App->argV[1];
+    permname = App->argV[2];
+    kondname = App->argV[3];
     return 0;
 }
 
@@ -86,14 +86,14 @@ static int readdata()
    MtxFile_t* fileOrb = mfOpen(orbname);
    orbits = imatRead(fileOrb);
    orbitSizes = imatRead(fileOrb);
-   NOrbits = orbitSizes->Noc;
+   NOrbits = orbitSizes->noc;
    mfClose(fileOrb);
 
    // Read the permutation.
    Perm = permLoad(permname);
-   if (Perm->Degree != orbits->Noc)
+   if (Perm->degree != orbits->noc)
       mtxAbort(MTX_HERE, "%s and %s: %s", permname, orbname, MTX_ERR_INCOMPAT);
-   Degree = Perm->Degree;
+   Degree = Perm->degree;
 
    // Set field and allocate output buffer.
    if (fieldOrder != 0) {               /* Condensation over GF(q) */
@@ -108,7 +108,7 @@ static int readdata()
          -------------------------------------------- */
       ppow = ffChar;
       for (i = 0; i < NOrbits; ++i) {
-         n = orbitSizes->Data[i];
+         n = orbitSizes->data[i];
          while (n % ppow == 0) {
             ppow *= ffChar;
          }
@@ -136,7 +136,7 @@ static void init2()
     ffMulRow(hsz,FF_ZERO, NOrbits);
     for (i = 0; i < NOrbits; ++i)
     {	
-	int l = (int) orbitSizes->Data[i];
+	int l = (int) orbitSizes->data[i];
 	if (l % ppow == 0)
 	    f = ffInv(ffFromInt((l / ppow) % ffChar));
 	else
@@ -190,12 +190,12 @@ int main(int argc, char **argv)
 	{
 	    int image_orbit;
 	    FEL f;
-	    if (orbits->Data[pt] != orbit)	    /* Ignore other orbits */
+	    if (orbits->data[pt] != orbit)	    /* Ignore other orbits */
 		continue;
 
 	    /* Find out to which orbit <pt> is mapped.
 	       --------------------------------------- */
-	    image_orbit = orbits->Data[Perm->Data[pt]];
+	    image_orbit = orbits->data[Perm->data[pt]];
 
 	    /* Update the condensed row.
 	       ------------------------- */

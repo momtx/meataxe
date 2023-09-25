@@ -46,12 +46,12 @@ int IsSubspace(const Matrix_t *sub, const Matrix_t *space, int ngen)
        ------------------- */
     matValidate(MTX_HERE, sub);
     matValidate(MTX_HERE, space);
-    if (sub->Field != space->Field || sub->Noc != space->Noc)
+    if (sub->field != space->field || sub->noc != space->noc)
     {
 	mtxAbort(MTX_HERE,"%s",MTX_ERR_INCOMPAT);
 	return -1;
     }
-    if (space->PivotTable == NULL)
+    if (space->pivotTable == NULL)
     {
 	mtxAbort(MTX_HERE,"space: %s",MTX_ERR_NOTECH);
 	return -1;
@@ -59,15 +59,15 @@ int IsSubspace(const Matrix_t *sub, const Matrix_t *space, int ngen)
 
     /* Decide how many vectors from <sub> we shall check
        ------------------------------------------------- */
-    ffSetField(space->Field);
-    spcdim = space->Nor;
-    nvec = sub->Nor;
+    ffSetField(space->field);
+    spcdim = space->nor;
+    nvec = sub->nor;
     if (ngen > 0 && ngen < nvec)
 	nvec = ngen;
 
     /* Allocate workspace 
        ------------------ */
-    tmp = ffAlloc(1, space->Noc);
+    tmp = ffAlloc(1, space->noc);
     if (tmp == NULL)
     {	
 	mtxAbort(MTX_HERE,"Cannot allocate workspace");
@@ -76,12 +76,12 @@ int IsSubspace(const Matrix_t *sub, const Matrix_t *space, int ngen)
 
     /* Check if vectors from <sub> are in the span of <space>
        ------------------------------------------------------ */
-    for (i = nvec, y = sub->Data; i > 0; --i, ffStepPtr(&y, space->Noc))
+    for (i = nvec, y = sub->data; i > 0; --i, ffStepPtr(&y, space->noc))
     {
 	FEL f;
-	ffCopyRow(tmp,y, space->Noc);
-	ffCleanRow(tmp,space->Data,spcdim,space->Noc, space->PivotTable);
-        if (ffFindPivot(tmp,&f, space->Noc) != MTX_NVAL) 
+	ffCopyRow(tmp,y, space->noc);
+	ffCleanRow(tmp,space->data,spcdim,space->noc, space->pivotTable);
+        if (ffFindPivot(tmp,&f, space->noc) != MTX_NVAL) 
 	    break;
     }
 

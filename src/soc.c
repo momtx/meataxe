@@ -53,7 +53,7 @@ static void ReadConstituents()
     int i;
     char fn[200];
 
-    for (i = 0; i < LI.NCf; ++i)
+    for (i = 0; i < LI.nCf; ++i)
     {
 	/* Read generators
 	   --------------- */
@@ -90,10 +90,10 @@ static void init(int argc, char **argv)
     MaxLen = appGetIntOption(App,"-l --max-length",0,0,1000);
     appGetArguments(App,1,1);
 
-    latReadInfo(&LI,App->ArgV[0]);
-    Rep = mrLoad(App->ArgV[0],LI.NGen);
+    latReadInfo(&LI,App->argV[0]);
+    Rep = mrLoad(App->argV[0],LI.NGen);
     ReadConstituents();
-    Dimension = Rep->Gen[0]->Nor;
+    Dimension = Rep->Gen[0]->nor;
 
     WGen = wgAlloc(Rep);
     LI.NSocles = 0;
@@ -104,7 +104,7 @@ static void init(int argc, char **argv)
 static void WriteBasis(const Matrix_t *basis)
 {
     char name[200];
-    sprintf(name, "%s.soc",App->ArgV[0]);
+    sprintf(name, "%s.soc",App->argV[0]);
     MESSAGE(1,("Writing basis to %s\n",name));
     matSave(basis,name);
 }
@@ -117,15 +117,15 @@ static int NextLayer()
 
     SocDim = 0;
     Matrix_t* bas = matAlloc(ffOrder,Dimension,Dimension);
-    int* cfvec = NALLOC(int,LI.NCf);
+    int* cfvec = NALLOC(int,LI.nCf);
 
-    for (int j = 0; j < LI.NCf; j++)
+    for (int j = 0; j < LI.nCf; j++)
     {
 	Matrix_t *sed;
 	int dimendS;
 	Matrix_t *partbas;
 
-        if (LI.Cf[j].peakword <= 0)
+        if (LI.Cf[j].peakWord <= 0)
             mtxAbort(MTX_HERE,"Missing peak word for constituent %d - run pwkond!",j);
 	
 	sed = seed[j];
@@ -134,7 +134,7 @@ static int NextLayer()
 
 	/* determines a basis for the corresponding part in the socle
 	   ---------------------------------------------------------- */
-	if (sed->Nor != 0) 
+	if (sed->nor != 0) 
 	{
 	    partbas = HomogeneousPart(Rep,CfRep[j],sed,OpTableMat[j],dimendS);
 	    if (partbas == NULL)
@@ -148,11 +148,11 @@ static int NextLayer()
                 
 	/* Append the new basis to the old one.
 	   ------------------------------------ */
-	cfvec[j] = partbas->Nor / LI.Cf[j].dim;
+	cfvec[j] = partbas->nor / LI.Cf[j].dim;
 	matCopyRegion(bas,SocDim,0,partbas,0,0,-1,-1);
-	SocDim += partbas->Nor;
+	SocDim += partbas->nor;
 	MESSAGE(2,("Socle dimension of %s is %d\n", latCfName(&LI,j),
-	    partbas->Nor));
+	    partbas->nor));
     }
 
 
@@ -162,7 +162,7 @@ static int NextLayer()
     ++SocLen;
     MESSAGE(0,("Socle %d: %d =",SocLen,SocDim));
     flag = 0;
-    for (int j = 0; j < LI.NCf; j++)
+    for (int j = 0; j < LI.nCf; j++)
     {
 	if (cfvec[j] <= 0) 
 	    continue;
@@ -195,21 +195,21 @@ static int NextLayer()
 	else
 	{
 	    Matrix_t *mat;
-	    mat = matCutRows(basis,basis->Nor - SocDim,SocDim);
+	    mat = matCutRows(basis,basis->nor - SocDim,SocDim);
 	    matMul(bas,mat);
 	    matFree(mat);
-	    matCopyRegion(basis,basis->Nor - SocDim,0,bas,0,0,SocDim,-1);
+	    matCopyRegion(basis,basis->nor - SocDim,0,bas,0,0,SocDim,-1);
 	    WriteBasis(basis);
 	}
         return 1;
     }
 
     // Extend the basis of the socle to a basis of the whole module.
-    echbas = matAlloc(bas->Field,bas->Noc,bas->Noc);
+    echbas = matAlloc(bas->field,bas->noc,bas->noc);
     matCopyRegion(echbas,0,0,bas,0,0,-1,-1);
     matEchelonize(bas);
-    for (uint32_t i = bas->Nor; i < bas->Noc; ++i)
-	ffInsert(matGetPtr(echbas,i),bas->PivotTable[i],FF_ONE);
+    for (uint32_t i = bas->nor; i < bas->noc; ++i)
+	ffInsert(matGetPtr(echbas,i),bas->pivotTable[i],FF_ONE);
     matFree(bas);
     bas = echbas;
 
@@ -219,10 +219,10 @@ static int NextLayer()
     else
     {
 
-	Matrix_t* mat = matCutRows(basis,basis->Nor - Dimension,Dimension);
+	Matrix_t* mat = matCutRows(basis,basis->nor - Dimension,Dimension);
 	Matrix_t* stgen = matDup(bas);
 	matMul(stgen, mat);
-	matCopyRegion(basis,basis->Nor - Dimension,0,stgen,0,0,Dimension,-1);
+	matCopyRegion(basis,basis->nor - Dimension,0,stgen,0,0,Dimension,-1);
 	matFree(stgen);
 	matFree(mat);
     }
@@ -245,7 +245,7 @@ static int NextLayer()
 
 /* the kernels
    ----------- */
-    for (int j = 0; j < LI.NCf; j++)
+    for (int j = 0; j < LI.nCf; j++)
     {
 	Matrix_t *tmp;
 	if (seed[j] == NULL)
@@ -268,7 +268,7 @@ static int NextLayer()
 	Rep->Gen[i] = matCut(stgen,SocDim,SocDim,-1,-1);
         matFree(stgen);
     }
-    Dimension = Rep->Gen[0]->Nor;
+    Dimension = Rep->Gen[0]->nor;
     MESSAGE(1,("Reduced to dimension %d\n",Dimension));
 
     matFree(bas);

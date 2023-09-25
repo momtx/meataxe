@@ -35,16 +35,16 @@ Poly_t *polDerive(Poly_t *pol)
    // check argument
    polValidate(MTX_HERE, pol);
 
-   buf = pol->Data;
-   ffSetField(pol->Field);
-   for (i = 0; i < pol->Degree; ++i) {
+   buf = pol->data;
+   ffSetField(pol->field);
+   for (i = 0; i < pol->degree; ++i) {
       f = ffAdd(f,FF_ONE);
       buf[i] = ffMul(buf[i + 1],f);
       if (buf[i] != FF_ZERO) {
          maxdeg = i;
       }
    }
-   pol->Degree = maxdeg;
+   pol->degree = maxdeg;
    return pol;
 }
 

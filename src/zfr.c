@@ -40,8 +40,8 @@ static void init(int argc, char **argv)
 {
     App = appAlloc(&AppInfo,argc,argv);
     appGetArguments(App,2,2);
-    iname = App->ArgV[0];
-    oname = App->ArgV[1];
+    iname = App->argV[0];
+    oname = App->argV[1];
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////

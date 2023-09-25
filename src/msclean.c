@@ -16,9 +16,9 @@
 int matFindPivot(const Matrix_t *mat, int *row, int *col, FEL *f)
 {
    int i;
-   for (i = 0; i < mat->Nor; ++i) {
+   for (i = 0; i < mat->nor; ++i) {
       FEL g;
-      uint32_t piv = ffFindPivot(matGetPtr(mat,i),&g,mat->Noc);
+      uint32_t piv = ffFindPivot(matGetPtr(mat,i),&g,mat->noc);
       if (piv != MTX_NVAL) {
          if (f != NULL) { *f = g; }
          *row = i;
@@ -49,8 +49,8 @@ int msClean(const MatrixSet_t *set, Matrix_t *mat)
    matValidate(MTX_HERE, mat);
    if (set->Len > 0) {
       Matrix_t *mat0 = set->List[0].Matrix;
-      if ((mat->Field != mat0->Field) || (mat->Nor != mat0->Nor)
-          || (mat->Noc != mat0->Noc)) {
+      if ((mat->field != mat0->field) || (mat->nor != mat0->nor)
+          || (mat->noc != mat0->noc)) {
          mtxAbort(MTX_HERE,"Cannot clean: %s",MTX_ERR_INCOMPAT);
          return -1;
       }

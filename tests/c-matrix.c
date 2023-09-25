@@ -40,9 +40,9 @@ TstResult Matrix_Allocation(int q)
    }
    for (i = 0; i < NMAT; ++i) {
       ASSERT(matIsValid(m[i]));
-      ASSERT(m[i]->Field == ffOrder);
-      ASSERT(m[i]->Nor == nor[i]);
-      ASSERT(m[i]->Noc == noc[i]);
+      ASSERT(m[i]->field == ffOrder);
+      ASSERT(m[i]->nor == nor[i]);
+      ASSERT(m[i]->noc == noc[i]);
    }
    for (i = 0; i < NMAT; ++i) {
       ASSERT_EQ_INT(matFree(m[i]), 0);
@@ -66,20 +66,20 @@ TstResult Matrix_ThrowsOnDoubleFree()
 
 static int ChkEch(Matrix_t *mat)
 {
-   for (uint32_t i = 0; i < mat->Nor; ++i) {
+   for (uint32_t i = 0; i < mat->nor; ++i) {
       PTR p = matGetPtr(mat,i);
       FEL f;
 
-      ASSERT_EQ_INT(ffFindPivot(p,&f,mat->Noc), mat->PivotTable[i]);
+      ASSERT_EQ_INT(ffFindPivot(p,&f,mat->noc), mat->pivotTable[i]);
       for (uint32_t k = 0; k < i; ++k) {
-	 ASSERT_EQ_INT(ffExtract(p,mat->PivotTable[k]), FF_ZERO);
+	 ASSERT_EQ_INT(ffExtract(p,mat->pivotTable[k]), FF_ZERO);
       }
    }
-   for (uint32_t i = mat->Nor; i < mat->Noc; ++i) {
-      uint32_t piv = mat->PivotTable[i];
-      ASSERT(piv < mat->Noc);
+   for (uint32_t i = mat->nor; i < mat->noc; ++i) {
+      uint32_t piv = mat->pivotTable[i];
+      ASSERT(piv < mat->noc);
       for (uint32_t k = 0; k < i; ++k) {
-	 ASSERT(mat->PivotTable[k] != piv);
+	 ASSERT(mat->pivotTable[k] != piv);
       }
    }
    return 0;
@@ -104,7 +104,7 @@ static int TestMatEchelonize1(Matrix_t *m, int size)
    for (i = 0; i < size; ++i) {
       PTR p = matGetPtr(m,i);
       int k;
-      ASSERT_EQ_INT(m->PivotTable[i], size - i - 1);
+      ASSERT_EQ_INT(m->pivotTable[i], size - i - 1);
       for (k = 0; k < size; ++k) {
          FEL f = ffExtract(p,k);
          ASSERT(!((f == FF_ZERO) ^ (k != size - i - 1)));
@@ -291,8 +291,8 @@ static int TestNullSpace1(int dim)
    Matrix_t* a = matId(ffOrder,dim);
    Matrix_t* b = matNullSpace(a);
    ASSERT(matIsValid(b));
-   ASSERT(b->Noc == dim);
-   ASSERT(b->Nor == 0);
+   ASSERT(b->noc == dim);
+   ASSERT(b->nor == 0);
    matFree(b);
 
    b = matNullSpace__(matAlloc(ffOrder,dim,dim));
@@ -308,11 +308,11 @@ static int TestNullSpace2(int dim)
 {
    Matrix_t* a = RndMat(ffOrder,dim + 3,dim);
    Matrix_t* b = matNullSpace(a);
-   ASSERT(b->Nor >= 3);
+   ASSERT(b->nor >= 3);
    matMul(b,a);
-   for (int i = 0; i < b->Nor; ++i) {
+   for (int i = 0; i < b->nor; ++i) {
       FEL f;
-      ASSERT(ffFindPivot(matGetPtr(b,i),&f, b->Noc) == MTX_NVAL);
+      ASSERT(ffFindPivot(matGetPtr(b,i),&f, b->noc) == MTX_NVAL);
    }
    matFree(a);
    matFree(b);
@@ -478,9 +478,9 @@ static int TestMatId2(int fl, int dim)
    int i;
 
    m = matId(fl,dim);
-   ASSERT_EQ_INT(m->Field, fl);
-   ASSERT_EQ_INT(m->Nor, dim);
-   ASSERT_EQ_INT(m->Noc, dim);
+   ASSERT_EQ_INT(m->field, fl);
+   ASSERT_EQ_INT(m->nor, dim);
+   ASSERT_EQ_INT(m->noc, dim);
    for (i = 0; i < dim; ++i) {
       int k;
       PTR r = matGetPtr(m,i);

@@ -32,19 +32,19 @@ Matrix_t *SAction(const Matrix_t *subspace, const Matrix_t *gen)
    // check arguments
    matValidate(MTX_HERE, subspace);
    matValidate(MTX_HERE, gen);
-   if (subspace->Noc != gen->Nor) {
+   if (subspace->noc != gen->nor) {
       mtxAbort(MTX_HERE,"subspace and gen: %s",MTX_ERR_INCOMPAT);
       return NULL;
    }
-   if (gen->Nor != gen->Noc) {
+   if (gen->nor != gen->noc) {
       mtxAbort(MTX_HERE,"gen: %s",MTX_ERR_NOTSQUARE);
       return NULL;
    }
 
    // set up internal variables
-   const int dim = subspace->Noc;
-   const int sdim = subspace->Nor;
-   ffSetField(subspace->Field);
+   const int dim = subspace->noc;
+   const int sdim = subspace->nor;
+   ffSetField(subspace->field);
    Matrix_t *action = matAlloc(ffOrder,sdim,sdim);
    if (action == NULL) {
       return NULL;
@@ -56,7 +56,7 @@ Matrix_t *SAction(const Matrix_t *subspace, const Matrix_t *gen)
    }
 
    // calculate the action
-   for (int i = 0; i < subspace->Nor; ++i) {
+   for (int i = 0; i < subspace->nor; ++i) {
       PTR xi = matGetPtr(subspace,i);
       MTX_ASSERT(xi != NULL);
       PTR yi = matGetPtr(action,i);
@@ -64,10 +64,10 @@ Matrix_t *SAction(const Matrix_t *subspace, const Matrix_t *gen)
       FEL f;
 
       // calculate the image of the <i>-th row of <subspace>
-      ffMapRow(xi,gen->Data,dim,dim,tmp);
+      ffMapRow(xi,gen->data,dim,dim,tmp);
 
       // clean the image with the subspace and store coefficients
-      int rc = ffCleanRow2(tmp,subspace->Data,sdim,dim,subspace->PivotTable,yi);
+      int rc = ffCleanRow2(tmp,subspace->data,sdim,dim,subspace->pivotTable,yi);
       MTX_ASSERT(rc == 0);
       if (ffFindPivot(tmp,&f,dim) != MTX_NVAL) {
          mtxAbort(MTX_HERE,"Split(): Subspace not invariant");

@@ -46,11 +46,11 @@ int permIsValid(const Perm_t *p)
    if (p == NULL) {
       return 0;
    }
-   if (p->Magic != MTX_TYPE_PERMUTATION || p->Degree < 0 || p->Data == NULL) {
+   if (p->typeId != MTX_TYPE_PERMUTATION || p->degree < 0 || p->data == NULL) {
       return 0;
    }
-   for (int i = 0; i < p->Degree; ++i) {
-      if (p->Data[i] < 0 || p->Data[i] >= p->Degree) {
+   for (int i = 0; i < p->degree; ++i) {
+      if (p->data[i] < 0 || p->data[i] >= p->degree) {
          return 0;
       }
    }
@@ -67,12 +67,12 @@ void permValidate(const struct MtxSourceLocation* src, const Perm_t *p)
    if (p == NULL) {
       mtxAbort(src,"NULL permutation");
    }
-   if (p->Magic != MTX_TYPE_PERMUTATION || p->Degree < 0 || p->Data == NULL) {
-      mtxAbort(src,"Invalid permutation (magic=%d, deg=%d)", p->Magic, p->Degree);
+   if (p->typeId != MTX_TYPE_PERMUTATION || p->degree < 0 || p->data == NULL) {
+      mtxAbort(src,"Invalid permutation (magic=%d, deg=%d)", p->typeId, p->degree);
    }
-   for (int i = 0; i < p->Degree; ++i) {
-      if (p->Data[i] < 0 || p->Data[i] >= p->Degree) {
-         mtxAbort(src,"Invalid value %d in permutation (deg = %d)", (int) p->Data[i], p->Degree);
+   for (int i = 0; i < p->degree; ++i) {
+      if (p->data[i] < 0 || p->data[i] >= p->degree) {
+         mtxAbort(src,"Invalid value %d in permutation (deg = %d)", (int) p->data[i], p->degree);
       }
    }
 }
@@ -100,16 +100,16 @@ Perm_t *permAlloc(uint32_t deg)
       mtxAbort(MTX_HERE,"Cannot allocate Perm_t structure");
       return NULL;
    }
-   p->Magic = MTX_TYPE_PERMUTATION;
-   p->Degree = deg;
-   p->Data = NALLOC(uint32_t,deg);
-   if (p->Data == NULL) {
+   p->typeId = MTX_TYPE_PERMUTATION;
+   p->degree = deg;
+   p->data = NALLOC(uint32_t,deg);
+   if (p->data == NULL) {
       sysFree(p);
       mtxAbort(MTX_HERE,"Cannot allocate permutation data");
       return NULL;
    }
    for (i = 0; i < deg; ++i) {
-      p->Data[i] = i;
+      p->data[i] = i;
    }
    return p;
 }
@@ -127,7 +127,7 @@ int permFree(Perm_t *p)
 {
    permValidate(MTX_HERE, p);
 
-   sysFree(p->Data);
+   sysFree(p->data);
    memset(p,0,sizeof(Perm_t));
    sysFree(p);
    return 0;

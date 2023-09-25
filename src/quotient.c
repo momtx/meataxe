@@ -46,33 +46,33 @@ Matrix_t *QProjection(const Matrix_t *subspace, const Matrix_t *vectors)
    // Check the arguments
    matValidate(MTX_HERE, subspace);
    matValidate(MTX_HERE, vectors);
-   if ((subspace->Field != vectors->Field) || (subspace->Noc != vectors->Noc)) {
+   if ((subspace->field != vectors->field) || (subspace->noc != vectors->noc)) {
       mtxAbort(MTX_HERE,"%s",MTX_ERR_INCOMPAT);
    }
-   if (subspace->PivotTable == NULL) {
+   if (subspace->pivotTable == NULL) {
       mtxAbort(MTX_HERE,"%s",MTX_ERR_NOTECH);
    }
 
    // Initialize
-   sdim = subspace->Nor;
-   qdim = subspace->Noc - sdim;
-   result = matAlloc(subspace->Field,vectors->Nor,qdim);
+   sdim = subspace->nor;
+   qdim = subspace->noc - sdim;
+   result = matAlloc(subspace->field,vectors->nor,qdim);
    if (result == NULL) {
        return NULL;
    }
 
    // Calculate the projection
-   tmp = ffAlloc(1, subspace->Noc);
+   tmp = ffAlloc(1, subspace->noc);
    if (tmp == NULL) {
        matFree(result);
        return NULL;
    }
-   non_piv = subspace->PivotTable + subspace->Nor;
-   for (i = 0; i < vectors->Nor; ++i) {
+   non_piv = subspace->pivotTable + subspace->nor;
+   for (i = 0; i < vectors->nor; ++i) {
       int k;
       PTR q = matGetPtr(result,i);
-      ffCopyRow(tmp,matGetPtr(vectors,i), subspace->Noc);
-      ffCleanRow(tmp,subspace->Data,sdim,subspace->Noc, subspace->PivotTable);
+      ffCopyRow(tmp,matGetPtr(vectors,i), subspace->noc);
+      ffCleanRow(tmp,subspace->data,sdim,subspace->noc, subspace->pivotTable);
       for (k = 0; k < qdim; ++k) {
          ffInsert(q,k,ffExtract(tmp,non_piv[k]));
       }
@@ -111,19 +111,19 @@ Matrix_t *QAction(const Matrix_t *subspace, const Matrix_t *gen)
       ---------------- */
    matValidate(MTX_HERE, subspace);
    matValidate(MTX_HERE, gen);
-   if (subspace->Noc != gen->Nor) {
+   if (subspace->noc != gen->nor) {
       mtxAbort(MTX_HERE,"subspace and gen: %s",MTX_ERR_INCOMPAT);
    }
-   if (gen->Nor != gen->Noc) {
+   if (gen->nor != gen->noc) {
       mtxAbort(MTX_HERE,"gen: %s",MTX_ERR_NOTSQUARE);
    }
 
    /* Initialize
       ---------- */
-   dim = subspace->Noc;
-   sdim = subspace->Nor;
+   dim = subspace->noc;
+   sdim = subspace->nor;
    qdim = dim - sdim;
-   Matrix_t *action = matAlloc(subspace->Field,qdim,qdim);
+   Matrix_t *action = matAlloc(subspace->field,qdim,qdim);
    if (action == NULL) {
       return NULL;
    }
@@ -135,13 +135,13 @@ Matrix_t *QAction(const Matrix_t *subspace, const Matrix_t *gen)
       matFree(action);
       return NULL;
    }
-   const uint32_t* const piv = subspace->PivotTable;
-   const uint32_t* const non_piv = piv + subspace->Nor;
+   const uint32_t* const piv = subspace->pivotTable;
+   const uint32_t* const non_piv = piv + subspace->nor;
    for (k = 0; k < qdim; ++k) {
       int l;
       PTR qx = matGetPtr(action,k);
       ffCopyRow(tmp,matGetPtr(gen,non_piv[k]), dim);
-      ffCleanRow(tmp,subspace->Data,sdim,dim, piv);
+      ffCleanRow(tmp,subspace->data,sdim,dim, piv);
       for (l = 0; l < qdim; ++l) {
          ffInsert(qx,l,ffExtract(tmp,non_piv[l]));
       }

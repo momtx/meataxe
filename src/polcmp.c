@@ -49,22 +49,22 @@ int polCompare(const Poly_t *a, const Poly_t *b)
    polValidate(MTX_HERE, b);
 
    // compare fields
-   if (a->Field > b->Field)
+   if (a->field > b->field)
       return 1;
-   if (a->Field < b->Field)
+   if (a->field < b->field)
       return -1;
 
    // compare degrees
-   if (a->Degree > b->Degree) {
+   if (a->degree > b->degree) {
       return 1;
    }
-   if (a->Degree < b->Degree) {
+   if (a->degree < b->degree) {
       return -1;
    }
 
    // compare coefficients
-   for (i = a->Degree; i >= 0; --i) {
-       int cmp = ffCompare(a->Data[i], b->Data[i]);
+   for (i = a->degree; i >= 0; --i) {
+       int cmp = ffCompare(a->data[i], b->data[i]);
        if (cmp != 0)
 	   return cmp;
    }

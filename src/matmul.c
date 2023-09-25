@@ -33,25 +33,25 @@ Matrix_t *matMul(Matrix_t *dest, const Matrix_t *src)
 #ifdef MTX_DEBUG
    matValidate(MTX_HERE, src);
    matValidate(MTX_HERE, dest);
-   if ((src->Field != dest->Field) || (src->Nor != dest->Noc)) {
+   if ((src->field != dest->field) || (src->nor != dest->noc)) {
       mtxAbort(MTX_HERE,"Can't multiply %dx%d/GF(%d) by %dx%d/GF(%d): %s",
-                 dest->Nor,dest->Noc,dest->Field,src->Nor,src->Noc,src->Field,
+                 dest->nor,dest->noc,dest->field,src->nor,src->noc,src->field,
                  MTX_ERR_INCOMPAT);
    }
 #endif
 
    // matrix multiplication
-   ffSetField(src->Field);
-   result = tmp = ffAlloc(dest->Nor, src->Noc);
-   x = dest->Data;
-   for (i = 0; i < dest->Nor; ++i) {
-      ffMapRow(x,src->Data,src->Nor,src->Noc,tmp);
-      ffStepPtr(&tmp, src->Noc);
-      ffStepPtr(&x, dest->Noc);
+   ffSetField(src->field);
+   result = tmp = ffAlloc(dest->nor, src->noc);
+   x = dest->data;
+   for (i = 0; i < dest->nor; ++i) {
+      ffMapRow(x,src->data,src->nor,src->noc,tmp);
+      ffStepPtr(&tmp, src->noc);
+      ffStepPtr(&x, dest->noc);
    }
-   sysFree(dest->Data);
-   dest->Data = result;
-   dest->Noc = src->Noc;
+   sysFree(dest->data);
+   dest->data = result;
+   dest->noc = src->noc;
 
    mat_DeletePivotTable(dest);
 

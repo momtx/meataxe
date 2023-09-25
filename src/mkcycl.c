@@ -57,7 +57,7 @@ static void init(int argc, char **argv)
 	MtxMessageLevel = -100;
     appGetArguments(App,1,1);
     MESSAGE(0,("\n*** FIND CYCLIC SUBMODULES ***\n\n"));
-    latReadInfo(&LI,App->ArgV[0]);
+    latReadInfo(&LI,App->argV[0]);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -79,7 +79,7 @@ static void Spinup(Matrix_t *seed)
 	    mtxAbort(MTX_HERE,"Subspace comparison failed");
 	    return;
 	}
-	if (issub && sub->Nor == Cyclic[i]->Nor)
+	if (issub && sub->nor == Cyclic[i]->nor)
 	{
 	    matFree(sub);	/* Module already in list */
 	    return;
@@ -162,13 +162,13 @@ void FindCyclic(int cf)
 
     /* Spin up all seed vectors
        ------------------------ */
-    cond_dim = Rep->Gen[0]->Nor;
+    cond_dim = Rep->Gen[0]->nor;
     seed = matAlloc(ffOrder,1,cond_dim);
     seed_basis = matId(ffOrder,cond_dim);
     NCyclic = 0;
     count = 0;
     vec_no = 0;
-    while ((vec_no = MakeSeedVector(seed_basis,vec_no,seed->Data)) >= 0)
+    while ((vec_no = MakeSeedVector(seed_basis,vec_no,seed->data)) >= 0)
     {
 	++count;
 	if (count % 100 == 0)
@@ -197,7 +197,7 @@ void FindCyclic(int cf)
 int main(int argc, char *argv[])
 {
     init(argc, argv);
-    for (int i = 0; i < LI.NCf; ++i)
+    for (int i = 0; i < LI.nCf; ++i)
 	FindCyclic(i);
     if (MtxMessageLevel >= 0)
         printf("\n");

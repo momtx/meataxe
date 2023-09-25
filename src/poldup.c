@@ -22,12 +22,12 @@
 Poly_t *polDup(const Poly_t *p)
 {
    polValidate(MTX_HERE,p);
-   Poly_t *y = polAlloc(p->Field,p->Degree);
+   Poly_t *y = polAlloc(p->field,p->degree);
    if (y == NULL) {
       mtxAbort(MTX_HERE,"Cannot allocate polynomial");
       return NULL;
    }
-   memcpy(y->Data,p->Data,(p->Degree + 1) * sizeof(FEL));
+   memcpy(y->data,p->data,(p->degree + 1) * sizeof(FEL));
    return y;
 }
 

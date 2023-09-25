@@ -41,20 +41,20 @@ int matCompare(const Matrix_t *a, const Matrix_t *b)
    matValidate(MTX_HERE, b);
 
    // compare fields and dimensions
-   if (a->Field > b->Field) return 1;
-   if (a->Field < b->Field) return -1;
-   if (a->Noc > b->Noc) return 1;
-   if (a->Noc < b->Noc) return -1;
-   if (a->Nor > b->Nor) return 1;
-   if (a->Nor < b->Nor) return -1;
+   if (a->field > b->field) return 1;
+   if (a->field < b->field) return -1;
+   if (a->noc > b->noc) return 1;
+   if (a->noc < b->noc) return -1;
+   if (a->nor > b->nor) return 1;
+   if (a->nor < b->nor) return -1;
 
    // Compare the marks row by row. We cannot use memcmp() on the whole matrix
    // because we must ignore padding bytes.
-   ffSetField(a->Field);
-   for (i = 0; i < a->Nor; ++i) {
+   ffSetField(a->field);
+   for (i = 0; i < a->nor; ++i) {
       PTR pa = matGetPtr(a,i);
       PTR pb = matGetPtr(b,i);
-      const int diff = ffCmpRows(pa,pb, a->Noc);
+      const int diff = ffCmpRows(pa,pb, a->noc);
       if (diff > 0) return 1;
       if (diff < 0) return -1;
    }

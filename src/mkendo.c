@@ -17,7 +17,7 @@ static Matrix_t *MakeEndo(const MatRep_t *rep, const Matrix_t *sb1,
     /* Make standard basis from <vec>
        ------------------------------ */
     sb2 = SpinUp(vec,rep,SF_FIRST|SF_CYCLIC|SF_STD,NULL,NULL);
-    MTX_ASSERT(sb2 != NULL && sb2->Nor == sb2->Noc);
+    MTX_ASSERT(sb2 != NULL && sb2->nor == sb2->noc);
 
     /* The linear mapping that maps <sb1> on <Matrix_t> is the endomorphism
        we are looking for!
@@ -60,23 +60,23 @@ int MakeEndomorphisms(const MatRep_t *rep, const Matrix_t *nsp,
     Matrix_t *sb1;		/* Standard bases */
     int nendo;			/* # of endomorphisms obtained so far */
 
-    MTX_ASSERT(nsp->Nor > 0);
+    MTX_ASSERT(nsp->nor > 0);
     MTX_ASSERT(rep->NGen > 0);
 
     /* Take the first vector from <nsp> and make the standard basis.
        ------------------------------------------------------------- */
     sb1 = SpinUp(nsp,rep,SF_FIRST|SF_CYCLIC|SF_STD,NULL,NULL);
-    MTX_ASSERT(sb1 != NULL && sb1->Nor == sb1->Noc);
+    MTX_ASSERT(sb1 != NULL && sb1->nor == sb1->noc);
 
     /* Take the identity as the first basis element for E
        -------------------------------------------------- */
-    endo[0] = matId(rep->Gen[0]->Field,rep->Gen[0]->Nor);
+    endo[0] = matId(rep->Gen[0]->field,rep->Gen[0]->nor);
     nendo = 1;
 
     /* For each of the remaining vectors v_2,..v_d in <nsp>, construct the
        endomorphism that maps v_1 to v_j.
        -------------------------------------------------------------------- */
-    while (nendo < nsp->Nor)
+    while (nendo < nsp->nor)
     {
 	Matrix_t *vec = matCutRows(nsp,nendo,1);
 	endo[nendo] = MakeEndo(rep,sb1,vec);
@@ -88,7 +88,7 @@ int MakeEndomorphisms(const MatRep_t *rep, const Matrix_t *nsp,
 
     /* Clean up
        -------- */
-    if (nendo < nsp->Nor)
+    if (nendo < nsp->nor)
     {
 	while (nendo > 0)
 	    matFree(endo[--nendo]);
@@ -97,7 +97,7 @@ int MakeEndomorphisms(const MatRep_t *rep, const Matrix_t *nsp,
 
     /* Return error code
        ----------------- */
-    return nendo == nsp->Nor ? 0 : -1;
+    return nendo == nsp->nor ? 0 : -1;
 }
 
 /// @}

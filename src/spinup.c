@@ -108,20 +108,20 @@ static int Spin1(PTR seed, int seedno, const SpinUpInfo_t *info)
 
     /* Copy the seed vector to <put>, extending the pivot table
        -------------------------------------------------------- */
-    ffCopyRow(put,seed, Span->Noc);
-    ffCleanRow(put,Span->Data,SpanDim,Span->Noc, Piv);
+    ffCopyRow(put,seed, Span->noc);
+    ffCleanRow(put,Span->data,SpanDim,Span->noc, Piv);
     if (Script != NULL)
     {
 	OPVEC(SpanDim) = seedno;
 	OPGEN(SpanDim) = -1;	/* -1 means it's a seed vector */
     }
-    if ((Piv[SpanDim] = ffFindPivot(put,&f,Span->Noc)) != MTX_NVAL)
+    if ((Piv[SpanDim] = ffFindPivot(put,&f,Span->noc)) != MTX_NVAL)
     {
 	++SpanDim;
 	ffStepPtr(&put, Dim);
 	if (Flags & SF_STD)
 	{
-    	    ffCopyRow(stdput,seed, Span->Noc);
+    	    ffCopyRow(stdput,seed, Span->noc);
 	    ffStepPtr(&stdput, Dim);
 	}
     }
@@ -139,17 +139,17 @@ static int Spin1(PTR seed, int seedno, const SpinUpInfo_t *info)
 	if (Flags & SF_STD)
 	{
 	    if (Gen != NULL)
-		ffMapRow(stdget,Gen[igen]->Data,Dim,Dim,stdput);
+		ffMapRow(stdget,Gen[igen]->data,Dim,Dim,stdput);
 	    else
-		ffPermRow(stdget,GenP[igen]->Data, Dim,stdput);
+		ffPermRow(stdget,GenP[igen]->data, Dim,stdput);
 	    ffCopyRow(put,stdput, Dim );
 	}
 	else
 	{
 	    if (Gen != NULL)
-		ffMapRow(get,Gen[igen]->Data,Dim,Dim,put);
+		ffMapRow(get,Gen[igen]->data,Dim,Dim,put);
 	    else
-		ffPermRow(get,GenP[igen]->Data,Dim, put);
+		ffPermRow(get,GenP[igen]->data,Dim, put);
 	}
     	if (Script != NULL)
     	{
@@ -169,8 +169,8 @@ static int Spin1(PTR seed, int seedno, const SpinUpInfo_t *info)
 
 	/* Clean the result with the existing basis
 	   ---------------------------------------- */
-	ffCleanRow(put,Span->Data,SpanDim,Span->Noc, Piv);
-	if ((Piv[SpanDim] = ffFindPivot(put,&f,Span->Noc)) != MTX_NVAL)
+	ffCleanRow(put,Span->data,SpanDim,Span->noc, Piv);
+	if ((Piv[SpanDim] = ffFindPivot(put,&f,Span->noc)) != MTX_NVAL)
 	{
 	    num_tries = 0;
 	    ++SpanDim;
@@ -204,7 +204,7 @@ static int Spin1(PTR seed, int seedno, const SpinUpInfo_t *info)
 static int CheckArgs0(const Matrix_t *seed, int flags)
 {
     matValidate(MTX_HERE, seed);
-    if (seed->Nor < 1) 
+    if (seed->nor < 1) 
 	mtxAbort(MTX_HERE,"Empty seed space");
     if (flags == -1)
 	mtxAbort(MTX_HERE,"Invalid flags");
@@ -228,7 +228,7 @@ static int CheckArgs(const Matrix_t *seed, const MatRep_t *rep, int flags)
     }
     if (rep->NGen > 0)
     {
-	if (rep->Gen[0]->Noc != seed->Noc || rep->Gen[0]->Field != seed->Field)
+	if (rep->Gen[0]->noc != seed->noc || rep->Gen[0]->field != seed->field)
 	{
 	    mtxAbort(MTX_HERE,"%s",MTX_ERR_INCOMPAT);
 	    return -1;
@@ -253,9 +253,9 @@ static int CheckArgsP(const Matrix_t *seed, int ngen, const Perm_t **gen, int fl
     for (i = 0; i < ngen; ++i)
     {
        permValidate(MTX_HERE, gen[i]);
-	if (gen[i]->Degree != seed->Noc)
+	if (gen[i]->degree != seed->noc)
 	{
-	    mtxAbort(MTX_HERE,"Gen=%d, seed=%d: %s",gen[i]->Degree,seed->Noc,
+	    mtxAbort(MTX_HERE,"Gen=%d, seed=%d: %s",gen[i]->degree,seed->noc,
 		MTX_ERR_INCOMPAT);
 	    return -1;
 	}
@@ -271,9 +271,9 @@ static int Init0(const Matrix_t *seed, int flags, IntMatrix_t **script,
      const SpinUpInfo_t *info)
 {
     int ws_size;
-    ffSetField(seed->Field);
+    ffSetField(seed->field);
     Flags = flags;
-    Dim = seed->Noc;
+    Dim = seed->noc;
     Seed = seed;
 
     /* Allocate workspace, assuming the worst case.
@@ -282,7 +282,7 @@ static int Init0(const Matrix_t *seed, int flags, IntMatrix_t **script,
     	ws_size = info->MaxSubspaceDimension + 1;
     else
 	ws_size = Dim + 1;
-    Span = matAlloc(seed->Field,ws_size,Dim);
+    Span = matAlloc(seed->field,ws_size,Dim);
     if (Span == NULL)
     {
 	mtxAbort(MTX_HERE,"Cannot allocate result buffer");
@@ -300,7 +300,7 @@ static int Init0(const Matrix_t *seed, int flags, IntMatrix_t **script,
     if (script != NULL)
     {
 	if (*script != NULL && 
-	    ((*script)->Noc != 2 || (*script)->Nor < Dim + 1))
+	    ((*script)->noc != 2 || (*script)->nor < Dim + 1))
 	{
 	    imatFree(*script);
 	    *script = NULL;
@@ -312,14 +312,14 @@ static int Init0(const Matrix_t *seed, int flags, IntMatrix_t **script,
 	    mtxAbort(MTX_HERE,"Cannot allocate script");
 	    return -1;
 	}
-	Script = (*script)->Data;
+	Script = (*script)->data;
     }
     else
 	Script = NULL;	/* No script */
 
     if (Flags & SF_STD)
     {
-	StdSpan = matAlloc(seed->Field,Dim+1,Dim);
+	StdSpan = matAlloc(seed->field,Dim+1,Dim);
 	if (StdSpan == NULL)
 	{
 	    matFree(Span);
@@ -376,12 +376,12 @@ static int DoSpinup(const SpinUpInfo_t *info)
     	case SF_FIRST:
 	    /* Try the first seed vector only
 	       ------------------------------ */
-	    return Spin1(Seed->Data,1,info);
+	    return Spin1(Seed->data,1,info);
 
     	case SF_EACH:
 	    /* Try each seed vector until successful
 	       ------------------------------------- */
-	    for (seed = Seed->Data, n = 1; n <= Seed->Nor; ffStepPtr(&seed, Dim),++n)
+	    for (seed = Seed->data, n = 1; n <= Seed->nor; ffStepPtr(&seed, Dim),++n)
 	    {
 	    	if (Spin1(seed,n,info) == 0)
 		    return 0;
@@ -439,12 +439,12 @@ static Matrix_t *DoIt(IntMatrix_t **script, SpinUpInfo_t *info)
     {
 	matEchelonize(Span);
     }
-    Span->Nor = SpanDim;
-    Span->Data = (PTR) sysRealloc(Span->Data,ffSize(SpanDim, Seed->Noc));
+    Span->nor = SpanDim;
+    Span->data = (PTR) sysRealloc(Span->data,ffSize(SpanDim, Seed->noc));
     if (script != NULL)
     {
-	(*script)->Data = NREALLOC((*script)->Data,int32_t,2 * SpanDim);
-	(*script)->Nor = SpanDim;
+	(*script)->data = NREALLOC((*script)->data,int32_t,2 * SpanDim);
+	(*script)->nor = SpanDim;
     }
 
     return Span;

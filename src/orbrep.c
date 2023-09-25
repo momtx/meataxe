@@ -52,14 +52,14 @@ static int ReadPermutations()
 	Perm[i] = permLoad(fn);
 	if (Perm[i] == NULL)
 	    return -1;
-	if (i > 1 && Perm[i]->Degree != Perm[0]->Degree)
+	if (i > 1 && Perm[i]->degree != Perm[0]->degree)
 	{
 	    mtxAbort(MTX_HERE,"%s and %s.1 have different degrees",
 		fn,permname);
 	    return -1;
 	}
     }
-    Degree = Perm[0]->Degree;
+    Degree = Perm[0]->degree;
     if (Seed < 0 || Seed >= Degree)
     {
 	mtxAbort(MTX_HERE,"Illegal seed point, valid range is 1..%ld.",Degree+1);
@@ -86,10 +86,10 @@ static int Init(int argc, char **argv)
     nperm = appGetIntOption(App,"-g",2,1,MAXPERM);
     if (appGetArguments(App,4,4) < 0)
 	return -1;
-    permname = App->ArgV[0];
-    scriptname = App->ArgV[1];
-    Seed = atoi(App->ArgV[2]) - 1;
-    Stop = atoi(App->ArgV[3]) - 1;
+    permname = App->argV[0];
+    scriptname = App->argV[1];
+    Seed = atoi(App->argV[2]) - 1;
+    Stop = atoi(App->argV[3]) - 1;
     return 0;
 }
 
@@ -143,7 +143,7 @@ static int MakeOrbit()
         pt = ptnr[++done];
 	for (i = 0; i < nperm; ++i)
 	{
-	    image = Perm[i]->Data[pt];
+	    image = Perm[i]->data[pt];
  	    if (pre[image] < 0)
 	    {
 		ptnr[++orblen] = image;

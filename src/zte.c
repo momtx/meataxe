@@ -110,8 +110,8 @@ static int tensorperms(void)
     uint32_t* a_buf = NALLOC(uint32_t,a_deg);
     uint32_t* b_buf = NALLOC(uint32_t,b_deg);
     uint32_t* c_buf = NALLOC(uint32_t,b_deg);
-    sysRead32(fileA->File,a_buf,a_deg);
-    sysRead32(fileB->File,b_buf,b_deg);
+    sysRead32(fileA->file,a_buf,a_deg);
+    sysRead32(fileB->file,b_buf,b_deg);
     permConvertLegacyFormat(a_buf,a_deg);
     permConvertLegacyFormat(b_buf,b_deg);
 
@@ -124,7 +124,7 @@ static int tensorperms(void)
 	int k;
 	for (k = 0; k < b_deg; ++k)
 	    c_buf[k] = a_buf[i] * b_deg + b_buf[k];
-        sysWrite32(f->File, c_buf, b_deg);
+        sysWrite32(f->file, c_buf, b_deg);
     }
     mfClose(f);
     return 0;
@@ -166,9 +166,9 @@ static void init(int argc, char **argv)
 {
     App = appAlloc(&AppInfo,argc,argv);
     appGetArguments(App,3,3);
-    fileNameA = App->ArgV[0];
-    fileNameB = App->ArgV[1];
-    fileNameC = App->ArgV[2];
+    fileNameA = App->argV[0];
+    fileNameB = App->argV[1];
+    fileNameC = App->argV[2];
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////

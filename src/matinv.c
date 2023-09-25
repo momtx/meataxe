@@ -74,18 +74,18 @@ Matrix_t *matInverse(const Matrix_t *mat)
    PTR tmp = NULL;      // workspace
 
    matValidate(MTX_HERE, mat);
-   if (mat->Nor != mat->Noc) {
+   if (mat->nor != mat->noc) {
       mtxAbort(MTX_HERE,"%s",MTX_ERR_NOTSQUARE);
    }
-   const int dim = mat->Nor;
-   Matrix_t *dest = matId(mat->Field, dim);
+   const int dim = mat->nor;
+   Matrix_t *dest = matId(mat->field, dim);
 
    // Copy matrix into workspace
    tmp = ffAlloc(dim, dim);
-   memcpy(tmp,mat->Data,ffSize(dim, dim));
+   memcpy(tmp,mat->data,ffSize(dim, dim));
 
    // Inversion
-   zmatinv(tmp,dest->Data, dim);
+   zmatinv(tmp,dest->data, dim);
    return dest;
 }
 

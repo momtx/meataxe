@@ -15,10 +15,10 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 /// Local data
 
-#define IS_DONE(app,i) (app->IsDone[i] == 0xFFFFFFFF)
-#define IS_DONE_1(app,i,k) ((app->IsDone[i] & (1 << (k))) != 0)
-#define MARK_DONE(app,i) (app->IsDone[i] = 0xFFFFFFFF)
-#define MARK_DONE_1(app,i,k) (app->IsDone[i] |= (1 << (k)))
+#define IS_DONE(app,i) (app->isDone[i] == 0xFFFFFFFF)
+#define IS_DONE_1(app,i,k) ((app->isDone[i] & (1 << (k))) != 0)
+#define MARK_DONE(app,i) (app->isDone[i] = 0xFFFFFFFF)
+#define MARK_DONE_1(app,i,k) (app->isDone[i] |= (1 << (k)))
 
 /// @defgroup app Application Framework
 /// @{
@@ -73,10 +73,10 @@ static int CheckForLongOption(MtxApplication_t *app, int i, const char *long_nam
    if (*long_name == 0) {
       return -1;
    }
-   if (strcmp(app->OrigArgV[i] + 2,long_name)) {
+   if (strcmp(app->origArgV[i] + 2,long_name)) {
       return -1;
    }
-   app->IsDone[i] = 0xFFFFFFFF;
+   app->isDone[i] = 0xFFFFFFFF;
    return 0;
 }
 
@@ -85,7 +85,7 @@ static int CheckForLongOption(MtxApplication_t *app, int i, const char *long_nam
 
 static int CheckForShortOption(MtxApplication_t *app, int i, char short_name, int needs_arg)
 {
-   const char *tab = app->OrigArgV[i] + 1;
+   const char *tab = app->origArgV[i] + 1;
    int k;
    for (k = 0; tab[k] != 0; ++k) {
       if (IS_DONE_1(app,i,k)) {
@@ -110,12 +110,12 @@ static int CheckForShortOption(MtxApplication_t *app, int i, char short_name, in
 
 static int GetArg(MtxApplication_t *app, int i)
 {
-   if ((i >= app->OptEnd - 1) || (app->IsDone[i + 1] != 0)) {
-      mtxAbort(NULL,"Missing argument after '%s'",app->OrigArgV[i]);
+   if ((i >= app->optEnd - 1) || (app->isDone[i + 1] != 0)) {
+      mtxAbort(NULL,"Missing argument after '%s'",app->origArgV[i]);
       return -1;
    }
-   app->OptArg = app->OrigArgV[i + 1];
-   app->IsDone[i + 1] = 0xFFFFFFFF;
+   app->optArg = app->origArgV[i + 1];
+   app->isDone[i + 1] = 0xFFFFFFFF;
    return 0;
 }
 
@@ -126,16 +126,16 @@ static int Find(MtxApplication_t *app, char short_name, const char *long_name,
                 int needs_arg)
 {
    int i;
-   for (i = 0; i < app->OptEnd; ++i) {
+   for (i = 0; i < app->optEnd; ++i) {
       int rc;
 
       if (IS_DONE(app,i)) {
          continue;
       }
-      if (*app->OrigArgV[i] != '-') {
+      if (*app->origArgV[i] != '-') {
          continue;
       }
-      if (app->OrigArgV[i][1] == '-') {
+      if (app->origArgV[i][1] == '-') {
          rc = CheckForLongOption(app,i,long_name);
       } else {
          rc = CheckForShortOption(app,i,short_name,needs_arg);
@@ -146,7 +146,7 @@ static int Find(MtxApplication_t *app, char short_name, const char *long_name,
                return -1;
             }
          }
-         app->OptInd = i;
+         app->optInd = i;
          return 0;
       }
    }
@@ -213,8 +213,8 @@ static void PrintHelp(const MtxApplicationInfo_t *ai)
       printf("MeatAxe Version %s\nNo help text available.\n",v);
    } else {
       printf("NAME\n    %s - %s\n    Version %s\n\n",
-             ai->Name,ai->Description,v);
-      printf("%s\n",ai->Help);
+             ai->name,ai->description,v);
+      printf("%s\n",ai->help);
    }
 }
 
@@ -255,24 +255,23 @@ MtxApplication_t *appAlloc(MtxApplicationInfo_t const *ai, int argc, char **argv
    int time_limit;
    int i;
 
-   if ((a = ALLOC(MtxApplication_t)) == NULL) {
-      return NULL;
-   }
+   a = ALLOC(MtxApplication_t);
    memset(a,0,sizeof(*a));
+   a->context = mtxBegin(MTX_HERE, "Running program: %s", ai ? ai->name : "(no name)");
 
    /* Save the command line for later use.
       ------------------------------------ */
-   a->OptEnd = a->OrigArgC = argc - 1;
-   a->OrigArgV = argv + 1;
-   memset(a->IsDone,0,sizeof(a->IsDone));
+   a->optEnd = a->origArgC = argc - 1;
+   a->origArgV = argv + 1;
+   memset(a->isDone,0,sizeof(a->isDone));
    a->AppInfo = ai;
 
    /* Look for '--'.
       -------------- */
-   for (i = 0; i < a->OrigArgC; ++i) {
-      if (!strcmp(a->OrigArgV[i],"--")) {
-         a->OptEnd = i;
-         a->IsDone[i] = 0xFFFFFFFF;
+   for (i = 0; i < a->origArgC; ++i) {
+      if (!strcmp(a->origArgV[i],"--")) {
+         a->optEnd = i;
+         a->isDone[i] = 0xFFFFFFFF;
          break;
       }
    }
@@ -314,7 +313,8 @@ void appFree(MtxApplication_t *a)
 {
    long t = sysTimeUsed();
    MESSAGE(1,("%s: %ld.%ld seconds\n",a->AppInfo != NULL ?
-              a->AppInfo->Name : "meataxe",t / 10,t % 10));
+              a->AppInfo->name : "meataxe",t / 10,t % 10));
+   if (a->context > 0) mtxEnd(a->context);
    sysFree(a);
 }
 
@@ -405,7 +405,7 @@ const char *appGetTextOption(MtxApplication_t *app, const char *spec, const char
    if (FindSpec(app,spec,1) != 0) {
       return dflt;
    }
-   return app->OptArg;
+   return app->optArg;
 }
 
 
@@ -457,13 +457,13 @@ int appGetIntOption(MtxApplication_t *app, const char *spec, int dflt,
       return dflt;
    }
    if (!IsInteger(txt)) {
-      mtxAbort(NULL,"Invalid number after '%s'",app->OrigArgV[app->OptInd]);
+      mtxAbort(NULL,"Invalid number after '%s'",app->origArgV[app->optInd]);
       return dflt;
    }
    i = atoi(txt);
    if ((min <= max) && ((i < min) || (i > max))) {
       mtxAbort(NULL,"Value after '%s' is out of range (%d..%d)",
-                 app->OrigArgV[app->OptInd],min,max);
+                 app->origArgV[app->optInd],min,max);
       return dflt;
    }
    return i;
@@ -472,16 +472,16 @@ int appGetIntOption(MtxApplication_t *app, const char *spec, int dflt,
 
 static int CheckDone(MtxApplication_t *app, int i)
 {
-   const char *c = app->OrigArgV[i];
+   const char *c = app->origArgV[i];
 
-   if (app->IsDone[i] == 0xFFFFFFFF) {
+   if (app->isDone[i] == 0xFFFFFFFF) {
       return 0;
    }
    if (*c != '-') {
       return 1;                 /* 1 = Ende der Optionen */
    }
    if (c[1] == '-') {
-      if (app->IsDone[i] != 0xFFFFFFFF) {
+      if (app->isDone[i] != 0xFFFFFFFF) {
          mtxAbort(NULL,"Unknown option '%s', try --help",c);
          return -1;             /* -1 = Nicht ausgewertete Option */
       }
@@ -520,7 +520,7 @@ int appGetArguments(MtxApplication_t *app, int min_argc, int max_argc)
    int i;
 
    // Check for unprocessed options
-   for (i = 0; i < app->OptEnd; ++i) {
+   for (i = 0; i < app->optEnd; ++i) {
       int rc = CheckDone(app,i);
       if (rc < 0) {
          return -1;
@@ -531,27 +531,27 @@ int appGetArguments(MtxApplication_t *app, int min_argc, int max_argc)
    }
 
    // handle "--"
-   if ((i == app->OptEnd) && (app->OptEnd < app->OrigArgC)) {
+   if ((i == app->optEnd) && (app->optEnd < app->origArgC)) {
       ++i;
    }
 
-   app->ArgC = app->OrigArgC - i;
-   app->ArgV = app->OrigArgV + i;
+   app->argC = app->origArgC - i;
+   app->argV = app->origArgV + i;
 
    // check for options in argument list
-   for (++i; i < app->OrigArgC; ++i) {
-      if (app->IsDone[i] != 0) {
-         mtxAbort(NULL,"Option '%s' following non-optional argument", app->OrigArgV[i]);
+   for (++i; i < app->origArgC; ++i) {
+      if (app->isDone[i] != 0) {
+         mtxAbort(MTX_HERE,"Option '%s' following non-optional argument", app->origArgV[i]);
          return -1;
       }
    }
 
    // check number of arguments
-   if ((app->ArgC < min_argc) || (app->ArgC > max_argc)) {
-      mtxAbort(NULL,"Invalid number of arguments, try --help");
+   if ((app->argC < min_argc) || (app->argC > max_argc)) {
+      mtxAbort(MTX_HERE,"Invalid number of arguments, try --help");
       return -1;
    }
-   return app->ArgC;
+   return app->argC;
 }
 
 /// @}

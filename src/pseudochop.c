@@ -66,24 +66,24 @@ int main(int argc, char *argv[])
 	return 1;
 
     /* Read <ref>.cfinfo */
-    latReadInfo(&mycfinfo,App->ArgV[1]);
+    latReadInfo(&mycfinfo,App->argV[1]);
 
     /* Read generators of <mod>, and set up the word generator */
-    gens = mrLoad(App->ArgV[0],mycfinfo.NGen);
+    gens = mrLoad(App->argV[0],mycfinfo.NGen);
     rep = wgAlloc(gens);
 
     /* Run through all possible constituents and calculate their multiplicity in <mod> */
-    for ( j = 0; j < mycfinfo.NCf; j++ )
+    for ( j = 0; j < mycfinfo.nCf; j++ )
     {
 	int oldnul, newnul;
-        if (mycfinfo.Cf[j].peakword == 0)
+        if (mycfinfo.Cf[j].peakWord == 0)
         {
 	    mtxAbort(MTX_HERE,"0 is definitly not a peakword! - Did you run mkpeak?");
             return 1;
         }
-        old = matInsert(wgMakeWord(rep,mycfinfo.Cf[j].peakword),mycfinfo.Cf[j].peakpol);
+        old = matInsert(wgMakeWord(rep,mycfinfo.Cf[j].peakWord),mycfinfo.Cf[j].peakPol);
 	nulsp = matNullSpace(old);
-	newnul = nulsp->Nor; 
+	newnul = nulsp->nor; 
         oldnul = 0;
 
 	/* Find stable nullity */
@@ -97,48 +97,48 @@ int main(int argc, char *argv[])
             matFree(nulsp);
             old = matDup(newmat);
             nulsp = matNullSpace__(newmat); 
-            newnul= nulsp->Nor;
+            newnul= nulsp->nor;
         }
         matFree(old);
         mycfinfo.Cf[j].mult = newnul / mycfinfo.Cf[j].spl;
         dim += mycfinfo.Cf[j].dim * mycfinfo.Cf[j].mult;
 
         MESSAGE(0,("%s%s occurs %ld times (total dimension now %d out of %d)\n",
-	    App->ArgV[1],latCfName(&mycfinfo,j),mycfinfo.Cf[j].mult,
-	    dim,gens->Gen[0]->Nor));
+	    App->argV[1],latCfName(&mycfinfo,j),mycfinfo.Cf[j].mult,
+	    dim,gens->Gen[0]->nor));
 
 	/* Copy generators, std basis, and .op file for this constituent.
            Note: we do this even if this constituent does not occcur in <mod> */
-        sprintf(name, "%s%s.k", App->ArgV[0], latCfName(&mycfinfo,j));
+        sprintf(name, "%s%s.k", App->argV[0], latCfName(&mycfinfo,j));
         matSave(nulsp,name);
-        sprintf(name, "%s%s.op", App->ArgV[0], latCfName(&mycfinfo,j));
-        sprintf(name2, "%s%s.op", App->ArgV[1], latCfName(&mycfinfo,j));
+        sprintf(name, "%s%s.op", App->argV[0], latCfName(&mycfinfo,j));
+        sprintf(name2, "%s%s.op", App->argV[1], latCfName(&mycfinfo,j));
         OpTable = imatLoad(name2);
         imatSave(OpTable,name);
         for ( i = 0; i < mycfinfo.NGen; i++ )
         {
-            sprintf(name, "%s%s.%d", App->ArgV[0], latCfName(&mycfinfo,j), i+1);
-            sprintf(name2, "%s%s.%d", App->ArgV[1], latCfName(&mycfinfo,j), i+1);
+            sprintf(name, "%s%s.%d", App->argV[0], latCfName(&mycfinfo,j), i+1);
+            sprintf(name2, "%s%s.%d", App->argV[1], latCfName(&mycfinfo,j), i+1);
             mat = matLoad(name2);
-            if (mat->Field != gens->Gen[0]->Field)
+            if (mat->field != gens->Gen[0]->field)
             {
 		mtxAbort(MTX_HERE,"%s: %s",name2,MTX_ERR_INCOMPAT); 
                 return -1;
             }
             matSave(mat, name);
             matFree(mat);
-            sprintf(name, "%s%s.std.%d", App->ArgV[0], latCfName(&mycfinfo,j), i+1);
-            sprintf(name2, "%s%s.std.%d", App->ArgV[1], latCfName(&mycfinfo,j), i+1);
+            sprintf(name, "%s%s.std.%d", App->argV[0], latCfName(&mycfinfo,j), i+1);
+            sprintf(name2, "%s%s.std.%d", App->argV[1], latCfName(&mycfinfo,j), i+1);
             mat = matLoad(name2);
             matSave(mat, name);
             matFree(mat);
         } 
     }
-    if (dim < gens->Gen[0]->Nor)
+    if (dim < gens->Gen[0]->nor)
         fprintf(stderr, "The given compositionfactors form only %d from whole dimension %d!\n\n",
-		dim, gens->Gen[0]->Nor);
+		dim, gens->Gen[0]->nor);
 
-    strcpy(mycfinfo.BaseName,App->ArgV[0]);
+    strcpy(mycfinfo.BaseName,App->argV[0]);
     latWriteInfo(&mycfinfo);
 
     return 0;	

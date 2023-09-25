@@ -22,10 +22,10 @@ Perm_t *permInverse(const Perm_t *src)
 {
    permValidate(MTX_HERE, src);
 
-   Perm_t* inv = permAlloc(src->Degree);
-   uint32_t* d = inv->Data;
-   const uint32_t* s = src->Data + src->Degree;
-   for (uint32_t i = src->Degree; i > 0; ) {
+   Perm_t* inv = permAlloc(src->degree);
+   uint32_t* d = inv->data;
+   const uint32_t* s = src->data + src->degree;
+   for (uint32_t i = src->degree; i > 0; ) {
       --i;
       --s;
       d[*s] = i;

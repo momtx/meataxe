@@ -64,16 +64,16 @@ static void AllocateResult()
     /* Calculate the dimension of M
        ---------------------------- */
     DimM = 0;
-    for (i = 0; i < InfoM.NCf; ++i)
+    for (i = 0; i < InfoM.nCf; ++i)
 	DimM += InfoM.Cf[i].dim * InfoM.Cf[i].mult;
 
     /* Calculate the dimension of N 
        ---------------------------- */
     DimN = 0;
-    for (i = 0; i < InfoN.NCf; ++i)
+    for (i = 0; i < InfoN.nCf; ++i)
 	DimN += InfoN.Cf[i].dim * InfoN.Cf[i].mult;
 
-    UncondMat = matAlloc(CondMat->Field,CondMat->Nor,DimM * DimN);
+    UncondMat = matAlloc(CondMat->field,CondMat->nor,DimM * DimN);
 }
 
 
@@ -88,7 +88,7 @@ static void ReadQMatrices()
     int i;
     char fn[200];
 
-    for (i = 0; i < TkInfo.NCf; ++i)
+    for (i = 0; i < TkInfo.nCf; ++i)
     {
 	sprintf(fn,"%s.q.%d",TkiName,i+1);
 	MESSAGE(1,("Reading %s\n",fn));
@@ -121,15 +121,15 @@ static void Init(int argc, char **argv)
 
     /* Read input files
        ---------------- */
-    TkiName = App->ArgV[0];
+    TkiName = App->argV[0];
     tkReadInfo(&TkInfo,TkiName);
-    latReadInfo(&InfoM,TkInfo.NameM);
-    latReadInfo(&InfoN,TkInfo.NameN);
-    CondMat = matLoad(App->ArgV[1]);
+    latReadInfo(&InfoM,TkInfo.nameM);
+    latReadInfo(&InfoN,TkInfo.nameN);
+    CondMat = matLoad(App->argV[1]);
 
     /* Other initializations
        --------------------- */
-    UncondName = App->ArgV[2];
+    UncondName = App->argV[2];
     AllocateResult();
     ReadQMatrices();
 }
@@ -161,13 +161,13 @@ static void CalculatePositions(int cf, int num_m, int num_n, int *condpos,
     int *uncondpos)
 
 {
-    int cfm = TkInfo.CfIndex[0][cf];
-    int cfn = TkInfo.CfIndex[1][cf];
+    int cfm = TkInfo.cfIndex[0][cf];
+    int cfn = TkInfo.cfIndex[1][cf];
     int startm = 0, startn = 0;
     int i;
 
-    MTX_ASSERT(cfm >= 0 && cfm <= InfoM.NCf);
-    MTX_ASSERT(cfn >= 0 && cfn <= InfoN.NCf);
+    MTX_ASSERT(cfm >= 0 && cfm <= InfoM.nCf);
+    MTX_ASSERT(cfn >= 0 && cfn <= InfoN.nCf);
     MTX_ASSERT(InfoM.Cf[cfm].dim == InfoN.Cf[cfn].dim);
 
 
@@ -186,8 +186,8 @@ static void CalculatePositions(int cf, int num_m, int num_n, int *condpos,
     *condpos = 0;
     for (i = 0; i < cf; ++i)
     {
-	int m = TkInfo.CfIndex[0][i];
-	int n = TkInfo.CfIndex[1][i];
+	int m = TkInfo.cfIndex[0][i];
+	int n = TkInfo.cfIndex[1][i];
 	*condpos += InfoM.Cf[m].mult * InfoN.Cf[n].mult * InfoM.Cf[m].spl;
     }
     *condpos += (num_m * InfoN.Cf[cfn].mult +num_n)* InfoM.Cf[cfm].spl;
@@ -210,10 +210,10 @@ static void UncondenseCf(int row, int cf)
     int cfm, cfn, mult_m, mult_n, cf_dim;
 
     MTX_ASSERT(row >= 0);
-    MTX_ASSERT(cf >= 0 && cf < TkInfo.NCf);
+    MTX_ASSERT(cf >= 0 && cf < TkInfo.nCf);
 
-    cfm = TkInfo.CfIndex[0][cf];    /* Constituent index in M */
-    cfn = TkInfo.CfIndex[1][cf];    /* Constituent index in N */
+    cfm = TkInfo.cfIndex[0][cf];    /* Constituent index in M */
+    cfn = TkInfo.cfIndex[1][cf];    /* Constituent index in N */
     mult_m = InfoM.Cf[cfm].mult;    /* Mutiplicity of constituent in M */
     mult_n = InfoN.Cf[cfn].mult;    /* Mutiplicity of constituent in N */
     cf_dim = InfoM.Cf[cfm].dim;	    /* Dimension of the constituent */
@@ -228,7 +228,7 @@ static void UncondenseCf(int row, int cf)
 	    int pos, condpos, uncondpos;
 
 	    CalculatePositions(cf,i,j,&condpos,&uncondpos);
-	    condvec = matCut(CondMat,row,condpos,1,QMat[cf]->Nor);
+	    condvec = matCut(CondMat,row,condpos,1,QMat[cf]->nor);
 	    matMul(condvec,QMat[cf]);
 	    pos = 0;
 	    for (k = 1; k <= InfoM.Cf[cfm].dim; ++k)
@@ -261,7 +261,7 @@ static void Uncondense(int row)
 
     /* Loop through all constituents
        ----------------------------- */
-    for (cf = 0; cf < TkInfo.NCf; ++cf)
+    for (cf = 0; cf < TkInfo.nCf; ++cf)
 	UncondenseCf(row,cf);
 }
 
@@ -276,7 +276,7 @@ static void Uncondense(int row)
 int main(int argc, char **argv)
 {
     Init(argc,argv);
-    for (int row = 0; row < CondMat->Nor; ++row)
+    for (int row = 0; row < CondMat->nor; ++row)
 	Uncondense(row);
     matSave(UncondMat,UncondName);
     if (App != NULL)

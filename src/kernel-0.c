@@ -286,7 +286,7 @@ int ffSetField(int field)
       mtxAbort(MTX_HERE,"Cannot open table file for GF(%d)", field);
       return -1;
    }
-   const int context = mtxBegin("Loading arithmetic tables for GF(%d)", field);
+   const int context = mtxBegin(MTX_HERE, "Loading arithmetic tables for GF(%d)", field);
    result = ReadTableFile(fd,field);
    mtxEnd(context);
    fclose(fd);
@@ -571,10 +571,8 @@ void ffAddMulRowPartial(PTR dest, PTR src, FEL f, int firstcol, int noc)
 
 FEL ffFromInt(int l)
 {
-   register int f;
-   f = l % ffOrder;
-   if (f < 0) { f += ffOrder; }
-   return (FEL) f;
+   MTX_ASSERT(isFel(l));
+   return (FEL) l;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////

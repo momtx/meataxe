@@ -30,20 +30,20 @@ int MatrixToVector(const Matrix_t *mat, Matrix_t *vecs, int n)
    int i;
    matValidate(MTX_HERE, mat);
    matValidate(MTX_HERE, vecs);
-   if ((mat->Nor * mat->Noc != vecs->Noc)
-       || (mat->Field != vecs->Field)) {
+   if ((mat->nor * mat->noc != vecs->noc)
+       || (mat->field != vecs->field)) {
       mtxAbort(MTX_HERE,"mat and vecs: %s",MTX_ERR_INCOMPAT);
       return -1;
    }
-   if ((n < 0) || (n >= vecs->Nor)) {
-      mtxAbort(MTX_HERE,"n=%d (nor=%d): %s",n,vecs->Nor,MTX_ERR_BADARG);
+   if ((n < 0) || (n >= vecs->nor)) {
+      mtxAbort(MTX_HERE,"n=%d (nor=%d): %s",n,vecs->nor,MTX_ERR_BADARG);
       return -1;
    }
 
    /* Convert the matrix.
       ------------------- */
-   for (i = 0; i < mat->Nor; ++i) {
-      if (matCopyRegion(vecs,n,i * mat->Noc, mat,i,0,1,mat->Noc) != 0) {
+   for (i = 0; i < mat->nor; ++i) {
+      if (matCopyRegion(vecs,n,i * mat->noc, mat,i,0,1,mat->noc) != 0) {
          mtxAbort(MTX_HERE,"Copying failed");
          return -1;
       }

@@ -10,21 +10,16 @@
 #include <stdlib.h>
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-/// Global data
-
 
 static int GrpLibFormat = 0;    /* File is in Group Library Format */
-static uint32_t fl;
-static int mod;
-static uint32_t nor;
-static uint32_t noc;
-static FILE *src = NULL;                /* Input file */
-static FILE *out;                       /* Output file */
-static char lbuf[MAXLINE] = {0};        /* Input line buffer */
-static char *lptr = lbuf;               /* Read pointer */
+static FILE *src = NULL;                // Input file
+static FILE *out;                       // Output file
+static int inpLineNo = 0;               // Input line number
+static char lbuf[MAXLINE] = {0};        // Input line buffer
+static char *lptr = lbuf;               // Read pointer
 static const char *inpname = "[stdin]";
 static const char *outname = "";
-static int MemberCount = 0;             /* Number of members */
+static int MemberCount = 0;             // Number of members
 
 static MtxApplicationInfo_t AppInfo = {
    "zcv","Convert Text to Binary Format",
@@ -42,85 +37,156 @@ static MtxApplicationInfo_t AppInfo = {
 
 static MtxApplication_t *App = NULL;
 
-/////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////
 /// Read next input line, skip empty lines and strip comments.
-/// Returns 0 on success, 1 on end-of-file.
+/// Returns 1 on success, 0 on end-of-file.
 
-static int readline()
+static int tryReadLine()
 {
-   char *c;
-   int mt = 1;
-
-   while (mt) {
+   while (1) {
       lbuf[0] = 0;
-      if (feof(src)) { return 1; }
-      fgets(lbuf,sizeof(lbuf),src);
-      if (ferror(src)) {
-         mtxAbort(MTX_HERE,"Unexpected end of input file");
-         return -1;
+      if (fgets(lbuf,sizeof(lbuf),src) == NULL) {
+         if (feof(src)) 
+            return 0;
+         mtxAbort(MTX_HERE,"Error reading file");
       }
-      for (c = lbuf; *c != 0 && *c != '#'; ++c) {
-         if (!isspace(*c)) { mt = 0; }}
+      ++inpLineNo;
+
+      // Skip comment lines (starting with '#')
+      if (lbuf[0] == '#')
+         continue;
+
+      // Trim leading and trailing white space, skip empty lines.
+      lptr = lbuf;
+      while (isspace(*lptr))
+         ++lptr;
+      if (*lptr == 0)
+         continue;
+      char *c = lptr + strlen(lptr);
+      if (c == lbuf + sizeof(lbuf) && c[-1] != '\n')
+          mtxAbort(MTX_HERE,"Line too long");
+      while (c > lptr && isspace(c[-1]))
+         --c;
       *c = 0;
+      return 1;
    }
-   lptr = lbuf;
-   return 0;
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+/// Like tryReadLine, but fails on end-of-file.
+
+static void readLine()
+{
+   if (!tryReadLine())
+      mtxAbort(MTX_HERE,"Unexpected end of file");
+}
+
+const char* provideInputFilePosition(void* userData)
+{
+   static char buffer[300];
+   snprintf(buffer, sizeof(buffer), "Reading %s, line %d, column %d",
+         inpname, inpLineNo, (int)(lptr - lbuf) + 1);
+   return buffer;
+}
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////
+
+static void assertEndOfLine()
+{
+   while (isspace(*lptr))
+      ++lptr;
+   if (*lptr != 0)
+      mtxAbort(MTX_HERE, "Unexpected trailing characters");
+}
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////
+
+/// Read field element
+
+static FEL readFel()
+{
+   // Skip to beginning of next number.
+   while (1) {
+      while (isspace(*lptr)) ++lptr;
+      if (*lptr != 0) 
+         break;
+      readLine();
+   }
+
+   // Parse number
+   char *rp = lptr;
+   uint32_t val = 0;
+   if (!isdigit(*lptr))
+      mtxAbort(MTX_HERE, "Bad input: expected digit, found 0x%02x", (unsigned char) *lptr);
+   while (isdigit(*rp) && val < 0xFFFF) {
+      val = val * 10 + (*rp - '0');
+      ++rp;
+      // Allow packed format without spaces for GF(q), q < 10
+      if (ffOrder < 9)
+         break;
+   }
+   if (val >= ffOrder) {
+      mtxAbort(MTX_HERE, "Bad input: %lu not in GF(%lu)",
+            (unsigned long) val, (unsigned long) ffOrder);
+   }
+   lptr = rp;
+   return ffFromInt(val);
 }
 
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////
+
 /// Read integer number
 
-static int32_t readlong()
-{
-   long l;
-   int minus = 0;
+static int UNSIGNED = 1;
+static int SIGNED = 2;
 
-   while (!isdigit(*lptr) && *lptr != '-') {
-      while (*lptr != 0 && !isdigit(*lptr) && *lptr != '-') {
+static uint32_t read32(const int type)
+{
+   // Skip to beginning of next number.
+   while (1) {
+      while (isspace(*lptr)) ++lptr;
+      if (*lptr != 0) 
+         break;
+      readLine();
+   }
+
+   // Parse number
+   int minus = 0;
+   if (type == SIGNED) {
+      if (*lptr == '-') {
+         minus = 1;
          ++lptr;
       }
-      if (*lptr == 0) {
-         if (readline()) {
-            mtxAbort(MTX_HERE,"Unexpected end of input file");
-            return -1;
-         }
-      }
    }
-   if (*lptr == '-') { minus = 1; ++lptr; }
-   if (!isdigit(*lptr)) {
-      mtxAbort(MTX_HERE,"%s: Bad file format",inpname);
-      return -1;
+   char *rp = lptr;
+   uint64_t val = 0;
+   const uint64_t maxVal = (type == SIGNED) ? (minus ? 0x80000000 : 0x7FFFFFFF) : 0xFFFFFFFF;
+   if (!isdigit(*rp))
+      mtxAbort(MTX_HERE, "Bad input: expected digit, found 0x%02x", (unsigned char) *rp);
+   while (isdigit(*rp)) {
+      val = val * 10 + (*rp - '0');
+      if (val > maxVal)
+          mtxAbort(MTX_HERE, "Number out of range [-2^32,2^32-1]");
+      ++rp;
    }
-   for (l = 0; isdigit(*lptr); ) {
-      l *= 10;
-      switch (*lptr) {
-         case '0': break;
-         case '1': l += 1;
-            break;
-         case '2': l += 2;
-            break;
-         case '3': l += 3;
-            break;
-         case '4': l += 4;
-            break;
-         case '5': l += 5;
-            break;
-         case '6': l += 6;
-            break;
-         case '7': l += 7;
-            break;
-         case '8': l += 8;
-            break;
-         case '9': l += 9;
-            break;
-      }
-      ++lptr;
-      if ((mod != 2) && (mod != 5) && (fl >= 2) && (fl <= 9)) { break; }
-   }
-   return minus ? -l : l;
+   if (*rp != 0 && !isspace(*rp))
+      mtxAbort(MTX_HERE, "Malformed number");
+
+   lptr = rp;
+   return (uint32_t)(minus ? -val : val);
 }
 
+static int32_t parse32s()
+{
+   return (int32_t) read32(SIGNED);
+}
+
+static uint32_t parse32u()
+{
+   return read32(UNSIGNED);
+}
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -132,160 +198,206 @@ static void WriteHeader(uint32_t a, uint32_t b, uint32_t c)
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static const char* strPrefix(const char* s, const char* prefix)
+//static const char* strPrefix(const char* s, const char* prefix)
+//{
+//   if (s == NULL || prefix == NULL)
+//      return NULL;
+//   while (*prefix != 0 && *s == *prefix) {
+//      ++s;
+//      ++prefix;
+//   }
+//   return (*prefix == 0) ? s : NULL;
+//}
+//
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+int tryParseLiteral(const char *text)
 {
-   if (s == NULL || prefix == NULL)
-      return NULL;
-   while (*prefix != 0 && *s == *prefix) {
-      ++s;
-      ++prefix;
-   }
-   return (*prefix == 0) ? s : NULL;
+   size_t textLen = strlen(text);
+   if (strncmp(lptr, text, textLen) != 0)
+      return 0;
+   char *end = lptr + textLen;
+   if (*end != 0 && !isspace(*end))
+      return 0;
+   lptr = end;
+   return 1;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static int parse32u(uint32_t* var, const char *s, const char* prefix)
+static int tryParseHeaderField(uint32_t* var, const char* prefix)
 {
-   const char* valueStr = strPrefix(s, prefix);
-   if (valueStr == NULL) return 0;
-      
+   while (isspace(*lptr)) ++lptr;
+   const size_t plen = strlen(prefix);
+   if (strncmp(lptr, prefix, plen) != 0)
+      return 0;
+   lptr += plen;
    char* end = NULL;
-   unsigned long value = strtoul(valueStr, &end, 10);
-   if (*valueStr != 0 && *end == 0) {
-      if (value <= 0xFFFFFFFFU) {
-         *var = (uint32_t) value;
-         return 1;
-      }
+   unsigned long long value = strtoull(lptr, &end, 10);
+   if (*lptr != 0 && end != lptr && value <= 0xFFFFFFFFU) {
+      *var = (uint32_t) value;
+      lptr = end;
+      return 1;
    }
-   
-   mtxAbort(MTX_HERE, "%s: invalid number in object header: \"%s\"", inpname, s);
+   mtxAbort(MTX_HERE, "Invalid number after \"%s\"", prefix);
    return 0;
 }
          
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-/// Convert matrix
 
-static void ConvertMatrix()
+static int tryParseHeaderField32s(int32_t* var, const char* prefix)
 {
-   long i, j;
-   PTR m1;
+   while (isspace(*lptr)) ++lptr;
+   const size_t plen = strlen(prefix);
+   if (strncmp(lptr, prefix, plen) != 0)
+      return 0;
+   lptr += plen;
+   char* end = NULL;
+   long long value = strtoll(lptr, &end, 10);
+   if (*lptr != 0 && end != lptr && value <= 2147483647LL && value >= -2147483648LL) {
+      *var = (int32_t) value;
+      lptr = end;
+      return 1;
+   }
+   mtxAbort(MTX_HERE, "Invalid number after \"%s\"", prefix);
+   return 0;
+}
+         
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
-   MESSAGE(0,("%dx%d matrix over GF(%d)\n",nor,noc,fl));
+static void convertMatrix()
+{
+   uint32_t fl = MTX_NVAL;
+   uint32_t nor = MTX_NVAL;
+   uint32_t noc = MTX_NVAL;
+   while (1) {
+      if (tryParseHeaderField(&fl, "field=")) {continue;}
+      if (tryParseHeaderField(&nor, "nor=")) {continue;}
+      if (tryParseHeaderField(&nor, "rows=")) {continue;}
+      if (tryParseHeaderField(&noc, "noc=")) {continue;}
+      if (tryParseHeaderField(&noc, "cols=")) {continue;}
+      if (*lptr == 0) {break;}
+      mtxAbort(MTX_HERE, "Unknown header field");
+   }
+   if (nor == MTX_NVAL) {mtxAbort(MTX_HERE, "Missing header field \"rows\".");}
+   if (noc == MTX_NVAL) {mtxAbort(MTX_HERE, "Missing header field \"cols\".");}
+   if (fl == MTX_NVAL) {mtxAbort(MTX_HERE, "Missing header field \"field\".");}
+
+   MESSAGE(0, ("%dx%d matrix over GF(%d)\n", nor, noc, fl));
    ffSetField(fl);
-   m1 = ffAlloc(1, noc);
-   WriteHeader(fl,nor,noc);
-   for (i = 1; i <= nor; ++i) {
-      ffMulRow(m1,FF_ZERO, noc);
-      for (j = 0; j < noc; ++j) {
-         long val = readlong();
-         ffInsert(m1,j,ffFromInt(val));
+   PTR m1 = ffAlloc(1, noc);
+   WriteHeader(fl, nor, noc);
+
+   for (uint32_t i = 0; i < nor; ++i) {
+      ffMulRow(m1, FF_ZERO, noc);
+      for (uint32_t j = 0; j < noc; ++j) {
+         FEL a = readFel();
+         ffInsert(m1, j, a);
       }
       ffWriteRows(out, m1, 1, noc);
+      assertEndOfLine();
    }
+   sysFree(m1);
 }
 
-
 /////////////////////////////////////////////////////////////////////////////////////////////////////
-/// Convert integer matrix
 
-static void ConvertIntMatrix()
+static void convertIntegerMatrix()
 {
-   long i, j;
-   int32_t *x;
+   uint32_t nor = MTX_NVAL;
+   uint32_t noc = MTX_NVAL;
+   while (1) {
+      if (tryParseHeaderField(&nor, "rows=")) continue;
+      if (tryParseHeaderField(&nor, "nor=")) continue;
+      if (tryParseHeaderField(&noc, "cols=")) continue;
+      if (tryParseHeaderField(&noc, "noc=")) continue;
+      if (*lptr == 0) break;
+      mtxAbort(MTX_HERE,"Unknown header field");
+   }
+   if (nor == MTX_NVAL) {mtxAbort(MTX_HERE, "Missing header field \"rows\".");}
+   if (noc == MTX_NVAL) {mtxAbort(MTX_HERE, "Missing header field \"cols\".");}
 
    MESSAGE(0,("%dx%d integer matrix\n",nor,noc));
-   x = NALLOC(int32_t,noc);
-   WriteHeader(MTX_TYPE_INTMATRIX, nor, noc);         /* 8 = T_IMAT */
-   for (i = 1; i <= nor; ++i) {
-      for (j = 0; j < noc; ++j) {
-         x[j] = readlong();
+   int32_t* x = NALLOC(int32_t, noc);
+   WriteHeader(MTX_TYPE_INTMATRIX, nor, noc);
+   for (uint32_t i = 1; i <= nor; ++i) {
+      for (uint32_t j = 0; j < noc; ++j) {
+         x[j] = parse32s();
       }
       sysWrite32(out,x,noc);
+      assertEndOfLine();
    }
    free(x);
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////
 
-/// Convert permutation (new format)
-
-static void ConvertPermutation()
+static void convertPermutation()
 {
-   long i;
-   uint32_t *buf;
-   long kk;
-
-   MESSAGE(0,("Permutation on %d points\n",nor));
-   buf = NALLOC(uint32_t,nor);
-   WriteHeader(MTX_TYPE_PERMUTATION, nor, 1);
-
-   for (i = 0; i < nor; ++i) {
-      kk = readlong();
-      MTX_ASSERT(kk > 0);
-      MTX_ASSERT(kk <= nor);
-      buf[i] = kk - 1;
+   uint32_t degree = MTX_NVAL;
+   while (1) {
+      if (tryParseHeaderField(&degree, "degree=")) continue;
+      if (tryParseHeaderField(&degree, "deg=")) continue;
+      if (*lptr == 0) break;
+      mtxAbort(MTX_HERE,"Unknown header field");
    }
-   sysWrite32(out, buf, nor);
-}
-
-
-/////////////////////////////////////////////////////////////////////////////////////////////////////
-/// Convert polynomial (new format)
-
-static void ConvertPolynomial()
-{
-   long i;
-   Poly_t *p;
-
-   MESSAGE(0,("Polynomial of degree %d over GF(%d)\n",nor,fl));
-   p = polAlloc(fl,nor);
-   out = sysFopen(outname,"wb");
-   for (i = 0; i <= nor; ++i) {
-      long kk = readlong();
-      p->Data[i] = ffFromInt(kk);
+   if (degree == MTX_NVAL) {
+      mtxAbort(MTX_HERE,"Missing header field \"degree\".");
    }
-   polWrite(p,out);
-}
 
-
-/////////////////////////////////////////////////////////////////////////////////////////////////////
-///  Convert permutation (mode 2)
-
-void convperm()
-{
-   long i, val;
-   PTR m1;
-
-   MESSAGE(0,("%dx%d permutation matrix over GF(%d)\n",nor,noc,fl));
-   ffSetField(fl);
-   m1 = ffAlloc(1, noc);
-   WriteHeader(fl,nor,noc);
-   for (i = 1; i <= nor; ++i) {
-      val = readlong();
-      ffMulRow(m1,FF_ZERO, noc);
-      ffInsert(m1,val - 1,FF_ONE);
-      ffWriteRows(out, m1, 1, noc);
+   MESSAGE(0,("Permutation on %lu points\n",(unsigned long) degree));
+   uint32_t *buf = NALLOC(uint32_t,degree);
+   WriteHeader(MTX_TYPE_PERMUTATION, degree, 1);
+   for (uint32_t i = 0; i < degree; ++i) {
+      uint32_t point = parse32u();
+      if (point == 0 || point > degree) {
+         mtxAbort(MTX_HERE,"Invalid point %lu in permutation of degree %lu",
+               (unsigned long) point, (unsigned long) degree);
+      }
+      buf[i] = point - 1;
    }
+   sysWrite32(out, buf, degree);
+   sysFree(buf);
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////
-/// Read the next header. Returns 0 on end of file, 1 on success.
 
-static int ReadHeader(void)
+static void convertPolynomial()
 {
-   if (readline()) {
-      return 0;
+   uint32_t fieldOrder = MTX_NVAL;
+   int32_t degree = -2;
+   int hasDegree = 0;
+
+   while (1) {
+      if (tryParseHeaderField32s(&degree, "degree=")) {
+         hasDegree = 1;
+         continue;
+      }
+      if (tryParseHeaderField(&fieldOrder, "field=")) {continue;}
+      if (*lptr == 0) {break;}
+      mtxAbort(MTX_HERE, "Unknown header field");
    }
-   return 1;
+   if (!hasDegree) {mtxAbort(MTX_HERE, "Missing header field \"degree\".");}
+   if (fieldOrder == MTX_NVAL) {mtxAbort(MTX_HERE, "Missing header field \"field\".");}
+
+   MESSAGE(0, ("Polynomial of degree %ld over GF(%lu)\n",
+               (long) degree, (unsigned long)fieldOrder));
+   ffSetField(fieldOrder);
+   Poly_t* p = polAlloc(fieldOrder, degree);
+   for (int32_t i = 0; i <= degree; ++i) {
+      p->data[i] = readFel();
+   }
+   polWrite(p, out);
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////
 
 /// Convert one member.
 
-static void Convert(void)
+static int convert(void)
 {
+   if (!tryReadLine())
+      return 0;
    char *c;
 
    // Check for new file format
@@ -303,141 +415,61 @@ static void Convert(void)
       GrpLibFormat = 1;
    }
 
-   if (!strncmp(lbuf,"matrix",6)) {
-      fl = nor = noc = MTX_NVAL;
-      for (char* c = strtok(lbuf + 6," \t\n"); c != NULL; c = strtok(NULL," \t\n")) {
-         if (parse32u(&fl, c, "field=")) continue;
-         if (parse32u(&nor, c, "nor=")) continue;
-         if (parse32u(&nor, c, "rows=")) continue;
-         if (parse32u(&noc, c, "noc=")) continue;
-         if (parse32u(&noc, c, "cols=")) continue;
-         mtxAbort(MTX_HERE,"%s: Bad object header: \"%s\"", inpname, c);
-      }
-      if ((nor == MTX_NVAL)
-            || (noc == MTX_NVAL)
-            || (fl == MTX_NVAL)) {
-         mtxAbort(MTX_HERE,"%s: Bad file format (missing header field)",inpname);
-      }
-      readline();
-      ConvertMatrix();
-      return;
-   }
-   if (!strncmp(lbuf,"integer matrix",14) || !strncmp(lbuf,"integer-matrix",14)) {
-      char *c;
-      nor = noc = MTX_NVAL;
-      for (c = strtok(lbuf + 14," \t\n"); c != NULL; c = strtok(NULL," \t\n")) {
-         if (parse32u(&nor, c, "nor=")) continue;
-         if (parse32u(&nor, c, "rows=")) continue;
-         if (parse32u(&noc, c, "noc=")) continue;
-         if (parse32u(&noc, c, "cols=")) continue;
-         mtxAbort(MTX_HERE,"%s: Bad object header: \"%s\"", inpname, c);
-      }
-      if (nor == MTX_NVAL || noc == MTX_NVAL) {
-         mtxAbort(MTX_HERE,"%s: Bad file format (missing header field)",inpname);
-      }
-      readline();
-      ConvertIntMatrix();
-      return;
-   } else if (!strncmp(lbuf,"permutation",11)) {
-      char *c;
-      fl = nor = MTX_NVAL;
-      noc = 1;
-      for (c = strtok(lbuf + 11," \t\n"); c != NULL; c = strtok(NULL," \t\n")) {
-         if (parse32u(&nor, c, "degree=")) continue;
-         if (parse32u(&nor, c, "deg=")) continue;
-         mtxAbort(MTX_HERE,"%s: Bad object header: \"%s\"", inpname, c);
-      }
-      if (nor == MTX_NVAL) {
-         mtxAbort(MTX_HERE,"%s: Bad file format (missing header field)",inpname);
-      }
-      readline();
-      ConvertPermutation();
-      return;
-   } else if (!strncmp(lbuf,"polynomial",10)) {
-      char *c;
-      fl = nor = MTX_NVAL;
-      noc = 1;
-      for (c = strtok(lbuf + 11," \t\n"); c != NULL; c = strtok(NULL," \t\n")) {
-         if (parse32u(&nor, c, "degree=")) continue;
-         if (parse32u(&nor, c, "deg=")) continue;
-         if (parse32u(&fl, c, "field=")) continue;
-         mtxAbort(MTX_HERE,"%s: Bad object header: \"%s\"", inpname, c);
-      }
-      if (fl == MTX_NVAL || noc == MTX_NVAL) {
-         mtxAbort(MTX_HERE,"%s: Bad file format (missing header field)",inpname);
-      }
-      readline();
-      ConvertPolynomial();
-      return;
+   if (tryParseLiteral("matrix")) {
+      convertMatrix();
+   } else if (tryParseLiteral("integer matrix") || tryParseLiteral("integer-matrix")) {
+      convertIntegerMatrix();
+   } else if (tryParseLiteral("permutation")) {
+      convertPermutation();
+   } else if (tryParseLiteral("polynomial")) {
+      convertPolynomial();
    } else {
-      mtxAbort(MTX_HERE,"%s: Unsupported file format",inpname);
+      mtxAbort(MTX_HERE,"%s: Unrecognized object header",inpname);
    }
+   assertEndOfLine();
+   return 1;
 }
 
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static int Init(int argc, char **argv)
+static void init(int argc, char **argv)
 {
-   if ((App = appAlloc(&AppInfo,argc,argv)) == NULL) {
-      return -1;
-   }
-   if (appGetArguments(App,2,2) < 0) {
-      return -1;
-   }
+   App = appAlloc(&AppInfo,argc,argv);
+   appGetArguments(App,2,2);
 
    // input file
-   inpname = App->ArgV[0];
+   inpname = App->argV[0];
    if (strcmp(inpname,"-")) {
       src = sysFopen(inpname, "r::lib");
-      if (src == NULL) {
+      if (src == NULL)
          mtxAbort(MTX_HERE,"Cannot open %s",inpname);
-         return -1;
-      }
    } else {
       src = stdin;
    }
 
    // output file
-   outname = App->ArgV[1];
+   outname = App->argV[1];
    out = sysFopen(outname,"wb");
-   if (out == NULL) {
+   if (out == NULL)
       mtxAbort(MTX_HERE,"Cannot open %s for output",outname);
-      return -1;
-   }
-
-   return 0;
 }
-
-
-/////////////////////////////////////////////////////////////////////////////////////////////////////
-
-static void Cleanup()
-{
-   fclose(out);
-   if (App != NULL) { appFree(App); }
-}
-
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////
 
 int main(int argc, char **argv)
 {
-   if (Init(argc,argv) != 0) {
-      return 0;
-   }
-
-   int context = mtxBegin("Converting %s", inpname);
-   while (ReadHeader()) {
-      Convert();
+   init(argc,argv);
+   int inputFileScope = mtxBeginScope(provideInputFilePosition, NULL);
+   while (convert()) {
       ++MemberCount;
    }
    if (MemberCount == 0) {
-      MESSAGE(0,("Warning: %s is empty",inpname));
+      MESSAGE(0,("Warning: %s is empty\n",inpname));
    }
-   mtxEnd(context);
-
-   Cleanup();
+   mtxEnd(inputFileScope);
+   fclose(out);
+   appFree(App);
    return 0;
 }
 

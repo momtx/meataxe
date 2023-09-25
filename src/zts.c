@@ -88,9 +88,9 @@ static int ReadFiles()
     Seed = matLoad(SeedName);
     if (Seed  == NULL)
 	return -1;
-    TpDim = GenM[0]->Nor * GenN[0]->Nor;
+    TpDim = GenM[0]->nor * GenN[0]->nor;
     MESSAGE(1,("Tensor product has dimension %d*%d=%d\n",
-	GenM[0]->Nor,GenN[0]->Nor,TpDim));
+	GenM[0]->nor,GenN[0]->nor,TpDim));
     return 0;
 }
 
@@ -100,11 +100,11 @@ static void VecToMat(PTR vec, Matrix_t *m)
     int row, pos;
     PTR rowptr;
 
-    for (pos=row=0, rowptr=m->Data; row < m->Nor; ++row,ffStepPtr(&rowptr,m->Noc))
+    for (pos=row=0, rowptr=m->data; row < m->nor; ++row,ffStepPtr(&rowptr,m->noc))
     {
 	int col;
-	ffMulRow(rowptr,FF_ZERO, m->Noc);
-	for (col = 0; col < m->Noc; ++col, ++pos)
+	ffMulRow(rowptr,FF_ZERO, m->noc);
+	for (col = 0; col < m->noc; ++col, ++pos)
 	{
 	    FEL f = ffExtract(vec,pos);
 	    if (f != FF_ZERO)
@@ -119,10 +119,10 @@ static void matToVec(PTR vec, const Matrix_t *m)
     PTR rowptr;
 
     ffMulRow(vec,FF_ZERO, TpDim);
-    for (pos=row=0, rowptr=m->Data; row < m->Nor; ++row,ffStepPtr(&rowptr,m->Noc))
+    for (pos=row=0, rowptr=m->data; row < m->nor; ++row,ffStepPtr(&rowptr,m->noc))
     {
 	int col;
-	for (col = 0; col < m->Noc; ++col, ++pos)
+	for (col = 0; col < m->noc; ++col, ++pos)
 	{
 	    FEL f = ffExtract(rowptr,col);
 	    if (f != FF_ZERO)
@@ -137,11 +137,11 @@ static int FindPivot(Matrix_t *m, tPivotEntry *piv)
     int row;
     PTR rowptr;
 
-    for (row = 0, rowptr=m->Data; row < m->Nor; ++row, ffStepPtr(&rowptr,m->Noc))
+    for (row = 0, rowptr=m->data; row < m->nor; ++row, ffStepPtr(&rowptr,m->noc))
     {
 	int col;
 	FEL f;
-	col = ffFindPivot(rowptr,&f,m->Noc);
+	col = ffFindPivot(rowptr,&f,m->noc);
 	if (col != MTX_NVAL)
 	{
 	    piv->Row = row;
@@ -159,7 +159,7 @@ static void Clean(Matrix_t *mat, const Matrix_t **basis,
 {
     int i;
 
-    MTX_ASSERT(dim == 0 || (mat->Noc == basis[0]->Noc && mat->Nor == basis[0]->Nor));
+    MTX_ASSERT(dim == 0 || (mat->noc == basis[0]->noc && mat->nor == basis[0]->nor));
     for (i = 0; i < dim; ++i)
     {
 	PTR x;
@@ -178,7 +178,7 @@ static void Clean2(Matrix_t *mat, const Matrix_t **basis,
 {
     int i;
 
-    MTX_ASSERT(mat->Noc == basis[0]->Noc && mat->Nor == basis[0]->Nor);
+    MTX_ASSERT(mat->noc == basis[0]->noc && mat->nor == basis[0]->nor);
     ffMulRow(op,FF_ZERO, dim);
     for (i = 0; i < dim; ++i)
     {
@@ -261,16 +261,16 @@ static void Spinup()
     Piv = NULL;
     MaxDim = 0;
     Dim = 0;
-    vec = Seed->Data;
-    for (i = 1; i <= Seed->Nor; ++i)
+    vec = Seed->data;
+    for (i = 1; i <= Seed->nor; ++i)
     {
 	Matrix_t *seed;
 	MESSAGE(1,("Spinning up seed vector %d\n",i));
-	seed = matAlloc(ffOrder,GenM[0]->Nor,GenN[0]->Nor);
+	seed = matAlloc(ffOrder,GenM[0]->nor,GenN[0]->nor);
 	VecToMat(vec,seed);
 	SpinUpMatrix(seed);		    /* <Spinup()> eats <seed>! */
-	ffStepPtr(&vec,Seed->Noc);
-	if (i < Seed->Nor)
+	ffStepPtr(&vec,Seed->noc);
+	if (i < Seed->nor)
 	    MESSAGE(1,("Dimension = %d\n",Dim));
     }
     MESSAGE(0,("Subspace has dimension %d\n",Dim));
@@ -285,7 +285,7 @@ static void WriteSubspace()
 
     MESSAGE(1,("Writing subspace to %s\n",SubName));
     row = ffAlloc(1, TpDim);
-    f = mfCreate(SubName,Seed->Field,Dim,TpDim);
+    f = mfCreate(SubName,Seed->field,Dim,TpDim);
     for (i = 0; i < Dim; ++i)
     {
 	matToVec(row,Basis[i]);
@@ -303,7 +303,7 @@ static void CalculateAction1(int gen, const char *file_name)
     int i;
 
     MESSAGE(1,("Writing generator to %s\n",file_name));
-    f = mfCreate(file_name,Seed->Field,Dim,Dim);
+    f = mfCreate(file_name,Seed->field,Dim,Dim);
     rowptr = ffAlloc(1, Dim);
     for (i = 0; i < Dim; ++i)
     {
@@ -346,10 +346,10 @@ static int Init(int argc, char **argv)
        -------------------------------- */
     if (appGetArguments(App,3,4) < 0)
 	return -1;
-    MName = App->ArgV[0];
-    NName = App->ArgV[1];
-    SeedName = App->ArgV[2];
-    SubName = App->ArgC >= 4 ? App->ArgV[3] : NULL;
+    MName = App->argV[0];
+    NName = App->argV[1];
+    SeedName = App->argV[2];
+    SubName = App->argC >= 4 ? App->argV[3] : NULL;
     return 0;
 }
 

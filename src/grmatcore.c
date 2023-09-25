@@ -43,10 +43,10 @@ int GrMatIsValid(const GreasedMatrix_t *mat)
       mtxAbort(MTX_HERE,"NULL matrix");
       return 0;
    }
-   if ((mat->Magic != GMAT_MAGIC) || (mat->Field < 2) || (mat->Nor < 0) ||
-       (mat->Noc < 0)) {
+   if ((mat->typeId != GMAT_MAGIC) || (mat->field < 2) || (mat->nor < 0) ||
+       (mat->noc < 0)) {
       mtxAbort(MTX_HERE,"Invalid greased matrix (field=%d, nor=%d, noc=%d)",
-                 mat->Field,mat->Nor,mat->Noc);
+                 mat->field,mat->nor,mat->noc);
       return 0;
    }
    return 1;
@@ -68,8 +68,8 @@ int GrMatFree(GreasedMatrix_t *mat)
    if (!GrMatIsValid(mat)) {
       return -1;
    }
-   if (mat->PrecalcData != NULL) {
-      sysFree(mat->PrecalcData);
+   if (mat->precalcData != NULL) {
+      sysFree(mat->precalcData);
    }
    memset(mat,0,sizeof(Matrix_t));
    sysFree(mat);
@@ -109,74 +109,74 @@ GreasedMatrix_t *GrMatAlloc(const Matrix_t *M, int gr_rows)
    if (res == NULL) {
       return NULL;
    }
-   res->Field = M->Field;
-   res->Noc = M->Noc;
-   res->Nor = M->Nor;
-   res->GrRows = gr_rows;
+   res->field = M->field;
+   res->noc = M->noc;
+   res->nor = M->nor;
+   res->grRows = gr_rows;
 
-   ffSetField(M->Field);
+   ffSetField(M->field);
 
    /* special case of greasing switched off: */
    if (gr_rows == 0) {
-      res->GrBlockSize = 1;
-      res->PrecalcData = ffAlloc(M->Nor, M->Noc);
-      res->NumVecs = M->Nor;
-      memcpy(res->PrecalcData,M->Data,ffSize(M->Nor, M->Noc));
-      res->ExtrTab = NULL;
-      res->Magic = GMAT_MAGIC;
+      res->grBlockSize = 1;
+      res->precalcData = ffAlloc(M->nor, M->noc);
+      res->numVecs = M->nor;
+      memcpy(res->precalcData,M->data,ffSize(M->nor, M->noc));
+      res->extrTab = NULL;
+      res->typeId = GMAT_MAGIC;
       return res;
    }
 
    nrvecs = 1;
    for (i = gr_rows; i > 0; i--) {
-      nrvecs *= M->Field;   /* This calculates fl^gr_rows */
+      nrvecs *= M->field;   /* This calculates fl^gr_rows */
    }
-   res->GrBlockSize = --nrvecs;   /* the null vector is not stored! */
+   res->grBlockSize = --nrvecs;   /* the null vector is not stored! */
 
-   nrvecs = nrvecs * (M->Nor / gr_rows) + M->Nor % gr_rows;
-   res->NumVecs = nrvecs;
-   if ((res->PrecalcData = ffAlloc(nrvecs, M->Noc)) == NULL) {
+   nrvecs = nrvecs * (M->nor / gr_rows) + M->nor % gr_rows;
+   res->numVecs = nrvecs;
+   if ((res->precalcData = ffAlloc(nrvecs, M->noc)) == NULL) {
       return NULL;
    }
-   v = ffAlloc(1, M->Noc);
+   v = ffAlloc(1, M->noc);
 
    /* Now we calculate all linear combinations necessary: */
-   p = res->PrecalcData;
-   q = M->Data;
-   for (i = M->Nor / gr_rows; i > 0; i--) { /* all greasing block */
+   p = res->precalcData;
+   q = M->data;
+   for (i = M->nor / gr_rows; i > 0; i--) { /* all greasing block */
       bs = p;
       rows = 0;    /* this is 1 - 1 = fl^0 - 1 */
 
       /* now for all vectors in the block: */
       for (j = gr_rows; j > 0; j--) { /* all vectors in block */
-         for (k = 1; k < M->Field; k++) { /* all field elements */
-            ffCopyRow(v,q, M->Noc);
-            ffMulRow(v,ffFromInt(k), M->Noc);
-            ffCopyRow(p,v, M->Noc); /* copy the new multiple */
-            ffStepPtr(&p, M->Noc);
+         for (k = 1; k < M->field; k++) { /* all field elements */
+            ffCopyRow(v,q, M->noc);
+            ffMulRow(v,ffFromInt(k), M->noc);
+            ffCopyRow(p,v, M->noc); /* copy the new multiple */
+            ffStepPtr(&p, M->noc);
 
             r = bs;  /* start from the beginning of the current block */
             for (l = rows; l > 0; l--) { /* for all vectors so far */
-               ffCopyRow(p,r, M->Noc);
-               ffStepPtr(&r, M->Noc);
-               ffAddRow(p,v, M->Noc);
-               ffStepPtr(&p, M->Noc);
+               ffCopyRow(p,r, M->noc);
+               ffStepPtr(&r, M->noc);
+               ffAddRow(p,v, M->noc);
+               ffStepPtr(&p, M->noc);
             }
          }
-         ffStepPtr(&q, M->Noc); /* take a new row of the original matrix */
-         rows = (rows + 1) * M->Field - 1; /* the null vector is not there */
+         ffStepPtr(&q, M->noc); /* take a new row of the original matrix */
+         rows = (rows + 1) * M->field - 1; /* the null vector is not there */
       }
    }
 
-   for (i = M->Nor % gr_rows; i > 0; i--) { /* the rest of the vectors */
-      ffCopyRow(p,q, M->Noc);
-      ffStepPtr(&p, M->Noc);
-      ffStepPtr(&q, M->Noc);
+   for (i = M->nor % gr_rows; i > 0; i--) { /* the rest of the vectors */
+      ffCopyRow(p,q, M->noc);
+      ffStepPtr(&p, M->noc);
+      ffStepPtr(&q, M->noc);
    }
-   res->ExtrTab = GrGetExtractionTable(M->Field,gr_rows);
+   res->extrTab = GrGetExtractionTable(M->field,gr_rows);
    sysFree(v);
 
-   res->Magic = GMAT_MAGIC;
+   res->typeId = GMAT_MAGIC;
    return res;
 }
 

@@ -52,12 +52,12 @@ static int GensAreValid(int ngen, Matrix_t **gen)
    }
    for (i = 0; i < ngen; ++i) {
       matValidate(MTX_HERE, gen[i]);
-      if (gen[i]->Nor != gen[i]->Noc) {
+      if (gen[i]->nor != gen[i]->noc) {
          mtxAbort(MTX_HERE,"gen[%i]: %s",i,MTX_ERR_NOTSQUARE);
          return 0;
       }
       if (i != 0) {
-         if ((gen[i]->Field != gen[0]->Field) || (gen[i]->Nor != gen[0]->Nor)) {
+         if ((gen[i]->field != gen[0]->field) || (gen[i]->nor != gen[0]->nor)) {
             mtxAbort(MTX_HERE,"gen[0] and gen[%d]: %s",i,MTX_ERR_INCOMPAT);
             return 0;
          }
@@ -82,8 +82,8 @@ int mrIsValid(const MatRep_t *rep)
       mtxAbort(MTX_HERE,"NULL representation");
       return 0;
    }
-   if (rep->Magic != MR_MAGIC) {
-      mtxAbort(MTX_HERE,"Invalid matrix representation (magic=%d)",(int)rep->Magic);
+   if (rep->typeId != MR_MAGIC) {
+      mtxAbort(MTX_HERE,"Invalid matrix representation (magic=%d)",(int)rep->typeId);
       return 0;
    }
    if (!GensAreValid(rep->NGen,rep->Gen)) {
@@ -154,7 +154,7 @@ MatRep_t *mrAlloc(int ngen, Matrix_t **gen, int flags)
       }
    }
 
-   rep->Magic = MR_MAGIC;
+   rep->typeId = MR_MAGIC;
    return rep;
 }
 

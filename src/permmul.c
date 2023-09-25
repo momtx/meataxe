@@ -24,13 +24,13 @@ Perm_t *permMul(Perm_t *dest, const Perm_t *src)
 {
    permValidate(MTX_HERE, src);
    permValidate(MTX_HERE, dest);
-   if (dest->Degree != src->Degree) {
+   if (dest->degree != src->degree) {
       mtxAbort(MTX_HERE,"%s",MTX_ERR_INCOMPAT);
    }
 
-   uint32_t* d = dest->Data;
-   const uint32_t* const s = src->Data;
-   for (uint32_t i = dest->Degree; i > 0; --i) {
+   uint32_t* d = dest->data;
+   const uint32_t* const s = src->data;
+   for (uint32_t i = dest->degree; i > 0; --i) {
       *d = s[*d];
       ++d;
    }

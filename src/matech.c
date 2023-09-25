@@ -84,27 +84,27 @@ int matEchelonize(Matrix_t *mat)
       |Noc| should never change without releasing the pivot table, but
       this would be a really nasty bug....
       ----------------------------------------------------------------- */
-   mat->PivotTable = NREALLOC(mat->PivotTable,uint32_t,mat->Noc);
-   if (mat->Noc > maxnoc) {
-      int *new_is_piv = NREALLOC(is_pivot,int,mat->Noc);
+   mat->pivotTable = NREALLOC(mat->pivotTable,uint32_t,mat->noc);
+   if (mat->noc > maxnoc) {
+      int *new_is_piv = NREALLOC(is_pivot,int,mat->noc);
       if (new_is_piv == NULL) {
          mtxAbort(MTX_HERE,"Cannot allocate temporary table");
          return -1;
       }
       is_pivot = new_is_piv;
-      maxnoc = mat->Noc;
+      maxnoc = mat->noc;
    }
 
    /* Build the pivot table
       --------------------- */
-   ffSetField(mat->Field);
-   rank = zmkechelon(mat->Data,mat->Nor,mat->Noc,mat->PivotTable,is_pivot);
+   ffSetField(mat->field);
+   rank = zmkechelon(mat->data,mat->nor,mat->noc,mat->pivotTable,is_pivot);
 
    /* If the rank is less than the number of rows, remove null rows
       ------------------------------------------------------------- */
-   if (rank != mat->Nor) {
-      mat->Nor = rank;
-      mat->Data = (PTR) sysRealloc(mat->Data,ffSize(rank, mat->Noc));
+   if (rank != mat->nor) {
+      mat->nor = rank;
+      mat->data = (PTR) sysRealloc(mat->data,ffSize(rank, mat->noc));
    }
 
    return rank;
@@ -140,7 +140,7 @@ int matNullity__(Matrix_t *mat)
    if (matEchelonize(mat) < 0) {
       return -1;
    }
-   int nul = mat->Noc - mat->Nor;
+   int nul = mat->noc - mat->nor;
    matFree(mat);
    return nul;
 }

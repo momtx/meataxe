@@ -26,21 +26,21 @@ Matrix_t *matAdd(Matrix_t *dest, const Matrix_t *src)
       --------------- */
    matValidate(MTX_HERE,src);
    matValidate(MTX_HERE,dest);
-   if ((dest->Field != src->Field) || (dest->Nor != src->Nor) ||
-       (dest->Noc != src->Noc)) {
+   if ((dest->field != src->field) || (dest->nor != src->nor) ||
+       (dest->noc != src->noc)) {
       mtxAbort(MTX_HERE,"%s",MTX_ERR_INCOMPAT);
       return NULL;
    }
 
    /* Add <src> to <dest>
       ------------------- */
-   dp = dest->Data;
-   sp = src->Data;
-   ffSetField(src->Field);
-   for (n = src->Nor; n > 0; --n) {
-      ffAddRow(dp,sp, src->Noc);
-      ffStepPtr(&dp, src->Noc);
-      ffStepPtr(&sp, src->Noc);
+   dp = dest->data;
+   sp = src->data;
+   ffSetField(src->field);
+   for (n = src->nor; n > 0; --n) {
+      ffAddRow(dp,sp, src->noc);
+      ffStepPtr(&dp, src->noc);
+      ffStepPtr(&sp, src->noc);
    }
 
    /* Delete the pivot table

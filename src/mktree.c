@@ -121,7 +121,7 @@ static int Init(int argc, char **argv)
        ---------- */
     if (appGetArguments(App,1,1) < 0)
 	return -1;
-    Name = App->ArgV[0];
+    Name = App->argV[0];
 
     /* Load the generators.
        -------------------- */
@@ -132,14 +132,8 @@ static int Init(int argc, char **argv)
     /* Initialize the element list.
        ---------------------------- */
     MaxNElms = Rep->NGen + 10;
-    if ((Elms = NALLOC(Entry_t,MaxNElms)) == NULL)
-    {
-	mtxAbort(MTX_HERE,"Cannot allocate lement list");
-	return -1;
-    }
+    Elms = NALLOC(Entry_t,MaxNElms);
     NElms = 0;
-
-
     return 0;
 }
 
@@ -192,7 +186,7 @@ static int MakeTree()
     int rc = 0;
     int src;
 
-    if (AddToList(matId(ffOrder,Rep->Gen[0]->Nor),-1,-1) != 0)
+    if (AddToList(matId(ffOrder,Rep->Gen[0]->nor),-1,-1) != 0)
 	return -1;
 
     /* Calculate all elements
@@ -246,8 +240,8 @@ static void WriteOutput()
 	return;
     for (i = 0; i < NElms; ++i)
     {
-	mat->Data[2*i] = Elms[i].Source;
-	mat->Data[2*i + 1] = Elms[i].Gen;
+	mat->data[2*i] = Elms[i].Source;
+	mat->data[2*i + 1] = Elms[i].Gen;
     }
     imatSave(mat,fn);
     imatFree(mat);

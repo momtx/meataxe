@@ -86,7 +86,7 @@ TstResult App_DoubleDash()
    ASSERT(!appGetOption(App,"-b"));	// -b is not an option
 
    ASSERT(appGetArguments(App,1,1) == 1);
-   ASSERT(!strcmp(App->ArgV[0],"-b"));
+   ASSERT(!strcmp(App->argV[0],"-b"));
    appFree(App);
    return 0;
 }

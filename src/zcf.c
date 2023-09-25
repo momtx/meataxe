@@ -67,12 +67,12 @@ static void checkFieldOrders()
 static void convertPermutationToMatrix()
 {
    ffSetField(outputFieldOrder);
-   Perm_t *perm = permReadData(inputFile->File, inputFile->header);
-   const uint32_t nor = perm->Degree;
+   Perm_t *perm = permReadData(inputFile->file, inputFile->header);
+   const uint32_t nor = perm->degree;
    PTR row = ffAlloc(1, nor);
 
    outputFile = mfCreate(oname, outputFieldOrder, nor, nor);
-   const uint32_t *p = perm->Data;
+   const uint32_t *p = perm->data;
    for (uint32_t i = 0; i < nor; ++i)
    {	
       ffMulRow(row,FF_ZERO, nor);
@@ -170,9 +170,9 @@ static void init(int argc, char **argv)
 {
     App = appAlloc(&AppInfo,argc,argv);
     appGetArguments(App,3,3);
-    outputFieldOrder = atol(App->ArgV[0]);
-    iname = App->ArgV[1];
-    oname = App->ArgV[2];
+    outputFieldOrder = atol(App->argV[0]);
+    iname = App->argV[1];
+    oname = App->argV[2];
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////

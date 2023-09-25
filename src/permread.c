@@ -41,8 +41,8 @@ Perm_t *permReadData(FILE *f, const uint32_t header[3])
       mtxAbort(MTX_HERE,"%s",MTX_ERR_NOTPERM);
    }
    Perm_t* p = permAlloc(header[1]);
-   sysRead32(f, p->Data, p->Degree);
-   permConvertLegacyFormat(p->Data, p->Degree);
+   sysRead32(f, p->data, p->degree);
+   permConvertLegacyFormat(p->data, p->degree);
    permValidate(MTX_HERE, p);
    return p;
 }
@@ -77,7 +77,7 @@ Perm_t *permRead(FILE *f)
 
 Perm_t *permLoad(const char *fn)
 {
-   int context = mtxBegin("Reading permutation: %s", fn);
+   int context = mtxBegin(MTX_HERE, "Reading permutation: %s", fn);
 
    FILE *f;
    if ((f = sysFopen(fn,"rb")) == NULL) {

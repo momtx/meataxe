@@ -93,10 +93,10 @@ static void init(int argc, char **argv)
 {
     App = appAlloc(&AppInfo,argc,argv);
     appGetArguments(App,4,4);
-    aname = App->ArgV[0];
-    bname = App->ArgV[1];
-    sumname = App->ArgV[2];
-    intname = App->ArgV[3];
+    aname = App->argV[0];
+    bname = App->argV[1];
+    sumname = App->argV[2];
+    intname = App->argV[3];
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////

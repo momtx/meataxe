@@ -32,49 +32,49 @@ Matrix_t *matInsert_(Matrix_t *mat, const Poly_t *pol)
    // Check the arguments
    matValidate(MTX_HERE, mat);
    polValidate(MTX_HERE, pol);
-   if ((nor = mat->Nor) != mat->Noc) {
+   if ((nor = mat->nor) != mat->noc) {
       mtxAbort(MTX_HERE,"%s",MTX_ERR_NOTSQUARE);
       return NULL;
    }
-   if (mat->Field != pol->Field) {
+   if (mat->field != pol->field) {
       mtxAbort(MTX_HERE,"%s",MTX_ERR_INCOMPAT);
       return NULL;
    }
 
-   ffSetField(mat->Field);
+   ffSetField(mat->field);
 
    // Special case: p(x) = 0
-   if (pol->Degree == -1) {
-      for (l = 0, v = mat->Data; l < nor; ffStepPtr(&v, nor), ++l) {
+   if (pol->degree == -1) {
+      for (l = 0, v = mat->data; l < nor; ffStepPtr(&v, nor), ++l) {
          ffMulRow(v,FF_ZERO, nor);
       }
       return mat;
    }
 
    // Special case: deg(p) = 0
-   if (pol->Degree == 0) {
-      for (l = 0, v = mat->Data; l < nor; ffStepPtr(&v, nor), ++l) {
+   if (pol->degree == 0) {
+      for (l = 0, v = mat->data; l < nor; ffStepPtr(&v, nor), ++l) {
          ffMulRow(v,FF_ZERO, nor);
-         ffInsert(v,l,pol->Data[0]);
+         ffInsert(v,l,pol->data[0]);
       }
       return mat;
    }
 
    // Evaluate p(A)
-   if (pol->Degree > 1) {
+   if (pol->degree > 1) {
       x = matDup(mat);
       if (x == NULL) {
 	  return NULL;
       }
    }
-   if ((f = pol->Data[pol->Degree]) != FF_ONE) {
-      for (l = nor, v = mat->Data; l > 0; --l, ffStepPtr(&v, nor)) {
+   if ((f = pol->data[pol->degree]) != FF_ONE) {
+      for (l = nor, v = mat->data; l > 0; --l, ffStepPtr(&v, nor)) {
          ffMulRow(v,f, nor);
       }
    }
-   for (i = pol->Degree - 1; i >= 0; --i) {
-      if ((f = pol->Data[i]) != FF_ZERO) {
-         for (l = 0, v = mat->Data; l < nor; ++l, ffStepPtr(&v, nor)) {
+   for (i = pol->degree - 1; i >= 0; --i) {
+      if ((f = pol->data[i]) != FF_ZERO) {
+         for (l = 0, v = mat->data; l < nor; ++l, ffStepPtr(&v, nor)) {
             ffInsert(v,l,ffAdd(ffExtract(v,l),f));
          }
       }
@@ -82,7 +82,7 @@ Matrix_t *matInsert_(Matrix_t *mat, const Poly_t *pol)
          matMul(mat,x);
       }
    }
-   if (pol->Degree > 1) { matFree(x); }
+   if (pol->degree > 1) { matFree(x); }
    return mat;
 }
 
@@ -107,28 +107,28 @@ Matrix_t *matInsert(const Matrix_t *mat, const Poly_t *pol)
 
    matValidate(MTX_HERE, mat);
    polValidate(MTX_HERE, pol);
-   if ((nor = mat->Nor) != mat->Noc) {
+   if ((nor = mat->nor) != mat->noc) {
       mtxAbort(MTX_HERE,"%s",MTX_ERR_NOTSQUARE);
       return NULL;
    }
-   if (mat->Field != pol->Field) {
+   if (mat->field != pol->field) {
       mtxAbort(MTX_HERE,"%s",MTX_ERR_INCOMPAT);
       return NULL;
    }
 
    // Special case: p = 0
-   if (pol->Degree == -1) {
-      return matAlloc(mat->Field,nor,nor);
+   if (pol->degree == -1) {
+      return matAlloc(mat->field,nor,nor);
    }
 
    // Special case: deg(p) = 0
-   if (pol->Degree == 0) {
-      x = matAlloc(mat->Field,nor,nor);
+   if (pol->degree == 0) {
+      x = matAlloc(mat->field,nor,nor);
       if (x == NULL) {
 	  return NULL;
       }
-      for (l = 0, v = x->Data; l < nor; ++l, ffStepPtr(&v, nor)) {
-         ffInsert(v,l,pol->Data[0]);
+      for (l = 0, v = x->data; l < nor; ++l, ffStepPtr(&v, nor)) {
+         ffInsert(v,l,pol->data[0]);
       }
       return x;
    }
@@ -138,14 +138,14 @@ Matrix_t *matInsert(const Matrix_t *mat, const Poly_t *pol)
    if (x == NULL) {
       return NULL;
    }
-   if ((f = pol->Data[pol->Degree]) != FF_ONE) {
-      for (l = nor, v = x->Data; l > 0; --l, ffStepPtr(&v, nor)) {
+   if ((f = pol->data[pol->degree]) != FF_ONE) {
+      for (l = nor, v = x->data; l > 0; --l, ffStepPtr(&v, nor)) {
          ffMulRow(v,f, nor);
       }
    }
-   for (i = pol->Degree - 1; i >= 0; --i) {
-      if ((f = pol->Data[i]) != FF_ZERO) {
-         for (l = 0, v = x->Data; l < nor; ++l, ffStepPtr(&v, nor)) {
+   for (i = pol->degree - 1; i >= 0; --i) {
+      if ((f = pol->data[i]) != FF_ZERO) {
+         for (l = 0, v = x->data; l < nor; ++l, ffStepPtr(&v, nor)) {
             ffInsert(v,l,ffAdd(ffExtract(v,l),f));
          }
       }

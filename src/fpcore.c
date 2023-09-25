@@ -31,7 +31,7 @@ int fpIsValid(const FPoly_t *p)
    if (p == NULL) {
       return 0;
    }
-   if ((p->Magic != FP_MAGIC) || (p->NFactors < 0) || (p->BufSize < p->NFactors)) {
+   if ((p->typeId != FP_MAGIC) || (p->NFactors < 0) || (p->BufSize < p->NFactors)) {
       return 0;
    }
    if ((p->Factor == NULL) || (p->Mult == NULL)) {
@@ -43,7 +43,7 @@ int fpIsValid(const FPoly_t *p)
       if (p->Mult[i] < 0) {
          return 0;
       }
-      if ((i > 0) && (p->Factor[i]->Field != p->Factor[0]->Field)) {
+      if ((i > 0) && (p->Factor[i]->field != p->Factor[0]->field)) {
          return 0;
       }
    }
@@ -56,9 +56,9 @@ void fpValidate(const struct MtxSourceLocation* src, const FPoly_t *p)
    if (p == NULL) {
       mtxAbort(src,"NULL polynomial");
    }
-   if ((p->Magic != FP_MAGIC) || (p->NFactors < 0) || (p->BufSize < p->NFactors)) {
+   if ((p->typeId != FP_MAGIC) || (p->NFactors < 0) || (p->BufSize < p->NFactors)) {
       mtxAbort(src,"Invalid FPoly_t: Magic=%d, NFactors=%d, MaxLen=%d",
-                 (int)p->Magic,p->NFactors,p->BufSize);
+                 (int)p->typeId,p->NFactors,p->BufSize);
    }
    if ((p->Factor == NULL) || (p->Mult == NULL)) {
       mtxAbort(src,"Invalid FPoly_t: Factor:%s, Mult:%s",
@@ -70,7 +70,7 @@ void fpValidate(const struct MtxSourceLocation* src, const FPoly_t *p)
       if (p->Mult[i] < 0) {
          mtxAbort(src,"Invalid multiplicity %d",p->Mult[i]);
       }
-      if ((i > 0) && (p->Factor[i]->Field != p->Factor[0]->Field)) {
+      if ((i > 0) && (p->Factor[i]->field != p->Factor[0]->field)) {
          mtxAbort(src,"Factors over different fields");
       }
    }
@@ -89,7 +89,7 @@ FPoly_t *fpAlloc()
    x->Factor = NALLOC(Poly_t *,x->BufSize);
    x->Mult = NALLOC(int,x->BufSize);
    x->NFactors = 0;
-   x->Magic = FP_MAGIC;
+   x->typeId = FP_MAGIC;
    return x;
 }
 

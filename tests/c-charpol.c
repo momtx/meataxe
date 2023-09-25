@@ -15,9 +15,9 @@ static int CheckPoly(Poly_t *p, int degree, ...)
    int i;
    va_list al;
    va_start(al,degree);
-   ASSERT_EQ_INT(p->Degree,degree);
+   ASSERT_EQ_INT(p->degree,degree);
    for (i = 0; i <= degree; ++i) {
-      ASSERT_EQ_INT(p->Data[i],ffFromInt(va_arg(al,int)));
+      ASSERT_EQ_INT(p->data[i],ffFromInt(va_arg(al,int)));
    }
    va_end(al);
    polFree(p);

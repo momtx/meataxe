@@ -14,7 +14,7 @@
 
 static Matrix_t **MkStdBasis(Matrix_t *NPW, MatRep_t *M, const IntMatrix_t *op)
 {
-   const int num_seed = NPW->Nor;
+   const int num_seed = NPW->nor;
 
    Matrix_t **V = NALLOC(Matrix_t *,num_seed);
    int ok = (V != NULL);
@@ -78,11 +78,11 @@ Matrix_t *HomogeneousPart(MatRep_t *m, MatRep_t *s, Matrix_t *npw,
    int i, nr, dim, Sdim, nulldim, Mdim, fl, col, len;
    PTR row, vec, basptr;
 
-    fl = s->Gen[0]->Field;
-    Sdim = s->Gen[0]->Nor;
-    Mdim = m->Gen[0]->Nor;
-    nulldim = npw->Nor;
-    MTX_ASSERT(op->Nor == Sdim);
+    fl = s->Gen[0]->field;
+    Sdim = s->Gen[0]->nor;
+    Mdim = m->Gen[0]->nor;
+    nulldim = npw->nor;
+    MTX_ASSERT(op->nor == Sdim);
     V = MkStdBasis(npw,m,op);
 
     /* Make the system of equations.
@@ -126,13 +126,13 @@ Matrix_t *HomogeneousPart(MatRep_t *m, MatRep_t *s, Matrix_t *npw,
 	}
     }
 
-    MESSAGE(2,("Equation system is %dx%d\n",A->Nor,A->Noc));
+    MESSAGE(2,("Equation system is %dx%d\n",A->nor,A->noc));
     gensys = matNullSpace__(A);    /* module-generating system for the S-part */
 
 /* spins up the basis of the whole S-part of M
    ------------------------------------------- */
     MTX_ASSERT(Sdim % dimends == 0);
-    dim = gensys->Nor * (Sdim/dimends);
+    dim = gensys->nor * (Sdim/dimends);
     MTX_ASSERT(dim % Sdim == 0);
     nr = dim/Sdim;		
     if ((bas = matAlloc(fl, dim, Mdim)) == NULL)
@@ -140,9 +140,9 @@ Matrix_t *HomogeneousPart(MatRep_t *m, MatRep_t *s, Matrix_t *npw,
 	mtxAbort(MTX_HERE,"Cannot allocate buffer");
 	return NULL;
     }
-    basptr = bas->Data;
-    vec = gensys->Data;
-    for (i = 1; i <= gensys->Nor; i++, ffStepPtr(&vec, nulldim))
+    basptr = bas->data;
+    vec = gensys->data;
+    for (i = 1; i <= gensys->nor; i++, ffStepPtr(&vec, nulldim))
     {
     	int j;
 	if ((seed = matAlloc (fl,1,Mdim)) == NULL)
@@ -155,9 +155,9 @@ Matrix_t *HomogeneousPart(MatRep_t *m, MatRep_t *s, Matrix_t *npw,
 	    FEL f;
 	    f = ffExtract(vec, j);
 	    mat = matDup(V[j]);
-	    row = mat->Data;
+	    row = mat->data;
 	    ffMulRow(row, f, Mdim);
-	    ffAddRow(seed->Data, row, Mdim);
+	    ffAddRow(seed->data, row, Mdim);
 	    matFree(mat);
 	}
 	base = matDup(bas);
@@ -179,11 +179,11 @@ Matrix_t *HomogeneousPart(MatRep_t *m, MatRep_t *s, Matrix_t *npw,
 	    for (j = 0; j < nulldim; j++)	/* calculates the SB to u */
 	    {
 		FEL f;
-		MTX_ASSERT(j < gensys->Noc);
+		MTX_ASSERT(j < gensys->noc);
 		f = ffExtract(vec,j);
 		matAddMul(sum,V[j],f);
 	    }
-	    v = sum->Data;
+	    v = sum->data;
 	    for (j = 0; j < Sdim; j++)
 	    {
 		ffCopyRow(basptr, v, Mdim);

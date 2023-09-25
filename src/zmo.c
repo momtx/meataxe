@@ -64,7 +64,7 @@ static int ReadPermutations()
 	if (Perm[i] == NULL)
 	    return -1;
     }
-    Degree = Perm[0]->Degree;
+    Degree = Perm[0]->degree;
     return 0;
 }
 
@@ -82,8 +82,8 @@ static int Init(int argc, char **argv)
     Seed = appGetIntOption(App,"-s --seed",1,1,1000000) - 1;
     if (appGetArguments(App,2,2) < 0)
 	return -1;
-    permname = App->ArgV[0];
-    orbname = App->ArgV[1];
+    permname = App->argV[0];
+    orbname = App->argV[1];
     return 0;
 }
 
@@ -152,7 +152,7 @@ static int MakeOrbits()
 	   ----------------------- */
 	for (i = 0; i < nperm; ++i)
 	{
-	    long image = Perm[i]->Data[pt];
+	    long image = Perm[i]->data[pt];
 	    if (OrbNo[image] < 0)
 	    {
 		OrbNo[image] = orb;

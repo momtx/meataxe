@@ -46,39 +46,39 @@ int matCopyRegion(Matrix_t *dest, int destrow, int destcol,
       ------------------- */
    matValidate(MTX_HERE, src);
    matValidate(MTX_HERE, dest);
-   if (src->Field != dest->Field) {
+   if (src->field != dest->field) {
       mtxAbort(MTX_HERE,"%s",MTX_ERR_INCOMPAT);
       return -1;
    }
    if (nrows == -1) {
-      nrows = src->Nor - row1;
+      nrows = src->nor - row1;
    }
    if (ncols == -1) {
-      ncols = src->Noc - col1;
+      ncols = src->noc - col1;
    }
-   if ((row1 < 0) || (nrows < 0) || (row1 + nrows > src->Nor)) {
+   if ((row1 < 0) || (nrows < 0) || (row1 + nrows > src->nor)) {
       mtxAbort(MTX_HERE,"Source row index out of range");
       return -1;
    }
-   if ((col1 < 0) || (ncols < 0) || (col1 + ncols > src->Noc)) {
+   if ((col1 < 0) || (ncols < 0) || (col1 + ncols > src->noc)) {
       mtxAbort(MTX_HERE,"Source column index out of range");
       return -1;
    }
-   if ((destrow < 0) || (destrow + nrows > dest->Nor)) {
+   if ((destrow < 0) || (destrow + nrows > dest->nor)) {
       mtxAbort(MTX_HERE,"Destination row index out of range");
       return -1;
    }
-   if ((destcol < 0) || (destcol + ncols > dest->Noc)) {
+   if ((destcol < 0) || (destcol + ncols > dest->noc)) {
       mtxAbort(MTX_HERE,"Destination column index out of range");
       return -1;
    }
 
    /* Initialize data pointers
       ------------------------ */
-   ffSetField(src->Field);
+   ffSetField(src->field);
 #ifdef MTX_DEBUG
-   s = row1 < src->Nor ? matGetPtr(src,row1) : NULL;
-   d = destrow < dest->Nor ? matGetPtr(dest,destrow) : NULL;
+   s = row1 < src->nor ? matGetPtr(src,row1) : NULL;
+   d = destrow < dest->nor ? matGetPtr(dest,destrow) : NULL;
 #else
    s = matGetPtr(src,row1);
    d = matGetPtr(dest,destrow);
@@ -96,8 +96,8 @@ int matCopyRegion(Matrix_t *dest, int destrow, int destcol,
          ffInsert(d,destcol + k - col1,ffExtract(s,k));
 #endif
       }
-      ffStepPtr(&s, src->Noc);
-      ffStepPtr(&d, dest->Noc);
+      ffStepPtr(&s, src->noc);
+      ffStepPtr(&d, dest->noc);
    }
 
    mat_DeletePivotTable(dest);

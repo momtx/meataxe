@@ -203,14 +203,14 @@ static void init2()
     // Set firstm and firstdl
     firstm[0] = 0;
     firstdl[0] = 0;
-    for (i = 0; i < LI.NCf; ++i)
+    for (i = 0; i < LI.nCf; ++i)
     {
 	firstm[i+1] = firstm[i] + LI.Cf[i].nmount;
 	firstdl[i+1] = firstdl[i] + LI.Cf[i].ndotl;
     }
 
     // Initialize done[]
-    for (i = 0; i < LI.NCf; ++i) done[i] = 0;
+    for (i = 0; i < LI.nCf; ++i) done[i] = 0;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -588,7 +588,7 @@ void writeresult()
 	fprintf(f,"Radical series:\n");
 	for (i = 0; i < bnmount; ++i) bsSet(rad,i);
 	bsClearAll(zero);
-	for (i = 0, rdim = 0; i < LI.NCf; ++i)
+	for (i = 0, rdim = 0; i < LI.nCf; ++i)
 	    rdim += LI.Cf[i].dim * LI.Cf[i].mult;
 	for (layer = 1; bsCompare(rad,zero) != 0; ++layer)
 	{
@@ -625,7 +625,7 @@ void writeresult()
 	      }
 	    }
 	    fprintf(f,"    Layer %d: Dim=%-4ld  ",layer,rdim);
-	    for (i = 0; i < LI.NCf; ++i)
+	    for (i = 0; i < LI.nCf; ++i)
 		for (; mult[i] > 0; --mult[i])
 		    fprintf(f,"%s ",latCfName(&LI,i));
 	    fprintf(f,"\n");
@@ -744,16 +744,16 @@ static int nextblock()
     int i, k;
 
     ++blnum;
-    for (i = 0; i < LI.NCf && done[i]; ++i);
-    if (i >= LI.NCf) return 0;
+    for (i = 0; i < LI.nCf && done[i]; ++i);
+    if (i >= LI.nCf) return 0;
 
     /* If -b was not used, build one single
        block containing all irreducibles.
        ------------------------------------ */
     if (!opt_b)
     {
-	blsize = LI.NCf;
-	for (i = 0; i < LI.NCf; ++i)
+	blsize = LI.nCf;
+	for (i = 0; i < LI.nCf; ++i)
 	{
 	    block[i] = i;
 	    done[i] = 1;
@@ -770,7 +770,7 @@ static int nextblock()
     i = 0;
     while (i < blsize)
     {
-	for (k = 0; k < LI.NCf; ++k)
+	for (k = 0; k < LI.nCf; ++k)
     	    if (!done[k] && sameblock(block[i],k))
     	    {
 	        done[k] = 1;
@@ -1088,7 +1088,7 @@ static int Init(int argc, char **argv)
     if (ParseCommandLine() != 0)
 	return -1;
     MESSAGE(0,("*** CALCULATE ALL SUBMODULES ***\n\n"));
-    init(App->ArgV[0]);
+    init(App->argV[0]);
     init2();
     return 0;
 }

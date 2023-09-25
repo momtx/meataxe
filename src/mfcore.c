@@ -32,7 +32,7 @@ int mfIsValid(const MtxFile_t *file)
 {
    if (file == NULL)
       return 0;
-   if (file->Magic != MF_MAGIC)
+   if (file->typeId != MF_MAGIC)
       return 0;
    return 1;
 }
@@ -44,7 +44,7 @@ void mfValidate(const struct MtxSourceLocation* src, const MtxFile_t *file)
    if (file == NULL) {
       mtxAbort(src,"NULL file");
    }
-   if (file->Magic != MF_MAGIC) {
+   if (file->typeId != MF_MAGIC) {
       mtxAbort(src,"Invalid file");
    }
 }
@@ -55,8 +55,8 @@ static MtxFile_t *allocFile(const char *name)
 {
    MtxFile_t *f = ALLOC(MtxFile_t);
    memset(f,0,sizeof(*f));
-   f->Name = sysMalloc(strlen(name) + 1);
-   strcpy(f->Name,name);
+   f->name = sysMalloc(strlen(name) + 1);
+   strcpy(f->name,name);
    return f;
 }
 
@@ -64,10 +64,10 @@ static MtxFile_t *allocFile(const char *name)
 
 static void freeFile(MtxFile_t *f)
 {
-   if (f->File != NULL) {
-      fclose(f->File);
+   if (f->file != NULL) {
+      fclose(f->file);
    }
-   sysFree(f->Name);
+   sysFree(f->name);
    memset(f,0,sizeof(*f));
    sysFree(f);
 }
@@ -101,7 +101,7 @@ static int isValidHeader(uint32_t* type, const uint32_t header[3])
       return 1;
    }
    if (header[0] == MTX_TYPE_POLYNOMIAL) {
-      return isValidFieldOrder(header[1]);
+      return isValidFieldOrder(header[1]) && (int32_t) header[2] >= -1;
    }
    if (header[0] == MTX_TYPE_BITSTRING_FIXED) {
       return 1;
@@ -133,7 +133,7 @@ uint32_t mfObjectType(const MtxFile_t* file)
    uint32_t type = MTX_TYPE_BEGIN;
    if (!isValidHeader(&type, file->header))
       mtxAbort(MTX_HERE, "%s: invalid object header (0x%lx,0x%lx,0x%lx)",
-            file->Name,
+            file->name,
             (unsigned long) file->header[0],
             (unsigned long) file->header[1],
             (unsigned long) file->header[2]);
@@ -145,9 +145,9 @@ uint32_t mfObjectType(const MtxFile_t* file)
 static void checkHeader(MtxFile_t* f)
 {
    mfObjectType(f);
-   //f->Field = (int) f->header[0];
-   //f->Nor = (int) f->header[1];
-   //f->Noc = (int) f->header[2];
+   //f->field = (int) f->header[0];
+   //f->nor = (int) f->header[1];
+   //f->noc = (int) f->header[2];
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -161,7 +161,7 @@ static void checkHeader(MtxFile_t* f)
 
 void mfReadHeader(MtxFile_t* file)
 {
-   sysRead32(file->File, file->header, 3);
+   sysRead32(file->file, file->header, 3);
    checkHeader(file);
 }
 
@@ -174,7 +174,7 @@ void mfReadHeader(MtxFile_t* file)
 
 int mfTryReadHeader(MtxFile_t* file)
 {
-   if (!sysTryRead32(file->File, file->header, 3))
+   if (!sysTryRead32(file->file, file->header, 3))
       return 0;
    checkHeader(file);
    return 1;
@@ -188,8 +188,8 @@ int mfTryReadHeader(MtxFile_t* file)
 MtxFile_t *mfOpen(const char *name)
 {
    MtxFile_t *f = allocFile(name);
-   f->Magic = MF_MAGIC;
-   f->File = sysFopen(name,"rb");
+   f->typeId = MF_MAGIC;
+   f->file = sysFopen(name,"rb");
    return f;
 }
 
@@ -202,17 +202,17 @@ MtxFile_t *mfOpen(const char *name)
 MtxFile_t *mfCreate(const char *name, uint32_t field, uint32_t nor, uint32_t noc)
 {
    MtxFile_t *f = allocFile(name);
-   f->File = sysFopen(name,"wb");
+   f->file = sysFopen(name,"wb");
 
    /* Write the file header.
       ---------------------- */
    uint32_t header[3];
-   header[0] = /*f->Field = */ field;
-   header[1] = /*f->Nor = */nor;
-   header[2] = /*f->Noc = */noc;
-   sysWrite32(f->File,header,3);
+   header[0] = /*f->field = */ field;
+   header[1] = /*f->nor = */nor;
+   header[2] = /*f->noc = */noc;
+   sysWrite32(f->file,header,3);
 
-   f->Magic = MF_MAGIC;
+   f->typeId = MF_MAGIC;
    return f;
 }
 
@@ -249,8 +249,8 @@ void mfReadRows(MtxFile_t *f, PTR buf, uint32_t nor, uint32_t noc)
    // Read rows.
    uint8_t *b = (uint8_t *) buf;
    for (uint32_t i = nor; i > 0; --i) {
-      if (fread(b, rowSizeUsed, 1, f->File) != 1) {
-         mtxAbort(MTX_HERE,"%s: read error: %s", f->Name, strerror(errno));
+      if (fread(b, rowSizeUsed, 1, f->file) != 1) {
+         mtxAbort(MTX_HERE,"%s: read error: %s", f->name, strerror(errno));
       }
       b += rowSize;
    }
@@ -260,8 +260,8 @@ void mfReadRows(MtxFile_t *f, PTR buf, uint32_t nor, uint32_t noc)
 
 void mfSkip(MtxFile_t *file, size_t nBytes)
 {
-   if (fseek(file->File, (long)nBytes, SEEK_CUR) != 0)
-      mtxAbort(MTX_HERE, "%s: seek error: %s", file->Name, strerror(errno));
+   if (fseek(file->file, (long)nBytes, SEEK_CUR) != 0)
+      mtxAbort(MTX_HERE, "%s: seek error: %s", file->name, strerror(errno));
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -290,14 +290,14 @@ void mfWriteRows(MtxFile_t *f, PTR buf, uint32_t nor, uint32_t noc)
    const size_t rowSizeUsed = ffRowSizeUsed(noc);
 
    for (uint32_t i = nor; i > 0; --i) {
-      if (fwrite(b,rowSizeUsed,1,f->File) != 1) {
+      if (fwrite(b,rowSizeUsed,1,f->file) != 1) {
          break;
       }
       b += rowSize;
    }
 
-   if (ferror(f->File)) {
-      mtxAbort(MTX_HERE,"%s: Write failed: %s",f->Name, strerror(errno));
+   if (ferror(f->file)) {
+      mtxAbort(MTX_HERE,"%s: Write failed: %s",f->name, strerror(errno));
    }
 }
 
@@ -313,7 +313,7 @@ void mfWriteRows(MtxFile_t *f, PTR buf, uint32_t nor, uint32_t noc)
 void mfWrite32(MtxFile_t *f, const void *buf, int count)
 {
    mfValidate(MTX_HERE, f);
-   sysWrite32(f->File,buf,count);
+   sysWrite32(f->file,buf,count);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -326,7 +326,7 @@ void mfWrite32(MtxFile_t *f, const void *buf, int count)
 void mfRead32(MtxFile_t* f, void* buf, int count)
 {
    mfValidate(MTX_HERE, f);
-   sysRead32(f->File,buf,count);
+   sysRead32(f->file,buf,count);
 }
 
 /// @}

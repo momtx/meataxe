@@ -451,7 +451,7 @@ int main(int argc, char **argv)
    MtxMessageLevel = 0;
 
    const int nsel = appGetArguments(app,0,1000);
-   const char * const * const sel = (const char* const*)app->ArgV;
+   const char * const * const sel = (const char* const*)app->argV;
 
    sortTests();
 

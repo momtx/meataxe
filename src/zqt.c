@@ -54,9 +54,9 @@ static void init(int argc, char **argv)
     App = appAlloc(&AppInfo,argc,argv);
     opt_i = appGetOption(App,"-i");
     appGetArguments(App,3,3);
-    fileNameS = App->ArgV[0];
-    fileNameM = App->ArgV[1];
-    fileNameQ = App->ArgV[2];
+    fileNameS = App->argV[0];
+    fileNameM = App->argV[1];
+    fileNameQ = App->argV[2];
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -76,7 +76,7 @@ static int readFiles()
        mtxAbort(MTX_HERE, "%s: %s", fileNameM, MTX_ERR_NOTMATRIX);
     norM = fileM->header[1];
     nocM = fileM->header[2];
-    if (nocM != S->Noc)
+    if (nocM != S->noc)
 	mtxAbort(MTX_HERE,"%s and %s: %s",fileNameS,fileNameM,MTX_ERR_INCOMPAT);
     if (opt_i && norM != nocM)
        mtxAbort(MTX_HERE, "%s: %s", fileNameM, MTX_ERR_NOTSQUARE);
@@ -89,8 +89,8 @@ static int readFiles()
 
 static int isPivot(int i)
 {
-   uint32_t *piv = S->PivotTable;
-   uint32_t dimS = S->Nor;
+   uint32_t *piv = S->pivotTable;
+   uint32_t dimS = S->nor;
    for (uint32_t k = 0; k < dimS; ++k)
    {
       if (i == piv[k])
@@ -104,8 +104,8 @@ static int isPivot(int i)
 static void doit()
 {
     int i;
-    const uint32_t *non_pivot = S->PivotTable + S->Nor;
-    const uint32_t quotientDim = S->Noc - S->Nor;
+    const uint32_t *non_pivot = S->pivotTable + S->nor;
+    const uint32_t quotientDim = S->noc - S->nor;
 
     const uint32_t norM = fileM->header[1];
     const uint32_t nocM = fileM->header[2];
@@ -123,7 +123,7 @@ static void doit()
 	    continue;
 
 	// Clean and extract insignificant columns.
-	ffCleanRow(bufferM,S->Data,S->Nor,S->Noc,S->PivotTable);
+	ffCleanRow(bufferM,S->data,S->nor,S->noc,S->pivotTable);
 	ffMulRow(bufferQ,FF_ZERO, quotientDim);
 	for (uint32_t k = 0; k < quotientDim; ++k)
 	    ffInsert(bufferQ,k,ffExtract(bufferM,non_pivot[k]));

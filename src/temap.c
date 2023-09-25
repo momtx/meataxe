@@ -29,25 +29,25 @@ Matrix_t *TensorMap(Matrix_t *vec, const Matrix_t *a, const Matrix_t *b)
    matValidate(MTX_HERE, vec);
    matValidate(MTX_HERE, a);
    matValidate(MTX_HERE, b);
-   if ((a->Field != b->Field) || (b->Field != vec->Field) ||
-       (vec->Noc != a->Nor * b->Nor)) {
+   if ((a->field != b->field) || (b->field != vec->field) ||
+       (vec->noc != a->nor * b->nor)) {
       mtxAbort(MTX_HERE,"%s",MTX_ERR_INCOMPAT);
       return NULL;
    }
 
    // Calculate the result
-   Matrix_t *result = matAlloc(vec->Field,vec->Nor,a->Noc * b->Noc);
+   Matrix_t *result = matAlloc(vec->field,vec->nor,a->noc * b->noc);
    if (result == NULL) {
       return NULL;
    }
-   for (int i = 0; i < vec->Nor; ++i) {
+   for (int i = 0; i < vec->nor; ++i) {
       Matrix_t *tmp = matTransposed(a);
       if (tmp == NULL) {
          matFree(result);
          return NULL;
       }
 
-      Matrix_t *v = VectorToMatrix(vec,i,b->Nor);
+      Matrix_t *v = VectorToMatrix(vec,i,b->nor);
       if (v == NULL) {
          mtxAbort(MTX_HERE,"Conversion failed");
          matFree(result);

@@ -59,15 +59,15 @@ static void prepare()
       nor = f->header[1];
       noc = f->header[2];
       ffSetField(field);
-      matrixInp = matReadData(f->File, f->header);
+      matrixInp = matReadData(f->file, f->header);
       rowIn = NALLOC(PTR, nor);
       for (uint32_t i = 0; i < nor; ++i) {
          rowIn[i] = matGetPtr(matrixInp, i);
       }
    } else if (objectType == MTX_TYPE_PERMUTATION) {
-      permInp = permReadData(f->File, f->header);
+      permInp = permReadData(f->file, f->header);
       field = 0;
-      nor = noc = permInp->Degree;
+      nor = noc = permInp->degree;
    } else {
       mtxAbort(MTX_HERE,
                "%s: unsupported object type 0x%lx",
@@ -212,8 +212,8 @@ static uint32_t maps2(uint32_t i, uint32_t k)
 
 static void zs2p()
 {
-   const uint32_t* p1 = permInp->Data;
-   uint32_t* p2 = permOut->Data;
+   const uint32_t* p1 = permInp->data;
+   uint32_t* p2 = permOut->data;
    int i;
 
    for (i = 0; i < nor; ++i) {
@@ -242,8 +242,8 @@ static uint32_t mape2(uint32_t i, uint32_t k)
 
 static void ze2p()
 {
-   const uint32_t* p1 = permInp->Data;
-   uint32_t* p2 = permOut->Data;
+   const uint32_t* p1 = permInp->data;
+   uint32_t* p2 = permOut->data;
 
    for (uint32_t i = 0; i < nor; ++i) {
       for (uint32_t k = 0; k < i; ++k) {
@@ -348,8 +348,8 @@ static uint32_t mape3(uint32_t i, uint32_t k, uint32_t l)
 
 static void ze3p()
 {
-   uint32_t* p1 = permInp->Data;
-   uint32_t* p2 = permOut->Data;
+   uint32_t* p1 = permInp->data;
+   uint32_t* p2 = permOut->data;
    for (uint32_t i = 2; i < nor; ++i) {
       for (uint32_t k = 1; k < i; ++k) {
          for (uint32_t l = 0; l < k; ++l) {
@@ -464,9 +464,9 @@ static int init(int argc, char** argv)
    if (appGetArguments(App, 3, 3) < 0) {
       return -1;
    }
-   fileNameInp = App->ArgV[1];
-   fileNameOut = App->ArgV[2];
-   arg3 = App->ArgV[0];
+   fileNameInp = App->argV[1];
+   fileNameOut = App->argV[2];
+   arg3 = App->argV[0];
    if (!strcmp(arg3, "e2")) { mode = M_E2;} else if (!strcmp(arg3, "e3")) {
       mode = M_E3;
    } else if (!strcmp(arg3, "e4")) { mode = M_E4;} else if (!strcmp(arg3, "s2")) {

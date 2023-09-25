@@ -49,7 +49,7 @@ static Matrix_t *VecToMat(PTR vec, int fl, int nor, int noc)
     int i, k;
 
     mat = matAlloc(fl,nor,noc);
-    d = mat->Data;
+    d = mat->data;
     for (i = 0; i < nor; i++) 
     {
         for (k = 0; k < noc; k++) 
@@ -72,8 +72,8 @@ static void matToVec(Matrix_t *mat, PTR vec)
     PTR y;
     int i, k, nrows, ncol, l;
 
-    ncol = mat->Noc;
-    nrows = mat->Nor;
+    ncol = mat->noc;
+    nrows = mat->nor;
 
     /* Clear the vector 
        ---------------- */
@@ -81,7 +81,7 @@ static void matToVec(Matrix_t *mat, PTR vec)
 
     /* Convert
        ------- */
-    y = mat->Data;
+    y = mat->data;
     l = 0;
     for (i = 0; i < nrows; ++i) 
     {
@@ -102,19 +102,19 @@ static void readMatrices()
     {
 	mtxAbort(MTX_HERE,"Error reading matrices");
     }
-    if (matrixA->Nor != matrixA->Noc)
+    if (matrixA->nor != matrixA->noc)
     {
 	mtxAbort(MTX_HERE,"%s: %s",fileNameA,MTX_ERR_NOTSQUARE);
     }
-    if (matrixB->Nor != matrixB->Noc)
+    if (matrixB->nor != matrixB->noc)
     {
 	mtxAbort(MTX_HERE,"%s: %s",fileNameB,MTX_ERR_NOTSQUARE);
     }
-    if (matrixA->Field != matrixB->Field)
+    if (matrixA->field != matrixB->field)
     {
 	mtxAbort(MTX_HERE,"%s and %s: %s",fileNameA,fileNameB,MTX_ERR_INCOMPAT);
     }
-    nocV = matrixA->Noc * matrixB->Noc;
+    nocV = matrixA->noc * matrixB->noc;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -126,7 +126,7 @@ static void openVectorFiles()
     mfReadHeader(fileVin);
     if (mfObjectType(fileVin) != MTX_TYPE_MATRIX)
 	mtxAbort(MTX_HERE,"%s: %s",fileNameVin,MTX_ERR_NOTMATRIX);
-    if (fileVin->header[0] != matrixA->Field || fileVin->header[2] != nocV)
+    if (fileVin->header[0] != matrixA->field || fileVin->header[2] != nocV)
 	mtxAbort(MTX_HERE,"%s and %s/%s: %s",fileNameVin,fileNameA,fileNameB,MTX_ERR_INCOMPAT);
     
     // Create output file.
@@ -139,10 +139,10 @@ static void init(int argc, char **argv)
 {
     App = appAlloc(&AppInfo,argc,argv);
     appGetArguments(App,4,4);
-    fileNameA = App->ArgV[0];
-    fileNameB = App->ArgV[1];
-    fileNameVin = App->ArgV[2];
-    fileNameVout = App->ArgV[3];
+    fileNameA = App->argV[0];
+    fileNameB = App->argV[1];
+    fileNameVin = App->argV[2];
+    fileNameVout = App->argV[3];
     readMatrices();
     openVectorFiles();
 }
@@ -176,7 +176,7 @@ int main(int argc, char **argv)
 
         // Read one vector and convert to matrix.
         mfReadRows(fileVin,tmp,1, nocV);
-        mat3 = VecToMat(tmp, ffOrder, matrixATr->Nor, matrixB->Nor);
+        mat3 = VecToMat(tmp, ffOrder, matrixATr->nor, matrixB->nor);
        
         // Multiply from both sides.
 	newmat = matDup(matrixATr);

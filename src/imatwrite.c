@@ -23,9 +23,9 @@
 void imatWrite(const IntMatrix_t *mat, FILE *f)
 {
    imatValidate(MTX_HERE, mat);
-   uint32_t hdr[3] = {MTX_TYPE_INTMATRIX, mat->Nor, mat->Noc};
+   uint32_t hdr[3] = {MTX_TYPE_INTMATRIX, mat->nor, mat->noc};
    sysWrite32(f,hdr,3);
-   sysWrite32(f, mat->Data, (size_t) mat->Nor * mat->Noc);
+   sysWrite32(f, mat->data, (size_t) mat->nor * mat->noc);
 }
 
 

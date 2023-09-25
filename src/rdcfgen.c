@@ -37,7 +37,7 @@ MatRep_t *latReadCfGens(Lat_Info *info, int cf, int flags)
 	mtxAbort(MTX_HERE,"info: %s",MTX_ERR_BADARG);
 	return NULL;
     }
-    if (cf < 0 || cf >= info->NCf)
+    if (cf < 0 || cf >= info->nCf)
     {
 	mtxAbort(MTX_HERE,"cf: %s",MTX_ERR_BADARG);
 	return NULL;

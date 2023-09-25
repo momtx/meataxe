@@ -31,17 +31,17 @@ void polPrint(char *name, const Poly_t *p)
    if (name != NULL) {
       printf("%s=",name);
    }
-   ffSetField(p->Field);
-   if (p->Degree == -1) {
+   ffSetField(p->field);
+   if (p->degree == -1) {
       printf("0x^0");
    }
-   for (i = p->Degree; i >= 0; i--) {
-      if (p->Data[i] != FF_ZERO) {
+   for (i = p->degree; i >= 0; i--) {
+      if (p->data[i] != FF_ZERO) {
          if (flag) {
             printf("+");
          }
-         if ((p->Data[i] != FF_ONE) || (i == 0)) {
-            printf("%d",ffToInt(p->Data[i]));
+         if ((p->data[i] != FF_ONE) || (i == 0)) {
+            printf("%d",ffToInt(p->data[i]));
          }
          if (i > 1) {
             printf("x^%d",i);

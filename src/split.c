@@ -18,7 +18,7 @@ static int CheckArguments(Matrix_t *subspace, const MatRep_t *rep)
 	return -1;
     }
     matValidate(MTX_HERE, subspace);
-    if (subspace->PivotTable == NULL)
+    if (subspace->pivotTable == NULL)
     {
 	mtxAbort(MTX_HERE,"%s",MTX_ERR_NOTECH);
 	return -1;
@@ -59,7 +59,7 @@ static int CheckArguments(Matrix_t *subspace, const MatRep_t *rep)
 /// Matrix_t *subspace;
 /// ...
 /// subspace = SpinUp(seed,Rep,SF_FIRST|SF_SUB);
-/// if (subspace->Nor > 0 && subspace->Nor < subspace->Noc)
+/// if (subspace->nor > 0 && subspace->nor < subspace->noc)
 /// {
 ///     MatRep_t *Sub = NULL, *Quot = NULL;
 ///     printf("Split!\n");

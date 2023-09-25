@@ -81,7 +81,7 @@ Matrix_t *matPower(const Matrix_t *mat, long n)
    /* Check the arguments
       ------------------- */
    matValidate(MTX_HERE, mat);
-   if (mat->Nor != mat->Noc) {
+   if (mat->nor != mat->noc) {
       mtxAbort(MTX_HERE,"matPower(): %s",MTX_ERR_NOTSQUARE);
       return NULL;
    }
@@ -89,25 +89,25 @@ Matrix_t *matPower(const Matrix_t *mat, long n)
    /* Handle special cases n = 0 and n = 1
       ------------------------------------ */
    if (n == 0) {
-      return matId(mat->Field,mat->Nor);
+      return matId(mat->field,mat->nor);
    } else if (n == 1) {
       return matDup(mat);
    }
 
-   ffSetField(mat->Field);
-   tmp = ffAlloc(mat->Noc, mat->Noc);
+   ffSetField(mat->field);
+   tmp = ffAlloc(mat->noc, mat->noc);
    if (tmp == NULL) {
        return NULL;
    }
-   memcpy(tmp,mat->Data,ffSize(mat->Noc, mat->Noc));
-   tmp2 = ffAlloc(mat->Noc, mat->Noc);
+   memcpy(tmp,mat->data,ffSize(mat->noc, mat->noc));
+   tmp2 = ffAlloc(mat->noc, mat->noc);
    if (tmp2 == NULL) {
        sysFree(tmp);
        return NULL;
    }
-   result = matAlloc(mat->Field,mat->Nor,mat->Noc);
+   result = matAlloc(mat->field,mat->nor,mat->noc);
    if (result != NULL) {
-      matpwr_(n, tmp, result->Data, tmp2, mat->Noc);
+      matpwr_(n, tmp, result->data, tmp2, mat->noc);
    }
    sysFree(tmp);
    sysFree(tmp2);

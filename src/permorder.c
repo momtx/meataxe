@@ -22,12 +22,12 @@ uint32_t permOrder(const Perm_t *perm)
    uint32_t order = 1;
 
    permValidate(MTX_HERE, perm);
-   if (perm->Degree < 2) {
+   if (perm->degree < 2) {
       return 1;
    }
 
-   const uint32_t deg = perm->Degree;
-   const uint32_t* p = perm->Data;
+   const uint32_t deg = perm->degree;
+   const uint32_t* p = perm->data;
 
    uint8_t* done = NALLOC(uint8_t, deg);
    uint8_t* seed = done - 1;

@@ -67,22 +67,22 @@ static void MakeInvertible(Matrix_t *mat, const char *fn)
     int i, k;
 
     matEchelonize(dup);
-    k = dup->Nor;
-    if (k < mat->Nor)
+    k = dup->nor;
+    if (k < mat->nor)
     {
 	MESSAGE(0,("WARNING: %s: %d basis vectors are missing, "
-	    "using random vectors\n",fn,mat->Nor - k));
+	    "using random vectors\n",fn,mat->nor - k));
     }
-    for (i = 0, x = mat->Data; i < mat->Nor; ++i, ffStepPtr(&x, mat->Noc))
+    for (i = 0, x = mat->data; i < mat->nor; ++i, ffStepPtr(&x, mat->noc))
     {
 	FEL f;
-	if (ffFindPivot(x,&f, mat->Noc) == MTX_NVAL)
+	if (ffFindPivot(x,&f, mat->noc) == MTX_NVAL)
 	{
-	    ffInsert(x,dup->PivotTable[k],FF_ONE);
+	    ffInsert(x,dup->pivotTable[k],FF_ONE);
 	    ++k;
 	}
     }
-    MTX_ASSERT(k == mat->Nor);
+    MTX_ASSERT(k == mat->nor);
     matFree(dup);
 }
 
@@ -106,22 +106,22 @@ static void Init(int argc, char **argv)
     /* Process command line arguments
        ------------------------------ */
     appGetArguments(App,4,4);
-    TkiName = App->ArgV[0];
-    AName = App->ArgV[1];
-    BName = App->ArgV[2];
-    ResultName = App->ArgV[3];
+    TkiName = App->argV[0];
+    AName = App->argV[1];
+    BName = App->argV[2];
+    ResultName = App->argV[3];
 
     /* Read info files
        --------------- */
     tkReadInfo(&TKInfo,TkiName);
-    latReadInfo(&InfoM,TKInfo.NameM);
-    latReadInfo(&InfoN,TKInfo.NameN);
+    latReadInfo(&InfoM,TKInfo.nameM);
+    latReadInfo(&InfoN,TKInfo.nameN);
 
     /* Some checks on info file data
        ----------------------------- */
-    if (TKInfo.Dim <= 0)
+    if (TKInfo.dim <= 0)
 	mtxAbort(MTX_HERE,"No dimension found in .tki file - did you run precond?");
-    if (InfoM.Field != InfoN.Field)
+    if (InfoM.field != InfoN.field)
 	mtxAbort(MTX_HERE,"Different fields in .cfinfo files");
     if (InfoN.NGen != InfoM.NGen)
     {
@@ -134,14 +134,14 @@ static void Init(int argc, char **argv)
     if (!NoBasisChange)
     {
         MESSAGE(1,("Reading and inverting semisimplicity bases\n"));
-        sprintf(fn,"%s.ssb",TKInfo.NameM);
+        sprintf(fn,"%s.ssb",TKInfo.nameM);
         SsBasisM = matLoad(fn);
-	    // TODO: error info "Cannot load semisimplicity basis -- Did you run 'pwkond -t -b %s'?",TKInfo.NameM
+	    // TODO: error info "Cannot load semisimplicity basis -- Did you run 'pwkond -t -b %s'?",TKInfo.nameM
         MakeInvertible(SsBasisM,fn);
         SsBasisMi = matInverse(SsBasisM);
         if (strcmp(AName,BName))
         {
-	    sprintf(fn,"%s.ssb",TKInfo.NameN);
+	    sprintf(fn,"%s.ssb",TKInfo.nameN);
 	    SsBasisN = matLoad(fn);
             // TODO: error info see above
 	    MakeInvertible(SsBasisN,fn);
@@ -156,20 +156,20 @@ static void Init(int argc, char **argv)
 
     /* Read P and Q matrices.
        ---------------------- */
-    for (i = 0; i < TKInfo.NCf; ++i)
+    for (i = 0; i < TKInfo.nCf; ++i)
     {
-	int spl = InfoM.Cf[TKInfo.CfIndex[0][i]].spl;
-	int tdim = InfoM.Cf[TKInfo.CfIndex[0][i]].dim;
+	int spl = InfoM.Cf[TKInfo.cfIndex[0][i]].spl;
+	int tdim = InfoM.Cf[TKInfo.cfIndex[0][i]].dim;
 	int f;
 	tdim *= tdim;
         sprintf(fn,"%s.p.%d",TkiName,i + 1);
 	P[i] = matLoad(fn);
 	f = ffOrder;
-	if (P[i]->Field != f || P[i]->Noc != spl || P[i]->Nor != tdim)
+	if (P[i]->field != f || P[i]->noc != spl || P[i]->nor != tdim)
 	    mtxAbort(MTX_HERE,"%s: Invalid P matrix",fn);
         sprintf(fn,"%s.q.%d",TkiName,i + 1);
 	Q[i] = matLoad(fn);
-	if (Q[i]->Field != f || Q[i]->Nor != spl || Q[i]->Noc != tdim)
+	if (Q[i]->field != f || Q[i]->nor != spl || Q[i]->noc != tdim)
 	    mtxAbort(MTX_HERE,"%s: Invalid Q matrix",fn);
     }
 }
@@ -202,7 +202,7 @@ static int FirstRow(Lat_Info *info, int cf, int k)
     int ind = 0;
     int i;
 
-    MTX_ASSERT(cf >= 0 && cf < info->NCf);
+    MTX_ASSERT(cf >= 0 && cf < info->nCf);
     MTX_ASSERT(k >= 0 && k < info->Cf[cf].mult);
 
     /* Constituents before <cf> consume dim*mult rows
@@ -239,10 +239,10 @@ static void gemap(Matrix_t *conma, Matrix_t *q, Matrix_t *mrow, Matrix_t *nrow)
 
     /* For each irreducible constituent I
        ---------------------------------- */
-    for (j = 0; j < TKInfo.NCf; ++j)
+    for (j = 0; j < TKInfo.nCf; ++j)
     {
-	int cfm = TKInfo.CfIndex[0][j];		/* Index of constituent in M */
-	int cfn = TKInfo.CfIndex[1][j];		/* Index of constituent in M */
+	int cfm = TKInfo.cfIndex[0][j];		/* Index of constituent in M */
+	int cfn = TKInfo.cfIndex[1][j];		/* Index of constituent in M */
 	int d = InfoM.Cf[cfm].dim;		/* Dimension */
 	int mj;
 	
@@ -265,7 +265,7 @@ static void gemap(Matrix_t *conma, Matrix_t *q, Matrix_t *mrow, Matrix_t *nrow)
                 matMul(image, P[j]);   /* projection */
 		matCopyRegion(conma,0,bcol,image,0,0,-1,-1);
                 matFree(image);
-                bcol += P[j]->Noc;
+                bcol += P[j]->noc;
             }
 	    matFree(mop);
         }
@@ -341,14 +341,14 @@ static void condenseMat(int gen)
     /* Open the output file
        -------------------- */
     MESSAGE(1,("  Beginning condensation\n"));
-    MtxFile_t* resultFile = mfCreate(resname,ffOrder,TKInfo.Dim,TKInfo.Dim);
+    MtxFile_t* resultFile = mfCreate(resname,ffOrder,TKInfo.dim,TKInfo.dim);
 
     /* Main loop: for each constituent
        ------------------------------- */
-    for (cf = 0; cf < TKInfo.NCf; ++cf)
+    for (cf = 0; cf < TKInfo.nCf; ++cf)
     {
-	int cfm = TKInfo.CfIndex[0][cf];    /* Index in M */
-	int cfn = TKInfo.CfIndex[1][cf];    /* Index in N */
+	int cfm = TKInfo.cfIndex[0][cf];    /* Index in M */
+	int cfn = TKInfo.cfIndex[1][cf];    /* Index in N */
 	int rownb = InfoM.Cf[cfm].dim;	/* Number of rows to extract */
 	int mi;				/* Counter for copies of this const. */
 
@@ -369,18 +369,18 @@ static void condenseMat(int gen)
 
 		firstrow = FirstRow(&InfoN,cfn,ni);
 		nrow = matCutRows(nmat,firstrow,rownb);
-		condmat = matAlloc(ffOrder,Q[cf]->Nor,TKInfo.Dim);
+		condmat = matAlloc(ffOrder,Q[cf]->nor,TKInfo.dim);
 		if (condmat == NULL)
 		{
 		    mtxAbort(MTX_HERE,"Cannot allocate %dx%d matrix",
-			Q[cf]->Nor,TKInfo.Dim);
+			Q[cf]->nor,TKInfo.dim);
 		}
 
 	    	MESSAGE(3,(" %dx%d",mi,ni));
                 gemap(condmat,Q[cf],mrow,nrow);
                 
                 /* write result */
-        	mfWriteRows(resultFile,condmat->Data,condmat->Nor,condmat->Noc);
+        	mfWriteRows(resultFile,condmat->data,condmat->nor,condmat->noc);
                 matFree(condmat);
                 matFree(nrow);
             }

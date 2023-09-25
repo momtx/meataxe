@@ -28,24 +28,24 @@ Poly_t *polMul(Poly_t *dest, const Poly_t *src)
    // check arguments
    polValidate(MTX_HERE, src);
    polValidate(MTX_HERE, dest);
-   if (dest->Field != src->Field) {
+   if (dest->field != src->field) {
       mtxAbort(MTX_HERE,"%s",MTX_ERR_INCOMPAT);
       return NULL;
    }
 
    // handle special cases: dest = 0, src = 0
-   if (dest->Degree == -1) {
+   if (dest->degree == -1) {
       return dest;
    }
-   if (src->Degree == -1) {
-      dest->Degree = -1;
+   if (src->degree == -1) {
+      dest->degree = -1;
       return dest;
    }
 
-   d = dest->Data;
-   s = src->Data;
-   xdeg = src->Degree + dest->Degree;
-   ffSetField(src->Field);
+   d = dest->data;
+   s = src->data;
+   xdeg = src->degree + dest->degree;
+   ffSetField(src->field);
 
    // allocate result buffer
    x = NALLOC(FEL,xdeg + 1);
@@ -58,17 +58,17 @@ Poly_t *polMul(Poly_t *dest, const Poly_t *src)
    }
 
    // multiply
-   for (di = 0; di <= dest->Degree; ++di) {
-      for (si = 0; si <= src->Degree; ++si) {
+   for (di = 0; di <= dest->degree; ++di) {
+      for (si = 0; si <= src->degree; ++si) {
          x[si + di] = ffAdd(x[si + di],ffMul(s[si],d[di]));
       }
    }
 
    // overwrite <dest> with the result
-   sysFree(dest->Data);
-   dest->Data = x;
-   dest->Degree = xdeg;
-   dest->BufSize = xdeg + 1;
+   sysFree(dest->data);
+   dest->data = x;
+   dest->degree = xdeg;
+   dest->bufSize = xdeg + 1;
    return dest;
 }
 

@@ -14,9 +14,9 @@
 void permWrite(const Perm_t *perm, FILE *f)
 {
    permValidate(MTX_HERE, perm);
-   uint32_t hdr[3] = {MTX_TYPE_PERMUTATION, perm->Degree, 1U};
+   uint32_t hdr[3] = {MTX_TYPE_PERMUTATION, perm->degree, 1U};
    sysWrite32(f,hdr,3);
-   sysWrite32(f,perm->Data,perm->Degree);
+   sysWrite32(f,perm->data,perm->degree);
 }
 
 
