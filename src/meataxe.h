@@ -62,6 +62,29 @@ void sysWrite32(FILE *f, const void* buf, size_t n);
 // @}
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
+/// Parallel execution (threads) support
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+/// @addtogroup pex @{
+
+typedef struct PexGroup PexGroup_t;
+
+PexGroup_t* pexCreateGroup();
+void pexExecute(PexGroup_t* group, void (*f)(void *userData), void* userData);
+void pexExecuteRange(PexGroup_t* group, void (*f)(void *userData, size_t begin, size_t end),
+	void* userData, size_t begin, size_t end);
+void pexFinally(PexGroup_t* group, void(*f)(void* userData), void* userData);
+void pexInit(int nThreads);
+MTX_PRINTF_ATTRIBUTE(1,2)
+void pexLog(const char* msg, ...);
+void pexShutdown();
+void pexSleep(unsigned timeInMs);
+unsigned pexThreadId();
+void pexWait();
+
+/// @}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
 // Finite fields kernel
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -1029,6 +1052,11 @@ int ldFree(LdLattice_t *l);
 int ldAddIncidence(LdLattice_t *lat, int sub, int sup);
 int ldSetPositions(LdLattice_t *l);
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void hashLittle2(const void *data, size_t len, uint32_t *pc, uint32_t *pb);
+
 #endif  /* !defined(_MEATAXE_H_) */
 
 // vim:fileencoding=utf8:sw=3:ts=8:et:cin
+

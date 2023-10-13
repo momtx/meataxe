@@ -110,6 +110,7 @@ LIB_OBJS=\
 	fpcore fpdup fpmul fpmul2 fpprint \
 	gcd genseed\
 	grmaprow grmatcore grtable \
+	hashlittle2 \
 	homcomp \
 	imatcore imatread imatwrite\
 	init intio issub \
@@ -129,7 +130,8 @@ LIB_OBJS=\
 	msclean mscore \
 	mtensor mtxobj os \
 	permcmp permcore permdup perminv permmul permorder\
-	permprint permpwr permread permwrite poladd\
+	permprint permpwr permread permwrite \
+	pex poladd\
 	polcmp polcore polderive poldiv poldup\
 	polgcd polmul polprint polread polwrite \
 	quotient random rdcfgen \
