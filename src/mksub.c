@@ -18,20 +18,20 @@
 	       O_RADICAL|O_SOCLE|O_INCIDENCES)
 
 
-int opt_b = 0;			/* -b option (blocks) */
+int opt_b = 0;			// -b option (blocks)
 int opt_o = O_ALL;
 int opt_G = 0;
-int done[LAT_MAXCF];		/* */
-int blnum;			/* Number of current block */
-int blsize;			/* Block size */
-int block[LAT_MAXCF];		/* Block members */
+int done[LAT_MAXCF];
 
-int firstm[LAT_MAXCF+1];	/* First mountain */
-int firstdl[LAT_MAXCF+1];	/* First dotted line */
+int blockNumber;		// Number of current block
+int blockSize;			// Block size
+int blockMember[LAT_MAXCF];	// Block members (index in constituent list)
+
+int firstm[LAT_MAXCF+1];	// First mountain per constituent
+int firstdl[LAT_MAXCF+1];	// First dotted line per constituent
 
 
-/* Data read from input files
-   -------------------------- */
+// Data read from input files
 int xnmount = 0;		// Number of mountains
 int xndotl = 0;			// Number of dotted lines
 BitString_t *xsubof[MAXCYCL];	// Incidence matrix
@@ -186,7 +186,7 @@ static void init(const char *basename)
 	    return;
 	}
 	xmdim[i] = mdim;
-	while (fgetc(f) != '\n')	/* Skip class */
+	while (fgetc(f) != '\n')	// Skip class
 	{
 	    if (ferror(f) || feof(f))
 	    {
@@ -198,28 +198,6 @@ static void init(const char *basename)
     fclose(f);
 }
 
-
-/* -----------------------------------------------------------------
-   init2()
-   ----------------------------------------------------------------- */
-
-static void init2()
-{
-    int i;
-
-    // Set firstm and firstdl
-    firstm[0] = 0;
-    firstdl[0] = 0;
-    for (i = 0; i < LI.nCf; ++i)
-    {
-	firstm[i+1] = firstm[i] + LI.Cf[i].nmount;
-	firstdl[i+1] = firstdl[i] + LI.Cf[i].ndotl;
-    }
-
-    // Initialize done[]
-    for (i = 0; i < LI.nCf; ++i) done[i] = 0;
-}
-
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 /// Determine the isomorphism type of a mountain.
@@ -227,8 +205,8 @@ static void init2()
 static int isotype(int mnt)
 {
     int m;
-    for (m = 0; (mnt -= LI.Cf[block[m]].nmount) >= 0; ++m);
-    return block[m];
+    for (m = 0; (mnt -= LI.Cf[blockMember[m]].nmount) >= 0; ++m);
+    return blockMember[m];
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -423,7 +401,7 @@ FILE *openout(char *name)
     FILE *f;
     char fn[200];
 
-    sprintf(fn,opt_b ? "%s%s.%d" : "%s%s",LI.BaseName,name,blnum);
+    sprintf(fn,opt_b ? "%s%s.%d" : "%s%s",LI.BaseName,name,blockNumber);
     MESSAGE(1,("Writing %s\n",fn));
     f = sysFopen(fn, "w");
     if (f == NULL)
@@ -488,30 +466,29 @@ static int printbs(FILE *f, BitString_t *b)
 
 void writeresult()
 {
-   FILE* f, * g;
+   FILE* g;
    int i, k;
    char tmp[100];
    BitString_t* b = bsAlloc(bnmount);
 
    MESSAGE(0, ("Finished, %d submodules found\n", nsub));
-   f = openout(".out");
+   FILE* f = openout(".out");
 
-   /* Write irreducibles
-      ------------------ */
+   // Write irreducible constituents
    fprintf(f, "Irreducibles:\n");
    fprintf(f, "    Type   Mult   SF   Mountains           Dotted lines\n");
-   for (i = 0; i < blsize; ++i) {
-      sprintf(tmp, "%s", latCfName(&LI, block[i]));
-      fprintf(f, "    %-7s%-7ld%-5ld", tmp, LI.Cf[block[i]].mult,
-              LI.Cf[block[i]].spl);
-      sprintf(tmp, "%ld (%ld-%ld)", LI.Cf[block[i]].nmount,
-              (long) firstm[block[i]],
-              LI.Cf[block[i]].nmount + firstm[block[i]] - 1);
+   for (i = 0; i < blockSize; ++i) {
+      sprintf(tmp, "%s", latCfName(&LI, blockMember[i]));
+      fprintf(f, "    %-7s%-7ld%-5ld", tmp, LI.Cf[blockMember[i]].mult,
+              LI.Cf[blockMember[i]].spl);
+      sprintf(tmp, "%ld (%ld-%ld)", LI.Cf[blockMember[i]].nmount,
+              (long) firstm[blockMember[i]],
+              LI.Cf[blockMember[i]].nmount + firstm[blockMember[i]] - 1);
       fprintf(f, "%-20s", tmp);
-      if (LI.Cf[block[i]].ndotl > 0) {
-         sprintf(tmp, "%ld (%ld-%ld)", LI.Cf[block[i]].ndotl,
-                 (long) firstdl[block[i]],
-                 LI.Cf[block[i]].ndotl + firstdl[block[i]] - 1);
+      if (LI.Cf[blockMember[i]].ndotl > 0) {
+         sprintf(tmp, "%ld (%ld-%ld)", LI.Cf[blockMember[i]].ndotl,
+                 (long) firstdl[blockMember[i]],
+                 LI.Cf[blockMember[i]].ndotl + firstdl[blockMember[i]] - 1);
       }
       else {
          sprintf(tmp, "0");
@@ -520,8 +497,7 @@ void writeresult()
    }
    fprintf(f, "\n");
 
-   /* Write mountains
-      --------------- */
+   // Write mountains
    if (opt_o & O_MOUNTAINS) {
       fprintf(f, "Mountains:\n");
       fprintf(f, "    No     Dim    Maximal Submountains\n");
@@ -541,10 +517,8 @@ void writeresult()
       fprintf(f, "\n");
    }
 
-   /* Write incidence matrix
-      ---------------------- */
+   // Write incidence matrix
    if (opt_o & O_INCIDENCES) {
-      MESSAGE(1, ("  Incidence matrix (%d by %d)\n", bnmount, bnmount));
       fprintf(f, "Incidence matrix:\n");
       for (i = 0; i < bnmount; ++i) {
          fprintf(f, "    %3d: ", i);
@@ -554,24 +528,20 @@ void writeresult()
       fprintf(f, "\n");
    }
 
-   /* Write dotted lines
-      ------------------ */
+   // Dotted lines
    if (opt_o & O_DOTTEDLINES) {
-      MESSAGE(1, ("  Dotted lines (%d)\n", bndotl));
       fflush(stdout);
       fprintf(f, "Dotted lines:\n");
       for (i = 0; i < bndotl; ++i) {
-         fprintf(f, "    ");
+         fprintf(f, "    %3d: ", i);
          printbs(f, bdotl[i]);
          fprintf(f, "\n");
       }
       fprintf(f, "\n");
    }
 
-   /* Write submodules
-      ---------------- */
+   // Submodule list
    if (opt_o & O_SUBMODULES) {
-      MESSAGE(1, ("  Submodules (%d)\n", nsub));
       fflush(stdout);
       g = openout(".sub");
       fprintf(f, "Submodules:\n");
@@ -609,7 +579,6 @@ void writeresult()
       * x = bsAlloc(bnmount),
       * zero = bsAlloc(bnmount);
 
-      MESSAGE(1, ("  Radical series\n"));
       fprintf(f, "Radical series:\n");
       for (i = 0; i < bnmount; ++i) {
          bsSet(rad, i);
@@ -623,9 +592,8 @@ void writeresult()
          bsClearAll(newrad);
          MESSAGE(1, ("Starting layer %d\n", layer));
 
-         /* Extend the zero module = x by all those mountains
-            which are contained in the radical and extend y
-            ------------------------------------------------- */
+         // Extend the zero module = x by all those mountains
+         // which are contained in the radical and extend y
          for (i = 0; i < bnmount && bsCompare(rad, x); ++i) {
             if (bsTest(rad, i) && !(bsTest(x, i))) {
                MESSAGE(2, ("extend(%i)\n", i));
@@ -635,8 +603,7 @@ void writeresult()
             }
          }
 
-         /* Find the irreducible factors in this layer
-            ------------------------------------------ */
+         // Find the irreducible factors in this layer
          memset(mult, 0, sizeof(mult));
          bsCopy(x, newrad);
          for (i = 0; i < bnmount && bsCompare(rad, x); ++i) {
@@ -689,8 +656,7 @@ void writeresult()
 
       fclose(f);
 
-      /* Write the .gra file
-         ------------------- */
+      // Write the .gra file
       f = openout(".gra");
       fprintf(f, "%d\n", nsub);
       for (i = 0; i < nsub; ++i) {
@@ -735,57 +701,57 @@ static int nextblock()
 {
     int i, k;
 
-    ++blnum;
+    ++blockNumber;
     for (i = 0; i < LI.nCf && done[i]; ++i);
     if (i >= LI.nCf) return 0;
 
     // If -b was not used, build a single block containing all irreducibles.
     if (!opt_b)
     {
-	blsize = LI.nCf;
+	blockSize = LI.nCf;
 	for (i = 0; i < LI.nCf; ++i)
 	{
-	    block[i] = i;
+	    blockMember[i] = i;
 	    done[i] = 1;
 	}
 	return 1;
     }
 
     // Otherwise, make the next block
-    MESSAGE(2,("Making next block (%d)\n",blnum));
+    MESSAGE(2,("Making next block (%d)\n",blockNumber));
     done[i] = 1;
-    blsize = 1;
-    block[0] = i;
+    blockSize = 1;
+    blockMember[0] = i;
     i = 0;
-    while (i < blsize)
+    while (i < blockSize)
     {
 	for (k = 0; k < LI.nCf; ++k)
-    	    if (!done[k] && sameblock(block[i],k))
+    	    if (!done[k] && sameblock(blockMember[i],k))
     	    {
 	        done[k] = 1;
-	        block[blsize++] = k;
+	        blockMember[blockSize++] = k;
 	    }
 	++i;
     }
 
     // Sort block
-    MESSAGE(2,("Sorting block (size=%lu)\n", (unsigned long) blsize));
-    for (i = 0; i < blsize; ++i) {
-	for (k = i+1; k < blsize; ++k)
+    MESSAGE(2,("Sorting block (size=%lu)\n", (unsigned long) blockSize));
+    for (i = 0; i < blockSize; ++i) {
+	for (k = i+1; k < blockSize; ++k)
 	{
-	    if (block[i] > block[k])
+	    if (blockMember[i] > blockMember[k])
 	    {
-		int tmp = block[i];
-		block[i] = block[k];
-		block[k] = tmp;
+		int tmp = blockMember[i];
+		blockMember[i] = blockMember[k];
+		blockMember[k] = tmp;
 	    }
 	}
     }
     if (MSG0)
     {
-        printf("\nBlock %d: ",blnum);
-	for (i = 0; i < blsize; ++i)
-	    printf(" %s%s",LI.BaseName,latCfName(&LI,block[i]));
+        printf("\nBlock %d: ",blockNumber);
+	for (i = 0; i < blockSize; ++i)
+	    printf(" %s%s",LI.BaseName,latCfName(&LI,blockMember[i]));
 	printf("\n");
         fflush(stdout);
     }
@@ -853,8 +819,8 @@ static void initBlock()
 
     // Determine the number of mountains in this block
     bnmount = 0;
-    for (int i = 0; i < blsize; ++i)
-	bnmount += LI.Cf[block[i]].nmount;
+    for (int i = 0; i < blockSize; ++i)
+	bnmount += LI.Cf[blockMember[i]].nmount;
 
     // Build the incidence matrix
     MESSAGE(0,("Building incidence matrix\n"));
@@ -865,14 +831,14 @@ static void initBlock()
 	bsupof[i] = bsAlloc(bnmount);
     }
     row = 0;
-    for (int i = 0; i < blsize; ++i)
+    for (int i = 0; i < blockSize; ++i)
     {
-        for (int ii = firstm[block[i]]; ii < firstm[block[i]+1]; ++ii)
+        for (int ii = firstm[blockMember[i]]; ii < firstm[blockMember[i]+1]; ++ii)
 	{
 	    col = 0;
-	    for (int k = 0; k < blsize; ++k)
+	    for (int k = 0; k < blockSize; ++k)
 	    {
-		for (int kk=firstm[block[k]]; kk<firstm[block[k]+1]; ++kk)
+		for (int kk=firstm[blockMember[k]]; kk<firstm[blockMember[k]+1]; ++kk)
 		{
 		    if (bsTest(xsubof[ii],kk))
 		    {
@@ -891,16 +857,16 @@ static void initBlock()
     MESSAGE(0,("Building dotted lines\n"));
     fflush(stdout);
     bndotl = 0;
-    for (int i = 0; i < blsize; ++i)
+    for (int i = 0; i < blockSize; ++i)
     {
-        for (int ii = firstdl[block[i]]; ii < firstdl[block[i]+1]; ++ii)
+        for (int ii = firstdl[blockMember[i]]; ii < firstdl[blockMember[i]+1]; ++ii)
 	{
 	    bdotl[bndotl] = bsAlloc(bnmount);
 	    bdlspan[bndotl] = bsAlloc(bnmount);
 	    col = 0;
-	    for (int k = 0; k < blsize; ++k)
+	    for (int k = 0; k < blockSize; ++k)
 	    {
-		for (int kk=firstm[block[k]]; kk<firstm[block[k]+1]; ++kk)
+		for (int kk=firstm[blockMember[k]]; kk<firstm[blockMember[k]+1]; ++kk)
 		{
 		    if (bsTest(xdotl[ii],kk))
 		    {
@@ -1038,6 +1004,26 @@ static int ParseCommandLine()
 }
 
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+static void calculateCfInfo()
+{
+    int i;
+
+    // Set firstm and firstdl
+    firstm[0] = 0;
+    firstdl[0] = 0;
+    for (i = 0; i < LI.nCf; ++i)
+    {
+	firstm[i+1] = firstm[i] + LI.Cf[i].nmount;
+	firstdl[i+1] = firstdl[i] + LI.Cf[i].ndotl;
+    }
+
+    // Initialize done[]
+    for (i = 0; i < LI.nCf; ++i) done[i] = 0;
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 static int Init(int argc, char **argv)
 {
@@ -1047,13 +1033,11 @@ static int Init(int argc, char **argv)
 	return -1;
     MESSAGE(0,("*** CALCULATE ALL SUBMODULES ***\n\n"));
     init(App->argV[0]);
-    init2();
+    calculateCfInfo();
     return 0;
 }
 
-/* -----------------------------------------------------------------
-   main()
-   ----------------------------------------------------------------- */
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 int main(int argc, char **argv)
 {
