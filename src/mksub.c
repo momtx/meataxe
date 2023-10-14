@@ -230,112 +230,155 @@ static int isotype(int mnt)
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
+static int compareSubmodules(const void* e1, const void *e2)
+{
+   const BitString_t* a = *(const BitString_t**)e1;
+   const BitString_t* b = *(const BitString_t**)e2;
+   if (bsIsSub(a,b)) return -1;
+   if (bsIsSub(b,a)) return 1;
+   if ((const char*)e1 < (const char*) e2) return -1;
+   if ((const char*)e2 < (const char*) e1) return 1;
+   return 0;
+}
+
+static void sortBlock()
+{
+   MESSAGE(0, ("Sorting\n"));
+
+   #if 1
+   qsort(sub, nsub, sizeof(sub[0]), compareSubmodules);
+   for (int i = 0; i < nsub; ++i) {
+      for (int k = i + 1; k < nsub; ++k) {
+         MTX_ASSERT(!bsIsSub(sub[k], sub[i]));
+      }
+   }
+   #else
+   (void) compareSubmodules;
+   int i, k;
+   BitString_t* x;
+   for (i = 0; i < nsub; ++i) {
+      for (k = i + 1; k < nsub; ++k) {
+         if (bsIsSub(sub[k], sub[i])) {
+            x = sub[i];
+            sub[i] = sub[k];
+            sub[k] = x;
+         }
+      }
+   }
+   #endif
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
 /// Calculate the radical series, socle series, and submodule dimensions.
 
 void finishBlock()
 {
+   sortBlock();
+
    MESSAGE(0, ("Calculating maximal submodules\n"));
-    uint8_t *flag = NALLOC(uint8_t, nsub);  // 0=unknown, 1=maximal, 2=not maximal
-    BitString_t *bs = bsAlloc(bnmount);
+   uint8_t* flag = NALLOC(uint8_t, nsub);   // 0=unknown, 1=maximal, 2=not maximal
+   BitString_t* bs = bsAlloc(bnmount);
 
-    // Calculate maximal submodules and submodule dimensions
-    ismount = NALLOC(char,nsub);
-    max = NALLOC(int *,nsub);
-    subdim = NALLOC(long,nsub);
+   // Calculate maximal submodules and submodule dimensions
+   ismount = NALLOC(char, nsub);
+   max = NALLOC(int*, nsub);
+   subdim = NALLOC(long, nsub);
 
-    for (int i = 0; i < nsub; ++i)
-    {
-	int maxcount = 0, *lp;
-        memset(flag,0,(size_t) nsub);
+   for (int i = 0; i < nsub; ++i) {
+      int maxcount = 0, * lp;
+      memset(flag, 0, (size_t) nsub);
 
-	// Find all maximal submodules
-	for (int k = i; k > 0; )
-	{
-           --k;
-	    if (flag[k] != 0) continue;
-	    if (bsIsSub(sub[k],sub[i]))
-	    {
-		flag[k] = 1;
-		++maxcount;
-		for (size_t l = k; l > 0; )
-		{
-                   --l;
-		    if (bsIsSub(sub[l],sub[k])) 
-			flag[l] = 2;
-		}
-	    }
-	}
+      // Find all maximal submodules
+      for (int k = i; k > 0;) {
+         --k;
+         if (flag[k] != 0) { continue;}
+         if (bsIsSub(sub[k], sub[i])) {
+            flag[k] = 1;
+            ++maxcount;
+            for (size_t l = k; l > 0;) {
+               --l;
+               if (bsIsSub(sub[l], sub[k])) {
+                  flag[l] = 2;
+               }
+            }
+         }
+      }
 
-        // Build a list of maximal submodules and simple factors.
-        // max[i][0] = maximal submodule dimension
-        // max[i][1] = factor type (index in LI.CF)
-	lp = max[i] = NALLOC(int,2*maxcount+1);
-	for (int k = 0; k < i; ++k)
-	{
-	    if (flag[k] == 1)
-	    {
-		*lp++ = k;
-		int l;
-		for (l = 0; !bsTest(sub[i],l) || bsTest(sub[k],l); ++l);
-		*lp++ = isotype(l);
-	    }
-	}
-	*lp = -1;
-	ismount[i] = (char) (maxcount == 1);
+      // Build a list of maximal submodules and simple factors.
+      // max[i][0] = maximal submodule dimension
+      // max[i][1] = factor type (index in LI.CF)
+      lp = max[i] = NALLOC(int, 2 * maxcount + 1);
+      for (int k = 0; k < i; ++k) {
+         if (flag[k] == 1) {
+            *lp++ = k;
+            int l;
+            for (l = 0; !bsTest(sub[i], l) || bsTest(sub[k], l); ++l) {}
+            *lp++ = isotype(l);
+         }
+      }
+      *lp = -1;
+      ismount[i] = (char) (maxcount == 1);
 
-	// Calculate submodule dimension. Since we are working from bottom to top,
-        // the dimension of maximal submodules is already known.
-	if (maxcount == 0)
-	    subdim[i] = 0;
-	else
-	    subdim[i] = subdim[max[i][0]] + LI.Cf[max[i][1]].dim;
-    }
+      // Calculate submodule dimension. Since we are working from bottom to top,
+      // the dimension of maximal submodules is already known.
+      if (maxcount == 0) {
+         subdim[i] = 0;
+      }
+      else {
+         subdim[i] = subdim[max[i][0]] + LI.Cf[max[i][1]].dim;
+      }
+   }
 
-   MESSAGE(0, ("Calculating radical series\n"));
-    // Calculate the radical series
-    israd = NALLOC(char,nsub);
-    memset(israd,0,(size_t)nsub);
-    for (int i = nsub-1; i > 0; )
-    {	
-	int *lp;
-	bsCopy(bs,sub[i]);
-	for (lp = max[i]; *lp >= 0; lp += 2)
-	    bsAnd(bs,sub[*lp]);
-	for (i = nsub-1; !bsIsSub(sub[i],bs); --i);
-	israd[i] = 1;
-    }
+   if (opt_o & O_RADICAL) {
+      MESSAGE(0, ("Calculating radical series\n"));
+      // Calculate the radical series
+      israd = NALLOC(char, nsub);
+      memset(israd, 0, (size_t)nsub);
+      for (int i = nsub - 1; i > 0;) {
+         int* lp;
+         bsCopy(bs, sub[i]);
+         for (lp = max[i]; *lp >= 0; lp += 2) {
+            bsAnd(bs, sub[*lp]);
+         }
+         for (i = nsub - 1; !bsIsSub(sub[i], bs); --i) {}
+         israd[i] = 1;
+      }
+   }
 
-    // Calculate the socle series
-   MESSAGE(0, ("Calculating socle series\n"));
-    issoc = NALLOC(char,nsub);
-    memset(issoc,0,(size_t)nsub);
-    for (int i = 0; i < nsub-1; )
-    {
-	// Find simple submodules
-	memset(flag,0,(size_t) nsub);
-	for (int k = i+1; k < nsub; ++k)
-	{
-	    if (flag[k] != 0) continue;
-	    if (bsIsSub(sub[i],sub[k]))
-	    {
-		int l;
-		flag[k] = 1;
-		for (l = k + 1; l < nsub; ++l)
-		    if (bsIsSub(sub[k],sub[l])) flag[l] = 2;
-	    }
-        }
+   // Calculate the socle series
+   if (opt_o & O_SOCLE) {
+      MESSAGE(0, ("Calculating socle series\n"));
+      issoc = NALLOC(char, nsub);
+      memset(issoc, 0, (size_t)nsub);
+      for (int i = 0; i < nsub - 1;) {
+         // Find simple submodules
+         memset(flag, 0, (size_t) nsub);
+         for (int k = i + 1; k < nsub; ++k) {
+            if (flag[k] != 0) { continue;}
+            if (bsIsSub(sub[i], sub[k])) {
+               int l;
+               flag[k] = 1;
+               for (l = k + 1; l < nsub; ++l) {
+                  if (bsIsSub(sub[k], sub[l])) { flag[l] = 2;}}
+            }
+         }
 
-        // Calculate the socle (sum of all simple submodules)
-	bsCopy(bs,sub[i]);
-	for (int k = i; k < nsub; ++k)
-	{
-	    if (flag[k] == 1) 
-		bsOr(bs,sub[k]);
-	}
+         // Calculate the socle (sum of all simple submodules)
+         bsCopy(bs, sub[i]);
+         for (int k = i; k < nsub; ++k) {
+            if (flag[k] == 1) {
+               bsOr(bs, sub[k]);
+            }
+         }
 
-	for (i = 0; !bsIsSub(bs,sub[i]); ++i);
-	issoc[i] = 1;
-    }
+         for (i = 0; !bsIsSub(bs, sub[i]); ++i) {}
+         issoc[i] = 1;
+      }
+   }
+
+   sysFree(flag);
+   bsFree(bs);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -561,8 +604,7 @@ void writeresult()
 	fclose(g);
     }
 
-    /* Radikal- und Sockelreihe
-       ------------------------ */
+    // Radical series
     if (opt_o & O_RADICAL)
     {
 	static int mult[LAT_MAXCF];
@@ -614,6 +656,8 @@ void writeresult()
 		  rdim -= LI.Cf[k].dim;
 	      }
 	    }
+            // TODO: add layer 0 (full module)
+            // TODO: output module number for each layer
 	    fprintf(f,"    Layer %d: Dim=%-4ld  ",layer,rdim);
 	    for (i = 0; i < LI.nCf; ++i)
 		for (; mult[i] > 0; --mult[i])
@@ -758,24 +802,6 @@ static int nextblock()
     return 1;
 }
 
-////////////////////////////////////////////////////////////////////////////////////////////////////
-
-void sort()
-{
-   MESSAGE(0, ("Sorting\n"));
-   int i, k;
-   BitString_t* x;
-   for (i = 0; i < nsub; ++i) {
-      for (k = i + 1; k < nsub; ++k) {
-         if (bsIsSub(sub[k], sub[i])) {
-            x = sub[i];
-            sub[i] = sub[k];
-            sub[k] = x;
-         }
-      }
-   }
-}
-
 static void clearHashTable()
 {
    for (size_t i = 0; i < HASH_SIZE; ++i) {
@@ -813,7 +839,6 @@ static int tryAddSubmodule(BitString_t *bs)
    }
    if (nsub >= MAXNSUB) {
       // write partial result
-      sort();
       finishBlock();
       writeresult();
       mtxAbort(MTX_HERE, "Too many submodules (> %d)", MAXNSUB);
@@ -1063,7 +1088,6 @@ int main(int argc, char **argv)
 		MESSAGE(0,("Generation %d: %lu candidates, %lu new\n",
 		    generation, (unsigned long) nadd, (unsigned long)(lastGenEnd - lastGenBegin)));
 	    }
-	    sort();
 	    finishBlock();
 	}
 	else
