@@ -50,15 +50,21 @@ BitString_t *bdotl[MAXDOTL];    // Dotted-lines for block
 BitString_t *bdlspan[MAXDOTL];  // Closure of dotted-lines
 
 // List of submodules found so far.
-int nsub = 0;			// Number of submodules
-BitString_t *sub[MAXNSUB];	// Submodules (linear list)
+typedef struct Submodule {
+   struct Submodule* htNext;    // Links submodules with the same hash key
+   BitString_t *bs;             // Mountains
+   int isMountain;              // 1 for mountains, 0 otherwise.
+   uint32_t dimension;
+   int radicalLayer;            // Radical series layer (0=top) or -1 if not in radical series
+   int socleLayer;              // Socle series layer (0=bottom) or -1 if not in socle series
+   int generation;
+   size_t id;                   // Unique ID, reflects the order in which submodules were found
+} Submodule_t;
+int Xnsub = 0;			// Number of submodules
+Submodule_t* Xsub[MAXNSUB];	// Submodules (linear list)
 
-// Hash table into sub[]. Used to check efficiently whether a given module is already in the list.
-struct BsListItem {
-   BitString_t* bs; 
-   struct BsListItem* next;
-};
-static struct BsListItem* hashTable[2048] = { 0 };
+// Hash table for sub[]. Used to check efficiently whether a given module is already in the list.
+static Submodule_t* hashTable[2048] = { 0 };
 static const size_t HASH_SIZE = sizeof(hashTable) / sizeof(hashTable[0]);
 
 // Range in sub[] occupied by the previous submodule generation.
@@ -70,10 +76,11 @@ int nadd;			// Number of calls to addSubmodule()
 BitString_t *y;			// Temporary bit string
 
 // Calculated after all submodues in the current block have been found. See finishBlock().
-long *subdim;			// Submodule dimensions
-char *israd;			// Radical series
-char *issoc;			// Socle series
-char *ismount;			// Mountains
+// TODO: convert the following arrays into members of Submodule_t
+//long *subdim;			// Submodule dimensions
+//char *israd;			// Radical series
+//char *issoc;			// Socle series
+//char *ismount;			// Mountains
 int **max;			// List of maximal submodules
 
 
@@ -245,23 +252,23 @@ static void sortBlock()
 {
    MESSAGE(0, ("Sorting\n"));
 
-   #if 1
-   qsort(sub, nsub, sizeof(sub[0]), compareSubmodules);
-   for (int i = 0; i < nsub; ++i) {
-      for (int k = i + 1; k < nsub; ++k) {
-         MTX_ASSERT(!bsIsSub(sub[k], sub[i]));
+   #if 0
+   qsort(Xsub, Xnsub, sizeof(Xsub[0]), compareSubmodules);
+   for (int i = 0; i < Xnsub; ++i) {
+      for (int k = i + 1; k < Xnsub; ++k) {
+         MTX_ASSERT(!bsIsSub(Xsub[k]->bs, Xsub[i]->bs));
       }
    }
    #else
    (void) compareSubmodules;
    int i, k;
    BitString_t* x;
-   for (i = 0; i < nsub; ++i) {
-      for (k = i + 1; k < nsub; ++k) {
-         if (bsIsSub(sub[k], sub[i])) {
-            x = sub[i];
-            sub[i] = sub[k];
-            sub[k] = x;
+   for (i = 0; i < Xnsub; ++i) {
+      for (k = i + 1; k < Xnsub; ++k) {
+         if (bsIsSub(Xsub[k]->bs, Xsub[i]->bs)) {
+            x = Xsub[i]->bs;
+            Xsub[i]->bs = Xsub[k]->bs;
+            Xsub[k]->bs = x;
          }
       }
    }
@@ -277,28 +284,26 @@ void finishBlock()
    sortBlock();
 
    MESSAGE(0, ("Calculating maximal submodules\n"));
-   uint8_t* flag = NALLOC(uint8_t, nsub);   // 0=unknown, 1=maximal, 2=not maximal
+   uint8_t* flag = NALLOC(uint8_t, Xnsub);   // 0=unknown, 1=maximal, 2=not maximal
    BitString_t* bs = bsAlloc(bnmount);
 
    // Calculate maximal submodules and submodule dimensions
-   ismount = NALLOC(char, nsub);
-   max = NALLOC(int*, nsub);
-   subdim = NALLOC(long, nsub);
+   max = NALLOC(int*, Xnsub);
 
-   for (int i = 0; i < nsub; ++i) {
+   for (int i = 0; i < Xnsub; ++i) {
       int maxcount = 0, * lp;
-      memset(flag, 0, (size_t) nsub);
+      memset(flag, 0, (size_t) Xnsub);
 
       // Find all maximal submodules
       for (int k = i; k > 0;) {
          --k;
          if (flag[k] != 0) { continue;}
-         if (bsIsSub(sub[k], sub[i])) {
+         if (bsIsSub(Xsub[k]->bs, Xsub[i]->bs)) {
             flag[k] = 1;
             ++maxcount;
             for (size_t l = k; l > 0;) {
                --l;
-               if (bsIsSub(sub[l], sub[k])) {
+               if (bsIsSub(Xsub[l]->bs, Xsub[k]->bs)) {
                   flag[l] = 2;
                }
             }
@@ -313,67 +318,67 @@ void finishBlock()
          if (flag[k] == 1) {
             *lp++ = k;
             int l;
-            for (l = 0; !bsTest(sub[i], l) || bsTest(sub[k], l); ++l) {}
+            for (l = 0; !bsTest(Xsub[i]->bs, l) || bsTest(Xsub[k]->bs, l); ++l) {}
             *lp++ = isotype(l);
          }
       }
       *lp = -1;
-      ismount[i] = (char) (maxcount == 1);
+      Xsub[i]->isMountain = (maxcount == 1);
 
       // Calculate submodule dimension. Since we are working from bottom to top,
       // the dimension of maximal submodules is already known.
       if (maxcount == 0) {
-         subdim[i] = 0;
+         Xsub[i]->dimension = 0;
       }
       else {
-         subdim[i] = subdim[max[i][0]] + LI.Cf[max[i][1]].dim;
+         Xsub[i]->dimension = Xsub[max[i][0]]->dimension + LI.Cf[max[i][1]].dim;
       }
    }
 
+   // Calculate the radical series
    if (opt_o & O_RADICAL) {
       MESSAGE(0, ("Calculating radical series\n"));
-      // Calculate the radical series
-      israd = NALLOC(char, nsub);
-      memset(israd, 0, (size_t)nsub);
-      for (int i = nsub - 1; i > 0;) {
+      Xsub[Xnsub-1]->radicalLayer = 0;
+      int layer = 1;
+      for (int i = Xnsub - 1; i > 0;) {
          int* lp;
-         bsCopy(bs, sub[i]);
+         bsCopy(bs, Xsub[i]->bs);
          for (lp = max[i]; *lp >= 0; lp += 2) {
-            bsAnd(bs, sub[*lp]);
+            bsAnd(bs, Xsub[*lp]->bs);
          }
-         for (i = nsub - 1; !bsIsSub(sub[i], bs); --i) {}
-         israd[i] = 1;
+         for (i = Xnsub - 1; !bsIsSub(Xsub[i]->bs, bs); --i) {}
+         Xsub[i]->radicalLayer = layer++;
       }
    }
 
    // Calculate the socle series
    if (opt_o & O_SOCLE) {
       MESSAGE(0, ("Calculating socle series\n"));
-      issoc = NALLOC(char, nsub);
-      memset(issoc, 0, (size_t)nsub);
-      for (int i = 0; i < nsub - 1;) {
+      Xsub[Xnsub-1]->socleLayer = 0;
+      int layer = 1;
+      for (int i = 0; i < Xnsub - 1;) {
          // Find simple submodules
-         memset(flag, 0, (size_t) nsub);
-         for (int k = i + 1; k < nsub; ++k) {
+         memset(flag, 0, (size_t) Xnsub);
+         for (int k = i + 1; k < Xnsub; ++k) {
             if (flag[k] != 0) { continue;}
-            if (bsIsSub(sub[i], sub[k])) {
+            if (bsIsSub(Xsub[i]->bs, Xsub[k]->bs)) {
                int l;
                flag[k] = 1;
-               for (l = k + 1; l < nsub; ++l) {
-                  if (bsIsSub(sub[k], sub[l])) { flag[l] = 2;}}
+               for (l = k + 1; l < Xnsub; ++l) {
+                  if (bsIsSub(Xsub[k]->bs, Xsub[l]->bs)) { flag[l] = 2;}}
             }
          }
 
          // Calculate the socle (sum of all simple submodules)
-         bsCopy(bs, sub[i]);
-         for (int k = i; k < nsub; ++k) {
+         bsCopy(bs, Xsub[i]->bs);
+         for (int k = i; k < Xnsub; ++k) {
             if (flag[k] == 1) {
-               bsOr(bs, sub[k]);
+               bsOr(bs, Xsub[k]->bs);
             }
          }
 
-         for (i = 0; !bsIsSub(bs, sub[i]); ++i) {}
-         issoc[i] = 1;
+         for (i = 0; !bsIsSub(bs, Xsub[i]->bs); ++i) {}
+         Xsub[i]->socleLayer = layer++;
       }
    }
 
@@ -490,7 +495,7 @@ void writeresult()
     char tmp[100];
     BitString_t *b = bsAlloc(bnmount);
 
-    MESSAGE(0,("Finished, %d submodules found\n",nsub));
+    MESSAGE(0,("Finished, %d submodules found\n",Xnsub));
     f = openout(".out");
 
     /* Write irreducibles
@@ -575,21 +580,21 @@ void writeresult()
        ---------------- */
     if (opt_o & O_SUBMODULES)
     {
-	MESSAGE(1,("  Submodules (%d)\n",nsub));
+	MESSAGE(1,("  Submodules (%d)\n",Xnsub));
 	fflush(stdout);
     	g = openout(".sub");
 	fprintf(f,"Submodules:\n");
 	fprintf(f,"    No    Dim  Flags  Ident                           Max\n");
-	for (i = 0; i < nsub; ++i)
+	for (i = 0; i < Xnsub; ++i)
 	{
 	    int *lp;
 
-	    fprintf(f,"    %-6d%-5ld",i,subdim[i]);
-	    fputc(ismount[i] ? 'M' : ' ',f);
-	    fputc(israd[i] ? 'R' : ' ',f);
-	    fputc(issoc[i] ? 'S' : ' ',f);
+	    fprintf(f,"    %-6d%-5lu",i, (unsigned long)Xsub[i]->dimension);
+	    fputc(Xsub[i]->isMountain ? 'M' : ' ',f);
+	    fputc(Xsub[i]->radicalLayer > 0 ? 'R' : ' ',f);
+	    fputc(Xsub[i]->socleLayer > 0 ? 'S' : ' ',f);
 	    fprintf(f,"    ");
-	    k = printbs(f,sub[i]);
+	    k = printbs(f,Xsub[i]->bs);
 	    for (; k < 30; ++k) fputc(' ',f);
 	    fprintf(f,"  ");
 	    for (lp = max[i]; *lp >= 0; lp += 2)
@@ -598,7 +603,7 @@ void writeresult()
 		fprintf(f,"%d",*lp);
 	    }
 	    fprintf(f,"\n");
-	    bsWrite(sub[i],g);
+	    bsWrite(Xsub[i]->bs,g);
 	}
 	fprintf(f,"\n");
 	fclose(g);
@@ -675,11 +680,11 @@ void writeresult()
 	// Write the .lat file
 	f = openout(".lat");
 	fprintf(f,"MeatAxe.Lattice := [\n");
-	for (i = 0; i < nsub; ++i)
+	for (i = 0; i < Xnsub; ++i)
 	{
 	    int *lp = max[i];
 
-	    fprintf(f,"[%ld,[",subdim[i]);
+	    fprintf(f,"[%lu,[",(unsigned long) Xsub[i]->dimension);
 	    for (k = 0, lp = max[i]; *lp >= 0; lp += 2, ++k)
 	    {
 	    	fprintf(f,"[%d,%d]",lp[0]+1,lp[1]+1);
@@ -689,7 +694,7 @@ void writeresult()
 		    if (k % 10 == 9) fprintf(f,"\n");
 		}
 	    }
-	    if (i < nsub-1)
+	    if (i < Xnsub-1)
 		fprintf(f,"]],\n");
 	    else
 		fprintf(f,"]]\n");
@@ -702,14 +707,14 @@ void writeresult()
 	/* Write the .gra file
 	   ------------------- */
 	f = openout(".gra");
-	fprintf(f,"%d\n",nsub);
-	for (i = 0; i < nsub; ++i)
+	fprintf(f,"%d\n",Xnsub);
+	for (i = 0; i < Xnsub; ++i)
 	{
 	int *lp;
 
-	fputc(ismount[i] ? 'm' : '.',f);
-	fputc(israd[i] ? 'r' : '.',f);
-	fputc(issoc[i] ? 's' : '.',f);
+	fputc(Xsub[i]->isMountain ? 'm' : '.',f);
+	fputc(Xsub[i]->radicalLayer > 0 ? 'r' : '.',f);
+	fputc(Xsub[i]->socleLayer > 0 ? 's' : '.',f);
 	for (k = 0, lp = max[i]; *lp >= 0; lp += 2, ++k);
 	fprintf(f," %2d",k);
 	for (lp = max[i]; *lp >= 0; lp += 2)
@@ -804,13 +809,7 @@ static int nextblock()
 
 static void clearHashTable()
 {
-   for (size_t i = 0; i < HASH_SIZE; ++i) {
-      while (hashTable[i] != NULL) {
-         struct BsListItem* head = hashTable[i];
-         hashTable[i] = head->next;
-         sysFree(head);
-      }
-   }
+   memset(hashTable, 0, sizeof(hashTable));
 }
 
 static size_t hashKey(BitString_t *bs)
@@ -825,31 +824,37 @@ static size_t hashKey(BitString_t *bs)
 
 /// Checks whether the given submodule is new. If yes, the submodule is added to the list.
 
-static int tryAddSubmodule(BitString_t *bs)
+static int tryAddSubmodule(BitString_t *bs, int generation)
 {
    ++nadd;
    if (nadd % 1000 == 0) {
-      MESSAGE(1, ("Generation %d: %d candidates, %d new\n", generation, nadd, nsub - lastGenEnd));
+      MESSAGE(1, ("Generation %d: %d candidates, %d new\n", generation, nadd, Xnsub - lastGenEnd));
    }
 
    const size_t key = hashKey(bs);
-   for (struct BsListItem* item = hashTable[key]; item != NULL; item = item->next) {
+   for (Submodule_t* item = hashTable[key]; item != NULL; item = item->htNext) {
       if (bsCompare(item->bs, bs) == 0)
          return 0;
    }
-   if (nsub >= MAXNSUB) {
+   if (Xnsub >= MAXNSUB) {
       // write partial result
       finishBlock();
       writeresult();
       mtxAbort(MTX_HERE, "Too many submodules (> %d)", MAXNSUB);
    }
    
-   struct BsListItem* item = ALLOC(struct BsListItem);
+   Submodule_t* item = ALLOC(Submodule_t);
    item->bs = bsAlloc(bnmount);
+   item->dimension = 0;
+   item->isMountain = 0;
+   item->socleLayer = -1;
+   item->radicalLayer = -1;
    bsCopy(item->bs, bs);
-   item->next = hashTable[key];
+   item->htNext = hashTable[key];
+   item->id = Xnsub;
+   item->generation = generation;
    hashTable[key] = item;
-   sub[nsub++] = item->bs;
+   Xsub[Xnsub++] = item;
    return 1;
 }
 
@@ -923,13 +928,13 @@ static void initBlock()
     }
 
     // Initialize global variables
-    nsub = 0;
+    Xnsub = 0;
     clearHashTable();
     lastGenEnd = 0;
     lastGenBegin = 0;
     // Add generation 0 (null module)
-    tryAddSubmodule(bsAlloc(bnmount));
-    lastGenEnd = nsub;
+    tryAddSubmodule(bsAlloc(bnmount), 0);
+    lastGenEnd = Xnsub;
     generation = 0;
 }
 
@@ -952,15 +957,13 @@ static void cleanupBlock()
     }
     if (opt_o & O_SUBMODULES)
     {
-        for (i = 0; i < nsub; ++i)
+        for (i = 0; i < Xnsub; ++i)
         {
-	    free(sub[i]);
-	    free(max[i]);
+	    bsFree(Xsub[i]->bs);
+            memset(Xsub[i], 0, sizeof(Submodule_t));
+            sysFree(Xsub[i]);
+	    free(max[i]);  // TODO: make max[i] member of Submodule_t
         }
-        free(ismount);
-        free(israd);
-        free(issoc);
-        free(subdim);
         free(max);
     }
 }
@@ -972,21 +975,21 @@ static void cleanupBlock()
 static void nextgen()
 {
    ++generation;
-   const int begin = nsub;
+   const int begin = Xnsub;
    BitString_t* x = bsAlloc(bnmount);
    for (int i = lastGenBegin; i < begin; ++i) {
       for (int k = 0; k < bnmount; ++k) {
-         if (bsTest(sub[i], k)) {
+         if (bsTest(Xsub[i]->bs, k)) {
             continue;
          }
-         bsCopy(x, sub[i]);
+         bsCopy(x, Xsub[i]->bs);
          extend(x, k, 0);
-         tryAddSubmodule(x);
+         tryAddSubmodule(x, generation);
       }
    }
 
    lastGenBegin = begin;
-   lastGenEnd = nsub;
+   lastGenEnd = Xnsub;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
