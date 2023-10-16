@@ -10,7 +10,7 @@
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static int TestMatInsert1()
+TstResult Matrix_InsertIntoPolynomial(int q)
 {
    Matrix_t* const mat = RndMat(ffOrder,10,10);
    Matrix_t* const zero = matAlloc(ffOrder,10,10);
@@ -48,12 +48,4 @@ static int TestMatInsert1()
    polFree(idPoly);
 
    return 0;
-}
-
-////////////////////////////////////////////////////////////////////////////////////////////////////
-
-TstResult Matrix_InsertIntoPolynomial(int q)
-{
-   int result = TestMatInsert1(ffOrder);
-   return result;
 }
