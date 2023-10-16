@@ -166,7 +166,7 @@ static int FindSpec(MtxApplication_t *app, const char *spec, int needs_arg)
    for (c = spec; *c != 0 && isspace((unsigned char)*c); ++c) {
    }
    if (*c != '-') {
-      mtxAbort(MTX_HERE,err_text);
+      mtxAbort(MTX_HERE,"%s", err_text);
       return -1;
    }
    if (c[1] != '-') {
@@ -180,7 +180,7 @@ static int FindSpec(MtxApplication_t *app, const char *spec, int needs_arg)
    }
    if (*c != 0) {
       if ((c[0] != '-') || (c[1] != '-')) {
-         mtxAbort(MTX_HERE,err_text);
+         mtxAbort(MTX_HERE,"%s", err_text);
          return -1;
       }
       long_name = c + 2;
@@ -188,7 +188,7 @@ static int FindSpec(MtxApplication_t *app, const char *spec, int needs_arg)
          ++c;
       }
       if (*c != 0) {
-         mtxAbort(MTX_HERE,err_text);
+         mtxAbort(MTX_HERE,"%s", err_text);
          return -1;
       }
    }

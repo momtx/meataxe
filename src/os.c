@@ -206,11 +206,11 @@ FILE *sysFopen(const char *name, const char* mode)
       snprintf(sysMode, sizeof(sysMode), "%.*s", (int)(mtxExt - mode), mode);
       const char* c = mtxExt + 2;
       while (1) {
-         if (!strncmp(c, "lib", 3) != 0) {
+         if (strncmp(c, "lib", 3) == 0) {
             useLibDir = 1;
             c += 3;
          }
-         else if (!strncmp(c, "noerror", 7) != 0) {
+         else if (strncmp(c, "noerror", 7) == 0) {
             raiseError = 0;
             c += 7;
          } else {

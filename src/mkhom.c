@@ -747,8 +747,7 @@ int main(int argc, char **argv)
 
 {
     int rc = 0;                        /* Program exit code */
-    long t0, tposim = 0, teqs = 0, tstker = 0, tgauss = 0,
-                    tspbas = 0;        /* Time */
+    long t0, tposim = 0, teqs = 0, tstker = 0, tgauss = 0, tspbas = 0;        /* Time */
     Matrix_t 
              *spinbas,                /* the spinning basis */
              *spinbasi = 0,         /* its inverse) */
@@ -1109,6 +1108,8 @@ int main(int argc, char **argv)
             matFree(ker1);
     }
 
+    mtxMessage(1,"Time used: posim=%ld eqs=%ld stker=%ld gauss=%ld spbas=%ld",
+             tposim, teqs, tstker,tgauss,tspbas);
 
     Cleanup();
     return rc;

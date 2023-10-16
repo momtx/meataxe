@@ -138,11 +138,7 @@ static void AddConstituents(int mod)
    for (i = 0; i < li->nCf; ++i) {
       char fn[sizeof(li->BaseName) + 100];
       MatRep_t *cf;
-        #pragma GCC diagnostic push
-        #pragma GCC diagnostic ignored "-Wstringop-truncation"
-        #pragma GCC diagnostic ignored "-Wformat-truncation"
       snprintf(fn, sizeof(fn), "%s%s",li->BaseName,latCfName(li,i));
-        #pragma GCC diagnostic pop
       cf = mrLoad(fn,li->NGen);
       AddConstituent(cf,li->Cf + i,mod,i);
    }
@@ -438,11 +434,7 @@ static void WriteOutput(int final)
       latWriteInfo(&ModList[i].Info);
       if (opt_b) {
          char fn[sizeof(ModList[i].Info.BaseName) + 10];
-            #pragma GCC diagnostic push
-            #pragma GCC diagnostic ignored "-Wstringop-truncation"
-            #pragma GCC diagnostic ignored "-Wformat-truncation"
          snprintf(fn, sizeof(fn), "%s.ssb",ModList[i].Info.BaseName);
-            #pragma GCC diagnostic pop
          MESSAGE(1,("Writing semisimplicity basis to %s\n",fn));
          matSave(ModList[i].SsBasis,fn);
       }
