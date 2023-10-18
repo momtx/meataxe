@@ -7,14 +7,6 @@
 #include <string.h>
 #include <stdlib.h>
 
-
-
-
-/* ------------------------------------------------------------------
-   Global data
-   ------------------------------------------------------------------ */
-
-
 #define O_MOUNTAINS		0x01
 #define O_SUBMODULES		0x02
 #define O_DOTTEDLINES		0x04
@@ -26,53 +18,68 @@
 	       O_RADICAL|O_SOCLE|O_INCIDENCES)
 
 
-int opt_b = 0;			/* -b option (blocks) */
+int opt_b = 0;			// -b option (blocks)
 int opt_o = O_ALL;
 int opt_G = 0;
-int done[LAT_MAXCF];		/* */
-int blnum;			/* Number of current block */
-int blsize;			/* Block size */
-int block[LAT_MAXCF];		/* Block members */
+int done[LAT_MAXCF];
 
-int firstm[LAT_MAXCF+1];	/* First mountain */
-int firstdl[LAT_MAXCF+1];	/* First dotted line */
+int blockNumber;		// Number of current block
+int blockSize;			// Block size
+int blockMember[LAT_MAXCF];	// Block members (index in constituent list)
 
-
-/* Data read from input files
-   -------------------------- */
-int xnmount = 0;		/* Number of mountains */
-int xndotl = 0;			/* Number of dotted lines */
-BitString_t *xsubof[MAXCYCL];	/* Incidence matrix */
-BitString_t *xdotl[MAXDOTL];	/* Dotted lines */
-long xmdim[MAXCYCL];		/* Mountain dimensions */
-static Lat_Info LI;		/* Data from .cfinfo file */
+int firstm[LAT_MAXCF+1];	// First mountain per constituent
+int firstdl[LAT_MAXCF+1];	// First dotted line per constituent
 
 
-/* Data for current block
-   ---------------------- */
-int bnmount, bndotl;		/* As above, but for current block */
-BitString_t *bsubof[MAXCYCL];
-BitString_t *bsupof[MAXCYCL];	/* Transposed incidence matrix */
-BitString_t *bdotl[MAXDOTL];
-BitString_t *bdlspan[MAXDOTL];
-long bmdim[MAXCYCL];
-
-/* Data used during computation
-   ---------------------------- */
-BitString_t *sub[MAXNSUB];		/* Submodules */
-int nsub = 0;			/* Number of submodules */
-int lastgen = 0;		/* First submodule of last generation */
-int generation;			/* Generation count */
-int nadd;			/* Number of calls to addtolist() */
-int oldnsub;			/* */
-BitString_t *y;			/* Temporary bit string */
-long *subdim;			/* Submodule dimensions */
-char *israd;			/* Radical series */
-char *issoc;			/* Socle series */
-char *ismount;			/* Mountains */
-int **max;			/* List of maximal submodules */
+// Data read from input files
+int xnmount = 0;		// Number of mountains
+int xndotl = 0;			// Number of dotted lines
+BitString_t *xsubof[MAXCYCL];	// Incidence matrix
+BitString_t *xdotl[MAXDOTL];	// Dotted lines
+long xmdim[MAXCYCL];		// Mountain dimensions
+static Lat_Info LI;		// Data from .cfinfo file
 
 
+// Data for current block
+int bnmount;		        // Number of mountains in block
+int bndotl;		        // Number of dotted-lines in block
+long bmdim[MAXCYCL];            // Mountain dimensions
+BitString_t *bsubof[MAXCYCL];   // Incidence matrix for block
+BitString_t *bsupof[MAXCYCL];	// Transposed incidence matrix
+BitString_t *bdotl[MAXDOTL];    // Dotted-lines for block
+BitString_t *bdlspan[MAXDOTL];  // Closure of dotted-lines
+
+// List of submodules found so far.
+typedef struct MaxSubmodule {
+      struct Submodule* sub;    // maximal submodule
+      int isoType;              // type of factor module (index in constituents list)
+} MaxSubmodule_t;
+typedef struct Submodule {
+   struct Submodule* htNext;    // Links submodules with the same hash key
+   BitString_t *bs;             // Mountains
+   int isMountain;              // 1 for mountains, 0 otherwise.
+   uint32_t dimension;
+   MaxSubmodule_t* maxSubmodules; // List of maximal submodules, terminated with {NULL,0}
+   int radicalLayer;            // Radical series layer (0=top) or -1 if not in radical series
+   int socleLayer;              // Socle series layer (0=bottom) or -1 if not in socle series
+   int generation;
+   size_t seq;                  // reflects the order in which submodules were found
+   size_t id;                   // index after topological sort
+} Submodule_t;
+int nsub = 0;			// Number of submodules
+Submodule_t* sub[MAXNSUB];	// Submodules (linear list)
+
+// Hash table for sub[]. Used to check efficiently whether a given module is already in the list.
+static Submodule_t* hashTable[2048] = { 0 };
+static const size_t HASH_SIZE = sizeof(hashTable) / sizeof(hashTable[0]);
+
+// Range in sub[] occupied by the previous submodule generation.
+int lastGenBegin = 0;		// Begin of last generation
+int lastGenEnd;			// End of last generation 
+
+int generation;			// Current generation number
+int nadd;			// Number of calls to addSubmodule()
+BitString_t *y;			// Temporary bit string
 
 static MtxApplicationInfo_t AppInfo = { 
 "mksub", "Find Submodules",
@@ -179,7 +186,7 @@ static void init(const char *basename)
 	    return;
 	}
 	xmdim[i] = mdim;
-	while (fgetc(f) != '\n')	/* Skip class */
+	while (fgetc(f) != '\n')	// Skip class
 	{
 	    if (ferror(f) || feof(f))
 	    {
@@ -191,28 +198,6 @@ static void init(const char *basename)
     fclose(f);
 }
 
-
-/* -----------------------------------------------------------------
-   init2()
-   ----------------------------------------------------------------- */
-
-static void init2()
-{
-    int i;
-
-    // Set firstm and firstdl
-    firstm[0] = 0;
-    firstdl[0] = 0;
-    for (i = 0; i < LI.nCf; ++i)
-    {
-	firstm[i+1] = firstm[i] + LI.Cf[i].nmount;
-	firstdl[i+1] = firstdl[i] + LI.Cf[i].ndotl;
-    }
-
-    // Initialize done[]
-    for (i = 0; i < LI.nCf; ++i) done[i] = 0;
-}
-
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 /// Determine the isomorphism type of a mountain.
@@ -220,148 +205,179 @@ static void init2()
 static int isotype(int mnt)
 {
     int m;
-    for (m = 0; (mnt -= LI.Cf[block[m]].nmount) >= 0; ++m);
-    return block[m];
+    for (m = 0; (mnt -= LI.Cf[blockMember[m]].nmount) >= 0; ++m);
+    return blockMember[m];
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
-/* -----------------------------------------------------------------
-   findrsm() - Find the radical and socle series, and the
-	mountains.
-   ----------------------------------------------------------------- */
-
-void findrsm()
-
+static int compareSubmodules(const void* e1, const void *e2)
 {
-    char *flag = NALLOC(char,nsub);
-    BitString_t *bs = bsAlloc(bnmount);
-    int i, k;
-
-
-    /* Berechne maximale Teilmoduln und Dimensionen
-       -------------------------------------------- */
-    ismount = NALLOC(char,nsub);
-    max = NALLOC(int *,nsub);
-    subdim = NALLOC(long,nsub);
-
-    for (i = 0; i < nsub; ++i)
-    {
-	int maxcount = 0, *lp;
-        memset(flag,0,(size_t) nsub);
-
-	/* Bestimme alle maximalen Teilmoduln
-	   ---------------------------------- */
-	for (k = i-1; k >= 0; --k)
-	{
-	    if (flag[k] != 0) continue;
-	    if (bsIsSub(sub[k],sub[i]))
-	    {
-		int l;
-		flag[k] = 1;
-		++maxcount;
-		for (l = k-1; l >= 0; --l)
-		{
-		    if (bsIsSub(sub[l],sub[k])) 
-			flag[l] = 2;
-		}
-	    }
-	}
-
-	/* Baue eine Liste mit den Nummern der maximalen Teilmoduln
-	   und den Isomorphietypen der einfachen Faktoren auf.
-	   -------------------------------------------------------- */
-	lp = max[i] = NALLOC(int,2*maxcount+1);
-	for (k = 0; k < i; ++k)
-	{
-	    if (flag[k] == 1)
-	    {
-		int l;
-		*lp++ = k;
-		for (l = 0; !bsTest(sub[i],l)||bsTest(sub[k],l); ++l);
-		*lp++ = isotype(l);
-	    }
-	}
-	*lp = -1;
-	ismount[i] = (char) (maxcount == 1);
-
-	/* Berechne die Dimension. Da wir aufsteigend vorgehen,
-	   ist die Dimension der Maximalen hier schon bekannt.
-	   ---------------------------------------------------- */
-	if (maxcount == 0)
-	    subdim[i] = 0;
-	else
-	{
-	    subdim[i] = subdim[max[i][0]] + LI.Cf[max[i][1]].dim;
-	}
-    }
-
-    /* Berechne die Radikalreihe
-       -------------------------- */
-    israd = NALLOC(char,nsub);
-    memset(israd,0,(size_t)nsub);
-    for (i = nsub-1; i > 0; )
-    {	
-	int *lp;
-	bsCopy(bs,sub[i]);
-	for (lp = max[i]; *lp >= 0; lp += 2)
-	    bsAnd(bs,sub[*lp]);
-	for (i = nsub-1; !bsIsSub(sub[i],bs); --i);
-	israd[i] = 1;
-    }
-
-    /* Berechne die Sockelreihe
-       ------------------------ */
-    issoc = NALLOC(char,nsub);
-    memset(issoc,0,(size_t)nsub);
-    for (i = 0; i < nsub-1; )
-    {
-	/* Find the simple submodules
-	   -------------------------- */
-	memset(flag,0,(size_t) nsub);
-	for (k = i+1; k < nsub; ++k)
-	{
-	    if (flag[k] != 0) continue;
-	    if (bsIsSub(sub[i],sub[k]))
-	    {
-		int l;
-		flag[k] = 1;
-		for (l = k + 1; l < nsub; ++l)
-		    if (bsIsSub(sub[k],sub[l])) flag[l] = 2;
-	    }
-        }
-
-        /* Calculate the sum of all simple submodules (=Socle)
-	   --------------------------------------------------- */
-	bsCopy(bs,sub[i]);
-	for (k = i; k < nsub; ++k)
-	{
-	    if (flag[k] == 1) 
-		bsOr(bs,sub[k]);
-	}
-
-	for (i = 0; !bsIsSub(bs,sub[i]); ++i);
-	issoc[i] = 1;
-    }
+   const BitString_t* a = *(const BitString_t**)e1;
+   const BitString_t* b = *(const BitString_t**)e2;
+   if (bsIsSub(a,b)) return -1;
+   if (bsIsSub(b,a)) return 1;
+   if ((const char*)e1 < (const char*) e2) return -1;
+   if ((const char*)e2 < (const char*) e1) return 1;
+   return 0;
 }
 
+static void sortBlock()
+{
+   MESSAGE(0, ("Sorting\n"));
 
-/* -----------------------------------------------------------------
-   extend() - Add one mountain to a given BitString_t
-   ----------------------------------------------------------------- */
+   #if 0
+   qsort(sub, nsub, sizeof(sub[0]), compareSubmodules);
+   for (int i = 0; i < nsub; ++i) {
+      for (int k = i + 1; k < nsub; ++k) {
+         MTX_ASSERT(!bsIsSub(sub[k]->bs, sub[i]->bs));
+      }
+   }
+   #else
+   (void) compareSubmodules;
+   BitString_t* x;
+   for (int i = 0; i < nsub; ++i) {
+      for (int k = i + 1; k < nsub; ++k) {
+         if (bsIsSub(sub[k]->bs, sub[i]->bs)) {
+            x = sub[i]->bs;
+            sub[i]->bs = sub[k]->bs;
+            sub[k]->bs = x;
+         }
+      }
+   }
+   #endif
 
-static char dlflag[MAXDOTL] = {0};
+   for (size_t i = 0; i < nsub; ++i)
+      sub[i]->id = i;
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+/// Calculate the radical series, socle series, and submodule dimensions.
+
+void finishBlock()
+{
+   sortBlock();
+
+   MESSAGE(0, ("Calculating maximal submodules\n"));
+   uint8_t* flag = NALLOC(uint8_t, nsub);   // 0=unknown, 1=maximal, 2=not maximal
+   BitString_t* bs = bsAlloc(bnmount);
+
+   // Calculate maximal submodules and submodule dimensions
+   for (int i = 0; i < nsub; ++i) {
+      int maxcount = 0;
+      memset(flag, 0, (size_t) nsub);
+
+      // Find all maximal submodules
+      for (int k = i; k > 0;) {
+         --k;
+         if (flag[k] != 0) { continue; }
+         if (bsIsSub(sub[k]->bs, sub[i]->bs)) {
+            flag[k] = 1;
+            ++maxcount;
+            for (size_t l = k; l > 0;) {
+               --l;
+               if (bsIsSub(sub[l]->bs, sub[k]->bs)) {
+                  flag[l] = 2;
+               }
+            }
+         }
+      }
+      sub[i]->isMountain = (maxcount == 1);
+
+      // Build a list of maximal submodules and simple factors.
+      sub[i]->maxSubmodules = NALLOC(MaxSubmodule_t, maxcount + 1);
+      MaxSubmodule_t* lp = sub[i]->maxSubmodules;
+      for (int k = 0; k < i; ++k) {
+         if (flag[k] != 1) continue;
+         MTX_ASSERT(lp < sub[i]->maxSubmodules + maxcount);
+         lp->sub = sub[k];
+         size_t l;
+         for (l = 0; !bsTest(sub[i]->bs, l) || bsTest(sub[k]->bs, l); ++l) {}
+         MTX_ASSERT(l < bnmount);
+         lp->isoType = isotype((int)l);
+         ++lp;
+      }
+      // Terminate list
+      lp->sub = NULL;
+      lp->isoType = 0;
+
+      // Calculate submodule dimension. Since we are working from bottom to top,
+      // the dimension of maximal submodules is already known.
+      if (maxcount == 0) {
+         sub[i]->dimension = 0;
+      }
+      else {
+         const MaxSubmodule_t* max0 = sub[i]->maxSubmodules;
+         sub[i]->dimension = max0->sub->dimension + LI.Cf[max0->isoType].dim;
+      }
+   }
+
+   // Calculate the radical series
+   if (opt_o & O_RADICAL) {
+      MESSAGE(0, ("Calculating radical series\n"));
+      sub[nsub-1]->radicalLayer = 0;
+      int layer = 1;
+      for (int i = nsub - 1; i > 0;) {
+         bsCopy(bs, sub[i]->bs);
+         for (const MaxSubmodule_t* lp = sub[i]->maxSubmodules; lp && lp->sub != NULL; ++lp) {
+            bsAnd(bs, lp->sub->bs);
+         }
+         for (i = nsub - 1; !bsIsSub(sub[i]->bs, bs); --i) {}
+         sub[i]->radicalLayer = layer++;
+      }
+   }
+
+   // Calculate the socle series
+   if (opt_o & O_SOCLE) {
+      MESSAGE(0, ("Calculating socle series\n"));
+      sub[nsub-1]->socleLayer = 0;
+      int layer = 1;
+      for (int i = 0; i < nsub - 1;) {
+         // Find simple submodules
+         memset(flag, 0, (size_t) nsub);
+         for (int k = i + 1; k < nsub; ++k) {
+            if (flag[k] != 0) { continue;}
+            if (bsIsSub(sub[i]->bs, sub[k]->bs)) {
+               int l;
+               flag[k] = 1;
+               for (l = k + 1; l < nsub; ++l) {
+                  if (bsIsSub(sub[k]->bs, sub[l]->bs)) { flag[l] = 2;}}
+            }
+         }
+
+         // Calculate the socle (sum of all simple submodules)
+         bsCopy(bs, sub[i]->bs);
+         for (int k = i; k < nsub; ++k) {
+            if (flag[k] == 1) {
+               bsOr(bs, sub[k]->bs);
+            }
+         }
+
+         for (i = 0; !bsIsSub(bs, sub[i]->bs); ++i) {}
+         sub[i]->socleLayer = layer++;
+      }
+   }
+
+   sysFree(flag);
+   bsFree(bs);
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+/// Calculates a submodule candidate by adding one mountain (i) and taking the closure under the
+/// dotted-lines relation.
 
 static void extend(BitString_t *x, int i, int nextend)
-
 {
     int k;
     int changed;
 
-    bsOr(x,bsupof[i]);		/* Add mountain and its subspaces */
-    if (nextend) bsClear(x,i);	/* Add the radical only */
+    bsOr(x,bsupof[i]);		// Add the mountain and its subspaces
+    if (nextend) bsClear(x,i);	// Add the radical only
 
-    /* Make closure
-       ------------ */
+    // Make closure
+    static char dlflag[MAXDOTL] = {0};
     memset(dlflag,0,sizeof(dlflag));
     for (changed = 1; changed; )
     {
@@ -378,18 +394,14 @@ static void extend(BitString_t *x, int i, int nextend)
     }
 }
 
-
-/* -----------------------------------------------------------------
-   writeresult() - Write output files
-   ----------------------------------------------------------------- */
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 FILE *openout(char *name)
-
 {
     FILE *f;
     char fn[200];
 
-    sprintf(fn,opt_b ? "%s%s.%d" : "%s%s",LI.BaseName,name,blnum);
+    sprintf(fn,opt_b ? "%s%s.%d" : "%s%s",LI.BaseName,name,blockNumber);
     MESSAGE(1,("Writing %s\n",fn));
     f = sysFopen(fn, "w");
     if (f == NULL)
@@ -400,10 +412,11 @@ FILE *openout(char *name)
     return f;
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
 #define NDIG(x) (x>99999?6:x>9999?5:x>999?4:x>99?3:x>9?2:1)
 
 static int printbs(FILE *f, BitString_t *b)
-
 {
     int k, k1, k2, len, flag;
 
@@ -447,459 +460,385 @@ static int printbs(FILE *f, BitString_t *b)
     return len;
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
+/// Write output files for current block
 
 void writeresult()
-
 {
-    FILE *f, *g;
-    int i, k;
-    char tmp[100];
-    BitString_t *b = bsAlloc(bnmount);
+   FILE* g;
+   int i, k;
+   char tmp[100];
+   BitString_t* b = bsAlloc(bnmount);
 
-    MESSAGE(0,("Finished, %d submodules found\n",nsub));
-    f = openout(".out");
+   MESSAGE(0, ("Finished, %d submodules found\n", nsub));
+   FILE* f = openout(".out");
 
-    /* Write irreducibles
-       ------------------ */
-    fprintf(f,"Irreducibles:\n");
-    fprintf(f,"    Type   Mult   SF   Mountains           Dotted lines\n");
-    for (i = 0; i < blsize; ++i)
-    {
-	sprintf(tmp,"%s",latCfName(&LI,block[i]));
-	fprintf(f,"    %-7s%-7ld%-5ld",tmp,LI.Cf[block[i]].mult,
-	    LI.Cf[block[i]].spl);
-	sprintf(tmp,"%ld (%ld-%ld)",LI.Cf[block[i]].nmount,
-	    (long) firstm[block[i]],
-	    LI.Cf[block[i]].nmount+firstm[block[i]]-1);
-	fprintf(f,"%-20s",tmp);
-	if (LI.Cf[block[i]].ndotl > 0)
-	    sprintf(tmp,"%ld (%ld-%ld)",LI.Cf[block[i]].ndotl,
-	        (long) firstdl[block[i]],
-	        LI.Cf[block[i]].ndotl+firstdl[block[i]]-1);
-	else
-	    sprintf(tmp,"0");
-	fprintf(f,"%-20s\n",tmp);
-    }
-    fprintf(f,"\n");
+   // Write irreducible constituents
+   fprintf(f, "Irreducibles:\n");
+   fprintf(f, "    Type   Mult   SF   Mountains           Dotted lines\n");
+   for (i = 0; i < blockSize; ++i) {
+      sprintf(tmp, "%s", latCfName(&LI, blockMember[i]));
+      fprintf(f, "    %-7s%-7ld%-5ld", tmp, LI.Cf[blockMember[i]].mult,
+              LI.Cf[blockMember[i]].spl);
+      sprintf(tmp, "%ld (%ld-%ld)", LI.Cf[blockMember[i]].nmount,
+              (long) firstm[blockMember[i]],
+              LI.Cf[blockMember[i]].nmount + firstm[blockMember[i]] - 1);
+      fprintf(f, "%-20s", tmp);
+      if (LI.Cf[blockMember[i]].ndotl > 0) {
+         sprintf(tmp, "%ld (%ld-%ld)", LI.Cf[blockMember[i]].ndotl,
+                 (long) firstdl[blockMember[i]],
+                 LI.Cf[blockMember[i]].ndotl + firstdl[blockMember[i]] - 1);
+      }
+      else {
+         sprintf(tmp, "0");
+      }
+      fprintf(f, "%-20s\n", tmp);
+   }
+   fprintf(f, "\n");
 
-    /* Write mountains
-       --------------- */
-    if (opt_o & O_MOUNTAINS)
-    {
-	fprintf(f,"Mountains:\n");
-	fprintf(f,"    No     Dim    Maximal Submountains\n");
-	for (i = 0; i < bnmount; ++i)
-	{
-	    fprintf(f,"    %-7d%-7ld",i,bmdim[i]);
-	    bsCopy(b,bsupof[i]);
-	    bsClear(b,i);
-	    for (k = 0; k < bnmount; ++k)
-	    {
-		if (!bsTest(b,k)) continue;
-		bsMinus(b,bsupof[k]);
-		bsSet(b,k);
-	    }
-	    for (k = 0; k < bnmount; ++k)
-		if (bsTest(b,k)) fprintf(f,"%d ",k);
-	    fprintf(f,"\n");
-	}
-	fprintf(f,"\n");
-    }
+   // Write mountains
+   if (opt_o & O_MOUNTAINS) {
+      fprintf(f, "Mountains:\n");
+      fprintf(f, "    No     Dim    Maximal Submountains\n");
+      for (i = 0; i < bnmount; ++i) {
+         fprintf(f, "    %-7d%-7ld", i, bmdim[i]);
+         bsCopy(b, bsupof[i]);
+         bsClear(b, i);
+         for (k = 0; k < bnmount; ++k) {
+            if (!bsTest(b, k)) { continue;}
+            bsMinus(b, bsupof[k]);
+            bsSet(b, k);
+         }
+         for (k = 0; k < bnmount; ++k) {
+            if (bsTest(b, k)) { fprintf(f, "%d ", k);}}
+         fprintf(f, "\n");
+      }
+      fprintf(f, "\n");
+   }
 
-    /* Write incidence matrix
-       ---------------------- */
-    if (opt_o & O_INCIDENCES)
-    {
-	MESSAGE(1,("  Incidence matrix (%d by %d)\n",bnmount,bnmount));
-	fprintf(f,"Incidence matrix:\n");
-	for (i = 0; i < bnmount; ++i)
-	{
-	    fprintf(f,"    %3d: ",i);
-	    printbs(f,bsupof[i]);
-	    fprintf(f,"\n");
-	}
-	fprintf(f,"\n");
-    }
+   // Write incidence matrix
+   if (opt_o & O_INCIDENCES) {
+      fprintf(f, "Incidence matrix:\n");
+      for (i = 0; i < bnmount; ++i) {
+         fprintf(f, "    %3d: ", i);
+         printbs(f, bsupof[i]);
+         fprintf(f, "\n");
+      }
+      fprintf(f, "\n");
+   }
 
-    /* Write dotted lines
-       ------------------ */
-    if (opt_o & O_DOTTEDLINES)
-    {
-	MESSAGE(1,("  Dotted lines (%d)\n",bndotl));
-	fflush(stdout);
-	fprintf(f,"Dotted lines:\n");
-	for (i = 0; i < bndotl; ++i)
-	{
-		fprintf(f,"    ");
-		printbs(f,bdotl[i]);
-		fprintf(f,"\n");
-	}
-	fprintf(f,"\n");
-    }
+   // Dotted lines
+   if (opt_o & O_DOTTEDLINES) {
+      fflush(stdout);
+      fprintf(f, "Dotted lines:\n");
+      for (i = 0; i < bndotl; ++i) {
+         fprintf(f, "    %3d: ", i);
+         printbs(f, bdotl[i]);
+         fprintf(f, "\n");
+      }
+      fprintf(f, "\n");
+   }
 
-    /* Write submodules
-       ---------------- */
-    if (opt_o & O_SUBMODULES)
-    {
-	MESSAGE(1,("  Submodules (%d)\n",nsub));
-	fflush(stdout);
-    	g = openout(".sub");
-	fprintf(f,"Submodules:\n");
-	fprintf(f,"    No    Dim  Flags  Ident                           Max\n");
-	for (i = 0; i < nsub; ++i)
-	{
-	    int *lp;
+   // Submodule list
+   if (opt_o & O_SUBMODULES) {
+      fflush(stdout);
+      g = openout(".sub");
+      fprintf(f, "Submodules:\n");
+      fprintf(f, "    No    Dim  Flags  Ident                           Max\n");
+      for (i = 0; i < nsub; ++i) {
+         fprintf(f, "    %-6d%-5lu", i, (unsigned long)sub[i]->dimension);
+         fputc(sub[i]->isMountain ? 'M' : ' ', f);
+         fputc(sub[i]->radicalLayer > 0 ? 'R' : ' ', f);
+         fputc(sub[i]->socleLayer > 0 ? 'S' : ' ', f);
+         fprintf(f, "    ");
+         k = printbs(f, sub[i]->bs);
+         for (; k < 30; ++k) {
+            fputc(' ', f);
+         }
+         fprintf(f, "  ");
+         for (MaxSubmodule_t* lp = sub[i]->maxSubmodules; lp && lp->sub; ++lp) {
+            if (lp != sub[i]->maxSubmodules) { fputc(',', f);}
+            fprintf(f, "%lu", (unsigned long) lp->sub->id);
+         }
+         fprintf(f, "\n");
+         bsWrite(sub[i]->bs, g);
+      }
+      fprintf(f, "\n");
+      fclose(g);
+   }
 
-	    fprintf(f,"    %-6d%-5ld",i,subdim[i]);
-	    fputc(ismount[i] ? 'M' : ' ',f);
-	    fputc(israd[i] ? 'R' : ' ',f);
-	    fputc(issoc[i] ? 'S' : ' ',f);
-	    fprintf(f,"    ");
-	    k = printbs(f,sub[i]);
-	    for (; k < 30; ++k) fputc(' ',f);
-	    fprintf(f,"  ");
-	    for (lp = max[i]; *lp >= 0; lp += 2)
-	    {
-		if (lp != max[i]) fputc(',',f);
-		fprintf(f,"%d",*lp);
-	    }
-	    fprintf(f,"\n");
-	    bsWrite(sub[i],g);
-	}
-	fprintf(f,"\n");
-	fclose(g);
-    }
+   // Radical series
+   if (opt_o & O_RADICAL) {
+      static int mult[LAT_MAXCF];
+      long rdim;
+      int layer;
+      BitString_t
+      * rad = bsAlloc(bnmount),
+      * newrad = bsAlloc(bnmount),
+      * x = bsAlloc(bnmount),
+      * zero = bsAlloc(bnmount);
 
-    /* Radikal- und Sockelreihe
-       ------------------------ */
-    if (opt_o & O_RADICAL)
-    {
-	static int mult[LAT_MAXCF];
-	long rdim;
-	int layer;
-	BitString_t
-	    *rad = bsAlloc(bnmount),
-	    *newrad = bsAlloc(bnmount),
-	    *x = bsAlloc(bnmount),
-	    *zero = bsAlloc(bnmount);
+      fprintf(f, "Radical series:\n");
+      for (i = 0; i < bnmount; ++i) {
+         bsSet(rad, i);
+      }
+      bsClearAll(zero);
+      for (i = 0, rdim = 0; i < LI.nCf; ++i) {
+         rdim += LI.Cf[i].dim * LI.Cf[i].mult;
+      }
+      for (layer = 1; bsCompare(rad, zero) != 0; ++layer) {
+         bsClearAll(x);
+         bsClearAll(newrad);
+         MESSAGE(1, ("Starting layer %d\n", layer));
 
-	MESSAGE(1,("  Radical series\n"));
-	fprintf(f,"Radical series:\n");
-	for (i = 0; i < bnmount; ++i) bsSet(rad,i);
-	bsClearAll(zero);
-	for (i = 0, rdim = 0; i < LI.nCf; ++i)
-	    rdim += LI.Cf[i].dim * LI.Cf[i].mult;
-	for (layer = 1; bsCompare(rad,zero) != 0; ++layer)
-	{
-	    bsClearAll(x);
-	    bsClearAll(newrad);
-	    MESSAGE(1,("Starting layer %d\n",layer));
+         // Extend the zero module = x by all those mountains
+         // which are contained in the radical and extend y
+         for (i = 0; i < bnmount && bsCompare(rad, x); ++i) {
+            if (bsTest(rad, i) && !(bsTest(x, i))) {
+               MESSAGE(2, ("extend(%i)\n", i));
+               extend(x, i, 0);
+               MESSAGE(2, ("nextend(%i)\n", i));
+               extend(newrad, i, 1);
+            }
+         }
 
-	    /* Extend the zero module = x by all those mountains
-	       which are contained in the radical and extend y
-	       ------------------------------------------------- */
-	    for (i = 0; i < bnmount && bsCompare(rad,x); ++i)
-	    {
-		if (bsTest(rad,i) && !(bsTest(x,i)))
-		{
-		    MESSAGE(2,("extend(%i)\n",i));
-		    extend(x,i,0);
-		    MESSAGE(2,("nextend(%i)\n",i));
-		    extend(newrad,i,1);
-		}
-	    }
+         // Find the irreducible factors in this layer
+         memset(mult, 0, sizeof(mult));
+         bsCopy(x, newrad);
+         for (i = 0; i < bnmount && bsCompare(rad, x); ++i) {
+            if (bsTest(rad, i) && !(bsTest(x, i))) {
+               extend(x, i, 0);
+               k = isotype(i);
+               ++mult[k];
+               rdim -= LI.Cf[k].dim;
+            }
+         }
+         // TODO: add layer 0 (full module)
+         // TODO: output module number for each layer
+         fprintf(f, "    Layer %d: Dim=%-4ld  ", layer, rdim);
+         for (i = 0; i < LI.nCf; ++i) {
+            for (; mult[i] > 0; --mult[i]) {
+               fprintf(f, "%s ", latCfName(&LI, i));
+            }
+         }
+         fprintf(f, "\n");
+         bsCopy(rad, newrad);
+      }
+      fprintf(f, "\n");
+   }
+   fclose(f);
 
-	    /* Find the irreducible factors in this layer
-	       ------------------------------------------ */
-	    memset(mult,0,sizeof(mult));
-	    bsCopy(x,newrad);
-	    for (i = 0; i < bnmount && bsCompare(rad,x); ++i)
-	    {
-	      if (bsTest(rad,i) && !(bsTest(x,i)))
-	      {
-		  extend(x,i,0);
-		  k = isotype(i);
-		  ++mult[k];
-		  rdim -= LI.Cf[k].dim;
-	      }
-	    }
-	    fprintf(f,"    Layer %d: Dim=%-4ld  ",layer,rdim);
-	    for (i = 0; i < LI.nCf; ++i)
-		for (; mult[i] > 0; --mult[i])
-		    fprintf(f,"%s ",latCfName(&LI,i));
-	    fprintf(f,"\n");
-	    bsCopy(rad,newrad);
-	}
-	fprintf(f,"\n");
-    }
-    fclose(f);
+   if ((opt_o & O_EXTFILES) && (opt_o & O_SUBMODULES)) {
+      // Write the .lat file
+      f = openout(".lat");
+      fprintf(f, "MeatAxe.Lattice := [\n");
+      for (i = 0; i < nsub; ++i) {
+         fprintf(f, "[%lu,[", (unsigned long) sub[i]->dimension);
+         k = 0;
+         for (const MaxSubmodule_t* maxSub = sub[i]->maxSubmodules;
+              maxSub && maxSub->sub;
+              ++maxSub, ++k) {
+            fprintf(f, "[%lu,%d]", (unsigned long)maxSub->sub->id + 1, maxSub->isoType + 1);
+            if (maxSub[1].sub) {
+               fprintf(f, ",");
+               if (k % 10 == 9) { fprintf(f, "\n");}
+            }
+         }
+         if (i < nsub - 1) {
+            fprintf(f, "]],\n");
+         }
+         else {
+            fprintf(f, "]]\n");
+         }
+      }
+      fprintf(f, "];\n");
 
+      fclose(f);
 
-    if ((opt_o & O_EXTFILES) && (opt_o & O_SUBMODULES))
-    {
+      // Write the .gra file
+      f = openout(".gra");
+      fprintf(f, "%d\n", nsub);
+      for (i = 0; i < nsub; ++i) {
 
-	/* Write the .lat file
-	   ------------------- */
-	f = openout(".lat");
-#if 0
-	fprintf(f,"MeatAxe.IncidenceMatrix := [\n");
-	for (i = 0; i < nsub; ++i)
-	{
-	    fprintf(f,"[");
-	    for (k = 0; k < nsub; ++k)
-	    {
-		fprintf(f,"%d",bsIsSub(sub[i],sub[k]) ? 1 : 0);
-		if (k < nsub-1)
-		    fprintf(f,",");
-	    }
-	    fprintf(f,"]");
-	    if (i < nsub-1)
-		fprintf(f,",");
-	    fprintf(f,"\n");
-	}
-	fprintf(f,"];\n");
-#endif
-
-	fprintf(f,"MeatAxe.Lattice := [\n");
-	for (i = 0; i < nsub; ++i)
-	{
-	    int *lp = max[i];
-
-	    fprintf(f,"[%ld,[",subdim[i]);
-	    for (k = 0, lp = max[i]; *lp >= 0; lp += 2, ++k)
-	    {
-	    	fprintf(f,"[%d,%d]",lp[0]+1,lp[1]+1);
-		if (lp[2] >= 0)
-		{
-		    fprintf(f,",");
-		    if (k % 10 == 9) fprintf(f,"\n");
-		}
-	    }
-	    if (i < nsub-1)
-		fprintf(f,"]],\n");
-	    else
-		fprintf(f,"]]\n");
-	}
-	fprintf(f,"];\n");
-
-
-	fclose(f);
-
-	/* Write the .gra file
-	   ------------------- */
-	f = openout(".gra");
-	fprintf(f,"%d\n",nsub);
-	for (i = 0; i < nsub; ++i)
-	{
-	int *lp;
-
-	fputc(ismount[i] ? 'm' : '.',f);
-	fputc(israd[i] ? 'r' : '.',f);
-	fputc(issoc[i] ? 's' : '.',f);
-	for (k = 0, lp = max[i]; *lp >= 0; lp += 2, ++k);
-	fprintf(f," %2d",k);
-	for (lp = max[i]; *lp >= 0; lp += 2)
-	    fprintf(f," %d %d",lp[0],lp[1]);
-	fprintf(f,"\n");
-	}
-	fclose(f);
-    }
+         fputc(sub[i]->isMountain ? 'm' : '.', f);
+         fputc(sub[i]->radicalLayer > 0 ? 'r' : '.', f);
+         fputc(sub[i]->socleLayer > 0 ? 's' : '.', f);
+         const MaxSubmodule_t* lp = sub[i]->maxSubmodules;
+         for (k = 0; lp && lp->sub; ++lp, ++k) {}
+         fprintf(f, " %2d", k);
+         for (lp = sub[i]->maxSubmodules; lp && lp->sub; ++lp) {
+            fprintf(f, " %lu %d", (unsigned long) lp->sub->id, lp->isoType);
+         }
+         fprintf(f, "\n");
+      }
+      fclose(f);
+   }
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
-
-/* -----------------------------------------------------------------
-   sameblock() - Test if irred. #i and #k belong to the same block
-	(Actually, we check only if there is any mountain of
-	irred. i contained in any mountain of irred. k and vice
-	versa)
-   ----------------------------------------------------------------- */
+/// Test if irreducible constituent #i and #k belong to the same block.
+/// Actually, we check only if there is any mountain of constituent i contained in any mountain of
+/// constituent k and vice versa.
 
 static int sameblock(int i, int k)
-
 {
-    int ii, kk;
-
-    for (ii = firstm[i]; ii < firstm[i+1]; ++ii)
-	for (kk = firstm[k]; kk < firstm[k+1]; ++kk)
-	{
-	    if (bsTest(xsubof[ii],kk)) return 1;
-	    if (bsTest(xsubof[kk],ii)) return 1;
-	}
-    return 0;
+   for (size_t ii = firstm[i]; ii < firstm[i + 1]; ++ii) {
+      for (size_t kk = firstm[k]; kk < firstm[k + 1]; ++kk) {
+         if (bsTest(xsubof[ii], kk)) { return 1; }
+         if (bsTest(xsubof[kk], ii)) { return 1; }
+      }
+   }
+   return 0;
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
-
-
-/* -----------------------------------------------------------------
-   nextblock() - Build next block; returns 0 if no more
-   	constituents remain
-   ----------------------------------------------------------------- */
+/// Builds the next block. Returns 1 on success or 0 if no more constituents remain.
 
 static int nextblock()
-
 {
     int i, k;
 
-    ++blnum;
+    ++blockNumber;
     for (i = 0; i < LI.nCf && done[i]; ++i);
     if (i >= LI.nCf) return 0;
 
-    /* If -b was not used, build one single
-       block containing all irreducibles.
-       ------------------------------------ */
+    // If -b was not used, build a single block containing all irreducibles.
     if (!opt_b)
     {
-	blsize = LI.nCf;
+	blockSize = LI.nCf;
 	for (i = 0; i < LI.nCf; ++i)
 	{
-	    block[i] = i;
+	    blockMember[i] = i;
 	    done[i] = 1;
 	}
 	return 1;
     }
 
-    /* Otherwise, make the next block
-       ------------------------------ */
-    MESSAGE(2,("Making next block (%d)\n",blnum));
+    // Otherwise, make the next block
+    MESSAGE(2,("Making next block (%d)\n",blockNumber));
     done[i] = 1;
-    blsize = 1;
-    block[0] = i;
+    blockSize = 1;
+    blockMember[0] = i;
     i = 0;
-    while (i < blsize)
+    while (i < blockSize)
     {
 	for (k = 0; k < LI.nCf; ++k)
-    	    if (!done[k] && sameblock(block[i],k))
+    	    if (!done[k] && sameblock(blockMember[i],k))
     	    {
 	        done[k] = 1;
-	        block[blsize++] = k;
+	        blockMember[blockSize++] = k;
 	    }
 	++i;
     }
 
-    /* Sort block
-       ---------- */
-    MESSAGE(2,("Sorting\n"));
-    for (i = 0; i < blsize; ++i)
-	for (k = i+1; k < blsize; ++k)
+    // Sort block
+    MESSAGE(2,("Sorting block (size=%lu)\n", (unsigned long) blockSize));
+    for (i = 0; i < blockSize; ++i) {
+	for (k = i+1; k < blockSize; ++k)
 	{
-	    if (block[i] > block[k])
+	    if (blockMember[i] > blockMember[k])
 	    {
-		int tmp = block[i];
-		block[i] = block[k];
-		block[k] = tmp;
+		int tmp = blockMember[i];
+		blockMember[i] = blockMember[k];
+		blockMember[k] = tmp;
 	    }
 	}
+    }
     if (MSG0)
     {
-        printf("\nBlock %d: ",blnum);
-	for (i = 0; i < blsize; ++i)
-	    printf(" %s%s",LI.BaseName,latCfName(&LI,block[i]));
+        printf("\nBlock %d: ",blockNumber);
+	for (i = 0; i < blockSize; ++i)
+	    printf(" %s%s",LI.BaseName,latCfName(&LI,blockMember[i]));
 	printf("\n");
         fflush(stdout);
     }
     return 1;
 }
 
-
-
-/* -----------------------------------------------------------------
-   sort()
-   ----------------------------------------------------------------- */
-
-void sort()
-
+static void clearHashTable()
 {
-    int i, k;
-    BitString_t *x;
-
-    MESSAGE(0,("Sorting\n"));
-    for (i = 0; i < nsub; ++i)
-    {
-	for (k = i+1; k < nsub; ++k)
-	{
-	    if (bsIsSub(sub[k],sub[i]))
-	    {
-		x = sub[i];
-		sub[i] = sub[k];
-		sub[k] = x;
-	    }
-	}
-    }
+   memset(hashTable, 0, sizeof(hashTable));
 }
 
-/* -----------------------------------------------------------------
-   addtolist() - Find out if a given submodule is new. If yes, add
-	the new sub module to the list
-   ----------------------------------------------------------------- */
-
-static void addtolist(BitString_t *x)
-
+static size_t hashKey(BitString_t *bs)
 {
-    int i;
-
-    ++nadd;
-    if (nadd % 1000 == 0)
-    {
-	MESSAGE(1,("Generation %d: %d tries, %d new submodules\n",
-	    generation,nadd,nsub-oldnsub));
-    }
-
-    for (i = nsub-1; i >= 0; --i)
-    {
-	if (!bsCompare(sub[i],x))
-	    return;
-    }
-    if (nsub >= MAXNSUB)
-    {
-	sort();
-	findrsm();
-	writeresult();	/* Write out what we have found so far */
-	mtxAbort(MTX_HERE,"Too many submodules (> %d)",MAXNSUB);
-    }
-    sub[nsub] = bsAlloc(bnmount);
-    bsCopy(sub[nsub++],x);
+   uint32_t h1 = 0x12345678;
+   uint32_t h2 = 0x33775588;
+   hashLittle2(bs->data, bs->size / 8, &h1, &h2);
+   return h1 % HASH_SIZE;
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
+/// Checks whether the given submodule is new. If yes, the submodule is added to the list.
 
-
-
-/* -----------------------------------------------------------------
-   initblock()
-   ----------------------------------------------------------------- */
-
-static void initblock()
-
+static int tryAddSubmodule(BitString_t *bs, int generation)
 {
-    int i, k, ii, kk, row, col;
+   ++nadd;
+   if (nadd % 1000 == 0) {
+      MESSAGE(1, ("Generation %d: %d candidates, %d new\n", generation, nadd, nsub - lastGenEnd));
+   }
 
-    /* Find out the number of mountains in this block
-       ---------------------------------------------- */
+   const size_t key = hashKey(bs);
+   for (Submodule_t* item = hashTable[key]; item != NULL; item = item->htNext) {
+      if (bsCompare(item->bs, bs) == 0)
+         return 0;
+   }
+   if (nsub >= MAXNSUB) {
+      // write partial result
+      finishBlock();
+      writeresult();
+      mtxAbort(MTX_HERE, "Too many submodules (> %d)", MAXNSUB);
+   }
+   
+   Submodule_t* item = ALLOC(Submodule_t);
+   item->bs = bsAlloc(bnmount);
+   item->dimension = 0;
+   item->maxSubmodules = NULL;
+   item->isMountain = 0;
+   item->socleLayer = -1;
+   item->radicalLayer = -1;
+   bsCopy(item->bs, bs);
+   item->htNext = hashTable[key];
+   item->seq = nsub;
+   item->id = nsub; // will be reset after sort
+   item->generation = generation;
+   hashTable[key] = item;
+   sub[nsub++] = item;
+   return 1;
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+static void initBlock()
+{
+    int row, col;
+
+    // Determine the number of mountains in this block
     bnmount = 0;
-    for (i = 0; i < blsize; ++i)
-	bnmount += LI.Cf[block[i]].nmount;
+    for (int i = 0; i < blockSize; ++i)
+	bnmount += LI.Cf[blockMember[i]].nmount;
 
-    /* Build the incidence matrix
-       -------------------------- */
+    // Build the incidence matrix
     MESSAGE(0,("Building incidence matrix\n"));
     fflush(stdout);
-    for (i = 0; i < bnmount; ++i)
+    for (int i = 0; i < bnmount; ++i)
     {
 	bsubof[i] = bsAlloc(bnmount);
 	bsupof[i] = bsAlloc(bnmount);
     }
     row = 0;
-    for (i = 0; i < blsize; ++i)
+    for (int i = 0; i < blockSize; ++i)
     {
-        for (ii = firstm[block[i]]; ii < firstm[block[i]+1]; ++ii)
+        for (int ii = firstm[blockMember[i]]; ii < firstm[blockMember[i]+1]; ++ii)
 	{
 	    col = 0;
-	    for (k = 0; k < blsize; ++k)
+	    for (int k = 0; k < blockSize; ++k)
 	    {
-		for (kk=firstm[block[k]]; kk<firstm[block[k]+1]; ++kk)
+		for (int kk=firstm[blockMember[k]]; kk<firstm[blockMember[k]+1]; ++kk)
 		{
 		    if (bsTest(xsubof[ii],kk))
 		    {
@@ -914,21 +853,20 @@ static void initblock()
 	}
     }
 
-    /* Build the dotted lines for one block
-       ------------------------------------ */
+    // Build the dotted lines for this block
     MESSAGE(0,("Building dotted lines\n"));
     fflush(stdout);
     bndotl = 0;
-    for (i = 0; i < blsize; ++i)
+    for (int i = 0; i < blockSize; ++i)
     {
-        for (ii = firstdl[block[i]]; ii < firstdl[block[i]+1]; ++ii)
+        for (int ii = firstdl[blockMember[i]]; ii < firstdl[blockMember[i]+1]; ++ii)
 	{
 	    bdotl[bndotl] = bsAlloc(bnmount);
 	    bdlspan[bndotl] = bsAlloc(bnmount);
 	    col = 0;
-	    for (k = 0; k < blsize; ++k)
+	    for (int k = 0; k < blockSize; ++k)
 	    {
-		for (kk=firstm[block[k]]; kk<firstm[block[k]+1]; ++kk)
+		for (int kk=firstm[blockMember[k]]; kk<firstm[blockMember[k]+1]; ++kk)
 		{
 		    if (bsTest(xdotl[ii],kk))
 		    {
@@ -942,24 +880,22 @@ static void initblock()
 	}
     }
 
-    /* Initialize global variables
-       --------------------------- */
+    // Initialize global variables
+    nsub = 0;
+    clearHashTable();
+    lastGenEnd = 0;
+    lastGenBegin = 0;
+    // Add generation 0 (null module)
+    tryAddSubmodule(bsAlloc(bnmount), 0);
+    lastGenEnd = nsub;
     generation = 0;
-    nsub = 0;		/* Number of submodules */
-    lastgen = 0;	/* First submodule of previous generation */
-    nadd = 0;
-    oldnsub = 0;
-    addtolist(bsAlloc(bnmount));	/* Null module */
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
+/// Clean up after each block
 
-/* -----------------------------------------------------------------
-   cleanupblock() - Clean up after each block
-   ----------------------------------------------------------------- */
-
-static void cleanupblock()
-
+static void cleanupBlock()
 {
     int i;
 
@@ -976,49 +912,41 @@ static void cleanupblock()
     {
         for (i = 0; i < nsub; ++i)
         {
-	    free(sub[i]);
-	    free(max[i]);
+	    bsFree(sub[i]->bs);
+	    sysFree(sub[i]->maxSubmodules);
+            memset(sub[i], 0, sizeof(Submodule_t));
+            sysFree(sub[i]);
         }
-        free(ismount);
-        free(israd);
-        free(issoc);
-        free(subdim);
-        free(max);
     }
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// Make next generation (submodules generated by n+1 mountains)
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
-
-/* -----------------------------------------------------------------
-   nextgen() - Make next generation (modules generated by n+1
-	mountains)
-   ----------------------------------------------------------------- */
-
-void nextgen()
-
+static void nextgen()
 {
-    int i, k, oldnsub = nsub;
-    BitString_t *x;
+   ++generation;
+   const int begin = nsub;
+   BitString_t* x = bsAlloc(bnmount);
+   for (int i = lastGenBegin; i < begin; ++i) {
+      for (int k = 0; k < bnmount; ++k) {
+         if (bsTest(sub[i]->bs, k)) {
+            continue;
+         }
+         bsCopy(x, sub[i]->bs);
+         extend(x, k, 0);
+         tryAddSubmodule(x, generation);
+      }
+   }
 
-    x = bsAlloc(bnmount);
-    for (i = lastgen; i < oldnsub; ++i)
-    {
-	for (k = 0; k < bnmount; ++k)
-	{
-	    if (bsTest(sub[i],k))
-		continue;
-	    bsCopy(x,sub[i]);
-	    extend(x,k,0);
-	    addtolist(x);
-	}
-    }
-    lastgen = oldnsub;
-    ++generation;
+   lastGenBegin = begin;
+   lastGenEnd = nsub;
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 static int setFormatFlags(const char *c, int set)
-
 {
     static int FirstTime = 1;
     if (FirstTime)
@@ -1050,15 +978,12 @@ static int setFormatFlags(const char *c, int set)
     return 0;
 }
 
-
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 static int ParseCommandLine()
-
 {
     const char *c;
 
-    /* Parse command line
-       ------------------ */
     opt_G = appGetOption(App,"-G --gap");
     if (opt_G) 
 	MtxMessageLevel = -100;
@@ -1079,9 +1004,28 @@ static int ParseCommandLine()
 }
 
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+static void calculateCfInfo()
+{
+    int i;
+
+    // Set firstm and firstdl
+    firstm[0] = 0;
+    firstdl[0] = 0;
+    for (i = 0; i < LI.nCf; ++i)
+    {
+	firstm[i+1] = firstm[i] + LI.Cf[i].nmount;
+	firstdl[i+1] = firstdl[i] + LI.Cf[i].ndotl;
+    }
+
+    // Initialize done[]
+    for (i = 0; i < LI.nCf; ++i) done[i] = 0;
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 static int Init(int argc, char **argv)
-
 {
     if ((App = appAlloc(&AppInfo,argc,argv)) == NULL)
 	return -1;
@@ -1089,20 +1033,13 @@ static int Init(int argc, char **argv)
 	return -1;
     MESSAGE(0,("*** CALCULATE ALL SUBMODULES ***\n\n"));
     init(App->argV[0]);
-    init2();
+    calculateCfInfo();
     return 0;
 }
 
-
-
-
-
-/* -----------------------------------------------------------------
-   main()
-   ----------------------------------------------------------------- */
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 int main(int argc, char **argv)
-
 {
     if (Init(argc,argv) != 0)
     {
@@ -1112,31 +1049,26 @@ int main(int argc, char **argv)
 
     while (nextblock())
     {
-	initblock();
+	initBlock();
 
 	if (opt_o & O_SUBMODULES)
 	{
-	    do
+	    while (1)
 	    {
-		MESSAGE(0,("Generation %d: %d tr%s, %d new submodule%s\n",
-		    generation,nadd,nadd == 1 ? "y":"ies",
-		    nsub-oldnsub,nsub-oldnsub == 1 ? "" : "s"));
-/*if (nsub > 100) exit(0);
-*/
 		nadd = 0;
-		oldnsub = nsub;
 		nextgen();
+                if (lastGenEnd == lastGenBegin) break;
+		MESSAGE(0,("Generation %d: %lu candidates, %lu new\n",
+		    generation, (unsigned long) nadd, (unsigned long)(lastGenEnd - lastGenBegin)));
 	    }
-	    while (oldnsub != nsub);
-	    sort();
-	    findrsm();
+	    finishBlock();
 	}
 	else
 	    MESSAGE(0,("Submodules not calculated\n"));
 
 	writeresult();
 	MESSAGE(0,("\n"));
-	cleanupblock();
+	cleanupBlock();
     }
     return 0;
 }
@@ -1226,7 +1158,7 @@ from its blocks by forming direct sums.
 
 Output files are created separately for each block, and a number
 is appended to the name. For example, if the representation is
-called "psl277" and the lattice decomposes into 3 blocks,
+called "psl211" and the lattice decomposes into 3 blocks,
 @b mksub creates 9 output files:
 <pre>
 psl211.out.1 psl211.lat.1 psl211.gra.1

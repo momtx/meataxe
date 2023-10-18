@@ -30,8 +30,8 @@ Incidence matrix:
       9: ...+++...+
 
 Dotted lines:
-    .+++......
-    .......+++
+      0: .+++......
+      1: .......+++
 
 Submodules:
     No    Dim  Flags  Ident                           Max

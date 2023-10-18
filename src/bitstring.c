@@ -412,7 +412,7 @@ int bsCompare(const BitString_t *a, const BitString_t *b)
    const size_t minCapacity = a->capacity < b->capacity ? a->capacity : b->capacity;
    for (size_t i = minCapacity / BPL; i > 0; --i) {
       if (*ap != *bp) {
-         // Compare bytewise to make the result independeant of the endianness.
+         // Compare bytewise to make the result independent of the endianness.
          const uint8_t *a8 = (const uint8_t *)ap;
          const uint8_t *b8 = (const uint8_t *)bp;
          for (unsigned k = sizeof(long); k > 0; --k) {
