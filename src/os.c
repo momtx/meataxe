@@ -229,8 +229,7 @@ FILE *sysFopen(const char *name, const char* mode)
 
    FILE *f = NULL;
    if (useLibDir && *name != '/') {
-      char buf[300];
-      snprintf(buf,sizeof(buf),"%s/%s", mtxLibraryDirectory(), name);
+      const char* buf = strTprintf("%s/%s", mtxLibraryDirectory(), name);
       f = fopen(buf,sysMode);
    }
    if (f == NULL)
@@ -428,8 +427,6 @@ const char* sysGetExecutableName(const char* argv0)
       return argv0;
    const char* p = getenv("PATH");
 
-   char exeName[2048];
-
    while (1) {
       while (*p == ':') ++p;
       if (*p == 0) break;
@@ -437,7 +434,7 @@ const char* sysGetExecutableName(const char* argv0)
       while (*p != 0 && *p != ':') ++p;
       int len = p - bop;
 
-      snprintf(exeName, sizeof(exeName), "%.*s/%s", len, bop, argv0);
+      const char* exeName = strTprintf("%.*s/%s", len, bop, argv0);
       if (access(exeName, X_OK) == 0) {
          result = strdup(exeName);
          return result;

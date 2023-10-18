@@ -17,3 +17,9 @@ compareWithReference x25
 zpr -G "${MTX_TEST_DATA_DIR}/Mat67" x67
 compareWithReference x67
 
+
+cat "${MTX_TEST_DATA_DIR}/Perm1" "${MTX_TEST_DATA_DIR}/Perm2" \
+   "${MTX_TEST_DATA_DIR}/Mat2" "${MTX_TEST_DATA_DIR}/Mat25" "${MTX_TEST_DATA_DIR}/Mat67" \
+   > input
+zpr -G input input.txt
+compareWithReference input.txt

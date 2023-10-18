@@ -10,16 +10,8 @@
 #include <string.h>
 #include <stdlib.h>
 
-
-
-
 #define LBUFSIZE 2000	/* Input line buffer */
 #define MAXIRRED 20	/* Max number of irreducibles */
-
-
-/* ------------------------------------------------------------------
-   Global data
-   ------------------------------------------------------------------ */
 
 
 static MtxApplicationInfo_t AppInfo = { 
@@ -46,11 +38,9 @@ MTX_COMMON_OPTIONS_DESCRIPTION
 };
 
 static MtxApplication_t *App = NULL;
-
-
 static char name[100];
-static char ifilename[130];
-static char ofilename[130];
+static char* fileNameInp = NULL;
+static char* fileNameOut = NULL;
 static long block = -1;
 static Lat_Info LI;		/* Data from .cfinfo file */
 static enum { O_PS, O_GAP } OutputMode = O_PS;
@@ -68,66 +58,37 @@ struct { char name[20]; long r, b, g; } ColorMap[] =
 
 
 int upper, lower;
-
-
-/* Data read from the input file
-   ----------------------------- */
-int nsub;		/* Number of submodules */
-long *dim;		/* Dimension of submodules */
-int **max;		/* Maximal submodules */
-int **maxtype;		/* Types of irreducible factors */
-char *issoc;		/* Socle series */
-char *israd;		/* Radical series */
-char *ismount;		/* Mountains */
-
-/* The factor
-   ---------- */
 static LdLattice_t *Lattice;
 
+// Data read from the input file
+int nsub;		// Number of submodules
+long *dim;		// Dimension of submodules
+int **max;		// Maximal submodules
+int **maxtype;		// Types of irreducible factors
+char *issoc;		// Socle series
+char *israd;		// Radical series
+char *ismount;		// Mountains
 
 
-/* ------------------------------------------------------------------
-   err() - Print error message and exit
-   ------------------------------------------------------------------ */
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static void err(char *msg)
+// Reads the .gra file.
 
+static void readFile(void)
 {
-    mtxAbort(MTX_HERE,"*** Fatal error: %s",msg);
-    exit(1);
-}
-
-
-/* ------------------------------------------------------------------
-   readfile() - Read the .gra file
-   ------------------------------------------------------------------ */
-
-void readfile(void)
-
-{
-    FILE *f;
     char *buf, *c;
     int i, nmax, *lp, *kp;
 
-
-    /* Open input file
-       --------------- */
-    f = sysFopen(ifilename,"r");
-    if (f == NULL)
-    {	perror(ifilename);
-		err("Error opening input file");
-    }
+    FILE* f = sysFopen(fileNameInp,"r");
     buf = (char *)sysMalloc(LBUFSIZE);
-    MESSAGE(1,("Reading %s\n",ifilename));
+    MESSAGE(1,("Reading %s\n",fileNameInp));
 
-    /* Read number of submodules 
-       ------------------------- */
+    // Read number of submodules 
     fgets(buf,LBUFSIZE,f);
     nsub = atoi(buf);
     MESSAGE(1,("%d submodules\n",nsub));
 
-    /* Allocate some arrays
-       -------------------- */
+    // Allocate some arrays
     dim = NALLOC(long,nsub);
     max     = NALLOC(int *,nsub);
     maxtype = NALLOC(int *,nsub);
@@ -138,8 +99,7 @@ void readfile(void)
     memset(israd,0,nsub);
     memset(ismount,0,nsub);
 
-    /* Read the lattice
-       ---------------- */
+    // Read the lattice
     for (i = 0; i < nsub; ++i)
     {
 	fgets(buf,LBUFSIZE,f);
@@ -168,15 +128,12 @@ printf("typ[3] = %d %d %d\n",maxtype[3][0],maxtype[3][1],maxtype[3][2]);
 */
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
-/* ------------------------------------------------------------------
-   SocLevel(), RadLevel() - Returns the level of a given submudule
-   in the socle or radical series. Both functions return -1 if the
-   submodule does not belong to the series.
-   ------------------------------------------------------------------ */
+/// Returns the level of a given submodule in the socle series.
+/// Both functions return -1 if the submodule does not belong to the socle series.
 
 static int SocLevel(int n)
-
 {
     int i, lev=0;
     if (!issoc[n]) return -1;
@@ -185,9 +142,12 @@ static int SocLevel(int n)
     return lev;
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+/// Returns the level of a given submodule in the radical series.
+/// Both functions return -1 if the submodule does not belong to the radical series.
 
 static int RadLevel(int n)
-
 {
     int i, lev=0;
     if (!israd[n]) return -1;
@@ -196,98 +156,86 @@ static int RadLevel(int n)
     return lev;
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
-/* ------------------------------------------------------------------
-   buildroot()
+/// Initializes the (sub-)lattice.
  
-   Input: nsub, max, lower, upper
-   Output: Lattice
-   ------------------------------------------------------------------ */
+void buildRoot(void)
+{
+   char* flag = NALLOC(char, nsub);
+   int* map = NALLOC(int, nsub);
+   int finis;
+   int i, k;
+   int* ip;
+   int xnsub;
 
-void buildroot(void)
+   if (lower == -1) { lower = 0; }
+   if (upper == -1) { upper = nsub - 1; }
 
-{   char *flag = NALLOC(char,nsub);
-    int *map = NALLOC(int,nsub);
-    int finis;
-    int i, k;
-    int *ip;
-    int xnsub;
+   /* Select all modules below <upper>
+      -------------------------------- */
+   memset(flag, 0, nsub);
+   flag[upper] = 1;
+   for (finis = 0; !finis;) {
+      finis = 1;
+      for (i = 0; i < nsub; ++i) {
+         if (flag[i] == 1) {
+            for (ip = max[i]; *ip >= 0; ++ip) {
+               if (flag[*ip] == 0) {
+                  flag[*ip] = 1;
+                  finis = 0;
+               }
+            }
+            flag[i] = 2;
+         }
+      }
+   }
 
-    if (lower == -1) lower = 0;
-    if (upper == -1) upper = nsub-1;
+   /* Select all modules which are also above <lower>
+      ----------------------------------------------- */
+   if (flag[lower] != 2) { mtxAbort(MTX_HERE, "Illegal limits"); }
+   flag[lower] = 3;
+   map[lower] = 0;
+   xnsub = 1;
+   for (finis = 0; !finis;) {
+      finis = 1;
+      for (i = 0; i < nsub; ++i) {
+         if (flag[i] == 2) {
+            for (ip = max[i]; *ip >= 0; ++ip) {
+               if (flag[*ip] == 3) {
+                  finis = 0;
+                  flag[i] = 3;
+                  map[i] = xnsub++;
+                  break;
+               }
+            }
+         }
+      }
+   }
+   if (lower > 0 || upper < nsub - 1) {
+      MESSAGE(1, ("%d modules between %d and %d\n", xnsub, lower, upper));
+   }
 
-    /* Select all modules below <upper>
-       -------------------------------- */
-    memset(flag,0,nsub);
-    flag[upper] = 1;
-    for (finis = 0; !finis; )
-    {	finis = 1;
-	for (i = 0; i < nsub; ++i)
-	{   if (flag[i] == 1)
-	    {	for (ip = max[i]; *ip >= 0; ++ip)
-		{   if (flag[*ip] == 0)
-		    {	flag[*ip] = 1;
-			finis = 0;
-		    }
-		}
-		flag[i] = 2;
-	    }
-	}
-    }
-
-    /* Select all modules which are also above <lower>
-       ----------------------------------------------- */
-    if (flag[lower] != 2) err("Illegal limits\n");
-    flag[lower] = 3;
-    map[lower] = 0;
-    xnsub = 1;
-    for (finis = 0; !finis; )
-    {	finis = 1;
-	for (i = 0; i < nsub; ++i)
-	{   if (flag[i] == 2)
-	    {	for (ip = max[i]; *ip >= 0; ++ip)
-		{   if (flag[*ip] == 3)
-		    {	finis = 0;
-			flag[i] = 3;
-			map[i] = xnsub++;
-			break;
-		    }
-		}
-	    }
-	}
-    }
-    if (lower > 0 || upper < nsub - 1)
-	MESSAGE(1,("%d modules between %d and %d\n",xnsub,lower,upper));
-
-    /* Calculate the factor lattice
-       ---------------------------- */
-    Lattice = ldAlloc(xnsub);
-    k = 0;
-    for (i = 0; i < nsub; ++i)
-    {   
-	if (flag[i] == 3)
-        {   
-	    Lattice->Nodes[k].UserData = i;
-	    for (ip = max[i]; *ip >= 0; ++ip)
-	    {   
-		if (flag[*ip] == 3)
-		    ldAddIncidence(Lattice,map[*ip],k);
-	    }
-	    ++k;
-	}
-    }
+   /* Calculate the factor lattice
+      ---------------------------- */
+   Lattice = ldAlloc(xnsub);
+   k = 0;
+   for (i = 0; i < nsub; ++i) {
+      if (flag[i] == 3) {
+         Lattice->Nodes[k].UserData = i;
+         for (ip = max[i]; *ip >= 0; ++ip) {
+            if (flag[*ip] == 3) {
+               ldAddIncidence(Lattice, map[*ip], k);
+            }
+         }
+         ++k;
+      }
+   }
 }
 
-
-
-
-
-/* ------------------------------------------------------------------
-   setColors() - Set colors from command line option.
-   ------------------------------------------------------------------ */
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 static void setColors(const char *opt_text_ptr)
-
 {
     int i;
     int r,b,g;
@@ -321,49 +269,45 @@ static void setColors(const char *opt_text_ptr)
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static void init(int argc, char **argv)
-{	
-    const char *c;
+static void init(int argc, char** argv)
+{
+   const char* c;
 
-    App = appAlloc(&AppInfo,argc,argv);
-    block = appGetIntOption(App,"-b",-1,0,-1);
-    if (appGetOption(App,"-G"))
-	OutputMode = O_GAP;
-    if ((c = appGetTextOption(App,"-c",NULL)) != NULL)
-	setColors(c);
-    if (OutputMode == O_GAP)
-	MtxMessageLevel = -1000;
-    upper = lower = -1;
-    appGetArguments(App,1,3);
-    switch (App->argC)
-    {	case 3:
-		upper = atoi(App->argV[2]);
-	case 2:
-		lower = atoi(App->argV[1]);
-	case 1:
-		strcpy(name,App->argV[0]);
-		break;
-    }
+   App = appAlloc(&AppInfo, argc, argv);
+   block = appGetIntOption(App, "-b", -1, 0, -1);
+   if (appGetOption(App, "-G")) {
+      OutputMode = O_GAP;
+   }
+   if ((c = appGetTextOption(App, "-c", NULL)) != NULL) {
+      setColors(c);
+   }
+   if (OutputMode == O_GAP) {
+      MtxMessageLevel = -1000;
+   }
+   upper = lower = -1;
+   appGetArguments(App, 1, 3);
+   switch (App->argC) {
+      case 3:
+         upper = atoi(App->argV[2]);
+      case 2:
+         lower = atoi(App->argV[1]);
+      case 1:
+         strcpy(name, App->argV[0]);
+         break;
+   }
 
-    latReadInfo(&LI,name);
-    if (block > 0)
-    {
-	snprintf(ifilename, sizeof(ifilename), "%s.gra.%ld",name,block);
-	snprintf(ofilename, sizeof(ofilename), "%s.ps.%ld",name,block);
-    }
-    else
-    {
-	snprintf(ifilename, sizeof(ifilename), "%s.gra",name);
-	snprintf(ofilename, sizeof(ofilename), "%s.ps",name);
-    }
+   latReadInfo(&LI, name);
+   if (block > 0) {
+      fileNameInp = strMprintf("%s.gra.%ld", name, block);
+      fileNameOut = strMprintf("%s.ps.%ld", name, block);
+   }
+   else {
+      fileNameInp = strMprintf("%s.gra", name);
+      fileNameOut = strMprintf("%s.ps", name);
+   }
 }
 
-
-
-
-/* ------------------------------------------------------------------
-   display() Postscript version
-   ------------------------------------------------------------------ */
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 #define XMAP(x) ((x)*xsize + 10)
 #define YMAP(y) ((y)*ysize)
@@ -404,17 +348,18 @@ static char hdr2[] =
 static char FontName[] = "Helvetica";
 static char *FontAlias[] = {"Small","Norm","Big"};
 static int FontSize[] = {5,8,12,0};
+ 
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void writeheader(void)
-
 {
     char mname[100], *c;
     int i;
 
-    fprintf(psfile,hdr1,"ver0.0",ofilename);
+    fprintf(psfile,hdr1,"ver0.0",fileNameOut);
     fprintf(psfile,hdr2,xsize,ysize);
 
-    strcpy(mname,ofilename);
+    strcpy(mname,fileNameOut);
     for (c = mname; *c; ++c);
     c[-3] = 0;
     for (i = 0; FontSize[i] > 0; ++i)
@@ -486,7 +431,7 @@ void writeheader(void)
 	    ColorMap[i].b);
 }
 
-
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void shownode(int i,double x,double y)
 
@@ -533,9 +478,9 @@ static char *linestyle[MAXIRRED] = {
 "[5 1 3 1 3 1 3 1] 0",
 };
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void showline(int i, int k,int type)
-
 {	
     int t = type;
     if (t < 0) t = 0;
@@ -549,10 +494,9 @@ void showline(int i, int k,int type)
     fprintf(psfile,"stroke [] 0 setdash\n");
 }
 
-
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void writelegend()
-
 {
     int i;
 
@@ -570,66 +514,58 @@ void writelegend()
     fprintf(psfile,"\n");
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void display()
-
 {
-    int i, l;
+   int i, l;
 
-    MESSAGE(0,("Writing lattice diagram to %s\n",ofilename));
-    fflush(stdout);
-    psfile = sysFopen(ofilename,"w");
-    if (psfile == NULL)
-    {	perror(ofilename);
-	exit(1);
-    }
-    writeheader();
-    writelegend();
+   MESSAGE(0, ("Writing lattice diagram to %s\n", fileNameOut));
+   fflush(stdout);
+   psfile = sysFopen(fileNameOut, "w");
+   if (psfile == NULL) {
+      perror(fileNameOut);
+      exit(1);
+   }
+   writeheader();
+   writelegend();
 
-    for (i = 0; i < Lattice->NNodes; ++i)
-    {	
-	fprintf(psfile,"1 { ");
-	shownode(Lattice->Nodes[i].UserData,Lattice->Nodes[i].PosX,
-	    Lattice->Nodes[i].PosY);
-	fprintf(psfile,"newpath\n");
-	for (l = 0; l < Lattice->NNodes; ++l)
-	{
-	    if (LD_ISSUB(Lattice,l,i))
-	    {
-		int ni = Lattice->Nodes[i].UserData;
-		int nl = Lattice->Nodes[l].UserData;
-		int m;
-		for (m = 0; max[i][m] >= 0 && max[i][m] != nl; ++m);
-		showline(l,i,maxtype[ni][m]);
-if ((l == 3 && i < 3) || (l < 3 && i == 3))
-{
-printf("Show line %d-%d: orig=%d-%d, m=%d, type=%d\n",
-    l,i,nl,ni,m,maxtype[ni][m]);
-}
-	    }
-	}
+   for (i = 0; i < Lattice->NNodes; ++i) {
+      fprintf(psfile, "1 { ");
+      shownode(Lattice->Nodes[i].UserData, Lattice->Nodes[i].PosX,
+               Lattice->Nodes[i].PosY);
+      fprintf(psfile, "newpath\n");
+      for (l = 0; l < Lattice->NNodes; ++l) {
+         if (LD_ISSUB(Lattice, l, i)) {
+            int ni = Lattice->Nodes[i].UserData;
+            int nl = Lattice->Nodes[l].UserData;
+            int m;
+            for (m = 0; max[i][m] >= 0 && max[i][m] != nl; ++m) {}
+            showline(l, i, maxtype[ni][m]);
+            if ((l == 3 && i < 3) || (l < 3 && i == 3)) {
+               printf("Show line %d-%d: orig=%d-%d, m=%d, type=%d\n",
+                      l, i, nl, ni, m, maxtype[ni][m]);
+            }
+         }
+      }
 
-	fprintf(psfile,"} repeat\n");
-    }
-    fprintf(psfile,"showpage\n");
-    fprintf(psfile,"%%%%sOF\n");
-    fclose(psfile);
+      fprintf(psfile, "} repeat\n");
+   }
+   fprintf(psfile, "showpage\n");
+   fprintf(psfile, "%%%%sOF\n");
+   fclose(psfile);
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
-
-
-/* ------------------------------------------------------------------
-   DisplayGap() - Generate GAP output
-   ------------------------------------------------------------------ */
+/// Generate GAP output
 
 const int GapXSize = 800;
 const int GapYSize = 600;
 const char *GapLatName = "MtxLattice";
 const char *GapVlName = "MtxVertexList";
 
-static void DisplayGap()
-
+static void displayGap()
 {
     int i, l;
 
@@ -648,12 +584,10 @@ static void DisplayGap()
     for (i = 0; i < Lattice->NNodes; ++i)
     {
 	LdNode_t *n = Lattice->Nodes + i;
-	char tmp[50];
-	snprintf(tmp, sizeof(tmp), "%d",i);
 	printf("Add(%s,Vertex(%s,rec(SubmoduleNumber:=%d),"
-	    "rec(x:=%d,levelparam:=%d,label:=\"%s\",shape:=\"%s\")));\n",
+	    "rec(x:=%d,levelparam:=%d,label:=\"%d\",shape:=\"%s\")));\n",
 	    GapVlName,GapLatName,i,(int)(n->PosX * GapXSize),n->Layer,
-	    tmp,ismount[Lattice->Nodes[i].UserData] ? "diamond" : "circle");
+	    i,ismount[Lattice->Nodes[i].UserData] ? "diamond" : "circle");
     }
 
     /* Insert edges into the Poset
@@ -691,12 +625,12 @@ Edge(p,vertexliste[from[i]],vertexliste[to[i]]);
 int main(int argc, char *argv[])
 {
     init(argc,argv);
-    readfile();
-    buildroot();
+    readFile();
+    buildRoot();
     ldSetPositions(Lattice);
     switch (OutputMode)
     {
-	case O_GAP: DisplayGap(); break;
+	case O_GAP: displayGap(); break;
 	default: display(); break;
     }
     return 0;

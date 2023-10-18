@@ -107,7 +107,7 @@ static void writeP(const Poly_t *pol)
         first = 0;
 	printf("[");
 	for (int i = 0; i <= pol->degree; ++i)
-	    printf(i == 0 ? "%s" : ",%s",ffToGap(pol->data[i]));
+	    printf(i == 0 ? "%s" : ",%s",ffToGapStr(pol->data[i]));
 	printf("]");
     }
     else {
@@ -129,8 +129,8 @@ static void writeF(const FPoly_t *fpol)
          first = 0;
          printf("[[");
          for (int i = 0; i < factor->degree; ++i)
-            printf("%s,",ffToGap(factor->data[i]));
-         printf("%s], %d]",ffToGap(factor->data[i]), exp);
+            printf("%s,",ffToGapStr(factor->data[i]));
+         printf("%s], %d]",ffToGapStr(factor->data[i]), exp);
       } else {
          printf("(");
          polPrint(NULL,factor);

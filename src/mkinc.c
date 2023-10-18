@@ -295,49 +295,37 @@ static void FindMountains()
     MESSAGE(0,("Total: %d mountain%s\n",nmount,nmount != 1 ? "s" : ""));
 }
 
-
-
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 static void WriteIncidenceMatrix()
 {
-    char fn[200];
+   const char* fn = strTprintf("%s.inc", LI.BaseName);
+   FILE* f = sysFopen(fn, "wb");
+   MESSAGE(1,("Writing incidence matrix (%s)\n",fn));
+   uint32_t l = nmount;
+   sysWrite32(f,&l,1);
+   for (int i = 0; i < nmount; ++i)
+      bsWrite(subof[i],f);
+   fclose(f);
 
-    // Write the incidence matrix
-    snprintf(fn, sizeof(fn), "%s.inc", LI.BaseName);
-    FILE* f = sysFopen(fn, "wb");
-    MESSAGE(1,("Writing incidence matrix (%s)\n",fn));
-    uint32_t l = nmount;
-    sysWrite32(f,&l,1);
-    for (int i = 0; i < nmount; ++i)
-	bsWrite(subof[i],f);
-    fclose(f);
-
-    // Write the .cfinfo file
-    latWriteInfo(&LI);
+   // Write the .cfinfo file
+   latWriteInfo(&LI);
 }
 
-
-
-/* -----------------------------------------------------------------
-   CalculateIncidences() - Calculate all incidences
-   ----------------------------------------------------------------- */
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 static void CalculateIncidences()
-
 {
     int i, k;
     int cfi, cfk;	/* Comp. factor corresponding to mountain i,j */
 
     MESSAGE(0,("Step 2 (Incidences)\n"));
 
-    /* Allocate memory for the incidence matrix
-       ---------------------------------------- */
+    // Allocate memory for the incidence matrix
     for (i = 0; i < nmount; ++i)
 	subof[i] = bsAlloc(nmount);
 
-    /* Calculate the incidences
-       ------------------------ */
+    // Calculate the incidences
     for (cfi = i = 0; i < nmount; ++i)
     {
 	if (i == moffset[cfi])
@@ -364,23 +352,16 @@ static void CalculateIncidences()
     }
 }
 
-
-
-/* -------------------------------------------------------------------------
-   WriteResultGAP() - Write GAP output
-
-   This function writes the mountain list and the incidence matrix in GAP
-   format to stdout.
-   ------------------------------------------------------------------------- */
+////////////////////////////////////////////////////////////////////////////////////////////////////
+   
+/// Writes the mountain list and the incidence matrix in GAP format to stdout.
 
 static void WriteResultGAP()
-
 {
     int i,  j;
     int *p;
 
-    /* Write the incidence matrix
-       -------------------------- */
+    // Write the incidence matrix
     printf("MeatAxe.NMount := %d;\n", nmount);
     printf("MeatAxe.Incidences := [\n");
     for (i = 0; i < nmount; ++i)
@@ -395,8 +376,7 @@ static void WriteResultGAP()
 	printf( i < nmount-1 ? ",\n" : "] ;\n" ) ;
     }
 
-    /* Write dimensions and classes
-       ---------------------------- */
+    // Write dimensions and classes
     printf("MeatAxe.Dimensions := [");
     for (i = 0; i < nmount-1 ; ++i)
 	printf("%d,", MountDim[i]);
@@ -415,14 +395,9 @@ static void WriteResultGAP()
     }
 }
 
-
-
-/* -----------------------------------------------------------------
-   main()
-   ----------------------------------------------------------------- */
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 int main(int argc, char **argv)
-
 {
     init(argc,argv);
     FindMountains();

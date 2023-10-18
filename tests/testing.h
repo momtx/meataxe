@@ -63,7 +63,7 @@ void tstMissingAbort();
    } while (0)
 
 
-MTX_PRINTF_ATTRIBUTE(4,5)
+MTX_PRINTF(4,5)
 void tstFail(const char *file, int line, const char *func, const char *msg, ...);
 #define TST_FAIL(msg, ...) \
    do { tstFail(__FILE__, __LINE__, __func__, msg, __VA_ARGS__); return 1; } while(0)

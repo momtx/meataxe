@@ -36,7 +36,7 @@ static void tstVprintf(int level, const char *msg, va_list args)
       vfprintf(stdout, msg, args);
 }
 
-MTX_PRINTF_ATTRIBUTE(2,3)
+MTX_PRINTF(2,3)
 static void tstPrintf(int level, const char *msg, ...)
 {
    va_list args;

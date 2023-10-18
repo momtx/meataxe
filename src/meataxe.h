@@ -16,9 +16,9 @@
 
 
 #if defined __GNUC__
-#define MTX_PRINTF_ATTRIBUTE(f,v) __attribute__((format(printf,f,v)))
+#define MTX_PRINTF(f,v) __attribute__((format(printf,f,v)))
 #else
-#define MTX_PRINTF_ATTRIBUTE(f,v)
+#define MTX_PRINTF(f,v)
 #endif
 
 extern const uint32_t MTX_TYPE_MATRIX;
@@ -75,7 +75,7 @@ void pexExecuteRange(PexGroup_t* group, void (*f)(void *userData, size_t begin, 
 	void* userData, size_t begin, size_t end);
 void pexFinally(PexGroup_t* group, void(*f)(void* userData), void* userData);
 void pexInit(int nThreads);
-MTX_PRINTF_ATTRIBUTE(1,2)
+MTX_PRINTF(1,2)
 void pexLog(const char* msg, ...);
 void pexShutdown();
 void pexSleep(unsigned timeInMs);
@@ -137,7 +137,14 @@ FEL ffDiv(FEL a, FEL b);
 FEL ffNeg(FEL a);
 FEL ffInv(FEL a);
 
-const char *ffToGap(FEL f);
+typedef struct FfGapRepresentation {
+   FEL a;
+   uint32_t fmt;  // 0: a = k*Z(q), 1: a = Z(q)^k
+   uint32_t k;
+} FfGapRepresentation_t;
+const FfGapRepresentation_t* ffToGap(FEL a);
+const char* ffToGapStr(FEL a);
+
 void ffAddMulRowPartial(PTR dest, PTR src, FEL f, int firstcol, int noc);
 void ffAddMulRow(PTR dest, PTR src, FEL f, int noc);
 void ffAddRowPartial(PTR dest, PTR src, int first, int noc);
@@ -241,16 +248,29 @@ const char* mtxVersion();
 /// free() or realloc() on a dynamic string.
 
 typedef struct {
-   char *S;     /* pointer to NUL terminated string */
-} String;
+   uint32_t typeId;
+   size_t size;
+   size_t capacity;
+   char *data;
+} StringBuilder_t;
 
-String strAlloc(size_t initial_capacity);
-void strFree(String *s);
-void strAppend(String *s, const char *text);
-MTX_PRINTF_ATTRIBUTE(2,3)
-void strAppendF(String *s, const char *fmt, ...);
-MTX_PRINTF_ATTRIBUTE(2,3)
-void strPrintF(String *s, const char *fmt, ...);
+StringBuilder_t* sbAlloc(size_t initialCapacity);
+void sbAppend(StringBuilder_t* sb, const char* fragment);
+void sbClear(StringBuilder_t* sb);
+char* sbCopy(StringBuilder_t* sb);
+const char* sbData(StringBuilder_t *sb);
+void sbFree(StringBuilder_t *sb);
+MTX_PRINTF(2,3)
+void sbPrintf(StringBuilder_t* sb, const char* fmt, ...);
+char* sbToString(StringBuilder_t* sb);
+void sbVprintf(StringBuilder_t* sb, const char* fmt, va_list args);
+
+MTX_PRINTF(1,2)
+char *strMprintf(const char* s, ...);
+char *strVMprintf(const char* s, va_list args);
+MTX_PRINTF(1,2)
+const char *strTprintf(const char* s, ...);
+const char *strVTprintf(const char* s, va_list args);
 
 /// @}
 
@@ -367,15 +387,12 @@ struct MtxErrorInfo {
 typedef void MtxErrorHandler_t(const struct MtxErrorInfo *);
 typedef const char* MtxErrorContextProvider(void* userData);
 
-MTX_PRINTF_ATTRIBUTE(2,3)
+MTX_PRINTF(2,3)
 void mtxAbort(const struct MtxSourceLocation *sl, const char *text, ...);
-MTX_PRINTF_ATTRIBUTE(2,3)
+MTX_PRINTF(2,3)
 int mtxBegin(const struct MtxSourceLocation *sl, const char *s, ...);
 int mtxBeginScope(MtxErrorContextProvider ec, void* userData);
 void mtxEnd(int id);
-MTX_PRINTF_ATTRIBUTE(1,2)
-char *mtxMprintf(const char* s, ...);
-char *mtxVmprintf(const char* s, va_list args);
 
 MtxErrorHandler_t *MtxSetErrorHandler(MtxErrorHandler_t *h);
 
@@ -406,7 +423,7 @@ extern int MtxMessageLevel;
 #define MESSAGE(level,args) \
    (MtxMessageLevel >= (level) ? (printf args, fflush(stdout), 1) : 0)
 
-MTX_PRINTF_ATTRIBUTE(2,3)
+MTX_PRINTF(2,3)
 void mtxMessage(int level, const char* msg, ...);
 
 /* ------------------------------------------------------------------
@@ -462,10 +479,10 @@ int stfMatch(StfData *f, const char *pattern);
 
 /// Binary data file object.
 typedef struct {
-   unsigned long typeId;        ///< Used internally.
-   uint32_t header[3];          ///< Last read/written object header.
-   FILE *file;                  ///< File handle.
-   char *name;                  ///< File name.
+   uint32_t typeId;    ///< Used internally.
+   uint32_t header[3]; ///< Last read/written object header.
+   FILE *file;         ///< File handle.
+   char *name;         ///< File name.
 } MtxFile_t;
 
 void mfClose(MtxFile_t *file);
@@ -488,7 +505,7 @@ void mfWriteRows(MtxFile_t *file, PTR buf, uint32_t nrows, uint32_t noc);
 
 /// A matrix over a finite field.
 typedef struct {
-   unsigned long typeId; ///< @private
+   uint32_t typeId;      ///< @private
    int field;            ///< Field order.
    int nor;              ///< Number of rows.
    int noc;              ///< Number of columns.
@@ -553,7 +570,7 @@ const GrExtractionTable_t *GrGetExtractionTable(int fl,int grrows);
 /// A greased matrix.
 
 typedef struct {
-   unsigned long typeId;
+   uint32_t typeId;
    int field;
    int nor;
    int noc;
@@ -606,7 +623,7 @@ void permWrite(const Perm_t *perm, FILE *f);
 
 /// A polynomial.
 typedef struct {
-   unsigned long typeId;///< Used internally.
+   uint32_t typeId;     ///< Used internally.
    uint32_t field;      ///< Field order.
    int32_t degree;      ///< Degree of the polynomial.
    FEL *data;           ///< Coefficients. Degree+1 values, starting with the constant term.
@@ -640,7 +657,7 @@ void polWrite(const Poly_t *p, FILE *f);
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 typedef struct {
-   unsigned long typeId;///< Used internally.
+   uint32_t typeId;     ///< Used internally.
    int NFactors;        ///< Number of different irreducible factors.
    int BufSize;         ///< Used internally for memory management.
    Poly_t **Factor;     ///< List of irreducible factors.
@@ -661,7 +678,7 @@ void fpValidate(const struct MtxSourceLocation* src, const FPoly_t *p);
 
 /// A bit string.
 typedef struct {
-   unsigned typeId;       ///< Used internally.
+   uint32_t typeId;       ///< Used internally.
    size_t size;           ///< Number of signicant bits. Only used for fixed-size bit strings!
    size_t capacity;       ///< Maximum size.
    uint8_t *data;         ///< The bits. Bit 0 is the LSB of data[0].
@@ -714,7 +731,7 @@ void bsWrite(BitString_t *bs, FILE *f);
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 typedef struct {
-   unsigned long typeId;
+   uint32_t typeId;
    int nor;        ///< Number of rows
    int noc;        ///< Number of colums
    int32_t *data;  ///< Marks (row by row)
@@ -762,7 +779,7 @@ typedef struct {
 ** A set of matrices.
 **/
 typedef struct {
-   unsigned long typeId;
+   uint32_t typeId;
    int Len;
    MatrixSetElement_t *List;
 } MatrixSet_t;
@@ -778,7 +795,7 @@ int msIsValid(const MatrixSet_t *set);
    -------------------------------------------------------------------------- */
 
 typedef struct {
-   unsigned long typeId;
+   uint32_t typeId;
    int NGen;
    Matrix_t **Gen;
 } MatRep_t;

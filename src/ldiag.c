@@ -151,7 +151,6 @@ LdLattice_t *ldFactor(LdLattice_t *l, int min, int max)
 /// Find the bottom node
    
 static int FindBottom(LdLattice_t *l)
-
 {
     int i, k;
 
@@ -293,48 +292,40 @@ static int setInitialXPositions(LdLattice_t *l)
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 /// Calculate scores for x optimization
 
-static void CalcScores(LdLattice_t *l)
+static void CalcScores(LdLattice_t* l, int direction)
 {
-    int i;
+   for (int i = 0; i < l->NNodes; ++i) {
+      l->Nodes[i].Score = 0.0;
+      l->Nodes[i].ScoreCount = 0;
+   }
 
-    /* Initialize
-       ---------- */
-    for (i = 0; i < l->NNodes; ++i)
-    {
-	l->Nodes[i].Score = 0.0;
-	l->Nodes[i].ScoreCount = 0;
-    }
+   for (int i = 0; i < l->NNodes; ++i) {
+      for (int k = 0; k < l->NNodes; ++k) {
+         if (!LD_ISSUB(l, i, k)) { continue; }
 
-    /* Calculate score
-       --------------- */
-    for (i = 0; i < l->NNodes; ++i)
-    {
-	int k;
-	for (k = 0; k < l->NNodes; ++k)
-	{
-	    if (LD_ISSUB(l,i,k))
-	    {
-		l->Nodes[i].Score += l->Nodes[k].PosX;
-		++l->Nodes[i].ScoreCount;
-		l->Nodes[k].Score += l->Nodes[i].PosX;
-		++l->Nodes[k].ScoreCount;
+         if (direction > 0) {
+            l->Nodes[i].Score += l->Nodes[k].PosX;
+            ++l->Nodes[i].ScoreCount;
+         } else {
+            l->Nodes[k].Score += l->Nodes[i].PosX;
+            ++l->Nodes[k].ScoreCount;
+         }
 
-		if (l->Nodes[i].Layer <= l->NLayers / 2)
-	 	{
-		    l->Nodes[i].Score += 2 * l->Nodes[k].PosX;
-		    l->Nodes[i].ScoreCount += 2;
-		}
-		else
-	 	{
-		    l->Nodes[k].Score += 2 * l->Nodes[i].PosX;
-		    l->Nodes[k].ScoreCount += 2;
-		}
+         if (l->Nodes[i].Layer <= l->NLayers / 2) {
+            l->Nodes[i].Score += 2 * l->Nodes[k].PosX;
+            l->Nodes[i].ScoreCount += 2;
+         }
+         else {
+            l->Nodes[k].Score += 2 * l->Nodes[i].PosX;
+            l->Nodes[k].ScoreCount += 2;
+         }
+      }
+   }
 
-	    }
-	}
-    }
-    for (i = 0; i < l->NNodes; ++i)
-	l->Nodes[i].Score /= l->Nodes[i].ScoreCount;
+   for (int i = 0; i < l->NNodes; ++i) {
+      if (l->Nodes[i].ScoreCount != 0)
+         l->Nodes[i].Score /= l->Nodes[i].ScoreCount;
+   }
 
 }
 
@@ -400,27 +391,25 @@ printf("        %d(pos=%.2f, score=%.2f)      %d(pos=%.2f, score=%.2f)\n",
 
    This function calculates the x positions of all nodes. We repeat the 
    basic step - calculate scores, then reorder - until the configuration is
-   stable or up to 150 times.
+   stable or the maximum number of rounds is reached.
    -------------------------------------------------------------------------- */
 
-static int setXPositions(LdLattice_t *l)
-
+static int setXPositions(LdLattice_t* l)
 {
-    int num_changes = 1;
-    int count = 0;
+   if (setInitialXPositions(l) != 0) {
+      return -1;
+   }
+   for (int round = 0; round < 50; ++round) {
+      CalcScores(l, 0);
+      int numA = ReOrder(l);
+      //printf("Round %da: %d changes\n", round, numA);
+      CalcScores(l, 1);
+      int numB = ReOrder(l);
+      //printf("Round %db: %d changes\n", round, numB);
+      if (numA == 0 && numB == 0) { break; }
+   }
 
-    if (setInitialXPositions(l) != 0)
-	return -1;
-    for (count = 0; count < 150 && num_changes > 0; ++count)
-    {
-	CalcScores(l);
-	num_changes = ReOrder(l);
-/*
-printf("Round %d: %d changes\n",count,num_changes);
-*/
-    }
-
-    return 0;
+   return 0;
 }
 
 
@@ -444,12 +433,12 @@ int ldSetPositions(LdLattice_t *l)
     }
     if (setYPositions(l))
     {
-	mtxAbort(MTX_HERE,"Error setting x positions");
+	mtxAbort(MTX_HERE,"Error setting y positions");
 	return -1;
     }
     if (setXPositions(l))
     {
-	mtxAbort(MTX_HERE,"Error setting y positions");
+	mtxAbort(MTX_HERE,"Error setting x positions");
 	return -1;
     }
     return 0;

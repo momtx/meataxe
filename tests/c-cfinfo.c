@@ -38,14 +38,10 @@ static const Tst_TempFile* TstCreateTemporaryFile(const char *ext, const char *d
    TempFiles = tf;
 
    // base name
-   const size_t bfnl = 20;
-   tf->base_name = (char*) malloc(bfnl);
-   snprintf(tf->base_name,bfnl,"tmp%08x",TempFileId);
+   tf->base_name = strMprintf("tmp%08x",TempFileId);
 
    // full name
-   const size_t fnl = bfnl + strlen(ext);
-   tf->name = (char*) malloc(fnl);
-   snprintf(tf->name,fnl,"%s%s",tf->base_name,ext);
+   tf->name = strMprintf("%s%s",tf->base_name,ext);
 
    // create file
    const int fd = open(tf->name,O_WRONLY|O_CREAT|O_TRUNC,0600);

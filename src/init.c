@@ -85,7 +85,7 @@ int mtxIsBigEndian()
 
 const char* mtxVersion()
 {
-   static char version[200] = {0};
+   static char version[100] = {0};
    if (version[0] == 0) {
       sysInit();
       char *v = version;

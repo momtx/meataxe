@@ -42,7 +42,7 @@ static void printNewLine()
    }
 }
 
-MTX_PRINTF_ATTRIBUTE(1,2)
+MTX_PRINTF(1,2)
 static void print(const char *fmt, ...)
 {
    char tmp[200];
@@ -79,7 +79,6 @@ static void printString(char* c)
       }
    }
 }
-
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -121,25 +120,17 @@ static void printGapMatrix()
             cnt = 0;
          }
          const FEL f1 = ffExtract(m1, col);
+         const FfGapRepresentation_t* gap = ffToGap(f1);
          if (isprimefield) {
-            FEL f2 = FF_ZERO;
-            unsigned long k = 0;
-            while (f2 != f1) {
-               f2 = ffAdd(f2, ffGen);
-               ++k;
-            }
-            cnt += fprintf(textFile, "%lu", k);
+            cnt += fprintf(textFile, "%lu", (unsigned long)gap->k);
+            MTX_ASSERT(gap->fmt == 0);
          } else {
-            if (f1 == FF_ZERO) {
-               cnt += fprintf(textFile, "0*Z(%lu)", (unsigned long)field);
+            if (gap->fmt == 0) {
+               cnt += fprintf(textFile, "%lu*Z(%lu)",
+                     (unsigned long)gap->k, (unsigned long)field);
             } else {
-               FEL f2 = ffGen;
-               unsigned long k = 1;
-               while (f2 != f1) {
-                  f2 = ffMul(f2, ffGen);
-                  ++k;
-               }
-               cnt += fprintf(textFile, "Z(%lu)^%lu", (unsigned long)field, k);
+               cnt += fprintf(textFile, "Z(%lu)^%lu",
+                     (unsigned long)field, (unsigned long)gap->k);
             }
          }
          if (col < noc - 1) {

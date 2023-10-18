@@ -126,7 +126,9 @@ LIB_OBJS=\
 	message \
 	mfcore \
 	mkendo\
-	mmulscal mraddgen mrcore mrread mrtranspose mrwrite \
+	mmulscal \
+	mprintf \
+	mraddgen mrcore mrread mrtranspose mrwrite \
 	msclean mscore \
 	mtensor mtxobj os \
 	permcmp permcore permdup perminv permmul permorder\

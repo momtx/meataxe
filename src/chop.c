@@ -355,7 +355,7 @@ static void WriteResult(node_t *root)
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-MTX_PRINTF_ATTRIBUTE(3,4)
+MTX_PRINTF(3,4)
 static void message(int level, node_t *n, const char *msg, ...)
 {
    if (level > MtxMessageLevel) return;

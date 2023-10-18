@@ -239,7 +239,7 @@ int mtxBegin(const struct MtxSourceLocation* sl, const char *s, ...)
    va_list args;
    va_start(args, s);
    item->source = *sl;
-   item->title = mtxVmprintf(s, args);
+   item->title = strVMprintf(s, args);
    va_end(args);
    return cs->size++;
 }
@@ -274,39 +274,6 @@ void mtxEnd(int id)
    sysFree(item->title);
 }
 
-////////////////////////////////////////////////////////////////////////////////////////////////////
-
-char *mtxMprintf(const char* s, ...)
-{
-   va_list args;
-   va_start(args, s);
-   return mtxVmprintf(s, args);
-   va_end(args);
-}
-
-
-////////////////////////////////////////////////////////////////////////////////////////////////////
-
-char *mtxVmprintf(const char* s, va_list args)
-{
-   va_list args2;
-   va_copy(args2, args);
-   char fixedBuf[200];
-   int len = vsnprintf(fixedBuf, sizeof(fixedBuf), s, args2);
-   va_end(args2);
-   if (len < 0)
-      return NULL;
-   char* buf = NALLOC(char, len + 1);
-   if ((size_t) len < sizeof(fixedBuf)) {
-      memcpy(buf, fixedBuf, len + 1);
-   } else {
-      vsnprintf(buf, len + 1, s, args);
-   }
-   va_end(args2);
-   return buf;
-}
-
 /// @}
-
 
 // vim:fileencoding=utf8:sw=3:ts=8:et:cin

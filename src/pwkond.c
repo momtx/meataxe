@@ -122,24 +122,20 @@ static void AddConstituent(MatRep_t *cf, CfInfo *info, int modno, int cfno)
               latCfName(&ModList[modno].Info,cfno),i));
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
-/* --------------------------------------------------------------------------
-   AddConstituents() - Add all constituents of a module
-
-   This function calls <AddConstituent()> for each constituent of the
-   <mod>-th module in <ModList>. I.e., it adds all constituents of that
-   module to the global constituent list and sets up the constituent map.
-   -------------------------------------------------------------------------- */
+/// Adds all constituents of a module.
+/// This function calls <AddConstituent()> for each constituent of the <mod>-th module in
+/// <ModList>. I.e., it adds all constituents of that module to the global constituent list and
+/// sets up the constituent map.
 
 static void AddConstituents(int mod)
 {
    Lat_Info *li = &ModList[mod].Info;
    int i;
    for (i = 0; i < li->nCf; ++i) {
-      char fn[sizeof(li->BaseName) + 100];
       MatRep_t *cf;
-      snprintf(fn, sizeof(fn), "%s%s",li->BaseName,latCfName(li,i));
-      cf = mrLoad(fn,li->NGen);
+      cf = mrLoad(strTprintf("%s%s",li->BaseName,latCfName(li,i)),li->NGen);
       AddConstituent(cf,li->Cf + i,mod,i);
    }
 }
@@ -214,26 +210,19 @@ static void loadModules()
    }
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
-/* ------------------------------------------------------------------
-   gkond() - Generalized condensation of one matrix
-   ------------------------------------------------------------------ */
+/// Generalized condensation of one matrix.
 
-static void gkond(const Lat_Info *li, int i, Matrix_t *b, Matrix_t *k,
-                  Matrix_t *w, const char *name)
+static void gkond(const Lat_Info *li, int i, Matrix_t *b, Matrix_t *k, Matrix_t *w, const char *name)
 {
-   char fn[LAT_MAXBASENAME + 20];
-   Matrix_t *x1, *x2;
-
-   x1 = matDup(k);
+   Matrix_t* x1 = matDup(k);
    matMul(x1,w);
-   x2 = QProjection(b,x1);
-   snprintf(fn, sizeof(fn), "%s%s.%s",li->BaseName,latCfName(li,i),name);
-   matSave(x2,fn);
-   matFree(x1);
+   Matrix_t *x2 = QProjection(b,x1);
+   matSave(x2,strTprintf("%s%s.%s",li->BaseName,latCfName(li,i),name));
    matFree(x2);
+   matFree(x1);
 }
-
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -241,7 +230,7 @@ static void gkond(const Lat_Info *li, int i, Matrix_t *b, Matrix_t *k,
 /// basis spinup script to XXX.op.
 /// Note: the generators in CfList[cf] remain unchanged!
 
-static void Standardize(int cf)
+static void transformToStandardBasis(int cf)
 {
    // Make the standard basis and spinup script. Transform the generators.
    MESSAGE(0,("  Transforming to standard basis\n"));
@@ -381,51 +370,48 @@ static void Condense(int cf)
 }
 
 
-static String GapPrintPoly(const Poly_t *pol)
+static char* GapPrintPoly(const Poly_t *pol)
 {
-   String s = strAlloc(10);
-   int i;
-   strAppend(&s, "[");
-   for (i = 0; i < pol->degree; ++i) {
-      strAppendF(&s,"%s,",ffToGap(pol->data[i]));
+   StringBuilder_t* sb = sbAlloc(100);
+   sbAppend(sb, "[");
+   for (int i = 0; i < pol->degree; ++i) {
+      sbPrintf(sb,"%s,",ffToGapStr(pol->data[i]));
    }
-   strAppendF(&s,"%s]",ffToGap(pol->data[i]));
-   return s;
+   sbPrintf(sb,"%s]",ffToGapStr(pol->data[pol->degree]));
+   return sbToString(sb);
 }
 
 
-static String GapPrintWord(const WgData_t *b, long n)
+static char* GapPrintWord(const WgData_t *b, long n)
 {
-   String buffer = strAlloc(10);
+   StringBuilder_t* sb = sbAlloc(100);
 
    wgDescribeWord((WgData_t *)b, n);
    int *x;
-   strAppend(&buffer, "[");
+   sbAppend(sb, "[");
    for (x = b->Description; *x != -1;) {
       int first = 1;
-      if (x != b->Description) { strAppend(&buffer, ",");}
-      strAppend(&buffer, "[");
+      if (x != b->Description) {
+         sbAppend(sb, ",");
+      }
+      sbAppend(sb, "[");
       do {
          long gen = *x++;
-         if (!first) { strAppend(&buffer, ",");}
+         if (!first) { sbAppend(sb, ",");}
          first = 0;
-         strAppendF(&buffer,"%ld", gen + 1);
+         sbPrintf(sb,"%ld", gen + 1);
       } while (*x != -1);
-      strAppend(&buffer, "]");
+      sbAppend(sb, "]");
       ++x;
    }
-   strAppend(&buffer, "]");
-   return buffer;
+   sbAppend(sb, "]");
+   return sbToString(sb);
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
-/* --------------------------------------------------------------------------
-   WriteOutput() - Write all output files
-
-   Description:
-     This function writes the .cfinfo file and the semisimplicity basis. It
-     is called after a new peak word has been found.
-   -------------------------------------------------------------------------- */
+/// Writes the .cfinfo file and the semisimplicity basis.
+/// It is called after a new peak word has been found.
 
 static void WriteOutput(int final)
 {
@@ -433,8 +419,7 @@ static void WriteOutput(int final)
    for (i = 0; i < NumMods; ++i) {
       latWriteInfo(&ModList[i].Info);
       if (opt_b) {
-         char fn[sizeof(ModList[i].Info.BaseName) + 10];
-         snprintf(fn, sizeof(fn), "%s.ssb",ModList[i].Info.BaseName);
+         const char* fn = strTprintf("%s.ssb",ModList[i].Info.BaseName);
          MESSAGE(1,("Writing semisimplicity basis to %s\n",fn));
          matSave(ModList[i].SsBasis,fn);
       }
@@ -443,8 +428,7 @@ static void WriteOutput(int final)
       return;
    }
 
-   /* Write GAP output.
-      ----------------- */
+   // Write GAP output.
    if (opt_G) {
       int m, i;
       printf("MeatAxe.PeakWords := [\n");
@@ -454,12 +438,12 @@ static void WriteOutput(int final)
          for (i = 0; i < ModInfo->nCf; ++i) {
             const CfInfo * const Cf = ModInfo->Cf + i;
             printf("    # irreducible factor: %s\n", latCfName(ModInfo,i));
-            String ws = GapPrintWord(CfList[i].Wg,Cf->peakWord);
-            String ps = GapPrintPoly(Cf->peakPol);
-            printf("    [ %ld, %s, %s ]%s\n", Cf->peakWord, ws.S, ps.S,
-                   i == ModInfo->nCf - 1 ? "" : ",");
-            strFree(&ws);
-            strFree(&ps);
+            char* ws = GapPrintWord(CfList[i].Wg,Cf->peakWord);
+            char* ps = GapPrintPoly(Cf->peakPol);
+            printf("    [ %ld, %s, %s ]%s\n", Cf->peakWord, ws, ps,
+                  i == ModInfo->nCf - 1 ? "" : ",");
+            sysFree(ws);
+            sysFree(ps);
          }
          printf(m < NumMods - 1 ? "],\n" : "]\n");
       }
@@ -468,12 +452,10 @@ static void WriteOutput(int final)
 
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
-/* --------------------------------------------------------------------------
-   CopyPeakWordToAllModules() - Copy the peak word and polynomial just found
-   to all modules having an appropriate constituent. Also, print a nice
-   message showing the peak word and to which constituents it applies.
-   -------------------------------------------------------------------------- */
+/// Copies the peak word and polynomial just found to all modules having an appropriate constituent.
+/// Alo prints a nice message showing the peak word and to which constituents it applies.
 
 static void CopyPeakWordToAllModules(int i)
 {
@@ -500,29 +482,23 @@ static void CopyPeakWordToAllModules(int i)
    }
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
-/* --------------------------------------------------------------------------
-   PeakWordFound() - A peak word has been found
+/// Handle new peak word.
+///
+/// This function is called each time a peak word is found. Depending on the command line options
+/// we condense the peak word, and transform the generators to standard basis.
+/// We also write the .cfinfo file each time. This allows the user to kill the running program and
+/// continue with the peak words found so far.
 
-   Arguments:
-     <w>: The word number
-
-   Description:
-     This function is called each time a peak word is found. Depending on the
-     command line options we condense the peak word, and transform the
-     generators to standard basis.
-     We also write the .cfinfo file each time. This allows the user to kill
-     the running program and continue with the peak words found so far.
-   -------------------------------------------------------------------------- */
-
-static void PeakWordFound(int i)
+static void PeakWordFound(int wordNumber)
 {
-   CopyPeakWordToAllModules(i);
+   CopyPeakWordToAllModules(wordNumber);
    if (!opt_n || opt_k) {
-      Condense(i);              /* Condense */
+      Condense(wordNumber);
    }
    if (opt_t) {
-      Standardize(i);           /* Transform to std basis */
+      transformToStandardBasis(wordNumber);
    }
    WriteOutput(0);
    --PeakWordsMissing;
