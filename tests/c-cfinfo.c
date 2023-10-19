@@ -45,7 +45,7 @@ static const Tst_TempFile* TstCreateTemporaryFile(const char *ext, const char *d
 
    // create file
    const int fd = open(tf->name,O_WRONLY|O_CREAT|O_TRUNC,0600);
-   write(fd,data,strlen(data));
+   (void) write(fd,data,strlen(data));
    close(fd);
 
    return tf;

@@ -84,7 +84,8 @@ static void readFile(void)
     MESSAGE(1,("Reading %s\n",fileNameInp));
 
     // Read number of submodules 
-    fgets(buf,LBUFSIZE,f);
+    if (fgets(buf,LBUFSIZE,f) == NULL)
+       mtxAbort(MTX_HERE, "Error reading %s: unexpected end of file", fileNameInp);
     nsub = atoi(buf);
     MESSAGE(1,("%d submodules\n",nsub));
 
@@ -102,7 +103,8 @@ static void readFile(void)
     // Read the lattice
     for (i = 0; i < nsub; ++i)
     {
-	fgets(buf,LBUFSIZE,f);
+	if (fgets(buf,LBUFSIZE,f) == NULL)
+           mtxAbort(MTX_HERE, "Error reading %s: unexpected end of file", fileNameInp);
 	for (c = strtok(buf," "); *c != 0; ++c)
 	{	
 	    if (*c == 'm') ismount[i] = 1; else

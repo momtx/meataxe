@@ -112,7 +112,7 @@ TstResult Os_FileIo()
    fclose(f);
 
    ASSERT((f = sysFopen("check1","rb")) != NULL);
-   fread(Text2,1,36,f);
+   ASSERT(fread(Text2,1,36,f) == 36);
    fclose(f);
 
    ASSERT(memcmp(Text1,Text2,sizeof(Text)) == 0);

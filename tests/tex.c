@@ -27,7 +27,7 @@ struct FoundTest* foundTests = NULL;
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-MTX_PRINTF_ATTRIBUTE(1,2)
+MTX_PRINTF(1,2)
 void fail(const char *message, ...)
 {
    va_list args;

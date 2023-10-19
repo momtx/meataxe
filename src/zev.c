@@ -4,6 +4,7 @@
 
 
 #include "meataxe.h"
+#include <ctype.h>
 #include <string.h>
 #include <stdlib.h>
 
@@ -146,26 +147,21 @@ void Gauss(void)
 }
 
 
-/* ------------------------------------------------------------------
-   readln() - Read one input line, strip comments
-   ------------------------------------------------------------------ */
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
-int readln(char *buf)
+/// Reads one input line. Skips comments (lines starting with '#').
+/// Returns 1 on success or 0 at end-of-file.
 
+int readLine(char *buf)
 {
-    char *c;
-    int flag = 0;
-    while (!flag)
-    {	if (feof(src) || ferror(src)) return 0;
-	*buf = 0;
-	fgets(buf,LINEWIDTH,src);
-	if (*buf == '#') continue;	/* comment */
-	for (c = buf; *c != 0 && *c != '\n'; ++c)
-		if (*c != ' ' && *c != '\t')
-			flag = 1;		/* */
-	*c = 0;					/* remove EOL */
-    }
-    return 1;
+   while (fgets(buf,LINEWIDTH,src) != NULL) {
+      if (*buf == '#') continue;
+      char *c = buf + strlen(buf);
+      while (c > buf && (isspace(c[-1]))) --c;
+      *c = 0;
+      return 1;
+   }
+   return 0; // end of file
 }
 
 
@@ -185,7 +181,7 @@ int getnextpol(void)
  
     while (!feof(src))
     {	
-	if (!readln(line)) 
+	if (!readLine(line)) 
 	    return 0;
 	if (*line != ' ')	/* new group */
 	{	
