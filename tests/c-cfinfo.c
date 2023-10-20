@@ -85,7 +85,7 @@ TstResult Cfinfo_BadIdWord()
       "CFInfo.Heads := [];\n";
 
    const Tst_TempFile* const tf = TstCreateTemporaryFile(".cfinfo",FILE_DATA);
-   Lat_Info info;
+   static Lat_Info info; // static to avoid unwinding by longjmp
    ASSERT_ABORT(latReadInfo(&info, tf->base_name));
    ASSERT(info.nCf == 1);
    Tst_RemoveTempFiles();

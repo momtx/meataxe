@@ -125,6 +125,7 @@ static void ReadWord(StfData *f, long *w, Poly_t **p, const char *fn)
 
 static void readCfFile(StfData* f, const char* fn, Lat_Info* li)
 {
+    mtxMessage(1,"Reading %s", fn);
 
     /* Read header
        ----------- */
@@ -238,7 +239,6 @@ void latReadInfo(Lat_Info *li, const char *basename)
     // Open the file and read
     char fn[LAT_MAXBASENAME + 20];
     sprintf(fn,"%s.cfinfo",basename);
-    int result = 0;
     StfData *f = stfOpen(fn,"r");
     if (f == NULL) {
 	mtxAbort(MTX_HERE,"Cannot open %s",fn);
@@ -246,8 +246,7 @@ void latReadInfo(Lat_Info *li, const char *basename)
        readCfFile(f, fn, li);
     }
     stfClose(f);
-    if (result == 0)
-       mtxMessage(1,"Read %s: %d composition factors",fn,li->nCf);
+    mtxMessage(1,"Finished reading %s: %d composition factors",fn,li->nCf);
 }
 
 
