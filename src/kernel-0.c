@@ -97,13 +97,13 @@ static int isFel(FEL x) { return (unsigned int) x < (unsigned int) ffOrder; }
 /// into a new row vector.
 /// @code
 /// ffSetField(9);
-/// PTR row9 = ffAlloc(10);
+/// PTR row9 = ffAlloc(ROW_SIZE);
 /// // [...] - fill the row with values
-/// FEL buf[10];
-/// for (int i = 0; i &lt; 10; ++i) buf[i] = ffExtract(row9,i);
+/// FEL buf[ROW_SIZE];
+/// for (int i = 0; i &lt; ROW_SIZE; ++i) buf[i] = ffExtract(row9,i);
 /// ffSetField(81);
-/// PTR row81 = ffAlloc(10);
-/// for (i = 0; i &lt; 10; ++i) ffInsert(row81,i,ffEmbed(buf[i],9));
+/// PTR row81 = ffAlloc(ROW_SIZE);
+/// for (i = 0; i &lt; ROW_SIZE; ++i) ffInsert(row81,i,ffEmbed(buf[i],9));
 /// @endcode
 
 /// @addtogroup ff

@@ -10,34 +10,36 @@
 
 #define MAXPWR 16
 
-typedef unsigned short POLY[MAXPWR + 1];
+// Polynomial in Z[p]
+typedef uint16_t POLY[MAXPWR + 1];
+
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // Data to be written into the table file,
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static unsigned short* inc = NULL;              // Increment table
-static unsigned short Minusone;
+static uint16_t* inc = NULL;              // Increment table
+static uint16_t Minusone;
 
 // Mapping of internal to external representation for nonzero field elements. This table
 // has Q elements, but only positions 0...Q-2 are actually used. The zero element is handled
 // separately.
-static unsigned short* FfToIntTable = NULL;
+static uint16_t* FfToIntTable = NULL;
 
 // Mapping of external to internal representation.
 // - The zero element is at position 0, i.e., FfFromIntTable[0] is always 0xFFFF.
 // - For nonzero field elements, FfFromIntTable[i] is the logarithm base Gen of the
 //   i-th field element. In particular, the unit element is always at position 1,
 //   i.e., FfFromIntTable[1] is always 0.
-static unsigned short* FfFromIntTable = NULL;
+static uint16_t* FfFromIntTable = NULL;
 
 static uint16_t numberOfSubfields;
 static uint16_t subfieldOrders[20];
 static uint16_t* embeddingTables = NULL;        // Joined embed/restrict tables for all subfields
 size_t embeddingTablesSize = 0;                 // Size in uint16_t units
-static uint16_t P;        // Characteristic of the field
-static uint16_t Q;        // Order of the field
-static uint16_t N;        // Q = P^N
+static uint32_t P;        // Characteristic of the field
+static uint32_t Q;        // Order of the field
+static uint32_t N;        // Q = P^N
 static uint16_t Gen;      // Generator
 
 static FILE *fd;                // Output file
@@ -215,7 +217,7 @@ static void printpol(POLY a)
 
 static int polInsert(POLY a, int p)
 {
-   unsigned short k = 0;
+   uint32_t k = 0;
    for (int i = MAXPWR; i >= 0; i--) {
       k = k * p + a[i];
    }
@@ -254,7 +256,7 @@ static void polmod(POLY a, POLY b)
       f = (int)P - f;
       for (i = 0; i <= l; ++i) {
          a[i + dl - l] =
-            (unsigned short) ((f * b[i] + a[i + dl - l]) % (int)P);
+            (uint16_t) ((f * b[i] + a[i + dl - l]) % (int)P);
       }
    }
 }
@@ -324,10 +326,11 @@ static void computeFieldMapP(uint16_t *map, int p)
 
 static void testprim()
 {
-   unsigned short i, *a;
+   uint32_t i;
+   uint32_t *a;
 
-   a = (unsigned short*) malloc(sizeof(short) * (size_t)Q);
-   memset(a,0,sizeof(short) * (size_t)Q);
+   a = NALLOC(uint32_t, Q);
+   memset(a, 0, sizeof(uint32_t) * (size_t)Q);
    for (i = 1; i < Q; i++) {
       MTX_ASSERT(FfFromIntTable[i] < Q);
       ++a[FfFromIntTable[i]];
@@ -378,7 +381,8 @@ static void computeFieldMapQ(uint16_t *map, int q)
 // The returned pointer is a table of size 2*q, where the first half defines the internal to
 // external mapping, and the second half defines the external to internal mapping:
 //
-//  - map[a]     = external representation ("number") of the field element a
+//  - map[a]     = external representation ("number") of the nonzero field element a.
+//                 The mapping of FF_ZERO to 0 is not in the table!
 //  - map[q + i] = field element corresponding to number i
 //
 // The table is allocated dynamically and must be freed by the caller.
@@ -387,13 +391,10 @@ static uint16_t* computeFieldMap(const int p, const int q)
 {
    const int n = intLog(p, q);
 
-   // Initialize with "invalid" value
+   // Initialize with FF_ZERO
    uint16_t* tbl = NALLOC(uint16_t, 2 * q);
-   for (size_t k = 0; k < 2 * q; ++k) tbl[k] = 0xFFFE;
-
-   // note: mapping of FF_ZERO to 0 is not in the table!
-   tbl[q + 0] = FF_ZERO; 
-
+   for (size_t k = 0; k < q; ++k) tbl[k] = 0;
+   for (size_t k = q; k < 2 * q; ++k) tbl[k] = FF_ZERO;
    if (n == 1) {
       computeFieldMapP(tbl, p);
    } else {
@@ -415,10 +416,11 @@ static void computeEmbedding(uint16_t r, uint16_t* table)
    const int m = intLog(P, r);  // r = P^m
    MTX_ASSERT(N % m ==  0);
 
-   // Fill table with "invalid" marker
+   // Fill table with "invalid" marker. FF_ZERO is handled in code and never occurs as a
+   // table entry.
    uint16_t* const emb = table;
    uint16_t* const restr = table + r;
-   for (size_t i = 0; i < r + Q; ++i) table[i] = 0xFFFE;
+   for (size_t i = 0; i < r + Q; ++i) table[i] = FF_ZERO;
 
    // compute embedding + restriction (for nonzero elements)
    uint16_t* const subfieldMap = computeFieldMap(P, r);
@@ -479,8 +481,8 @@ static void initarith()
    for (i = 0; i < (int)Q - 1; i++) {
       elem = polInsert(a, P);
       MTX_ASSERT(elem > 0 && elem < Q);
-      FfFromIntTable[elem] = (unsigned short) i;
-      FfToIntTable[i] = (unsigned short) elem;
+      FfFromIntTable[elem] = (uint16_t) i;
+      FfToIntTable[i] = (uint16_t) elem;
       polmultx(a);
       polmod(a,irred);
    }
@@ -495,14 +497,14 @@ static void initarith()
 
 static void initarithP()
 {
-   unsigned short i;
-   unsigned short a, gen, x;
+   uint16_t a, gen, x;
 
    // Find generator
    for (gen = 1; gen < P; ++gen) {
       x = gen;
+      uint32_t i;
       for (i = 1; x != 1; ++i) {
-         x = (unsigned short) (((long)x * gen) % P);
+         x = (uint16_t) (((unsigned long)x * gen) % P);
       }
       if (i == P - 1) {break;}
    }
@@ -512,11 +514,11 @@ static void initarithP()
    FfFromIntTable[0] = 0xFFFF;
    FfToIntTable[Q] = 0; // never used
    a = 1;
-   for (i = 0; i < P - 1; i++) {
+   for (unsigned i = 0; i < P - 1; i++) {
       MTX_ASSERT(a > 0 && a < Q);
-      FfFromIntTable[a] = i;
+      FfFromIntTable[a] = (uint16_t) i;
       FfToIntTable[i] = a;
-      a = (unsigned short) (((unsigned long) a * gen) % P);
+      a = (uint16_t) (((unsigned long) a * gen) % P);
    }
    testprim();
 }
@@ -527,10 +529,8 @@ static void initarithP()
 
 static void computeIncrementTable()
 {
-   unsigned short i, j;
-
-   for (i = 1; i <= Q - 1; ++i) {
-      j = (int)((i % P) == P - 1 ? i + 1 - P : i + 1);
+   for (uint32_t i = 1; i <= Q - 1; ++i) {
+      const uint16_t j = (uint16_t)((i % P) == P - 1 ? i + 1 - P : i + 1);
       if (j == 0) {
          Minusone = FfFromIntTable[i];
          MESSAGE(1,("MinusOne=%u(0x%04x)\n", i, FfFromIntTable[i]));
@@ -555,7 +555,7 @@ static void writeHeader()
       exit(EXIT_ERR);
    }
 
-   uint16_t header[5];
+   uint32_t header[5];
    header[0] = MTX_ZZZVERSION;
    header[1] = P;
    header[2] = Q;
@@ -572,11 +572,7 @@ static void writeHeader()
    } else {
       MESSAGE(1,("Generator   : %u\n", (unsigned int) Gen));
    }
-   if (fwrite(header,sizeof(uint16_t), 5, fd) != 5) {
-      perror(fname);
-      fprintf(stderr,"bigmktab: Error writing file header!\n");
-      exit(EXIT_ERR);
-   }
+   sysWrite32(fd, header, 5);
 }
 
 
@@ -586,22 +582,20 @@ static void init(long fieldOrder)
 {
    MTX_ASSERT(FF_ZERO == 0xFFFF);
 
-   if (fieldOrder < 2 || fieldOrder > 65535) {
-      fprintf(stderr, "Field order %ld out of range (2-65535)\n", fieldOrder);
-      exit(EXIT_ERR);
+   if (fieldOrder < 2 || fieldOrder > 65536) {
+      mtxAbort(MTX_HERE, "Field order %ld out of range (2-65536)", fieldOrder);
    }
-   Q = (unsigned short) fieldOrder;
+   Q = (uint32_t) fieldOrder;
    for (P = 2; Q % P != 0; ++P);
-   unsigned q = Q;
+   uint32_t q = Q;
    for (N = 0; (q % P) == 0; q /= P, ++N);
    if (q != 1) {
-      fprintf(stderr,"Field order %ld is not allowed\n", fieldOrder);
-      exit(EXIT_ERR);
+      mtxAbort(MTX_HERE, "Field order %ld is not allowed\n", fieldOrder);
    }
 
-   inc = NREALLOC(inc, unsigned short, Q);
-   FfToIntTable = NREALLOC(FfToIntTable, unsigned short, Q);
-   FfFromIntTable = NREALLOC(FfFromIntTable, unsigned short, Q);
+   inc = NREALLOC(inc, uint16_t, Q);
+   FfToIntTable = NREALLOC(FfToIntTable, uint16_t, Q);
+   FfFromIntTable = NREALLOC(FfFromIntTable, uint16_t, Q);
    getpol();
    if (N != 1) {
       initarith();

@@ -16,7 +16,7 @@
 
 #elif MTX_ZZZ == 1
 
-#define ISFEL(f) ((f) == 0xffff || (unsigned short)(f) < (unsigned short)ffOrder)
+#define ISFEL(f) ((f) == 0xffff || (uint16_t)(f) < (uint16_t)(ffOrder - 1))
 
 #elif 
 #error MTX_ZZZ undefined

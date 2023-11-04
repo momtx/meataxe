@@ -299,10 +299,10 @@ TstResult Kernel_FindPivot(int q)
 
 static int TestSubfield1(int fld, int sub)
 {
-   FEL tabsub[256];
-   FEL tabemb[256];
+   FEL tabsub[65536U];
+   FEL tabemb[65536U];
 
-   // Fill table with all subfield elememts
+   // Fill table with all subfield elements
    ffSetField(sub);
    for (int i = 0; i < sub; ++i) {
       tabsub[i] = ffFromInt(i);
@@ -361,6 +361,16 @@ TstResult Kernel_Field_Subfields()
    result |= TestSubfield1(49,7);
 
    result |= TestSubfield1(121,11);
+
+   #if MTX_ZZZ == 1
+   result |= TestSubfield1(65536, 2);
+   result |= TestSubfield1(65536, 4);
+   result |= TestSubfield1(65536,16);
+   result |= TestSubfield1(65536,256);
+   result |= TestSubfield1(59049, 3);
+   result |= TestSubfield1(59049, 9);
+   result |= TestSubfield1(59049, 243);
+   #endif
 
    return result;
 }

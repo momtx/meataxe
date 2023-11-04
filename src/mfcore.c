@@ -84,7 +84,7 @@ static int isValidFieldOrder(uint32_t x)
    #if MTX_ZZZ == 0
    static const uint32_t MTX_MAX_Q = 256;
    #elif MTX_ZZZ == 1
-   static const uint32_t MTX_MAX_Q = 63001;
+   static const uint32_t MTX_MAX_Q = 65536;
    #else
    #error
    #endif

@@ -7,7 +7,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-// The "large" arithmetics kernel supports fiels order up to 63001.
+// The "large" arithmetics kernel supports field orders up to 65536.
 //
 // The internal data representation is based on a generator for the multiplicative group which is
 // chosen for each field as follows. If q = p is prime, the generator is the smallest natural
@@ -17,7 +17,7 @@
 // is g = x + (p(x)).
 // Nonzero field elements are internally represented as their logarithm base g, i.e., the
 // unit element is represented as 0, the generator g as 1, and so on. The zero element is
-// represented by the special value 65536, which can never occur as representatzion of a
+// represented by the special value 65536, which can never occur as representation of a
 // nonzero field element.
 // Note that the prime field elements are NOT represented by 0..p-1, even for prime fields.
 // All calculations must be performed with FfAdd/FfMul. Always use the constants
@@ -32,22 +32,22 @@
 // {0..p} correspond to the prime field.
 
 
-int mtx_subfields[17];                  // public list of subfields, terminated with 0
+int mtx_subfields[17];                    // public list of subfields, terminated with 0
 
-static uint16_t minusone;                   // -1
-static uint16_t *inc = NULL;                // a+1 = inc[a]
+static uint16_t minusone;                 // -1
+static uint16_t *inc = NULL;              // inc[a] = a+1
 static uint16_t *FfFromIntTable = NULL;
 static uint16_t *FfToIntTable = NULL;
-static uint16_t subfieldsTable[17];     // internal list of subfields, terminated with 0xFFFF
-static FEL *embeddingTables = NULL;         // combined embed/restrict tables
+static uint16_t subfieldsTable[17];       // internal list of subfield orders, terminated with 0
+static uint16_t *embeddingTables = NULL;  // combined embed/restrict tables
 
-static unsigned short P = 0;         // Characteristic
-static unsigned short Q = 0;         // Field order
-static unsigned short Q1 = 0;        // Q-1, order of the multiplicative group
-static unsigned short N;             // Degree over prime field, Q=P^N
-static unsigned short Gen;           // Generator of the multiplicative group
+static uint32_t P = 0;         // Characteristic
+static uint32_t Q = 0;         // Field order
+static uint32_t Q1 = 0;        // Q-1, order of the multiplicative group
+static uint32_t N;             // Degree over prime field, Q=P^N
+static uint32_t Gen;           // Generator of the multiplicative group
 
-#define FF_INVALID 0xFFFE
+//#define FF_INVALID 0xFFFE
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // Argument checking macros
@@ -77,9 +77,9 @@ static int loadEmbedAndRestrictTables(FILE *fd)
    MTX_ASSERT(numberOfSubfields <= 16);
         
    sysRead16(fd, subfieldsTable, numberOfSubfields);
-   subfieldsTable[numberOfSubfields] = FF_INVALID;
+   subfieldsTable[numberOfSubfields] = 0;
    size_t tblSize = 0;
-   for (FEL* sf = subfieldsTable; *sf != FF_INVALID; ++sf) {
+   for (FEL* sf = subfieldsTable; *sf != 0; ++sf) {
       if (*sf >= Q) {
          mtxAbort(MTX_HERE,"Corrupt table file (subfield order)");
       }
@@ -92,9 +92,9 @@ static int loadEmbedAndRestrictTables(FILE *fd)
    }
 
    // Copy subfields to public table
-   subfieldsTable[numberOfSubfields] = FF_INVALID;
+   subfieldsTable[numberOfSubfields] = 0;
    memset(mtx_subfields, 0, sizeof(mtx_subfields));
-   for (int i = 0; i < numberOfSubfields && subfieldsTable[i] != FF_INVALID; ++i) {
+   for (int i = 0; i < numberOfSubfields && subfieldsTable[i] != 0; ++i) {
       mtx_subfields[i] = (int) subfieldsTable[i];
    }
 
@@ -113,10 +113,8 @@ static int LoadTables_(int fieldOrder, const char* fileName)
       return 0;
 
    // read header
-   unsigned short info[5];
-   if (fread((char *)info,sizeof(short),5,fd) != 5) {
-      mtxAbort(MTX_HERE,"CANNOT READ TABLE HEADER");
-   }
+   uint32_t info[5];
+   sysRead32(fd, info, 5);
 
    P = info[1];
    Q = info[2];
@@ -328,20 +326,22 @@ size_t ffRowSizeUsed(int noc)
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-// Embed/Restrict tables: for each subfield
+// Organization of subfield embedding/restriction tables:
+// 
+// uint16_t subfields[] contains the list of subfields. The list is terminated by 0. Note that we do
+// not support the trivial embedding F(q)<=F(q), thus 2^16 never occurs as order of a subfield.
+//
+// uint16_t embeddingTables[] contains, for each subfield F(s)<F(q), two tables:
 //  - FEL embed[s] - embedding into F(q)
-//  - FEL restrict[q] - restriction to F(s) or 0xFFFE 
-// all tables are contiguous without padding. The zero element is handled in code and not
+//  - FEL restrict[q] - restriction to F(s) or FF_ZERO (meaning the element is not in the subfield)
+// all tables are concatenated without padding. The zero element is handled in code and not
 // included in the tables
-// Subfield table: 
-//  - uint16_t[]: list of subfield order, terminated with 0xFFFF
-//    e.g., for q=3^6:   [3, 9, 27, 0xFFFF]
 
 
 // Returns a pointer to the combined embed/restrict table for F(r)<F(q).
 // The table has size r + q.
-static FEL* getEmbeddingTable(int r)
- {
+static FEL* getEmbeddingTable(uint16_t r)
+{
    // Look up the subfield for every call, assuming ffEmbed() performance is not critical.
    FEL* sptr = subfieldsTable;
    FEL* tptr = embeddingTables;
@@ -360,6 +360,7 @@ static FEL* getEmbeddingTable(int r)
    return tptr;
 }
  
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 FEL ffRestrict(FEL a, int subfield)
 {
@@ -368,12 +369,9 @@ FEL ffRestrict(FEL a, int subfield)
    CHECKFEL(a);
 
    FEL* table = getEmbeddingTable(subfield);
-   if (table == NULL)
-      return FF_ZERO;
    FEL result = table[subfield + a];
-   if (result == FF_INVALID) {
+   if (result == FF_ZERO) {
       mtxAbort(MTX_HERE,"%s(): Element %u is not in subfield F(%u).", __func__, a, subfield);
-      return FF_ZERO;
    }
    return result;
 }
