@@ -185,6 +185,7 @@ TESTS=\
   0200_lattice_m11 \
   0201_lattice_ac \
   0202 \
+  0203_lattice_m \
   0210 \
   0211 \
   0212_soc_a5reg \

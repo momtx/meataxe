@@ -354,7 +354,8 @@ void finishBlock()
             }
          }
 
-         for (i = 0; !bsIsSub(bs, sub[i]->bs); ++i) {}
+         for (i = 0; i < nsub && !bsIsSub(bs, sub[i]->bs); ++i) {}
+         MTX_ASSERT(i < nsub);
          sub[i]->socleLayer = layer++;
       }
    }
@@ -788,9 +789,6 @@ static int tryAddSubmodule(BitString_t *bs, int generation)
          return 0;
    }
    if (nsub >= MAXNSUB) {
-      // write partial result
-      finishBlock();
-      writeresult();
       mtxAbort(MTX_HERE, "Too many submodules (> %d)", MAXNSUB);
    }
    

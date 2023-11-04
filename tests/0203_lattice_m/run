@@ -1,0 +1,22 @@
+echo "0203 - Submodules"
+
+. ../tests/common.sh
+
+cp "${MTX_TEST_DATA_DIR}/m.1" m.1
+cp "${MTX_TEST_DATA_DIR}/m.2" m.2
+cp "${MTX_TEST_DATA_DIR}/m.3" m.3
+
+chop -Q -g 3 m || error "CHOP failed"
+pwkond -Qt m || error "PWKOND failed"
+mkcycl -Q m || error "MKCYCL FAILED"
+mkinc -Q m || error "MKINC FAILED"
+mkdotl -Q m || error "MKDOTL FAILED"
+compareWithReference m.cfinfo cfinfo_after_mkdotl.expected
+mksub  -Q m || error "MKSUB FAILED"
+compareWithReference m.out
+compareWithReference m.lat
+compareWithReference m.gra
+
+soc -Q m || error "SOC failed"
+rad -Q m || error "RAD failed"
+compareWithReference m.cfinfo cfinfo_after_socrad.expected
