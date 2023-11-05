@@ -35,7 +35,7 @@ TstResult CharacteristicPolynomial()
              1,0,0,0,0,0,    0,1,1,0,0,0,    0,0,0,0,1,0,
              0,0,1,1,0,0,    0,0,0,0,0,1,    0,0,0,0,1,1);
 
-   Charpol_t* state = charpolAlloc(a, PM_CHARPOL, 0);
+   Charpol_t* state = charpolStart(a, PM_CHARPOL, 0);
    result |= CheckPoly(charpolFactor(state) ,1,1,1);
    result |= CheckPoly(charpolFactor(state),4,0,1,0,0,1);
    result |= CheckPoly(charpolFactor(state),1,1,1);

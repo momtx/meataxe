@@ -1,0 +1,20 @@
+echo "0122 - ZTM"
+
+. ../tests/common.sh
+
+# Make some test vectors int the tensor module.
+A="$MTX_TEST_DATA_DIR/C0.1"
+B="$MTX_TEST_DATA_DIR/C0.2"
+
+zte "$A" "$B" AB
+zte "$B" "$A" BA
+zad AB BA M
+znu M VECS
+
+# Map test vectors uzing ZTM
+ztm VECS $A $B MAPPED1
+
+# Map test vectors uzing ZTE/ZMU
+zmu VECS AB MAPPED2
+
+cmp MAPPED1 MAPPED2

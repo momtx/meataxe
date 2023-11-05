@@ -1,74 +1,127 @@
-The C MeatAxe                         {#mainpage}
-=============
+@mainpage The C MeatAxe
 
-The MeatAxe is a set of programs for working with matrices over
-finite fields. Its primary purpose is the calculation of modular
-character tables, although it can be used for other purposes, such
-as investigating subgroup structure, module structure etc.
-Indeed, there is a set of programs (see @ref pg_progs_lattice)
-to compute automatically the submodule lattice of a given module.
+The MeatAxe is a set of programs for working with matrices over finite fields and,
+to some degree, with permutations and polynomials. It was originally written to
+calculate modular character tables, but it can be used for other purposes such as
+investigating subgroup structure, module structure etc.
+Indeed, there is a set of programs to compute the submodule lattice of a given module.
+See @ref pg_progs_index for a list of all programs.
 
-Each of the programs is self-contained, reading its input from files,
-and writing its output to files. To make the MeatAxe usable,
-therefore, it is necessary to write operating system commands to run
-the various programs. This documentation is primarily for the programs,
-and further documentation is necessary for the various implementations
-in differing operating environments.
+# Quick Start
 
-The primitive objects are of two types: matrices and permutations.
-Permutation objects can be handled, but not as smoothly as you might
-expect. For example, it is hoped that programs such as split
-(@ref prog_zsp "zsp") and multiply (@ref prog_zmu "zmu")
-will be able to work with mixed types, but at present
-ZSP is restricted to matrices only, and ZMU can multiply
-a matrix by a permutation, but not vice versa.
+To build the MeatAxe, change to the top level directory (containing `Makefile`)
+and execute
+```
+make clean test
+```
+This command builds all programs in the `bin/` directory and runs the tests.
+It should work on Linux, macos and probably other UNIX operating systems
+with a C compiler supporting the C99 standard.
 
-<b>Remarks on the C implementation</b><br>
-Most of the programs (including their documentation) in this package
-are based on the FORTRAN code written by Richard A. Parker.
-The translation from FORTRAN to C was done in 1989 and since then both
-versions have developed independently.
-The user interface of the C programs has been changed significantly
-(e.g., command line arguments were introduced) and some new programs
-have been added which are not available in the FORTRAN MeatAxe.
+Here are some simple examples for using the programs:
 
-The objective of this suite of programs is research, so that where
-simplicity and power are in contention, power is selected. Nevertheless,
-I have tried to make the programs as straightforward and user-friendly
-as possible. Moreover, the source code is freely available, so be free
-to change any parts you are annoyed with.
+* Show the MeatAxe version (works with any program)
+  ```
+  bin/zpr --version
+  ```
+* Print a matrix in text format:
+  ```
+  bin/zpr tests/data/0/C0.1
+  ```
+* Calculate the order of a matrix:
+  ```
+  bin/zor tests/data/0/C0.2
+  ```
+* Calculate the characteristic and minimal polynomial of a matrix:
+  ```
+  bin/zcp -f tests/data/0/C0.2
+  bin/zcp -m -f tests/data/0/C0.2
+  ```
+* Find the irreducible constituents of a 112 dimensional
+  representation of M11 over GF(2):
+  ```
+  cd tmp
+  cp ../tests/data/0/m11.1 ../tests/data/0/m11.2 .
+  ../bin/chop m11
+  ```
 
-<b>Supported platforms</b><br>
-The MeatAxe should run on most UNIX platforms including Linux, NetBSD,
-Ultrix, Solaris, HP-UX, and on Windows NT. Other platforms as MS-DOS,
-VM/CMS and VMS are not officially supported, but it should not be too
-difficult to compile and run the programs on those systems.
+# More Information
 
-Users of the MeatAxe on a non-UNIX platform should be aware that their
-operating system may impose some additional restrictions on the programs.
-For example, the length and syntax of file names may be more restricted
-as in UNIX, and CPU time information may not be available or incorrect.
+- @subpage pg_building
+- @subpage pg_userguide -- Information about installing and using the MeatAxe programs.
+- @subpage pg_programming -- Read this if you want to modify or extend the MeatAxe, or
+     use the MeatAxe library in your programs.
+- @subpage pg_changelog
+- @subpage pg_bib
 
-- @subpage changelog
-- @subpage pg_userguide
-- @subpage pg_programming
-**/
 
-/**
+
+#############################################################################################
+
+@page pg_building Bulding and Installing the MeatAxe
+
+# System Requirements
+
+The MeatAxe is developed under Linux and regularly built on Linux and macos.
+GNU make and a C compiler supporting the C99 standard is required. 
+Building the documentation requires Doxygen.
+
+# Obtaining the Source Code
+
+The MeatAxe source code can be downloaded from https://github.com/momtx/meataxe.
+Cloning with Git or unpacking the downloaded archive will create a top-level
+directory containing, among other files, @c Makefile and two subdirectories,
+@c src and @c tests.
+
+# Building
+
+To build the MeatAxe, change to the top level directory (containing `Makefile`)
+and execute
+```
+make clean test
+```
+This command builds all programs in the `bin/` directory and runs the tests.
+
+
+# Compile-Time Configuration (Makefile.conf)
+
+The build process can be customized by creating the file @c Makefile.conf
+next to @c Makefile and entering make variable settings in this file.
+This is recommended instead of modifying the @c Makefile directly because
+@c Makefile.conf will not be overwritten when a new version is downloaded.
+
+The variables that can be overwritten are described at the beginning of @c Makefile.
+Here is a (possibly incomplete) list:
+
+* **MTXROOT** is the directory where run-time files are installed.
+  Executable programs will be created in @c ${MTXROOT}/bin,
+  libraries and other files will be created in @c ${MTXROOT}/lib.
+  The default is MTXROOT=.
+  
+* **CC**, **CFLAGS1**, and **LDFLAGS1** set the compiler command, compile options,
+  and link options, respectively.
+
+* **ZZZ** controls which arithmentic module will be used. There are two modules available:
+  * @c ZZZ=0 selects the standard arithmetic, supporting fields up to GF(256).
+  * @c ZZZ=1 selecte the "large fields" arithmetic module which supports fields up to
+    GF(251<sup>2</sup>) but is considerably slower than the standard arithmetic.
+
+* **MTXDOCDIR** sets the directory where the HTML documentation will be created.
+  Default is "./doc".
+
+#############################################################################################
+
 @page pg_userguide User's Guide
-Sections:
 
-- @subpage pg_start
 - @subpage pg_using
 - @subpage prog_stdopts
-- @subpage pg_progs_conv
-- @subpage pg_progs_lattice
 - @subpage pg_progs_index
 - @subpage pg_file_formats
 - @subpage pg_bib
-**/
 
-/**
+
+#############################################################################################
+
 @page pg_bib Bibliography
 
 
@@ -121,14 +174,18 @@ Sections:
     <em>Fixpunktkondensation von Tensorproduktmoduln</em>.
     Diplomarbeit, Lehrstuhl D für Mathematik der RWTH Aachen, 1994.
 
-**/
+@anchor BC85
+@par [BC85]
+    D.J. Benson, J.H. Conway.
+    <em>Diagrams for Modular Lattices.</em>
+    Journal of Pure and Applied Algebra 37 (1985), 111-116.
 
 
+#############################################################################################
 
-/**
 @page pg_progs_index Program Index
 
-This section contains a detailed description of each MeatAxe program.
+Thd following list contains a detailed description of each MeatAxe program.
 Some command line options, which are common to all programs, are
 documented on a separate page (see @ref prog_stdopts).
 
@@ -176,8 +233,8 @@ documented on a separate page (see @ref prog_stdopts).
 - @subpage prog_zro
 - @subpage prog_zsc
 - @subpage prog_zsi
-- @subpage prog_zsy
 - @subpage prog_zsp
+- @subpage prog_zsy
 - @subpage prog_ztc
 - @subpage prog_zte
 - @subpage prog_ztm
@@ -185,11 +242,9 @@ documented on a separate page (see @ref prog_stdopts).
 - @subpage prog_zts
 - @subpage prog_zuk
 - @subpage prog_zvp
-**/
 
 
-/**
-@page pg_progs_conv File Conversion Programs
+# File Conversion Programs
 These programs are used to convert between different file formats.
 
 - @subpage prog_zcf
@@ -198,11 +253,8 @@ These programs are used to convert between different file formats.
 - @subpage prog_zpr
 - @subpage prog_zpt
 
-**/
 
-
-/**
-@page pg_progs_lattice The Lattice Programs
+# The Lattice Programs {#sec_progs_lattice}
 
 These programs are used to investigate the structure of matrix representations over
 finite fields. The first step is always to find the irreducible constituents of the
@@ -213,17 +265,17 @@ Here are some examples of what you can do with the programs:
   @ref prog_pwkond "pwkond", @ref prog_mkcycl "mkcycl", @ref prog_mkinc "mkinc",
   @ref prog_mkdotl "mkdotl", @ref prog_mksub "mksub", @ref prog_genmod "genmod").
 - Find out if a given irreducible module occurs as a constituent of a module
-  (@ref prog_cfcomp).
+  (@ref prog_cfcomp "cfcomp").
 - Draw the submodule lattice in graphical form (@ref prog_mkgraph "mkgraph").
 - Calculate a module's socle and radical series (@ref prog_chop "chop",
   @ref prog_pwkond "pwkond",
   @ref prog_soc "soc", @ref prog_rad "rad").
 - Calculate all homomorphisms between two modules, or the endomorphism
-  ring of a module (@ref prog_chop "chop", @ref prog_pwkond "pwkond", MKHOM).
+  ring of a module (@ref prog_chop "chop", @ref prog_pwkond "pwkond", @ref prog_mkhom "mkhom").
 - Decompose a module into direct summands (@ref prog_chop "chop", @ref prog_pwkond "pwkond",
   @ref prog_mkhom "mkhom", @ref prog_decomp "decomp").
 
-@section sec_progs_cond Condensation Programs
+# Condensation Programs {#sec_progs_cond}
 These programs are used to condense representations. @ref prog_zkd "zkd"
 performs a fixed-point condensation of permutation representations.
 It can be used after the orbits have been calculated with @ref prog_zmo "zmo".
@@ -235,65 +287,38 @@ the condensation subgroup is semisimple.
 The algorithm assumes that the irreducible constituents
 of the restriction, and corresponding peak words are known, so you must
 run @ref prog_chop "chop" and @ref prog_pwkond "pwkond" before.
-**/
 
+#############################################################################################
 
-/**
-@page pg_start Installing the MeatAxe
-
-This section contains some general information about the MeatAxe
-programs and how to use them.
-
-@section start_compile Compiling
-
-Instructions for compiling and installing the MeatAxe can be found in the file
-README.md, which is included in the distribution package.
-There are several options which can be defined at compile time:
-
-@par @c MTXLIB
-Name of the library directory, see @ref sec_libdir.
-The value selected at compile-time can be overridden later by defining
-the environment variable MTXLIB or by using the `-L' option.
-
-@par @c MTX_DEBUG
-Useful only for development and bug-fixing. Setting this option
-results in more argument checking and, consequently, slower execution.
-
-@par PARANOID
-Even more argument checking. This option will cause problems with some
-MeatAxe applications!
-
-**/
-
-
-
-/**
 @page pg_using Using the MeatAxe Programs: General Remarks
 
-@section sec_env Setting up the environment
+Each of the programs is self-contained, reading its input from files, and writing
+its output to files. 
+
+# Setting up the environment
 
 It is recommended that you include the MeatAxe installation directory, where
 all the programs are installed, in your path. You may also define the following
 environment variables which are recognized by the MeatAxe programs:
 
-@par @c MTXLIB
-Name of the MeatAxe library directory, see @ref sec_libdir.
-You need to define this variable only if you want to use a library directory
-different from the default library directory chosen at compile time.
-This can be overridden by the -L command line option.
+Variable  | Description
+:-------- | :-------------
+MTXLIB    | Name of the MeatAxe library directory, see @ref sec_libdir.
 
-@section sec_tables Arithmetic Tables
+
+# Arithmetic Tables
 All programs use lookup tables for row operations and finite field arithmetic.
-These tables are read from a file named <tt>pXXX.zzz</tt> or <tt>pXXXXX.zzz</tt>,
-where XXX is the field order.
-For example, tables for GF(25) are read from the file <tt>p025.zzz</tt>.
+These tables are read from a file named `pXXX.zzz`, or, if the MeatAxe
+was build with the "large fields" arithmetic kernel, from `pXXXXX.zzz`.
+For example, tables for GF(25) are read from the file `p025.zzz` or
+`p00025.zzz`, respectively.
+
 The table file can be in the library directory (see below) or in the current
 working directory. If it is not found in either location, a new file is created
-in the working directory. You can copy the file to the library directory to avoid
-creating new files in every working directory.
+in the library directory.
 
-@section sec_ft File Types
-All MeatAxe programs operate on files and do not require user interaction.
+# File Types
+All MeatAxe programs operate on files and do not require user interaction while running.
 There are two kinds of files:
 
 - Binary (internal format) data files. Programs usually read
@@ -303,11 +328,11 @@ There are two kinds of files:
   The format of text files is described with the @ref prog_zcv "zcv" program.
 
 Typically, a program reads a number of input files and produces one or
-more output files. For example, the ZMU (multiply) program expects two
+more output files. For example, the @ref prog_zmu "zmu" (multiply) program expects two
 input and one output file. Thus,
-<pre>
+```  
 zmu mat1 mat2 result
-</pre>
+```
 reads matrices from "mat1" and "mat2", and writes the product to "result".
 To find out which
 files are used by a specific program, look up the program description in
@@ -316,41 +341,29 @@ with the "--help" option to get an on-line help.
 
 A detailed description of the MeatAxe file formats can be found in @ref pg_file_formats.
 
+# The Library Directory  {#sec_libdir}
+When given a file name, all programs look for the file in the current directory first.
+If the file is not found there, some programs try to find it in the library directory.
+This extended search applies, for example, to @ref prog_zev "zev" and
+@ref prog_zcv "zcv" input files, and to the arithmetic table files.
 
-@section sec_libdir The library directory
-When given a file name, all programs look for the file in the current
-directory first. If the file is not found there, some programs try to
-find it in the library directory, provided a library has been defined.
-This extended search applies, for example, to ZEV and @ref prog_zcv "zcv" input files
-and also to the arithmetic table files.
+By default, the library is derived from the executable name by replacing "bin" with "lib".
+For the program @c /usr/local/mtx/bin/zad will by default expect library files in
+@c /usr/local/mtx/lib.
+The default may be overridden at run-time by defining the environment variable @c MTXLIB.
+Both the default and @c MTXLIB can be overridden with -L command line option, which is
+supported by all programs.
 
-The library is usually defined at compile-time by defining MTXLIB.
-This definition may be overridden at run-time by defining the environment variable MTXLIB.
-In either case MTXLIB must be a directory name including
-a trailing separator character (e.g., '/' for UNIX). When looking for
-files in the library, the programs simply append the file name to the
-value of MTXLIB in order to build the complete file name.
-**/
+#############################################################################################
 
-
-/**
 @page pg_programming Programmer's Guide
-Since it was ported from FORTRAN to C in 1989 the MeatAxe has been freely available, including
-source code, under the terms of the GNU general public license. Users are encouraged to extend
-or modify the programs as needed.  Indeed, most of the recent improvements and additions to the
-MeatAxe are the result of users' reports, requests, and experiments.
-
-This documentation is intended to provide the information you need to write your own MeatAxe
-programs or to modify existing ones. Since the software is changing continuously the documentation
-is necessarily incomplete and not everywhere correct. So, even with this manual, you should be
-prepared to look in the source code, which is always the ultimate reference.
-Starting with release 2.3 I have tried to merge documentation and source code,
-which should help to keep the documentation more up-to-date.
+This section is intended for users who want to add new programs to the MeatAxe or
+use MeatAxe functions in their own programs. 
 
 Internally, the MeatAxe is built in several layers where each layer uses
-services provided by the lower layers.
+services provided by the lower layers. Layers 1 to 3 constitute the MeatAxe Library.
 
-\par Layer 1 - Kernel
+# Layer 1 - Kernel
 The MeatAxe kernel provides the finite field arithmetic,
 some low-level vector operations,
 and a platform-independent interface to operating
@@ -363,11 +376,10 @@ Most kernel services are simple,
 but there are some more complex functions like Gaussian elimination,
 which have been implemented in the kernel for performance reasons.
 
-
 - @ref os
 - @ref ff
 
-\par Layer 2 - Objects
+# Layer 2 - Objects
 This layer encapsulates low-level functionality in "objects" 
 like matrices, permutations, and polynomials. It also provides the
 elementary operations with these objects like, for example, matrix
@@ -379,10 +391,9 @@ multiplication.
 - @ref mf
 - @ref mrep
 - @ref imat
-- @ref intset
 - @ref matset
 
-\par Layer 3 - Algorithms
+# Layer 3 - Algorithms
 This layer provides more complex operations which typically involve
 several objects. The spin-up and split functions are examples for this
 layer.
@@ -393,62 +404,45 @@ layer.
 Throughout this documentation, layers 1 to 3 are referred to as the
 "MeatAxe library". Indeed, these layers are implemented as a static library.
 
-\par The program layer
+# Layer 4 - Programs
 The top layer includes the MeatAxe programs and shell scripts like
 @ref prog_zad "zad", @ref prog_zmu "zmu", @ref prog_chop "chop", ...
 See @ref pg_progs_index for detailed descriptions.
 
-@section links Further Information
-- @subpage pg_compiling
-
-
-
-@page pg_compiling Compiling and Linking with the MeatAxe Library
+# Compiling and Linking with the MeatAxe Library
 
 To use the MeatAxe library in your programs you need two files:
-\par libmtx.a
-The library file. This file is generated during the compilation of the MeatAxe.
-\par meataxe.h
-The header file for all MeatAxe library functions.
-This file is part of the distribution.
 
+@par meataxe.h
+(in the @c src directory) contains declarations for all MeatAxe library functions.
+This header must be included in all source files using MeatAxe functions.
 
-You must include the header file in your program by putting the line
-@code
-    #include "meataxe.h"
-@endcode
-somewhere at the top of your program.
-If meataxe.h resides in the same directory as your program
-the compiler will find it there.
-Otherwise you must specify a complete path in the include statement
-or specify the directory on the command line, for example:
-<pre>
+@par libmtx.a
+The (static) MeatAxe library. This file can be found in the @c tmp directory after
+the MeatAxe was built. Add the library when linking your programs. For example:
+
+Example:
+```
 cc -c -I/usr/joe/mtx/src -o myprog.o myprog.c
-</pre>
-Having compiled your program you must link it with the
-MeatAxe library. Here is an example:
-<pre>
-*msg{cc -o myprog myprog.o libmtx.a}
-</pre>
+cc -L/usr/joe/mtx/tmp -o myprog myprog.o libmtx.a
+```
 
-**/
+#############################################################################################
 
-
-/**
 @page prog_stdopts Standard Command Line Options
 All MeatAxe programs expect one or more arguments, ususally the names
 of input and output files. Arguments may be preceeded by program options
 which always start with a minus sign. Options which don't need arguments
 can be grouped together. For example, the two commands
-<pre>
+```
 chop -G -V -V -V test
 chop -GVVV test
-</pre>
+```
 are equivalent. Some options require an additional argument which must be
 separated from the option by a space. Here is an example:
-<pre>
+```
 chop -g 3 -T 3600 -G -VV module
-</pre>
+```
 Some options may have an alternative, long name starting with `--'.
 These options cannot be grouped together with other options.
 
@@ -482,9 +476,9 @@ meaning is always the same.
   by a positive integer.
 @par -G
   Generate output in GAP format.
-**/
 
-/**
+#############################################################################################
+
 @page pg_file_formats File Formats
 
 @section sec_fileformats_binary Binary Data Files
@@ -562,7 +556,7 @@ k 32-bit little-endian numbers, where k is chosen such that
 first bit of the string.
 
 
-**/
+
 
 
 @section sec_fileformats_text Text Files
@@ -584,7 +578,7 @@ Raising Errors
 --------------
 
 @ref mtxAbort
-@ref MTX_HERE
+@c MTX_HERE
 @ref MtxSourceLocation
 
 
@@ -598,3 +592,5 @@ Providing Context Information
 Custom Error Handlers
 ---------------------
 
+
+**/

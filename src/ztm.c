@@ -16,12 +16,12 @@
 static MtxApplicationInfo_t AppInfo = { 
 "ztm", "Tensor Multiply",
 "SYNTAX\n"
-"    ztm [-QV] [-T <MaxTime>] <A> <B> <Vectors> <Result>"
+"    ztm [-QV] [-T <MaxTime>] <Vectors> <A> <B> <Result>"
 "\n"
 "ARGUMENTS\n"
+"    <Vectors> ............... Input file: Vectors\n"
 "    <A> ..................... Input file: Left factor (square matrix)\n"
 "    <B> ..................... Input file: Right factor (square matrix)\n"
-"    <Vectors> ............... Input file: Vectors\n"
 "    <Result> ................ Output file: Result\n"
 "\n"
 "OPTIONS\n"
@@ -35,11 +35,9 @@ static MtxFile_t *fileVin = NULL,
     *fileVout = NULL;
 static uint32_t nocV = 0;               // Tensor product dimension
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
-
-/* ------------------------------------------------------------------
-   VecToMat() - Convert vector to matrix
-   ------------------------------------------------------------------ */
+// Convert vector to matrix
 
 static Matrix_t *VecToMat(PTR vec, int fl, int nor, int noc)
 
@@ -59,38 +57,28 @@ static Matrix_t *VecToMat(PTR vec, int fl, int nor, int noc)
     return mat;
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
-
-
-/* ------------------------------------------------------------------
-   matToVec() - Convert matrix to vector
-   ------------------------------------------------------------------ */
+// Convert matrix to vector
 
 static void matToVec(Matrix_t *mat, PTR vec)
-
 {
-    PTR y;
-    int i, k, nrows, ncol, l;
+    const uint32_t noc = mat->noc;
+    const uint32_t nor = mat->nor;
 
-    ncol = mat->noc;
-    nrows = mat->nor;
+    // Clear the vector 
+    ffMulRow(vec,FF_ZERO, nor * noc);
 
-    /* Clear the vector 
-       ---------------- */
-    ffMulRow(vec,FF_ZERO, nrows * ncol);
-
-    /* Convert
-       ------- */
-    y = mat->data;
-    l = 0;
-    for (i = 0; i < nrows; ++i) 
+    // Convert
+    PTR y = mat->data;
+    uint32_t l = 0;
+    for (uint32_t i = 0; i < nor; ++i) 
     {
-        for (k = 0; k < ncol; ++k) 
+        for (uint32_t k = 0; k < noc; ++k) 
             ffInsert(vec,l++,ffExtract(y,k));
-        ffStepPtr(&y, ncol);
+        ffStepPtr(&y, noc);
     }
 }
-
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -139,9 +127,9 @@ static void init(int argc, char **argv)
 {
     App = appAlloc(&AppInfo,argc,argv);
     appGetArguments(App,4,4);
-    fileNameA = App->argV[0];
-    fileNameB = App->argV[1];
-    fileNameVin = App->argV[2];
+    fileNameVin = App->argV[0];
+    fileNameA = App->argV[1];
+    fileNameB = App->argV[2];
     fileNameVout = App->argV[3];
     readMatrices();
     openVectorFiles();
@@ -199,12 +187,16 @@ int main(int argc, char **argv)
 
 
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+// *INDENT-OFF*
+
 /**
 @page prog_ztm ztm - Tensor Multiply
 
 @section ztm_syntax Command Line
 <pre>
-ztm [@em Options] @em A @em B @em Vectors @em Result
+ztm [@em Options] @em Vectors @em A @em B @em Result
 </pre>
 
 @par @em Options
@@ -221,12 +213,12 @@ ztm [@em Options] @em A @em B @em Vectors @em Result
     Output file: Vectors.
 
 @section ztm_inp Input Files
+@par @em Vectors
+    Vectors to be multiplied, a r×(mn) matrix.
 @par @em A
     Left factor, m×m matrix.
 @par @em B
     Right factor, n×n matrix.
-@par @em Vectors
-    Vectors to be multiplied, a r×(mn) matrix.
 
 @section ztm_out Output Files
 @par @em Result
@@ -236,23 +228,18 @@ ztm [@em Options] @em A @em B @em Vectors @em Result
 @section ztm_desc Description
 This program reads two matrices from A and B, a list of vectors,
 and calculates the image of the vectors under A⊗B.
-@em A and @em B must be square matrices of dimension m and n, respetively
-This calculation could be done with the @ref prog_zte "zte" and @ref prog_zmu "zmu"
-programs, but using @b ztm avoids the memory-consuming calculation of A⊗B.
+@em A and @em B must be square matrices of dimension m and n, respectively.
 
-@subsection ztm_impl Implementation Details
-Let m, n be the dimensions of A and B, respectively. For each
-input vector v∊F<sup>1×mn</sup>, the program computes the m×n matrix \f$\hat{v}\f$ with
-@f[
-	\hat{v}_{ik} = v_{(i-1)n + k}\qquad (1\leq i\leq m,\ 1\leq k\leq n)
-@f]
-Then, v(A⊗B) can be computed by ordinary matrix operations:
-@f[
-    \widehat{v(A\otimes B)} = A^{tr}\cdot\hat{v}\cdot B
-@f]
-
-Both matrices and one vector must fit into memory at the same time.
-
-
+The same calculation could be done with the @ref prog_zte "zte" and @ref prog_zmu "zmu"
+programs:
+```
+ztm Vecs A B Result
+```
+is equivalent to
+```
+zte A B AB
+zmu Vecs AB Result
+```
+but using @b ztm avoids the memory-consuming calculation of A⊗B.
 **/
 // vim:fileencoding=utf8:sw=3:ts=8:et:cin

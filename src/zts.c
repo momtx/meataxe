@@ -383,7 +383,9 @@ int main(int argc, char **argv)
     return 0;
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
+// *INDENT-OFF*
 
 /**
 @page prog_zts zts - Tensor Split
@@ -446,8 +448,9 @@ Generator action on the invariant subspace.
 This program is similar to @ref prog_zsp "zsp", but it works on the tensor
 product of two modules, M⊗N. @b zts spins up one or more vectors, and optionally
 calculates a matrix representation corresponding to the invariant
-subspace. The program does not use the matrix representation of the
-generators on M⊗N, which would be too large in many cases.
+subspace.
+The same calculation could be done by combining @ref prog_zte "zte" and @ref prog_zsp "zsp,
+but ZTS avoids the calculation of the generators on M⊗N, which could be very large.
 This program is used, for example, to spin up vectors that have
 been uncondensed with @ref prog_tuc "tuc".
 
@@ -457,32 +460,14 @@ You can use the -g option to specify the number of generators.
 The default is two generators.
 
 Seed vectors are read from @em Seed.
-They must be given with respect to the lexicographically ordered
-basis explained below.
-    
-If the @em Sub argument is given, ZTS writes a basis of the
-invariant subspace to @em Sub, calculates the action of the
-generators on the invariant subspace, and writes it to
-@em Sub.1, @em Sub.2,...
+They must be given with respect to the lexicographically ordered basis 
+(b<sub>1</sub>⊗c<sub>1</sub>, b<sub>1</sub>⊗c<sub>2</sub>, …,  b<sub>m</sub>⊗c<sub>n</sub>),
+where (b<sub>1</sub>,…,b<sub>m</sub>) and (c<sub>1</sub>,…,c<sub>n</sub>) are the bases
+of M and N, respectively.
 
-@section zts_impl Implementation Details
-Let \f$B=(b_1,\ldots,b_m)\f$ be a basis of \e M,
-\f$C=(c_1,\ldots,c_n)\f$ a basis of \e N,
-and denote by \f$B\otimes C\f$ the lexicographically ordered basis
-\f$(b_1\otimes c_1, b_1\otimes c_2, \dots b_m\otimes c_n)\f$.
-For \f$v\in M\otimes N\f$,
-the coordinate row \f$m(v,B\otimes C)\f$ has \f$mn\f$ entries
-which can be arranged as a \f$m\times n\f$ matrix (top to bottom, left to
-right).  Let \f$M(B,v,C)\f$ denote this matrix. Then
-\f[
-	M(B,va,C) = m(B,a|_M,B)^{\rm tr}M(B,v,C)m(C,a|_N,C)
-	\quad\mbox{for all }
-	a\in A,\ v\in M\otimes N
-\f]
-Using this relation,
-we can calculate the image of any vector \f$v\in M\otimes N\f$ under an algebra element \f$a\f$,
-and thus spin up a vector without using the matrix representation of \f$a\f$
-on \f$v\in M\otimes N\f$.
+If the @em Sub argument is given, ZTS writes a basis of the invariant subspace to @em Sub,
+calculates the action of the generators on the invariant subspace, and writes it to
+@em Sub.1, @em Sub.2,...
 
 */
 

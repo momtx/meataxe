@@ -84,6 +84,10 @@ int main(int argc, char *argv[])
     return 0;
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+// *INDENT-OFF*
+
 /**
 @page prog_zbl zbl - Bottom Left
 
@@ -137,8 +141,8 @@ it is just a bodge, but it is possible:
   is in standard basis (so all the basis vectors are images of the first under the group) the
   diagonal entries of any fixed quadratic form must all be equal, so try each field entry in
   turn by adding that scalar matrix to the bottom half of the symplectic form.
--# For each quadratic form Q made as in 3, test if it is fixed by forming @f$G^TQG@f$ for each
-  generator @f$G@f$, and checking that the diagonal is still the same as it was before (the
+-# For each quadratic form Q made as in 3, test if it is fixed by forming G<sup>T</sup>QG for each
+  generator G, and checking that the diagonal is still the same as it was before (the
   symplectic form should have been checked before starting). The check can be done by adding
   the form to the result, then doing @b zbl, @b ztr and @b zbl again --- the result will be the zero
   matrix (use @ref prog_znu "znu") iff the form was fixed (given that the symplectic one was).

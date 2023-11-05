@@ -22,8 +22,8 @@ unpack a new version of the MeatAxe.
 
 ## Documentation
 
-Documentation snapshots are available under http://momtx.github.io/meataxe
 If doxygen is available, you can build the documentation from the sources with
 
     make doc
 
+The documentation is created in `./doc` by default.

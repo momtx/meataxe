@@ -70,7 +70,7 @@ static uint32_t *esyspiv;
 static int maxnumMgens = 0;
 static int numMgens = 0;
 
-/* TODO: ersetzen durch FfCleanRowAndRepeat */
+// TODO: replace with FfCleanRowAndRepeat
 
 static void myzcleanrow(PTR row, PTR matrix, PTR matrix2, int nor, int noc, int *piv)
 

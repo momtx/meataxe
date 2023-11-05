@@ -475,42 +475,49 @@ int main(int argc, char** argv)
    return EXIT_OK;
 }
 
-// @page prog_zpr zpr - Print Matrices and Permutations
-// @see @ref prog_zcv
-//
-// @section zpr_syntax Command Line
-// <pre>
-// zpr [@em Options] [-Gs] @em DataFile [@em TextFile]
-// </pre>
-//
-// @par @em Options
-// Standard options, see @ref prog_stdopts
-// @par -G, --gap
-// Output in GAP format.
-// @par -s, --summary
-// Show headers only.
-// @par @em DataFile
-// Input file (binary)
-// @par @em TextFile
-// Output file (text)
-//
-// @section zpr_inp Input Files
-// @par @em DataFile
-// Input file (binary)
-//
-// @section zpr_out Output Files
-// @par @em TextFile
-// Output file (text)
-//
-// @section zpr_desc Description
-// This program prints the contents of a MeatAxe data file in readable
-// format. The text produced by @b zpr can be converted into binary format by
-// the @ref prog_zcv "zcv" program.
-//
-// If there is only one argument on the command line, @b zpr writes to stdout.
-// A second argument, if present, is taken as the output file name.
-//
-// To find out the contents of a MeatAxe file, use the -s option. To generate
-// output readble by GAP, use -G. Both options can be combined.
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+// *INDENT-OFF*
+
+/**
+@page prog_zpr zpr - Print Matrices and Permutations
+
+@see @ref prog_zcv
+
+@section zpr_syntax Command Line
+<pre>
+zpr [@em Options] [-Gs] @em DataFile [@em TextFile]
+</pre>
+
+@par @em Options
+Standard options, see @ref prog_stdopts
+@par -G, --gap
+Output in GAP format.
+@par -s, --summary
+Show headers only.
+@par @em DataFile
+Input file (binary)
+@par @em TextFile
+Output file (text)
+
+@section zpr_inp Input Files
+@par @em DataFile
+Input file (binary)
+
+@section zpr_out Output Files
+@par @em TextFile
+Output file (text)
+
+@section zpr_desc Description
+This program prints the contents of a MeatAxe data file in readable
+format. The text produced by @b zpr can be converted into binary format by
+the @ref prog_zcv "zcv" program.
+
+If there is only one argument on the command line, @b zpr writes to stdout.
+A second argument, if present, is taken as the output file name.
+
+To find out the contents of a MeatAxe file, use the -s option. To generate
+output readble by GAP, use -G. Both options can be combined.
+**/
 
 // vim:fileencoding=utf8:sw=3:ts=8:et:cin

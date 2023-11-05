@@ -403,6 +403,7 @@ FEL ffRestrict(FEL a, int subfield)
 /// This function adds src to dest. Field order and row size must have been set before.
 /// @param dest The row to add to.
 /// @param src The row to add.
+/// @param noc Row size (number of columns).
 /// @return Always returns dest.
 
 PTR ffAddRow(PTR dest, PTR src, int noc)
@@ -673,13 +674,12 @@ void ffMapRow(PTR row, PTR matrix, int nor, int noc, PTR result)
    }
 }
 
-
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-/// Scalar Product of Two Vectors.
-/// Given two vectors @f$a=(a_i)@f$ and @f$b=(b_i)@f$, this function calculates the
-/// scalar product @f$p=\sum_ia_ib_i@f$.
+
+/// Calculates the scalar product of two vectors, which must have equal size.
 /// @param a The first vector.
 /// @param b The second vector.
+/// @param noc Row size (number of columns).
 /// @return Scalar product of the two vectors.
 
 FEL ffScalarProduct(PTR a, PTR b, int noc)
@@ -718,7 +718,7 @@ FEL ffScalarProduct(PTR a, PTR b, int noc)
 ///
 /// @param mat Pointer to the matrix (@a nor by @a noc).
 /// @param nor Number of rows in matrix.
-/// @param nor Number of columns in matrix.
+/// @param noc Number of columns in matrix.
 /// @param col Column to extract (starting with 0).
 /// @param result Pointer to buffer for the extracted column (@a nor columns).
 

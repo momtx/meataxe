@@ -473,9 +473,13 @@ int main(int argc, char **argv)
    return 0;
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+// *INDENT-OFF*
 
 /**
 @page prog_zcv zcv - Convert Text to Binary Format
+
 @see @ref prog_zpr
 
 @section zcv_syntax Command Line

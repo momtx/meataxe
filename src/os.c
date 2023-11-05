@@ -3,21 +3,21 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 /// @defgroup os Operating System Interface
-/// @{
-/// @details
+///
 /// The MeatAxe is written for a UNIX-like operating environment and uses many functions of
 /// the standard C library. To make the MeatAxe more portable between different operating
 /// systems, some C library and system calls are accessed through wrapper functions. These
-/// wrapper functions have names that begin with 'Sys'. For example @c sysFree() is the wrapper
+/// wrapper functions have names that begin with 'sys'. For example @c sysFree() is the wrapper
 /// function for @c free().
+/// @{
 
-/* --------------------------------------------------------------------------
-   These sybols can be defined:
-
-   OS_NO_CPU_TIME .......... no CPU times are available
-   OS_TIMES_AND_SYSCONF	.... use times() and sysconf() instead of getrusage()
-   OS_NO_ITIMER ............ no interval timers
-   -------------------------------------------------------------------------- */
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// These sybols can be defined:
+//
+// OS_NO_CPU_TIME .......... no CPU times are available
+// OS_TIMES_AND_SYSCONF	.... use times() and sysconf() instead of getrusage()
+// OS_NO_ITIMER ............ no interval timers
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 #include "meataxe.h"
 
@@ -51,7 +51,7 @@
    ------------------------------------------------------------------ */
 
 #if defined(OS_NO_CPU_TIME)
-time_t zinittime = 0;           /**< Start time of this process. */
+static time_t zinittime = 0;           /**< Start time of this process. */
 #endif
 
 
@@ -142,7 +142,6 @@ DWORD CALLBACK Killer(void *x)
    return 0;
 }
 
-
 void sysSetTimeLimit(long nsecs)
 {
    DWORD id;
@@ -177,7 +176,6 @@ void sysSetTimeLimit(long nsecs)
 {
 }
 
-
 #endif
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -187,12 +185,13 @@ void sysSetTimeLimit(long nsecs)
 /// * If the operation fails an error is raised, which normally aborts the program. If the
 ///   application has defined an error handler that doe snot abort, sysFopen() returns NULL on
 ///   error.
-/// * The «mode» string can be extended by appending "//«Flags»", where «Flags» is
+/// * The @a mode string can be extended by appending "::FLAGS", where FLAGS is
 ///   a colon-separated list of any of the following items:
-///   * "lib" - Try to open the file in the library directory (see @ref MtxLibDir) first, unless
-///     «name» starts with '/'. It this fails, try again using the file name as it is.
+///   * "lib" - Try to open the file in the library directory (see @ref mtxLibraryDirectory),
+///     unless @a name starts with '/'. It this fails, try again using the file name as it is.
 ///     No errors are reported if the first attempt fails and the second attempt succeeds.
 ///   * "noerror" - Do not raise an error if the file cannot be opened, just return NULL.
+///   For example: sysFopen("coeff7.txt", "r::lib:noerror")
 ///
 /// @return A pointer to the open file or NULL on error.
 

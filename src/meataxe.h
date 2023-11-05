@@ -29,7 +29,8 @@ extern const uint32_t MTX_TYPE_BITSTRING_DYNAMIC;
 extern const uint32_t MTX_TYPE_INTMATRIX;
 extern const uint32_t MTX_TYPE_BEGIN;
 
-/// @addtogroup os @{
+/// @addtogroup os
+/// @{
 
 int sysCreateDirectory(const char *name);
 FILE* sysFopen(const char *name, const char*mode);
@@ -59,13 +60,14 @@ void sysWrite32(FILE *f, const void* buf, size_t n);
 #define NREALLOC(x,type,n) \
    ((type *) sysRealloc(x,(size_t)(n) * sizeof(type)))
 
-// @}
+/// @}
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 /// Parallel execution (threads) support
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-/// @addtogroup pex @{
+/// @addtogroup pex
+/// @{
 
 typedef struct PexGroup PexGroup_t;
 
@@ -88,10 +90,8 @@ void pexWait();
 // Finite fields kernel
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-/**
-** @addtogroup ff
-** @{
-**/
+/// @addtogroup ff
+/// @{
 
 /* Data types and constants
    ------------------------ */
@@ -127,6 +127,8 @@ extern uint32_t ffOrder;
 extern int ffChar;
 extern FEL ffGen;
 
+/// An invalid value. Used in places where a row/colum index is expected to signal that no value
+/// is avalable.
 #define MTX_NVAL ((uint32_t)0xFFFFFFFF)
 
 /* Arithmetic */
@@ -137,11 +139,15 @@ FEL ffDiv(FEL a, FEL b);
 FEL ffNeg(FEL a);
 FEL ffInv(FEL a);
 
+/// Contains a representation of a field element which can be used to generate
+/// text output readable by GAP.
+
 typedef struct FfGapRepresentation {
    FEL a;
    uint32_t fmt;  // 0: a = k*Z(q), 1: a = Z(q)^k
    uint32_t k;
 } FfGapRepresentation_t;
+
 const FfGapRepresentation_t* ffToGap(FEL a);
 const char* ffToGapStr(FEL a);
 
@@ -180,9 +186,9 @@ void ffWriteRows(FILE *f, PTR buf, int n, int noc);
 /// List of subfield orders, terminated with 0.
 extern int mtx_subfields[17];
 
-/* --------------------------------------------------------------------------
-   Macro versions of kernel functions
-   -------------------------------------------------------------------------- */
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// Macro versions of kernel functions
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 #if MTX_ZZZ == 0
 
@@ -214,7 +220,7 @@ void ffInsert(PTR row, int col, FEL mark);
    #error Illegal value of MTX_ZZZ
 #endif
 
-/** @} **/
+/// @}
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // Other low-level functions (zzz2.c)
@@ -309,7 +315,7 @@ typedef struct {
 /// This data structure stores all internal data needed by the Application support functions,
 /// such as command line arguments, temporary directory names, and more.
 ///
-/// See also @ref AppAlloc
+/// See also @ref appAlloc
 
 typedef struct {
    MtxApplicationInfo_t const *AppInfo; ///< Program name and description.
@@ -372,7 +378,7 @@ struct MtxSourceLocation {
 };
 
 /// Provides a source code location descriptor.
-/// Both @a file and @func must be pointers to static constant strings.
+/// Both @a file and @a func must be pointers to static constant strings.
 const struct MtxSourceLocation* mtxSourceLocation(const char* file, int line, const char* func);
 
 /// The current source code location
@@ -733,7 +739,7 @@ void bsWrite(BitString_t *bs, FILE *f);
 typedef struct {
    uint32_t typeId;
    int nor;        ///< Number of rows
-   int noc;        ///< Number of colums
+   int noc;        ///< Number of columns
    int32_t *data;  ///< Marks (row by row)
 } IntMatrix_t;
 
@@ -903,10 +909,18 @@ FPoly_t *Factorization(const Poly_t *pol);
 // Characteristic and minimal polynomials
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
+/// State for characteristic/minimal polynomial computation.
+/// This structure is used by @ref charpolFactor / @ref minpolFactor.
+
 struct CharpolState 
 {
    uint32_t typeId;
-   enum CharpolMode {PM_CHARPOL, PM_MINPOL} mode;
+
+   /// Defines which polynomial shall be calculated.
+   enum CharpolMode {
+      PM_CHARPOL,       ///< characteristic polynomial
+      PM_MINPOL         ///< minimal polynomial
+   } mode;
 
    long fl;      // field order
    long vsDim;   // vector space dimension
@@ -925,7 +939,7 @@ struct CharpolState
 typedef struct CharpolState Charpol_t;
 
 
-Charpol_t* charpolAlloc(const Matrix_t* matrix, enum CharpolMode mode, long seed);
+Charpol_t* charpolStart(const Matrix_t* matrix, enum CharpolMode mode, long seed);
 void charpolFree(struct CharpolState* state);
 
 Poly_t *charpolFactor(Charpol_t* state);

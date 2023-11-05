@@ -233,8 +233,9 @@ mkcycl @em Options [-G] @em Name
   Cyclic submodules.
 
 @section mkcycl_desc Description
-This program is invoked after @ref prog_pwkond "pwkond" has calculated the
-condensation with respect to the peak words. @b mkcycl calculates, for each
+The MKCYCL program is part of the @ref sec_progs_lattice "Submodule Lattice Package".
+It is invoked after @ref prog_pwkond "pwkond" has calculated the
+condensation with respect to the peak words. MKCYCL calculates, for each
 condensed module, its 1-dimensional subspaces. The output is a list of vectors
 (in matrix form) for each irreducible constituent, which generate all cyclic
 submodules. For example, if "X10a" is the constituent's name, the list of

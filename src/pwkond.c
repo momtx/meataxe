@@ -816,154 +816,156 @@ int main(int argc, char **argv)
 
 
 /**
-   @page prog_pwkond pwkond - Peak Word Condensation
+@page prog_pwkond pwkond - Peak Word Condensation
 
-   @section pwkond_syntax Command Line
-   <pre>
-   pwkond @em Options [-Gnptbk] [-i @em List] [-e @em List] @em Name [@em Name ...]
-   </pre>
+@section pwkond_syntax Command Line
+<pre>
+pwkond @em Options [-Gnptbk] [-i @em List] [-e @em List] @em Name [@em Name ...]
+</pre>
 
-   @par @em Options
-   Standard options, see @ref prog_stdopts
-   @par -G
-   Produce output in GAP format.
-   @par -n
-   Find peak words only, do not condense.
-   @par -p
-   Use full polynomials instead of linear factors only in peak word search.
-   @par -t
-   Transform generators into standard basis.
-   @par -b
-   Calculate a semisimplicity basis.
-   @par -k
-   Compute kernel of peak words.
-   @par -i @em List
-   Word to try first, for example "-i 100,20-35".
-   @par -e @em List
-   Words to be excluded, for example "-e 3,20-99".
+@par @em Options
+Standard options, see @ref prog_stdopts
+@par -G
+Produce output in GAP format.
+@par -n
+Find peak words only, do not condense.
+@par -p
+Use full polynomials instead of linear factors only in peak word search.
+@par -t
+Transform generators into standard basis.
+@par -b
+Calculate a semisimplicity basis.
+@par -k
+Compute kernel of peak words.
+@par -i @em List
+Word to try first, for example "-i 100,20-35".
+@par -e @em List
+Words to be excluded, for example "-e 3,20-99".
 
-   @par @em Name
-   Name of the representation.
+@par @em Name
+Name of the representation.
 
-   @section pwkond_inp Input Files
-   @par @em Name.cfinfo
-   Constituent info file.
-   @par @em Name.1, @em Name.2, ...
-   Generators.
+@section pwkond_inp Input Files
+@par @em Name.cfinfo
+Constituent info file.
+@par @em Name.1, @em Name.2, ...
+Generators.
 
-   @par @em NameCF.1, @em NameCF.2, ...
-   Generators on the irreducible constituents. NameCF is the representation name
-   followed by the dimension and a letter to distinguish inequivalent constituents
-   of the same dimension (see @ref prog_chop "chop").
+@par @em NameCF.1, @em NameCF.2, ...
+Generators on the irreducible constituents. NameCF is the representation name
+followed by the dimension and a letter to distinguish inequivalent constituents
+of the same dimension (see @ref prog_chop "chop").
 
-   @section pwkond_out Output Files
-   @par @em Name.cfinfo
-   Constituent info file.
+@section pwkond_out Output Files
+@par @em Name.cfinfo
+Constituent info file.
 
-   @par @em NameCF.1k, @em NameCF.2k, ...
-   Condensed generators on the irreducible constituents.
+@par @em NameCF.1k, @em NameCF.2k, ...
+Condensed generators on the irreducible constituents.
 
-   @par @em NameCF.1.std, @em NameCF.2.std, ...
-   Condensed generators in standard basis (with -t).
+@par @em NameCF.1.std, @em NameCF.2.std, ...
+Condensed generators in standard basis (with -t).
 
-   @par @em NameCF.op
-   Spin-up script for the standard basis (with -t).
+@par @em NameCF.op
+Spin-up script for the standard basis (with -t).
 
-   @par @em NameCF.np
-   Condensed peak word.
+@par @em NameCF.np
+Condensed peak word.
 
-   @par @em NameCF.im
-   Image used for the condensation.
+@par @em NameCF.im
+Image used for the condensation.
 
-   @par @em NameCF.k
-   Peak word kernel (with -k or without -n).
+@par @em NameCF.k
+Peak word kernel (with -k or without -n).
 
-   @par @em NameCF.ssb
-   Semisimplicity basis (with -b).
+@par @em NameCF.ssb
+Semisimplicity basis (with -b).
 
 
-   @section pwkond_desc Description
+@section pwkond_desc Description
 
-   After the irreducible constituents of a module, or a number of modules,
-   have been found with @ref prog_chop "chop", this program can be used
-   - to calulate peak words for the constituents,
-   - to condense the module using the peak words,
-   - to transform the generators on the constituents to the standard
-   basis as defined by the peak word kernel, and
-   - to calculate a basis reflecting the direct decomposition of the
-   module, if the module is semisimple.
-   By definition, a "peak word" for the i-th constituent is an algebra element which has
-   minimal nullity on the i-th constituent and which operates regularly (i.e., with nullity 0)
-   on the other constituents.
-   Als for identifying words (see @ref prog_chop "chop"), the nullity of a peak word on
-   its constituent is equal to the degree of the splitting field for that
-   constituent.
 
-   When more than one module is specified on the command line, the peak words found by
-   @b pwkond are "global", i.e., each peak word selects
-   exactly one of the constituents of alle the modules. Running @b pwkond
-   successively on two modules does not generally produce global peak
-   words, since a peak word found for module M may have a non-zero
-   nullity on a different constituent that occurs in another module N
-   but not in M.
+The PWKOND program is part of the @ref sec_progs_lattice "Submodule Lattice Package".
+After the irreducible constituents of a module, or a number of modules,
+have been found with @ref prog_chop "chop", PWKOND can be used
+- to calculate peak words for the constituents,
+- to condense the module using the peak words,
+- to transform the generators on the constituents to the standard
+basis as defined by the peak word kernel, and
+- to calculate a basis reflecting the direct decomposition of the
+module, if the module is semisimple.
+By definition, a "peak word" for the i-th constituent is an algebra element which has
+minimal nullity on the i-th constituent and which operates regularly (i.e., with nullity 0)
+on the other constituents.
+Als for identifying words (see @ref prog_chop "chop"), the nullity of a peak word on
+its constituent is equal to the degree of the splitting field for that
+constituent.
 
-   The -e option can be used to exclude certain words from the search.
-   @em List is a list of integers or ranges of integers, for example
-   "-e 57,82-112,289".
-   Using "-i" you can specify a list of words which will be tested first.
-   This can significantly reduce computation time if you already know one
-   or more peak words for a given module.
-   The "-n" option disables the condensation phase. If this option is used,
-   the program stops after the peak words have been found.
-   If the "-t" option is specified, @b pwkond transforms the generators of all
-   irreducible constituents to the standard basis defined by the peak word.
+When more than one module is specified on the command line, the peak words found by
+@b pwkond are "global", i.e., each peak word selects
+exactly one of the constituents of alle the modules. Running @b pwkond
+successively on two modules does not generally produce global peak
+words, since a peak word found for module M may have a non-zero
+nullity on a different constituent that occurs in another module N
+but not in M.
 
-   For each composition factor there are several output files. If, for
-   example, one composition factor is X10a, @b pwkond will produce
-   the following files:
-   - X10a.std.1 and X10a.std.1 are the operation of the generators on
-   the constituent with respect to the standard basis defined by the
-   peak word. These files are created only if the `-t' option is used.
-   - X10a.op Spin-up script for the standard basis. See ZSB for details.
-   - X10a.1k and X10a.2k are th action of the generators on the
-   condensed module.
-   - X10a.np Condensed peak word. This is a nilpotent matrix.
-   - X10a.im Image of the peak word.
-   - X10a.k Kernel of the peak word.
-   The .cfinfo file is written each time a peak word is found. So, if
-   the program does not terminate or dies unexpectedly the information about
-   the peak words found so far are not lost.
+The -e option can be used to exclude certain words from the search.
+@em List is a list of integers or ranges of integers, for example
+"-e 57,82-112,289".
+Using "-i" you can specify a list of words which will be tested first.
+This can significantly reduce computation time if you already know one
+or more peak words for a given module.
+The "-n" option disables the condensation phase. If this option is used,
+the program stops after the peak words have been found.
+If the "-t" option is specified, @b pwkond transforms the generators of all
+irreducible constituents to the standard basis defined by the peak word.
 
-   If the module is semisimple, @b pwkond can
-   calculate a basis that respects the decomposition into irreducible
-   constituents. With respect to this basis, the generators are in block
-   diagonal form, where the blocks occur in the order determined by @ref prog_chop "chop".
-   All blocks corresponding to the same constituent are equal, not only
-   equivalent, and the blocks occur in their "natural" order (as defined by
-   @ref prog_chop "chop"). This is essential for the tensor condensation procedure
-   (see @ref prog_precond "precond"). To calculate the semisimplicity basis, use the
-   "-b" option.
-   The basis is written to @em Name.ssb. Using "-b" with a module that is not
-   semisimple produces undefined results. Most probably, @b pwkond will stop
-   with the error message "row index out of range", or it will write a
-   singular matrix to @em Name.ssb.
+For each composition factor there are several output files. If, for
+example, one composition factor is X10a, @b pwkond will produce
+the following files:
+- X10a.std.1 and X10a.std.1 are the operation of the generators on
+the constituent with respect to the standard basis defined by the
+peak word. These files are created only if the `-t' option is used.
+- X10a.op Spin-up script for the standard basis. See ZSB for details.
+- X10a.1k and X10a.2k are th action of the generators on the
+condensed module.
+- X10a.np Condensed peak word. This is a nilpotent matrix.
+- X10a.im Image of the peak word.
+- X10a.k Kernel of the peak word.
+The .cfinfo file is written each time a peak word is found. So, if
+the program does not terminate or dies unexpectedly the information about
+the peak words found so far are not lost.
 
-   @section pwkond_impl Implementation Details
-   Internally, a peak word is represented by a pair (n,p) where n is
-   the canonical number of the word (See @ref prog_zmw "zmw"), and p is a
-   polynomial. The peak word represented by this pair is p(Wn), Wn
-   being the n-th word. Without "-p", @b pwkond considers only linear
-   polynomials. If the "-p" option is used, @b pwkond can find polynomials
-   of any degree.
+If the module is semisimple, @b pwkond can
+calculate a basis that respects the decomposition into irreducible
+constituents. With respect to this basis, the generators are in block
+diagonal form, where the blocks occur in the order determined by @ref prog_chop "chop".
+All blocks corresponding to the same constituent are equal, not only
+equivalent, and the blocks occur in their "natural" order (as defined by
+@ref prog_chop "chop"). This is essential for the tensor condensation procedure
+(see @ref prog_precond "precond"). To calculate the semisimplicity basis, use the
+"-b" option.
+The basis is written to @em Name.ssb. Using "-b" with a module that is not
+semisimple produces undefined results. Most probably, @b pwkond will stop
+with the error message "row index out of range", or it will write a
+singular matrix to @em Name.ssb.
 
-   Whenever a peak word is found, the generalized condensation
-   is calculated as follows: The peakword is caculated as a matrix acting on V,
-   which is then repeatedly raised to higher powers until the nullity stabilizes.
-   The stable nullity equals the multiplicity k of the constituent times the
-   degree [E:F] of the splitting field extension.
-   Having a power w^N of the peakword with stable nullity,
-   the condensation onto its kernel, i.e., the projection of V onto V/w^N(V),
-   is determined in the same way as in the @ref prog_zqt "zqt" program.
+@section pwkond_impl Implementation Details
+Internally, a peak word is represented by a pair (n,p) where n is
+the canonical number of the word (See @ref prog_zmw "zmw"), and p is a
+polynomial. The peak word represented by this pair is p(Wn), Wn
+being the n-th word. Without "-p", @b pwkond considers only linear
+polynomials. If the "-p" option is used, @b pwkond can find polynomials
+of any degree.
+
+Whenever a peak word is found, the generalized condensation
+is calculated as follows: The peakword is caculated as a matrix acting on V,
+which is then repeatedly raised to higher powers until the nullity stabilizes.
+The stable nullity equals the multiplicity k of the constituent times the
+degree [E:F] of the splitting field extension.
+Having a power w^N of the peakword with stable nullity,
+the condensation onto its kernel, i.e., the projection of V onto V/w^N(V),
+is determined in the same way as in the @ref prog_zqt "zqt" program.
  **/
  
 // vim:fileencoding=utf8:sw=3:ts=8:et:cin

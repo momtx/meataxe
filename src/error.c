@@ -62,6 +62,7 @@ const char MTX_ERR_NARGS[] = "Bad number of arguments";
 const char MTX_ERR_NOTMATRIX[] = "Not a matrix";
 const char MTX_ERR_NOTPERM[] = "Not a permutation";
 
+/// @private
 struct ErrorContext {
    struct MtxSourceLocation source;
    char *title;
@@ -69,6 +70,7 @@ struct ErrorContext {
    void* userData;
 };
 
+/// @private
 struct ErrorContextStack {
    struct ErrorContext* stack;
    int capacity;
@@ -199,8 +201,9 @@ MtxErrorHandler_t *MtxSetErrorHandler(MtxErrorHandler_t *h)
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 /// Terminates the program with an error message. 
-/// @param sl The source location to be included in the error message. Use the MTX_HERE to use
+/// @param sl The source location to be included in the error message. Pass @c MTX_HERE to use
 ///    print the current location. If @a sl is NULL, no location will be shown.
+/// @param text The error message (printf style format), followed by any arguments.
 
 void mtxAbort(const struct MtxSourceLocation* sl, const char *text, ...)
 {

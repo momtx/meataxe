@@ -25,7 +25,7 @@ void permWrite(const Perm_t *perm, FILE *f)
 /// Writes a permutation to a file.
 /// This function creates a file, writes a single permutation to the file and closes the file.
 /// If a file with the same name already exists, its contents are destroyed.
-/// See also @re3f PermWrite.
+/// See also @ref permWrite.
 
 void permSave(const Perm_t *perm, const char *fileName)
 {

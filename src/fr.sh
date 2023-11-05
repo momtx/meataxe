@@ -1,6 +1,10 @@
 #!/bin/sh
-################################################################################
-# MeatAxe script                                    
+
+# This program expects two matrices in `z1' (a) and `z2' (b), and
+# calculates 8 products in `z3',... `z10':
+# ab, ababb, abababb, ababababb, ababbabababb,
+# abababababb, ababbabababbabb, and ababbabbabababb.
+
 ################################################################################
 
 zmu z1 z2 z3
@@ -14,17 +18,3 @@ zmu z7 z10 z9
 zmu z4 z10 z11
 zmu z11 z5 z10
 exit 0
-
-
-/*{{{ --------------------------------------------------------------------------
-!section apps.scripts
-!program fr "Make random words"
-!synopsis
-    fr
-!seealso
-!description
-    This program expects two matrices in `z1' (a) and `z2' (b), and
-    calculates 8 products in `z3',\ldots `z10':
-    ab, ababb, abababb, ababababb, ababbabababb,
-    abababababb, ababbabababbabb, and ababbabbabababb.
--------------------------------------------------------------------------- }}}*/

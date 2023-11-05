@@ -589,12 +589,12 @@ mkdotl [@em Options] [-G] [--nodup] @em Name
   Dotted-lines.
 
 @section mkdotl_desc Description
-This program calculates a set of dotted lines between the local
-submodules. More precisely, it computes one dotted line for
-each submodule with head isomoprphic to S⊕S, S irreducible.
-It can be shown that this set of dotted lines is sufficient to
-determine the complete submodule lattice as described by
-Benson and Conway.
+The MKDOTL program is part of the @ref sec_progs_lattice "Submodule Lattice Package".
+MKDOTL calculates a set of "dotted-lines" (see @ref LMR94) between the local submodules.
+More precisely, it computes one dotted-line for each submodule with head isomorphic to S⊕S,
+where S is irreducible.
+It can be shown that this set of dotted-lines is sufficient to determine the complete
+submodule lattice as described by Benson and Conway (@ref BC85).
 
 Input for this program are the incidence matrix calculated by
 @ref prog_mkinc "mkinc" and the cyclic submodules from @ref prog_mkcycl "mkcycl".

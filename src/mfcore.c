@@ -125,7 +125,7 @@ static int isValidHeader(uint32_t* type, const uint32_t header[3])
 
 /// Returns the object type.
 /// This function assumes that <tt>file->header</tt> contains a valid object header, i.e., that
-/// @ref mfReadHeader or @ref mfTryRedHeader was called before.
+/// @ref mfReadHeader or @ref mfTryReadHeader was called before.
 /// The function fails and aborts the program if the header is invalid.
 
 uint32_t mfObjectType(const MtxFile_t* file)
@@ -321,7 +321,7 @@ void mfWrite32(MtxFile_t *f, const void *buf, int count)
 /// Reads 32-bit integers from a file.
 /// This function reads @a count 32-bit integers from a data file into a buffer.
 /// Each integer is converted from file format (little-endian) into native format.
-/// See @ref sysread32 for details.
+/// See @ref sysRead32 for details.
 
 void mfRead32(MtxFile_t* f, void* buf, int count)
 {

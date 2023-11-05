@@ -505,151 +505,117 @@ int main(int argc, char** argv)
 }
 
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+// *INDENT-OFF*
+
 /**
-   @page prog_zsy zsy - Symmetrized Tensor Product
+@page prog_zsy zsy - Symmetrized Tensor Product
 
-   @section zsy_syntax Command Line
-   <pre>
-   zsy [@em Options] [-G] @em Mode @em Inp @em Out
-   </pre>
+@section zsy_syntax Command Line
+<pre>
+zsy [@em Options] [-G] @em Mode @em Inp @em Out
+</pre>
 
-   @par @em Options
-   Standard options, see @ref prog_stdopts
-   @par -G
-   GAP output.
-   @par @em Mode
-   Symmetrization mode: "e2", "s2", "e3" or "e4".
-   @par @em Inp
-   Input matrix.
-   @par @em Out
-   Result matrix.
+@par @em Options
+Standard options, see @ref prog_stdopts
+@par -G
+GAP output.
+@par @em Mode
+Symmetrization mode: "e2", "s2", "e3" or "e4".
+@par @em Inp
+Input matrix.
+@par @em Out
+Result matrix.
 
-   @section zsy_inp Input Files
-   @par @em Mat
-   Input matrix or permutation.
+@section zsy_inp Input Files
+@par @em Mat
+Input matrix or permutation.
 
-   @section zsy_out Output Files
-   @par @em Result
-   Result matrix.
+@section zsy_out Output Files
+@par @em Result
+Result matrix.
 
-   @section zsy_desc Description
-   This program reads a matrix or permutation, calculates its symmetrized tensor
-   product according to @em Mode, and writes out the result.
+@section zsy_desc Description
+This program reads a matrix or permutation, calculates its symmetrized tensor
+product according to @em Mode, and writes out the result.
 
-   The @em Mode argument specifies the tensor product to be taken
-   and the kind of symmetrization to be performed. Currently there are
-   4 Modes available:
-   - "s2" is the symmetric tensor square. The output has size
-   n(n+1)/2 (For matrices, number of lines, for permutations,
-   degree).
-   - "e2" is the antisymmetric tensor square. The output has size
-   n(n-1)/2.
-   - "e3" is the antisymmetric tensor cube. The output has size
-   n(n-1)(n-2)/6.
-   - "e4" is the antisymmetric fourth power. The output has size
-   n(n-1)(n-2)(n-3)/24.
+The @em Mode argument specifies the tensor product to be taken
+and the kind of symmetrization to be performed. Currently there are
+4 Modes available:
+- "s2" is the symmetric tensor square. The output has size
+  n(n+1)/2 (For matrices, number of lines, for permutations,
+  degree).
+- "e2" is the antisymmetric tensor square. The output has size
+  n(n-1)/2.
+- "e3" is the antisymmetric tensor cube. The output has size
+  n(n-1)(n-2)/6.
+- "e4" is the antisymmetric fourth power. The output has size
+  n(n-1)(n-2)(n-3)/24.
 
-   Since the typical application of @b zsy is to generate new representations from
-   existing ones, it will usually be used with square matrices. However,
-   the input is not required to be square.
+The input matrix is not required to be square. If it is not, the formulas above
+are valid for both the number of rows and columns.
 
+If the input file contains more than one permutation, only the
+first permutation is read in and processed.
 
-   @subsection zsy_perms Permutations
-   Currently, only modes s2, e2 and e3 are available for permutations.
-   The result gives the operation of the input permutation on unordered
-   pairs (e2, s2) or triples (e3) of points.
-   More precisely, if the given permutation operates on 1...n, then:
-   - s2 is the operation on (i,k) with 1≤i≤k≤n.
-   - e2 is the operation on (i,k) with 1≤i<k≤n.
-   - e3 is the operation on (i,k,l) with 1≤i<k<l≤n.
+@subsection zsy_perms Permutations
+Currently, only modes s2, e2 and e3 are available for permutations.
+The result gives the operation of the input permutation on unordered
+pairs (e2, s2) or triples (e3) of points.
+More precisely, if the given permutation operates on 1...n, then:
+- s2 is the operation on (i,k) with 1≤i≤k≤n.
+- e2 is the operation on (i,k) with 1≤i<k≤n.
+- e3 is the operation on (i,k,l) with 1≤i<k<l≤n.
 
-   In the output, pairs and triples are numbered lexicographically.
-   For example, E2 uses the following order:
-   (1,2), (1,3), (2,3), (1,4), ...
-   Notice that the symmetric square is never transitive but
-   decomposes into the diagonal and the antisymmetric square.
-   Here are some examples:
-   <pre>
-   p     = (1 5 4 3 2)
-   e2(p) = (1 7 10 6 3)(2 8 4 9 5)
-   s2(p) = (1 15 10 6 3)(2 11 14 9 5)(7 14 8 4 12)
-   e3(p) = (1 5 8 10 4)(2 6 9 3 7)
-   </pre>
-
-
-   @subsection mats Matrices
-   The r-th exterior power (modes e2, e3, e4) has as its entries the determinants of
-   r times r submatrices of the input. Rows and columns are ordered lexicographically,
-   which is equivalent to taking the following basis in the tensor product:
-   @par e2
-        v<sub>i</sub> ∧ v<sub>j</sub> with 1≤i<j≤n
-   @par e3
-        v<sub>i</sub> ∧ v<sub>j</sub> ∧ v<sub>k</sub> with 1≤i<j<k≤n
-   @par e4
-        v<sub>i</sub> ∧ v<sub>j</sub> ∧ v<sub>k</sub>∧v<sub>l</sub> with 1≤i<j<k<l≤n
-
-   The basis vectors are ordered lexicographically, for example (e2):
-   v<sub>1</sub>∧v<sub>2</sub>, v<sub>1</sub>∧v<sub>3</sub>, ... v<sub>1</sub>∧v<sub>n</sub>,
-   v<sub>2</sub>∧v<sub>3</sub>, v<sub>2</sub>∧v<sub>4</sub>, ... v<sub>3</sub>∧v<sub>n</sub>,
-   ... v<sub>n-1</sub>∧v<sub>n</sub>.
-
-   The symmetric square of a matrix with r rows and c columns is a
-   matrix with r(r+1)/2 rows and c(c+1)/2 columns, with entries
-   given by the formulae
-   @f[
-   \begin{array}{c|cc}
-          &  c(c-1)/2  & c  \\ \hline
-   r*(r-1)/2 & ad+bc      & ac \\
-        r &  2ab       & a^2
-   \end{array}
-   @f]
-   where the upper left is the r(r-1)/2 by c(c-1)/2 matrix of permanents.
-   The program orders both the rows and the columns in lexicographical order, i.e.
-   v<sub>1</sub>v<sub>2</sub>, v<sub>1</sub>v<sub>3</sub>, ... v<sub>1</sub>v<sub>n</sub>,
-   v<sub>2</sub>v<sub>3</sub>, v<sub>2</sub>v<sub>4</sub>, ...
-   v<sub>2</sub>v<sub>n</sub>, v<sub>3</sub>v<sub>4</sub>, ... v_{n-1}v<sub>n</sub>,
-   v<sub>1</sub>v<sub>1</sub>, v<sub>2</sub>v<sub>2</sub>, ...
-   v<sub>n</sub>v<sub>n</sub>
-   with the assumption that v<sub>i</sub>v<sub>j</sub> = v<sub>j</sub>v<sub>i</sub>,
-   i.e. the action is on quadratic polynomials.
-
-   The symmetric square is, in general, irreducible except in characteristic 2.
-   In that case there is a copy of the Frobenius square
-   as an invariant submodule, as can be seen from the 2ab in the above
-   formulae. Invariant subspaces in characteristic 2 correspond to special
-   groups (i.e.\ groups of the form 2<sup>n</sup>×2<sup>m</sup>) on which the group
-   given acts on the quotient 2<sup>n</sup>.
-
-   Here are some examples:
-   <pre>
-     (1 2 1 3)    (1 2 1 3 6 2)
-   E2 (0 1 2 1) =  (0 1 0 2 0 4)     (mod 7)
-     (1 2 2 3)    (6 5 6 5 1 4)
-
-     (1 0 2 0 2)   (1 0 1 4 0 1 0 0 0 0)
-   E3 (1 1 2 1 2) = (1 4 3 4 0 3 2 1 3 4)     (mod 5)
-     (3 3 2 3 2)   (1 2 2 3 2 3 1 3 4 2)
-     (1 2 3 1 0)   (4 0 4 0 2 0 4 2 1 3)
-
-                   (1  2  1  5  5  7  0  2  2  3)
-     (1 2 1 3)     (4  3  6  6 12  9  1  4  2  9)
-   S2 (0 1 2 1)  =  (1  2  1  6  5  8  0  2  4  3)   (mod 13)
-     (1 2 2 3)     (4  2  6  4 12  6  1  4  1  9)
-                   (0  0  0  4  2  4  0  1  4  1)
-                   (4  4  6  8 12 12  1  4  4  9)
-   </pre>
+In the output, pairs and triples are numbered lexicographically.
+For example, E2 uses the following order:
+(1,2), (1,3), (2,3), (1,4), ...
+Notice that the symmetric square is never transitive but
+decomposes into the diagonal and the antisymmetric square.
+Here are some examples:
+<pre>
+p     = (1 5 4 3 2)
+e2(p) = (1 7 10 6 3)(2 8 4 9 5)
+s2(p) = (1 15 10 6 3)(2 11 14 9 5)(7 14 8 4 12)
+e3(p) = (1 5 8 10 4)(2 6 9 3 7)
+</pre>
 
 
+@subsection mats Matrices
+The r-th exterior power (modes e2, e3, e4) has as its entries the determinants of
+r times r submatrices of the input. Rows and columns are ordered lexicographically,
+which is equivalent to taking the following basis in the tensor product:
+@par e2
+     v<sub>i</sub> ∧ v<sub>j</sub> with 1≤i<j≤n
+@par e3
+     v<sub>i</sub> ∧ v<sub>j</sub> ∧ v<sub>k</sub> with 1≤i<j<k≤n
+@par e4
+     v<sub>i</sub> ∧ v<sub>j</sub> ∧ v<sub>k</sub>∧v<sub>l</sub> with 1≤i<j<k<l≤n
 
+The basis vectors are ordered lexicographically, for example (e2):
+v<sub>1</sub>∧v<sub>2</sub>, v<sub>1</sub>∧v<sub>3</sub>, ... v<sub>1</sub>∧v<sub>n</sub>,
+v<sub>2</sub>∧v<sub>3</sub>, v<sub>2</sub>∧v<sub>4</sub>, ... v<sub>3</sub>∧v<sub>n</sub>,
+... v<sub>n-1</sub>∧v<sub>n</sub>.
 
-   @section zsy_impl Implementation Details
-   If the input file contains more than one permutation, only the
-   first permutation is read in and processed.
+Here are some examples:
+<pre>
+   (1 2 1 3)    (1 2 1 3 6 2)
+E2 (0 1 2 1) =  (0 1 0 2 0 4)     (mod 7)
+   (1 2 2 3)    (6 5 6 5 1 4)
 
-   If the input is a matrix, the whole input matrix and one row of the
-   result must fit into memory. In case of permutations both the input
-   and the result must fit into memory.
+   (1 0 2 0 2)   (1 0 1 4 0 1 0 0 0 0)
+E3 (1 1 2 1 2) = (1 4 3 4 0 3 2 1 3 4)     (mod 5)
+   (3 3 2 3 2)   (1 2 2 3 2 3 1 3 4 2)
+   (1 2 3 1 0)   (4 0 4 0 2 0 4 2 1 3)
 
- **/
+                 (1  2  1  5  5  7  0  2  2  3)
+   (1 2 1 3)     (4  3  6  6 12  9  1  4  2  9)
+S2 (0 1 2 1)  =  (1  2  1  6  5  8  0  2  4  3)   (mod 13)
+   (1 2 2 3)     (4  2  6  4 12  6  1  4  1  9)
+                 (0  0  0  4  2  4  0  1  4  1)
+                 (4  4  6  8 12 12  1  4  4  9)
+</pre>
+**/
 
 // vim:fileencoding=utf8:sw=3:ts=8:et:cin

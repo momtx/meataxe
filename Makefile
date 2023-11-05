@@ -32,6 +32,8 @@ ZZZ=0
 # Verbose output (echo all commands)
 V=0
 
+MTXDOCDIR=tmp/doc
+
 # configuration overrides
 include Makefile.conf
 
@@ -45,7 +47,7 @@ SILENT=${SILENT${V}}
 
 MTXBIN = ${MTXROOT}/bin
 
-CFLAGS=$(CFLAGS1) -I"${MTXROOT}/include" -Itmp -DMTX_ZZZ=${ZZZ}
+CFLAGS=$(CFLAGS1) -I"include" -Itmp -DMTX_ZZZ=${ZZZ}
 LDFLAGS=$(LDFLAGS1)
 
 PROGRAMS = \
@@ -67,8 +69,8 @@ clean:
 Makefile.conf:
 	@echo "*** Creating empty Makefile.conf"
 	@echo "*** See Makefile for more information"
-	@sleep 5
 	touch "$@"
+	@sleep 5
 
 # ------------------------------------------------------------------------------
 # Compile C sources
@@ -251,25 +253,25 @@ info:
 
 .PHONY: doc
 
-docDir = doc/${MTXVERSION}
-docDocs = src/changelog.dox src/mainpage.dox src/sections.dox src/error_handling.dox
-docProducts = ${docDir}/index.html ${docDir}/pages.html ${docDir}/classes.html
+docDocs = src/changelog.md src/mainpage.md
+docProducts = ${MTXDOCDIR}/index.html ${MTXDOCDIR}/pages.html ${MTXDOCDIR}/classes.html
 
 doc ${docProducts}: \
    etc/Doxyfile etc/layout.xml $(PROGRAMS:%=src/%.c) $(LIB_OBJS:%=src/%.c) \
    src/meataxe.h  \
    ${docDocs} 
+	mkdir -p tmp
 	cp etc/Doxyfile tmp/Doxyfile.auto
 	echo "PROJECT_NUMBER=${MTXVERSION}" >>tmp/Doxyfile.auto
-	echo "OUTPUT_DIRECTORY=${docDir}" >>tmp/Doxyfile.auto
-	mkdir -p ${docDir}
+	echo "OUTPUT_DIRECTORY=${MTXDOCDIR}" >>tmp/Doxyfile.auto
+	mkdir -p ${MTXDOCDIR}
 	doxygen tmp/Doxyfile.auto >tmp/doxygen.log
 
 doxy:
 	cp etc/Doxyfile tmp/Doxyfile.auto
 	echo "PROJECT_NUMBER=${MTXVERSION}" >>tmp/Doxyfile.auto
-	echo "OUTPUT_DIRECTORY=${docDir}" >>tmp/Doxyfile.auto
-	mkdir -p ${docDir}
+	echo "OUTPUT_DIRECTORY=${MTXDOCDIR}" >>tmp/Doxyfile.auto
+	mkdir -p ${MTXDOCDIR}
 	doxygen tmp/Doxyfile.auto >tmp/doxygen.log
 
 

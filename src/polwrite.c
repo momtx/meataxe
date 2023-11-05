@@ -31,7 +31,7 @@ void polWrite(const Poly_t *p, FILE *file)
 
 /// Writes a single polynomial to a file.
 /// If a file with e same name alread eyists, its contents are destroyed.
-/// See also @ref PolWrite
+/// See also @ref polWrite
 ///
 /// @param pol Polynomial to write.
 /// @param fn File name.
@@ -139,10 +139,6 @@ Poly_t *polLoad(const char *fn)
    }
    return p;
 }
-
-
-/// @}
-// vim:fileencoding=utf8:sw=3:ts=8:et:cin
 
 /// @}
 // vim:fileencoding=utf8:sw=3:ts=8:et:cin

@@ -12,15 +12,14 @@
 /// of nonnegative integers, where each 1 in the bit string means that the set contains the
 /// corresponding number.
 ///
-/// Normally, bit strings are created empty and grow as needed when bits are set. The @ref bsTrim
-/// function can be used to free unused memory occupied by trailing 0 bits.
+/// Variable bit strings are with @ref bsAllocEmpty. They are initially empty and grow as needed
+/// when bits are set. The @ref bsTrim function can be used to free unused memory occupied by
+/// trailing 0 bits.
 ///
-/// A bit string can have a fixed size, which is useful when dealing with subsets of a given finite
-/// set M. Fixed-size bit strings do not allow access to bits beyond the fixed range 0...N-1 and
-/// will abort the program instead of extending the bit string.
-/// To create a fixed-size bit string, use @ref bsAllocFixed or call @ref bsSetSize on a standard
-/// bit string.
-
+/// Alternativley, a fixed-size bit string can be created using @ref bsAlloc. This is useful if the
+/// number of bits is known, e.g., when dealing with subsets of a given finite set M. Fixed-size
+/// bit strings do not allow access to bits beyond the fixed range 0...N-1 and will abort the
+/// program instead of extending the bit string.
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -55,12 +54,16 @@ void bsValidate(const struct MtxSourceLocation* src, const BitString_t *bs)
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 /// Creates a bit string.
-/// This function creates a new, empty bit string.
+/// This function creates a empty bit string of variable size.
 ///
 /// See also @ref bsFree
 
 static size_t count = 0;
 static size_t mem = 0;
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+/// Creates an empty, variable-sized bit string.
 
 BitString_t *bsAllocEmpty()
 {
@@ -171,7 +174,7 @@ void bsTrim(BitString_t* bs)
 /// Changes and locks the size of a bit string.
 /// This function can be called on any bit string, variable or fixed size.
 /// It converts the bit string into a fixed-size bit string of the given size. Existing bits at
-/// position @newSize and above will be lost. If the size is increased, new bits are initialized
+/// position @a newSize and above will be lost. If the size is increased, new bits are initialized
 /// with 0.
 
 void bsResize(BitString_t* bs, size_t newSize)
@@ -502,8 +505,7 @@ void bsPrint(const char *name, const BitString_t *bs)
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 /// Writes a bit string to a file.
-/// @param bs The bit string.
-/// @param f File to write to. Must be open for writing.
+/// The file must be open for writing.
 
 void bsWrite(BitString_t *bs, FILE *file)
 {
@@ -525,8 +527,7 @@ void bsWrite(BitString_t *bs, FILE *file)
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-/// Reads a bit string from a file.
-/// @param f File to read from. Must be open for reading.
+/// Reads a bit string from a file. The file must be open for reading.
 /// @return The bit string.
 
 BitString_t *bsRead(FILE *file)

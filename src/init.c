@@ -8,7 +8,8 @@
 #include <stdlib.h>
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-/// @addtosection app
+
+/// @addtogroup app
 /// @{
 
 static int isInitialized = 0;
@@ -19,8 +20,6 @@ static int isInitialized = 0;
 static char libDir[250] = "";
 
 int MtxOpt_UseOldWordGenerator = 0;
-
-
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -103,13 +102,13 @@ const char* mtxVersion()
 
 /// This function initializes the MeatAxe library including finite field arithmetic and file i/o
 /// functions. It must be called before any other MeatAxe library function.
-/// It is legal to call MtxInitLibrary() multiple times. Only the first call will actually do
+/// It is legal to call mtxInitLibrary() multiple times. Only the first call will actually do
 /// anything.
-/// An application that uses @ref MtxInitApplication need not call this function.
+/// An application that uses @ref appAlloc need not call this function.
 ///
-/// @a argv0 is the name of the process executable. It will be used to initialize directory names
-/// such as @ref libDir, which have a default value relative to the executable directory. If the
-/// program name is not known, the argument may be NULL or an empty string.
+/// @a argv0 is the name of the process executable. It may be used to initialize directory names
+/// such as the library directory, which have a default value relative to the executable directory.
+/// If the program name is not known, the argument may be NULL or an empty string.
 
 void mtxInitLibrary(char* argv0)
 {
@@ -127,7 +126,7 @@ void mtxInitLibrary(char* argv0)
 /// Returns the name of the MeatAxe library directory.
 /// The returned name does not have a trailing slash, unless it is equal to "/".
 /// This function fails and aborts the program if it is called before @ref mtxInitLibrary.
-
+///
 /// The library directory is determined as follows (in the order given here):
 ///
 /// * If the "-L" option is used and the argument is not an empty string, the given directory

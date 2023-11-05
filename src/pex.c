@@ -11,6 +11,7 @@
 #include <pthread.h>
 
 
+/// @private
 struct PexGroup {
    struct PexGroup* next;
    struct PexGroup** prev;
@@ -20,6 +21,7 @@ struct PexGroup {
    size_t nPending;             // number of tasks waiting or being executed
 };
 
+/// @private
 typedef struct Task {
    struct Task* next;
    struct PexGroup* group;

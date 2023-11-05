@@ -1,15 +1,20 @@
-# vim:fileencoding=utf8
+@page pg_changelog Version History and Release Notes
 
-/**
-
-@page changelog Release Notes
-
-@section r2_5_x Release 2.5.X
-Removed suport for old text file formats.
-Added "large field" arithmetic (q < 65535).
+Most of the programs (including their documentation) in this package
+are based on the FORTRAN code written by Richard A. Parker.
+The translation from FORTRAN to C was done in 1989 and since then both
+versions have developed independently.
 
 
-@section r2_4_x Release 2.4.X
+# Release 2.5.X {#r2_5_x}
+
+- **NOTE**: version 2.5. includes major incompatible API changes
+  and will probably be renamed to 3.0
+- Removed suport for old text file formats.
+- Added "large field" arithmetic (q < 65535).
+
+
+# Release 2.4.X {#r2_4_x}
 @par Jan-2015
 Refactoring of tests (work in progress).
 
@@ -28,7 +33,7 @@ Bugfix: pwkond can now print words in GAP format if there are more than 9 genera
 - Added functions for handling of dynamic strings.
 - Documentation enhancements.
 
-@section r2_4_13 Release 2.4.13
+# Release 2.4.13 {#r2_4_13}
 @par 11-May-2009 
 - Makefile reorganization and SVN integration. As a consequence of the latter, the third
   component of the version number is now the subversion revision.
@@ -37,12 +42,12 @@ Bugfix: pwkond can now print words in GAP format if there are more than 9 genera
 - pseudochop: integrated changes by Klaus Lux to get it working under 2.4.8.
   Now using simpler integer mat functions.
 
-@section r2_4_8 Release 2.4.8
+# Release 2.4.8 {#r2_4_8}
 @par 21-Apr-2009 
 - Minor corrections.
 - ZSC: accept spin-up scripts starting with a seed vector differnent from 1.
 
-@section r2_4_7 Release 2.4.7
+# Release 2.4.7 {#r2_4_7}
 @par 09-Sep-2007
 - More bugfixes for 64-bit platforms.
 @par 03-Sep-2007
@@ -81,4 +86,3 @@ Bugfix: pwkond can now print words in GAP format if there are more than 9 genera
 - Test scripts modified to work with Bourne shell (Solaris)
 - Automatic platform detection (config.h)
 
-**/

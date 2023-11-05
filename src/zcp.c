@@ -7,14 +7,6 @@
 #include <string.h>
 #include <stdlib.h>
 
-
-
-
-/* ------------------------------------------------------------------
-   Global data
-   ------------------------------------------------------------------ */
-
-
 static const char *fname;		/* Matrix file name */
 static Matrix_t *mat;			/* The matrix */
 static int opt_G = 0;			/* GAP output */
@@ -127,7 +119,7 @@ static void writeF(const FPoly_t *fpol)
          if (!first)
             printf(",\n");
          first = 0;
-         printf("[[");
+         printf("[" "["); // Doxygen chokes on two opening brackets
          for (int i = 0; i < factor->degree; ++i)
             printf("%s,",ffToGapStr(factor->data[i]));
          printf("%s], %d]",ffToGapStr(factor->data[i]), exp);
@@ -159,7 +151,7 @@ int main(int argc, char **argv)
 
     if (!opt_f) {
        // Partial factorization (default) or single polynomial
-       Charpol_t* state = charpolAlloc(mat, opt_m ? PM_MINPOL : PM_CHARPOL, 0);
+       Charpol_t* state = charpolStart(mat, opt_m ? PM_MINPOL : PM_CHARPOL, 0);
        Poly_t *poly = polAlloc(mat->field, 0);
        Poly_t *factor;
        while ((factor = charpolFactor(state)) != NULL) {
@@ -183,6 +175,9 @@ int main(int argc, char **argv)
     return 0;
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+// *INDENT-OFF*
 
 /**
 @page prog_zcp zcp - Characteristic Polynomial
@@ -231,25 +226,20 @@ coefficients of the factors in ascending order.
 
 @section zcp_impl Implementation Details
 The characteristic polynomial of a matrix A is computed by constructing a sequence 
-@f[
-        0=U_0<U_1<\ldots<U_n=V
-@f]
-of A-invariant subspaces, where @f$U_i/U_{i-1}@f$ is A-cyclic.
-In the i-th step, @f$U_i@f$ is constructed by chosing a random vector
-@f$u\in V\setminus U_{i-1}@f$ and calculating @f$u,uA,uA^2,\ldots@f$ until some
-linear combination of these vectors falls into @f$U_{i-1}@f$. This yields
-a polynomial @f$p_i(x)@f$ with @f$up_i(A)\in U_{i-1}@f$. @f$p_i(x)@f$ is the
-characteristic polynomial of @f$A@f$ on @f$U_i/U_{i-1}@f$, and the full
-characteristic polynomial of @f$A@f$ is the product of all @f$p_i@f$'s.
+0=U₀<U₁< ‥  <Uₙ=V of A-invariant subspaces, where U<sub>i</sub>/U<sub>i-1</sub> is A-cyclic.
+In each step, U<sub>i</sub> is constructed by chosing a random vector u∈V∖U<sub>i-1</sub>
+and calculating uA, uA², uA³,… until some linear combination of these vectors falls into
+U<sub>i-1</sub>. This yields a factor of the characteristic polynomial corresponding to 
+U<sub>i</sub>/U<sub>i-1</sub>, and the full characteristic polynomial is the product of
+all factors.
 
-The algorithm for the minimal polynomial uses the same technique of
-constructing a sequence @f$(U_i)@f$ of invariant subspaces. In the
-i-th step, images @f$uA,uA^2,\ldots@f$ of a seed vector @f$u@f$ are
-calculated, until a linear combination of these vectors vanishes
-(this is the main difference to the algorithm above). This yields a
-polynomial @f$p_i(x)@f$ of minimal degree with @f$up_i(A)=0@f$, and the
-minimal polynomial of A is the least common multiple of the
-@f$p_i@f$'s.
+The algorithm for the minimal polynomial uses the same technique of constructing a sequence
+(U<sub>i</sub>) of invariant subspaces. In each step images uA, uA², uA³,… of a seed vector
+u are calculated until some linear combination of the images is zero (this is the main
+difference to the algorithm above). This yields a polynomial p<sub>i</sub>(x) of minimal degree
+with up<sub>i</sub>(A)=0, and the minimal polynomial of A is the least common multiple of the
+p<sub>i</sub>'s.
 
 */
+
 // vim:fileencoding=utf8:sw=3:ts=8:et:cin

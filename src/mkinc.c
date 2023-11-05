@@ -449,9 +449,10 @@ mkinc [@em Options] [-G] @em Name
   Incidence matrix.
 
 @section mkinc_desc Description
-This program runs in two steps. During the first step, all cyclic
-cyclic submodules found by @ref prog_mkcycl "mkcycl" are uncondensed, giving the
-local submodules, the "mountains", of the original module. Then, each
+The MKINC program is part of the @ref sec_progs_lattice "Submodule Lattice Package".
+It is invoked after @ref prog_pwkond "pwkond" has calculated the cyclic submodules.
+MKCYCL runs in two steps. During the first step, all cyclic submodules are uncondensed,
+giving the local submodules, the "mountains", of the original module. Then, each
 local submodule is projected back to the condensed module, and all
 cyclic vectors which are contained in the image are found.
 At the end of this step, there is a list of local submodules and,

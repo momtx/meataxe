@@ -73,7 +73,7 @@ void ffFree(PTR x)
 /// This function copies the contents of one row to another row.
 /// @param dest Pointer to the destination.
 /// @param src Pointer to the source.
-/// @param noc Row size (number of colums).
+/// @param noc Row size (number of columns).
 
 void ffCopyRow(PTR dest, PTR src, int noc)
 {
@@ -86,7 +86,7 @@ void ffCopyRow(PTR dest, PTR src, int noc)
 /// This function exchanges the contents of two rows.
 /// @param dest Pointer to the first row
 /// @param src Pointer to the second row
-/// @param noc Row size (number of colums).
+/// @param noc Row size (number of columns).
 
 void ffSwapRows(PTR dest, PTR src, int noc)
 {
@@ -111,6 +111,7 @@ void ffSwapRows(PTR dest, PTR src, int noc)
 /// @see ffStepPtr()
 /// @param base Pointer to the first row of the matrix.
 /// @param row Row index. The first row has index 0.
+/// @param noc Row size (number of columns).
 
 PTR ffGetPtr(PTR base, int row, int noc)
 {

@@ -224,7 +224,9 @@ int main(int argc, char **argv)
     return 0;
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
+// *INDENT-OFF*
 
 /**
 @page prog_zkd zkd - Condense a Permutation
@@ -282,16 +284,15 @@ GF(q) case.
 
 
 @section zkd_impl Implementation Details
-Let r be the number of orbits,
-@f$O_1,\ldots,O_r@f$ the orbits and, for @f$i=1,\ldots,r@f$, @f$l_i:=|O_i|@f$
-the size of the i-th orbit.
+Let r be the number of orbits, O<sub>1</sub>,…,O<sub>r</sub> the orbits,
+and l<sub>i</sub>:=|O_i| the size of the i-th orbit.
 The first step is to calculate the largest power (m) of the
 characteristic that divides any of the orbit sizes. ZKD assumes that
 this is the order of the Sylow-p subgroup of the condensation
 subgroup, but it prints out its findings with the message
-<pre>
+```
 p-part taken has order N
-</pre>
+```
 so the user can check it. If this is not the order of the Sylow-p
 subgroup of the condensation group, the program will not know, so
 will continue. Normally, however, the condensation subgroup K will
@@ -303,38 +304,35 @@ The output is a square matrix with one row and one column for each
 orbit of K. Abstractly, the condensation can be described as follows.
 Let G be a permutation group of degree n, F a field of
 characteristic p and K≤G a p'-subgroup. Then, there is an idempotent
-@f[
-        e = \frac{1}{|K|} \sum_{h\in K} h \in FG
-@f]
-associated to K. Now, let V be a FG-module, for example (as in
-this program) the natural permutation module @f$V=F^n@f$, where G acts
-by permuting the entries of vectors. Then, Ve is an e(FG)e-module,
-and for any π∈G, the condensed form is eπe, regarded as a linear map on Ve.
 
-To calculate the action of eπe, let @f$(v_1,\ldots,v_n)@f$ be the
-standard basis such that @f$v_i\pi=v_{i\pi}@f$ for π∈G.
+   e = 1/|K|·∑<sub>h∈K</sub>h
+
+in FG associated to K. Now, let V be a FG-module, for example (as in this program) the natural
+permutation module V=Fⁿ, where G acts by permuting the entries of vectors.
+Then, Ve is an e(FG)e-module, and for any π∈G, the condensed form is eπe,
+regarded as a linear map on Ve.
+
+To calculate the action of eπe, let (v_1,…,v_n) be the standard basis such that
+v<sub>i</sub>·π=v<sub>iπ</sub> for π∈G.
 A basis of Ve is given by the orbit sums
-@f[
-        w_i = \sum_{k\in O_i} v_k
-    	\qquad(1\leq i\leq r)
-@f]
+
+   ew<sub>i</sub> = ∑<sub>k∈O<sub>i</sub></sub>v<sub>k</sub> (1≤i≤r)
+
 and with respect to this basis we have
-@f[
-        w_i (e\pi e) = \sum_{k\in O_i} \frac{1}{l_{[k\pi]}} w_{[k\pi]}
-@f]
+       
+   w<sub>i</sub>(eπe) = ∑<sub>k∈O<sub>i</sub></sub> 1/(l<sub>[kπ]</sub>) w<sub>[kπ]</sub>
+
 where [m] denotes the orbit containing m.
 
-If K is not a p'-subgroup, e is no longer defined. However, the
-last formula can still be given a sense by replacing
-@f[
-        \frac{1}{l_{[i\pi]}} \to \lambda_{[i\pi]}:=
-        \left\{\begin{array}{ll}
-        \frac{1}{l_{[i\pi]}/p^m}  & \mbox{if~}p^m|l_{[i\pi]}\\
-        0                         & \mbox{otherwise}
-        \end{array}\right.
-@f]
-where m is the highest power of the characteristic which divides
-any of the orbit sizes. Thus, all but the orbits with maximal p-part
-are discarded, and the corresponding columns in the output matrix are zero.
+If K is not a p'-subgroup, e is no longer defined. However, the last formula can still
+be given a sense by replacing
+
+   1/l<sub>[kπ]</sub> → 1/l<sub>[kπ]/p<sup>m</sup></sub>  if p<sup>m</sup> | l<sub>[kπ]</sub><br>
+   1/l<sub>[kπ]</sub> → 0  otherwise
+
+where m is the highest power of the characteristic which divides any of the orbit sizes.
+Thus, all but the orbits with maximal p-part are discarded, and the corresponding columns
+in the output matrix are zero.
 */
+
 // vim:fileencoding=utf8:sw=3:ts=8:et:cin

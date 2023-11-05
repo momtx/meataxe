@@ -134,6 +134,8 @@ static void reserve(StringBuilder_t* sb, size_t minFree)
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
+/// Appends a fixed text fragment to the string.
+
 void sbAppend(StringBuilder_t* sb, const char* fragment)
 {
    sbValidate(MTX_HERE, sb);
@@ -145,6 +147,8 @@ void sbAppend(StringBuilder_t* sb, const char* fragment)
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
+
+/// Appends a formatted string (vprintf style) to the string.
 
 void sbVprintf(StringBuilder_t* sb, const char* fmt, va_list args)
 {
@@ -175,13 +179,11 @@ void sbPrintf(StringBuilder_t* sb, const char* fmt, ...)
    va_end(args);
 }
 
-/// @}
-
-// vim:fileencoding=utf8:sw=3:ts=8:et:cin
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 #define TPRINTF_N_BUF 5
 
+/// @private
 struct PrintBuffer {
     size_t capacity;
     size_t size;

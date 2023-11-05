@@ -29,8 +29,9 @@ void charpolValidate(const struct MtxSourceLocation* src, Charpol_t* cp)
 ///
 /// @param matrix The matrix.
 /// @param mode Decides which polynomial (minimal or characteristic) to compute.
+/// @param seed The first basis vector to use for spin-up. Usually zero.
 
-Charpol_t* charpolAlloc(const Matrix_t* matrix, enum CharpolMode mode, long seed)
+Charpol_t* charpolStart(const Matrix_t* matrix, enum CharpolMode mode, long seed)
 {
    matValidate(MTX_HERE, matrix);
    if (matrix->nor != matrix->noc) {
@@ -193,7 +194,7 @@ static Poly_t *charpolFactor_(struct CharpolState* state)
 /// Computes one factor of the characteristic or minimal polynomial of a matrix.
 ///
 /// The function needs a computation state for the matrix which must have been created with
-/// @ref charpolAlloc. Each call of @c charpolFactor for the same state returns a new factor of the
+/// @ref charpolStart. Each call of @c charpolFactor for the same state returns a new factor of the
 /// characteristic or minimal polynomial. If the polynomial is complete, the function returns NULL.
 ///
 /// The factors returned by @c charpolFactor are in general reducible. If you need the
@@ -212,7 +213,7 @@ Poly_t *charpolFactor(Charpol_t* state)
 FPoly_t *charpol(const Matrix_t *mat)
 {
    matValidate(MTX_HERE, mat);
-   Charpol_t* state = charpolAlloc(mat, PM_CHARPOL, 0);
+   Charpol_t* state = charpolStart(mat, PM_CHARPOL, 0);
 
    FPoly_t *cpol = fpAlloc();
    Poly_t *p;
@@ -231,7 +232,7 @@ FPoly_t *charpol(const Matrix_t *mat)
 /// Computes one factor of the minimal polynomial of a matrix.
 ///
 /// The function needs a computation state for the matrix which must have been created with
-/// @ref charpolAlloc using @ref PM_MINPOL mode. Each call of @c charpolFactor for the same state
+/// @ref charpolStart using @c PM_MINPOL mode. Each call of @c charpolFactor for the same state
 /// returns a new factor of the minimal polynomial. If the polynomial is complete, the function
 /// returns NULL
 ///
@@ -252,7 +253,7 @@ Poly_t *minpolFactor(Charpol_t* state)
 FPoly_t *minpol(const Matrix_t *mat)
 {
    matValidate(MTX_HERE, mat);
-   Charpol_t* state = charpolAlloc(mat, PM_MINPOL, 0);
+   Charpol_t* state = charpolStart(mat, PM_MINPOL, 0);
    FPoly_t *mp = fpAlloc();
    while (1)
    {
