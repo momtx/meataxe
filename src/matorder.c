@@ -96,7 +96,7 @@ int matOrder(const Matrix_t *mat)
                flag = 0;
             }
          }
-         ffMapRow(v2,m1,nor,nor,v3);
+         ffMapRow(v3,v2,m1,nor,nor);
          ++tord;
       }
       while (tord <= 1000 && ffCmpRows(v3,v1, nor) != 0);

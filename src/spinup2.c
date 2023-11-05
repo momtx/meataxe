@@ -80,7 +80,7 @@ Matrix_t *SpinUpWithScript(const Matrix_t *seed, const MatRep_t *rep, const IntM
 	    	mtxAbort(MTX_HERE,"Invalid generator number %d at position %d",
 		    vecgen,i);
 	    }
-	    ffMapRow(matGetPtr(basis,vecno),rep->Gen[vecgen]->data,seed->noc,seed->noc,vec);
+	    ffMapRow(vec, matGetPtr(basis,vecno),rep->Gen[vecgen]->data,seed->noc,seed->noc);
 	}
     }
     return basis;

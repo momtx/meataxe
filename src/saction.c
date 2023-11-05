@@ -64,7 +64,7 @@ Matrix_t *SAction(const Matrix_t *subspace, const Matrix_t *gen)
       FEL f;
 
       // calculate the image of the <i>-th row of <subspace>
-      ffMapRow(xi,gen->data,dim,dim,tmp);
+      ffMapRow(tmp, xi,gen->data,dim,dim);
 
       // clean the image with the subspace and store coefficients
       int rc = ffCleanRow2(tmp,subspace->data,sdim,dim,subspace->pivotTable,yi);

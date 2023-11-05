@@ -20,7 +20,7 @@ static int TestGrMapRow1(Matrix_t *m, int gr_level)
 
    for (i = 0; i < m->nor; ++i) {
       PTR vec = matGetPtr(input,i);
-      ffMapRow(vec,m->data,m->nor,m->noc, res_std);
+      ffMapRow(res_std, vec,m->data,m->nor,m->noc);
       GrMapRow(vec,gm,res_grease);
       ASSERT_EQ_INT(ffCmpRows(res_grease,res_std,m->noc), 0);
    }

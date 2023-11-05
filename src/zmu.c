@@ -101,7 +101,7 @@ static void multmp(void)
    for (uint32_t i = 0; i < norA; ++i)
    {
       mfReadRows(fileA, row_in, 1, nocA);
-      ffPermRow(row_in, perm->data, nocA, row_out);
+      ffPermRow(row_out, row_in, perm->data, nocA);
       mfWriteRows(fileC, row_out,1, nocA);
    }
 
@@ -176,7 +176,7 @@ static void multmm(void)
     for (uint32_t i = 0; i < norA; ++i)
     {
         mfReadRows(fileA, rowA, 1, nocA);
-	ffMapRow(rowA, matrixB, norB, nocB, rowC);
+	ffMapRow(rowC, rowA, matrixB, norB, nocB);
 	mfWriteRows(fileC,rowC, 1, nocB);
     }
     sysFree(rowC);

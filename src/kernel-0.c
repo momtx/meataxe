@@ -591,13 +591,13 @@ int ffToInt(FEL f)
 ///
 /// @attention @em result and @em row must not overlap. Otherwise the result is undefined.
 ///
+/// @param[out] result The resulting vector (@a noc columns).
 /// @param row The source vector (\a nor columns).
 /// @param matrix The matrix (\a nor by \a noc).
 /// @param nor number of rows in the matrix.
 /// @param noc number of columns in the matrix.
-/// @param[out] result The resulting vector (@a noc columns).
 
-void ffMapRow(PTR row, PTR matrix, int nor, int noc, PTR result)
+void ffMapRow(PTR result, PTR row, PTR matrix, int nor, int noc)
 {
    register int i;
    register FEL f;

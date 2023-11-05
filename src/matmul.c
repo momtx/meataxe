@@ -45,7 +45,7 @@ Matrix_t *matMul(Matrix_t *dest, const Matrix_t *src)
    result = tmp = ffAlloc(dest->nor, src->noc);
    x = dest->data;
    for (i = 0; i < dest->nor; ++i) {
-      ffMapRow(x,src->data,src->nor,src->noc,tmp);
+      ffMapRow(tmp, x,src->data,src->nor,src->noc);
       ffStepPtr(&tmp, src->noc);
       ffStepPtr(&x, dest->noc);
    }

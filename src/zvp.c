@@ -295,7 +295,7 @@ static int MakeOrbit()
    while (nfinished < nvec && nvec <= maxvec) {
       MESSAGE(3,("Vec[%d] * Gen[%d] = ",nfinished,igen));
       x = ffGetPtr(vtable,vecpos[nfinished],Seed->noc);
-      ffMapRow(x,Gen[igen]->data,Seed->noc,Seed->noc,tmp);
+      ffMapRow(tmp, x,Gen[igen]->data,Seed->noc,Seed->noc);
       if (proj) {
          Normalize(tmp);
       }

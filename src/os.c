@@ -362,7 +362,7 @@ void *sysMalloc(size_t nbytes)
 /// Resizes a memory block.
 /// This function works like @c realloc() but handles zero-length blocks differently (namely, by
 /// allocating 1 byte instead) to avoid problems with broken @c realloc() implementations.
-/// Note: if a buffer is enlarged, the added memory region is NOT initialized with zeroes!
+/// Note: if a buffer is enlarged, the added memory region is not initialized with zeroes!
 /// @param buf Pointer to the memory block.
 /// @param nbytes Desired new size.
 /// @return  Pointer to resized memory block or NULL on error.

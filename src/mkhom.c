@@ -188,7 +188,7 @@ int zgensbasis(PTR seed, int noc, int seedcount, int ngen, Matrix_t *gen[], PTR 
 
    while (xi < xk)
    {
-      ffMapRow(yi, gen[igen]->data, noc, noc, yk);
+      ffMapRow(yk, yi, gen[igen]->data, noc, noc);
       ffCopyRow(xk,yk, noc);
 
       /* Clean and check if we got a new vector
@@ -328,7 +328,7 @@ Matrix_t *bigform(Matrix_t *mat, Matrix_t **gens, long *op_table)
         else
         {
             ptr = matGetPtr(big,op_table[ind] - 1);
-            ffMapRow(ptr, gens[op_table[ind + 1] - 1]->data, gens[0]->nor, mat->noc, bigptr);
+            ffMapRow(bigptr, ptr, gens[op_table[ind + 1] - 1]->data, gens[0]->nor, mat->noc);
         }
         ffStepPtr(&bigptr, mat->noc);
     }
@@ -676,7 +676,7 @@ Matrix_t *spinpartstdbas(PTR vec, const long *op_table, Matrix_t *gens[],
     for (l = part_dim + 2; l <= newpartdim; l++)
     {
         row = matGetPtr(mat,op_table[2*l] - 1 - part_dim);
-        ffMapRow(row, gens[op_table[2*l + 1] - 1]->data, gens[0]->nor, gens[0]->noc,ptr);
+        ffMapRow(ptr, row, gens[op_table[2*l + 1] - 1]->data, gens[0]->nor, gens[0]->noc);
         ffStepPtr(&ptr, gens[0]->noc);
     }
     return mat;
@@ -939,7 +939,7 @@ int main(int argc, char **argv)
                             if (m == numMgens)
                             {
                                 basptr = matGetPtr(posimages[m][s], stdtab[k][l] - 1);
-                                ffMapRow(basptr, NRep->Gen[k]->data, NRep->Gen[0]->nor, NRep->Gen[0]->noc, sysptr);
+                                ffMapRow(sysptr, basptr, NRep->Gen[k]->data, NRep->Gen[0]->nor, NRep->Gen[0]->noc);
                                 ffMulRow(sysptr, ffNeg(FF_ONE), NRep->Gen[0]->noc);
                             }
                             basptr = posimages[m][s]->data;

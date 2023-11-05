@@ -131,7 +131,7 @@ void GrMapRow(PTR v,GreasedMatrix_t *M, PTR w)
       return;
    }
    if (M->grRows == 0) {        /* Greasig is switched off */
-      ffMapRow(v,M->precalcData,M->nor,M->noc,w);
+      ffMapRow(w, v,M->precalcData,M->nor,M->noc);
       return;
    }
 

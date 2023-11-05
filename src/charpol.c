@@ -124,7 +124,7 @@ static void spinup_cyclic(struct CharpolState* state)
          ------------------------- */
       x = a;
       ffStepPtr(&a, state->vsDim);
-      ffMapRow(x,state->mat,state->vsDim,state->vsDim,a);
+      ffMapRow(a, x,state->mat,state->vsDim,state->vsDim);
       y = b;
       ffStepPtr(&b, state->vsDim);
       ffMulRow(b,FF_ZERO, state->vsDim);

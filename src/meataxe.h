@@ -226,8 +226,8 @@ void ffInsert(PTR row, int col, FEL mark);
 // Other low-level functions (zzz2.c)
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void ffMapRow(PTR row, PTR matrix, int nor, int noc, PTR result);
-void ffPermRow(PTR row, const uint32_t *perm, int noc, PTR result);
+void ffMapRow(PTR result, PTR row, PTR matrix, int nor, int noc);
+void ffPermRow(PTR result, PTR row, const uint32_t *perm, int noc);
 int ffSumAndIntersection(int noc, PTR wrk1, uint32_t *nor1, uint32_t *nor2, PTR wrk2, uint32_t *piv);
 
 

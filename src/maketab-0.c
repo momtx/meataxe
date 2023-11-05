@@ -469,7 +469,7 @@ static void mkembed()
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static int Init(int field)
+static void Init(int field)
 {
     long q, d;
 
@@ -502,15 +502,12 @@ int ffMakeTables(int field)
     uint8_t a[8],b[8],c[8],d[8],z;
 
 
-    /* Initialize
-       ---------- */
-    if (Init(field) != 0)
-	return 1;
-    writeheader();			/* Open file and write header */
+    // Initialize
+    Init(field);
+    writeheader();
     inittables();
 
-    /* Make insert table
-       ----------------- */
+    // Make insert table
     memset(a,0,sizeof(a));
     MESSAGE(1,("Calculating insert table\n"));
     for (i = 0; i < (int) Q; i++)
@@ -525,8 +522,7 @@ int ffMakeTables(int field)
     	}
     }
 
-    /* Pack/unpack and arithmetic tables
-       --------------------------------- */
+    // Pack/unpack and arithmetic tables
     MESSAGE(1,("Calculating pack/unpack and arithmetic tables\n"));
     for (i=0 ; i < (int) maxmem; i++)
     {
@@ -585,8 +581,7 @@ int ffMakeTables(int field)
     }
     MESSAGE(2,("\n"));
 
-    /* Inversion table
-       --------------- */
+    // Inversion table
     MESSAGE(1,("Calculating inversion table\n"));
     fflush(stdout);
     for (i = 0; i < (int)Q; i++)

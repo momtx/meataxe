@@ -531,7 +531,7 @@ int ffToInt(FEL f)
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void ffMapRow(PTR row, PTR matrix, int nor, int noc, PTR result)
+void ffMapRow(PTR result, PTR row, PTR matrix, int nor, int noc)
 {
    ffMulRow(result, FF_ZERO, noc);
 

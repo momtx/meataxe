@@ -108,7 +108,7 @@ static void calculateMatrixOrder()
          if (++tord > MAXORDER_C) {
             mtxAbort(MTX_HERE,"zor: Partial order is over %d",MAXORDER_C);
          }
-         ffMapRow(v,m1,noc,noc,bend);
+         ffMapRow(bend, v,m1,noc,noc);
       }
       while (ffCmpRows(bend,start,noc));
 

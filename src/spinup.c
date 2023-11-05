@@ -139,17 +139,17 @@ static int Spin1(PTR seed, int seedno, const SpinUpInfo_t *info)
 	if (Flags & SF_STD)
 	{
 	    if (Gen != NULL)
-		ffMapRow(stdget,Gen[igen]->data,Dim,Dim,stdput);
+		ffMapRow(stdput, stdget,Gen[igen]->data,Dim,Dim);
 	    else
-		ffPermRow(stdget,GenP[igen]->data, Dim,stdput);
+		ffPermRow(stdput, stdget,GenP[igen]->data, Dim);
 	    ffCopyRow(put,stdput, Dim );
 	}
 	else
 	{
 	    if (Gen != NULL)
-		ffMapRow(get,Gen[igen]->data,Dim,Dim,put);
+		ffMapRow(put, get,Gen[igen]->data,Dim,Dim);
 	    else
-		ffPermRow(get,GenP[igen]->data,Dim, put);
+		ffPermRow(put, get,GenP[igen]->data,Dim);
 	}
     	if (Script != NULL)
     	{

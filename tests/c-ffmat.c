@@ -28,13 +28,13 @@ static int TestMapRow1(PTR mat, PTR a, PTR b, int noc)
       // Check that the i-th basis vector is mapped to itself.
       ffMulRow(a,FF_ZERO, noc);
       ffInsert(a,i,FF_ONE);
-      ffMapRow(a,mat,noc,noc,b);
+      ffMapRow(b, a,mat,noc,noc);
       for (k = 0; k < noc; ++k) {
          ASSERT((ffExtract(b,k) == FF_ZERO) ^ (k == i));
       }
 
       
-      ffMapRow(a,mat,i,noc,b);
+      ffMapRow(b, a,mat,i,noc);
       for (k = 0; k < noc; ++k) {
          ASSERT_EQ_INT(ffExtract(b,k), FF_ZERO);
       }
@@ -43,7 +43,7 @@ static int TestMapRow1(PTR mat, PTR a, PTR b, int noc)
    for (i = 0; i < noc; ++i) {
       ffInsert(a,i,FTab[i % ffOrder]);
    }
-   ffMapRow(a,mat,noc,noc,b);
+   ffMapRow(b, a,mat,noc,noc);
    for (i = 0; i < noc; ++i) {
       ASSERT_EQ_INT(ffExtract(b,i), FTab[i % ffOrder]);
    }

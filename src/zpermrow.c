@@ -13,14 +13,14 @@
 /// and stores the result in @a result. More explicitly: if <tt>perm[i] = k</tt>, then the
 /// i-th mark of the vector is stored in the k-th position of the result. 
 ///
+/// @param result Result vector (@a noc columns).
 /// @param row A row vector with @a noc columns.
 /// @param perm Pointer to a table of @a noc numbers defining a permutation of {0,..., noc-1}.
 /// @param noc Number of columns in @a row and @result
-/// @param result Result vector (@a noc columns).
 ///
 /// Note: @a result and @a row must not overlap.
 
-void ffPermRow(PTR row, const uint32_t* perm, int noc, PTR result)
+void ffPermRow(PTR result, PTR row, const uint32_t* perm, int noc)
 {
    register FEL f;
    register int i;

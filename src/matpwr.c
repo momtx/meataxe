@@ -35,7 +35,7 @@ static void matpwr_(long n, PTR inp, PTR out, PTR tmp2, int dim)
          } else {
             x = out;
             for (i = 0; i < dim; ++i) {
-               ffMapRow(x,inp,dim,dim,tmp2);
+               ffMapRow(tmp2, x,inp,dim,dim);
                ffCopyRow(x,tmp2, dim);
                ffStepPtr(&x, dim);
             }
@@ -47,7 +47,7 @@ static void matpwr_(long n, PTR inp, PTR out, PTR tmp2, int dim)
       x = inp;
       y = tmp2;
       for (i = 0; i < dim; ++i) {
-         ffMapRow(x,inp,dim, dim,y);
+         ffMapRow(y, x,inp,dim, dim);
          ffStepPtr(&x, dim);
          ffStepPtr(&y, dim);
       }
