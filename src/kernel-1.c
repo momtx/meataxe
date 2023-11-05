@@ -171,7 +171,6 @@ static int LoadTables(int fieldOrder)
 int ffSetField(int field)
 {
    MTX_ASSERT(sizeof(FEL) == 2);
-   MTX_ASSERT(sizeof(unsigned short) == 2);
    MTX_ASSERT(sizeof(unsigned int) >= 4);
 
    if ((field == ffOrder) || (field < 2)) {

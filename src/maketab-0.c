@@ -11,7 +11,6 @@
 
 #define MAXGRAD 12		/* Maximal degree of polynomials */
 
-typedef unsigned char BYTE;
 typedef unsigned char POLY[MAXGRAD+1];
 
 
@@ -20,7 +19,7 @@ typedef unsigned char POLY[MAXGRAD+1];
    ----------------------------------------------------------------- */
 
 
-BYTE
+uint8_t
     mtx_tmult[256][256],
     mtx_tadd[256][256],
     mtx_taddinv[256],
@@ -29,27 +28,27 @@ BYTE
 	mtx_textract[8][256],
 	mtx_tnull[8][256],
 	mtx_tinsert[8][256];
-BYTE mtx_embed[MTX_MAXSUBFIELDS][MTX_MAXSUBFIELDORD]; /* Embeddings of subfields */
-BYTE mtx_restrict[MTX_MAXSUBFIELDS][256];	  /* Restriction to subfields */
+uint8_t mtx_embed[MTX_MAXSUBFIELDS][MTX_MAXSUBFIELDORD]; /* Embeddings of subfields */
+uint8_t mtx_restrict[MTX_MAXSUBFIELDS][256];	  /* Restriction to subfields */
 static uint32_t mtx_embedord[MTX_MAXSUBFIELDS];		  /* Subfield orders */
 
 static uint32_t info[4] = {0L,0L,0L,0L};
 static uint32_t ver = MTX_ZZZVERSION;
 static char filename[50];
 
-static long 	P;		/* Characteristic of the field */
-static long	G;		/* Generator for the field */
-static long	Q;		/* Order of the field */
-static long	CPM;		/* No. of field elements (FELs) per BYTE */
-static long	N;		/* Q = P^N */
-static long	maxmem;		/* (Highest value stored in BYTE) + 1 */
-static FILE	*fd;		/* File pointer */
+static long Q;		// field order
+static long P;		// characteristic
+static long N;		// degree over prime field, Q = P^N
+static long G;		// generator for the multiplicative group
+static long CPM;	// no. of field elements (FELs) per uint8_t
+static long maxmem;	// (highest value stored in uint8_t) + 1
+static FILE *fd;	// table file pointer
 
 
 static POLY irred;		/*  Polynomial which defines the field */
-static BYTE indx[256];		/*  Index i of a field element g,g=X^i */
-static BYTE polynom[256];	/*  reverse to index  */
-static BYTE zech[256];		/*  Zech-logarithm for index i  */
+static uint8_t indx[256];		/*  Index i of a field element g,g=X^i */
+static uint8_t polynom[256];	/*  reverse to index  */
+static uint8_t zech[256];		/*  Zech-logarithm for index i  */
 
 
 /* Tables for non-prime fields, q<=256
@@ -80,13 +79,13 @@ static POLY irreducibles[] = {			/* Parker's polynomials: */
 static int irrednrs[] =	/* Field orders */
 	{4,8,9,16,25,27,32,49,64,81,121,125,128,169,243,256,0};
 
-static BYTE irredprs[] =	/* Prime field orders  */
+static uint8_t irredprs[] =	/* Prime field orders  */
 	{2,2,3,2,5,3,2,7,2,3,11,5,2,13,3,2,0};
 
 /* The following is a list of possible generators for PRIME
    fields. For non-prime fields, X will be used as generator */
 
-static BYTE gen[] = {1,2,3,5,6,7,19,0};
+static uint8_t gen[] = {1,2,3,5,6,7,19,0};
 
 
 /* -----------------------------------------------------------------
@@ -117,14 +116,14 @@ static void printpol(POLY a)
    polynomial over Z, and returns the integer f(p).
    -------------------------------------------------------------------------- */
 
-static BYTE number(POLY a)
+static uint8_t number(POLY a)
 {
-    BYTE k;
+    uint8_t k;
     int i;
 
     k = 0;
     for (i = MAXGRAD; i >= 0; i--)
-	k = (BYTE) (k * P + a[i]);
+	k = (uint8_t) (k * P + a[i]);
     return k;
 }
 
@@ -158,7 +157,7 @@ static void polymod(POLY a, POLY b)
 	if (f == 0) continue;
 	f = (int)P - f;
 	for (i = 0; i <= l; ++i)
-	    a[i+dl-l] = (BYTE) ((f*b[i] + a[i+dl-l]) % (int)P);
+	    a[i+dl-l] = (uint8_t) ((f*b[i] + a[i+dl-l]) % (int)P);
     }
 }
 
@@ -196,13 +195,13 @@ static void initarith()
 
 	/* Initialize index table
 	   ---------------------- */
-	indx[0] = (BYTE) (Q - 1);
+	indx[0] = (uint8_t) (Q - 1);
 	polynom[(int)Q-1] = 0;		/* 0 gets index q-1 */
 	a[0] = 1;			/* a=X^0  */
 	for (i = 0; i < (int)Q-1; i++)	/* for each index */
 	{	elem = number(a);
-		indx[elem] = (BYTE) i;
-		polynom[i] = (BYTE) elem;
+		indx[elem] = (uint8_t) i;
+		polynom[i] = (uint8_t) elem;
 		polmultx(a);
 		polymod(a,irred);
         }
@@ -221,11 +220,11 @@ static void initarith()
    add() - Add two field elements.
    ----------------------------------------------------------------- */
 
-static BYTE add(BYTE i, BYTE j)
+static uint8_t add(uint8_t i, uint8_t j)
 {
     int ii,ij,z;
 
-    if (P==Q) return ((BYTE) ( ((int)i+(int)j) % P));
+    if (P==Q) return ((uint8_t) ( ((int)i+(int)j) % P));
     if (i==0) return(j);
     if (j==0) return(i);
 
@@ -242,10 +241,10 @@ static BYTE add(BYTE i, BYTE j)
    mult() - Multiply two field elements.
    ----------------------------------------------------------------- */
 
-static BYTE mult(BYTE i, BYTE j)
+static uint8_t mult(uint8_t i, uint8_t j)
 
 {	if (P==Q)
-		return ((BYTE)(((long int)i * j) % P));
+		return ((uint8_t)(((long int)i * j) % P));
 	if (i==0 || j==0)
 		return(0);
 
@@ -257,21 +256,21 @@ static BYTE mult(BYTE i, BYTE j)
    testgen() - Test if ord(a) = prime-1
    ------------------------------------------------------------------ */
 
-static int testgen(BYTE a, BYTE prime)
-{	BYTE i, x;
+static int testgen(uint8_t a, uint8_t prime)
+{	uint8_t i, x;
 
 	if (a % prime == 0) return 0;
 	x = a;
 	for (i = 1; x != 1; ++i)
-	{	x = (BYTE) (((long int)x * a) % prime);
+	{	x = (uint8_t) (((long int)x * a) % prime);
 	}
-	return (i == prime - (BYTE) 1);
+	return (i == prime - (uint8_t) 1);
 }
 
 
 /* ------------------------------------------------------------------
-   unpack() - Unpack a BYTE into an array of field elements
-   pack() - Pack field elements into one BYTE
+   unpack() - Unpack a uint8_t into an array of field elements
+   pack() - Pack field elements into one uint8_t
 
    We use q-adic packing, i.e.
 
@@ -280,31 +279,30 @@ static int testgen(BYTE a, BYTE prime)
    with n = CPM - 1.
    ------------------------------------------------------------------ */
 
-static void unpack(register BYTE x, BYTE a[8])
+static void unpack(register uint8_t x, uint8_t a[8])
 {	int i;
 
 	for (i = (int)(CPM-1); i >= 0; i--)
-	{	a[i] = (BYTE) ((int) x % (int) Q);
-		x = (BYTE)((int) x / (int) Q);
+	{	a[i] = (uint8_t) ((int) x % (int) Q);
+		x = (uint8_t)((int) x / (int) Q);
 	}
 }
 
 
-static BYTE pack(BYTE a[8])
+static uint8_t pack(uint8_t a[8])
 {	int i;
-	BYTE x;
+	uint8_t x;
 
 	x = 0;
 	for (i = 0; i < (int) CPM; i++)
-		x = (BYTE)(x * Q + a[i]);
+		x = (uint8_t)(x * Q + a[i]);
 	return (x);
 }
 
 
-/* -----------------------------------------------------------------
-   writeheader() - Set info[], open table file, select polynomial,
-	and initialize tables.
-   ----------------------------------------------------------------- */
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+///  Set info[], open table file, select polynomial, and initialize tables.
 
 static void writeheader()
 {
@@ -332,8 +330,7 @@ static void writeheader()
 	P = Q;
 	/* Find a generator
 	   ---------------- */
-	for (j = 0; (G = (long) gen[j]) != 0 &&
-		 !testgen((BYTE)gen[j],(BYTE)P); j++);
+	for (j = 0; (G = (long) gen[j]) != 0 && !testgen((uint8_t)gen[j],(uint8_t)P); j++);
     }
     info[0] = (long int) P;
     info[1] = (long int) G;
@@ -350,33 +347,6 @@ static void writeheader()
     }
     MESSAGE(1,("Generator   : %lu\n",(unsigned long)info[1]));
     MESSAGE(1,("Packing     : %lu/byte\n",(unsigned long)info[3]));
-}
-
-
-/* -----------------------------------------------------------------
-   checkq() - Set Q and N. Verify that Q is a prime power.
-   ----------------------------------------------------------------- */
-
-static void checkq(long l)
-{
-    long q, d;
-
-    if (l < 2 || l > 256)
-    {
-	fprintf(stderr,"Field order out of range (2-256)\n");
-	exit(EXIT_ERR);
-    }
-
-    Q = l;
-    q = Q;
-    for (d = 2; q % d != 0; ++d); /* Find smallest prime divisor */
-    for (N = 0; (q % d) == 0; ++N)
-       	q /= d;
-    if (q != 1)
-    {
-	fprintf(stderr,"Illegal Field order\n");
-	exit(EXIT_ERR);
-    }
 }
 
 
@@ -407,7 +377,7 @@ static void mkembed()
     int i, k;
     POLY a, subirred;
     int count = 0;
-    BYTE emb, f;
+    uint8_t emb, f;
 
     memset(mtx_embed,255,sizeof(mtx_embed));
     memset(mtx_restrict,255,sizeof(mtx_restrict));
@@ -432,8 +402,8 @@ static void mkembed()
     	    mtx_embedord[count] = P;
     	    for (i = 0; i < (int) P; ++i)
     	    {
-		mtx_embed[count][i] = (BYTE) i;
-		mtx_restrict[count][i] = (BYTE) i;
+		mtx_embed[count][i] = (uint8_t) i;
+		mtx_restrict[count][i] = (uint8_t) i;
     	    }
 	    ++count;
 	    continue;
@@ -455,7 +425,7 @@ static void mkembed()
 	   -------------------------------------- */
 	emb = 1;
 	for (i = (Q-1)/(q-1); i > 0; --i) 
-	    emb = mult(emb,(BYTE) G);
+	    emb = mult(emb,(uint8_t) G);
 
 	/* Look up the polynomial
 	   ---------------------- */
@@ -497,22 +467,39 @@ static void mkembed()
     }
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 static int Init(int field)
 {
-    checkq(field);
-    return 0;
+    long q, d;
+
+    if (field < 2 || field > 256)
+    {
+	fprintf(stderr,"Field order out of range (2-256)\n");
+	exit(EXIT_ERR);
+    }
+
+    Q = field;
+    q = Q;
+    for (d = 2; q % d != 0; ++d); /* Find smallest prime divisor */
+    for (N = 0; (q % d) == 0; ++N)
+       	q /= d;
+    if (q != 1)
+    {
+	fprintf(stderr,"Illegal Field order\n");
+	exit(EXIT_ERR);
+    }
 }
 
-/* -----------------------------------------------------------------
-   ffMakeTables() - Build meataxe arithmetic tables
-   ----------------------------------------------------------------- */
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+/// Create the arithmetic table file.
 
 int ffMakeTables(int field)
 {
     int i, j, k;
-    short flag;
-    BYTE a[8],b[8],c[8],d[8],z;
+    uint16_t flag;
+    uint8_t a[8],b[8],c[8],d[8],z;
 
 
     /* Initialize
@@ -530,7 +517,7 @@ int ffMakeTables(int field)
     {
 	for (j = 0; j < (int) CPM; j++)
     	{
-	    a[j] = (BYTE) i;
+	    a[j] = (uint8_t) i;
 	    mtx_tinsert[j][i] = pack(a);	/* Insert-table */
 	    MESSAGE(3,("insert[%d][%d]=%u (0x%x)\n",j,i,
 	     mtx_tinsert[j][i],mtx_tinsert[j][i]));
@@ -547,7 +534,7 @@ int ffMakeTables(int field)
 	{   if (i == 140) printf("\n");
 	    printf("%3d ",i);
 	}
-	unpack((BYTE)i,a);   /* unpack 1.element in a[] */
+	unpack((uint8_t)i,a);   /* unpack 1.element in a[] */
 	flag = 0;
 	for (j = 0; j < (int) CPM; j++)
 	{
@@ -560,14 +547,14 @@ int ffMakeTables(int field)
 	    {
 		flag = 1;
 		mtx_tffirst[i][0] = z;  /* Find first table: mark */
-		mtx_tffirst[i][1] = (BYTE)j;  /* Find first table: pos. */
+		mtx_tffirst[i][1] = (uint8_t)j;  /* Find first table: pos. */
 	    }
 	}
 	if (Q != 2)
 	{
 	    for (j=0; j < (int) maxmem; j++)
 	    {
-		unpack((BYTE)j,b);	/* 2.element in b[] */
+		unpack((uint8_t)j,b);	/* 2.element in b[] */
 		if (i <= j)
 		{
 		    for (k=0; k < (int) CPM; k++)
@@ -591,8 +578,8 @@ int ffMakeTables(int field)
 	{
 	    for (j=0; j < (int) maxmem; j++)
 	    {
-		mtx_tadd[i][j] = (BYTE)(i ^ j);
-		mtx_tmult[i][j] = (BYTE)((i & 1) != 0 ?  j : 0);
+		mtx_tadd[i][j] = (uint8_t)(i ^ j);
+		mtx_tmult[i][j] = (uint8_t)((i & 1) != 0 ?  j : 0);
 	    }
 	}
     }
@@ -606,8 +593,8 @@ int ffMakeTables(int field)
     {
         for (j = 0; j < (int)Q; j++)
 	{
-	    if (add((BYTE)i,(BYTE)j) == 0) mtx_taddinv[i] = (BYTE)j;
-	    if (mult((BYTE)i,(BYTE)j) == 1) mtx_tmultinv[i] = (BYTE)j;
+	    if (add((uint8_t)i,(uint8_t)j) == 0) mtx_taddinv[i] = (uint8_t)j;
+	    if (mult((uint8_t)i,(uint8_t)j) == 1) mtx_tmultinv[i] = (uint8_t)j;
 	}
     }
 
