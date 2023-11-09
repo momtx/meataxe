@@ -184,6 +184,8 @@ TESTS=\
   0119_zef_zcl \
   0120_zfr \
   0121_zev \
+  0122_ztm \
+  0123_zsp \
   0200_lattice_m11 \
   0201_lattice_ac \
   0202 \

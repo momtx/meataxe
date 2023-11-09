@@ -1,0 +1,18 @@
+echo "0123 - ZSP"
+
+. ../tests/common.sh
+
+# generators
+for i in 1 2 3; do cp "$MTX_TEST_DATA_DIR/Ru-K378.$i" "gen.$i"; done
+
+# seed vectors
+zct -Q 1-3 gen.1 seed
+
+zsp -Q -b basis1 -s sub1 -q quot1 -o op1 -g 3 gen seed
+
+compareBinaryWithReference basis1 "$MTX_TESTCASE_DIR/expected_basis1.txt"
+compareBinaryWithReference "op1" "$MTX_TESTCASE_DIR/expected_op1.tx"
+for i in 1 2 3; do
+   compareBinaryWithReference "sub1.$i" "$MTX_TESTCASE_DIR/expected_sub1.$i.txt"
+   compareBinaryWithReference "quot1.$i" "$MTX_TESTCASE_DIR/expected_quot1.$i.txt"
+done

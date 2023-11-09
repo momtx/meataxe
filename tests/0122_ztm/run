@@ -9,12 +9,12 @@ B="$MTX_TEST_DATA_DIR/C0.2"
 zte "$A" "$B" AB
 zte "$B" "$A" BA
 zad AB BA M
-znu M VECS
+znu -Q M VECS
 
 # Map test vectors uzing ZTM
-ztm VECS $A $B MAPPED1
+ztm -Q VECS $A $B MAPPED1
 
 # Map test vectors uzing ZTE/ZMU
-zmu VECS AB MAPPED2
+zmu -Q VECS AB MAPPED2
 
 cmp MAPPED1 MAPPED2
