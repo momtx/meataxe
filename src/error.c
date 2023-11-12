@@ -77,12 +77,47 @@ struct ErrorContextStack {
    int size;
 };
 
-// TODO: make context stack thread specific
-static struct ErrorContextStack contextStack = {
-  .stack = NULL,
-  .capacity = 0,
-  .size = 0
-};
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+#if defined(MTX_DEFAULT_THREADS)
+
+static pthread_key_t csKey;
+
+static void createCsKey()
+{
+    pthread_key_create(&csKey, NULL);
+}
+
+#endif
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+struct ErrorContextStack* getContextStack()
+{
+   #if defined(MTX_DEFAULT_THREADS)
+
+   static pthread_once_t once = PTHREAD_ONCE_INIT;
+   pthread_once(&once, createCsKey);
+
+   struct ErrorContextStack* cs = (struct ErrorContextStack*) pthread_getspecific(csKey);
+   if (cs == NULL) {
+      cs = ALLOC(struct ErrorContextStack);
+      pthread_setspecific(csKey, cs);
+   }
+
+   #else
+
+   static struct ErrorContextStack contextStack = {
+     .stack = NULL,
+     .capacity = 0,
+     .size = 0
+   };
+   struct ErrorContextStack* cs = &contextStack;
+
+   #endif
+
+   return cs;
+}
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
        
@@ -136,7 +171,6 @@ const struct MtxSourceLocation* mtxSourceLocation(const char* file, int line, co
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-
 typedef void ErrorHandler_t(const struct MtxErrorInfo *err);
 
 static void (*ErrorHandler)(const struct MtxErrorInfo *err) = NULL;
@@ -150,16 +184,19 @@ static void DefaultHandler(const struct MtxErrorInfo* e)
       LogFile = stderr;
    }
 
+   // TODO: dump context stack for all threads
+
    fprintf(LogFile,
            "\n********************************************************************************\n"
            "ERROR: %s\n", e->message);
-   if (MSG1 && e->source.file) {
+   if (MSG0 && e->source.file) {
       const char* baseName = strrchr(e->source.file, '/');
       baseName = baseName != NULL ? baseName + 1 : e->source.file;
       fprintf(LogFile, "|at %s:%d (%s)\n", baseName, e->source.line, e->source.func);
    }
-   struct ErrorContext* sp = contextStack.stack + contextStack.size;
-   while (sp > contextStack.stack) {
+   struct ErrorContextStack* contextStack = getContextStack();
+   struct ErrorContext* sp = contextStack->stack + contextStack->size;
+   while (sp > contextStack->stack) {
       --sp;
       if (sp->contextProvider != NULL) {
          const char* title = sp->contextProvider(sp->userData);
@@ -232,7 +269,7 @@ void mtxAbort(const struct MtxSourceLocation* sl, const char *text, ...)
 
 int mtxBegin(const struct MtxSourceLocation* sl, const char *s, ...)
 {
-   struct ErrorContextStack* cs = &contextStack;
+   struct ErrorContextStack* cs = getContextStack();
    if (cs->size >= cs->capacity) {
       cs->capacity = cs->size + 10;
       cs->stack = NREALLOC(cs->stack, struct ErrorContext, cs->capacity);
@@ -251,7 +288,7 @@ int mtxBegin(const struct MtxSourceLocation* sl, const char *s, ...)
 
 int mtxBeginScope(MtxErrorContextProvider ec, void* userData)
 {
-   struct ErrorContextStack* cs = &contextStack;
+   struct ErrorContextStack* cs = getContextStack();
    if (cs->size >= cs->capacity) {
       cs->capacity = cs->size + 10;
       cs->stack = NREALLOC(cs->stack, struct ErrorContext, cs->capacity);
@@ -271,7 +308,7 @@ int mtxBeginScope(MtxErrorContextProvider ec, void* userData)
 
 void mtxEnd(int id)
 {
-   struct ErrorContextStack* cs = &contextStack;
+   struct ErrorContextStack* cs = getContextStack();
    MTX_ASSERT(id + 1 == cs->size);
    struct ErrorContext* item = cs->stack + (--cs->size);
    sysFree(item->title);

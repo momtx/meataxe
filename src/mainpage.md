@@ -109,6 +109,14 @@ Here is a (possibly incomplete) list:
 * **MTXDOCDIR** sets the directory where the HTML documentation will be created.
   Default is "./doc".
 
+* **CFLAGS_THREADS** and **LDFLAGS_THREADS** control support for multithreading.
+  Thread support is an experimental feature and disabled by default.
+  Turning it on can speed up the pwkond program in some cases.
+  To enable threading, the preprocessor symbol @c MTX_DEFAULT_THREADS must be defined
+  and should be set to the available number of CPU cores. Depending on the operating
+  system you may also need compiler and linker options to enable the POSIX threads
+  library.
+
 #############################################################################################
 
 @page pg_userguide User's Guide

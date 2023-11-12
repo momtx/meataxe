@@ -12,11 +12,7 @@
 
 static int CheckArguments(Matrix_t *subspace, const MatRep_t *rep)
 {
-    if (!mrIsValid(rep))
-    {
-	mtxAbort(MTX_HERE,"rep: %s",MTX_ERR_BADARG);
-	return -1;
-    }
+    mrValidate(MTX_HERE, rep);
     matValidate(MTX_HERE, subspace);
     if (subspace->pivotTable == NULL)
     {

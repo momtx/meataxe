@@ -575,23 +575,22 @@ void writeresult()
    // Radical series
    if (opt_o & O_RADICAL) {
       static int mult[LAT_MAXCF];
-      long rdim;
-      int layer;
-      BitString_t
-      * rad = bsAlloc(bnmount),
-      * newrad = bsAlloc(bnmount),
-      * x = bsAlloc(bnmount),
-      * zero = bsAlloc(bnmount);
+      BitString_t* rad = bsAlloc(bnmount);
+      BitString_t* newrad = bsAlloc(bnmount);
+      BitString_t* x = bsAlloc(bnmount);
+      BitString_t* zero = bsAlloc(bnmount);
 
       fprintf(f, "Radical series:\n");
       for (i = 0; i < bnmount; ++i) {
          bsSet(rad, i);
       }
       bsClearAll(zero);
+      long rdim = 0;
       for (i = 0, rdim = 0; i < LI.nCf; ++i) {
          rdim += LI.Cf[i].dim * LI.Cf[i].mult;
       }
-      for (layer = 1; bsCompare(rad, zero) != 0; ++layer) {
+      for (int layer = 1; bsCompare(rad, zero) != 0; ++layer) {
+         MTX_ASSERT(rdim > 0);
          bsClearAll(x);
          bsClearAll(newrad);
          MESSAGE(1, ("Starting layer %d\n", layer));

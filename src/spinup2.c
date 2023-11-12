@@ -19,11 +19,7 @@ static int ArgsAreValid(const Matrix_t *seed, const MatRep_t *rep, const IntMatr
     if (script->noc != 2)
 	mtxAbort(MTX_HERE,"Invalid script");
     matValidate(MTX_HERE, seed);
-    if (!mrIsValid(rep) || rep->NGen <= 0)
-    {
-	mtxAbort(MTX_HERE,"Invalid representation");
-	return 0;
-    }
+    mrValidate(MTX_HERE, rep);
     if (seed->noc != rep->Gen[0]->noc || seed->field != rep->Gen[0]->field)
     {
 	mtxAbort(MTX_HERE,"seed and rep: %s",MTX_ERR_INCOMPAT);

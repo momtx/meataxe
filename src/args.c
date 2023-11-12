@@ -300,6 +300,11 @@ MtxApplication_t *appAlloc(MtxApplicationInfo_t const *ai, int argc, char **argv
    if ((time_limit = appGetIntOption(a,"-T --lime-limit",0,0,1000000)) > 0) {
       sysSetTimeLimit(time_limit);
    }
+#if defined MTX_DEFAULT_THREADS
+   const int nThreads = appGetIntOption(a,"-j --threads", MTX_DEFAULT_THREADS, 0, 1024);
+   if (nThreads > 0)
+      pexInit(nThreads);
+#endif
 
    return a;
 }

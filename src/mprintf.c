@@ -144,6 +144,7 @@ void sbAppend(StringBuilder_t* sb, const char* fragment)
    const size_t fragmentLength = strlen(fragment);
    reserve(sb, fragmentLength);
    memcpy(sb->data + sb->size, fragment, fragmentLength + 1);
+   sb->size += fragmentLength;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////

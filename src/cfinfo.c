@@ -125,8 +125,6 @@ static void ReadWord(StfData *f, long *w, Poly_t **p, const char *fn)
 
 static void readCfFile(StfData* f, const char* fn, Lat_Info* li)
 {
-    mtxMessage(1,"Reading %s", fn);
-
     /* Read header
        ----------- */
     if (stfReadLine(f) || strcmp(stfGetName(f),"CFInfo"))
@@ -246,7 +244,6 @@ void latReadInfo(Lat_Info *li, const char *basename)
        readCfFile(f, fn, li);
     }
     stfClose(f);
-    mtxMessage(1,"Finished reading %s: %d composition factors",fn,li->nCf);
 }
 
 
@@ -348,12 +345,8 @@ int latWriteInfo(const Lat_Info *li)
     stfEndEntry(f);
 
     stfClose(f);
-    MESSAGE(1,("Wrote %s: %d composition factors\n",fn,li->nCf));
     return 0;
 }
-
-
-
 
 /// Make Constituent Name.
 /// This function returns the name of the @a cf-th constituent of a module.
@@ -370,30 +363,27 @@ int latWriteInfo(const Lat_Info *li)
 /// @param cf Index of the constituent.
 /// @return Pointer to the constituent name (without base name).
 
-const char *latCfName(const Lat_Info *li, int cf)
+const char* latCfName(const Lat_Info* li, int cf)
 {
-    static char buf[20];
-    int num, dim;
+   MTX_ASSERT(li != NULL);
+   MTX_ASSERT(cf >= 0 && cf < li->nCf);
 
-    buf[0] = 0;
-    MTX_ASSERT(li != NULL);
-    MTX_ASSERT(cf >= 0 && cf < li->nCf);
+   const CfInfo* const ip = li->Cf + cf;
+   char* const n = (char*) ip->name;
+   const size_t ns = sizeof(ip->name);
+   unsigned long const dim = (unsigned long) ip->dim;
+   unsigned long const num = (unsigned long) ip->num;
 
-    /* Get dimension and number of the constituent
-       ------------------------------------------- */
-    num = li->Cf[cf].num;
-    dim = li->Cf[cf].dim;
-
-    /* Build the constituent's name
-       ---------------------------- */
-    if (num < 26)
-	sprintf(buf,"%d%c",dim,(char)num+'a');
-    else if (num < 26*26)
-	sprintf(buf,"%d%c%c",dim,(char)(num/26-1)+'a',(char)(num%26)+'a');
-    else
-	sprintf(buf,"%dcf%d",dim,num);
-
-    return buf;
+   if (num < 26U) {
+      snprintf(n, ns, "%ld%c", dim, (char)num + 'a');
+   }
+   else if (num < 26U * 26) {
+      snprintf(n, ns, "%ld%c%c", dim, (char)(num / 26 - 1) + 'a', (char)(num % 26) + 'a');
+   }
+   else {
+      snprintf(n, ns, "%ldcf%ld", dim, num);
+   }
+   return ip->name;
 }
 
 

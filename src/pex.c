@@ -8,8 +8,6 @@
 #include <string.h>
 #include <stdio.h>
 #include <stdarg.h>
-#include <pthread.h>
-
 
 /// @private
 struct PexGroup {
@@ -17,9 +15,17 @@ struct PexGroup {
    struct PexGroup** prev;
    void* userData;
    void (*finalize)(void* userData);
+   #if defined(MTX_DEFAULT_THREADS)
    pthread_mutex_t mutex;
+   #endif
    size_t nPending;             // number of tasks waiting or being executed
 };
+
+#if defined(MTX_DEFAULT_THREADS)
+static pthread_mutex_t groupsMutex = PTHREAD_MUTEX_INITIALIZER;
+#endif
+static PexGroup_t* groupsHead = NULL;
+static PexGroup_t** groupsTail = &groupsHead;
 
 /// @private
 typedef struct Task {
@@ -32,26 +38,31 @@ typedef struct Task {
    size_t end;
 } Task_t;
 
-static pthread_mutex_t groupsMutex = PTHREAD_MUTEX_INITIALIZER;
-static PexGroup_t* groupsHead = NULL;
-static PexGroup_t** groupsTail = &groupsHead;
 
-static int nThreads = 0;
+#if defined(MTX_DEFAULT_THREADS)
+static int nThreads = 0;        // Fixed (from -j)
 static pthread_t *tid = NULL;
 static pthread_key_t tidKey;
 static int* dummyPtr = NULL;
+#else
+static const int nThreads = 0;
+#endif
 
 // Data protected by tqMutex
+#if defined(MTX_DEFAULT_THREADS)
 static pthread_mutex_t tqMutex = PTHREAD_MUTEX_INITIALIZER;
 static pthread_cond_t tqWakeup = PTHREAD_COND_INITIALIZER;   // task added or shutdown started
 static pthread_cond_t tqIdle = PTHREAD_COND_INITIALIZER;     // task finished
+static int nTotalThreads = 0;
 static int nBusyThreads = 0;
 static int tqShutdown = 0;
 static struct Task* tqHead = NULL;
 static struct Task** tqTail = &tqHead;
+#endif
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
+#if defined(MTX_DEFAULT_THREADS)
 static void deleteGroup(PexGroup_t* group)
 {
    MTX_ASSERT(group->prev != NULL);
@@ -65,6 +76,7 @@ static void deleteGroup(PexGroup_t* group)
    memset(group, 0, sizeof(PexGroup_t));
    sysFree(group);
 }
+#endif
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -75,26 +87,50 @@ static void deleteGroup(PexGroup_t* group)
 /// 2. Add arbitrary tasks to the group by passing the group as first argument to @ref pexExecute.
 /// 3. Call @ref pexFinally to define the finalizer.
 ///
-/// It is an error to create a task group and never call @ref pexFinally for this group. The error
-/// will be detected by @ref pexShutdown.
+/// It is an error to create a task group without calling @ref pexFinally for this
+/// group. The error will be detected by @ref pexShutdown.
 
 PexGroup_t* pexCreateGroup()
 {
    PexGroup_t* group = ALLOC(PexGroup_t);
    memset(group, 0, sizeof(PexGroup_t));
+   #if defined(MTX_DEFAULT_THREADS)
    pthread_mutex_init(&group->mutex, NULL);
    pthread_mutex_lock(&groupsMutex);
+   #endif
    MTX_ASSERT(groupsTail != NULL);
    MTX_ASSERT(*groupsTail == NULL);
    group->prev = groupsTail;
    *groupsTail = group;
    groupsTail = &group->next;
+   #if defined(MTX_DEFAULT_THREADS)
    pthread_mutex_unlock(&groupsMutex);
+   #endif
    return group;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
+#if defined(MTX_DEFAULT_THREADS)
+static void pexLog(const char* msg, ...)
+{
+   if (!MSG2) return;
+   va_list args;
+   va_start(args,msg);
+   char tmp[200];
+   char *end = tmp + sizeof(tmp);
+   char *wp = tmp;
+   wp += snprintf(wp, end - wp, "%4x ", pexThreadId());
+   wp += vsnprintf(wp, end - wp, msg, args);
+   wp += snprintf(wp, end - wp, "\n");
+   va_end(args);
+   MESSAGE(2,("%s", tmp));
+}
+#endif
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+#if defined(MTX_DEFAULT_THREADS)
 static void removeTaskFromGroup(PexGroup_t* group)
 {
    pthread_mutex_lock(&group->mutex);
@@ -109,9 +145,11 @@ static void removeTaskFromGroup(PexGroup_t* group)
       deleteGroup(group);
    }
 }
+#endif
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
+#if defined(MTX_DEFAULT_THREADS)
 static void addTaskToGroup(PexGroup_t* group)
 {
    pthread_mutex_lock(&group->mutex);
@@ -119,6 +157,7 @@ static void addTaskToGroup(PexGroup_t* group)
    ++group->nPending;
    pthread_mutex_unlock(&group->mutex);
 }
+#endif
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -151,6 +190,7 @@ void pexFinally(PexGroup_t *group, void (*f)(void* userData), void* userData)
       return;
    }
 
+#if defined(MTX_DEFAULT_THREADS)
    pthread_mutex_lock(&group->mutex);
    MTX_ASSERT(group->finalize == NULL);
    pexLog("pexFinally: grp=%p nPending=%lu", group, (unsigned long)group->nPending);
@@ -165,9 +205,12 @@ void pexFinally(PexGroup_t *group, void (*f)(void* userData), void* userData)
       f(userData);
       deleteGroup(group);
    }
+#endif
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
+
+#if defined(MTX_DEFAULT_THREADS)
 
 static void executeTask(Task_t* task)
 {
@@ -185,8 +228,11 @@ static void executeTask(Task_t* task)
    }
 }
 
+#endif
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
+#if defined(MTX_DEFAULT_THREADS)
 static void* threadMain(void* arg)
 {
    pthread_setspecific(tidKey, arg);
@@ -216,13 +262,16 @@ static void* threadMain(void* arg)
    pexLog("exiting");
    return NULL;
 }
+#endif
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
+#if defined(MTX_DEFAULT_THREADS)
 static void createTidKey()
 {
     pthread_key_create(&tidKey, NULL);
 }
+#endif
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -232,51 +281,45 @@ static void createTidKey()
 
 void pexInit(int nThreads_)
 {
-    MTX_ASSERT(nThreads_ > 0);
-    tqShutdown = 0;
-    nThreads = nThreads_;
-    nBusyThreads = 0;
-    tid = NALLOC(pthread_t, nThreads);
-    static pthread_once_t createTidKeyOnce = PTHREAD_ONCE_INIT;
-    pthread_once(&createTidKeyOnce, createTidKey);
-    pthread_setspecific(tidKey, (void*) (dummyPtr + 0xFFFF));
-    pthread_mutex_lock(&tqMutex);
-    for (int i = 0; i < nThreads; ++i) {
-	int rc = pthread_create(tid + i, NULL, threadMain, dummyPtr + i);
-	MTX_ASSERT(rc == 0);
-    }
-    pthread_mutex_unlock(&tqMutex);
-}
-
-////////////////////////////////////////////////////////////////////////////////////////////////////
-
-void pexLog(const char* msg, ...)
-{
-   va_list args;
-   va_start(args,msg);
-   char tmp[200];
-   char *end = tmp + sizeof(tmp);
-   char *wp = tmp;
-   wp += snprintf(wp, end - wp, "%4x ", pexThreadId());
-   wp += vsnprintf(wp, end - wp, msg, args);
-   wp += snprintf(wp, end - wp, "\n");
-   va_end(args);
-   fputs(tmp, stdout);
+   #if defined(MTX_DEFAULT_THREADS)
+   MTX_ASSERT(nThreads_ > 0);
+   tqShutdown = 0;
+   nThreads = nThreads_;
+   nTotalThreads = 0;
+   nBusyThreads = 0;
+   tid = NALLOC(pthread_t, nThreads);
+   static pthread_once_t createTidKeyOnce = PTHREAD_ONCE_INIT;
+   pthread_once(&createTidKeyOnce, createTidKey);
+   pthread_setspecific(tidKey, (void*) (dummyPtr + 0xFFFF));
+//   pthread_mutex_lock(&tqMutex);
+//   for (int i = 0; i < nThreads; ++i) {
+//      int rc = pthread_create(tid + i, NULL, threadMain, dummyPtr + i);
+//      MTX_ASSERT(rc == 0);
+//   }
+//   pthread_mutex_unlock(&tqMutex);
+   #endif
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 unsigned pexThreadId()
 {
+#if defined(MTX_DEFAULT_THREADS)
     return (unsigned) ((int*) pthread_getspecific(tidKey) - dummyPtr);
+#else
+    return 0;
+#endif
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 /// Waits until all pending tasks are finished.
 
+// TODO: pexWait(PexGroup* group) ?
+
 void pexWait()
 {
+#if defined(MTX_DEFAULT_THREADS)
    pthread_mutex_lock(&tqMutex);
    while (1) {
       if (tqHead == NULL && nBusyThreads == 0)
@@ -285,7 +328,9 @@ void pexWait()
       pthread_cond_wait(&tqIdle, &tqMutex);
    }
    pthread_mutex_unlock(&tqMutex);
+#endif
 }
+
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -296,6 +341,7 @@ void pexWait()
 
 void pexShutdown()
 {
+#if defined(MTX_DEFAULT_THREADS)
    if (nThreads == 0)
       return;
    pexLog("shutting down");
@@ -307,23 +353,26 @@ void pexShutdown()
    tqShutdown = 1;
    pthread_cond_broadcast(&tqWakeup);
    pthread_mutex_unlock(&tqMutex);
-   for (int i = 0; i < nThreads; ++i) {
+   for (int i = 0; i < nTotalThreads; ++i) {
       pthread_join(tid[i], NULL);
    }
    pthread_mutex_unlock(&tqMutex);
    sysFree(tid);
    tid = NULL;
    nThreads = 0;
+   nTotalThreads = 0;
 
    pthread_mutex_lock(&groupsMutex);
    MTX_ASSERT(groupsHead == NULL);
    pthread_mutex_unlock(&groupsMutex);
+#endif
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void pexSleep(unsigned timeInMs)
 {
+#if defined(MTX_DEFAULT_THREADS)
     struct timespec expTime;
     clock_gettime(CLOCK_REALTIME, &expTime);
     expTime.tv_sec += timeInMs / 1000;
@@ -337,6 +386,7 @@ void pexSleep(unsigned timeInMs)
     pthread_mutex_lock(&mutex);
     pthread_cond_timedwait(&cond, &mutex, &expTime);
     pthread_mutex_unlock(&mutex);
+#endif
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -358,6 +408,7 @@ static void createTask(
       return;
    }
 
+#if defined(MTX_DEFAULT_THREADS)
    if (group != NULL)
       addTaskToGroup(group);
    Task_t* task = ALLOC(Task_t);
@@ -372,8 +423,16 @@ static void createTask(
    *tqTail = task;
    task->next = NULL;
    tqTail = &task->next;
-   pthread_cond_signal(&tqWakeup);
+
+   if (nBusyThreads == nTotalThreads && nTotalThreads < nThreads) {
+      int rc = pthread_create(tid + nTotalThreads, NULL, threadMain, dummyPtr + nTotalThreads);
+      MTX_ASSERT(rc == 0);
+      ++nTotalThreads;
+   }
+
+   pthread_cond_signal(&tqWakeup);  // may deadlock? broadcast required???
    pthread_mutex_unlock(&tqMutex);
+#endif
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -415,5 +474,6 @@ void pexExecuteRange(
    MTX_ASSERT(f != NULL);
    createTask(group, NULL, f, userData, begin, end);
 }
+
 
 // vim:sw=3:et:cin

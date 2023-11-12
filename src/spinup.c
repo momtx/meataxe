@@ -46,344 +46,323 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // Local data
 
-static int Dim = 0;			// Dimension of the whole space
-static uint32_t *Piv = NULL;		// Pivot table
-static const Matrix_t *Seed = NULL;	// Seed space
-static Matrix_t *Span = NULL;		// Span
-static int SpanDim = 0;			// Dimension of the span
-static int Flags = 0;			// Flags
-static int NGen;			// Number of generators 
-static const Matrix_t **Gen;		// Generators
-static const Perm_t **GenP;		// Generators (permutation mode)
-static Matrix_t *StdSpan = NULL;	// Span
-static int32_t *Script = NULL;
+/// Internal state for spin up.
+typedef struct {
+   // user data
+   const Matrix_t* seed;
+   const MatRep_t* rep;
+   int nPerms;
+   Perm_t *perms;                       // NULL for matrix representation
+   int flags;
+   IntMatrix_t** script;
+   uint32_t maxSubspaceDimension;
+   int result;
 
-#define OPVEC(i) Script[2*(i)]
-#define OPGEN(i) Script[2*(i)+1]
+   // internal data
+   uint32_t Dim;		// Dimension of the whole space
+   uint32_t *Piv;		// Pivot table
+   Matrix_t *Span;		// Span
+   int SpanDim;			// Dimension of the span
+   int NGen;			// Number of generators 
+   const Matrix_t **Gen;		// Generators
+   const Perm_t **GenP;		// Generators (permutation mode)
+   Matrix_t *StdSpan;	        // Span
+   int32_t *ops;
+} SpinupContext_t;
+
+#define OPVEC(ctx,i) ctx->ops[2*(i)]
+#define OPGEN(ctx,i) ctx->ops[2*(i)+1]
 
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
+
 /// This function spins up the next seed vector.
 /// @param seed The seed vector.
 /// @param seedno The seed vector number.
 /// @return 0 = success, 1 = no success, -1 = error
 
-static int Spin1(PTR seed, int seedno, const SpinUpInfo_t *info)
+static int Spin1(SpinupContext_t* ctx, PTR seed, int seedno)
 {
-    int igen;	    /* Generator to apply next */
-    PTR get;	    /* Vector to map */
-    PTR put;	    /* New vectors go here */
-    PTR stdget, stdput;
-    FEL f;
-    int iget;
-    int maxdim;
-    int num_tries = 0;	/* Number of multiplications */
+   int igen;        // Generator to apply next
+   PTR get;         // Vector to map
+   PTR put;         // New vectors go here
+   PTR stdget, stdput;
+   FEL f;
+   int iget;
+   uint32_t num_tries = 0;
 
-    /* Set maxdim: If the user specified a limit, use it. Otherwise use <Dim>.
-       ---------------------------------------------------------------------- */
-    if (info != NULL && info->MaxSubspaceDimension > 0)
-	maxdim = info->MaxSubspaceDimension + 1;
-    else
-	maxdim = Dim + 1;
+   const uint32_t maxdim =
+      ctx->maxSubspaceDimension > 0 ? ctx->maxSubspaceDimension + 1 : ctx->Dim + 1;
 
+   // If we are not in 'combine' mode, start with an empty space.
+   // In 'combine' mode, keep what has been found so far.
+   if ((ctx->flags & SF_MODE_MASK) != SF_COMBINE) {
+      ctx->SpanDim = 0;
+   }
 
-    /* If we are not in 'combine' mode, start with an empty space.
-       In 'combine' mode, keep what has been found so far.
-       ------------------------------------------------------------ */
-    if ((Flags & SF_MODE_MASK) != SF_COMBINE)
-    {
-	SpanDim = 0;
-    }
+   // Initialize <get> and <put> to point to the first free row in <Span>
+   get = matGetPtr(ctx->Span, ctx->SpanDim);
+   iget = ctx->SpanDim;
+   put = get;
+   if (ctx->flags & SF_STD) {
+      stdget = matGetPtr(ctx->StdSpan, ctx->SpanDim);
+      stdput = stdget;
+   }
 
-    /* Initialize <get> and <put> to point to the first free row in <Span>
-       ------------------------------------------------------------------- */
-    get = matGetPtr(Span,SpanDim);
-    iget = SpanDim;
-    put = get;
-    if (Flags & SF_STD)
-    {
-	stdget = matGetPtr(StdSpan,SpanDim);
-	stdput = stdget;
-    }
+   // Copy the seed vector to <put>, extending the pivot table
+   ffCopyRow(put, seed, ctx->Span->noc);
+   ffCleanRow(put, ctx->Span->data, ctx->SpanDim, ctx->Span->noc, ctx->Piv);
+   if (ctx->ops != NULL) {
+      OPVEC(ctx, ctx->SpanDim) = seedno;
+      OPGEN(ctx, ctx->SpanDim) = -1;    // it's a seed vector
+   }
+   if ((ctx->Piv[ctx->SpanDim] = ffFindPivot(put, &f, ctx->Span->noc)) != MTX_NVAL) {
+      ++ctx->SpanDim;
+      ffStepPtr(&put, ctx->Dim);
+      if (ctx->flags & SF_STD) {
+         ffCopyRow(stdput, seed, ctx->Span->noc);
+         ffStepPtr(&stdput, ctx->Dim);
+      }
+   }
 
-    /* Copy the seed vector to <put>, extending the pivot table
-       -------------------------------------------------------- */
-    ffCopyRow(put,seed, Span->noc);
-    ffCleanRow(put,Span->data,SpanDim,Span->noc, Piv);
-    if (Script != NULL)
-    {
-	OPVEC(SpanDim) = seedno;
-	OPGEN(SpanDim) = -1;	/* -1 means it's a seed vector */
-    }
-    if ((Piv[SpanDim] = ffFindPivot(put,&f,Span->noc)) != MTX_NVAL)
-    {
-	++SpanDim;
-	ffStepPtr(&put, Dim);
-	if (Flags & SF_STD)
-	{
-    	    ffCopyRow(stdput,seed, Span->noc);
-	    ffStepPtr(&stdput, Dim);
-	}
-    }
+   // Spin up
+   igen = 0;
+   while (get != put && ctx->SpanDim < ctx->Dim && ctx->SpanDim < maxdim && ctx->NGen > 0) {
+      // Map the current vector using the current generator.
+      if (ctx->flags & SF_STD) {
+         if (ctx->Gen != NULL) {
+            ffMapRow(stdput, stdget, ctx->Gen[igen]->data, ctx->Dim, ctx->Dim);
+         }
+         else {
+            ffPermRow(stdput, stdget, ctx->GenP[igen]->data, ctx->Dim);
+         }
+         ffCopyRow(put, stdput, ctx->Dim);
+      }
+      else {
+         if (ctx->Gen != NULL) {
+            ffMapRow(put, get, ctx->Gen[igen]->data, ctx->Dim, ctx->Dim);
+         }
+         else {
+            ffPermRow(put, get, ctx->GenP[igen]->data, ctx->Dim);
+         }
+      }
+      if (ctx->ops != NULL) {
+         OPVEC(ctx, ctx->SpanDim) = iget;
+         OPGEN(ctx, ctx->SpanDim) = igen;
+      }
 
-    /* Spin up
-       ------- */
-    igen = 0;
-    while (   get != put && SpanDim < Dim && SpanDim < maxdim && NGen > 0
-	   && (   info == NULL || info->MaxTries <= 0
-	       || num_tries < info->MaxTries))
-    {
-	/* Apply the next generator to <get>. IF this was 
-	   the last generator, advance <get> to the next vector.
-	   ----------------------------------------------------- */
-	if (Flags & SF_STD)
-	{
-	    if (Gen != NULL)
-		ffMapRow(stdput, stdget,Gen[igen]->data,Dim,Dim);
-	    else
-		ffPermRow(stdput, stdget,GenP[igen]->data, Dim);
-	    ffCopyRow(put,stdput, Dim );
-	}
-	else
-	{
-	    if (Gen != NULL)
-		ffMapRow(put, get,Gen[igen]->data,Dim,Dim);
-	    else
-		ffPermRow(put, get,GenP[igen]->data,Dim);
-	}
-    	if (Script != NULL)
-    	{
-    	    OPVEC(SpanDim) = iget;
-	    OPGEN(SpanDim) = igen;
-	}
-        if (++igen >= NGen)
-	{
-	    ++num_tries;
-	    igen = 0;
-	    ffStepPtr(&get, Dim);
-	    ffStepPtr(&stdget, Dim);
-	    ++iget;
-	    if (MSG4 || (MSG3 && SpanDim % 50 == 0))
-            	printf("SpinUp(): dim=%d, stack=%d\n", SpanDim,SpanDim - iget);
-	}
+      // If this was the last generator, continue with the next vector.
+      if (++igen >= ctx->NGen) {
+         ++num_tries;
+         igen = 0;
+         ffStepPtr(&get, ctx->Dim);
+         ffStepPtr(&stdget, ctx->Dim);
+         ++iget;
+         if (MSG4 || (MSG3 && ctx->SpanDim % 50 == 0)) {
+            printf("SpinUp(): dim=%d, stack=%d\n", ctx->SpanDim, ctx->SpanDim - iget);
+         }
+      }
 
-	/* Clean the result with the existing basis
-	   ---------------------------------------- */
-	ffCleanRow(put,Span->data,SpanDim,Span->noc, Piv);
-	if ((Piv[SpanDim] = ffFindPivot(put,&f,Span->noc)) != MTX_NVAL)
-	{
-	    num_tries = 0;
-	    ++SpanDim;
-	    ffStepPtr(&put, Dim);
-	    ffStepPtr(&stdput, Dim);
-	}
-    }
+      // Clean the image with the existing basis.
+      ffCleanRow(put, ctx->Span->data, ctx->SpanDim, ctx->Span->noc, ctx->Piv);
+      if ((ctx->Piv[ctx->SpanDim] = ffFindPivot(put, &f, ctx->Span->noc)) != MTX_NVAL) {
+         // Ne basis vector
+         num_tries = 0;
+         ++ctx->SpanDim;
+         ffStepPtr(&put, ctx->Dim);
+         ffStepPtr(&stdput, ctx->Dim);
+      }
+   }
 
-    /* Return success code, depending on the mode and the result 
-       of the spin up 
-       --------------------------------------------------------- */
-    //MESSAGE(2,("SpinUp(): sub=%d, quot=%d\n",SpanDim,Dim-SpanDim));
-    switch (Flags & SF_MODE_MASK)
-    {
-	case SF_SUB:
-	    return (SpanDim > 0 && SpanDim < Dim && SpanDim < maxdim) ?
-		    0 : 1;
-	case SF_CYCLIC:
-	case SF_COMBINE:
-	    return SpanDim < Dim ? 1 : 0;
-    }
-    mtxAbort(MTX_HERE,"Invalid search mode %d",Flags & SF_MODE_MASK);
-    return -1;
+   // Calculate return code.
+   //MESSAGE(2,("SpinUp(): sub=%d, quot=%d\n",SpanDim,Dim-SpanDim));
+   switch (ctx->flags & SF_MODE_MASK) {
+      case SF_SUB:
+         return (ctx->SpanDim > 0 && ctx->SpanDim < ctx->Dim && ctx->SpanDim < maxdim) ?
+                0 : 1;
+      case SF_CYCLIC:
+      case SF_COMBINE:
+         return ctx->SpanDim < ctx->Dim ? 1 : 0;
+   }
+   mtxAbort(MTX_HERE, "Invalid search mode %d", ctx->flags & SF_MODE_MASK);
+   return -1;
 }
 
-
-
 ////////////////////////////////////////////////////////////////////////////////////////////////////
+
 /// Check arguments (common to matrix and permutation mode)
 
-static int CheckArgs0(const Matrix_t *seed, int flags)
+static void CheckArgs0(const Matrix_t *seed, int flags, SpinUpInfo_t* info)
 {
     matValidate(MTX_HERE, seed);
     if (seed->nor < 1) 
 	mtxAbort(MTX_HERE,"Empty seed space");
     if (flags == -1)
 	mtxAbort(MTX_HERE,"Invalid flags");
-    return 0;
+    if (info) {
+       // Max + 1 must not overflow
+       MTX_ASSERT(info->MaxSubspaceDimension < 0xFFFFFFFF);
+    }
 }
 
-
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-/// Check arguments
 
-static int CheckArgs(const Matrix_t *seed, const MatRep_t *rep, int flags)
+static void CheckArgsM(const Matrix_t *seed, const MatRep_t *rep, int flags, SpinUpInfo_t* info)
 {
-    if (CheckArgs0(seed,flags) != 0)
-	return -1;
-    if (!mrIsValid(rep))
-	return -1;
-    if (rep->NGen < 0)
-    {
-	mtxAbort(MTX_HERE,"Invalid number of generators (%d)",rep->NGen);
-	return -1;
+    CheckArgs0(seed, flags, info);
+    mrValidate(MTX_HERE, rep);
+    if (rep->NGen > 0) {
+       if (seed->noc != rep->Gen[0]->nor || seed->field != rep->Gen[0]->field)
+          mtxAbort(MTX_HERE, "Seed vector(s) are not compatible with representation");
     }
-    if (rep->NGen > 0)
-    {
-	if (rep->Gen[0]->noc != seed->noc || rep->Gen[0]->field != seed->field)
-	{
-	    mtxAbort(MTX_HERE,"%s",MTX_ERR_INCOMPAT);
-	    return -1;
-	}
-    }
-    return 0;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-/// Check arguments (permutation mode)
 
-static int CheckArgsP(const Matrix_t *seed, int ngen, const Perm_t **gen, int flags)
-{
-    int i;
-    if (CheckArgs0(seed,flags) != 0)
-	return -1;
-    if (ngen < 0)
-    {
-	mtxAbort(MTX_HERE,"Invalid number of generators (%d)",ngen);
-	return -1;
-    }
-    for (i = 0; i < ngen; ++i)
-    {
-       permValidate(MTX_HERE, gen[i]);
-	if (gen[i]->degree != seed->noc)
-	{
-	    mtxAbort(MTX_HERE,"Gen=%d, seed=%d: %s",gen[i]->degree,seed->noc,
-		MTX_ERR_INCOMPAT);
-	    return -1;
-	}
-    }
-    return 0;
-}
+/// Common initialization for matrix and permutation mode
 
-
-////////////////////////////////////////////////////////////////////////////////////////////////////
-/// Initialize for spin-up (common for matrix and permutation mode)
-
-static int Init0(const Matrix_t *seed, int flags, IntMatrix_t **script,
-     const SpinUpInfo_t *info)
+static void Init0(SpinupContext_t* ctx)
 {
     int ws_size;
-    ffSetField(seed->field);
-    Flags = flags;
-    Dim = seed->noc;
-    Seed = seed;
+    ffSetField(ctx->seed->field);
+    ctx->Dim = ctx->seed->noc;
 
-    /* Allocate workspace, assuming the worst case.
-       -------------------------------------------- */
-    if (info && info->MaxSubspaceDimension > 0)
-    	ws_size = info->MaxSubspaceDimension + 1;
+    // Allocate workspace, assuming the worst case.
+    if (ctx->maxSubspaceDimension > 0)
+    	ws_size = ctx->maxSubspaceDimension + 1;
     else
-	ws_size = Dim + 1;
-    Span = matAlloc(seed->field,ws_size,Dim);
-    if (Span == NULL)
-    {
-	mtxAbort(MTX_HERE,"Cannot allocate result buffer");
-	return -1;
-    }
+	ws_size = ctx->Dim + 1;
+    ctx->Span = matAlloc(ctx->seed->field,ws_size,ctx->Dim);
 
-
-    SpanDim = 0;
-    Piv = NREALLOC(Piv,uint32_t,Dim+2);
-    if (Piv == NULL)
+    ctx->SpanDim = 0;
+    ctx->Piv = NALLOC(uint32_t,ctx->Dim+2);
+    if (ctx->script != NULL)
     {
-	mtxAbort(MTX_HERE,"Cannot allocate pivot table");
-	return -1;
-    }
-    if (script != NULL)
-    {
-	if (*script != NULL && 
-	    ((*script)->noc != 2 || (*script)->nor < Dim + 1))
+       // Reuse existing script if possible
+	if (*ctx->script != NULL && ((*ctx->script)->noc != 2 || (*ctx->script)->nor < ctx->Dim + 1))
 	{
-	    imatFree(*script);
-	    *script = NULL;
+	    imatFree(*ctx->script);
+	    *ctx->script = NULL;
 	}
-	if (*script == NULL)
-	    *script = imatAlloc(Dim+1,2);
-	if (*script == NULL)
-	{
-	    mtxAbort(MTX_HERE,"Cannot allocate script");
-	    return -1;
-	}
-	Script = (*script)->data;
+	if (*ctx->script == NULL)
+	    *ctx->script = imatAlloc(ctx->Dim+1,2);
+	ctx->ops = (*ctx->script)->data;
     }
     else
-	Script = NULL;	/* No script */
+	ctx->ops = NULL;
 
-    if (Flags & SF_STD)
-    {
-	StdSpan = matAlloc(seed->field,Dim+1,Dim);
-	if (StdSpan == NULL)
-	{
-	    matFree(Span);
-	    mtxAbort(MTX_HERE,"Cannot allocate workspace");
-	    return -1;
-	}
-    }
-    return 0;
+    if (ctx->flags & SF_STD)
+	ctx->StdSpan = matAlloc(ctx->seed->field,ctx->Dim+1,ctx->Dim);
 }
-
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-/// Initialize for spin-up
 
-static int Init(const Matrix_t *seed, const MatRep_t *rep, int flags, 
-    IntMatrix_t **script, const SpinUpInfo_t *info)
+static void CheckArgsP(
+   const Matrix_t* seed,
+   int ngen,
+   const Perm_t** gen,
+   int flags,
+   SpinUpInfo_t* info)
 {
-    if (Init0(seed,flags,script,info) != 0)
-	return -1;
-    Gen =  (const Matrix_t **) rep->Gen;
-    GenP = NULL;
-    NGen = rep->NGen;
-    return 0;
+   CheckArgs0(seed, flags, info);
+   if (ngen <= 0) {
+      mtxAbort(MTX_HERE, "Invalid number of generators (%d)", ngen);
+   }
+   for (int i = 0; i < ngen; ++i) {
+      permValidate(MTX_HERE, gen[i]);
+      if (gen[i]->degree != seed->noc) {
+         mtxAbort(MTX_HERE, "Gen=%d, seed=%d: %s", gen[i]->degree, seed->noc, MTX_ERR_INCOMPAT);
+      }
+   }
 }
-
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-/// Initialize for spin-up (permutation mode)
 
-static int InitP(const Matrix_t *seed, int ngen, const Perm_t **gen, int flags, 
-    IntMatrix_t **script, SpinUpInfo_t *info)
+static SpinupContext_t* CreateContext0(
+      const Matrix_t* seed,
+      int flags,
+      IntMatrix_t** script,
+      SpinUpInfo_t* info)
 {
-    if (Init0(seed,flags,script,info) != 0)
-	return -1;
-    GenP = gen;
-    Gen = NULL;
-    NGen = ngen;
-    return 0;
+   SpinupContext_t* ctx = ALLOC(SpinupContext_t);
+   ctx->seed = seed;
+   ctx->flags = flags;
+   ctx->script = script;
+   if (info) {
+      ctx->maxSubspaceDimension = info->MaxSubspaceDimension;
+      ctx->result = info->Result;
+   }
+   return ctx;
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+static SpinupContext_t* CreateContextM(
+      const Matrix_t* seed,
+      const MatRep_t* rep,
+      int flags,
+      IntMatrix_t** script,
+      SpinUpInfo_t* info)
+{
+   CheckArgsM(seed, rep, flags, info);
+   SpinupContext_t* ctx = CreateContext0(seed, flags, script, info);
+   Init0(ctx);
+   ctx->rep = rep;
+   ctx->Gen =  (const Matrix_t **) ctx->rep->Gen;
+   ctx->GenP = NULL;
+   ctx->NGen = rep->NGen;
+   return ctx;
+}
+
+static SpinupContext_t* CreateContextP(
+      const Matrix_t* seed,
+      int nPerms,
+      const Perm_t** perms,
+      int flags,
+      IntMatrix_t** script,
+      SpinUpInfo_t* info)
+{
+   CheckArgsP(seed, nPerms, perms, flags, info);
+   SpinupContext_t* ctx = CreateContext0(seed, flags, script, info);
+   Init0(ctx);
+   ctx->rep = NULL;
+   ctx->Gen = NULL;
+   ctx->GenP = perms,
+   ctx->NGen = nPerms;
+   return ctx;
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void DestroyContext(SpinupContext_t* ctx)
+{
+   memset(ctx, 0, sizeof(*ctx));
+   sysFree(ctx);
+}
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 /// Spin up
 /// @return 0 = Ok, 1 = Not found, -1 = Error
 
-static int DoSpinup(const SpinUpInfo_t *info)
+static int DoSpinup(SpinupContext_t* ctx)
 {
     long n;
     int result;
     PTR seed;
 
-    switch (Flags & SF_SEED_MASK)
+    switch (ctx->flags & SF_SEED_MASK)
     {
     	case SF_FIRST:
 	    /* Try the first seed vector only
 	       ------------------------------ */
-	    return Spin1(Seed->data,1,info);
+	    return Spin1(ctx, ctx->seed->data,1);
 
     	case SF_EACH:
 	    /* Try each seed vector until successful
 	       ------------------------------------- */
-	    for (seed = Seed->data, n = 1; n <= Seed->nor; ffStepPtr(&seed, Dim),++n)
+	    for (seed = ctx->seed->data, n = 1; n <= ctx->seed->nor; ffStepPtr(&seed, ctx->Dim),++n)
 	    {
-	    	if (Spin1(seed,n,info) == 0)
+	    	if (Spin1(ctx,seed,n) == 0)
 		    return 0;
 	    }
 	    return 1;
@@ -391,15 +370,15 @@ static int DoSpinup(const SpinUpInfo_t *info)
     	case SF_MAKE:
 	    /* Try each 1-dimensional subspace until successfull
 	       ------------------------------------------------- */
-	    if ((seed = ffAlloc(1, Dim)) == NULL) 
+	    if ((seed = ffAlloc(1, ctx->Dim)) == NULL) 
 	    {
 		mtxAbort(MTX_HERE,"Cannot allocate seed vector");
 		return -1;
 	    }
 	    result = 1;
-	    for (n = 0; result == 1 && (n = MakeSeedVector(Seed,n,seed)) > 0; )
+	    for (n = 0; result == 1 && (n = MakeSeedVector(ctx->seed,n,seed)) > 0; )
 	    {
-	    	if (Spin1(seed,n,info) == 0)
+	    	if (Spin1(ctx, seed,n) == 0)
 		    result = 0;
 	    }
 	    sysFree(seed);
@@ -413,41 +392,29 @@ static int DoSpinup(const SpinUpInfo_t *info)
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static Matrix_t *DoIt(IntMatrix_t **script, SpinUpInfo_t *info)
+static void DoIt(SpinupContext_t* ctx)
 {
-    int rc = DoSpinup(info);
-    if (info != NULL)
-	info->Result = rc;
+   ctx->result = DoSpinup(ctx);
+   if (ctx->result < 0)
+      mtxAbort(MTX_HERE,"Spin-up failed"); // TODO: remove (fail in DoSpinup)
 
-    if (rc < 0)
+    // Adjust the result size.
+    if (ctx->flags & SF_STD)
     {
-	matFree(Span);
-	if (Flags & SF_STD)
-	    matFree(StdSpan);
-	mtxAbort(MTX_HERE,"Spin-up failed");
-	return NULL;
-    }
-
-    /* Adjust the result size
-       ----------------------- */
-    if (Flags & SF_STD)
-    {
-	matFree(Span);
-	Span = StdSpan;
+	matFree(ctx->Span);
+	ctx->Span = ctx->StdSpan;
     }
     else
     {
-	matEchelonize(Span);
+	matEchelonize(ctx->Span);
     }
-    Span->nor = SpanDim;
-    Span->data = (PTR) sysRealloc(Span->data,ffSize(SpanDim, Seed->noc));
-    if (script != NULL)
+    ctx->Span->nor = ctx->SpanDim;
+    ctx->Span->data = (PTR) sysRealloc(ctx->Span->data,ffSize(ctx->SpanDim, ctx->seed->noc));
+    if (ctx->script != NULL)
     {
-	(*script)->data = NREALLOC((*script)->data,int32_t,2 * SpanDim);
-	(*script)->nor = SpanDim;
+	(*ctx->script)->data = NREALLOC((*ctx->script)->data,int32_t,2 * ctx->SpanDim);
+	(*ctx->script)->nor = ctx->SpanDim;
     }
-
-    return Span;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -511,54 +478,52 @@ static Matrix_t *DoIt(IntMatrix_t **script, SpinUpInfo_t *info)
 /// @param info Pointer to a data structure with additional parameters, or NULL.
 /// @return Span of the seed vector(s) under the action of the generators, or NULL on error.
 
-Matrix_t *SpinUp(const Matrix_t *seed, const MatRep_t *rep, int flags,
-    IntMatrix_t **script, SpinUpInfo_t *info)
-{
-    if (CheckArgs(seed,rep,flags) != 0)
-    {
-	mtxAbort(MTX_HERE,"%s",MTX_ERR_BADARG);
-	return NULL;
-    }
-    if (Init(seed,rep,flags,script,info) != 0)
-    {
-	mtxAbort(MTX_HERE,"Initialization failed");
-	return NULL;
-    }
-    return DoIt(script,info);
-}
 
+Matrix_t* SpinUp(
+   const Matrix_t* seed,
+   const MatRep_t* rep,
+   int flags,
+   IntMatrix_t** script,
+   SpinUpInfo_t* info)
+{
+   SpinupContext_t* ctx = CreateContextM(seed, rep, flags, script, info);
+   DoIt(ctx);
+   Matrix_t* result = ctx->Span;
+   ctx->Span = NULL;
+   if (info) {
+      info->Result = ctx->result;
+   }
+   DestroyContext(ctx);
+   return result;
+}
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 /// Spin Up With Permutations.
 /// This function works like Spinup() but expects permutations instead of matrices
 /// for the generators.
 
-Matrix_t *SpinUpWithPermutations(const Matrix_t *seed, int ngen, 
-    const Perm_t **gen, int flags, IntMatrix_t **script, SpinUpInfo_t *info)
+Matrix_t* SpinUpWithPermutations(
+   const Matrix_t* seed, int ngen,
+   const Perm_t** gen, int flags, IntMatrix_t** script, SpinUpInfo_t* info)
 {
-    if (CheckArgsP(seed, ngen, gen, flags) != 0)
-    {
-	mtxAbort(MTX_HERE,"%s",MTX_ERR_BADARG);
-	return NULL;
-    }
-    if (InitP(seed, ngen, gen, flags, script, info) != 0)
-    {
-	mtxAbort(MTX_HERE,"Initialization failed");
-	return NULL;
-    }
-    return DoIt(script,info);
+   SpinupContext_t* ctx = CreateContextP(seed, ngen, gen, flags, script, info);
+   DoIt(ctx);
+   Matrix_t* result = ctx->Span;
+   ctx->Span = NULL;
+   if (info) {
+      info->Result = ctx->result;
+   }
+   DestroyContext(ctx);
+   return result;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 /// Initialize spin-up parameters.
 /// @param info Pointer to parameter structure.
-/// @return 0 on success, -1 on error.
 
-int SpinUpInfoInit(SpinUpInfo_t *info)
+void SpinUpInfoInit(SpinUpInfo_t* info)
 {
-    memset(info,0,sizeof(*info));
-    info->MaxSubspaceDimension = -1;
-    return 0;
+   memset(info, 0, sizeof(*info));
 }
 
 /// @}

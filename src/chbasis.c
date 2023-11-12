@@ -26,8 +26,7 @@ void mrChangeBasis(MatRep_t *rep, const Matrix_t *trans)
     int i;
 
     // Check arguments
-    if (!mrIsValid(rep))
-	mtxAbort(MTX_HERE,"rep: %s",MTX_ERR_BADARG);
+    mrValidate(MTX_HERE, rep);
     matValidate(MTX_HERE, trans);
 
     if (rep->NGen <= 0)
@@ -62,8 +61,7 @@ void mrChangeBasis(MatRep_t *rep, const Matrix_t *trans)
 
 MatRep_t* mrChangeBasis2(const MatRep_t *rep, const Matrix_t *trans)
 {
-   if (!mrIsValid(rep))
-      mtxAbort(MTX_HERE,"rep: %s",MTX_ERR_BADARG);
+   mrValidate(MTX_HERE, rep);
    matValidate(MTX_HERE, trans);
    MatRep_t *result = mrAlloc(0, NULL, 0);
    if (rep->NGen <= 0)

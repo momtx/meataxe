@@ -11,22 +11,21 @@
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static int zmkechelon(PTR matrix, int nor, int noc, uint32_t *piv, int *ispiv)
+static uint32_t zmkechelon(PTR matrix, uint32_t nor, uint32_t noc, uint32_t *piv, uint8_t *ispiv)
 {
-   PTR x, newrow;
-   int i, j, rank;
+   uint32_t i;
 
-   /* Initialize the table
-      -------------------- */
+   // Initialize the table
    for (i = 0; i < noc; ++i) {
       piv[i] = i;
       ispiv[i] = 0;
    }
 
-   /* Echelonize the matrix and build the pivot table in <piv>.
-      Keep track of assigned pivot columns in <ispiv>.
-      --------------------------------------------------------- */
-   rank = 0;
+   // Echelonize the matrix and build the pivot table in <piv>.
+   // Keep track of assigned pivot columns in <ispiv>.
+   PTR x = matrix;
+   uint32_t rank = 0;
+   PTR newrow = matrix;
    newrow = matrix;
    for (i = 0, x = matrix; i < nor && rank < noc; ++i, ffStepPtr(&x, noc)) {
       if (rank < i) {
@@ -43,9 +42,8 @@ static int zmkechelon(PTR matrix, int nor, int noc, uint32_t *piv, int *ispiv)
       }
    }
 
-   /* Insert the non-pivot columns
-      ---------------------------- */
-   j = rank;
+   // Insert the non-pivot columns
+   uint32_t j = rank;
    for (i = 0; i < noc; ++i) {
       if (!ispiv[i]) {
          piv[j++] = i;
@@ -61,47 +59,32 @@ static int zmkechelon(PTR matrix, int nor, int noc, uint32_t *piv, int *ispiv)
 /// @{
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
+
 /// Reduce to echelon form
-/// This function performs a Gaussian elimination on the matrix |mat|. On
-/// return, |mat| is in semi echelon form and a pivot table has been
-/// attatched to the matrix. If the rank of |mat| was smaller than the number
+/// This function performs a Gaussian elimination on the matrix @a mat.
+/// After return, @a mat is in semi echelon form and a pivot table has been
+/// attatched to the matrix. If the rank of @a mat was smaller than the number
 /// of rows, some rows are removed during the process. This function can also
 /// be used to rebuild the pivot table after the matrix has been modified.
 /// @param mat Pointer to the matrix.
-/// @return Rank of @em mat, or -1 on error.
+/// @return Rank of @a mat, or -1 on error.
 
 int matEchelonize(Matrix_t *mat)
 {
-   int rank;
-   static int *is_pivot = NULL;
-   static int maxnoc = -1;
-
-   /* Check the argument
-      ------------------ */
    matValidate(MTX_HERE, mat);
 
-   /* Re-allocate the pivot table. This is not really necessary, since
-      |Noc| should never change without releasing the pivot table, but
-      this would be a really nasty bug....
-      ----------------------------------------------------------------- */
+   // Re-allocate the pivot table. This is not really necessary, since
+   // «Noc» should never change without releasing the pivot table, but
+   // this would be a really nasty bug....
    mat->pivotTable = NREALLOC(mat->pivotTable,uint32_t,mat->noc);
-   if (mat->noc > maxnoc) {
-      int *new_is_piv = NREALLOC(is_pivot,int,mat->noc);
-      if (new_is_piv == NULL) {
-         mtxAbort(MTX_HERE,"Cannot allocate temporary table");
-         return -1;
-      }
-      is_pivot = new_is_piv;
-      maxnoc = mat->noc;
-   }
 
-   /* Build the pivot table
-      --------------------- */
+   // Build the pivot table
+   uint8_t *is_pivot = NALLOC(uint8_t, mat->noc);
    ffSetField(mat->field);
-   rank = zmkechelon(mat->data,mat->nor,mat->noc,mat->pivotTable,is_pivot);
+   const uint32_t rank = zmkechelon(mat->data,mat->nor,mat->noc,mat->pivotTable, is_pivot);
+   sysFree(is_pivot);
 
-   /* If the rank is less than the number of rows, remove null rows
-      ------------------------------------------------------------- */
+   // If the rank is less than the number of rows, remove null rows
    if (rank != mat->nor) {
       mat->nor = rank;
       mat->data = (PTR) sysRealloc(mat->data,ffSize(rank, mat->noc));

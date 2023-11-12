@@ -31,10 +31,7 @@ int mrAddGenerator(MatRep_t *rep, Matrix_t *gen, int flags)
 
     /* Check arguments
        --------------- */
-    if (!mrIsValid(rep))
-    {
-	mtxAbort(MTX_HERE,"rep: %s",MTX_ERR_BADARG);
-    }
+    mrValidate(MTX_HERE,rep);
     if (gen->nor != gen->noc)
     {
 	mtxAbort(MTX_HERE,"gen: %s",MTX_ERR_NOTSQUARE);

@@ -68,34 +68,26 @@ static int GensAreValid(int ngen, Matrix_t **gen)
 
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-/// Check a matrix representation.
-/// This function checks if the argument is a pointer to a valid
-/// matrix representation. If the representation is o.k., the function
-/// returns 1. Otherwise, an error is signaled and, if the error handler
-/// does not terminate the program, the function returns 0.
-/// @param rep Pointer to the matrix representation.
-/// @return 1 if @a rep points to a valid matrix representation, 0 otherwise.
 
-int mrIsValid(const MatRep_t *rep)
+/// Verifies that a matrix representation is valid and aborts the program if it is not valid.
+
+void mrValidate(const struct MtxSourceLocation* where, const MatRep_t *rep)
 {
-   if (rep == NULL) {
-      mtxAbort(MTX_HERE,"NULL representation");
-      return 0;
-   }
-   if (rep->typeId != MR_MAGIC) {
-      mtxAbort(MTX_HERE,"Invalid matrix representation (magic=%d)",(int)rep->typeId);
-      return 0;
-   }
-   if (!GensAreValid(rep->NGen,rep->Gen)) {
-      mtxAbort(MTX_HERE,"Invalid generators");
-      return 0;
-   }
-   return 1;
+   if (rep == NULL)
+      mtxAbort(where,"NULL representation");
+   if (rep->typeId != MR_MAGIC) 
+      mtxAbort(where,"Invalid matrix representation (magic=%d)",(int)rep->typeId);
+   if (rep->NGen < 0)
+      mtxAbort(where,"Invalid number of generators (%d)",rep->NGen);
+   if (!GensAreValid(rep->NGen,rep->Gen))
+      mtxAbort(where,"Invalid generators");
 }
 
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-/// Create a matrix representation.
+
+/// Creates a matrix representation.
+///
 /// The matrices in @a gen must all be square, over the same field, and of the same size.
 /// @a flags may be zero or the special value MR_COPY_GENERATORS. In the latter case,
 /// a local copy of the generators is made, and the matrices in @a gen can
@@ -173,10 +165,7 @@ MatRep_t *mrAlloc(int ngen, Matrix_t **gen, int flags)
 int mrFree(MatRep_t *rep)
 {
    int i;
-   if (!mrIsValid(rep)) {
-      mtxAbort(MTX_HERE,"%s",MTX_ERR_BADARG);
-      return -1;
-   }
+   mrValidate(MTX_HERE,rep);
    for (i = 0; i < rep->NGen; ++i) {
       matFree(rep->Gen[i]);
    }

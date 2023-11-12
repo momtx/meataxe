@@ -89,89 +89,90 @@ static void MakeInvertible(Matrix_t *mat, const char *fn)
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static void Init(int argc, char **argv)
+static void Init(int argc, char** argv)
 {
-    char fn[200];
-    int i;
+   char fn[200];
+   int i;
 
-    /* Process command line options
-       ---------------------------- */
-    App = appAlloc(&AppInfo,argc,argv);
-    NGen = appGetIntOption(App,"-g",2,1,100);
-    WriteGenerators = appGetOption(App,"-t --write-generators");
-    NoBasisChange = appGetOption(App,"-n --no-basis-change");
-    if (WriteGenerators && NoBasisChange)
-	mtxAbort(NULL,"'-t' and '-n' cannot be used together");
+   // Process command line options
+   App = appAlloc(&AppInfo, argc, argv);
+   NGen = appGetIntOption(App, "-g", 2, 1, 100);
+   WriteGenerators = appGetOption(App, "-t --write-generators");
+   NoBasisChange = appGetOption(App, "-n --no-basis-change");
+   if (WriteGenerators && NoBasisChange) {
+      mtxAbort(NULL, "'-t' and '-n' cannot be used together");
+   }
 
-    /* Process command line arguments
-       ------------------------------ */
-    appGetArguments(App,4,4);
-    TkiName = App->argV[0];
-    AName = App->argV[1];
-    BName = App->argV[2];
-    ResultName = App->argV[3];
+   // Process command line arguments
+   appGetArguments(App, 4, 4);
+   TkiName = App->argV[0];
+   AName = App->argV[1];
+   BName = App->argV[2];
+   ResultName = App->argV[3];
 
-    /* Read info files
-       --------------- */
-    tkReadInfo(&TKInfo,TkiName);
-    latReadInfo(&InfoM,TKInfo.nameM);
-    latReadInfo(&InfoN,TKInfo.nameN);
+   // Read .tki file
+   {
+      int ctx = mtxBegin(MTX_HERE, "HINT: did you run 'precond'?");
+      tkReadInfo(&TKInfo, TkiName);
+      if (TKInfo.dim <= 0) {
+         mtxAbort(MTX_HERE, "No dimension found in .tki file");
+      }
+      mtxEnd(ctx);
+   }
 
-    /* Some checks on info file data
-       ----------------------------- */
-    if (TKInfo.dim <= 0)
-	mtxAbort(MTX_HERE,"No dimension found in .tki file - did you run precond?");
-    if (InfoM.field != InfoN.field)
-	mtxAbort(MTX_HERE,"Different fields in .cfinfo files");
-    if (InfoN.NGen != InfoM.NGen)
-    {
-	mtxAbort(MTX_HERE,"Different number of generators in %s and %s",
-	    InfoM.BaseName,InfoN.BaseName);
-    }
+   latReadInfo(&InfoM, TKInfo.nameM);
+   latReadInfo(&InfoN, TKInfo.nameN);
 
-    /* Read the semisimplicity bases.
-       ------------------------------ */
-    if (!NoBasisChange)
-    {
-        MESSAGE(1,("Reading and inverting semisimplicity bases\n"));
-        sprintf(fn,"%s.ssb",TKInfo.nameM);
-        SsBasisM = matLoad(fn);
-	    // TODO: error info "Cannot load semisimplicity basis -- Did you run 'pwkond -t -b %s'?",TKInfo.nameM
-        MakeInvertible(SsBasisM,fn);
-        SsBasisMi = matInverse(SsBasisM);
-        if (strcmp(AName,BName))
-        {
-	    sprintf(fn,"%s.ssb",TKInfo.nameN);
-	    SsBasisN = matLoad(fn);
-            // TODO: error info see above
-	    MakeInvertible(SsBasisN,fn);
-	    SsBasisNi = matInverse(SsBasisN);
-        }
-        else
-        {
-	    SsBasisN = SsBasisM;
-	    SsBasisNi = SsBasisMi;
-        }
-    }
+   // Some checks on info file data
+   if (InfoM.field != InfoN.field) {
+      mtxAbort(MTX_HERE, "Different fields in .cfinfo files");
+   }
+   if (InfoN.NGen != InfoM.NGen) {
+      mtxAbort(MTX_HERE, "Different number of generators in %s and %s",
+         InfoM.BaseName, InfoN.BaseName);
+   }
 
-    /* Read P and Q matrices.
-       ---------------------- */
-    for (i = 0; i < TKInfo.nCf; ++i)
-    {
-	int spl = InfoM.Cf[TKInfo.cfIndex[0][i]].spl;
-	int tdim = InfoM.Cf[TKInfo.cfIndex[0][i]].dim;
-	int f;
-	tdim *= tdim;
-        sprintf(fn,"%s.p.%d",TkiName,i + 1);
-	P[i] = matLoad(fn);
-	f = ffOrder;
-	if (P[i]->field != f || P[i]->noc != spl || P[i]->nor != tdim)
-	    mtxAbort(MTX_HERE,"%s: Invalid P matrix",fn);
-        sprintf(fn,"%s.q.%d",TkiName,i + 1);
-	Q[i] = matLoad(fn);
-	if (Q[i]->field != f || Q[i]->nor != spl || Q[i]->noc != tdim)
-	    mtxAbort(MTX_HERE,"%s: Invalid Q matrix",fn);
-    }
+   // Read the semisimplicity bases.
+   if (!NoBasisChange) {
+      int ctx = mtxBegin(MTX_HERE, "HINT: did you run 'pwkond -tb'?");
+      MESSAGE(1, ("Reading and inverting semisimplicity bases\n"));
+      sprintf(fn, "%s.ssb", TKInfo.nameM);
+      SsBasisM = matLoad(fn);
+      MakeInvertible(SsBasisM, fn);
+      SsBasisMi = matInverse(SsBasisM);
+      if (strcmp(AName, BName)) {
+         sprintf(fn, "%s.ssb", TKInfo.nameN);
+         SsBasisN = matLoad(fn);
+         MakeInvertible(SsBasisN, fn);
+         SsBasisNi = matInverse(SsBasisN);
+      }
+      else {
+         SsBasisN = SsBasisM;
+         SsBasisNi = SsBasisMi;
+      }
+      mtxEnd(ctx);
+   }
+
+   // Read P and Q matrices.
+   for (i = 0; i < TKInfo.nCf; ++i) {
+      int ctx = mtxBegin(MTX_HERE, "HINT: did you run 'precond'?");
+      int spl = InfoM.Cf[TKInfo.cfIndex[0][i]].spl;
+      int tdim = InfoM.Cf[TKInfo.cfIndex[0][i]].dim;
+      int f;
+      tdim *= tdim;
+      sprintf(fn, "%s.p.%d", TkiName, i + 1);
+      P[i] = matLoad(fn);
+      f = ffOrder;
+      if (P[i]->field != f || P[i]->noc != spl || P[i]->nor != tdim) {
+         mtxAbort(MTX_HERE, "%s: Invalid P matrix", fn);
+      }
+      sprintf(fn, "%s.q.%d", TkiName, i + 1);
+      Q[i] = matLoad(fn);
+      if (Q[i]->field != f || Q[i]->nor != spl || Q[i]->noc != tdim) {
+         mtxAbort(MTX_HERE, "%s: Invalid Q matrix", fn);
+      }
+      mtxEnd(ctx);
+   }
 }
 
 
@@ -308,7 +309,6 @@ static void condenseMat(int gen)
         MESSAGE(1,("  Changing basis\n"));
         x = matDup(SsBasisM);
         matMul(x,mmat);
-	// TODO: error info "Basis change failed - did you run 'pwkond -tb' and 'precond'?"
         
         matMul(x,SsBasisMi);
         matFree(mmat);

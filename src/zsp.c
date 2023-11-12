@@ -36,7 +36,6 @@ static int TryLinearCombinations = 0;	/* -m: try all linear combinations */
 static int FindCyclicVector = 0;	/* -e: find a cyclic vector */
 static int FindClosure = 0;		/* -c: make closure of the seed space */
 static int Standard = 0;		/* -t: standard basis */
-static int MaxTries = 0;		/* -x: max. # of tries */
 
 
 
@@ -67,8 +66,6 @@ MTX_COMMON_OPTIONS_DESCRIPTION
 "    -e ...................... Find a cyclic vector\n"
 "    -c ...................... Combine, make the closure\n"
 "    -t ...................... Make standard basis\n"
-"    -x <Max> ................ Assume subspace is closed after <Max>\n"
-"                              multiplications without finding new vector.\n"
 "\n"
 "FILES\n"
 "    <Gen1>,<Gen2>............ I  Generators (without -g)\n"
@@ -173,7 +170,6 @@ static void init_args()
     OpName = appGetTextOption(App,"-o --script",NULL);
 
     MaxDim = appGetIntOption(App,"-d --dimension-limit",-1,1,100000000);
-    MaxTries = appGetIntOption(App,"-x --max-tries",-1,1,1000);
     TryOneVector = appGetOption(App,"-1 --single-shot");
     TryLinearCombinations = appGetOption(App,"-m --seed-generate");
     FindCyclicVector = appGetOption(App,"-e --find-cyclic-vector");
@@ -330,8 +326,6 @@ int main(int argc, char **argv)
     SpinUpInfoInit(&SpInfo);
     if (MaxDim > 0)
 	SpInfo.MaxSubspaceDimension = MaxDim;
-    if (MaxTries > 0)
-	SpInfo.MaxTries = MaxTries;
 
     flags = 0;
 
@@ -384,10 +378,10 @@ int main(int argc, char **argv)
 @section zsp_syntax Command Line
 <pre>
 zsp [@em Options] [-1emc] [-b @em Bas] [-s @em Sub] [-q @em Quot] [-o @em Scr] [-n @em Vector]
-    [-d @em MaxDim] [-x @em MaxTries] @em Gen1 @em Gen2 @em Seed
+    [-d @em MaxDim] @em Gen1 @em Gen2 @em Seed
 
 zsp [@em Options] [-1emc] [-b @em Bas] [-s @em Sub] [-q @em Quot] [-o @em Scr] [-n @em Vector]
-    [-d @em MaxDim] [-x @em MaxTries] [-g @em NGen] @em Gen @em Seed
+    [-d @em MaxDim] [-g @em NGen] @em Gen @em Seed
 </pre>
 
 @par @em Options
@@ -416,9 +410,6 @@ Standard options, see @ref prog_stdopts
     Generate seed vectors.
 @par -t
     Spin up canonically (standard basis).
-@par -x
-    Assume the subspace is closed, if @em MaxTries vectors have been multiplied by
-    all generators without yielding a new vector.
 @par -g 
     Set the number of generators.
 @par -G

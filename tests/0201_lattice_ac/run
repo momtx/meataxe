@@ -1,3 +1,4 @@
+#!/bin/sh
 echo "0201 - Submodules of ac"
 
 . ../tests/common.sh

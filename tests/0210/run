@@ -1,3 +1,4 @@
+#!/bin/sh
 echo "0210 - Tensor condensation of Ru (dim = 378)"
 
 . ../tests/common.sh

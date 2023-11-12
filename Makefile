@@ -9,7 +9,9 @@
 # Directory where binaries and run-time files will be installed.
 MTXROOT = ${CURDIR}
 
-# C compiler and common compiler/linker flags
+# ------------------------------------------------------------------------------
+# Common compiler and linker flags
+# ------------------------------------------------------------------------------
 # The default is to use GNU C
 CC=gcc
 CFLAGS1=-std=c99 -D_DEFAULT_SOURCE -g -O3 -Wall
@@ -18,15 +20,29 @@ LDFLAGS1=-g -Wall
 #CFLAGS1=-std=c99 -D_DEFAULT_SOURCE -g -Wall -Werror -DMTX_DEBUG
 #CFLAGS1=-std=c99 -D_DEFAULT_SOURCE -g -Wall -Werror -DASM_MMX -DMTX_DEBUG
 
+# ------------------------------------------------------------------------------
+# Multithreading support
+# ------------------------------------------------------------------------------
+# Leave empty to disable:
+CFLAGS_THREADS=
+LDFLAGS_THREADS=
+# Enable with four threads by default:
+#CFLAGS_THREADS=-pthread -DMTX_DEFAULT_THREADS=4
+#LDFLAGS_THREADS=-pthread
+
+# ------------------------------------------------------------------------------
 # Flags to pass to the ar utility
+# ------------------------------------------------------------------------------
 ARFLAGS1=
 # For AIX 64-bit:
 #ARFLAGS1=-X 64
 
-# Select which kernel you want to use.
+# ------------------------------------------------------------------------------
+# Arithmetic kernel
+# ------------------------------------------------------------------------------
 # Standard kernel, up to GF(256)
 ZZZ=0
-# Big kernel, up to GF(2^16)  -- NOTE: THIS IS NO LONGER AVAILABLE
+# Big kernel, up to GF(2^16)
 #ZZZ=1
 
 # Verbose output (echo all commands)
@@ -47,8 +63,8 @@ SILENT=${SILENT${V}}
 
 MTXBIN = ${MTXROOT}/bin
 
-CFLAGS=$(CFLAGS1) -I"include" -Itmp -DMTX_ZZZ=${ZZZ}
-LDFLAGS=$(LDFLAGS1)
+CFLAGS=$(CFLAGS1) $(CFLAGS_THREADS) -I"include" -Itmp -DMTX_ZZZ=${ZZZ}
+LDFLAGS=$(LDFLAGS1) $(LDFLAGS_THREADS)
 
 PROGRAMS = \
   cfcomp chop decomp genmod mkcycl mkdotl mkgraph mkhom \

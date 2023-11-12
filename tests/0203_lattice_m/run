@@ -7,12 +7,26 @@ cp "${MTX_TEST_DATA_DIR}/m.2" m.2
 cp "${MTX_TEST_DATA_DIR}/m.3" m.3
 
 chop -Q -g 3 m || error "CHOP failed"
-pwkond -Qt m || error "PWKOND failed"
+
+pwkond -Q -t m || error "PWKOND failed"
+for cf in 20a 20b 20c 20d 128a; do
+   compareBinaryWithReference m${cf}.k m${cf}.k.txt.expected
+   compareBinaryWithReference m${cf}.im m${cf}.im.txt.expected
+   compareBinaryWithReference m${cf}.op m${cf}.op.txt.expected
+   compareBinaryWithReference m${cf}.np m${cf}.np.txt.expected
+   compareBinaryWithReference m${cf}.1k m${cf}.1k.txt.expected
+   compareBinaryWithReference m${cf}.2k m${cf}.2k.txt.expected
+   compareBinaryWithReference m${cf}.3k m${cf}.3k.txt.expected
+   compareBinaryWithReference m${cf}.std.1 m${cf}.std.1.txt.expected
+   compareBinaryWithReference m${cf}.std.2 m${cf}.std.2.txt.expected
+   compareBinaryWithReference m${cf}.std.3 m${cf}.std.3.txt.expected
+done
+
 mkcycl -Q m || error "MKCYCL FAILED"
 mkinc -Q m || error "MKINC FAILED"
 mkdotl -Q m || error "MKDOTL FAILED"
 compareWithReference m.cfinfo cfinfo_after_mkdotl.expected
-mksub  -Q m || error "MKSUB FAILED"
+mksub -Q m || error "MKSUB FAILED"
 compareWithReference m.out
 compareWithReference m.lat
 compareWithReference m.gra

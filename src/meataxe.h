@@ -8,6 +8,9 @@
 #include <stdio.h>
 #include <stdint.h>
 #include <stdarg.h>
+#if defined(MTX_DEFAULT_THREADS)
+#include <pthread.h>
+#endif
 
 // Version naming convention:
 // x.y.z          - Released version
@@ -77,8 +80,6 @@ void pexExecuteRange(PexGroup_t* group, void (*f)(void *userData, size_t begin, 
 	void* userData, size_t begin, size_t end);
 void pexFinally(PexGroup_t* group, void(*f)(void* userData), void* userData);
 void pexInit(int nThreads);
-MTX_PRINTF(1,2)
-void pexLog(const char* msg, ...);
 void pexShutdown();
 void pexSleep(unsigned timeInMs);
 unsigned pexThreadId();
@@ -343,12 +344,25 @@ int appGetArguments(MtxApplication_t *app, int min_argc, int max_argc);
 #define MTX_COMMON_OPTIONS_SYNTAX \
    "[<Options>]"
 
+#define STRINGIFY2(x) #x
+#define STRINGIFY(x) STRINGIFY2(x)
+
+#if defined(MTX_DEFAULT_THREADS)
+   #define MTX_THREAD_OPTION_DESCRIPTION \
+      "    -j <n> .................. Parallel execution on <n> CPU cores (default: "\
+        STRINGIFY(MTX_DEFAULT_THREADS) ")\n"
+#else
+   #define MTX_THREAD_OPTION_DESCRIPTION \
+      "    -j <n> .................. Ignored (threading support is disabled)\n"
+#endif
+
 #define MTX_COMMON_OPTIONS_DESCRIPTION \
    "    -Q ...................... Quiet, no messages\n" \
    "    -V ...................... Verbose, more messages\n" \
    "    -T <MaxTime> ............ Set CPU time limit [s]\n" \
-   "    --version ............... Show version information\n"
-
+   "    --help .................. Show help on command line syntax\n" \
+   "    --version ............... Show version information\n" \
+   MTX_THREAD_OPTION_DESCRIPTION
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // Messages and error handling
@@ -812,7 +826,7 @@ int mrAddGenerator(MatRep_t *rep, Matrix_t *gen, int flags);
 MatRep_t *mrAlloc(int ngen, Matrix_t **gen, int flags);
 void mrChangeBasis(MatRep_t *rep, const Matrix_t *trans);
 MatRep_t* mrChangeBasis2(const MatRep_t *rep, const Matrix_t *trans);
-int mrIsValid(const MatRep_t *rep);
+void mrValidate(const struct MtxSourceLocation* where, const MatRep_t *rep);
 int mrFree(MatRep_t *rep);
 MatRep_t *mrLoad(const char *basename, int ngen);
 int mrSave(const MatRep_t *rep, const char *basename);
@@ -822,17 +836,23 @@ MatRep_t *mrTransposed(const MatRep_t *rep);
    The word generator
    ------------------------------------------------------------------ */
 
+#define MTX_WG_MAXLEN 8
+
 typedef struct {
-   const MatRep_t *Rep;         /**< The representation. **/
-   Matrix_t *Basis[8];          /**< Products of the generators **/
-   int N2[8];                   /**< Coefficients **/
-   int *Description;            /**< Symbolic description of a word **/
+   const MatRep_t *Rep;         //< The representation
+   Matrix_t *Basis[8];          //< Products of the generators
+   int N2[8];                   //< Coefficients
+   int *Description;            //< Symbolic description of a word (binary)
+   int buf[8][MTX_WG_MAXLEN + 1];  //< internal
+   int lastn2;
+   char name[8 * (MTX_WG_MAXLEN + 1) + 1]; //< Symbolic description of a word (text)
 } WgData_t;
 
 WgData_t *wgAlloc(const MatRep_t *rep);
-int *wgDescribeWord(WgData_t *b, long n);
+int *wgDescribeWord(WgData_t *b, uint32_t n);
 int wgFree(WgData_t *b);
-Matrix_t *wgMakeWord(WgData_t *b, long n);
+Matrix_t *wgMakeWord(WgData_t *b, uint32_t n);
+Matrix_t *wgMakeWord2(WgData_t *b, uint32_t n);
 void wgMakeFingerPrint(WgData_t *b, int fp[6]);
 const char *wgSymbolicName(WgData_t *b, long n);
 
@@ -855,12 +875,12 @@ Matrix_t *QAction(const Matrix_t *sub, const Matrix_t *gen);
 Matrix_t *SAction(const Matrix_t *sub, const Matrix_t *gen);
 
 typedef struct {
-   int MaxSubspaceDimension;
-   int MaxTries;
-   int Result;
+   /// Subspace dimension limit. 0 = unlimited.
+   uint32_t MaxSubspaceDimension;
+   uint32_t Result;
 } SpinUpInfo_t;
 
-int SpinUpInfoInit(SpinUpInfo_t *info);
+void SpinUpInfoInit(SpinUpInfo_t *info);
 Matrix_t *SpinUp(const Matrix_t *seed, const MatRep_t *rep, int flags,
                  IntMatrix_t **script, SpinUpInfo_t *info);
 Matrix_t *SpinUpWithScript(const Matrix_t *seed, const MatRep_t *rep,
@@ -967,13 +987,14 @@ FPoly_t *minpolS(const Matrix_t *mat, long seed);
 
 typedef struct {
    long dim, num, mult;
-   long idWord;                 /* Identifying word */
+   char name[30];               // <dim><num>, e.g., "20b"
+   long idWord;                 // Identifying word
    Poly_t *idPol;
-   long peakWord;               /* Peak word */
+   long peakWord;               // Peak word
    Poly_t *peakPol;
-   long nmount;                 /* Number of mountains */
-   long ndotl;                  /* Number of dotted lines */
-   long spl;                    /* Degree of splitting field */
+   long nmount;                 // Number of mountains
+   long ndotl;                  // Number of dotted lines
+   long spl;                    // Degree of splitting field
 }
 CfInfo;
 

@@ -56,7 +56,7 @@ static int partdim = 0;
 
 static PTR basis = NULL;
 static PTR space = NULL;
-static int *piv = NULL;
+static uint32_t *piv = NULL;
 static long *op = NULL;
 static PTR *stdgen = NULL;
 static long **stdtab = NULL;
@@ -70,27 +70,10 @@ static uint32_t *esyspiv;
 static int maxnumMgens = 0;
 static int numMgens = 0;
 
-// TODO: replace with FfCleanRowAndRepeat
-
-static void myzcleanrow(PTR row, PTR matrix, PTR matrix2, int nor, int noc, int *piv)
-
+static void myzcleanrow(PTR row, PTR matrix, PTR matrix2, int nor, int noc, uint32_t *piv)
 {
-    long i;
-    PTR x, y, row2;
-
-    row2 = ffGetPtr(matrix2,nor, noc);
-    for (i = 0, x = matrix, y = matrix2; i < nor; 
-         ++i, ffStepPtr(&x,noc), ffStepPtr(&y,noc))
-    {
-        FEL f = ffExtract(row, piv[i]);
-        if (f == FF_ZERO) 
-            continue;
-        f = ffNeg(ffDiv(f, ffExtract(x, piv[i])));
-        ffAddMulRow(row, x, f, noc);
-        ffAddMulRow(row2, y, f, noc);
-    }
+    ffCleanRowAndRepeat(row, matrix, nor, noc, piv, ffGetPtr(matrix2,nor, noc), matrix2);
 }
-
 
 /* ------------------------------------------------------------------
    zgensbasis() - Spin up canonically (spinning basis).
@@ -130,7 +113,7 @@ static void myzcleanrow(PTR row, PTR matrix, PTR matrix2, int nor, int noc, int 
 
 
 int zgensbasis(PTR seed, int noc, int seedcount, int ngen, Matrix_t *gen[], PTR space, 
-    int *piv_table, PTR basis, int partdim, long *op_table, PTR stdgen[],
+    uint32_t *piv_table, PTR basis, int partdim, long *op_table, PTR stdgen[],
     long *std_tab[])
 
 {
@@ -607,7 +590,7 @@ static void AllocateWorkspace()
 {
     basis = ffAlloc(dimM + 1, dimM);
     space = ffAlloc(dimM + 1, dimM);
-    piv = NALLOC(int,dimM + 2);
+    piv = NALLOC(uint32_t ,dimM + 2);
     op = NALLOC(long,2 * dimM + 2);
     stdgen = NALLOC(PTR,MInfo.NGen);
     stdtab = NALLOC(long *,MInfo.NGen);

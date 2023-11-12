@@ -71,7 +71,6 @@ static void zmatinv(PTR mat, PTR result, int noc)
 
 Matrix_t *matInverse(const Matrix_t *mat)
 {
-   PTR tmp = NULL;      // workspace
 
    matValidate(MTX_HERE, mat);
    if (mat->nor != mat->noc) {
@@ -81,11 +80,13 @@ Matrix_t *matInverse(const Matrix_t *mat)
    Matrix_t *dest = matId(mat->field, dim);
 
    // Copy matrix into workspace
-   tmp = ffAlloc(dim, dim);
+   PTR tmp = ffAlloc(dim, dim);
    memcpy(tmp,mat->data,ffSize(dim, dim));
 
    // Inversion
    zmatinv(tmp,dest->data, dim);
+   ffFree(tmp);
+
    return dest;
 }
 
