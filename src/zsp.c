@@ -22,7 +22,7 @@ static int Dim = -1;                    // Dimension / permutation size
 static int ngen = 2;			/* Number of generators */
 static int opt_G = 0;		        /* GAP output */
 static long SeedVecNo = 0;		/* Current seed vector */
-static const char *GenName[MAXGEN];	/* File name for generators */
+static const char *genFileName[MAXGEN];	/* File name for generators */
 static const char *SeedName = NULL;	/* File name for seed vectors */
 static const char *SubspaceName = NULL;	/* File name for invariant subspace */
 static const char *SubName = NULL;	/* File name for action on subspace */
@@ -79,83 +79,71 @@ MTX_COMMON_OPTIONS_DESCRIPTION
 
 static MtxApplication_t *App = NULL;
 
-
-/* ------------------------------------------------------------------
-   ReadGenerators() - Read the generators into <Rep>
-   ------------------------------------------------------------------ */
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 static void readGenerators()
 {
-   int i;
-
-   {
-      MtxFile_t *f = mfOpen(GenName[0]);
-      mfReadHeader(f);
-      uint32_t objectType = mfObjectType(f);
-      if (objectType == MTX_TYPE_PERMUTATION)
-         Permutations = 1;
-      if (objectType == MTX_TYPE_MATRIX) {
-         Permutations = 0;
+   MtxFile_t* f = mfOpen(genFileName[0]);
+   mfReadHeader(f);
+   uint32_t objectType = mfObjectType(f);
+   switch (objectType) {
+      case MTX_TYPE_PERMUTATION:
+         if (SubName != NULL || QuotName != NULL) {
+            mtxAbort(MTX_HERE, "'-s' and '-q' are not supported for permutations");
+         }
+         for (int i = 0; i < ngen; ++i) {
+            Perm[i] = permLoad(genFileName[i]);
+         }
+         Dim = Perm[0]->degree;
+         break;
+      case MTX_TYPE_MATRIX:
          ffSetField(f->header[0]);
-      }
-      else {
+         Rep = mrAlloc(0, NULL, 0);
+         for (int i = 0; i < ngen; ++i) {
+            mrAddGenerator(Rep, matLoad(genFileName[i]), 0);
+         }
+         Dim = Rep->Gen[0]->noc;
+         break;
+      default:
          mtxAbort(MTX_HERE, "%s: unsupported object type 0x%lx",
-               GenName[0], (unsigned long) objectType);
-      }
-      mfClose(f);
+            genFileName[0], (unsigned long) objectType);
    }
-
-   if (Permutations)
-   {
-      if (SubName != NULL || QuotName != NULL)
-         mtxAbort(MTX_HERE,"'-s' and '-q' are not supported for permutations");
-      for (i = 0; i < ngen; ++i)
-      {
-         Perm[i] = permLoad(GenName[i]);
-      }
-      Dim = Perm[0]->degree;
-   }
-   else
-   {
-      Rep = mrAlloc(0,NULL,0);
-      for (i = 0; i < ngen; ++i)
-      {
-         Matrix_t *gen = matLoad(GenName[i]);
-         mrAddGenerator(Rep,gen,0);
-      }
-      Dim = Rep->Gen[0]->noc;
-   }
+   mfClose(f);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 static void readSeed()
 {
-    MtxFile_t *sf = mfOpen(SeedName);
-    mfReadHeader(sf);
-    if (mfObjectType(sf) != MTX_TYPE_MATRIX)
-	mtxAbort(MTX_HERE,"%s: %s",SeedName,MTX_ERR_NOTMATRIX);
-    const uint32_t field = sf->header[0];
-    const int norSeed = sf->header[1];
-    const int nocSeed = sf->header[2];
+   MtxFile_t* sf = mfOpen(SeedName);
+   mfReadHeader(sf);
+   if (mfObjectType(sf) != MTX_TYPE_MATRIX) {
+      mtxAbort(MTX_HERE, "%s: %s", SeedName, MTX_ERR_NOTMATRIX);
+   }
+   const uint32_t field = sf->header[0];
+   const int norSeed = sf->header[1];
+   const int nocSeed = sf->header[2];
 
-    if (Permutations)
-	ffSetField(field);
-    if (nocSeed != Dim || sf->header[0] != ffOrder)
-	mtxAbort(MTX_HERE,"%s and %s: %s",GenName[0],SeedName,MTX_ERR_INCOMPAT);
-    
-    size_t skip = 0;
-    if (!TryLinearCombinations && SeedVecNo > 0) {
-       // skip the first «SeedVecNo» rows
-       if ((skip = SeedVecNo - 1) > norSeed)
-          skip = norSeed;
-       sysFseekRelative(sf->file, skip * ffRowSize(nocSeed));
-    }
-    uint32_t num_seed = TryOneVector ? 1 : norSeed - skip;
+   if (Permutations) {
+      ffSetField(field);
+   }
+   if (nocSeed != Dim || field != ffOrder) {
+      mtxAbort(MTX_HERE, "%s and %s: %s", genFileName[0], SeedName, MTX_ERR_INCOMPAT);
+   }
 
-    Seed = matAlloc(ffOrder,num_seed,Dim);
-    mfReadRows(sf,Seed->data,norSeed,Dim);
-    mfClose(sf);
+   size_t skip = 0;
+   if (!TryLinearCombinations && SeedVecNo > 0) {
+      // skip the first «SeedVecNo» rows
+      if ((skip = SeedVecNo - 1) > norSeed) {
+         skip = norSeed;
+      }
+      sysFseekRelative(sf->file, skip * ffRowSize(nocSeed));
+   }
+   const uint32_t num_seed = TryOneVector ? 1 : norSeed - skip;
+
+   Seed = matAlloc(ffOrder, num_seed, Dim);
+   mfReadRows(sf, Seed->data, num_seed, Dim);
+   mfClose(sf);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -211,8 +199,8 @@ static void init_args()
     {
 	ngen = 2;
 	appGetArguments(App,3,3);
-	GenName[0] = App->argV[0];
-	GenName[1] = App->argV[1];
+	genFileName[0] = App->argV[0];
+	genFileName[1] = App->argV[1];
 	SeedName =  App->argV[2];
     }
     else
@@ -224,7 +212,7 @@ static void init_args()
 	{
 	    char *c;
 	    sprintf(buf,"%s.%d",App->argV[0],i+1);
-	    GenName[i] = c = sysMalloc(strlen(buf)+1);
+	    genFileName[i] = c = sysMalloc(strlen(buf)+1);
 	    strcpy(c,buf);
 	}
     }

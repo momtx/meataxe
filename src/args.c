@@ -296,7 +296,6 @@ MtxApplication_t *appAlloc(MtxApplicationInfo_t const *ai, int argc, char **argv
    }
   
    // Handle common options.
-   MtxOpt_UseOldWordGenerator = appGetOption(a,"--old-word-generator");
    if ((time_limit = appGetIntOption(a,"-T --lime-limit",0,0,1000000)) > 0) {
       sysSetTimeLimit(time_limit);
    }

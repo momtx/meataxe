@@ -189,23 +189,25 @@ static void cleanUp()
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-int main(int argc, char **argv)
-
+int main(int argc, char** argv)
 {
-    init(argc,argv);
+   init(argc, argv);
 
-    inputFile = mfOpen(iname);
-    mfReadHeader(inputFile);
-    uint32_t objType = mfObjectType(inputFile);
-    if (objType == MTX_TYPE_MATRIX)
-       changeField();
-    else if (objType == MTX_TYPE_PERMUTATION)
-       convertPermutationToMatrix();
-    else
-       mtxAbort(MTX_HERE, "%s: unsupported object type", iname);
+   inputFile = mfOpen(iname);
+   mfReadHeader(inputFile);
+   switch (mfObjectType(inputFile)) {
+      case MTX_TYPE_MATRIX:
+         changeField();
+         break;
+      case MTX_TYPE_PERMUTATION:
+         convertPermutationToMatrix();
+         break;
+      default:
+         mtxAbort(MTX_HERE, "%s: unsupported object type", iname);
+   }
 
-    cleanUp();
-    return 0;
+   cleanUp();
+   return 0;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////

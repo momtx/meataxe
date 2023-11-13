@@ -162,7 +162,7 @@ LIB_OBJS=\
 	string \
 	sumint \
 	temap \
-	tkinfo types vec2mat \
+	tkinfo vec2mat \
 	wgen \
 	zcleanrow zcmprow zgap zpermrow \
 	zzz2 \

@@ -47,7 +47,6 @@
 /// and the function name where the error occurred.
 /// Note that you must not assume that mtxAbort terminates the program. In fact
 /// mtxAbort may return if a user-defined error handler has been installed.
-const char MTX_ERR_NOMEM[] = "Not enough memory";
 const char MTX_ERR_GAME_OVER[] = "Time limit exceeded";
 const char MTX_ERR_DIV0[] = "Division by 0 or singular Matrix";
 const char MTX_ERR_FILEFMT[] = "Bad format";
@@ -56,9 +55,7 @@ const char MTX_ERR_RANGE[] = "Out of range";
 const char MTX_ERR_NOTECH[] = "Matrix not in chelon form";
 const char MTX_ERR_NOTSQUARE[] = "Matrix not square";
 const char MTX_ERR_INCOMPAT[] = "Arguments are incompatible";
-const char MTX_ERR_BADUSAGE[] = "Bad command line";
 const char MTX_ERR_OPTION[] = "Bad usage of option";
-const char MTX_ERR_NARGS[] = "Bad number of arguments";
 const char MTX_ERR_NOTMATRIX[] = "Not a matrix";
 const char MTX_ERR_NOTPERM[] = "Not a permutation";
 

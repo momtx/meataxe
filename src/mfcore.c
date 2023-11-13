@@ -91,32 +91,27 @@ static int isValidFieldOrder(uint32_t x)
    return x <= MTX_MAX_Q && x >= 2;
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
 static int isValidHeader(uint32_t* type, const uint32_t header[3])
 {
    if (!isNonNegative(header[1]) && isNonNegative(header[2])) {
       return 0;
    }
    *type = header[0];
-   if (header[0] == MTX_TYPE_PERMUTATION) {
-      return 1;
+   switch (header[0]) {
+      case MTX_TYPE_PERMUTATION: return 1;
+      case MTX_TYPE_POLYNOMIAL: return isValidFieldOrder(header[1]) && (int32_t) header[2] >= -1;
+      case MTX_TYPE_BITSTRING_FIXED: return 1;
+      case MTX_TYPE_BITSTRING_DYNAMIC: return 1;
+      case MTX_TYPE_INTMATRIX: return 1;
+      case MTX_TYPE_MATRIX: return 0; // never used, header[0] is field order
    }
-   if (header[0] == MTX_TYPE_POLYNOMIAL) {
-      return isValidFieldOrder(header[1]) && (int32_t) header[2] >= -1;
-   }
-   if (header[0] == MTX_TYPE_BITSTRING_FIXED) {
-      return 1;
-   }
-   if (header[0] == MTX_TYPE_BITSTRING_DYNAMIC) {
-      return 1;
-   }
-   if (header[0] == MTX_TYPE_INTMATRIX) { 
-      return 1;
-   }
-   if (header[0] == MTX_TYPE_BEGIN) {
+
+   if (header[0] >= MTX_TYPE_BEGIN) {
       return 0;
    }
 
-   // matrix
    *type = MTX_TYPE_MATRIX;
    return isValidFieldOrder(header[0]);
 }
@@ -145,9 +140,6 @@ uint32_t mfObjectType(const MtxFile_t* file)
 static void checkHeader(MtxFile_t* f)
 {
    mfObjectType(f);
-   //f->field = (int) f->header[0];
-   //f->nor = (int) f->header[1];
-   //f->noc = (int) f->header[2];
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////

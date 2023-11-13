@@ -149,7 +149,7 @@ void sbAppend(StringBuilder_t* sb, const char* fragment)
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-/// Appends a formatted string (vprintf style) to the string.
+/// Appends a formatted string with multiple arguments (vprintf style) to the string.
 
 void sbVprintf(StringBuilder_t* sb, const char* fmt, va_list args)
 {
@@ -172,72 +172,13 @@ void sbVprintf(StringBuilder_t* sb, const char* fmt, va_list args)
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
+/// Appends a formatted string with multiple arguments (printf style) to the string.
+
 void sbPrintf(StringBuilder_t* sb, const char* fmt, ...)
 {
    va_list args;
    va_start(args, fmt);
    sbVprintf(sb, fmt, args);
-   va_end(args);
-}
-
-////////////////////////////////////////////////////////////////////////////////////////////////////
-
-#define TPRINTF_N_BUF 5
-
-/// @private
-struct PrintBuffer {
-    size_t capacity;
-    size_t size;
-    char* data;
-};
-
-static struct PrintBuffer buffer[TPRINTF_N_BUF] = {0};
-static size_t bufIndex = 0;
-static char ERROR[] = "!ERROR";
-
-////////////////////////////////////////////////////////////////////////////////////////////////////
-
-/// Formats a temporary string.
-/// This function is similar to vsnprintf() but returns a pointer to an internal buffer which is
-/// managed by strVTprintf and must not be released by the caller. The function uses a pool of
-/// 5 buffers to allow for multiple strVTprintf() invocations in the same scope without overwriting
-/// previously formatted texts.
-
-const char *strVTprintf(const char* s, va_list args)
-{
-    if (++bufIndex == TPRINTF_N_BUF) bufIndex = 0;
-    struct PrintBuffer* buf = buffer + bufIndex;
-
-    if (buf->capacity == 0) {
-	buf->capacity = 100;
-	buf->data = NALLOC(char, buf->capacity + 1);
-    }
-    va_list args2;
-    va_copy(args2, args);
-    int len = vsnprintf(buf->data, buf->capacity + 1, s, args2);
-    va_end(args2);
-    if (len < 0)
-	return ERROR;
-    if (len <= buf->capacity)
-	return buf->data;
-
-    buf->capacity = len + 1;
-    len = vsnprintf(buf->data, buf->capacity + 1, s, args);
-    MTX_ASSERT(len >= 0 && len <= buf->capacity);
-    return buf->data;
-}
-
-////////////////////////////////////////////////////////////////////////////////////////////////////
-
-/// Formats a temporary string.
-/// This function works like @ref strVTprintf but excepts a variable list of arguments instead of a
-/// @c va_list.
-
-const char *strTprintf(const char* s, ...)
-{
-   va_list args;
-   va_start(args, s);
-   return strVTprintf(s, args);
    va_end(args);
 }
 

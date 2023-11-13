@@ -215,17 +215,12 @@ static void printGapPermutation()
 static void printGapFormat()
 {
    const uint32_t objectType = mfObjectType(binaryFile);
-   if (objectType == MTX_TYPE_PERMUTATION) {
-      printGapPermutation();
-   } else if (objectType == MTX_TYPE_INTMATRIX)
-   {
-      printGapIntegerMatrix();
-   } else if (objectType == MTX_TYPE_MATRIX)
-   {
-      printGapMatrix();
-   } else {
-      mtxAbort(MTX_HERE, "Cannot print type 0x%lu in GAP format", (unsigned long)objectType);
+   switch (objectType) {
+      case MTX_TYPE_MATRIX: printGapMatrix(); return;
+      case MTX_TYPE_PERMUTATION: printGapPermutation(); return;
+      case MTX_TYPE_INTMATRIX: printGapIntegerMatrix(); return;
    }
+   mtxAbort(MTX_HERE, "Cannot print type 0x%lu in GAP format", (unsigned long)objectType);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -323,21 +318,13 @@ static void printIntegerMatrix()
 static void printStandardFormat()
 {
    const uint32_t objectType = mfObjectType(binaryFile);
-   if (objectType == MTX_TYPE_MATRIX) {
-      printMatrix();
+   switch (objectType) {
+      case MTX_TYPE_MATRIX: printMatrix(); return;
+      case MTX_TYPE_PERMUTATION: printPermutation(); return;
+      case MTX_TYPE_POLYNOMIAL: printPolynomial(); return;
+      case MTX_TYPE_INTMATRIX: printIntegerMatrix(); return;
    }
-   else if (objectType == MTX_TYPE_PERMUTATION) {
-      printPermutation();
-   }
-   else if (objectType == MTX_TYPE_POLYNOMIAL) {
-      printPolynomial();
-   }
-   else if (objectType == MTX_TYPE_INTMATRIX) {
-      printIntegerMatrix();
-   }
-   else {
-      mtxAbort(MTX_HERE, "Cannot print type 0x%lx in Mtx format", (unsigned long)objectType);
-   }
+   mtxAbort(MTX_HERE, "Cannot print type 0x%lx in Mtx format", (unsigned long)objectType);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -408,31 +395,32 @@ static void printSummary()
 {
    const uint32_t objectType = mfObjectType(binaryFile);
    size_t objectSize = 0;
-   if (objectType == MTX_TYPE_PERMUTATION) {
-      printPermutationSummary();
-      objectSize = sizeof(uint32_t) * binaryFile->header[1] * binaryFile->header[2];
-   }
-   else if (objectType == MTX_TYPE_MATRIX) {
-      printMatrixSummary();
-      ffSetField(binaryFile->header[0]);
-      objectSize = ffRowSizeUsed(binaryFile->header[2]) * binaryFile->header[1];
-   }
-   else if (objectType == MTX_TYPE_POLYNOMIAL) {
-      printPolySummary();
-      ffSetField(binaryFile->header[1]);
-      const int32_t degree = (int32_t)binaryFile->header[2];
-      MTX_ASSERT(degree >= -1);
-      objectSize = ffRowSizeUsed(degree + 1);
-   }
-   else if (objectType == MTX_TYPE_INTMATRIX) {
-      printImatSummary();
-      objectSize = sizeof(int32_t) * binaryFile->header[1] * binaryFile->header[2];
-   }
-   else {
-      mtxAbort(MTX_HERE, "Unsupported/invalid file header (0x%lx,0x%lx,0x%lx)",
-               (unsigned long)binaryFile->header[0],
-               (unsigned long)binaryFile->header[1],
-               (unsigned long)binaryFile->header[2]);
+   switch (objectType) {
+      case MTX_TYPE_PERMUTATION:
+         printPermutationSummary();
+         objectSize = sizeof(uint32_t) * binaryFile->header[1] * binaryFile->header[2];
+         break;
+      case MTX_TYPE_MATRIX:
+         printMatrixSummary();
+         ffSetField(binaryFile->header[0]);
+         objectSize = ffRowSizeUsed(binaryFile->header[2]) * binaryFile->header[1];
+         break;
+      case MTX_TYPE_POLYNOMIAL:
+         printPolySummary();
+         ffSetField(binaryFile->header[1]);
+         const int32_t degree = (int32_t)binaryFile->header[2];
+         MTX_ASSERT(degree >= -1);
+         objectSize = ffRowSizeUsed(degree + 1);
+         break;
+      case MTX_TYPE_INTMATRIX:
+         printImatSummary();
+         objectSize = sizeof(int32_t) * binaryFile->header[1] * binaryFile->header[2];
+         break;
+      default:
+         mtxAbort(MTX_HERE, "Unsupported/invalid file header (0x%lx,0x%lx,0x%lx)",
+            (unsigned long)binaryFile->header[0],
+            (unsigned long)binaryFile->header[1],
+            (unsigned long)binaryFile->header[2]);
    }
 
    mfSkip(binaryFile, objectSize);

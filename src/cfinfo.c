@@ -125,13 +125,11 @@ static void ReadWord(StfData *f, long *w, Poly_t **p, const char *fn)
 
 static void readCfFile(StfData* f, const char* fn, Lat_Info* li)
 {
-    /* Read header
-       ----------- */
+    // Read header
     if (stfReadLine(f) || strcmp(stfGetName(f),"CFInfo"))
 	mtxAbort(MTX_HERE,"%s: %s",fn,MTX_ERR_FILEFMT);
 
-    /* Read data
-       --------- */
+    // Read data
     while (stfReadLine(f) == 0)
     {
 	const char *c = stfGetName(f);
@@ -217,6 +215,7 @@ static void readCfFile(StfData* f, const char* fn, Lat_Info* li)
 
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
+
 /// Reads a Lattice Information File.
 /// This funktion reads a .cfinfo file and stores the data into a Lat_Info structure.
 /// @param li Pointer to the data structure.
@@ -253,9 +252,8 @@ void latReadInfo(Lat_Info *li, const char *basename)
 /// The file name is constructed from the @c BaseName field of the structure
 /// by appending ".cfinfo".
 /// @param li Pointer to the data structure.
-/// @return 0 on success, -1 on error.
 
-int latWriteInfo(const Lat_Info *li)
+void latWriteInfo(const Lat_Info *li)
 {
     StfData *f;
     int i;
@@ -264,13 +262,9 @@ int latWriteInfo(const Lat_Info *li)
 
     MTX_ASSERT(li != NULL);
 
-    /* Open the file
-       ------------- */
-    strcpy(fn,li->BaseName);
-    strcat(fn,".cfinfo");
+    // Open the file
+    snprintf(fn, sizeof(fn), "%s.cfinfo", li->BaseName);
     f = stfOpen(fn,"w");
-    if (f == NULL)
-	return -1;
 
     /* Write data
        ---------- */
@@ -345,23 +339,19 @@ int latWriteInfo(const Lat_Info *li)
     stfEndEntry(f);
 
     stfClose(f);
-    return 0;
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
 /// Make Constituent Name.
-/// This function returns the name of the @a cf-th constituent of a module.
-/// The constituent name consists of the dimension and an appendix which is
-/// built from the @c num field in the constituent's data structure. Usually
-/// the appendix is a single letter ('a', 'b', ...). If there are more than 
-/// 26 constituents with the same dimension, a two-letter appendix (`aa', 
-/// `ab', etc.) is used. 
 ///
-/// Note: The return value points to a static buffer which is overwritten 
-/// at each call. The constituent data inside @a li must have been set up 
-/// properly, i.e., the module must have been chopped.
-/// @param li Constituent info structure.
-/// @param cf Index of the constituent.
-/// @return Pointer to the constituent name (without base name).
+/// This function returns the name of the @a cf-th constituent of a module. The constituent name
+/// consists of the dimension and an appendix which is based on @c num field in the constituent's
+/// data structure. Usually the appendix is a single letter ('a', 'b', ...). If there are more than 
+/// 26 constituents with the same dimension, a two-letter appendix ('aa', 'ab', etc.) is used. 
+///
+/// Note: The returned pointer points to a member of the @c CfInfo structure associated with the
+/// constituent.
 
 const char* latCfName(const Lat_Info* li, int cf)
 {
@@ -386,6 +376,7 @@ const char* latCfName(const Lat_Info* li, int cf)
    return ip->name;
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 /// Add a Layer to the Socle Series.
 
@@ -402,6 +393,7 @@ int latAddSocle(Lat_Info *li, int *mult)
     return li->NSocles;
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 /// Add a Layer to the Radical Series.
 
@@ -419,4 +411,5 @@ int latAddHead(Lat_Info *li, int *mult)
 }
 
 /// @}
+
 // vim:fileencoding=utf8:sw=3:ts=8:et:cin

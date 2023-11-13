@@ -62,17 +62,19 @@ int permIsValid(const Perm_t *p)
 
 /// Checks if the given permuation is valid and aborts the program if the test fails.
 
-void permValidate(const struct MtxSourceLocation* src, const Perm_t *p)
+void permValidate(const struct MtxSourceLocation* src, const Perm_t* p)
 {
    if (p == NULL) {
-      mtxAbort(src,"NULL permutation");
+      mtxAbort(src, "NULL permutation");
    }
-   if (p->typeId != MTX_TYPE_PERMUTATION || p->degree < 0 || p->data == NULL) {
-      mtxAbort(src,"Invalid permutation (magic=%d, deg=%d)", p->typeId, p->degree);
+   if (p->typeId != MTX_TYPE_PERMUTATION || p->data == NULL) {
+      mtxAbort(src, "Invalid permutation (type=0x%lu, deg=%lu)",
+         (unsigned long) p->typeId,
+         (unsigned long) p->degree);
    }
    for (int i = 0; i < p->degree; ++i) {
       if (p->data[i] < 0 || p->data[i] >= p->degree) {
-         mtxAbort(src,"Invalid value %d in permutation (deg = %d)", (int) p->data[i], p->degree);
+         mtxAbort(src, "Invalid value %d in permutation (deg = %d)", (int) p->data[i], p->degree);
       }
    }
 }

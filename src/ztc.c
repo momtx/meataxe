@@ -32,22 +32,24 @@ MTX_COMMON_OPTIONS_DESCRIPTION
 
 static void trmat()
 {
-    ffSetField(InputFile->header[0]); 
-    const uint32_t nor = InputFile->header[1];
-    const uint32_t noc = InputFile->header[2];
-    const uint32_t min = nor < noc ? nor : noc;
-    PTR m1 = ffAlloc(1, noc);
-    FEL tr = FF_ZERO;
-    for (uint32_t i = 0; i < min; ++i)
-    {
-	mfReadRows(InputFile,m1,1,noc);
-	tr = ffAdd(tr,ffExtract(m1,i));
-    }
-    if (!opt_G)
-	printf("Trace is %lu\n",(unsigned long) ffToInt(tr));
-    else
-        printf("MeatAxe.Trace := %s;\n",ffToGapStr(tr));
-    sysFree(m1);
+   ffSetField(InputFile->header[0]);
+   const uint32_t nor = InputFile->header[1];
+   const uint32_t noc = InputFile->header[2];
+   const uint32_t min = nor < noc ? nor : noc;
+   PTR m1 = ffAlloc(1, noc);
+   FEL tr = FF_ZERO;
+   for (uint32_t i = 0; i < min; ++i) {
+      mfReadRows(InputFile, m1, 1, noc);
+      tr = ffAdd(tr, ffExtract(m1, i));
+   }
+   if (!opt_G) {
+      printf("Trace is %lu\n", (unsigned long) ffToInt(tr));
+   }
+   else {
+      char tmp[50];
+      printf("MeatAxe.Trace := %s;\n", ffToGapStr(tmp, sizeof(tmp), tr));
+   }
+   sysFree(m1);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -85,24 +87,24 @@ static void init(int argc, char **argv)
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-int main(int argc, char **argv)
+int main(int argc, char** argv)
 {
-   init(argc,argv);
+   init(argc, argv);
    InputFile = mfOpen(inpname);
    mfReadHeader(InputFile);
    const uint32_t objectType = mfObjectType(InputFile);
-   if (objectType == MTX_TYPE_MATRIX)
-      trmat();
-   else if (objectType == MTX_TYPE_PERMUTATION)
-      trperm();
-   else
-      mtxAbort(MTX_HERE,"%s: Unknown object type 0x%lx",inpname,(unsigned long)objectType);
+   switch (objectType) {
+      case MTX_TYPE_MATRIX: trmat();
+         break;
+      case MTX_TYPE_PERMUTATION: trperm();
+         break;
+      default:
+         mtxAbort(MTX_HERE, "%s: Unknown object type 0x%lx", inpname, (unsigned long)objectType);
+   }
    appFree(App);
    mfClose(InputFile);
    return 0;
 }
-
-
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 

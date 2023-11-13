@@ -24,13 +24,15 @@
 #define MTX_PRINTF(f,v)
 #endif
 
-extern const uint32_t MTX_TYPE_MATRIX;
-extern const uint32_t MTX_TYPE_PERMUTATION;
-extern const uint32_t MTX_TYPE_POLYNOMIAL;
-extern const uint32_t MTX_TYPE_BITSTRING_FIXED;
-extern const uint32_t MTX_TYPE_BITSTRING_DYNAMIC;
-extern const uint32_t MTX_TYPE_INTMATRIX;
-extern const uint32_t MTX_TYPE_BEGIN;
+enum MtxObjectType {
+   MTX_TYPE_PERMUTATION = 0xFFFFFFFF,         // -1
+   MTX_TYPE_POLYNOMIAL = 0xFFFFFFFE,          // -2
+   MTX_TYPE_BITSTRING_FIXED = 0xFFFFFFFD,     // -3
+   MTX_TYPE_BITSTRING_DYNAMIC = 0xFFFFFFFC,   // -4
+   MTX_TYPE_INTMATRIX = 0xFFFFFFF8,           // -8
+   MTX_TYPE_MATRIX = 0xFFFFFF01,
+   MTX_TYPE_BEGIN = 0xFFFFFF00
+};
 
 /// @addtogroup os
 /// @{
@@ -94,9 +96,6 @@ void pexWait();
 /// @addtogroup ff
 /// @{
 
-/* Data types and constants
-   ------------------------ */
-
 #if MTX_ZZZ == 0
 
 typedef uint8_t FEL;            ///< A finite field element
@@ -132,7 +131,7 @@ extern FEL ffGen;
 /// is avalable.
 #define MTX_NVAL ((uint32_t)0xFFFFFFFF)
 
-/* Arithmetic */
+// Arithmetic
 FEL ffAdd(FEL a, FEL b);
 FEL ffSub(FEL a, FEL b);
 FEL ffMul(FEL a, FEL b);
@@ -150,7 +149,7 @@ typedef struct FfGapRepresentation {
 } FfGapRepresentation_t;
 
 const FfGapRepresentation_t* ffToGap(FEL a);
-const char* ffToGapStr(FEL a);
+const char* ffToGapStr(char* buf, size_t bufSize, FEL a);
 
 void ffAddMulRowPartial(PTR dest, PTR src, FEL f, int firstcol, int noc);
 void ffAddMulRow(PTR dest, PTR src, FEL f, int noc);
@@ -236,23 +235,18 @@ int ffSumAndIntersection(int noc, PTR wrk1, uint32_t *nor1, uint32_t *nor2, PTR 
 // Library initialization and cleanup
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-extern int MtxOpt_UseOldWordGenerator;
-
 int mtxIsBigEndian();
 void mtxCleanupLibrary();
 void mtxInitLibrary(char* argv0);
 const char* mtxLibraryDirectory();
 const char* mtxVersion();
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
 /// @addtogroup str
 /// @{
 
-/// A dynamic string.
-/// The only member, S, is a normal «char*» pointing to a NUL terminated text.
-/// Note however, that dynamic strings use their own memory management
-/// which cannot be mixed with the standard C library memory functions.
-/// Unused strings must be freed with strFree(), and you must never use
-/// free() or realloc() on a dynamic string.
+/// A dynamic buffer used to construct strings.
 
 typedef struct {
    uint32_t typeId;
@@ -275,9 +269,6 @@ void sbVprintf(StringBuilder_t* sb, const char* fmt, va_list args);
 MTX_PRINTF(1,2)
 char *strMprintf(const char* s, ...);
 char *strVMprintf(const char* s, va_list args);
-MTX_PRINTF(1,2)
-const char *strTprintf(const char* s, ...);
-const char *strVTprintf(const char* s, va_list args);
 
 /// @}
 
@@ -285,31 +276,19 @@ const char *strVTprintf(const char* s, va_list args);
 
 #define APP_MAX_ARGS 50
 
-/** Application information structure.
-   This data structure is used to store information about the application.
-   It is used by the command line parser, e.g., to display the help
-   text.
-   \n Name is the program name,
-   \n Description is a one-line description of the program.
-   \n Help is a help text that is to be displayed when
-   the user invokes the program with '--help'.
-   Here is an example:
-   <PRE>
-    MtxApplicationInfo_t AppInfo = { "sample", "MeatAxe sample",
-        "\nSYNTAX\n"
-        "    sample [-a] [-l <level>] <input> <ouput>\n"
-        "\nOPTIONS\n"
-        "    -a, --all ........ Output all data\n"
-        "    -l, --level ...... Set output level (default: 42)\n"
-     };
-   </PRE>
-   \sa AppAlloc
- **/
+#define EXIT_OK         0       ///< Normal exit
+#define EXIT_ERR        1       ///< Program aborted after error
+
+
+/// Application information structure.
+/// This data structure is used to store information about the application.
+/// It is used by the command line parser, e.g., to display the help text.
+/// See also @ref AppAlloc
 
 typedef struct {
    const char *name;            ///< Program name.
    const char *description;     ///< One-line description of the program.
-   const char *help;            ///< Help text.
+   const char *help;            ///< Help text (shown with "--help").
 } MtxApplicationInfo_t;
 
 /// Application data.
@@ -341,9 +320,9 @@ int appGetIntOption(MtxApplication_t *app, const char *spec, int dflt,
                     int min, int max);
 int appGetArguments(MtxApplication_t *app, int min_argc, int max_argc);
 
+
 #define MTX_COMMON_OPTIONS_SYNTAX \
    "[<Options>]"
-
 #define STRINGIFY2(x) #x
 #define STRINGIFY(x) STRINGIFY2(x)
 
@@ -369,7 +348,6 @@ int appGetArguments(MtxApplication_t *app, int min_argc, int max_argc);
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 // Error messages
-extern const char MTX_ERR_NOMEM[];
 extern const char MTX_ERR_GAME_OVER[];
 extern const char MTX_ERR_DIV0[];
 extern const char MTX_ERR_FILEFMT[];
@@ -378,9 +356,7 @@ extern const char MTX_ERR_RANGE[];
 extern const char MTX_ERR_NOTECH[];
 extern const char MTX_ERR_NOTSQUARE[];
 extern const char MTX_ERR_INCOMPAT[];
-extern const char MTX_ERR_BADUSAGE[];
 extern const char MTX_ERR_OPTION[];
-extern const char MTX_ERR_NARGS[];
 extern const char MTX_ERR_NOTMATRIX[];
 extern const char MTX_ERR_NOTPERM[];
 
@@ -430,9 +406,9 @@ MtxErrorHandler_t *MtxSetErrorHandler(MtxErrorHandler_t *h);
 #define MTX_FALSE_DEBUG(e)
 #endif
 
-/* ------------------------------------------------------------------
-   Messages
-   ------------------------------------------------------------------ */
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// Messages
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 extern int MtxMessageLevel;
 #define MSG0 (MtxMessageLevel >= 0)
@@ -446,9 +422,9 @@ extern int MtxMessageLevel;
 MTX_PRINTF(2,3)
 void mtxMessage(int level, const char* msg, ...);
 
-/* ------------------------------------------------------------------
-   Miscellaneous
-   ------------------------------------------------------------------ */
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// Miscellaneous
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void mtxRandomInit(unsigned seed);
 long int mtxRandom(void);
@@ -973,10 +949,8 @@ FPoly_t *minpolS(const Matrix_t *mat, long seed);
 // Submodule lattice functions
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-/**
-** @addtogroup cfinfo
-** @{
-**/
+/// @addtogroup cfinfo
+/// @{
 
 #define MAXGEN 20       /* Max. number of generators */
 #define LAT_MAXCF 200   /* Max. number of composition factors */
@@ -1011,7 +985,7 @@ typedef struct {
 } Lat_Info;
 
 void latReadInfo(Lat_Info *li, const char *basename);
-int latWriteInfo(const Lat_Info *li);
+void latWriteInfo(const Lat_Info *li);
 const char *latCfName(const Lat_Info *li, int cf);
 int latAddHead(Lat_Info *li, int *mult);
 int latAddSocle(Lat_Info *li, int *mult);
@@ -1022,47 +996,35 @@ int latAddSocle(Lat_Info *li, int *mult);
 
 MatRep_t *latReadCfGens(Lat_Info *info, int cf, int flags);
 
-/**
-** @}
-**/
+/// @}
 
-/* ------------------------------------------------------------------
-   Tensor condensation package
-   ------------------------------------------------------------------ */
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// Tensor condensation package
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
-/**
-** @ingroup tp
-** Tensor condensation state.
-** The %TkData_t structure is used by the tensor condensation algorithm to store
-** state information. By use of tkReadInfo() and tkWriteInfo() a program can read
-** the information from a file, and write back the data to a file if it was modified.
-**/
+/// @addtogroup tp
+/// @{
+
+/// Tensor condensation state.
+/// The %TkData_t structure holds the computation sate for the tensor condensation algorithm.
+/// See also @ref tkReadInfo and @ref tkWriteInfo.
 
 typedef struct {
-   char nameM[LAT_MAXBASENAME];         /**< Name of right factor */
-   char nameN[LAT_MAXBASENAME];         /**< Name of left factor */
-   int dim;                             /**< Dimension of condensed module */
-   int nCf;                             /**< Number of relevant constituents */
-   int cfIndex[2][LAT_MAXCF];           /**< Constituent number */
+   char nameM[LAT_MAXBASENAME];         ///< Name of right factor
+   char nameN[LAT_MAXBASENAME];         ///< Name of left factor
+   int dim;                             ///< Dimension of condensed module
+   int nCf;                             ///< Number of relevant constituents
+   int cfIndex[2][LAT_MAXCF];           ///< Constituent number
 } TkData_t;
 
 void tkReadInfo(TkData_t *tki, const char *name);
 int tkWriteInfo(TkData_t *tki, const char *name);
 
-/* !!!!!!!!!!!!!!! 2.3 STUFF below !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! */
-/* !!!!!!!!!!!!!!! 2.3 STUFF below !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! */
-/* !!!!!!!!!!!!!!! 2.3 STUFF below !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! */
+/// @}
 
-/* ------------------------------------------------------------------
-   Return codes
-   ------------------------------------------------------------------ */
-
-#define EXIT_OK         0       /* Exit code: normal end */
-#define EXIT_ERR        1       /*            error */
-
-/* ------------------------------------------------------------------
-   Function operating on representations and vector spaces
-   ------------------------------------------------------------------ */
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// Functions operating on representations and vector spaces
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 int IsIsomorphic(const MatRep_t *rep1, const CfInfo *info1,
                  const MatRep_t *rep2, Matrix_t  **trans, int use_pw);
@@ -1071,29 +1033,28 @@ int MakeEndomorphisms(const MatRep_t *rep, const Matrix_t *nsp,
 Matrix_t *HomogeneousPart(MatRep_t *m, MatRep_t *s, Matrix_t *npw,
                           const IntMatrix_t *op, int dimends);
 
-/* ------------------------------------------------------------------
-   Lattice drawing functions
-   ------------------------------------------------------------------ */
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// Lattice drawing functions
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
-/**
-** Node in a graphical lattice representation.
-**/
+// A lattice node.
+
 typedef struct {
-   double PosX, PosY;           /* Position [0..1] */
-   unsigned long UserData;      /* User-defined attributes */
-   int Layer;                   /* Layer number */
-   double Score;                /* Used in optimization */
+   double PosX, PosY;           // Position [0..1]
+   unsigned long UserData;      // User-defined attributes
+   int Layer;                   // Layer number
+   double Score;                // Used in optimization
    int ScoreCount;
 } LdNode_t;
 
-/**
-** Graphical lattice representation.
-**/
+
+// A lattice (nodes with x/y positions and parent/child relations).
+
 typedef struct {
    int NNodes;
    LdNode_t *Nodes;
-   int *IsSub;          /* Incidence relation, <NNodes> * <NNodes> entries */
-   int *LayerNo;        /* Layer numbers */
+   int *IsSub;          // Incidence relation, <NNodes> * <NNodes> entries
+   int *LayerNo;        // Layer numbers
    int NLayers;
 } LdLattice_t;
 
@@ -1111,4 +1072,3 @@ void hashLittle2(const void *data, size_t len, uint32_t *pc, uint32_t *pb);
 #endif  /* !defined(_MEATAXE_H_) */
 
 // vim:fileencoding=utf8:sw=3:ts=8:et:cin
-

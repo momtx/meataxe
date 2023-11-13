@@ -151,7 +151,9 @@ static void AddConstituents(int mod)
    int i;
    for (i = 0; i < li->nCf; ++i) {
       MatRep_t *cf;
-      cf = mrLoad(strTprintf("%s%s",li->BaseName,latCfName(li,i)),li->NGen);
+      char* const fn = strMprintf("%s%s",li->BaseName,latCfName(li,i));
+      cf = mrLoad(fn,li->NGen);
+      sysFree(fn);
       AddConstituent(cf,li->Cf + i,mod,i);
    }
 }
@@ -251,7 +253,9 @@ static void gkond(const Lat_Info *li, int i, Matrix_t *b, Matrix_t *k, Matrix_t 
    Matrix_t* x1 = matDup(k);
    matMul(x1,w);
    Matrix_t *x2 = QProjection(b,x1);
-   matSave(x2,strTprintf("%s%s.%s",li->BaseName,latCfName(li,i),name));
+   char *fn = strMprintf("%s%s.%s",li->BaseName,latCfName(li,i),name);
+   matSave(x2, fn);
+   sysFree(fn);
    matFree(x2);
    matFree(x1);
 }
@@ -395,12 +399,13 @@ static void condense(struct cf_struct* cf)
 
 static char* GapPrintPoly(const Poly_t *pol)
 {
+   char tmp[50];
    StringBuilder_t* sb = sbAlloc(100);
    sbAppend(sb, "[");
    for (int i = 0; i < pol->degree; ++i) {
-      sbPrintf(sb,"%s,",ffToGapStr(pol->data[i]));
+      sbPrintf(sb,"%s,",ffToGapStr(tmp, sizeof(tmp), pol->data[i]));
    }
-   sbPrintf(sb,"%s]",ffToGapStr(pol->data[pol->degree]));
+   sbPrintf(sb,"%s]",ffToGapStr(tmp, sizeof(tmp), pol->data[pol->degree]));
    return sbToString(sb);
 }
 
@@ -443,9 +448,10 @@ static void WriteOutput(int final)
       latWriteInfo(&ModList[i].Info);
       MESSAGE(1,("Wrote ModList[i].Info.BaseName .cfinfo\n"));
       if (opt_b) {
-         const char* fn = strTprintf("%s.ssb",ModList[i].Info.BaseName);
+         char* const fn = strMprintf("%s.ssb",ModList[i].Info.BaseName);
          matSave(ModList[i].SsBasis,fn);
          MESSAGE(1,("Wrote %s\n", fn));
+         sysFree(fn);
       }
    }
    if (!final) {

@@ -98,8 +98,9 @@ static void writeP(const Poly_t *pol)
 	    printf(",\n");
         first = 0;
 	printf("[");
+        char tmp[50];
 	for (int i = 0; i <= pol->degree; ++i)
-	    printf(i == 0 ? "%s" : ",%s",ffToGapStr(pol->data[i]));
+	    printf(i == 0 ? "%s" : ",%s",ffToGapStr(tmp, sizeof(tmp), pol->data[i]));
 	printf("]");
     }
     else {
@@ -115,14 +116,16 @@ static void writeF(const FPoly_t *fpol)
    for (int i = 0; i < fpol->NFactors; ++i) {
       const Poly_t* const factor = fpol->Factor[i];
       const int exp = fpol->Mult[i];
+
       if (opt_G) {
          if (!first)
             printf(",\n");
          first = 0;
          printf("[" "["); // Doxygen chokes on two opening brackets
+         char tmp[50];
          for (int i = 0; i < factor->degree; ++i)
-            printf("%s,",ffToGapStr(factor->data[i]));
-         printf("%s], %d]",ffToGapStr(factor->data[i]), exp);
+            printf("%s,",ffToGapStr(tmp, sizeof(tmp), factor->data[i]));
+         printf("%s], %d]",ffToGapStr(tmp, sizeof(tmp), factor->data[i]), exp);
       } else {
          printf("(");
          polPrint(NULL,factor);

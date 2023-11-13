@@ -19,8 +19,6 @@ static int isInitialized = 0;
 
 static char libDir[250] = "";
 
-int MtxOpt_UseOldWordGenerator = 0;
-
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 static void deriveDirectoryName(

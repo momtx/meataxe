@@ -299,9 +299,10 @@ static void FindMountains()
 
 static void WriteIncidenceMatrix()
 {
-   const char* fn = strTprintf("%s.inc", LI.BaseName);
+   char* const fn = strMprintf("%s.inc", LI.BaseName);
    FILE* f = sysFopen(fn, "wb");
    MESSAGE(1,("Writing incidence matrix (%s)\n",fn));
+   sysFree(fn);
    uint32_t l = nmount;
    sysWrite32(f,&l,1);
    for (int i = 0; i < nmount; ++i)

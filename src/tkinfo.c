@@ -14,7 +14,6 @@
 /// @addtogroup tp
 /// @{
 
-
 static int ReadVector(StfData *f, const char *c,
     const char *name, int size, int *vec)
 {

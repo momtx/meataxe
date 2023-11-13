@@ -187,16 +187,22 @@ static void init(int argc, char** argv)
 
 int main(int argc, char** argv)
 {
-   init(argc,argv);
+   init(argc, argv);
    file = mfOpen(fileName);
    mfReadHeader(file);
    uint32_t objectType = mfObjectType(file);
-   if (objectType == MTX_TYPE_MATRIX)
-      calculateMatrixOrder();
-   else if (objectType == MTX_TYPE_PERMUTATION)
-      calculatePermutationOrder();
-   else {
-      mtxAbort(MTX_HERE, "%s: unsupported object type 0x%lx", fileName, (unsigned long) objectType);
+   switch (objectType) {
+      case MTX_TYPE_MATRIX:
+         calculateMatrixOrder();
+         break;
+      case MTX_TYPE_PERMUTATION:
+         calculatePermutationOrder();
+         break;
+      default:
+         mtxAbort(MTX_HERE,
+            "%s: unsupported object type 0x%lx",
+            fileName,
+            (unsigned long) objectType);
    }
    mfClose(file);
    appFree(App);

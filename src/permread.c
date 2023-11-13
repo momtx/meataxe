@@ -48,9 +48,10 @@ Perm_t *permReadData(FILE *f, const uint32_t header[3])
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
+
 /// Reads a permutation from a File.
 /// This function reads a permutation from a file. The file must be opened for reading.
-/// After return the file pointer is advanced to the firts position after the permtation.
+/// After return the file pointer is advanced to the first position after the permutation.
 ///
 /// See also: @ref permLoad
 ///

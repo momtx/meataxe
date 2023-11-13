@@ -87,15 +87,18 @@ const FfGapRepresentation_t* ffToGap(FEL a)
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 /// Returns the GAP representation of a field element.
-/// The returned pointer is created with @ref strTprintf.
+/// Returns @a buf.
 
-const char* ffToGapStr(FEL a)
+const char* ffToGapStr(char* buf, size_t bufSize, FEL a)
 {
    const FfGapRepresentation_t* gap = ffToGap(a);
-   if (gap->fmt == 0)
-      return strTprintf("%lu*Z(%lu)", (unsigned long) gap->k, (unsigned long) q);
-   else
-      return strTprintf("Z(%lu)^%lu", (unsigned long) q, (unsigned long) gap->k);
+   int len = (gap->fmt == 0) ?
+      snprintf(buf, bufSize, "%lu*Z(%lu)", (unsigned long) gap->k, (unsigned long) q) :
+      snprintf(buf, bufSize, "Z(%lu)^%lu", (unsigned long) q, (unsigned long) gap->k);
+   if (len < 0 || len >= bufSize) {
+      mtxAbort(MTX_HERE,"String buffer overflow");
+   }
+   return buf;
 }
 
 

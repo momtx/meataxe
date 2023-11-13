@@ -11,7 +11,6 @@
 
 
 #define IS_MATRIX(x) (((Matrix_t *)x)->typeId == MTX_TYPE_MATRIX)
-#define IS_PERMUTATION(x) (((Perm_t *)x)->typeId == MTX_TYPE_PERMUTATION)
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 

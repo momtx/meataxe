@@ -54,25 +54,26 @@ static void prepare()
    if (mode != M_E2 && mode != M_S2 && mode != M_E3 && objectType != MTX_TYPE_MATRIX) {
       mtxAbort(MTX_HERE, "%s: %s", fileNameInp, MTX_ERR_NOTMATRIX);
    }
-   if (objectType == MTX_TYPE_MATRIX) {
-      field = f->header[0];
-      nor = f->header[1];
-      noc = f->header[2];
-      ffSetField(field);
-      matrixInp = matReadData(f->file, f->header);
-      rowIn = NALLOC(PTR, nor);
-      for (uint32_t i = 0; i < nor; ++i) {
-         rowIn[i] = matGetPtr(matrixInp, i);
-      }
-   } else if (objectType == MTX_TYPE_PERMUTATION) {
-      permInp = permReadData(f->file, f->header);
-      field = 0;
-      nor = noc = permInp->degree;
-   } else {
-      mtxAbort(MTX_HERE,
-               "%s: unsupported object type 0x%lx",
-               fileNameInp,
-               (unsigned long) objectType);
+   switch (objectType) {
+      case MTX_TYPE_MATRIX:
+         field = f->header[0];
+         nor = f->header[1];
+         noc = f->header[2];
+         ffSetField(field);
+         matrixInp = matReadData(f->file, f->header);
+         rowIn = NALLOC(PTR, nor);
+         for (uint32_t i = 0; i < nor; ++i) {
+            rowIn[i] = matGetPtr(matrixInp, i);
+         }
+         break;
+      case MTX_TYPE_PERMUTATION:
+         permInp = permReadData(f->file, f->header);
+         field = 0;
+         nor = noc = permInp->degree;
+         break;
+      default:
+         mtxAbort(MTX_HERE, "%s: unsupported object type 0x%lx",
+               fileNameInp, (unsigned long) objectType);
    }
    mfClose(f);
 
@@ -90,7 +91,8 @@ static void prepare()
          if (field >= 2) {
             MTX_ASSERT(noc > 0);
             noc2_ = (uint64_t)noc * (noc - 1) / 2;
-         } else {
+         }
+         else {
             noc2_ = nor2_;
          }
          break;
@@ -100,7 +102,8 @@ static void prepare()
          if (field >= 2) {
             MTX_ASSERT(noc > 2);
             noc2_ = (uint64_t)noc * (noc - 1) / 2 * (noc - 2) / 3;
-         } else {
+         }
+         else {
             noc2_ = nor2_;
          }
          break;
@@ -110,7 +113,8 @@ static void prepare()
          if (objectType == MTX_TYPE_MATRIX) {
             MTX_ASSERT(noc > 3);
             noc2_ = (uint64_t)noc * (noc - 1) / 2 * (noc - 2) / 3 * (noc - 3) / 4;
-         } else {
+         }
+         else {
             noc2_ = nor2_;
          }
          break;
@@ -124,14 +128,16 @@ static void prepare()
    nocOut = (uint32_t) noc2_;
 
    // Prepare output buffer and file.
-   if (objectType == MTX_TYPE_MATRIX) {
-      MESSAGE(0, ("Output is %ld x %ld\n", (long)norOut, (long)nocOut));
-      rowOut = ffAlloc(1, nocOut);
-      fileOut = mfCreate(fileNameOut, field, norOut, (field >= 2) ? nocOut : 1);
-   } else {
-      MESSAGE(0, ("Output has degree %ld\n", (long)norOut));
-      fflush(stdout);
-      permOut = permAlloc(norOut);
+   switch (objectType) {
+      case MTX_TYPE_MATRIX:
+         MESSAGE(0, ("Output is %ld x %ld\n", (long)norOut, (long)nocOut));
+         rowOut = ffAlloc(1, nocOut);
+         fileOut = mfCreate(fileNameOut, field, norOut, (field >= 2) ? nocOut : 1);
+         break;
+      case MTX_TYPE_PERMUTATION:
+         MESSAGE(0, ("Output has degree %ld\n", (long)norOut));
+         permOut = permAlloc(norOut);
+         break;
    }
 }
 
