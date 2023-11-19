@@ -237,27 +237,27 @@ int main(int argc, char **argv)
 	    cfvec[j] = partbas->nor / Info.Cf[j].dim;
 	    matCopyRegion(bas,socdim,0,partbas,0,0,-1,-1);
             socdim += partbas->nor;
-	    MESSAGE(2,("  headdim of the first %d cfs is %d\n", j+1, socdim));
+	    MESSAGE(2, "  headdim of the first %d cfs is %d\n", j+1, socdim);
             matFree(partbas);
         }
 
 /* makes the output
    ---------------- */
 	++soclen;
-	MESSAGE(0,("Head %d: %d =",soclen,socdim));
+	MESSAGE(0, "Head %d: %d =",soclen,socdim);
 	flag = 0;
 	for (j = 0; j < Info.nCf; j++)
 	{
 	    if (cfvec[j] <= 0) 
 		continue;
 	    if (flag++ > 0)
-		MESSAGE(0,(" +"));
+		MESSAGE(0, " +");
 	    if (cfvec[j] == 1)
-		MESSAGE(0,(" %s",latCfName(&Info,j)));
+		MESSAGE(0, " %s",latCfName(&Info,j));
 	    else
-		MESSAGE(0,(" %d*%s",cfvec[j],latCfName(&Info,j)));
+		MESSAGE(0, " %d*%s",cfvec[j],latCfName(&Info,j));
 	}
-	MESSAGE(0,("\n"));
+	MESSAGE(0, "\n");
 	if (!Head)
 	    latAddHead(&Info,cfvec);
 	sysFree(cfvec);
@@ -356,7 +356,7 @@ int main(int argc, char **argv)
    basis transformation and factorization
    -------------------------------------- */
 
-	MESSAGE(1,("Reducing to dimension %d\n",Rep->Gen[0]->noc-socdim));
+	MESSAGE(1, "Reducing to dimension %d\n",Rep->Gen[0]->noc-socdim);
         for (i = 0; i < Info.NGen; ++i)
         {
             stgen = matDup(bas);
@@ -386,7 +386,7 @@ int main(int argc, char **argv)
 	return 0;	
     if (socdim < Rep->Gen[0]->nor && !Head) 
     {
-	MESSAGE(0,("Radical length is greater than %d\n",soclen));
+	MESSAGE(0, "Radical length is greater than %d\n",soclen);
 	if (!Head)
 	    return 0;	
      }
@@ -397,8 +397,8 @@ int main(int argc, char **argv)
 
     if (soc2 == NULL)
     {
-	MESSAGE(0,("Radical length is smaller than %d, there are no vectors "
-		"in the %dth Head\n",Len,Len));
+	MESSAGE(0, "Radical length is smaller than %d, there are no vectors "
+		"in the %dth Head\n",Len,Len);
 	return 0;
     }
 

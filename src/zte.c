@@ -42,9 +42,8 @@ static void tensormatrices()
     const uint32_t nocC = nocA * nocB;
 
 
-    MESSAGE(1,("Computing matrix tensor product:"));
-    MESSAGE(1,(" (%d,%d)*(%d,%d)=(%d,%d)\n", 
-	norA,nocA,norB,nocB,norC,nocC));
+    MESSAGE(1, "Computing matrix tensor product:");
+    MESSAGE(1, " (%d,%d)*(%d,%d)=(%d,%d)\n", norA,nocA,norB,nocB,norC,nocC);
 
     // Allocate buffers.
     ffSetField(field);
@@ -103,8 +102,8 @@ static int tensorperms(void)
     const uint32_t c_deg = a_deg * b_deg;
     int i;
     
-    MESSAGE(1,("Computing permutation tensor product:"));
-    MESSAGE(1,(" %d*%d=%d\n", a_deg,b_deg,c_deg));
+    MESSAGE(1, "Computing permutation tensor product:");
+    MESSAGE(1, " %d*%d=%d\n", a_deg,b_deg,c_deg);
 
     // Read permutations.
     uint32_t* a_buf = NALLOC(uint32_t,a_deg);

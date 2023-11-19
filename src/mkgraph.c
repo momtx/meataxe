@@ -81,13 +81,13 @@ static void readFile(void)
 
     FILE* f = sysFopen(fileNameInp,"r");
     buf = (char *)sysMalloc(LBUFSIZE);
-    MESSAGE(1,("Reading %s\n",fileNameInp));
+    MESSAGE(1, "Reading %s\n",fileNameInp);
 
     // Read number of submodules 
     if (fgets(buf,LBUFSIZE,f) == NULL)
        mtxAbort(MTX_HERE, "Error reading %s: unexpected end of file", fileNameInp);
     nsub = atoi(buf);
-    MESSAGE(1,("%d submodules\n",nsub));
+    MESSAGE(1, "%d submodules\n",nsub);
 
     // Allocate some arrays
     dim = NALLOC(long,nsub);
@@ -215,7 +215,7 @@ void buildRoot(void)
       }
    }
    if (lower > 0 || upper < nsub - 1) {
-      MESSAGE(1, ("%d modules between %d and %d\n", xnsub, lower, upper));
+      MESSAGE(1, "%d modules between %d and %d\n", xnsub, lower, upper);
    }
 
    /* Calculate the factor lattice
@@ -264,8 +264,7 @@ static void setColors(const char *opt_text_ptr)
 	ColorMap[i].r = r;
 	ColorMap[i].g = g;
 	ColorMap[i].b = b;
-	MESSAGE(2,("setColor(%s = %d/%d/%d)\n",ColorMap[i].name,
-		r,g,b));
+	MESSAGE(2, "setColor(%s = %d/%d/%d)\n",ColorMap[i].name, r,g,b);
     }
 }
 
@@ -522,7 +521,7 @@ void display()
 {
    int i, l;
 
-   MESSAGE(0, ("Writing lattice diagram to %s\n", fileNameOut));
+   MESSAGE(0, "Writing lattice diagram to %s\n", fileNameOut);
    fflush(stdout);
    psfile = sysFopen(fileNameOut, "w");
    if (psfile == NULL) {

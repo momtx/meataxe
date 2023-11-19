@@ -299,7 +299,7 @@ static void MakeSBasis()
     }
     SvFree(v);
     /* OPT: free unused memory in <SBasis> */
-    MESSAGE(0,("Dim(S) = %d\n",SDim));
+    MESSAGE(0, "Dim(S) = %d\n",SDim);
 }
 
 
@@ -311,9 +311,9 @@ static void BuildTables(const Symmetrizer_t *s, int dim_v)
     VDim = dim_v;
     for (i = Degree - 1, WDim = VDim; i > 0; --i)
 	WDim *= VDim;
-    MESSAGE(0,("Dim(V) = %d\n",VDim));
-    MESSAGE(0,("Degree = %d\n",Degree));
-    MESSAGE(0,("Dim(W) = %d\n",WDim));
+    MESSAGE(0, "Dim(V) = %d\n",VDim);
+    MESSAGE(0, "Degree = %d\n",Degree);
+    MESSAGE(0, "Dim(W) = %d\n",WDim);
 
     MakeOmega(s);
     MakeSBasis();
@@ -404,7 +404,7 @@ static void prepare()
 
     BuildTables(&E3,nor);
 
-    MESSAGE(0,("Output is %d x %d\n",SDim,SDim));
+    MESSAGE(0, "Output is %d x %d\n",SDim,SDim);
     OutputFile = mfCreate(oname,fl,SDim,SDim);
 }
 

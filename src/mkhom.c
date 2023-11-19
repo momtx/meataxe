@@ -229,7 +229,7 @@ long independent(Matrix_t *bas[], Matrix_t *mat, int dim, uint32_t **piv_table,
     int i, j;
     FEL f;
     PTR matptr, basptr;
-    MESSAGE(1,("independent: dim=%d\n",dim));
+    MESSAGE(1, "independent: dim=%d\n",dim);
     for (i = 0; i < dim; i++)
     {
         if (bas[i] == NULL)
@@ -271,7 +271,7 @@ long independent(Matrix_t *bas[], Matrix_t *mat, int dim, uint32_t **piv_table,
     const int isIndependent = piv_table[dim][0] != MTX_NVAL;
     if (isIndependent && dep != NULL)
         ffInsert(dep, dim, FF_ONE);
-    MESSAGE(2,("independent(): result=%d\n",isIndependent));
+    MESSAGE(2, "independent(): result=%d\n",isIndependent);
     return isIndependent;
 }
 
@@ -360,7 +360,7 @@ Matrix_t **ringgens(Matrix_t *basis[], long n, long nummodgens, Matrix_t *regrep
 
     while (dim < n)
     {
-            MESSAGE(1,("ringgens(): dim=%d\n",dim));
+            MESSAGE(1, "ringgens(): dim=%d\n",dim);
         if ((stdbas[dim] = matAlloc(ffOrder, g, d)) == NULL)
             return NULL;
 
@@ -390,7 +390,7 @@ Matrix_t **ringgens(Matrix_t *basis[], long n, long nummodgens, Matrix_t *regrep
         dim++;
 	sprintf(name, "%s.%d", HomName, dim);
 	matSave(gens[max], name);
-        MESSAGE(1,("ringgens(): new element, dim=%d\n",dim));
+        MESSAGE(1, "ringgens(): new element, dim=%d\n",dim);
         if ((regrep[max] = matAlloc(ffOrder, n, n)) == NULL)
             return NULL;
         regptr[max] = regrep[max]->data;
@@ -420,7 +420,7 @@ Matrix_t **ringgens(Matrix_t *basis[], long n, long nummodgens, Matrix_t *regrep
 		matSave(mat, name);
 		matFree(mat);
                 dim++;
-                MESSAGE(1,("ringgens(): new element2, dim=%d\n",dim));
+                MESSAGE(1, "ringgens(): new element2, dim=%d\n",dim);
             }
             else
                 matFree(stdbas[dim]);
@@ -455,7 +455,7 @@ Matrix_t **ringgens(Matrix_t *basis[], long n, long nummodgens, Matrix_t *regrep
 		    mat = (big == 0 ? matDup(stdbas[dim]) : bigform(stdbas[dim], Ngen, op_table));
 		    matSave(mat, name);
                     dim++;
-                    MESSAGE(1,("ringgens(): new element3, dim=%d\n",dim));
+                    MESSAGE(1, "ringgens(): new element3, dim=%d\n",dim);
                 }
                 else
                     matFree(stdbas[dim]);
@@ -530,7 +530,7 @@ static int ParseArgs()
     big = appGetOption(App,"-b");
     if(big != 0 && reg == '?')
         {
-                MESSAGE(0, ("-b is only used with -r/l\n"));
+                MESSAGE(0, "-b is only used with -r/l\n");
                 big = 0;
         }
 
@@ -560,7 +560,7 @@ static void ReadFiles()
 {
     latReadInfo(&MInfo,MName);
 
-    MESSAGE(1,("Reading generators\n"));
+    MESSAGE(1, "Reading generators\n");
     MRep = mrLoad(MInfo.BaseName,MInfo.NGen);
     dimM = MRep->Gen[0]->noc;
     if (comp)
@@ -575,7 +575,7 @@ static void ReadFiles()
         Matrix_t *tmp;
         char fn[200];
         sprintf(fn, "%s.rad",MName);
-        MESSAGE(1,("Reading the head (%s)\n",fn));
+        MESSAGE(1, "Reading the head (%s)\n",fn);
         tmp = matLoad(fn);
         rad = matCutRows(tmp, hd, dimM - hd);
         matEchelonize(rad);
@@ -711,7 +711,7 @@ static int MakeKernels(int cf, Matrix_t **ker1, Matrix_t **ker2)
     {
         Matrix_t *word2;
         WgData_t *wg = wgAlloc(NRep);
-        MESSAGE(1,("Calculating the stable peak word kernel in %s\n",NName));
+        MESSAGE(1, "Calculating the stable peak word kernel in %s\n",NName);
         word2 = wgMakeWord(wg,MInfo.Cf[cf].peakWord);
         wgFree(wg);
         matInsert_(word2, MInfo.Cf[cf].peakPol);
@@ -719,7 +719,7 @@ static int MakeKernels(int cf, Matrix_t **ker1, Matrix_t **ker2)
         StablePower_(word2,NULL,ker2);
         matFree(word2);
     }
-    MESSAGE(0, ("                %ld\n", sysTimeUsed() - t0));
+    MESSAGE(0, "                %ld\n", sysTimeUsed() - t0);
     return 0;
 }
 
@@ -764,7 +764,7 @@ int main(int argc, char **argv)
     {
         int j;
 
-        MESSAGE(0,("Next constituent: %s%s\n",MName, latCfName(&MInfo,i)));
+        MESSAGE(0, "Next constituent: %s%s\n",MName, latCfName(&MInfo,i));
 
         t0 = sysTimeUsed();
         if (comp && (MakeKernels(i,&ker1,NULL) != 0))  /* Kernels of the peakwords */
@@ -785,7 +785,7 @@ int main(int argc, char **argv)
         {
             t0 = sysTimeUsed();
             seedcount++;
-            MESSAGE(1,("Taking kernel vector %d\n",j+1));
+            MESSAGE(1, "Taking kernel vector %d\n",j+1);
             if (hd)
             {
                 ffCleanRow(echkerptr, rad->data, rad->nor, dimM, rad->pivotTable);
@@ -799,11 +799,10 @@ int main(int argc, char **argv)
             if ((newpartdim = zgensbasis(ker1->data, dimM, seedcount, MInfo.NGen, MRep->Gen, 
                 space, piv, basis, partdim, op, stdgen, stdtab)) == partdim) 
             {
-                MESSAGE(1,("No new basis vectors - skipping\n"));
+                MESSAGE(1, "No new basis vectors - skipping\n");
                 continue;
             }
-            MESSAGE(0,("Vector %d (seedcount=%d) spins up to %d\n",j+1,
-                seedcount,newpartdim));
+            MESSAGE(0, "Vector %d (seedcount=%d) spins up to %d\n",j+1, seedcount,newpartdim);
             dims[numMgens] = newpartdim - partdim;
             tspbas += sysTimeUsed() - t0;
            
@@ -844,7 +843,7 @@ int main(int argc, char **argv)
 /* MODIFIED PART
    ------------- */
 
-            MESSAGE(1,("Calculating the possible images in %s\n",NName));
+            MESSAGE(1, "Calculating the possible images in %s\n",NName);
             posimages[numMgens] = NALLOC(Matrix_t *, ker2->nor);
             kerptr = ker2->data;
             for (k = 0; k < ker2->nor; k++)
@@ -872,15 +871,15 @@ int main(int argc, char **argv)
                 return 1;
             matFree(esys);
             esys = mat;
-            MESSAGE(1,("Building equation system (%dx%d)\n",
-                    NRep->Gen[0]->noc * dims[numMgens] * MInfo.NGen, mat->nor));
+            MESSAGE(1, "Building equation system (%dx%d)\n",
+                    NRep->Gen[0]->noc * dims[numMgens] * MInfo.NGen, mat->nor);
 
             if (esys->nor == 0)   /* there are no homomorphisms */
             {
                 if (newpartdim == MRep->Gen[0]->nor)
                 {
-                    MESSAGE(0,("Warning: There are no homomorphisms from "
-                        "%s to %s\n", MName, NName));
+                    MESSAGE(0, "Warning: There are no homomorphisms from " "%s to %s\n",
+                          MName, NName);
                    return 0;
                 }
                 partdim = newpartdim;
@@ -970,7 +969,7 @@ int main(int argc, char **argv)
 
             matFree(tresys);
 
-            MESSAGE(1, ("%d homomorphisms found\n", esys->noc - oldNor));
+            MESSAGE(1, "%d homomorphisms found\n", esys->noc - oldNor);
 
 /* gives back the superfluous space to the memory 
    ---------------------------------------------- */
@@ -990,14 +989,13 @@ int main(int argc, char **argv)
                 sysFree(spinbas->data);
                 spinbas->data = basis;
                 sprintf(name,"%s.spb",MName);
-                MESSAGE(1, ("Writing spinning basis to %s\n", name));
+                MESSAGE(1, "Writing spinning basis to %s", name);
                 matSave(spinbas, name);
                 if (standard || hominstd)
                     spinbasi = matInverse(spinbas);
                 if (standard)
                 {
-                    MESSAGE(1,("Transforming %s into spinning basis\n",
-                        MName));
+                    MESSAGE(1, "Transforming %s into spinning basis", MName);
                     for (k = 0; k < MInfo.NGen; k++)
                     {
                         mat = matDup(spinbas);
@@ -1059,7 +1057,7 @@ int main(int argc, char **argv)
                 if (reg == '?')
                     return rc;
 
-                MESSAGE(1,("Calculating regular representation\n"));
+                MESSAGE(1, "Calculating regular representation\n");
                 regrep = NALLOC(Matrix_t *, result->nor);
                 stdbas = NALLOC(Matrix_t *, result->nor + 1);
 

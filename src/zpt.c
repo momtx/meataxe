@@ -92,7 +92,7 @@ static void checksizes()
 {
     uint32_t field0 = 0;
 
-    MESSAGE(1,("Checking sizes\n"));
+    MESSAGE(1, "Checking sizes\n");
     for (int i = 0; i < nrows; ++i) 
 	height[i] = -1;
     for (int k = 0; k < ncols; ++k) 
@@ -146,7 +146,7 @@ static void checksizes()
     for (int k = 0; k < ncols; ++k)
 	nocOut += width[k];
 
-    MESSAGE(0,("Output is %dx%d\n",norOut,nocOut));
+    MESSAGE(0, "Output is %dx%d\n",norOut,nocOut);
 }
 
 
@@ -159,7 +159,7 @@ static void pasteMatrices()
    fileOut = mfCreate(ofilename, fieldOut, norOut, nocOut);
    for (int i = 0; i < nrows; ++i)
    {	
-      MESSAGE(1,("Pasting row %d\n",i));
+      MESSAGE(1, "Pasting row %d\n",i);
       for (uint32_t row = 0; row < maxnor; ++row)
          ffMulRow(ffGetPtr(bufOut, row, nocOut), FF_ZERO, nocOut);
       int colStart = 0;

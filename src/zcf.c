@@ -81,7 +81,7 @@ static void convertPermutationToMatrix()
    }
    permFree(perm);
    sysFree(row);
-   MESSAGE(0,("Converted to GF(%d)\n",outputFieldOrder));
+   MESSAGE(0, "Converted to GF(%d)\n",outputFieldOrder);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -159,9 +159,9 @@ static void changeField()
    sysFree(bufInp);
 
    if (inputFieldOrder < outputFieldOrder)
-      MESSAGE(0,("Embedded into GF(%d)\n",outputFieldOrder));
+      MESSAGE(0, "Embedded into GF(%d)\n",outputFieldOrder);
    else
-      MESSAGE(0,("Restricted to GF(%d)\n",outputFieldOrder));
+      MESSAGE(0, "Restricted to GF(%d)\n",outputFieldOrder);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////

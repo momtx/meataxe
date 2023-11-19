@@ -12,6 +12,7 @@ versions have developed independently.
   and will probably be renamed to 3.0
 - Removed suport for old text file formats.
 - Added "large field" arithmetic (q < 65535).
+- Added support for multithreading (experimental)
 
 
 # Release 2.4.X {#r2_4_x}

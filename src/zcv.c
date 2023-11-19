@@ -283,7 +283,7 @@ static void convertMatrix()
    if (noc == MTX_NVAL) {mtxAbort(MTX_HERE, "Missing header field \"cols\".");}
    if (fl == MTX_NVAL) {mtxAbort(MTX_HERE, "Missing header field \"field\".");}
 
-   MESSAGE(0, ("%dx%d matrix over GF(%d)\n", nor, noc, fl));
+   MESSAGE(0, "%dx%d matrix over GF(%d)\n", nor, noc, fl);
    ffSetField(fl);
    PTR m1 = ffAlloc(1, noc);
    WriteHeader(fl, nor, noc);
@@ -317,7 +317,7 @@ static void convertIntegerMatrix()
    if (nor == MTX_NVAL) {mtxAbort(MTX_HERE, "Missing header field \"rows\".");}
    if (noc == MTX_NVAL) {mtxAbort(MTX_HERE, "Missing header field \"cols\".");}
 
-   MESSAGE(0,("%dx%d integer matrix\n",nor,noc));
+   MESSAGE(0, "%dx%d integer matrix\n",nor,noc);
    int32_t* x = NALLOC(int32_t, noc);
    WriteHeader(MTX_TYPE_INTMATRIX, nor, noc);
    for (uint32_t i = 1; i <= nor; ++i) {
@@ -345,7 +345,7 @@ static void convertPermutation()
       mtxAbort(MTX_HERE,"Missing header field \"degree\".");
    }
 
-   MESSAGE(0,("Permutation on %lu points\n",(unsigned long) degree));
+   MESSAGE(0, "Permutation on %lu points\n",(unsigned long) degree);
    uint32_t *buf = NALLOC(uint32_t,degree);
    WriteHeader(MTX_TYPE_PERMUTATION, degree, 1);
    for (uint32_t i = 0; i < degree; ++i) {
@@ -380,8 +380,8 @@ static void convertPolynomial()
    if (!hasDegree) {mtxAbort(MTX_HERE, "Missing header field \"degree\".");}
    if (fieldOrder == MTX_NVAL) {mtxAbort(MTX_HERE, "Missing header field \"field\".");}
 
-   MESSAGE(0, ("Polynomial of degree %ld over GF(%lu)\n",
-               (long) degree, (unsigned long)fieldOrder));
+   MESSAGE(0, "Polynomial of degree %ld over GF(%lu)\n",
+               (long) degree, (unsigned long)fieldOrder);
    ffSetField(fieldOrder);
    Poly_t* p = polAlloc(fieldOrder, degree);
    for (int32_t i = 0; i <= degree; ++i) {
@@ -465,7 +465,7 @@ int main(int argc, char **argv)
       ++MemberCount;
    }
    if (MemberCount == 0) {
-      MESSAGE(0,("Warning: %s is empty\n",inpname));
+      MESSAGE(0, "Warning: %s is empty\n",inpname);
    }
    mtxEnd(inputFileScope);
    fclose(out);

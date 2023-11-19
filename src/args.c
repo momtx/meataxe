@@ -316,8 +316,8 @@ MtxApplication_t *appAlloc(MtxApplicationInfo_t const *ai, int argc, char **argv
 void appFree(MtxApplication_t *a)
 {
    long t = sysTimeUsed();
-   MESSAGE(1,("%s: %ld.%ld seconds\n",a->AppInfo != NULL ?
-              a->AppInfo->name : "meataxe",t / 10,t % 10));
+   MESSAGE(1, "%s: %ld.%ld seconds\n",a->AppInfo != NULL ?
+              a->AppInfo->name : "meataxe",t / 10,t % 10);
    if (a->context > 0) mtxEnd(a->context);
    sysFree(a);
 }

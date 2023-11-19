@@ -207,22 +207,22 @@ static int MakeTree()
 	    {
 		matFree(newelem);
 		if (src == 0)
-		    MESSAGE(0,("Warning: generator %d is redundant\n",g+1));
+		    MESSAGE(0, "Warning: generator %d is redundant\n",g+1);
 	    }
 	    else
 	    {
-	    	MESSAGE(2,("%d x %d = %d\n",src,g,NElms));
+	    	MESSAGE(2, "%d x %d = %d\n",src,g,NElms);
 		if (AddToList(newelem,src,g) != 0)
 		{
 		    rc = -1;
 		    break;
 		}
 		if (NElms % 50 == 0)
-		    MESSAGE(0,("%d elements\n",NElms));
+		    MESSAGE(0, "%d elements\n",NElms);
 	    }
 	}
     }
-    MESSAGE(0,("Done. The group has %d elements.\n",NElms));
+    MESSAGE(0, "Done. The group has %d elements.\n",NElms);
     return rc;
 }
 
@@ -234,7 +234,7 @@ static void WriteOutput()
     int i;
 
     sprintf(fn,"%s.elt",Name);
-    MESSAGE(1,("Writing %s\n",fn));
+    MESSAGE(1, "Writing %s\n",fn);
     mat = imatAlloc(NElms,2);
     if (mat == NULL)
 	return;

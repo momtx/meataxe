@@ -71,7 +71,7 @@ static int Init(int argc, char **argv)
     Rep = mrLoad(ModuleName,LI.NGen);
     mountains = matLoad(strcat(strcpy(fn,LI.BaseName),".v"));
     nmount = mountains->nor;
-    MESSAGE(1,("%d mountains\n",nmount));
+    MESSAGE(1, "%d mountains\n",nmount);
     
 
     /* Read the bit string from xxx.sub or set up the bit string
@@ -129,12 +129,12 @@ static void sp()
 	}
     }
     matEchelonize(m);
-    MESSAGE(0,("Seed space has dimension %d\n",m->nor));
+    MESSAGE(0, "Seed space has dimension %d\n",m->nor);
     subsp = SpinUp(m,Rep,SF_EACH|SF_COMBINE,NULL,NULL);
-    MESSAGE(0,("Submodule has dimension %d\n",subsp->nor));
+    MESSAGE(0, "Submodule has dimension %d\n",subsp->nor);
     sprintf(fn,"%s.%c%d",LI.BaseName,opt_m ? 'm' : 's',modnum);
     matSave(subsp,fn);
-    MESSAGE(0,("Module written to %s\n",fn));
+    MESSAGE(0, "Module written to %s\n",fn);
 }
 
 

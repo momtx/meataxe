@@ -67,7 +67,7 @@ CFLAGS=$(CFLAGS1) $(CFLAGS_THREADS) -I"include" -Itmp -DMTX_ZZZ=${ZZZ}
 LDFLAGS=$(LDFLAGS1) $(LDFLAGS_THREADS)
 
 PROGRAMS = \
-  cfcomp chop decomp genmod mkcycl mkdotl mkgraph mkhom \
+  cfcomp playground chop decomp genmod mkcycl mkdotl mkgraph mkhom \
   mkinc mksub mktree orbrep precond pseudochop pwkond rad soc symnew tcond tuc \
   zad zbl zcf zcl zcp zct zcv zef zev zfr ziv zkd zmo zmu zmw znu zor zpo zpr \
   zpt zqt zro zsc zsi zsp zsy ztc zte ztm ztr zts zuk zvp
@@ -123,9 +123,11 @@ LIB_OBJS=\
 	bitstring \
 	cfinfo \
 	charpol chbasis \
+	ephemeral_string \
 	error \
 	ffio \
 	fpcore fpdup fpmul fpmul2 fpprint \
+	gap_format \
 	gcd genseed\
 	grmaprow grmatcore grtable \
 	hashlittle2 \
@@ -159,12 +161,11 @@ LIB_OBJS=\
 	spinup spinup2 \
 	split stabpwr stfcore \
 	stfread stfwrite \
-	string \
 	sumint \
 	temap \
 	tkinfo vec2mat \
 	wgen \
-	zcleanrow zcmprow zgap zpermrow \
+	zcleanrow zcmprow zpermrow \
 	zzz2 \
 	version
 
@@ -213,19 +214,17 @@ TESTS=\
   0214 \
   0215_m11_x_m11
 
-
-
 test: $(TESTS:%=tmp/test-%.done)
 
 # meataxe library tests
 
 TS_OBJS1=c-args c-bitstring c-cfinfo c-charpol\
 	c-ffio c-fileio c-ffmat c-ffrow c-fpoly \
-	c-grease c-kernel c-matins c-matrix c-matset\
+	c-gap c-grease c-kernel c-matins c-matrix c-matset\
 	c-os c-perm c-poly c-pseed c-quot c-random \
-	c-stf c-tensor c-zzz
+	c-stf c-tensor
 
-TS_OBJS=$(TS_OBJS1:%=tmp/%.o) ${MTXROOT}/lib/libmtx.a
+TS_OBJS=$(TS_OBJS1:%=tmp/%.o) tmp/testing.o tmp/test_table.o ${MTXROOT}/lib/libmtx.a
 
 ${MTXBIN}/zzztest: $(TS_OBJS) tmp/_mkdir
 	@echo "# LD $@"
@@ -238,14 +237,15 @@ tmp/test_table.c: tmp/_mkdir tmp/tex $(TS_OBJS1:%=tests/%.c)
 tmp/tex: tests/tex.c tmp/_mkdir
 	@$(CC) -Itests -Isrc $(CFLAGS) $(LDFLAGS) $< -o $@
 
-tmp/c-%.o: tests/c-%.c tests/testing.h src/meataxe.h Makefile Makefile.conf
-	@echo "# CC c-$*.c -> $@"
+tmp/%.o: tests/%.c tests/testing.h src/meataxe.h Makefile Makefile.conf
+	@echo "# CC $*.c -> $@"
 	${SILENT}mkdir -p tmp
-	${SILENT}$(CC) $(CFLAGS) -Itests -Isrc -c "tests/c-$*.c" -o "$@"
+	${SILENT}$(CC) $(CFLAGS) -Itests -Isrc -c "tests/$*.c" -o "$@"
 
-tmp/c-zzz.o: tests/c-zzz.c tests/testing.h src/meataxe.h tmp/test_table.c Makefile Makefile.conf
-	@echo "# CC tests/c-zzz.c -> $@"
-	${SILENT}$(CC) $(CFLAGS) -Itests -Isrc -c "tests/c-zzz.c" -o "$@"
+tmp/test_table.o: tmp/test_table.c
+	@echo "# CC $*.c -> $@"
+	${SILENT}mkdir -p tmp
+	${SILENT}$(CC) $(CFLAGS) -Itests -Isrc -c tmp/test_table.c -o "$@"
 
 tmp/test-%.done: tests/common.sh ${MTXBIN}/zzztest tests/%/run \
    $(PROGRAMS:%=${MTXBIN}/%) tmp/_mkdir
@@ -253,7 +253,6 @@ tmp/test-%.done: tests/common.sh ${MTXBIN}/zzztest tests/%/run \
            MTX_ZZZ="${ZZZ}" \
 	   PATH="${MTXBIN}:/usr/bin:/bin" ../tests/$*/run
 	@touch "$@"
-
 
 .PHONY: tar clean install test
 .PRECIOUS: tmp/%.o

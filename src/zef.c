@@ -118,7 +118,7 @@ int main(int argc, char **argv)
 	if (opt_G)
 	    printf("MeatAxe.Rank := %d;\n",Mat->nor);
 	else
-	    MESSAGE(0,("RANK %d\n",Mat->nor));
+	    MESSAGE(0, "RANK %d\n",Mat->nor);
     }
     Cleanup();
     return rc;

@@ -32,29 +32,41 @@ void tstPrintRows(const char *name, PTR x, int nor, int noc);
 // Test framework
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-int tstAssert(const char *file, int line, const char *func, int e, const char *estr);
-#define ASSERT(e) \
-   do { if (tstAssert(__FILE__,__LINE__,__func__,e,#e) != 0) return 1; } while (0)
+struct TstSourceLocation {
+   const char* file;    ///< The source file name.
+   int line;            ///< The line number.
+   const char* func;    ///< The function name.
+};
 
-int tstAssertEqInt(const char *file, int line, const char *func, int act, int exp,
+#define TST_HERE (&(const struct TstSourceLocation){__FILE__, __LINE__, __func__}) 
+
+int tstAssert(const struct TstSourceLocation* where, int e, const char *estr);
+#define ASSERT(e) \
+   do { if (tstAssert(TST_HERE, e, #e) != 0) return 1; } while (0)
+
+int tstAssertEqInt(const struct TstSourceLocation* where, int act, int exp,
 	        const char *actstr, const char *expstr);
 #define ASSERT_EQ_INT(act,exp) \
-   do { if (tstAssertEqInt(__FILE__,__LINE__,__func__,act,exp,#act,#exp) != 0) return 1; } while(0)
+   do { if (tstAssertEqInt(TST_HERE,act,exp,#act,#exp) != 0) return 1; } while(0)
+
+int tstAssertEqString(const struct TstSourceLocation* where, const char* act, const char* exp,
+	        const char *actstr, const char *expstr);
+#define ASSERT_EQ_STRING(act,exp) \
+   do { if (tstAssertEqString(TST_HERE,act,exp,#act,#exp) != 0) return 1; } while(0)
+
 
 struct TstAbortState {
    jmp_buf jumpTarget;
    int enabled;
-   const char* file;
-   int line;
-   const char* func;
+   struct TstSourceLocation where;
    const char* expr;
 };
 extern struct TstAbortState tstAbortState;
-void tstPrepareCatchAbort(const char *file, int line, const char *func, const char *estr);
+void tstPrepareCatchAbort(const struct TstSourceLocation* where, const char *estr);
 void tstMissingAbort();
 #define ASSERT_ABORT(e) \
    do {\
-      tstPrepareCatchAbort(__FILE__, __LINE__, __func__, #e); \
+      tstPrepareCatchAbort(TST_HERE, #e); \
       if (setjmp(tstAbortState.jumpTarget) == 0) { \
          e; \
          tstMissingAbort(); \
@@ -63,10 +75,10 @@ void tstMissingAbort();
    } while (0)
 
 
-MTX_PRINTF(4,5)
-void tstFail(const char *file, int line, const char *func, const char *msg, ...);
+MTX_PRINTF(2,3)
+void tstFail(const struct TstSourceLocation *where, const char *msg, ...);
 #define TST_FAIL(msg, ...) \
-   do { tstFail(__FILE__, __LINE__, __func__, msg, __VA_ARGS__); return 1; } while(0)
+   do { tstFail(TST_HERE, msg, __VA_ARGS__); return 1; } while(0)
 
 extern FEL *FTab;
 int NextField();

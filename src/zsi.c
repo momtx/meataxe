@@ -43,7 +43,7 @@ static MtxApplication_t *App = NULL;
 
 static void writeFiles()
 {	
-    MESSAGE(0,("Sum %d, Intersection %d\n",norA,norB));
+    MESSAGE(0, "Sum %d, Intersection %d\n",norA,norB);
 
     MtxFile_t* of = mfCreate(sumname,ffOrder,norA,noc);
     mfWriteRows(of,wrk1,norA, noc);

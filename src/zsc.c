@@ -76,7 +76,7 @@ static int ReadFiles()
 
     /* Read the script.
        ---------------- */
-    MESSAGE(1,("Reading %s\n",OpName));
+    MESSAGE(1, "Reading %s\n",OpName);
     OpTable = imatLoad(OpName);
     if (OpTable == NULL)
 	return -1;
@@ -99,7 +99,7 @@ static int ReadFiles()
     if (OPGEN(0) != -1)
 	mtxAbort(MTX_HERE,"Illegal script (does not start with seed vector)");
     if (OPVEC(0) != 1)
-	MESSAGE(0,("Note: script does not start with first vector"));
+	MESSAGE(0, "Note: script does not start with first vector");
     for (i = 1; i < OpTable->nor; ++i)
     {
 	if (OPGEN(i) == -1)
@@ -121,7 +121,7 @@ static int ReadFiles()
 	mtxAbort(MTX_HERE,"%s.1 and %s: %s",GenName,SeedName,MTX_ERR_INCOMPAT);
 	return 1;
     }
-    MESSAGE(1,("%s: %d seed vectors\n",SeedName,Seed->nor));
+    MESSAGE(1, "%s: %d seed vectors\n",SeedName,Seed->nor);
     return 0;
 }
 

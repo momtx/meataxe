@@ -97,7 +97,7 @@ static void ReadFiles(const char *basename)
     sysRead32(f,&nmountains,1);
     if (nmountains != cfstart[LI.nCf]) 
 	mtxAbort(MTX_HERE,"Bad number of mountains in .inc file");
-    MESSAGE(1,("Reading incidence matrix (%lu mountains)\n",(unsigned long) nmountains));
+    MESSAGE(1, "Reading incidence matrix (%lu mountains)",(unsigned long) nmountains);
     fflush(stdout);
     for (i = 0; i < (int) nmountains; ++i)
 	subof[i] = bsRead(f);
@@ -112,7 +112,7 @@ static void ReadFiles(const char *basename)
     /* Read classes
        ------------ */
     sprintf(fn,"%s.mnt",LI.BaseName);
-    MESSAGE(1,("Reading classes (%s)\n",fn));
+    MESSAGE(1, "Reading classes (%s)",fn);
     f = sysFopen(fn,"r");
     for (i = 0; i < nmountains; ++i)
     {
@@ -200,7 +200,7 @@ static void nextcf(int cf)
     for (j = LI.Cf[cf].spl - 1; j > 0; --j)
     	dotlen *= ffOrder;
     ++dotlen;
-    MESSAGE(1,("Length of dotted-lines is %d\n",dotlen));
+    MESSAGE(1, "Length of dotted-lines is %d",dotlen);
 
     /* Calculate the mountains
        ----------------------- */
@@ -372,7 +372,7 @@ static void trydot(int i, int k, int beg, int next)
     {	
 	int d;
 
-	MESSAGE(1,("New dotted line: %d+%d\n",i,k));
+	MESSAGE(1, "New dotted line: %d+%d",i,k);
 	if (ndotl >= MAXDOTL)
 	{
 	    mtxAbort(MTX_HERE,"Too many dotted lines (max %d)",MAXDOTL);
@@ -392,7 +392,7 @@ static void trydot(int i, int k, int beg, int next)
 	    {
 		bsFree(dot);
 		bsFree(MaxMountains[ndotl]);
-		MESSAGE(2,("Discarding %d+%d (= dl %d)\n",i,k,d));
+		MESSAGE(2, "Discarding %d+%d (= dl %d)",i,k,d);
 	    }
 	    else
 		ndotl++;
@@ -428,7 +428,7 @@ static void mkdot(int cf)
     firstdotl = ndotl;
     for (i = firstm; i < nextm; ++i)
     {
-	MESSAGE(2,("Trying mountain %d\n",i));
+	MESSAGE(2, "Trying mountain %d",i);
 	lock(i,lck);
     	for (k = i+1; k < nextm; ++k)
     	{	
@@ -450,7 +450,7 @@ static void WriteResult()
     char fn[200];
 
     strcat(strcpy(fn,LI.BaseName),".dot");
-    MESSAGE(1,("Writing %s (%d dotted line%s)\n", fn,ndotl,ndotl!=1 ? "s" : ""));
+    MESSAGE(1, "Writing %s (%d dotted line%s)", fn,ndotl,ndotl!=1 ? "s" : "");
     FILE* f = sysFopen(fn,"wb");
     const uint32_t l = ndotl;
     sysWrite32(f,&l,1);
@@ -502,7 +502,7 @@ static int Init(int argc, char **argv)
 	MtxMessageLevel = -100;
     if (appGetArguments(App,1,1) != 1)
 	return -1;
-    MESSAGE(0,("*** DOTTED LINES ***\n\n"));
+    MESSAGE(0, "\n*** DOTTED LINES ***");
 
     ReadFiles(App->argV[0]);
     return 0;
@@ -527,9 +527,9 @@ int main(int argc, char *argv[])
 	nextcf(i);
 	mkdot(i);
 	LI.Cf[i].ndotl = ndotl - nn;
-	MESSAGE(0,("%s%s: %d vectors, %ld mountains, %ld dotted line%s\n",
+	MESSAGE(0, "%s%s: %d vectors, %ld mountains, %ld dotted line%s",
 	    LI.BaseName,latCfName(&LI,i),  cycl->nor,LI.Cf[i].nmount,
-	    LI.Cf[i].ndotl, LI.Cf[i].ndotl != 1 ? "s": ""));
+	    LI.Cf[i].ndotl, LI.Cf[i].ndotl != 1 ? "s": "");
 	nn = ndotl;
 	CleanupCf();
     }

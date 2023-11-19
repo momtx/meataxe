@@ -129,7 +129,7 @@ static Matrix_t *makekernel(const Poly_t *pol)
     const long fl = pol->field;
     Matrix_t* materg = matAlloc(fl,pdeg,pdeg);
     PTR rowptr = materg->data;
-    MESSAGE(3,("makekernel: fl=%ld pdeg=%ld\n", fl, pdeg));
+    MESSAGE(3, "makekernel: fl=%ld pdeg=%ld", fl, pdeg);
 
     FEL* xbuf = NALLOC(FEL,pdeg+1);
     for (k = 0; k <= pdeg; ++k) 

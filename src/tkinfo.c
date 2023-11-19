@@ -138,7 +138,7 @@ int tkWriteInfo(TkData_t *tki, const char *name)
     stfWriteVector(f,"TKInfo.CfIndexN",tki->nCf,tki->cfIndex[1]);
 
     stfClose(f);
-    MESSAGE(1,("Wrote %s: NCf=%d\n",fn,tki->nCf));
+    MESSAGE(1, "Wrote %s: NCf=%d\n",fn,tki->nCf);
     return result;
 }
 

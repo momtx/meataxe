@@ -70,8 +70,8 @@ static void MakeInvertible(Matrix_t *mat, const char *fn)
     k = dup->nor;
     if (k < mat->nor)
     {
-	MESSAGE(0,("WARNING: %s: %d basis vectors are missing, "
-	    "using random vectors\n",fn,mat->nor - k));
+	MESSAGE(0, "WARNING: %s: %d basis vectors are missing, "
+	    "using random vectors\n",fn,mat->nor - k);
     }
     for (i = 0, x = mat->data; i < mat->nor; ++i, ffStepPtr(&x, mat->noc))
     {
@@ -135,7 +135,7 @@ static void Init(int argc, char** argv)
    // Read the semisimplicity bases.
    if (!NoBasisChange) {
       int ctx = mtxBegin(MTX_HERE, "HINT: did you run 'pwkond -tb'?");
-      MESSAGE(1, ("Reading and inverting semisimplicity bases\n"));
+      MESSAGE(1, "Reading and inverting semisimplicity bases\n");
       sprintf(fn, "%s.ssb", TKInfo.nameM);
       SsBasisM = matLoad(fn);
       MakeInvertible(SsBasisM, fn);
@@ -292,7 +292,7 @@ static void condenseMat(int gen)
     sprintf(resname,"%s.%d",ResultName,gen+1);
     sprintf(aname,"%s.%d",AName,gen+1);
     sprintf(bname,"%s.%d",BName,gen+1);
-    MESSAGE(0,("Condensing %s x %s --> %s\n",aname,bname,resname));
+    MESSAGE(0, "Condensing %s x %s --> %s\n",aname,bname,resname);
 
     /* Load the generator on M and N
        ----------------------------- */
@@ -306,7 +306,7 @@ static void condenseMat(int gen)
        ------------------------------- */
     if (!NoBasisChange)
     {
-        MESSAGE(1,("  Changing basis\n"));
+        MESSAGE(1, "  Changing basis\n");
         x = matDup(SsBasisM);
         matMul(x,mmat);
         
@@ -340,7 +340,7 @@ static void condenseMat(int gen)
 
     /* Open the output file
        -------------------- */
-    MESSAGE(1,("  Beginning condensation\n"));
+    MESSAGE(1, "  Beginning condensation\n");
     MtxFile_t* resultFile = mfCreate(resname,ffOrder,TKInfo.dim,TKInfo.dim);
 
     /* Main loop: for each constituent
@@ -352,8 +352,8 @@ static void condenseMat(int gen)
 	int rownb = InfoM.Cf[cfm].dim;	/* Number of rows to extract */
 	int mi;				/* Counter for copies of this const. */
 
-        MESSAGE(2,("  Processing %s",latCfName(&InfoM,cfm)));
-        MESSAGE(2,(" x %s\n",latCfName(&InfoN,cfn)));
+        MESSAGE(2, "  Processing %s",latCfName(&InfoM,cfm));
+        MESSAGE(2, " x %s\n",latCfName(&InfoN,cfn));
 
         for (mi = 0; mi < InfoM.Cf[cfm].mult; ++mi)
         {
@@ -362,7 +362,7 @@ static void condenseMat(int gen)
 	    int firstrow = FirstRow(&InfoM,cfm,mi);
 	    mrow = matCutRows(mmat,firstrow,rownb);
 
-	    MESSAGE(3,("  "));
+	    MESSAGE(3, "  ");
             for (ni = 0; ni < InfoN.Cf[cfn].mult; ++ni)
             {
 		Matrix_t *nrow, *condmat;
@@ -376,7 +376,7 @@ static void condenseMat(int gen)
 			Q[cf]->nor,TKInfo.dim);
 		}
 
-	    	MESSAGE(3,(" %dx%d",mi,ni));
+	    	MESSAGE(3, " %dx%d",mi,ni);
                 gemap(condmat,Q[cf],mrow,nrow);
                 
                 /* write result */
@@ -384,7 +384,7 @@ static void condenseMat(int gen)
                 matFree(condmat);
                 matFree(nrow);
             }
-	    MESSAGE(3,("\n"));
+	    MESSAGE(3, "\n");
             matFree(mrow);
         }   
     }   

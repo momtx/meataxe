@@ -9,11 +9,18 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include <test_table.c>
+extern struct TstFoundTest foundTests[];
 
+static int tstMessageThreshold = 0;
+static const char* tstCurrent = "";
+static int tstFailCalled = 0;
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void tstPrintRows(const char *name, PTR x, int nor, int noc)
 {
+   size_t s = sizeof(foundTests[0]);
+   (void)s;
    printf("---\n%s (%dx%d):\n", name, nor, noc);
    for (int n = nor; n > 0; --n) {
       for (int col = 0; col < noc; ++col) {
@@ -24,11 +31,7 @@ void tstPrintRows(const char *name, PTR x, int nor, int noc)
    }
 }
 
-static char *argv0;
-static const char* tstCurrent = "";
-static int tstFailCalled = 0;
-static int tstMessageThreshold = 0;
-
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 static void tstVprintf(int level, const char *msg, va_list args)
 {
@@ -45,36 +48,54 @@ static void tstPrintf(int level, const char *msg, ...)
    va_end(args);
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void tstFail(const char *file, int line, const char *func, const char *msg, ...)
+void tstFail(const struct TstSourceLocation* where, const char* msg, ...)
 {
-    va_list args;
-    va_start(args, msg);
-    if (strcmp(tstCurrent, func) == 0) {
-       tstPrintf(-1,"%s:%d:: error: TEST FAILED: %s\n", file, line, tstCurrent);
-    } else {
-       tstPrintf(-1,"%s:%d:: error: TEST FAILED: %s (%s)\n", file, line, tstCurrent, func);
-    }
-    tstVprintf(-1,msg, args);
-    tstPrintf(-1,"\n");
-    tstFailCalled = 1;
+   va_list args;
+   va_start(args, msg);
+   tstPrintf(-1, "%s:%d:: error: TEST FAILED: %s (%s)\n",
+      where->file, where->line, tstCurrent, where->func);
+   tstVprintf(-1, msg, args);
+   tstPrintf(-1, "\n");
+   tstFailCalled = 1;
 }
 
-int tstAssert(const char *file, int line, const char *func, int e, const char *estr)
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+int tstAssert(const struct TstSourceLocation* where, int e, const char *estr)
 {
    if (e) return 0;
-   tstFail(file, line, func, "assertion failed: %s", estr);
+   tstFail(where, "assertion failed: %s", estr);
    return 1;
 }
 
-int tstAssertEqInt(const char *file, int line, const char *func, int act, int exp,
-	        const char *actstr, const char *expstr)
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+int tstAssertEqInt(
+   const struct TstSourceLocation* where,
+   int act, int exp, const char* actstr, const char* expstr)
 {
-   if (act == exp) return 0;  
-   tstFail(file, line, func, "value of %s:\nactual:   %d\nexpected: %d (%s)\n",
-	     actstr, act, exp, expstr);
+   if (act == exp)
+      return 0;
+   tstFail(where, "value of %s:\nactual:   %d\nexpected: %d (%s)\n", actstr, act, exp, expstr);
    return 1;
 }
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+int tstAssertEqString(const struct TstSourceLocation* where, const char* act, const char* exp,
+	        const char *actstr, const char *expstr)
+{
+   if ((act == NULL && exp == NULL) || strcmp(act, exp) == 0)
+      return 0;
+   tstFail(where, "value of %s:\nactual:   %s\nexpected: %s (%s)\n",
+         actstr, act ? act : "NULL",
+         exp ? exp : "NULL", expstr);
+   return 1;
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 static const int DEFAULT_FIELDS[] = {2,3,4,5,16,67,125,256,
 #if MTX_ZZZ == 1
@@ -85,6 +106,7 @@ static const int DEFAULT_FIELDS[] = {2,3,4,5,16,67,125,256,
 static const int* SelectedFields = DEFAULT_FIELDS;
 static const int* CurrentField = NULL;
 static int defaultField = 243;
+static char *argv0;
 
 
 
@@ -287,30 +309,32 @@ static void printTables(int field)
    }
 }
 
-
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 struct TstAbortState tstAbortState = {0};
 
-
-static void CatchAbortHandler(const struct MtxErrorInfo *err)
+static void CatchAbortHandler(const struct MtxErrorInfo* err)
 {
    if (tstAbortState.enabled) {
       longjmp(tstAbortState.jumpTarget, 112);
    }
-   tstFail(__FILE__, __LINE__, __func__,
-         "UNEXPECTED ABORT\nabort reason: %s\nCANNOT CONTINUE TESTS, EXITING",
-         err->message);
+   struct TstSourceLocation where = {
+      .file = err->source.file,
+      .line = err->source.line,
+      .func = err->source.func
+   };
+
+   tstFail(&where,
+      "UNEXPECTED ABORT\nabort reason: %s\nCANNOT CONTINUE TESTS, EXITING",
+      err->message);
    exit(2);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void tstPrepareCatchAbort(const char *file, int line, const char *func, const char *estr)
+void tstPrepareCatchAbort(const struct TstSourceLocation* where, const char *estr)
 {
-   tstAbortState.file = file;
-   tstAbortState.line = line;
-   tstAbortState.func = func;
+   tstAbortState.where = *where;
    tstAbortState.expr = estr;
    tstAbortState.enabled = 1;
 }
@@ -320,8 +344,7 @@ void tstPrepareCatchAbort(const char *file, int line, const char *func, const ch
 void tstMissingAbort()
 {
    tstAbortState.enabled = 0;
-   tstFail(tstAbortState.file, tstAbortState.line, tstAbortState.func,
-         "Did not abort as expected\nexpr: %s", tstAbortState.expr);
+   tstFail(&tstAbortState.where, "Did not abort as expected\nexpr: %s", tstAbortState.expr);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -388,7 +411,7 @@ static int executeTest(const struct TstFoundTest* test, int field)
       result = tf();
    }
    if (result != 0 && !tstFailCalled)
-      tstFail(__FILE__, __LINE__, __func__, "Test failed with no error message");
+      tstFail(TST_HERE, "Test failed with no error message");
    return result;
 }
 
@@ -411,12 +434,15 @@ static int cmpTests(const void* a, const void* b)
    return strcmp(ta->name, tb->name);
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
 static void sortTests()
 {
-   qsort(foundTests, sizeof(foundTests) / sizeof(foundTests[0]) - 1,
-         sizeof(foundTests[0]), cmpTests);
+   struct TstFoundTest *end;
+   for (end = foundTests; end->name != NULL; ++end);
+   size_t numberOfTests = end - foundTests;
+   qsort(foundTests, numberOfTests, sizeof(foundTests[0]), cmpTests);
 }
-
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 

@@ -121,6 +121,39 @@ long sysTimeUsed(void)
 
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+/// Returns the current time in milliseconds since an unspecified start time.
+
+uint64_t sysTime()
+{
+   struct timeval now;
+   gettimeofday(&now, NULL);
+   return (uint64_t) now.tv_sec * 1000 + now.tv_usec / 1000;
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+/// Timer for repeated events.
+/// @a buf must point to a variable which must be initialized with zero.
+/// On the first call, the return value is 0.
+/// On subsequent calls, the function returns 1 if more than @c intervalInSeconds seconds have
+/// elapsed since the last call that returned 1 (or, if there was no return value 1, since the
+/// first call).
+
+int sysTimeout(uint64_t* buf, unsigned intervalInSeconds)
+{
+   if (buf == NULL)
+      return 0;
+   uint64_t now = sysTime();
+   if (*buf == 0)
+      *buf = now;
+   else if (*buf + intervalInSeconds * (uint64_t) 1000 < now) {
+      *buf = now;
+      return 1;
+   }
+   return 0;
+}
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 

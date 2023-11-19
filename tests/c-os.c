@@ -50,7 +50,7 @@ TstResult OS_sysMalloc_InitializesMemoryWithZero()
       int k;
       for (k = 0; k < SIZE && buf[k] == 0; ++k);
       if (k < SIZE) {
-         tstFail(__FILE__, __LINE__, __func__, "Memory was not initialized");
+         tstFail(TST_HERE, "Memory was not initialized");
          result = 1;
       }
       memset(buf, 0xaa, SIZE * sizeof(int));

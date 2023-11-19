@@ -6,22 +6,16 @@
 #include <string.h>
 #include <stdlib.h>
 
-
-
-/* -------------------------------------------------------------------------
-   Global data
-   ------------------------------------------------------------------------- */
-
-MatRep_t *Rep;				/* Generators */
-Matrix_t *bild[LAT_MAXCF];		/* Image of peak word (gkond) */
-int nmount = 0;				/* Number of mountains */
-Matrix_t * mountlist[MAXCYCL];		/* List of mountains */
-int MountDim[MAXCYCL];			/* Dim. of mountains */
-Matrix_t **proj[MAXCYCL];		/* Projections of mountains */
-int moffset[LAT_MAXCF];			/* Number of first mountain */
-int *Class[MAXCYCL];			/* Classes of vectors */
-BitString_t *subof[MAXCYCL];		/* Incidence matrix */
-static Lat_Info LI;			/* Data from .cfinfo file */
+MatRep_t *Rep;				// Generators
+Matrix_t *bild[LAT_MAXCF];		// Image of peak word (gkond)
+int nmount = 0;				// Number of mountains
+Matrix_t * mountlist[MAXCYCL];		// List of mountains
+int MountDim[MAXCYCL];			// Dim. of mountains
+Matrix_t **proj[MAXCYCL];		// Projections of mountains
+int moffset[LAT_MAXCF];			// Number of first mountain
+int *Class[MAXCYCL];			// Classes of vectors
+BitString_t *subof[MAXCYCL];		// Incidence matrix
+static Lat_Info LI;			// Data from .cfinfo file
 
 static MtxApplicationInfo_t AppInfo = { 
 "mkinc", "Mountains and incidence matrix",
@@ -51,7 +45,7 @@ MTX_COMMON_OPTIONS_DESCRIPTION
 
 static MtxApplication_t *App = NULL;
 
-int opt_G = 0;	    /* GAP output */
+int opt_G = 0;	    // GAP output
 
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -82,7 +76,7 @@ static void init(int argc, char **argv)
     if (opt_G) 
 	MtxMessageLevel = -100;
     appGetArguments(App,1,1);
-    MESSAGE(0,("\n*** INCIDENCE MATRIX ***\n\n"));
+    MESSAGE(0, "\n*** INCIDENCE MATRIX ***");
     ReadFiles(App->argV[0]);
 }
 
@@ -95,10 +89,9 @@ static void WriteMountains()
     char fn[200];
     int i;
 
-    /* Write dimensions and classes
-       ---------------------------- */
+    // Write dimensions and classes
     FILE* f = sysFopen(strcat(strcpy(fn,LI.BaseName),".mnt"),"w");
-    MESSAGE(1,("Writing dimensions and classes to %s\n",fn));
+    MESSAGE(1, "Writing dimensions and classes to %s",fn);
     for (i = 0; i < nmount; ++i)
     {
 	int *p;
@@ -109,10 +102,9 @@ static void WriteMountains()
     }
     fclose(f);
 
-    /* Write mountains
-       --------------- */
+    // Write mountains
     strcat(strcpy(fn,LI.BaseName),".v");
-    MESSAGE(1,("Writing mountains to %s\n",fn));
+    MESSAGE(1, "Writing mountains to %s",fn);
     MtxFile_t* mountainsFile = mfCreate(fn,ffOrder,nmount,Rep->Gen[0]->noc);
     for (i = 0; i < nmount; ++i)
     {
@@ -123,13 +115,11 @@ static void WriteMountains()
     mfClose(mountainsFile);
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
-/* -----------------------------------------------------------------
-   newmountain() - Take a vector, spin it up and check if it is a
-	new mountain. If yes, add it to the mountain list and
-	calculate the projection on each condensed module.
-	Returns 1 if a new mountain has been found, 0 if not.
-   ----------------------------------------------------------------- */
+// Takes a vector, spins it up and checks if it is a new mountain. If yes, it is added to the
+// mountain list and projection on each condensed module is calculated.
+// Returns 1 if a new mountain has been found, 0 if not.
 
 static int newmountain(Matrix_t *vec, int cf)
 
@@ -137,16 +127,13 @@ static int newmountain(Matrix_t *vec, int cf)
     Matrix_t *span, *backproj;
     int i;
 
-    /* Spin up the vector and project back onto
-       the condensed module where it came from.
-       ----------------------------------------- */
+    // Spin up the vector and project back onto the condensed module where it came from.
     span = SpinUp(vec,Rep,SF_FIRST|SF_SUB,NULL,NULL);
-    MESSAGE(2,("Next vector spins up to %d\n",span->nor));
+    MESSAGE(2, "Next vector spins up to %d",span->nor);
     backproj = QProjection(bild[cf],span);
     matEchelonize(backproj);
 
-    /* Check if it is a new mountain
-       ----------------------------- */
+    // Check if it is a new mountain
     for (i = moffset[cf]; i < nmount; ++i)
     {
 	if (backproj->nor == proj[i][cf]->nor)
@@ -162,9 +149,8 @@ static int newmountain(Matrix_t *vec, int cf)
 	}
     }
 
-    /* If it is new, add it to the list and calculate
-       the other projections. Otherwise just forget it.
-       ------------------------------------------------ */
+    // If it is new, add it to the list and calculate the other projections.
+    // Otherwise just forget it.
     if (i >= nmount)
     {
 	int k;
@@ -176,10 +162,10 @@ static int newmountain(Matrix_t *vec, int cf)
 	}
 	proj[nmount] = NALLOC(Matrix_t *,LI.nCf);
 
-    	MESSAGE(2,("New Mountain %d\n",(int)i));
+    	MESSAGE(2, "New Mountain %d",(int)i);
 	for (k = 0; k < LI.nCf; ++k)
 	{
-    	    MESSAGE(3,("Projecting on %d\n",k));
+    	    MESSAGE(2, "Projecting on %d",k);
 	    if (k == cf)
 	    	proj[nmount][cf] = backproj;
 	    else
@@ -204,95 +190,80 @@ static int newmountain(Matrix_t *vec, int cf)
 }
 
 
-/* -----------------------------------------------------------------
-   makeclass() - Find all cyclic subspaces of the projection of a
-   mountain onto `its' irreducible.
-   ----------------------------------------------------------------- */
+//////////////////////////////////////////////////////////////////////////////////////////////////// 
 
-static void makeclass(int mnt, int cf, Matrix_t *vectors)
+// Finds all cyclic subspaces of the projection of a mountain onto `its' irreducible.
 
+static void makeclass(int mnt, int cf, Matrix_t* vectors)
 {
-    char *tmp = NALLOC(char,vectors->nor+2);
-    Matrix_t *vec;
-    int k;
-    int *p;
-    size_t nvec;
+   char* tmp = NALLOC(char, vectors->nor + 2);
+   Matrix_t* vec;
+   int k;
+   int* p;
+   size_t nvec;
 
-    nvec = 0;
-    MESSAGE(2,("Making equivalence class\n"));
-    for (k = 0; k < vectors->nor; ++k)
-    {
-	vec = matCutRows(vectors,k,1);
-	tmp[k] = 0;
-        MESSAGE(3,(" %d",k));
-	if (IsSubspace(vec,proj[mnt][cf],1))
-	{
-	    tmp[k] = 1;
-	    ++nvec;
-	}
-	matFree(vec);
-    }
-    MESSAGE(3,("\n"));
+   nvec = 0;
+   MESSAGE(2, "Making equivalence class");
+   for (k = 0; k < vectors->nor; ++k) {
+      vec = matCutRows(vectors, k, 1);
+      tmp[k] = 0;
+      if (IsSubspace(vec, proj[mnt][cf], 1)) {
+         tmp[k] = 1;
+         ++nvec;
+      }
+      matFree(vec);
+   }
 
-    p = Class[mnt] = NALLOC(int,nvec+2);
-    *p++ = nvec;
-    for (k = 0; k < vectors->nor; ++k)
-    {
-	if (tmp[k]) 
-	    *p++ = k;
-    }
-    *p = -1;
-    free(tmp);
+   p = Class[mnt] = NALLOC(int, nvec + 2);
+   *p++ = nvec;
+   for (k = 0; k < vectors->nor; ++k) {
+      if (tmp[k]) {
+         *p++ = k;
+      }
+   }
+   *p = -1;
+   free(tmp);
 }
 
 
-/* -----------------------------------------------------------------
-   FindMountains() - Make all mountains and calculate the projections of
-	mountains on condensed modules.
-   ----------------------------------------------------------------- */
+//////////////////////////////////////////////////////////////////////////////////////////////////// 
+
+// Make all mountains and calculate the projections of mountains on condensed modules.
 
 static void FindMountains()
-
 {
-    Matrix_t *vectors, *vec, *uk;
-    char fn[200];
-    int cf;
-    int i;
+   Matrix_t* vectors, * vec, * uk;
+   char fn[200];
+   int cf;
+   int i;
 
-    MESSAGE(0,("Step 1 (Mountains)\n"));
-    nmount = 0;
-    for (cf = 0; cf < LI.nCf; ++cf)	/* For each irreducible */
-    {
-	MESSAGE(0,("  %s%s: ",LI.BaseName,latCfName(&LI,cf)));
+   MESSAGE(0, "Step 1 (Mountains)");
+   nmount = 0;
+   for (cf = 0; cf < LI.nCf; ++cf) {
+      // Read the vectors and the uncondense matrix
+      sprintf(fn, "%s%s.v", LI.BaseName, latCfName(&LI, cf));
+      vectors = matLoad(fn);
+      sprintf(fn, "%s%s.k", LI.BaseName, latCfName(&LI, cf));
+      uk = matLoad(fn);
 
-	/* Read the vectors and the uncondense matrix
-	   ------------------------------------------ */
-	sprintf(fn,"%s%s.v",LI.BaseName,latCfName(&LI,cf));
-	vectors = matLoad(fn);
-	sprintf(fn,"%s%s.k",LI.BaseName,latCfName(&LI,cf));
-	uk = matLoad(fn);
+      // Try each vector
+      moffset[cf] = nmount;
+      for (i = 0; i < vectors->nor; ++i) {
+         vec = matCutRows(vectors, i, 1);
+         matMul(vec, uk);       // Uncondense
+         if (newmountain(vec, cf)) {
+            makeclass(nmount - 1, cf, vectors);
+         }
+      }
+      LI.Cf[cf].nmount = nmount - moffset[cf];
 
-	/* Try each vector
-	   --------------- */
-	moffset[cf] = nmount;
-	for (i = 0; i < vectors->nor; ++i)
-	{
-	    if (i % 50 == 0)
-		MESSAGE(1,("[%d] ",i));
-	    vec = matCutRows(vectors,i,1);
-	    matMul(vec,uk);	/* Uncondense */
-	    if (newmountain(vec,cf))
-		makeclass(nmount-1,cf,vectors);
-	}
-	LI.Cf[cf].nmount = nmount - moffset[cf];
+      matFree(vectors);
+      matFree(uk);
+      MESSAGE(0, "%s%s: %ld mountain%s", LI.BaseName, latCfName(&LI, cf),
+            LI.Cf[cf].nmount, LI.Cf[cf].nmount != 1 ? "s" : "");
 
-	matFree(vectors);
-	matFree(uk);
-	MESSAGE(0,("%ld mountain%s\n",LI.Cf[cf].nmount,
-		LI.Cf[cf].nmount != 1 ? "s" : ""));
-
-    }
-    MESSAGE(0,("Total: %d mountain%s\n",nmount,nmount != 1 ? "s" : ""));
+   }
+   MESSAGE(0, "Total: %d mountain%s", nmount, nmount != 1 ? "s" : "");
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -301,7 +272,7 @@ static void WriteIncidenceMatrix()
 {
    char* const fn = strMprintf("%s.inc", LI.BaseName);
    FILE* f = sysFopen(fn, "wb");
-   MESSAGE(1,("Writing incidence matrix (%s)\n",fn));
+   MESSAGE(1, "Writing incidence matrix (%s)",fn);
    sysFree(fn);
    uint32_t l = nmount;
    sysWrite32(f,&l,1);
@@ -318,9 +289,9 @@ static void WriteIncidenceMatrix()
 static void CalculateIncidences()
 {
     int i, k;
-    int cfi, cfk;	/* Comp. factor corresponding to mountain i,j */
+    int cfi, cfk;	// Comp. factor corresponding to mountain i,j
 
-    MESSAGE(0,("Step 2 (Incidences)\n"));
+    MESSAGE(0, "Step 2 (Incidences)");
 
     // Allocate memory for the incidence matrix
     for (i = 0; i < nmount; ++i)
@@ -330,7 +301,7 @@ static void CalculateIncidences()
     for (cfi = i = 0; i < nmount; ++i)
     {
 	if (i == moffset[cfi])
-	    MESSAGE(0,("  %s%s\n",LI.BaseName,latCfName(&LI,cfi)));
+	    MESSAGE(0, "%s%s",LI.BaseName,latCfName(&LI,cfi));
 	for (cfk=0, k = 0; k < nmount; ++k)
 	{
 	    int isubk, ksubi;

@@ -130,7 +130,7 @@ static int MakeOrbit()
     long done = -1;
     long pt, i, image;
 
-    MESSAGE(1,("Finding orbit of seed point %d\n",Seed+1));
+    MESSAGE(1, "Finding orbit of seed point %d\n",Seed+1);
     if (Seed == Stop)
     {
 	mtxAbort(MTX_HERE,"Stop point equals seed point");
@@ -152,7 +152,7 @@ static int MakeOrbit()
 	    }
 	    if (image == Stop)
 	    {
-		MESSAGE(1,("Stop point %d found\n",Stop+1));
+		MESSAGE(1, "Stop point %d found\n",Stop+1);
 		return 0;
 	    }
 	}

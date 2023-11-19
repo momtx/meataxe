@@ -46,8 +46,7 @@ static void trmat()
       printf("Trace is %lu\n", (unsigned long) ffToInt(tr));
    }
    else {
-      char tmp[50];
-      printf("MeatAxe.Trace := %s;\n", ffToGapStr(tmp, sizeof(tmp), tr));
+      printf("MeatAxe.Trace := %s;\n", gapFelToString(tr));
    }
    sysFree(m1);
 }

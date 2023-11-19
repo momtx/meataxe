@@ -120,18 +120,10 @@ static void printGapMatrix()
             cnt = 0;
          }
          const FEL f1 = ffExtract(m1, col);
-         const FfGapRepresentation_t* gap = ffToGap(f1);
          if (isprimefield) {
-            cnt += fprintf(textFile, "%lu", (unsigned long)gap->k);
-            MTX_ASSERT(gap->fmt == 0);
+            cnt += fprintf(textFile, "%s", gapFelToString1(f1));
          } else {
-            if (gap->fmt == 0) {
-               cnt += fprintf(textFile, "%lu*Z(%lu)",
-                     (unsigned long)gap->k, (unsigned long)field);
-            } else {
-               cnt += fprintf(textFile, "Z(%lu)^%lu",
-                     (unsigned long)field, (unsigned long)gap->k);
-            }
+            cnt += fprintf(textFile, "%s", gapFelToString(f1));
          }
          if (col < noc - 1) {
             fprintf(textFile, ",");
@@ -146,7 +138,7 @@ static void printGapMatrix()
    }
    fprintf(textFile, "]");
    if (isprimefield) {
-      fprintf(textFile, "*Z(%lu)", (unsigned long)field);
+      fprintf(textFile, "*%s", gapFelToString2());
    }
    fprintf(textFile, ";\n");
 

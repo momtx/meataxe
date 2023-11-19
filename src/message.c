@@ -33,8 +33,12 @@ void mtxMessage(int level, const char* msg, ...)
       return;
    va_list args;
    va_start(args,msg);
-   vfprintf(stdout, msg, args);
-   fputc('\n', stdout);
+   StrBuffer* sb = sbAlloc(200);
+   sbAppend(sb, pexLogPrefix());
+   sbVprintf(sb, msg, args);
+   sbAppend(sb, "\n");
+   fputs(sbData(sb), stdout);
+   sbFree(sb);
    va_end(args);
 }
 

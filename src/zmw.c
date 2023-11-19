@@ -58,11 +58,7 @@ MTX_COMMON_OPTIONS_DESCRIPTION
 static MtxApplication_t *App = NULL;
 
 
-
-
-
 static int ReadGenerators()
-
 {
     int ngen = NGen == -1 ? 2 : NGen;
     int i;
@@ -99,138 +95,134 @@ static int ReadGenerators()
     return 0;
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
+//   Parse word/polynomial specification   Examples:
+//
+//   spec          WordNo   WordNo2   Poly
+//   ------------  ------   -------   ------------
+//   10            10       -1        NULL
+//   1-100         1        100       NULL
+//   30/1,-1       30       -1        x-1
+//   30-32/1,1,1   30       31        x^2+x+1
 
-
-
-/* ------------------------------------------------------------------
-   ParseWord() - Parse word/polynomial specification
-
-   Examples:
-        spec          WordNo   WordNo2   Poly
-	------------  ------   -------   ------------
-        10            10       -1        NULL
-	1-100         1        100       NULL
-	30/1,-1       30       -1        x-1
-	30-32/1,1,1   30       31        x^2+x+1
-   ------------------------------------------------------------------ */
-
-static int ParseWord(const char *spec)
-
+static int ParseWord(const char* spec)
 {
-    if (!isdigit(*spec))
-	return -1;
-    WordNo = atoi(spec);
-    while (isdigit(*spec)) ++spec;
-    if (*spec == '-')
-    {
-	++spec;
-	if (!isdigit(*spec))
-	    return -1;
-	WordNo2 = atoi(spec);
-	while (isdigit(*spec)) 
-	    ++spec;
-    }
-    if (*spec == '/')
-    {
-	const char *c;
-	int deg;
-	++spec;
+   if (!isdigit(*spec)) {
+      return -1;
+   }
+   WordNo = atoi(spec);
+   while (isdigit(*spec)) {
+      ++spec;
+   }
+   if (*spec == '-') {
+      ++spec;
+      if (!isdigit(*spec)) {
+         return -1;
+      }
+      WordNo2 = atoi(spec);
+      while (isdigit(*spec)) {
+         ++spec;
+      }
+   }
+   if (*spec == '/') {
+      const char* c;
+      int deg;
+      ++spec;
 
-	for (c = spec, deg = 0; *c != 0; ++c)
-	{
-	    if (*c == ',') 
-		++deg;
-	}
-	Poly = polAlloc(ffOrder,deg);
-	while (deg >= 0)
-	{
-	    if (!isdigit(*spec) && (*spec != '-' || !isdigit(spec[1])))
-		return -1;
-	    Poly->data[deg--] = ffFromInt(atoi(spec));
-	    while (*spec == '-' || isdigit(*spec)) 
-		++spec;
-	    if (*spec == ',')
-		++spec;
-	}
-    
-    }
-    if (*spec != 0)
-	return -1;
+      for (c = spec, deg = 0; *c != 0; ++c) {
+         if (*c == ',') {
+            ++deg;
+         }
+      }
+      Poly = polAlloc(ffOrder, deg);
+      while (deg >= 0) {
+         if (!isdigit(*spec) && (*spec != '-' || !isdigit(spec[1]))) {
+            return -1;
+         }
+         Poly->data[deg--] = ffFromInt(atoi(spec));
+         while (*spec == '-' || isdigit(*spec)) {
+            ++spec;
+         }
+         if (*spec == ',') {
+            ++spec;
+         }
+      }
 
-    MESSAGE(1,("Word %d..%d, Poly=",WordNo,WordNo2));
-    if (MSG1)
-    {
-	if (Poly != NULL)
-	{
-	    polPrint(NULL,Poly);
-	    printf("\n");
-	}
-	else
-	    printf("x\n");
-    }
-    return 0;
+   }
+   if (*spec != 0) {
+      return -1;
+   }
+
+   MESSAGE(1, "Word %d..%d, Poly=", WordNo, WordNo2);
+   if (MSG1) {
+      if (Poly != NULL) {
+         polPrint(NULL, Poly);
+         printf("\n");
+      }
+      else {
+         printf("x\n");
+      }
+   }
+   return 0;
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
+/// Process command line options and arguments
 
-
-/* ------------------------------------------------------------------
-   init() - Process command line options and arguments
-   ------------------------------------------------------------------ */
-
-static int Init(int argc, char **argv)
-
+static int Init(int argc, char** argv)
 {
-    int min_num_args;
+   int min_num_args;
 
-    /* Process command line options.
-       ----------------------------- */
-    App = appAlloc(&AppInfo,argc,argv);
-    if (App == NULL)
-	return -1;
-    opt_G = appGetOption(App,"-G --gap");
-    if (opt_G) MtxMessageLevel = -100;
-    NGen = appGetIntOption(App,"-g",-1,1,MAXGEN);
+   /* Process command line options.
+      ----------------------------- */
+   App = appAlloc(&AppInfo, argc, argv);
+   if (App == NULL) {
+      return -1;
+   }
+   opt_G = appGetOption(App, "-G --gap");
+   if (opt_G) { MtxMessageLevel = -100; }
+   NGen = appGetIntOption(App, "-g", -1, 1, MAXGEN);
 
-    /* Process arguments.
-       ------------------ */
-    min_num_args = (NGen == -1) ? 3 : 2;
-    if (appGetArguments(App,min_num_args,min_num_args + 2) < 0)
-	return -1;
-    if (App->argC > min_num_args)
-	WordFileName = App->argV[min_num_args];
-    if (App->argC > min_num_args + 1)
-	NspFileName = App->argV[min_num_args + 1];
+   /* Process arguments.
+      ------------------ */
+   min_num_args = (NGen == -1) ? 3 : 2;
+   if (appGetArguments(App, min_num_args, min_num_args + 2) < 0) {
+      return -1;
+   }
+   if (App->argC > min_num_args) {
+      WordFileName = App->argV[min_num_args];
+   }
+   if (App->argC > min_num_args + 1) {
+      NspFileName = App->argV[min_num_args + 1];
+   }
 
-    /* Other initialization.
-       --------------------- */
-    if (ReadGenerators() != 0)
-	return -1;
-    if (ParseWord(App->argV[0]) != 0)
-    {
-	mtxAbort(MTX_HERE,"Invalid word/polynomial specification");
-	return -1;
-    }
+   /* Other initialization.
+      --------------------- */
+   if (ReadGenerators() != 0) {
+      return -1;
+   }
+   if (ParseWord(App->argV[0]) != 0) {
+      mtxAbort(MTX_HERE, "Invalid word/polynomial specification");
+      return -1;
+   }
 
-    return 0;
+   return 0;
 }
 
-
-
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 static void Cleanup()
-
 {
     wgFree(WGen);
     mrFree(Rep);
     appFree(App);
 }
 
-
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 static int MakeWord()
-
 {
     Matrix_t *w;
     int lastword = WordNo2 >= 0 ? WordNo2 : WordNo;
@@ -240,7 +232,7 @@ static int MakeWord()
     {
 	    polPrint("Using polynomial p(x)",Poly);
     }
-    MESSAGE(0,("Number Nullity Word\n"));
+    MESSAGE(0, "Number Nullity Word\n");
     for (; WordNo <= lastword; ++WordNo)
     {
 	w = wgMakeWord(WGen,WordNo);
@@ -248,7 +240,7 @@ static int MakeWord()
 	    return -1;
 	if (Poly != NULL)
 	    matInsert_(w,Poly);
-	MESSAGE(0,("%6d",WordNo));
+	MESSAGE(0, "%6d",WordNo);
 	if (WordFileName != NULL && WordNo2 == -1)
 	    matSave(w,WordFileName);
 	if (WordNo2 != -1 || NspFileName != NULL)
@@ -256,28 +248,20 @@ static int MakeWord()
 	    Matrix_t *nsp = matNullSpace_(w,0);
 	    if (WordNo2 == -1)
 		matSave(nsp,NspFileName);
-	    MESSAGE(0,("%8d",nsp->nor));
+	    MESSAGE(0, "%8d",nsp->nor);
 	    matFree(nsp);
 	}
 	else
-	    MESSAGE(0,("        "));
-	MESSAGE(0,(" %s\n",wgSymbolicName(WGen,WordNo)));
+	    MESSAGE(0, "        ");
+	MESSAGE(0, " %s\n",wgSymbolicName(WGen,WordNo));
 	matFree(w);
     }
     return 0;
 }
 
-
-
-
-
-
-/* ------------------------------------------------------------------
-   main()
-   ------------------------------------------------------------------ */
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 int main(int argc, char **argv)
-
 {
     int rc;
 

@@ -134,7 +134,7 @@ static void init(const char *basename)
     f = sysFopen(strcat(strcpy(fn,LI.BaseName),".inc"),"r");
     sysRead32(f,l,1);
     xnmount = (int) l[0];
-    MESSAGE(1,("Reading%s: %d mountain%s\n",fn,xnmount,xnmount == 1 ? "" : "s"));
+    MESSAGE(1, "Reading%s: %d mountain%s",fn,xnmount,xnmount == 1 ? "" : "s");
     if (xnmount > MAXCYCL) 
     {
 	mtxAbort(MTX_HERE,"Too many mountains (%d, max=%d)",xnmount,MAXCYCL);
@@ -157,10 +157,10 @@ static void init(const char *basename)
 
     // Read dotted lines
     f = sysFopen(strcat(strcpy(fn,LI.BaseName),".dot"),"rb");
-    MESSAGE(1,("Reading %s: ",fn));
+    MESSAGE(1, "Reading %s: ",fn);
     sysRead32(f,l,1);
     xndotl = (int) l[0];
-    MESSAGE(1,("%d dotted line%s\n",xndotl,xndotl == 1 ? "" : "s"));
+    MESSAGE(1, "%d dotted line%s",xndotl,xndotl == 1 ? "" : "s");
     if (xndotl > MAXDOTL) 
     {
 	mtxAbort(MTX_HERE,"Too many dotted-lines (%d, max=%d)",xndotl,MAXDOTL);
@@ -179,7 +179,7 @@ static void init(const char *basename)
 
     // Read dimensions
     f = sysFopen(strcat(strcpy(fn,LI.BaseName),".mnt"),"r");
-    MESSAGE(1,("Reading %s\n",fn));
+    MESSAGE(1, "Reading %s",fn);
     for (i = 0; i < xnmount; ++i)
     {
 	long mno, mdim;
@@ -214,32 +214,16 @@ static int isotype(int mnt)
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static int compareSubmodules(const void* e1, const void *e2)
-{
-   const BitString_t* a = *(const BitString_t**)e1;
-   const BitString_t* b = *(const BitString_t**)e2;
-   if (bsIsSub(a,b)) return -1;
-   if (bsIsSub(b,a)) return 1;
-   if ((const char*)e1 < (const char*) e2) return -1;
-   if ((const char*)e2 < (const char*) e1) return 1;
-   return 0;
-}
-
 static void sortBlock()
 {
-   MESSAGE(0, ("Sorting\n"));
+   MESSAGE(0, "Sorting %lu submodules", (unsigned long) nsub);
 
-   #if 0
-   qsort(sub, nsub, sizeof(sub[0]), compareSubmodules);
-   for (int i = 0; i < nsub; ++i) {
-      for (int k = i + 1; k < nsub; ++k) {
-         MTX_ASSERT(!bsIsSub(sub[k]->bs, sub[i]->bs));
-      }
-   }
-   #else
-   (void) compareSubmodules;
    BitString_t* x;
    for (int i = 0; i < nsub; ++i) {
+      static uint64_t progressTimer = 0;
+      if (sysTimeout(&progressTimer, 5)) {
+         MESSAGE(1,"%lu/%lu...", (unsigned long) i, (unsigned long) nsub);
+      }
       for (int k = i + 1; k < nsub; ++k) {
          if (bsIsSub(sub[k]->bs, sub[i]->bs)) {
             x = sub[i]->bs;
@@ -248,7 +232,6 @@ static void sortBlock()
          }
       }
    }
-   #endif
 
    for (size_t i = 0; i < nsub; ++i)
       sub[i]->id = i;
@@ -262,7 +245,7 @@ void finishBlock()
 {
    sortBlock();
 
-   MESSAGE(0, ("Calculating maximal submodules\n"));
+   MESSAGE(0, "Calculating maximal submodules");
    uint8_t* flag = NALLOC(uint8_t, nsub);   // 0=unknown, 1=maximal, 2=not maximal
    BitString_t* bs = bsAlloc(bnmount);
 
@@ -270,6 +253,10 @@ void finishBlock()
    for (int i = 0; i < nsub; ++i) {
       int maxcount = 0;
       memset(flag, 0, (size_t) nsub);
+      static uint64_t progressTimer = 0;
+      if (sysTimeout(&progressTimer, 5)) {
+         MESSAGE(1,"%lu/%lu...", (unsigned long) i, (unsigned long) nsub);
+      }
 
       // Find all maximal submodules
       for (int k = i; k > 0;) {
@@ -318,7 +305,7 @@ void finishBlock()
 
    // Calculate the radical series
    if (opt_o & O_RADICAL) {
-      MESSAGE(0, ("Calculating radical series\n"));
+      MESSAGE(0, "Calculating radical series");
       sub[nsub-1]->radicalLayer = 0;
       int layer = 1;
       for (int i = nsub - 1; i > 0;) {
@@ -333,7 +320,7 @@ void finishBlock()
 
    // Calculate the socle series
    if (opt_o & O_SOCLE) {
-      MESSAGE(0, ("Calculating socle series\n"));
+      MESSAGE(0, "Calculating socle series");
       sub[nsub-1]->socleLayer = 0;
       int layer = 1;
       for (int i = 0; i < nsub - 1;) {
@@ -406,7 +393,7 @@ FILE *openout(char *name)
     char fn[200];
 
     sprintf(fn,opt_b ? "%s%s.%d" : "%s%s",LI.BaseName,name,blockNumber);
-    MESSAGE(1,("Writing %s\n",fn));
+    MESSAGE(1, "Writing %s",fn);
     f = sysFopen(fn, "w");
     if (f == NULL)
     {
@@ -475,7 +462,7 @@ void writeresult()
    char tmp[100];
    BitString_t* b = bsAlloc(bnmount);
 
-   MESSAGE(0, ("Finished, %d submodules found\n", nsub));
+   MESSAGE(0, "Finished, %d submodules found", nsub);
    FILE* f = openout(".out");
 
    // Write irreducible constituents
@@ -593,15 +580,13 @@ void writeresult()
          MTX_ASSERT(rdim > 0);
          bsClearAll(x);
          bsClearAll(newrad);
-         MESSAGE(1, ("Starting layer %d\n", layer));
+         MESSAGE(1, "Starting layer %d", layer);
 
          // Extend the zero module = x by all those mountains
          // which are contained in the radical and extend y
          for (i = 0; i < bnmount && bsCompare(rad, x); ++i) {
             if (bsTest(rad, i) && !(bsTest(x, i))) {
-               MESSAGE(2, ("extend(%i)\n", i));
                extend(x, i, 0);
-               MESSAGE(2, ("nextend(%i)\n", i));
                extend(newrad, i, 1);
             }
          }
@@ -721,7 +706,7 @@ static int nextblock()
     }
 
     // Otherwise, make the next block
-    MESSAGE(2,("Making next block (%d)\n",blockNumber));
+    MESSAGE(1, "---\nMaking block %d",blockNumber);
     done[i] = 1;
     blockSize = 1;
     blockMember[0] = i;
@@ -738,7 +723,7 @@ static int nextblock()
     }
 
     // Sort block
-    MESSAGE(2,("Sorting block (size=%lu)\n", (unsigned long) blockSize));
+    MESSAGE(2, "Sorting block (size=%lu)", (unsigned long) blockSize);
     for (i = 0; i < blockSize; ++i) {
 	for (k = i+1; k < blockSize; ++k)
 	{
@@ -752,11 +737,12 @@ static int nextblock()
     }
     if (MSG0)
     {
-        printf("\nBlock %d: ",blockNumber);
+       StrBuffer* message = sbAlloc(100);
+       sbPrintf(message, "Block %d: ",blockNumber);
 	for (i = 0; i < blockSize; ++i)
-	    printf(" %s%s",LI.BaseName,latCfName(&LI,blockMember[i]));
-	printf("\n");
-        fflush(stdout);
+	    sbPrintf(message, " %s%s",LI.BaseName,latCfName(&LI,blockMember[i]));
+        MESSAGE(0, "%s", sbData(message));
+        sbFree(message);
     }
     return 1;
 }
@@ -785,8 +771,9 @@ static size_t hashKey(BitString_t *bs)
 static int tryAddSubmodule(BitString_t *bs, int generation)
 {
    ++nadd;
-   if (nadd % 1000 == 0) {
-      MESSAGE(1, ("Generation %d: %d candidates, %d new\n", generation, nadd, nsub - lastGenEnd));
+   static uint64_t progressTimer = 0;
+   if (sysTimeout(&progressTimer, 5)) {
+      MESSAGE(1, "Generation %d: %d candidates, %d new...", generation, nadd, nsub - lastGenEnd);
    }
 
    const size_t key = hashKey(bs);
@@ -827,7 +814,7 @@ static void initBlock()
 	bnmount += LI.Cf[blockMember[i]].nmount;
 
     // Build the incidence matrix
-    MESSAGE(0,("Building incidence matrix\n"));
+    MESSAGE(0, "Building incidence matrix");
     fflush(stdout);
     for (int i = 0; i < bnmount; ++i)
     {
@@ -858,7 +845,7 @@ static void initBlock()
     }
 
     // Build the dotted lines for this block
-    MESSAGE(0,("Building dotted lines\n"));
+    MESSAGE(0, "Building dotted lines");
     fflush(stdout);
     bndotl = 0;
     for (int i = 0; i < blockSize; ++i)
@@ -1035,7 +1022,7 @@ static int Init(int argc, char **argv)
 	return -1;
     if (ParseCommandLine() != 0)
 	return -1;
-    MESSAGE(0,("*** CALCULATE ALL SUBMODULES ***\n\n"));
+    MESSAGE(0, "\n*** CALCULATE ALL SUBMODULES ***");
     init(App->argV[0]);
     calculateCfInfo();
     return 0;
@@ -1062,18 +1049,18 @@ int main(int argc, char **argv)
 		nadd = 0;
 		nextgen();
                 if (lastGenEnd == lastGenBegin) break;
-		MESSAGE(0,("Generation %d: %lu candidates, %lu new\n",
-		    generation, (unsigned long) nadd, (unsigned long)(lastGenEnd - lastGenBegin)));
+		MESSAGE(0, "Generation %d: %lu candidates, %lu new",
+		    generation, (unsigned long) nadd, (unsigned long)(lastGenEnd - lastGenBegin));
 	    }
 	    finishBlock();
 	}
 	else
-	    MESSAGE(0,("Submodules not calculated\n"));
+	    MESSAGE(0, "Submodules not calculated");
 
 	writeresult();
-	MESSAGE(0,("\n"));
 	cleanupBlock();
     }
+    appFree(App);
     return 0;
 }
 

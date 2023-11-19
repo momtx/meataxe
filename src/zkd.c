@@ -98,8 +98,7 @@ static int readdata()
    // Set field and allocate output buffer.
    if (fieldOrder != 0) {               /* Condensation over GF(q) */
       ffSetField(fieldOrder);
-      MESSAGE(1, ("Condensation over GF(%d), characteristic is %d\n",
-                  fieldOrder, ffChar));
+      MESSAGE(1, "Condensation over GF(%d), characteristic is %d\n", fieldOrder, ffChar);
       m1 = ffAlloc(1, NOrbits);
       hsz = ffAlloc(1, NOrbits);
 
@@ -114,9 +113,9 @@ static int readdata()
          }
       }
       ppow /= ffChar;
-      MESSAGE(0, ("p-part taken has order %d\n", ppow));
+      MESSAGE(0, "p-part taken has order %d\n", ppow);
    } else {                     /* Condensation over Z */
-      MESSAGE(1, ("Condensation over Z\n"));
+      MESSAGE(1, "Condensation over Z\n");
       RowZ = NALLOC(uint32_t, NOrbits);
    }
 

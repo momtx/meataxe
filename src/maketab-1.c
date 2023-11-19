@@ -202,13 +202,13 @@ static void printpol(POLY a)
 
    for (i = MAXPWR; i >= 0; i--) {
       if (a[i] != 0) {
-         if (flag) { MESSAGE(1,("+"));}
-         if (a[i] != 1) { MESSAGE(1,("%d",(int)a[i]));}
-         MESSAGE(1,("x^%d",i));
+         if (flag) { MESSAGE(1, "+");}
+         if (a[i] != 1) { MESSAGE(1, "%d",(int)a[i]);}
+         MESSAGE(1, "x^%d",i);
          flag = 1;
       }
    }
-   MESSAGE(1,("\n"));
+   MESSAGE(1, "\n");
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -529,7 +529,7 @@ static void computeIncrementTable()
       const uint16_t j = (uint16_t)((i % P) == P - 1 ? i + 1 - P : i + 1);
       if (j == 0) {
          Minusone = FfFromIntTable[i];
-         MESSAGE(1,("MinusOne=%u(0x%04x)\n", i, FfFromIntTable[i]));
+         MESSAGE(1, "MinusOne=%u(0x%04x)\n", i, FfFromIntTable[i]);
       }
       inc[FfFromIntTable[i]] = FfFromIntTable[j];
    }
@@ -541,16 +541,16 @@ static void computeIncrementTable()
 
 static void writeHeader()
 {
-   MESSAGE(1, ("Generating arithmetic tables\n"));
-   MESSAGE(1, ("ZZZ version : %u\n", (unsigned) MTX_ZZZVERSION));
-   MESSAGE(1, ("Field order : %u=%u^%u\n", (unsigned)Q, (unsigned)P, (unsigned) N));
+   MESSAGE(1, "Generating arithmetic tables\n");
+   MESSAGE(1, "ZZZ version : %u\n", (unsigned) MTX_ZZZVERSION);
+   MESSAGE(1, "Field order : %u=%u^%u\n", (unsigned)Q, (unsigned)P, (unsigned) N);
    if (P != Q) {
-      MESSAGE(1, ("Polynomial  : "));
+      MESSAGE(1, "Polynomial  : ");
       printpol(irred);
-      MESSAGE(1, ("Generator   : x\n"));
+      MESSAGE(1, "Generator   : x\n");
    }
    else {
-      MESSAGE(1, ("Generator   : %u\n", (unsigned) Gen));
+      MESSAGE(1, "Generator   : %u\n", (unsigned) Gen);
    }
 
    char fname[50];
@@ -601,7 +601,7 @@ static void writeTables()
    sysWrite16(fd, subfieldOrders, numberOfSubfields);
    sysWrite16(fd, embeddingTables, embeddingTablesSize);
    fclose(fd);
-   MESSAGE(1,("Ok\n"));
+   MESSAGE(1, "Ok\n");
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////

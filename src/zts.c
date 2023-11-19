@@ -89,8 +89,7 @@ static int ReadFiles()
     if (Seed  == NULL)
 	return -1;
     TpDim = GenM[0]->nor * GenN[0]->nor;
-    MESSAGE(1,("Tensor product has dimension %d*%d=%d\n",
-	GenM[0]->nor,GenN[0]->nor,TpDim));
+    MESSAGE(1, "Tensor product has dimension %d*%d=%d\n", GenM[0]->nor,GenN[0]->nor,TpDim);
     return 0;
 }
 
@@ -222,7 +221,7 @@ static void CleanAndAppend(Matrix_t *mat)
 	Basis[Dim] = mat;
 	++Dim;
 	if (Dim % 100 == 0)
-	    MESSAGE(2,("Dimension=%d (%d%%)\n",Dim,Src*100/Dim));
+	    MESSAGE(2, "Dimension=%d (%d%%)\n",Dim,Src*100/Dim);
     }
     else
 	matFree(mat);
@@ -265,15 +264,15 @@ static void Spinup()
     for (i = 1; i <= Seed->nor; ++i)
     {
 	Matrix_t *seed;
-	MESSAGE(1,("Spinning up seed vector %d\n",i));
+	MESSAGE(1, "Spinning up seed vector %d\n",i);
 	seed = matAlloc(ffOrder,GenM[0]->nor,GenN[0]->nor);
 	VecToMat(vec,seed);
 	SpinUpMatrix(seed);		    /* <Spinup()> eats <seed>! */
 	ffStepPtr(&vec,Seed->noc);
 	if (i < Seed->nor)
-	    MESSAGE(1,("Dimension = %d\n",Dim));
+	    MESSAGE(1, "Dimension = %d\n",Dim);
     }
-    MESSAGE(0,("Subspace has dimension %d\n",Dim));
+    MESSAGE(0, "Subspace has dimension %d\n",Dim);
 }
 
 
@@ -283,7 +282,7 @@ static void WriteSubspace()
     MtxFile_t *f;
     PTR row;
 
-    MESSAGE(1,("Writing subspace to %s\n",SubName));
+    MESSAGE(1, "Writing subspace to %s\n",SubName);
     row = ffAlloc(1, TpDim);
     f = mfCreate(SubName,Seed->field,Dim,TpDim);
     for (i = 0; i < Dim; ++i)
@@ -302,7 +301,7 @@ static void CalculateAction1(int gen, const char *file_name)
     PTR rowptr;
     int i;
 
-    MESSAGE(1,("Writing generator to %s\n",file_name));
+    MESSAGE(1, "Writing generator to %s\n",file_name);
     f = mfCreate(file_name,Seed->field,Dim,Dim);
     rowptr = ffAlloc(1, Dim);
     for (i = 0; i < Dim; ++i)
@@ -322,7 +321,7 @@ static void CalculateAction1(int gen, const char *file_name)
 static void CalculateAction()
 {
     int i;
-    MESSAGE(0,("Calculating action of generators on subspace\n"));
+    MESSAGE(0, "Calculating action of generators on subspace\n");
     for (i = 0; i < NGen; ++i)
     {
 	char fn[200];

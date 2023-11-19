@@ -249,12 +249,12 @@ static int WriteAction()
 static int WriteResult()
 {
     if (Span->nor < Dim && (Standard || FindCyclicVector))
-	MESSAGE(0,("ZSP: Warning: Span is only %d of %d\n",Span->nor,Dim));
+	MESSAGE(0, "ZSP: Warning: Span is only %d of %d\n",Span->nor,Dim);
     else if (Span->nor == Dim && TryLinearCombinations)
-	MESSAGE(0,("ZSP: Warning: No invariant subspace found\n"));
+	MESSAGE(0, "ZSP: Warning: No invariant subspace found\n");
     else
     {
-	MESSAGE(0,("Subspace %d, quotient %d\n",Span->nor, Span->noc - Span->nor));
+	MESSAGE(0, "Subspace %d, quotient %d\n",Span->nor, Span->noc - Span->nor);
     }
 
     /* Write the invariant subspace.

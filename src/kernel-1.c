@@ -30,7 +30,11 @@
 // For non-prime fields, the field elements are represented by the integer numbers {0..,q-1},
 // which are found by inserting p into the element's representative polynomial. The numbers
 // {0..p} correspond to the prime field.
-
+// 
+// For q≤256, the external representation is consistent with the standard kernel. For example
+// matrices can be converted between the standard and "large" kernel using the zpr and zcv
+// programs. The chosen generator of the field's multiplicative group (@ref ffOrder) has the
+// same external representation
 
 int mtx_subfields[17];                    // public list of subfields, terminated with 0
 

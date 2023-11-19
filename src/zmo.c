@@ -116,7 +116,7 @@ static int MakeOrbits()
     int points_remaining;
     int seedpos = 0;
 
-    MESSAGE(1,("Finding orbits\n"));
+    MESSAGE(1, "Finding orbits\n");
     Stack[++Sp] = Seed;
     OrbNo[Seed] = 0;
     NOrbits = 1;
@@ -181,7 +181,7 @@ static int MakeOrbits()
 
 static int CalcSizes()
 {
-    MESSAGE(1,("Calculating orbit sizes\n"));
+    MESSAGE(1, "Calculating orbit sizes\n");
     OrbSize = NALLOC(uint32_t,NOrbits);
     memset(OrbSize,0,sizeof(*OrbSize) * NOrbits);
     for (int i = 0; i < Degree; ++i)

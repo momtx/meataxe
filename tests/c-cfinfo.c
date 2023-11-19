@@ -46,7 +46,7 @@ static const Tst_TempFile* TstCreateTemporaryFile(const char *ext, const char *d
    // create file
    const int fd = open(tf->name,O_WRONLY|O_CREAT|O_TRUNC,0600);
    if (write(fd,data,strlen(data)) != strlen(data))
-      tstFail(__FILE__, __LINE__, __func__, "write error on %s", tf->name);
+      tstFail(TST_HERE, "write error on %s", tf->name);
    close(fd);
 
    return tf;

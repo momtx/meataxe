@@ -130,12 +130,12 @@ static void prepare()
    // Prepare output buffer and file.
    switch (objectType) {
       case MTX_TYPE_MATRIX:
-         MESSAGE(0, ("Output is %ld x %ld\n", (long)norOut, (long)nocOut));
+         MESSAGE(0, "Output is %ld x %ld\n", (long)norOut, (long)nocOut);
          rowOut = ffAlloc(1, nocOut);
          fileOut = mfCreate(fileNameOut, field, norOut, (field >= 2) ? nocOut : 1);
          break;
       case MTX_TYPE_PERMUTATION:
-         MESSAGE(0, ("Output has degree %ld\n", (long)norOut));
+         MESSAGE(0, "Output has degree %ld\n", (long)norOut);
          permOut = permAlloc(norOut);
          break;
    }
@@ -152,7 +152,7 @@ static void zs2()
    FEL f11, f12, f21, f22;
    FEL w1, w2, f1, f2;
 
-   MESSAGE(1, ("Mode S2, part 1\n"));
+   MESSAGE(1, "Mode S2, part 1\n");
    for (i1 = 0; i1 < nor - 1; ++i1) {
       for (i2 = i1 + 1; i2 < nor; ++i2) {
          ffMulRow(rowOut, FF_ZERO, nocOut);
@@ -179,7 +179,7 @@ static void zs2()
       }
    }
 
-   MESSAGE(1, ("Mode S2, part 2\n"));
+   MESSAGE(1, "Mode S2, part 2\n");
    for (i1 = 0; i1 < nor; ++i1) {
       j3 = 0;
       ffMulRow(rowOut, FF_ZERO, nocOut);
@@ -300,11 +300,11 @@ static void ze3()
    int i1, i2, i3, j1, j2, j3, jins;
 
    for (i1 = 0; i1 < nor - 2; ++i1) {
-      MESSAGE(1, ("i1 = %d\n", i1));
+      MESSAGE(1, "i1 = %d\n", i1);
       for (i2 = i1 + 1; i2 < nor - 1; ++i2) {
-         MESSAGE(2, ("i2 = %d\n", i2));
+         MESSAGE(2, "i2 = %d\n", i2);
          for (i3 = i2 + 1; i3 < nor; ++i3) {
-            MESSAGE(3, ("i3 = %d\n", i3));
+            MESSAGE(3, "i3 = %d\n", i3);
             ffMulRow(rowOut, FF_ZERO, nocOut);
             jins = 0;
             for (j1 = 0; j1 < noc - 2; ++j1) {
@@ -378,11 +378,11 @@ static void ze4()
    int i1, i2, i3, i4, j1, j2, j3, j4, jins;
 
    for (i1 = 0; i1 < nor - 3; ++i1) {
-      MESSAGE(1, ("i1 = %d\n", i1));
+      MESSAGE(1, "i1 = %d\n", i1);
       for (i2 = i1 + 1; i2 < nor - 2; ++i2) {
-         MESSAGE(2, ("i2 = %d\n", i2));
+         MESSAGE(2, "i2 = %d\n", i2);
          for (i3 = i2 + 1; i3 < nor - 1; ++i3) {
-            MESSAGE(3, ("i3 = %d\n", i3));
+            MESSAGE(3, "i3 = %d\n", i3);
             for (i4 = i3 + 1; i4 < nor; ++i4) {
                ffMulRow(rowOut, FF_ZERO, nocOut);
                jins = 0;

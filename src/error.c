@@ -118,53 +118,53 @@ struct ErrorContextStack* getContextStack()
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
        
-static struct MtxSourceLocation** sourceLocations = NULL;
-static size_t sourceLocationsSize = 0;
-static size_t sourceLocationsCapacity = 0;
+//static struct MtxSourceLocation** sourceLocations = NULL;
+//static size_t sourceLocationsSize = 0;
+//static size_t sourceLocationsCapacity = 0;
+//
+//static int compare(const char* fileA, int lineA, const char* fileB, int lineB)
+//{
+//   if (fileA < fileB)
+//      return -1;
+//   if (fileA > fileB)
+//      return 1;
+//   if (lineA < lineB)
+//      return -1;
+//   if (lineA > lineB)
+//      return 1;
+//   return 0;
+//}
 
-static int compare(const char* fileA, int lineA, const char* fileB, int lineB)
-{
-   if (fileA < fileB)
-      return -1;
-   if (fileA > fileB)
-      return 1;
-   if (lineA < lineB)
-      return -1;
-   if (lineA > lineB)
-      return 1;
-   return 0;
-}
-
-const struct MtxSourceLocation* mtxSourceLocation(const char* file, int line, const char* func)
-{
-   size_t lo = 0;
-   size_t hi = sourceLocationsSize;
-   while (lo < hi) {
-      const size_t mid = (hi & lo) + (hi ^ lo) / 2;
-      const struct MtxSourceLocation* item = sourceLocations[mid];
-      const int cmp = compare(file, line, item->file, item->line);
-      if (cmp < 0)
-         hi = mid;
-      else if (cmp > 0)
-         lo = mid + 1;
-      else
-         return item;
-   }
-   if (sourceLocationsSize >= sourceLocationsCapacity) {
-      sourceLocationsCapacity += 100;
-      sourceLocations =
-         NREALLOC(sourceLocations, struct MtxSourceLocation*, sourceLocationsCapacity);
-   }
-   memmove(sourceLocations + lo + 1, sourceLocations + lo,
-         (sourceLocationsSize - lo) * sizeof(sourceLocations[0]));
-   ++sourceLocationsSize;
-   struct MtxSourceLocation* item = ALLOC(struct MtxSourceLocation);
-   item->file = file;
-   item->line = line;
-   item->func = func;
-   sourceLocations[lo] = item;
-   return item;
-}
+//const struct MtxSourceLocation* mtxSourceLocation(const char* file, int line, const char* func)
+//{
+//   size_t lo = 0;
+//   size_t hi = sourceLocationsSize;
+//   while (lo < hi) {
+//      const size_t mid = (hi & lo) + (hi ^ lo) / 2;
+//      const struct MtxSourceLocation* item = sourceLocations[mid];
+//      const int cmp = compare(file, line, item->file, item->line);
+//      if (cmp < 0)
+//         hi = mid;
+//      else if (cmp > 0)
+//         lo = mid + 1;
+//      else
+//         return item;
+//   }
+//   if (sourceLocationsSize >= sourceLocationsCapacity) {
+//      sourceLocationsCapacity += 100;
+//      sourceLocations =
+//         NREALLOC(sourceLocations, struct MtxSourceLocation*, sourceLocationsCapacity);
+//   }
+//   memmove(sourceLocations + lo + 1, sourceLocations + lo,
+//         (sourceLocationsSize - lo) * sizeof(sourceLocations[0]));
+//   ++sourceLocationsSize;
+//   struct MtxSourceLocation* item = ALLOC(struct MtxSourceLocation);
+//   item->file = file;
+//   item->line = line;
+//   item->func = func;
+//   sourceLocations[lo] = item;
+//   return item;
+//}
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 

@@ -10,18 +10,42 @@
 #include <stdint.h>
 #include <stdio.h>
 
-
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static int checkIntMapping(char* isSet, int bufSize)
+static int Kernel_Field_IntConversion_PrimeField_(uint8_t *tab)
+{
+   memset(tab, 0, ffChar * sizeof(*tab));
+   FEL a = FF_ZERO; 
+   for (int i = 0; i < ffChar; ++i) {
+      int ai = ffToInt(a);
+      ASSERT(ai >= 0);
+      ASSERT(ai < ffChar);
+      ASSERT(tab[ai] == 0);
+      ++tab[ai];
+      a = ffAdd(a, FF_ONE);
+   }
+   return 0;
+}
+
+TstResult Kernel_Field_IntConversion_PrimeField(int q)
 {
    ASSERT_EQ_INT(ffFromInt(0), FF_ZERO);
    ASSERT_EQ_INT(ffFromInt(1), FF_ONE);
    ASSERT_EQ_INT(ffToInt(FF_ZERO), 0);
    ASSERT_EQ_INT(ffToInt(FF_ONE), 1);
 
-   // Check that ffFromInt() and ffToInt() are inverse
-   memset(isSet, 0, bufSize);
+   // Verify that integers 0..q-1 are mapped to the prime subfield
+   uint8_t *tab = NALLOC(uint8_t, ffChar);
+   int result = Kernel_Field_IntConversion_PrimeField_(tab);
+   sysFree(tab);
+   return result;
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+static int Kernel_FelIntConversion_Consistency_(uint8_t* isSet, size_t bufSize)
+{
+   memset(isSet, 0, bufSize * sizeof(uint8_t));
    for (int i = 0; i < ffOrder; ++i) {
       FEL f = ffFromInt(i);
       ASSERT(f < bufSize);
@@ -33,10 +57,13 @@ static int checkIntMapping(char* isSet, int bufSize)
    return 0;
 }
 
-TstResult Kernel_Field_IntFelMapping(int q)
+// Checks value ranges of ffFromInt()/ffToInt()
+// Checks that both functions are inverse of each other.
+TstResult Kernel_Field_IntConversion_Consistency(int q)
 {
-   char* isSet = NALLOC(char, 0x10000);
-   int result = checkIntMapping(isSet, 0x10000);
+   const size_t bufSize = 0x10000;
+   uint8_t* isSet = NALLOC(uint8_t, bufSize);
+   int result = Kernel_FelIntConversion_Consistency_(isSet, bufSize);
    sysFree(isSet);
    return result;
 }

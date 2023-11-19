@@ -53,7 +53,7 @@ static void openFiles()
     if (mfObjectType(ifile) != MTX_TYPE_MATRIX)
 	mtxAbort(MTX_HERE,"%s: %s",iname,MTX_ERR_NOTMATRIX);
     ffSetField(ifile->header[0]); 
-    MESSAGE(0,("Characteristic is %lu\n",(unsigned long) ffChar));
+    MESSAGE(0, "Characteristic is %lu\n",(unsigned long) ffChar);
     ofile = mfCreate(oname,ifile->header[0],ifile->header[1],ifile->header[2]);
 }
 

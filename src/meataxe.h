@@ -50,6 +50,8 @@ size_t sysPad(size_t x, size_t unit);
 void sysRead8(FILE *f, void* buf, size_t n);
 void sysRead16(FILE *f, void* buf, size_t n);
 void sysRead32(FILE *f, void* buf, size_t n);
+uint64_t sysTime();
+int sysTimeout(uint64_t* buf, unsigned intervalInSeconds);
 int sysTryRead32(FILE *f, void* buf, size_t n);
 void* sysRealloc(void *buf, size_t nbytes);
 int sysRemoveDirectory(const char *name);
@@ -82,6 +84,9 @@ void pexExecuteRange(PexGroup_t* group, void (*f)(void *userData, size_t begin, 
 	void* userData, size_t begin, size_t end);
 void pexFinally(PexGroup_t* group, void(*f)(void* userData), void* userData);
 void pexInit(int nThreads);
+const char* pexLogPrefix();
+MTX_PRINTF(1,2)
+void pexSetThreadName(const char* name, ...);
 void pexShutdown();
 void pexSleep(unsigned timeInMs);
 unsigned pexThreadId();
@@ -138,18 +143,6 @@ FEL ffMul(FEL a, FEL b);
 FEL ffDiv(FEL a, FEL b);
 FEL ffNeg(FEL a);
 FEL ffInv(FEL a);
-
-/// Contains a representation of a field element which can be used to generate
-/// text output readable by GAP.
-
-typedef struct FfGapRepresentation {
-   FEL a;
-   uint32_t fmt;  // 0: a = k*Z(q), 1: a = Z(q)^k
-   uint32_t k;
-} FfGapRepresentation_t;
-
-const FfGapRepresentation_t* ffToGap(FEL a);
-const char* ffToGapStr(char* buf, size_t bufSize, FEL a);
 
 void ffAddMulRowPartial(PTR dest, PTR src, FEL f, int firstcol, int noc);
 void ffAddMulRow(PTR dest, PTR src, FEL f, int noc);
@@ -253,22 +246,24 @@ typedef struct {
    size_t size;
    size_t capacity;
    char *data;
-} StringBuilder_t;
+} StrBuffer;
 
-StringBuilder_t* sbAlloc(size_t initialCapacity);
-void sbAppend(StringBuilder_t* sb, const char* fragment);
-void sbClear(StringBuilder_t* sb);
-char* sbCopy(StringBuilder_t* sb);
-const char* sbData(StringBuilder_t *sb);
-void sbFree(StringBuilder_t *sb);
-MTX_PRINTF(2,3)
-void sbPrintf(StringBuilder_t* sb, const char* fmt, ...);
-char* sbToString(StringBuilder_t* sb);
-void sbVprintf(StringBuilder_t* sb, const char* fmt, va_list args);
+StrBuffer* sbAlloc(size_t initialCapacity);
+const char* sbData(StrBuffer *sb);
+void sbAppend(StrBuffer* sb, const char* fragment);
+void sbClear(StrBuffer* sb);
+char* sbCopy(StrBuffer* sb);
+MTX_PRINTF(1,2) char *strEprintf(const char* s, ...);
+void sbFree(StrBuffer *sb);
+MTX_PRINTF(2,3) void sbPrintf(StrBuffer* sb, const char* fmt, ...);
+char* sbToString(StrBuffer* sb);
+char* sbToEphemeralString(StrBuffer* sb);
+void sbVprintf(StrBuffer* sb, const char* fmt, va_list args);
 
-MTX_PRINTF(1,2)
-char *strMprintf(const char* s, ...);
+char* strMakeEphemeral(char* c);
+char *strVEprintf(const char* s, va_list args);
 char *strVMprintf(const char* s, va_list args);
+MTX_PRINTF(1,2) char *strMprintf(const char* s, ...);
 
 /// @}
 
@@ -283,7 +278,7 @@ char *strVMprintf(const char* s, va_list args);
 /// Application information structure.
 /// This data structure is used to store information about the application.
 /// It is used by the command line parser, e.g., to display the help text.
-/// See also @ref AppAlloc
+/// See also @ref appAlloc
 
 typedef struct {
    const char *name;            ///< Program name.
@@ -367,9 +362,9 @@ struct MtxSourceLocation {
    const char* func;    ///< The function name.
 };
 
-/// Provides a source code location descriptor.
-/// Both @a file and @a func must be pointers to static constant strings.
-const struct MtxSourceLocation* mtxSourceLocation(const char* file, int line, const char* func);
+// /// Provides a source code location descriptor.
+// /// Both @a file and @a func must be pointers to static constant strings.
+// const struct MtxSourceLocation* mtxSourceLocation(const char* file, int line, const char* func);
 
 /// The current source code location
 #define MTX_HERE (&(const struct MtxSourceLocation){__FILE__, __LINE__, __func__}) 
@@ -416,11 +411,12 @@ extern int MtxMessageLevel;
 #define MSG2 (MtxMessageLevel >= 2)
 #define MSG3 (MtxMessageLevel >= 3)
 #define MSG4 (MtxMessageLevel >= 4)
-#define MESSAGE(level,args) \
-   (MtxMessageLevel >= (level) ? (printf args, fflush(stdout), 1) : 0)
+#define MESSAGE(level, ...) \
+   do if (MtxMessageLevel >= (level)) mtxMessage(level, __VA_ARGS__); while(0)
 
 MTX_PRINTF(2,3)
 void mtxMessage(int level, const char* msg, ...);
+void mtxMessage0(int level, const char* text);
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // Miscellaneous
@@ -627,24 +623,26 @@ typedef struct {
 }
 Poly_t;
 
-Poly_t *polAdd(Poly_t *dest, const Poly_t *src);
-Poly_t *polAlloc(uint32_t field, int32_t degree);
+Poly_t* polAdd(Poly_t *dest, const Poly_t *src);
+Poly_t* polAlloc(uint32_t field, int32_t degree);
 int polCompare(const Poly_t *a, const Poly_t *b);
-Poly_t *polDerive(Poly_t *pol);
-Poly_t *polDivMod(Poly_t *a, const Poly_t *b);
-Poly_t *polDup(const Poly_t *p);
+Poly_t* polDerive(Poly_t *pol);
+Poly_t* polDivMod(Poly_t *a, const Poly_t *b);
+Poly_t* polDup(const Poly_t *p);
+void polFormat(StrBuffer* sb, const Poly_t *p);
 int polFree(Poly_t *p);
-Poly_t *polGcd(const Poly_t *a, const Poly_t *b);
+Poly_t* polGcd(const Poly_t *a, const Poly_t *b);
 int polGcdEx(const Poly_t *a, const Poly_t *b, Poly_t **result);
 int polIsValid(const Poly_t *p);
-Poly_t *polMod(Poly_t *a, const Poly_t *b);
+Poly_t* polLoad(const char *fn);
+Poly_t* polMod(Poly_t *a, const Poly_t *b);
+Poly_t* polMul(Poly_t *dest, const Poly_t *src);
 void Pol_Normalize(Poly_t *p);
-Poly_t *polLoad(const char *fn);
-Poly_t *polMul(Poly_t *dest, const Poly_t *src);
 void polPrint(char *name, const Poly_t *p);
-Poly_t *polRead(FILE *f);
-Poly_t *polReadData(FILE *f, const uint32_t header[3]);
+Poly_t* polReadData(FILE *f, const uint32_t header[3]);
+Poly_t* polRead(FILE *f);
 void polSave(const Poly_t *pol, const char *fn);
+char* polToEphemeralString(const Poly_t *p);
 void polValidate(const struct MtxSourceLocation* sl, const Poly_t *p);
 void polWrite(const Poly_t *p, FILE *f);
 
@@ -661,11 +659,13 @@ typedef struct {
 } FPoly_t;
 
 FPoly_t *fpAlloc();
+char* fpToEphemeralString(const FPoly_t *p);
+void fpFormat(StrBuffer* sb, const FPoly_t *p);
 int fpFree(FPoly_t *x);
 int fpIsValid(const FPoly_t *p);
 FPoly_t *fpMul(FPoly_t *dest, const FPoly_t *src);
 FPoly_t *fpMulP(FPoly_t *dest, const Poly_t *src, int pwr);
-int fpPrint(const char *name, const FPoly_t *p);
+void fpPrint(const char *name, const FPoly_t *p);
 void fpValidate(const struct MtxSourceLocation* src, const FPoly_t *p);
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -944,6 +944,17 @@ FPoly_t *charpol(const Matrix_t *mat);
 Poly_t *minpolFactor(Charpol_t* state);
 FPoly_t *minpol(const Matrix_t *mat);
 FPoly_t *minpolS(const Matrix_t *mat, long seed);
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// GAP output support functions
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+const char* gapFelToString(FEL a);
+const char* gapFelToString1(FEL a);
+const char* gapFelToString2();
+void gapFormatFel(StrBuffer* sb, FEL a);
+void gapFormatPoly(StrBuffer* sb, const Poly_t *pol);
+void gapFormatWord(StrBuffer* sb, const WgData_t *b, long n);
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // Submodule lattice functions

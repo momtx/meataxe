@@ -337,16 +337,16 @@ static void writeheader()
     info[2] = (long int) Q;
     info[3] = (long int) CPM;
 
-    MESSAGE(1,("ZZZ version : %lu\n",(unsigned long)ver));
-    MESSAGE(1,("Field order : %lu=%lu^%lu\n",
-             (unsigned long)info[2],(unsigned long)info[0],(unsigned long)N));
+    MESSAGE(1, "ZZZ version : %lu\n",(unsigned long)ver);
+    MESSAGE(1, "Field order : %lu=%lu^%lu\n",
+             (unsigned long)info[2],(unsigned long)info[0],(unsigned long)N);
     if (P != Q && MtxMessageLevel >= 1)
     {
 	printf("Polynome    : ");
 	printpol(irred);
     }
-    MESSAGE(1,("Generator   : %lu\n",(unsigned long)info[1]));
-    MESSAGE(1,("Packing     : %lu/byte\n",(unsigned long)info[3]));
+    MESSAGE(1, "Generator   : %lu\n",(unsigned long)info[1]);
+    MESSAGE(1, "Packing     : %lu/byte\n",(unsigned long)info[3]);
 }
 
 
@@ -382,7 +382,7 @@ static void mkembed()
     memset(mtx_embed,255,sizeof(mtx_embed));
     memset(mtx_restrict,255,sizeof(mtx_restrict));
 
-    MESSAGE(1,("Calculating embeddings of subfields\n"));
+    MESSAGE(1, "Calculating embeddings of subfields\n");
 
     /* Clear the mtx_embedord array. mtx_embedord[i]=0 means
        that the entry (and all subequent) is not used.
@@ -398,7 +398,7 @@ static void mkembed()
            -------------------------- */
 	if (n == 1)
 	{
-	    MESSAGE(1,("GF(%ld)\n",P));
+	    MESSAGE(1, "GF(%ld)\n",P);
     	    mtx_embedord[count] = P;
     	    for (i = 0; i < (int) P; ++i)
     	    {
@@ -434,7 +434,7 @@ static void mkembed()
        	for (i = 0; i <= MAXGRAD; i++)
             subirred[i] = irreducibles[k][MAXGRAD-i];
 
-	MESSAGE(1,("GF(%ld): gen=%d pol=",q,emb));
+	MESSAGE(1, "GF(%ld): gen=%d pol=",q,emb);
 	if (MSG1) printpol(subirred);
 	fflush(stdout);
 
@@ -444,7 +444,7 @@ static void mkembed()
 	for (i = 0; i < (int)q-1; ++i)
 	{
 	    mtx_embed[count][number(a)] = f;
-	    MESSAGE(3,("mtx_embed[%d][%d]=%d\n",count,number(a),(int)f));
+	    MESSAGE(3, "mtx_embed[%d][%d]=%d\n",count,number(a),(int)f);
 	    mtx_restrict[count][f] = number(a);
 	    polmultx(a);
 	    polymod(a,subirred);
@@ -452,7 +452,7 @@ static void mkembed()
         }
 	++count;
     }
-    MESSAGE(1,("\n"));
+    MESSAGE(1, "\n");
 
     if (MtxMessageLevel >= 2)
     {
@@ -509,21 +509,21 @@ int ffMakeTables(int field)
 
     // Make insert table
     memset(a,0,sizeof(a));
-    MESSAGE(1,("Calculating insert table\n"));
+    MESSAGE(1, "Calculating insert table\n");
     for (i = 0; i < (int) Q; i++)
     {
 	for (j = 0; j < (int) CPM; j++)
     	{
 	    a[j] = (uint8_t) i;
 	    mtx_tinsert[j][i] = pack(a);	/* Insert-table */
-	    MESSAGE(3,("insert[%d][%d]=%u (0x%x)\n",j,i,
-	     mtx_tinsert[j][i],mtx_tinsert[j][i]));
+	    MESSAGE(3, "insert[%d][%d]=%u (0x%x)\n",j,i,
+	     mtx_tinsert[j][i],mtx_tinsert[j][i]);
 	    a[j] = 0;
     	}
     }
 
     // Pack/unpack and arithmetic tables
-    MESSAGE(1,("Calculating pack/unpack and arithmetic tables\n"));
+    MESSAGE(1, "Calculating pack/unpack and arithmetic tables\n");
     for (i=0 ; i < (int) maxmem; i++)
     {
 	if (i % 10 == 0 && MtxMessageLevel >= 2)
@@ -579,10 +579,10 @@ int ffMakeTables(int field)
 	    }
 	}
     }
-    MESSAGE(2,("\n"));
+    MESSAGE(2, "\n");
 
     // Inversion table
-    MESSAGE(1,("Calculating inversion table\n"));
+    MESSAGE(1, "Calculating inversion table\n");
     fflush(stdout);
     for (i = 0; i < (int)Q; i++)
     {
@@ -595,7 +595,7 @@ int ffMakeTables(int field)
 
     mkembed();
 
-    MESSAGE(1,("Writing tables to %s\n",filename));
+    MESSAGE(1, "Writing tables to %s\n",filename);
     sysWrite32(fd,info,4);
     sysWrite32(fd,&ver,1);
     sysWrite8(fd,mtx_tmult,sizeof(mtx_tmult));

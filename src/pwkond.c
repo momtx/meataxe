@@ -6,22 +6,18 @@
 #include <string.h>
 #include <stdlib.h>
 
-/* --------------------------------------------------------------------------
-   Global data
-   -------------------------------------------------------------------------- */
-
 #define MAX_MODULES 50
-#define MAXCF (3 * LAT_MAXCF)       /* Max. number of different constituents */
+#define MAXCF (3 * LAT_MAXCF)       // Max. number of different constituents
 
-int NumMods = 0;                    /* Number of modules */
+int NumMods = 0;                    // Number of modules
 
 /// @private
 static struct module_struct {
-   Lat_Info Info;                   /* Data from .cfinfo file */
-   MatRep_t *Rep;                   /* Generators */
-   WgData_t *Wg;                    /* Word generators */
-   Matrix_t *SsBasis;               /* Semisimplicity basis */
-} ModList[MAX_MODULES];             /* List of all modules */
+   Lat_Info Info;                   // Data from .cfinfo file
+   MatRep_t *Rep;                   // Generators
+   WgData_t *Wg;                    // Word generators
+   Matrix_t *SsBasis;               // Semisimplicity basis
+} ModList[MAX_MODULES];             // List of all modules
 
 
 /// Table of constituents
@@ -37,7 +33,7 @@ struct cf_struct {
    int Mult;                        // In how many modules does it appear?
    int CfMap[MAX_MODULES][2];       // (module,cf)
 };
-int NumCf = 0;                      // Number of inequivalent constituents */
+int NumCf = 0;                      // Number of inequivalent constituents
 static struct cf_struct CfList[MAXCF];  // List of inequivalent constituents
 
 static int opt_G = 0;
@@ -52,7 +48,7 @@ static long include[MAXLOCK][2];
 static int ninclude = 0;
 static long exclude[MAXLOCK][2];
 static int nexclude = 0;
-static int PeakWordsMissing;            /* Number of missing peak words */
+static int PeakWordsMissing;            // Number of missing peak words
 
 /// @private
 struct SharedData {
@@ -103,13 +99,12 @@ static MtxApplicationInfo_t AppInfo = {
 
 static MtxApplication_t *App = NULL;
 
-/* --------------------------------------------------------------------------
-   AddConstituent() - Add a constituent
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
-   This function checks if a given constituent is already in <CfList>. If
-   not, it is added to the list. If it is already in the list, <cf> is
-   deleted.
-   -------------------------------------------------------------------------- */
+// Add a constituent
+// This function checks if a given constituent is already in <CfList>. If
+// not, it is added to the list. If it is already in the list, <cf> is
+// deleted.
 
 static void AddConstituent(MatRep_t *cf, CfInfo *info, int modno, int cfno)
 {
@@ -119,11 +114,11 @@ static void AddConstituent(MatRep_t *cf, CfInfo *info, int modno, int cfno)
          break;
    }
 
-   if (i < NumCf) { /* Constituent was already in the list */
+   if (i < NumCf) { // Constituent was already in the list
       int m = CfList[i].Mult;
       mrFree(cf);
       CfList[i].CfMap[m][0] = modno;
-   } else {         /* It's a new constituent */
+   } else {         // It's a new constituent
       CfList[i].Gen = cf;
       CfList[i].Info = info;
       CfList[i].Wg = wgAlloc(cf);
@@ -176,19 +171,19 @@ static void loadConstituents()
          }
       }
       struct cf_struct* const cfi = CfList + i;
-      snprintf(cfi->displayName, sizeof(cfi->displayName), "[%lu]", (unsigned long)i);
+      snprintf(cfi->displayName, sizeof(cfi->displayName), "cf%lu", (unsigned long)i);
    }
 
    for (int i = 0; i < NumCf; ++i) {
       struct cf_struct *const cf = CfList + i;
-      StringBuilder_t* sb = sbAlloc(20);
+      StrBuffer* sb = sbAlloc(20);
       sbPrintf(sb, "%s is", cf->displayName);
       for (size_t k = 0; k < cf->Mult; ++k) {
          struct module_struct *mod = ModList + cf->CfMap[k][0];
          const Lat_Info* const li = &mod->Info;
          sbPrintf(sb, " %s%s", li->BaseName,latCfName(li,cf->CfMap[k][1]));
       }
-      MESSAGE(1, ("%s\n", sbData(sb)));
+      MESSAGE(1, "%s", sbData(sb));
       sbFree(sb);
    }
 
@@ -211,28 +206,24 @@ static void checkCompatibility(int i)
 
 static void loadModules()
 {
-   /* Set the number of modules.
-      -------------------------- */
+   // Set the number of modules.
    NumMods = App->argC;
    if (NumMods > MAX_MODULES) {
       mtxAbort(MTX_HERE,"Too many modules (max. %d allowed)",MAX_MODULES);
    }
 
-   /* Read the .cfinfo files and load the generators (if needed).
-      ----------------------------------------------------------- */
+   // Read the .cfinfo files and load the generators (if needed).
    for (int i = 0; i < NumMods; ++i) {
       latReadInfo(&ModList[i].Info,App->argV[i]);
       mtxMessage(0,"%s: %d composition factors",App->argV[i],ModList[i].Info.nCf);
       checkCompatibility(i);
 
-      /* Clear any existing peak words.
-         ------------------------------ */
+      // Clear any existing peak words.
       for (int k = 0; k < ModList[i].Info.nCf; ++k) {
          ModList[i].Info.Cf[k].peakWord = -1;
       }
 
-      /* Read the generators, set up ss bases and word generators.
-         --------------------------------------------------------- */
+      // Read the generators, set up ss bases and word generators.
       if (!opt_n || opt_k || opt_b) {
          ModList[i].Rep = mrLoad(App->argV[i],ModList[i].Info.NGen);
          ModList[i].Wg = wgAlloc(ModList[i].Rep);
@@ -269,7 +260,7 @@ static void gkond(const Lat_Info *li, int i, Matrix_t *b, Matrix_t *k, Matrix_t 
 static void transformToStandardBasis(struct cf_struct* cf)
 {
    // Make the standard basis and spinup script. Transform the generators.
-   MESSAGE(1,("%s transforming to standard basis\n", cf->displayName));
+   MESSAGE(1, "%s Transforming to standard basis", cf->displayName);
    IntMatrix_t *script = NULL;
    Matrix_t* sb =
       SpinUp(cf->PWNullSpace,cf->Gen, SF_FIRST | SF_CYCLIC | SF_STD,&script,NULL);
@@ -282,26 +273,25 @@ static void transformToStandardBasis(struct cf_struct* cf)
       Lat_Info *li = &ModList[cf->CfMap[m][0]].Info;
       int i = cf->CfMap[m][1];
       sprintf(fn,"%s%s.op",li->BaseName,latCfName(li,i));
-      MESSAGE(2,("%s wrote operations to %s\n",cf->displayName, fn));
+      MESSAGE(2, "%s wrote operations to %s", cf->displayName, fn);
       imatSave(script,fn);
       for (int k = 0; k < li->NGen; ++k) {
          sprintf(fn,"%s%s.std.%d",li->BaseName,latCfName(li,i),k + 1);
          matSave(stdRep->Gen[k],fn);
       }
-      MESSAGE(2,("%s wrote %s%s.op and %s%s.std.(1..%d)\n",
-               cf->displayName,
-               li->BaseName,latCfName(li,i),
-               li->BaseName,latCfName(li,i), li->NGen));
+      MESSAGE(2, "%s wrote %s%s.op and %s%s.std.(1..%d)",
+            cf->displayName,
+            li->BaseName,latCfName(li,i),
+            li->BaseName,latCfName(li,i), li->NGen);
    }
 
    mrFree(stdRep);
    imatFree(script);
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
-/* ------------------------------------------------------------------
-   CfPosition() - Find the starting point for a constituent.
-   ------------------------------------------------------------------ */
+// Find the starting point for a constituent.
 
 static int CfPosition(const Lat_Info *li, int cf)
 {
@@ -315,9 +305,9 @@ static int CfPosition(const Lat_Info *li, int cf)
 }
 
 
-/* ------------------------------------------------------------------
-   kond() - Generalized condensation for one irreducible
-   ------------------------------------------------------------------ */
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+// Generalized condensation for one irreducible
 
 static void kond(struct cf_struct* cfData, struct module_struct* mod, int cf)
 {
@@ -331,9 +321,10 @@ static void kond(struct cf_struct* cfData, struct module_struct* mod, int cf)
    matInsert_(peakword,li->Cf[cf].peakPol);
    pw = matDup(peakword);
    StablePower_(peakword,&pwr,&kern);
-   MESSAGE(1,("%s stablePwr=%d, nul=%lu, mult=%lu, spl=%lu\n",
-            cfData->displayName, pwr, (unsigned long) kern->nor,
-            (unsigned long) li->Cf[cf].mult, (unsigned long) li->Cf[cf].spl));
+   MESSAGE(1, "%s stablePwr=%d, nul=%lu, mult=%lu, spl=%lu",
+            cfData->displayName,
+            pwr, (unsigned long) kern->nor,
+            (unsigned long) li->Cf[cf].mult, (unsigned long) li->Cf[cf].spl);
 
    if (kern->nor != li->Cf[cf].mult * li->Cf[cf].spl) {
       mtxAbort(MTX_HERE,"%s Something is wrong here", cfData->displayName);
@@ -370,10 +361,11 @@ static void kond(struct cf_struct* cfData, struct module_struct* mod, int cf)
       seed = matNullSpace_(pw,0);
       partbas = SpinUp(seed,mod->Rep,SF_EACH | SF_COMBINE | SF_STD,NULL,NULL);
       matFree(seed);
-      if (matCopyRegion(mod->SsBasis,pos,0,partbas,0,0,-1,-1) != 0) {
-         mtxAbort(MTX_HERE,"Error making basis - '%s' is possibly not semisimple",
-                    li->BaseName);
+
+      if (pos < 0 || pos + partbas->nor > mod->SsBasis->nor) {
+         mtxAbort(MTX_HERE,"Error making basis - '%s' is probably not semisimple", li->BaseName);
       }
+      matCopyRegion(mod->SsBasis,pos,0,partbas,0,0,-1,-1);
       matFree(partbas);
    }
    matFree(pw);
@@ -389,51 +381,9 @@ static void condense(struct cf_struct* cf)
    for (int k = 0; k < cf->Mult; ++k) {
       struct module_struct* const mod = ModList + cf->CfMap[k][0];
       const int i = cf->CfMap[k][1];
-      MESSAGE(0,("%s condensing %s%s\n", cf->displayName,
-               mod->Info.BaseName, latCfName(&mod->Info,i)));
+      MESSAGE(0, "%s condensing %s%s", cf->displayName, mod->Info.BaseName, latCfName(&mod->Info,i));
       kond(cf, mod, i);
    }
-}
-
-////////////////////////////////////////////////////////////////////////////////////////////////////
-
-static char* GapPrintPoly(const Poly_t *pol)
-{
-   char tmp[50];
-   StringBuilder_t* sb = sbAlloc(100);
-   sbAppend(sb, "[");
-   for (int i = 0; i < pol->degree; ++i) {
-      sbPrintf(sb,"%s,",ffToGapStr(tmp, sizeof(tmp), pol->data[i]));
-   }
-   sbPrintf(sb,"%s]",ffToGapStr(tmp, sizeof(tmp), pol->data[pol->degree]));
-   return sbToString(sb);
-}
-
-
-static char* GapPrintWord(const WgData_t *b, long n)
-{
-   StringBuilder_t* sb = sbAlloc(100);
-
-   wgDescribeWord((WgData_t *)b, n);
-   int *x;
-   sbAppend(sb, "[");
-   for (x = b->Description; *x != -1;) {
-      int first = 1;
-      if (x != b->Description) {
-         sbAppend(sb, ",");
-      }
-      sbAppend(sb, "[");
-      do {
-         long gen = *x++;
-         if (!first) { sbAppend(sb, ",");}
-         first = 0;
-         sbPrintf(sb,"%ld", gen + 1);
-      } while (*x != -1);
-      sbAppend(sb, "]");
-      ++x;
-   }
-   sbAppend(sb, "]");
-   return sbToString(sb);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -446,11 +396,11 @@ static void WriteOutput(int final)
    int i;
    for (i = 0; i < NumMods; ++i) {
       latWriteInfo(&ModList[i].Info);
-      MESSAGE(1,("Wrote ModList[i].Info.BaseName .cfinfo\n"));
+      MESSAGE(1, "Wrote %s.cfinfo", ModList[i].Info.BaseName);
       if (opt_b) {
          char* const fn = strMprintf("%s.ssb",ModList[i].Info.BaseName);
          matSave(ModList[i].SsBasis,fn);
-         MESSAGE(1,("Wrote %s\n", fn));
+         MESSAGE(1, "Wrote %s", fn);
          sysFree(fn);
       }
    }
@@ -468,12 +418,15 @@ static void WriteOutput(int final)
          for (i = 0; i < ModInfo->nCf; ++i) {
             const CfInfo * const Cf = ModInfo->Cf + i;
             printf("    # irreducible factor: %s\n", latCfName(ModInfo,i));
-            char* ws = GapPrintWord(CfList[i].Wg,Cf->peakWord);
-            char* ps = GapPrintPoly(Cf->peakPol);
-            printf("    [ %ld, %s, %s ]%s\n", Cf->peakWord, ws, ps,
-                  i == ModInfo->nCf - 1 ? "" : ",");
-            sysFree(ws);
-            sysFree(ps);
+
+            StrBuffer* sb = sbAlloc(100);
+            sbPrintf(sb, "    [ %ld, ", (long) Cf->peakWord);
+            gapFormatWord(sb, CfList[i].Wg,Cf->peakWord);
+            sbAppend(sb, ", ");
+            gapFormatPoly(sb, Cf->peakPol);
+            sbPrintf(sb, " ]%s\n",i == ModInfo->nCf - 1 ? "" : ",");
+            sbFree(sb);
+            sysFree(sb);
          }
          printf(m < NumMods - 1 ? "],\n" : "]\n");
       }
@@ -515,8 +468,9 @@ static void peakWordFound(struct cf_struct* cf)
    CfInfo* const info = cf->Info;
    const unsigned long pw = info->peakWord;
 
-   StringBuilder_t* sb = sbAlloc(100);
-   sbPrintf(sb, "%s peak word=%ld(%s)",cf->displayName, pw, wgSymbolicName(cf->Wg,pw));
+
+   StrBuffer* sb = sbAlloc(100);
+   sbPrintf(sb, "%s peak word=%ld(%s)", cf->displayName, pw, wgSymbolicName(cf->Wg,pw));
    const Poly_t * const pp = info->peakPol;
    sbPrintf(sb, " pol=[");
    for (int32_t k = pp->degree; k >= 0; --k) {
@@ -527,7 +481,8 @@ static void peakWordFound(struct cf_struct* cf)
       else if (k == 1) sbPrintf(sb,"x");
    }
    sbAppend(sb, "]");
-   MESSAGE(0,("%s\n", sbToString(sb)));
+   MESSAGE(0, "%s", sbData(sb));
+   sbFree(sb);
 
    CopyPeakWordToAllModules(cf);
    if (!opt_n || opt_k) {
@@ -536,7 +491,8 @@ static void peakWordFound(struct cf_struct* cf)
    if (opt_t) {
       transformToStandardBasis(cf);
    }
-   // NOT threadsafe! WriteOutput(0);
+
+   // TODO: NOT threadsafe! WriteOutput(0);
 }
 
 
@@ -610,7 +566,7 @@ static void init(int argc, char **argv)
 {
    App = appAlloc(&AppInfo,argc,argv);
    parseCommandLine();
-   MESSAGE(0,("*** PEAK WORD CONDENSATION ***\n"));
+   MESSAGE(0, "\n*** PEAK WORD CONDENSATION ***");
 
    #if defined(MTX_DEFAULT_THREADS)
    pthread_mutex_init(&sharedData.mutex, NULL);
@@ -651,7 +607,7 @@ static void tryLinear2(long w, FEL f)
    int i, ppos = -1;
    long nul;
 
-   for (i = 0; i < NumCf; ++i) { /* For each composition factor... */
+   for (i = 0; i < NumCf; ++i) { // For each composition factor...
       Matrix_t *word;
 
       word = wgMakeWord(CfList[i].Wg,w);
@@ -670,7 +626,7 @@ static void tryLinear2(long w, FEL f)
          nul = matNullity__(matMul(matDup(word),word));
          if (nul != CfList[i].Info->spl) {
             matFree(word);
-            return;      /* Nullity is not stable */
+            return;      // Nullity is not stable
          }
          // This is a peak word candidate for the i-th constituent.
          ppos = i;
@@ -678,7 +634,7 @@ static void tryLinear2(long w, FEL f)
       matFree(word);
    }
 
-   if (ppos > -1) { /* we have found a new peak word */
+   if (ppos > -1) { // we have found a new peak word
       --PeakWordsMissing;
       struct cf_struct* cf = CfList + ppos;
       cf->Info->peakWord = w;
@@ -717,10 +673,7 @@ static void tryLinear(long w)
    }
 }
 
-
-/* ------------------------------------------------------------------
-   tryp2()
-   ------------------------------------------------------------------ */
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 static int tryp2(long w, int cf, Poly_t *pol)
 {
@@ -759,7 +712,7 @@ static int tryPoly(long w)
       FPoly_t *mp;
 
       if (CfList[i].Info->peakWord > 0) {
-         continue;                      /* We already have a peak word */
+         continue;                      // We already have a peak word
       }
       word = wgMakeWord(CfList[i].Wg,w);
       mp = minpol(word);
@@ -781,8 +734,7 @@ static int tryPoly(long w)
                continue;
             }
 
-            /* Check if the nullity is stable
-               ------------------------------ */
+            // Check if the nullity is stable
             wp = matInsert(word,mp->Factor[k]);
             wp2 = matMul(matDup(wp),wp);
             matFree(wp);
@@ -800,7 +752,7 @@ static int tryPoly(long w)
          CfList[i].PWNullSpace = matNullSpace__(matInsert(word,mp->Factor[k]));
          peakWordFound(CfList + i);
       } else {
-         k = -1;        /* Not found */
+         k = -1;        // Not found
       }
       fpFree(mp);
       matFree(word);
@@ -818,10 +770,9 @@ static void tryWord(long w)
    if (isexcluded(w)) {
       return;
    }
-   if ((MSG1 && (w % 50 == 0)) || MSG2) {
-      printf("Word %ld\n",w);
-      fflush(stdout);
-   }
+   static uint64_t progressTimer = 0;
+   if (sysTimeout(&progressTimer, 10))
+      MESSAGE(1,"Word %ld",w);
    if (opt_p) {
       tryPoly(w);
    } else {
@@ -838,11 +789,9 @@ int main(int argc, char **argv)
 
    init(argc,argv);
 
-   /* Find peak words
-      --------------- */
    for (i = 0; PeakWordsMissing > 0 && i < ninclude; ++i) {
       if (i == 0) {
-         MESSAGE(1,("Trying words from inclusion list\n"));
+         MESSAGE(1, "Trying words from inclusion list");
       }
       for (w = include[i][0]; w <= include[i][1]; ++w) {
          tryWord(w);
@@ -855,6 +804,7 @@ int main(int argc, char **argv)
    pexWait();
 
    WriteOutput(1);
+   pexShutdown();
    if (App != NULL) { appFree(App);}
    return 0;
 }
@@ -1011,6 +961,6 @@ degree [E:F] of the splitting field extension.
 Having a power w^N of the peakword with stable nullity,
 the condensation onto its kernel, i.e., the projection of V onto V/w^N(V),
 is determined in the same way as in the @ref prog_zqt "zqt" program.
- **/
+**/
  
 // vim:fileencoding=utf8:sw=3:ts=8:et:cin

@@ -60,7 +60,7 @@ static int Init(int argc, char **argv)
 
     /* Read the matrix.
        ---------------- */
-    MESSAGE(1,("Reading %s\n",matname));
+    MESSAGE(1, "Reading %s\n",matname);
     Matrix = matLoad(matname);
     if (Matrix == NULL)
 	return 1;
@@ -90,7 +90,7 @@ int main(int argc, char **argv)
 	Matrix_t *null_space = matNullSpace_(Matrix,opt_n ? 1 : 0);
 	if (null_space == NULL)
 	    return 1;
-        MESSAGE(1,("Writing null-space to %s\n",nspname));
+        MESSAGE(1, "Writing null-space to %s\n",nspname);
 	matSave(null_space,nspname);
 	nspdim = null_space->nor;
     }
@@ -108,7 +108,7 @@ int main(int argc, char **argv)
 	fflush(stdout);
     }
     else
-        MESSAGE(0,("NULLITY %d\n",nspdim));
+        MESSAGE(0, "NULLITY %d\n",nspdim);
 
 
     appFree(App);

@@ -128,7 +128,7 @@ static void calculateMatrixOrder()
    }
 
    if (opt_q && ord != maxord) {
-      MESSAGE(0,("ORDER IS A MULTIPLE OF %d\n",ord));
+      MESSAGE(0, "ORDER IS A MULTIPLE OF %d\n",ord);
    } else {
       if (opt_G) {
          printf("MeatAxe.Order := %d;\n",ord);

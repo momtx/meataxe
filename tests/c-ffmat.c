@@ -200,7 +200,7 @@ static int TestSumInter2(int noc)
    wrk2 = ffAlloc(nor1 + nor2, noc);
    uint32_t *piv = NALLOC(uint32_t,nor1 + nor2);
 
-   MESSAGE(2,("TestSumInter2: q=%d, noc=%d, vnor=%d wnor=%d\n", ffOrder, noc, vdim, wdim));
+   MESSAGE(2,"TestSumInter2: q=%d, noc=%d, vnor=%d wnor=%d\n", ffOrder, noc, vdim, wdim);
 
    /* Fill with random values.
       ------------------------ */
