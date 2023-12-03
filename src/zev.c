@@ -70,7 +70,7 @@ static int Init(int argc, char **argv)
     if ((App = appAlloc(&AppInfo,argc,argv)) == NULL)
 	return -1;
     opt_G = appGetOption(App,"-G --gap");
-    if (opt_G) MtxMessageLevel = -100;
+//    if (opt_G) MtxMessageLevel = -100;
     if (appGetArguments(App,1,3) < 0)
 	return -1;
     switch (App->argC)

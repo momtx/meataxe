@@ -116,7 +116,7 @@ static int MakeOrbits()
     int points_remaining;
     int seedpos = 0;
 
-    MESSAGE(1, "Finding orbits\n");
+    MTX_LOGD("Finding orbits");
     Stack[++Sp] = Seed;
     OrbNo[Seed] = 0;
     NOrbits = 1;
@@ -181,7 +181,7 @@ static int MakeOrbits()
 
 static int CalcSizes()
 {
-    MESSAGE(1, "Calculating orbit sizes\n");
+    MTX_LOGD("Calculating orbit sizes");
     OrbSize = NALLOC(uint32_t,NOrbits);
     memset(OrbSize,0,sizeof(*OrbSize) * NOrbits);
     for (int i = 0; i < Degree; ++i)
@@ -210,32 +210,27 @@ static int WriteOutput()
     fclose(f);
     
 
-    /* Print orbit sizes
-       ----------------- */
-    if (MtxMessageLevel >= 0)
+    // Print orbit sizes
+    int size[20];
+    int count[20];
+    int dis = 0;
+    int i;
+    for (i = 0; i < NOrbits; ++i)
     {
-	int size[20];
-	int count[20];
-	int dis = 0;
-	int i;
-	for (i = 0; i <	NOrbits; ++i)
-	{
-	    int k;
-	    for (k = 0; k < dis && size[k] != OrbSize[i]; ++k);
-	    if (k < dis)
-		++count[k];
-	    else if (dis < 20)
-	    {
-		size[dis] = OrbSize[i];
-		count[dis] = 1;
-		++dis;
-	    }
-	}
-	for (i = 0; i < dis; ++i)
-	{
-	    printf("%6d ORBIT%c OF SIZE %6d\n",
-		 count[i],count[i] > 1 ? 'S':' ',size[i]);
-	}
+       int k;
+       for (k = 0; k < dis && size[k] != OrbSize[i]; ++k);
+       if (k < dis)
+          ++count[k];
+       else if (dis < 20)
+       {
+          size[dis] = OrbSize[i];
+          count[dis] = 1;
+          ++dis;
+       }
+    }
+    for (i = 0; i < dis; ++i)
+    {
+       MTX_LOGI("%6d ORBIT%c OF SIZE %6d", count[i],count[i] > 1 ? 'S':' ',size[i]);
     }
 
     return 0;

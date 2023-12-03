@@ -115,18 +115,18 @@ static int Init(int argc, char **argv)
     /* Print start message
        ------------------- */
     sprintf(fn,"%s.1",InfoM.BaseName);
-    MtxFile_t* f = mfOpen(fn);
+    MtxFile_t* f = mfOpen(fn, "rb");
     mfReadHeader(f);
     int nor1 = f->header[1];
     mfClose(f);
 
     sprintf(fn,"%s.1",InfoN.BaseName);
-    f = mfOpen(fn);
+    f = mfOpen(fn, "rb");
     mfReadHeader(f);
     int nor2 = f->header[1];
     mfClose(f);
 
-    MESSAGE(0, "Beginning pre-condensation of dimension %d x %d = %d\n", nor1,nor2,nor1*nor2);
+    MTX_LOGI("Beginning pre-condensation of dimension %d x %d = %d\n", nor1,nor2,nor1*nor2);
     return 0;
 }
 
@@ -162,7 +162,7 @@ static int IsDual(int mj, MatRep_t *rep_m, int nj)
 
     /* Read the (contragrediate) generators and compare
        ------------------------------------------------ */
-    MESSAGE(2, " (%s%s)",InfoN.BaseName,latCfName(&InfoN,nj));
+    MTX_LOG2(" (%s%s)",InfoN.BaseName,latCfName(&InfoN,nj));
     rep_n = latReadCfGens(&InfoN,nj,LAT_RG_INVERT|LAT_RG_TRANSPOSE
 	| (InfoN.Cf[nj].peakWord >= 0 ? LAT_RG_STD : 0));
     
@@ -297,7 +297,7 @@ static void MakeQ(int n, int spl, const Matrix_t **endo)
 	matFree(x);
     }
     sprintf(fn,"%s.q.%d",TkiName,n+1);
-    MESSAGE(2, "Writing %s\n",fn);
+    MTX_LOG2("Writing %s\n",fn);
 
 #if 0
     if (InfoM.Cf[TKInfo.cfIndex[0][n]].peakWord < 0)
@@ -347,27 +347,27 @@ static void MakePQ(int n, int mj, int nj)
     int i;
     Matrix_t *p;
 
-    MESSAGE(1, "Condensing %s%s x ",InfoM.BaseName,latCfName(&InfoM,mj));
-    MESSAGE(1, "%s%s, [E:k]=%d\n",InfoN.BaseName,latCfName(&InfoN,nj),spl);
+    MTX_LOGD("Condensing %s%s x ",InfoM.BaseName,latCfName(&InfoM,mj));
+    MTX_LOGD("%s%s, [E:k]=%d\n",InfoN.BaseName,latCfName(&InfoN,nj),spl);
 
     /* Read the generators for the constituent of M and make the
        endomorphism ring.
        --------------------------------------------------------- */
     rep_m = latReadCfGens(&InfoM,mj,InfoM.Cf[mj].peakWord >= 0 ? LAT_RG_STD : 0);
-    MESSAGE(2, "Calculating endomorphism ring\n");
+    MTX_LOG2("Calculating endomorphism ring\n");
     MkEndo(rep_m,InfoM.Cf + mj,endo,MAXENDO);
     mrFree(rep_m);
 
     /* Calculate the Q matrix
        ---------------------- */
-    MESSAGE(2, "Calculating embedding of E\n");
+    MTX_LOG2("Calculating embedding of E\n");
     MakeQ(n,spl,(const Matrix_t **)endo);
     
     /* Calculate the E* matrices
        Note: We should use the symmetry under i<-->k here!
        --------------------------------------------------- */
-    MESSAGE(2, "Calculating projection on E\n");
-    MESSAGE(2, "   E* matrices\n");
+    MTX_LOG2("Calculating projection on E\n");
+    MTX_LOG2("   E* matrices\n");
     e = matAlloc(ffOrder,spl,spl);
     for (i = 0; i < spl; ++i)
     {
@@ -400,7 +400,7 @@ static void MakePQ(int n, int mj, int nj)
     /* Transpose the E* matrices. This simplifies the 
        calculation of tr(z E*) below.
        ----------------------------------------------- */
-    MESSAGE(2, "   Transposing E* matrices\n");
+    MTX_LOG2("   Transposing E* matrices\n");
     for (i = 0; i < spl; ++i)
     {
 	Matrix_t *x = matTransposed(estar[i]);
@@ -410,7 +410,7 @@ static void MakePQ(int n, int mj, int nj)
 
     /* Calculate the P matrix
        ---------------------- */
-    MESSAGE(2, "   P matrix\n");
+    MTX_LOG2("   P matrix\n");
     p = matAlloc(ffOrder,dim*dim,spl);
     for (i = 0; i < dim; ++i)
     {
@@ -431,7 +431,7 @@ static void MakePQ(int n, int mj, int nj)
     }
 
     sprintf(fn,"%s.p.%d",TkiName,n+1);
-    MESSAGE(2, "Writing %s\n",fn);
+    MTX_LOG2("Writing %s\n",fn);
 #if 0
     if (InfoM.Cf[mj].peakWord < 0)
 	matMulScalar(p,FF_ZERO);
@@ -470,7 +470,7 @@ static void CalcDim()
 	int n = TKInfo.cfIndex[1][i];
 	TKInfo.dim += InfoM.Cf[m].mult * InfoN.Cf[n].mult * InfoM.Cf[m].spl;
     }
-    MESSAGE(0, "Dimension of condensed module = %d\n",TKInfo.dim);
+    MTX_LOGI("Dimension of condensed module = %d\n",TKInfo.dim);
 }
 
 
@@ -498,10 +498,10 @@ int main(int argc, char **argv)
 
 	if (InfoM.Cf[mj].peakWord < 0)
 	{
-	    MESSAGE(0, "WARNING: No peak word word available for %s%s\n",
+	    MTX_LOGI("WARNING: No peak word word available for %s%s\n",
 		InfoM.BaseName,latCfName(&InfoM,mj));
 	}
-	MESSAGE(0, "%s%s ",InfoM.BaseName,latCfName(&InfoM,mj));
+	MTX_LOGI("%s%s ",InfoM.BaseName,latCfName(&InfoM,mj));
 
 	/* Read the generators for the <mj>-th contituent of M, and find
 	   the corresponding (=contragredient) constituent in N.
@@ -513,14 +513,14 @@ int main(int argc, char **argv)
 	   ------------------------------------------------- */
 	if (nj >= 0)
 	{
-	    MESSAGE(0, " <--> %s%s\n",InfoN.BaseName, latCfName(&InfoN,nj));
+	    MTX_LOGI(" <--> %s%s\n",InfoN.BaseName, latCfName(&InfoN,nj));
 	    TKInfo.cfIndex[0][TKInfo.nCf] = mj;
 	    TKInfo.cfIndex[1][TKInfo.nCf] = nj;
 	    MakePQ(TKInfo.nCf,mj,nj);
 	    TKInfo.nCf++;
 	}
 	else
-	    MESSAGE(0, " not found in %s\n",InfoN.BaseName);
+	    MTX_LOGI(" not found in %s\n",InfoN.BaseName);
 
 	/* Clean up
 	   -------- */

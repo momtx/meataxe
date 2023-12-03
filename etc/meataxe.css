@@ -256,21 +256,21 @@ ul {
 pre.fragment {
   padding: 0px 0px 0px 0px;
   margin: 0px 0px 0px 0px;
-        border: 1px solid #C4CFE5;
-        background-color: #FBFCFD;
-        overflow: auto;
-        word-wrap: break-word;
-        font-size:  9pt;
-        line-height: 100%;
-        font-family: monospace, fixed;
-        font-size: 100%;
+  border: 1px solid #C4CFE5;
+  background-color: #FBFCFD;
+  overflow: auto;
+  word-wrap: break-word;
+  font-size:  9pt;
+  line-height: 100%;
+  font-family: monospace, fixed;
+  font-size: 100%;
 }
 
 div.fragment {
   padding: 0px 0px 0px 0px;
   margin: 7px 0px 7px 20px;
-  background-color: #F0F0FF;
-  border: 1px solid #C0C0F0;
+  background-color: #F0F0F0;
+  border: 1px solid #C0C0C0;
 }
 
 div.line {

@@ -70,7 +70,7 @@ static int readFiles()
     matPivotize(S);
 
     // matrix
-    fileM = mfOpen(fileNameM);
+    fileM = mfOpen(fileNameM, "rb");
     mfReadHeader(fileM);
     if (mfObjectType(fileM) != MTX_TYPE_MATRIX)
        mtxAbort(MTX_HERE, "%s: %s", fileNameM, MTX_ERR_NOTMATRIX);
@@ -116,7 +116,7 @@ static void doit()
 
     for (i = 0; i < norM; ++i)
     {
-	mfReadRows(fileM,bufferM, 1, nocM);
+	ffReadRows(fileM,bufferM, 1, nocM);
 
 	// When calculating the action, take only insignificant rows.
 	if (opt_i && isPivot(i))
@@ -129,7 +129,7 @@ static void doit()
 	    ffInsert(bufferQ,k,ffExtract(bufferM,non_pivot[k]));
 
 	// Write the output row.
-	mfWriteRows(fileQ,bufferQ, 1, quotientDim);
+	ffWriteRows(fileQ,bufferQ, 1, quotientDim);
     }
 
     sysFree(bufferQ);

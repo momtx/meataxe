@@ -88,7 +88,7 @@ Matrix_t *HomogeneousPart(MatRep_t *m, MatRep_t *s, Matrix_t *npw,
     /* Make the system of equations.
        ----------------------------- */
     len = Mdim * m->NGen * Sdim;		/* The number of equations */
-    MESSAGE(3, "HomogeneousPart(): len=%d\n",len);
+    MTX_LOG2("HomogeneousPart(): len=%d",len);
     if ((A = matAlloc(fl, nulldim, len)) == NULL)
     {
 	mtxAbort(MTX_HERE,"Cannot allocate buffer");
@@ -98,7 +98,7 @@ Matrix_t *HomogeneousPart(MatRep_t *m, MatRep_t *s, Matrix_t *npw,
     {
         int colin, j;
 	colin = i * Mdim * Sdim;   /* the first place in a row that is to fill */
-	MESSAGE(3, "colin=%d, nulldim=%d, Sdim=%d\n",colin,nulldim,Sdim);
+	MTX_LOG2("colin=%d, nulldim=%d, Sdim=%d",colin,nulldim,Sdim);
 	for (j=0; j<nulldim; j++)
 	{
 	    PTR matptr = matGetPtr(A,j);
@@ -126,7 +126,7 @@ Matrix_t *HomogeneousPart(MatRep_t *m, MatRep_t *s, Matrix_t *npw,
 	}
     }
 
-    MESSAGE(2, "Equation system is %dx%d\n",A->nor,A->noc);
+    MTX_LOG2("Equation system is %dx%d",A->nor,A->noc);
     gensys = matNullSpace__(A);    /* module-generating system for the S-part */
 
 /* spins up the basis of the whole S-part of M

@@ -11,7 +11,7 @@
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static const uint32_t TYPEID_STRING_BUILDER = 0x3B628F15LU;
+static const uint32_t TYPEID_STRING_BUFFER = 0x3B628F15LU;
 
 /// @defgroup str String Builder
 /// @{
@@ -23,7 +23,7 @@ static int sbIsValid(const StrBuffer* sb)
 {
    if (sb == NULL)
       return 0;
-   if (sb->typeId != TYPEID_STRING_BUILDER)
+   if (sb->typeId != TYPEID_STRING_BUFFER)
       return 0;
    if (sb->size > sb->capacity)
       return 0;
@@ -51,7 +51,7 @@ StrBuffer* sbAlloc(size_t initialCapacity)
    sb->capacity = initialCapacity;
    sb->data = NALLOC(char, initialCapacity + 1);
    *sb->data = 0;
-   sb->typeId = TYPEID_STRING_BUILDER;
+   sb->typeId = TYPEID_STRING_BUFFER;
    return sb;
 }
 
@@ -140,10 +140,12 @@ char* sbToEphemeralString(StrBuffer* sb)
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
+// Makes sure that at least minFree characters (plus the terminating NUL) can be appended.
+
 static void reserve(StrBuffer* sb, size_t minFree)
 {
    if (sb->size + minFree > sb->capacity) {
-      sb->capacity = sb->size + minFree;
+      sb->capacity = sb->size + ((minFree < 100) ? 100 : minFree);
       sb->data = NREALLOC(sb->data, char, sb->capacity + 1);
    }
 }
@@ -170,17 +172,17 @@ void sbAppend(StrBuffer* sb, const char* fragment)
 void sbVprintf(StrBuffer* sb, const char* fmt, va_list args)
 {
    sbValidate(MTX_HERE, sb);
-   reserve(sb, sb->size + 100);
+   reserve(sb, 100);
    va_list args2;
    va_copy(args2, args);
-   int len = vsnprintf(sb->data + sb->size, 100 + 1, fmt, args2);
+   int len = vsnprintf(sb->data + sb->size, sb->capacity - sb->size + 1, fmt, args2);
    va_end(args2);
    if (len < 0) {
       mtxAbort(MTX_HERE, "String formatting error");
    }
    if (len > 100) {
       reserve(sb, len);
-      int len2 = vsnprintf(sb->data, len + 1, fmt, args);
+      int len2 = vsnprintf(sb->data + sb->size, sb->capacity - sb->size + 1, fmt, args);
       MTX_ASSERT(len2 == len);
    }
    sb->size += len;

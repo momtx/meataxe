@@ -48,12 +48,12 @@ static void init(int argc, char **argv)
 
 static void openFiles()
 {
-    ifile = mfOpen(iname);
+    ifile = mfOpen(iname, "rb");
     mfReadHeader(ifile);
     if (mfObjectType(ifile) != MTX_TYPE_MATRIX)
 	mtxAbort(MTX_HERE,"%s: %s",iname,MTX_ERR_NOTMATRIX);
     ffSetField(ifile->header[0]); 
-    MESSAGE(0, "Characteristic is %lu\n",(unsigned long) ffChar);
+    MTX_LOGI("Characteristic is %lu",(unsigned long) ffChar);
     ofile = mfCreate(oname,ifile->header[0],ifile->header[1],ifile->header[2]);
 }
 
@@ -76,7 +76,7 @@ static void frobeniusMap()
 
     for (uint32_t i = 0; i < nor; ++i)
     {
-	mfReadRows(ifile,m1,1, noc);
+	ffReadRows(ifile,m1,1, noc);
 	for (uint32_t k = 0; k < noc; ++k)
 	{
 	    FEL f1 = ffExtract(m1,k);
@@ -85,7 +85,7 @@ static void frobeniusMap()
 		f2 = ffMul(f1,f2);
 	    ffInsert(m1,k,f2);
 	}
-	mfWriteRows(ofile,m1,1,noc);
+	ffWriteRows(ofile,m1,1,noc);
     }
     sysFree(m1);
 }

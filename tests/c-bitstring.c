@@ -453,7 +453,7 @@ TstResult BitString_Variable_Copy()
 static int testFileIo(int variable)
 {
    const char FILE_NAME[] = "check.1";
-   FILE* file = fopen(FILE_NAME,"w+b");
+   MtxFile_t* file = mfOpen(FILE_NAME,"w+b");
    const int SIZES[] = {0, 1, 2, 10, 100, 1000, 10000, -1};
    
    RngReset();
@@ -464,7 +464,7 @@ static int testFileIo(int variable)
       bsFree(bs);
    }
 
-   sysFseek(file, 0);
+   sysFseek(file->file, 0);
    RngReset();
    for (const int* size = SIZES; *size > 0; ++size) {
       BitString_t* expectedBs = variable ? bsAllocEmpty() : bsAlloc(*size);
@@ -474,7 +474,7 @@ static int testFileIo(int variable)
       bsFree(bs);
       bsFree(expectedBs);
    }
-   fclose(file);
+   mfClose(file);
    sysRemoveFile(FILE_NAME);
    return 0;
 }

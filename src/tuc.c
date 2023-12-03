@@ -91,7 +91,7 @@ static void ReadQMatrices()
     for (i = 0; i < TkInfo.nCf; ++i)
     {
 	sprintf(fn,"%s.q.%d",TkiName,i+1);
-	MESSAGE(1, "Reading %s\n",fn);
+	MTX_LOGD("Reading %s",fn);
 	QMat[i] = matLoad(fn);
     }
 }

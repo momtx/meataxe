@@ -70,7 +70,7 @@ static void MakeInvertible(Matrix_t *mat, const char *fn)
     k = dup->nor;
     if (k < mat->nor)
     {
-	MESSAGE(0, "WARNING: %s: %d basis vectors are missing, "
+	MTX_LOGI("WARNING: %s: %d basis vectors are missing, "
 	    "using random vectors\n",fn,mat->nor - k);
     }
     for (i = 0, x = mat->data; i < mat->nor; ++i, ffStepPtr(&x, mat->noc))
@@ -135,7 +135,7 @@ static void Init(int argc, char** argv)
    // Read the semisimplicity bases.
    if (!NoBasisChange) {
       int ctx = mtxBegin(MTX_HERE, "HINT: did you run 'pwkond -tb'?");
-      MESSAGE(1, "Reading and inverting semisimplicity bases\n");
+      MTX_LOGD("Reading and inverting semisimplicity bases");
       sprintf(fn, "%s.ssb", TKInfo.nameM);
       SsBasisM = matLoad(fn);
       MakeInvertible(SsBasisM, fn);
@@ -280,122 +280,102 @@ static void gemap(Matrix_t *conma, Matrix_t *q, Matrix_t *mrow, Matrix_t *nrow)
 
 static void condenseMat(int gen)
 {
-    char resname[LAT_MAXBASENAME + 20];	/* Output file name */
-    char aname[LAT_MAXBASENAME + 20];	/* Generator on M */
-    char bname[LAT_MAXBASENAME + 20];	/* Generator on M */
-    int cf;				/* Constituent index */
-    Matrix_t *mmat, *nmat, *x;		/* The generator on M, N */
+   char resname[LAT_MAXBASENAME + 20];  /* Output file name */
+   char aname[LAT_MAXBASENAME + 20];    /* Generator on M */
+   char bname[LAT_MAXBASENAME + 20];    /* Generator on M */
+   int cf;                              /* Constituent index */
+   Matrix_t* mmat, * nmat, * x;         /* The generator on M, N */
 
+   // Make file names
+   sprintf(resname, "%s.%d", ResultName, gen + 1);
+   sprintf(aname, "%s.%d", AName, gen + 1);
+   sprintf(bname, "%s.%d", BName, gen + 1);
+   MTX_LOGI("Condensing %s x %s --> %s", aname, bname, resname);
 
-    /* Make file names 
-       --------------- */
-    sprintf(resname,"%s.%d",ResultName,gen+1);
-    sprintf(aname,"%s.%d",AName,gen+1);
-    sprintf(bname,"%s.%d",BName,gen+1);
-    MESSAGE(0, "Condensing %s x %s --> %s\n",aname,bname,resname);
+   // Load the generators on M and N
+   mmat = matLoad(aname);
+   if (strcmp(aname, bname)) {
+      nmat = matLoad(bname);
+   }
+   else {
+      nmat = mmat;
+   }
 
-    /* Load the generator on M and N
-       ----------------------------- */
-    mmat = matLoad(aname);
-    if (strcmp(aname,bname))
-	nmat = matLoad(bname);
-    else
-	nmat = mmat;
+   // Change to semisimplicity basis.
+   if (!NoBasisChange) {
+      MTX_LOGD("  Changing basis");
+      x = matDup(SsBasisM);
+      matMul(x, mmat);
 
-    /* Change to semisimplicity basis.
-       ------------------------------- */
-    if (!NoBasisChange)
-    {
-        MESSAGE(1, "  Changing basis\n");
-        x = matDup(SsBasisM);
-        matMul(x,mmat);
-        
-        matMul(x,SsBasisMi);
-        matFree(mmat);
-        mmat = x;
+      matMul(x, SsBasisMi);
+      matFree(mmat);
+      mmat = x;
 
-        if (strcmp(aname,bname))
-        {
-	    x = matDup(SsBasisN);
-	    matMul(x,nmat);
-	    matMul(x,SsBasisNi);
-            matFree(nmat);
-	    nmat = x;
-        }
-        else
-	    nmat = mmat;
-    }
+      if (strcmp(aname, bname)) {
+         x = matDup(SsBasisN);
+         matMul(x, nmat);
+         matMul(x, SsBasisNi);
+         matFree(nmat);
+         nmat = x;
+      }
+      else {
+         nmat = mmat;
+      }
+   }
 
-    if (WriteGenerators)
-    {
-	char fn[200];
-        sprintf(fn,"%s.ss.%d",AName,gen+1);
-	matSave(mmat,fn);
-	if (strcmp(aname,bname))
-        {
-	    sprintf(fn,"%s.ss.%d",BName,gen+1);
-	    matSave(nmat,fn);
-	}
-    }
+   if (WriteGenerators) {
+      char fn[200];
+      sprintf(fn, "%s.ss.%d", AName, gen + 1);
+      matSave(mmat, fn);
+      if (strcmp(aname, bname)) {
+         sprintf(fn, "%s.ss.%d", BName, gen + 1);
+         matSave(nmat, fn);
+      }
+   }
 
-    /* Open the output file
-       -------------------- */
-    MESSAGE(1, "  Beginning condensation\n");
-    MtxFile_t* resultFile = mfCreate(resname,ffOrder,TKInfo.dim,TKInfo.dim);
+   // Open the output file
+   MTX_LOGD("Beginning condensation");
+   MtxFile_t* resultFile = mfCreate(resname, ffOrder, TKInfo.dim, TKInfo.dim);
 
-    /* Main loop: for each constituent
-       ------------------------------- */
-    for (cf = 0; cf < TKInfo.nCf; ++cf)
-    {
-	int cfm = TKInfo.cfIndex[0][cf];    /* Index in M */
-	int cfn = TKInfo.cfIndex[1][cf];    /* Index in N */
-	int rownb = InfoM.Cf[cfm].dim;	/* Number of rows to extract */
-	int mi;				/* Counter for copies of this const. */
+   // Main loop: for each constituent
+   for (cf = 0; cf < TKInfo.nCf; ++cf) {
+      const int cfm = TKInfo.cfIndex[0][cf];  // Index in M
+      const int cfn = TKInfo.cfIndex[1][cf];  // Index in N
+      const int rownb = InfoM.Cf[cfm].dim;    // Number of rows to extract
 
-        MESSAGE(2, "  Processing %s",latCfName(&InfoM,cfm));
-        MESSAGE(2, " x %s\n",latCfName(&InfoN,cfn));
+      MTX_LOG2("Processing %s x %s", latCfName(&InfoM, cfm), latCfName(&InfoN, cfn));
 
-        for (mi = 0; mi < InfoM.Cf[cfm].mult; ++mi)
-        {
-	    Matrix_t *mrow;
-	    int ni;
-	    int firstrow = FirstRow(&InfoM,cfm,mi);
-	    mrow = matCutRows(mmat,firstrow,rownb);
+      for (int mi = 0; mi < InfoM.Cf[cfm].mult; ++mi) {
+         Matrix_t* mrow;
+         int ni;
+         int firstrow = FirstRow(&InfoM, cfm, mi);
+         mrow = matCutRows(mmat, firstrow, rownb);
 
-	    MESSAGE(3, "  ");
-            for (ni = 0; ni < InfoN.Cf[cfn].mult; ++ni)
-            {
-		Matrix_t *nrow, *condmat;
+         for (ni = 0; ni < InfoN.Cf[cfn].mult; ++ni) {
+            Matrix_t* nrow, * condmat;
 
-		firstrow = FirstRow(&InfoN,cfn,ni);
-		nrow = matCutRows(nmat,firstrow,rownb);
-		condmat = matAlloc(ffOrder,Q[cf]->nor,TKInfo.dim);
-		if (condmat == NULL)
-		{
-		    mtxAbort(MTX_HERE,"Cannot allocate %dx%d matrix",
-			Q[cf]->nor,TKInfo.dim);
-		}
+            firstrow = FirstRow(&InfoN, cfn, ni);
+            nrow = matCutRows(nmat, firstrow, rownb);
+            condmat = matAlloc(ffOrder, Q[cf]->nor, TKInfo.dim);
+            MTX_LOG2("Processing %s(%d) x %s(%d)",
+               latCfName(&InfoM, cfm), mi,
+               latCfName(&InfoN, cfn), ni);
+            gemap(condmat, Q[cf], mrow, nrow);
 
-	    	MESSAGE(3, " %dx%d",mi,ni);
-                gemap(condmat,Q[cf],mrow,nrow);
-                
-                /* write result */
-        	mfWriteRows(resultFile,condmat->data,condmat->nor,condmat->noc);
-                matFree(condmat);
-                matFree(nrow);
-            }
-	    MESSAGE(3, "\n");
-            matFree(mrow);
-        }   
-    }   
+            /* write result */
+            ffWriteRows(resultFile, condmat->data, condmat->nor, condmat->noc);
+            matFree(condmat);
+            matFree(nrow);
+         }
+         matFree(mrow);
+      }
+   }
 
-    mfClose(resultFile);
-
-    /* Clean up
-       -------- */
-    matFree(mmat);
-    if (strcmp(aname,bname))
-	matFree(nmat);
+   mfClose(resultFile);
+   matFree(mmat);
+   if (strcmp(aname, bname)) {
+      matFree(nmat);
+   }
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////

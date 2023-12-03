@@ -1,4 +1,4 @@
-@mainpage The C MeatAxe
+@mainpage Documentation
 
 The MeatAxe is a set of programs for working with matrices over finite fields and,
 to some degree, with permutations and polynomials. It was originally written to
@@ -6,8 +6,6 @@ calculate modular character tables, but it can be used for other purposes such a
 investigating subgroup structure, module structure etc.
 Indeed, there is a set of programs to compute the submodule lattice of a given module.
 See @ref pg_progs_index for a list of all programs.
-
-# Quick Start
 
 To build the MeatAxe, change to the top level directory (containing `Makefile`)
 and execute
@@ -45,9 +43,8 @@ Here are some simple examples for using the programs:
   ../bin/chop m11
   ```
 
-# More Information
+<b>More Information</b>
 
-- @subpage pg_building
 - @subpage pg_userguide -- Information about installing and using the MeatAxe programs.
 - @subpage pg_programming -- Read this if you want to modify or extend the MeatAxe, or
      use the MeatAxe library in your programs.
@@ -55,10 +52,7 @@ Here are some simple examples for using the programs:
 - @subpage pg_bib
 
 
-
-#############################################################################################
-
-@page pg_building Bulding and Installing the MeatAxe
+@page pg_building Building and Installing the MeatAxe
 
 # System Requirements
 
@@ -88,15 +82,20 @@ This command builds all programs in the `bin/` directory and runs the tests.
 The build process can be customized by creating the file @c Makefile.conf
 next to @c Makefile and entering make variable settings in this file.
 This is recommended instead of modifying the @c Makefile directly because
-@c Makefile.conf will not be overwritten when a new version is downloaded.
+@c Makefile.conf will not be overwritten when you download a new version.
 
 The variables that can be overwritten are described at the beginning of @c Makefile.
 Here is a (possibly incomplete) list:
 
-* **MTXROOT** is the directory where run-time files are installed.
-  Executable programs will be created in @c ${MTXROOT}/bin,
-  libraries and other files will be created in @c ${MTXROOT}/lib.
-  The default is MTXROOT=.
+* **MTXINSTALLDIR** is the directory where run-time files are installed.
+  If you are only working locally in the source directory, make install is not required
+  and `${MTXINSTALLDIR}` can be left empty.
+
+  If you want to install the runtime files at a different location, set
+  `${MTXINSTALLDIR}` to the name of an exsting directory. Running `make install` will
+  copy programs and library files to the `bin`, `lib`, and `include` subdirectory of
+  `${MTXINSTALLDIR}`. These subdirectories are created when necessary, but the top-level
+  directory must exist.
   
 * **CC**, **CFLAGS1**, and **LDFLAGS1** set the compiler command, compile options,
   and link options, respectively.
@@ -104,10 +103,12 @@ Here is a (possibly incomplete) list:
 * **ZZZ** controls which arithmentic module will be used. There are two modules available:
   * @c ZZZ=0 selects the standard arithmetic, supporting fields up to GF(256).
   * @c ZZZ=1 selecte the "large fields" arithmetic module which supports fields up to
-    GF(251<sup>2</sup>) but is considerably slower than the standard arithmetic.
+    GF(2<sup>16</sup>) but is considerably slower than the standard arithmetic.
 
 * **MTXDOCDIR** sets the directory where the HTML documentation will be created.
-  Default is "./doc".
+  Default is "./doc". If you have define an installation directory (see above) may want
+  to build the documentation in a subdirectory of the installation directory. 
+  For example: `MTXDCDIR=${MTXINSTALLDIR}/doc`.
 
 * **CFLAGS_THREADS** and **LDFLAGS_THREADS** control support for multithreading.
   Thread support is an experimental feature and disabled by default.
@@ -117,18 +118,18 @@ Here is a (possibly incomplete) list:
   system you may also need compiler and linker options to enable the POSIX threads
   library.
 
-#############################################################################################
 
 @page pg_userguide User's Guide
 
+- @subpage pg_building
 - @subpage pg_using
 - @subpage prog_stdopts
 - @subpage pg_progs_index
 - @subpage pg_file_formats
-- @subpage pg_bib
+
+See also @ref pg_bib.
 
 
-#############################################################################################
 
 @page pg_bib Bibliography
 
@@ -189,7 +190,6 @@ Here is a (possibly incomplete) list:
     Journal of Pure and Applied Algebra 37 (1985), 111-116.
 
 
-#############################################################################################
 
 @page pg_progs_index Program Index
 
@@ -296,7 +296,6 @@ The algorithm assumes that the irreducible constituents
 of the restriction, and corresponding peak words are known, so you must
 run @ref prog_chop "chop" and @ref prog_pwkond "pwkond" before.
 
-#############################################################################################
 
 @page pg_using Using the MeatAxe Programs: General Remarks
 
@@ -362,7 +361,6 @@ The default may be overridden at run-time by defining the environment variable @
 Both the default and @c MTXLIB can be overridden with -L command line option, which is
 supported by all programs.
 
-#############################################################################################
 
 @page pg_programming Programmer's Guide
 This section is intended for users who want to add new programs to the MeatAxe or
@@ -386,6 +384,7 @@ which have been implemented in the kernel for performance reasons.
 
 - @ref os
 - @ref ff
+- @subpage pg_error_handling
 
 # Layer 2 - Objects
 This layer encapsulates low-level functionality in "objects" 
@@ -417,6 +416,10 @@ The top layer includes the MeatAxe programs and shell scripts like
 @ref prog_zad "zad", @ref prog_zmu "zmu", @ref prog_chop "chop", ...
 See @ref pg_progs_index for detailed descriptions.
 
+
+
+
+
 # Compiling and Linking with the MeatAxe Library
 
 To use the MeatAxe library in your programs you need two files:
@@ -434,8 +437,6 @@ Example:
 cc -c -I/usr/joe/mtx/src -o myprog.o myprog.c
 cc -L/usr/joe/mtx/tmp -o myprog myprog.o libmtx.a
 ```
-
-#############################################################################################
 
 @page prog_stdopts Standard Command Line Options
 All MeatAxe programs expect one or more arguments, ususally the names
@@ -485,7 +486,9 @@ meaning is always the same.
 @par -G
   Generate output in GAP format.
 
-#############################################################################################
+
+
+
 
 @page pg_file_formats File Formats
 
@@ -571,6 +574,8 @@ first bit of the string.
 @todo old format
 @todo new format
 
+
+@page pg_error_handling Error Handling
 
 Error Handling
 --------------

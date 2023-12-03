@@ -13,6 +13,10 @@ versions have developed independently.
 - Removed suport for old text file formats.
 - Added "large field" arithmetic (q < 65535).
 - Added support for multithreading (experimental)
+- Program messages can be controlled with --log. -Q and -V still exist but
+  should not be used together with --log
+- GAP output is not written to a file by default to avoid mixing with
+  normal messages. See the documentaion of -G / --gap
 
 
 # Release 2.4.X {#r2_4_x}

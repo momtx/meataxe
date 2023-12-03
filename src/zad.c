@@ -53,7 +53,7 @@ static void init(int argc, char** argv)
       if (*file_name == '-' || *file_name == '+') {
          ++file_name;
       }
-      Input[i] = mfOpen(file_name);
+      Input[i] = mfOpen(file_name, "rb");
       mfReadHeader(Input[i]);
 
       if (mfObjectType(Input[i]) != MTX_TYPE_MATRIX) {
@@ -107,12 +107,12 @@ static void addMatrices()
    const FEL MinusOne = ffNeg(FF_ONE);
 
    for (uint32_t i = Nor; i > 0; --i) {
-      mfReadRows(Input[0], Buf1, 1, Noc);
+      ffReadRows(Input[0], Buf1, 1, Noc);
       if (Subtract[0]) {
          ffMulRow(Buf1, MinusOne, Noc);
       }
       for (int k = 1; k < NInput; ++k) {
-         mfReadRows(Input[k], Buf2, 1, Noc);
+         ffReadRows(Input[k], Buf2, 1, Noc);
          if (Subtract[k]) {
             ffAddMulRow(Buf1, Buf2, MinusOne, Noc);
          }
@@ -121,7 +121,7 @@ static void addMatrices()
          }
       }
 
-      mfWriteRows(Output, Buf1, 1, Noc);
+      ffWriteRows(Output, Buf1, 1, Noc);
    }
 }
 

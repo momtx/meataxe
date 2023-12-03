@@ -265,8 +265,8 @@ static Matrix_t* makeMonomial(const WgData_t *wg, uint32_t blk, int pos)
 /// Symbolic name of a word.
 /// This function returns a symbolic representation of the word @a n as a polynomial in the
 /// generators. For example, word 306 with two generators is represented as "ab2a+a2b+ab3a".
-/// The return value is a pointer to a single buffer in the work generator, which is overwritten
-/// on each call for the same word generator.
+/// The return value is a pointer to an internal buffer in the word generator, which is
+/// overwritten on each call for the same word generator.
 ///
 /// See also @ref wgDescribeWord.
 ///
@@ -514,7 +514,7 @@ int wgFree(WgData_t *wg)
 /// @param wg Word generator data.
 /// @param fp Buffer for the finger print (6 numbers).
 
-void wgMakeFingerPrint(WgData_t *wg, int fp[6])
+void wgMakeFingerPrint(WgData_t *wg, uint32_t fp[6])
 {
    int i;
    for (i = 1; i <= 6; ++i) {

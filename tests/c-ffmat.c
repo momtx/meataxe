@@ -200,10 +200,7 @@ static int TestSumInter2(int noc)
    wrk2 = ffAlloc(nor1 + nor2, noc);
    uint32_t *piv = NALLOC(uint32_t,nor1 + nor2);
 
-   MESSAGE(2,"TestSumInter2: q=%d, noc=%d, vnor=%d wnor=%d\n", ffOrder, noc, vdim, wdim);
-
-   /* Fill with random values.
-      ------------------------ */
+   // Fill with random values.
    for (i = 0, x = v; i < nor1; ++i, ffStepPtr(&x, noc)) {
       for (k = 0; k < noc; ++k) {
          ffInsert(x,k,FTab[mtxRandomInt(ffOrder)]);

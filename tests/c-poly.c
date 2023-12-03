@@ -308,4 +308,67 @@ TstResult Polynomial_Gcd()
    return 0;
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+struct FactorizationTestCase {
+      int fieldOrder;
+      int pol[6][20];   // degree, a[0], a[1], ... a[degree]
+};
+
+
+static int Polynomial_Factorization_(const struct FactorizationTestCase* tc, int mult)
+{
+   const size_t MAX_POLS = sizeof(tc->pol) / sizeof(tc->pol[0]);
+   ffSetField(tc->fieldOrder);
+
+   FPoly_t* expected = fpAlloc(tc->fieldOrder);
+   Poly_t* poly = polAlloc(tc->fieldOrder, 0);
+   for (size_t i = 0; i < MAX_POLS && tc->pol[i][0] > 0; ++i) {
+      Poly_t* factor = polAlloc(tc->fieldOrder, tc->pol[i][0]);
+      for (int k = 0; k <= factor->degree; ++k)
+         factor->data[k] = ffFromInt(tc->pol[i][k+1]);
+      for (int k = 0; k < mult; ++k) {
+         polMul(poly, factor);
+      }
+      fpMulP(expected, factor, mult);
+      polFree(factor);
+   }
+
+   FPoly_t* factorized = Factorization(poly);
+   polFree(poly);
+   ASSERT_EQ_INT(fpCompare(factorized, expected), 0);
+   fpFree(factorized);
+   fpFree(expected);
+   return 0;
+}
+
+
+TstResult Polynomial_Factorization()
+{
+   const struct FactorizationTestCase TC[] = {
+      { .fieldOrder = 243,
+        .pol = {
+           { 2, 2, 2, 1 },        // X2+2X+2
+           { 3, 1, 2, 0, 1 },     // X3+2X+1
+           { 4, 2, 0, 0, 2, 1 }   // X4+2X3+2
+        } },
+      { .fieldOrder = 256,
+        .pol = {
+           { 3, 1, 1, 0, 1 },             // X3+X+1
+           { 5, 1, 0, 1, 0, 0, 1 },       // X5+X2+1
+           { 7, 1, 1, 0, 0, 0, 0, 0, 1 }  // X7+X+1
+        } },
+   };
+   const struct FactorizationTestCase* const TC_END = TC + sizeof(TC) / sizeof(TC[0]);
+
+   int result = 0;
+   for (const struct FactorizationTestCase* tc = TC; tc < TC_END; ++tc) {
+      for (int mult = 1; mult <= 3; ++mult) {
+         result |= Polynomial_Factorization_(tc, mult);
+         if (result) { return result; }
+      }
+   }
+   return result;
+}
+
 // vim:fileencoding=utf8:sw=3:ts=8:et:cin

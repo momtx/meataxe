@@ -39,10 +39,8 @@ static void init(int argc, char **argv)
 {
     App = appAlloc(&AppInfo,argc,argv);
     opt_G = appGetOption(App,"-G --gap");
-    if (opt_G) 
-	MtxMessageLevel = -100;
     appGetArguments(App,1,1);
-    MESSAGE(0, "\n*** FIND CYCLIC SUBMODULES ***");
+    MTX_LOGI("Start mkcycl - Find cyclic submodules");
     latReadInfo(&LI,App->argV[0]);
 }
 
@@ -96,7 +94,7 @@ void WriteResult(int cf, int cond_dim)
     for (i = 0; i < NCyclic; ++i)
 	matCopyRegion(result,i,0,Cyclic[i],0,0,1,-1);
     sprintf(fn,"%s%s.v",LI.BaseName,latCfName(&LI,cf));
-    MESSAGE(1, "Writing %s",fn);
+    MTX_LOGD("Writing %s",fn);
     matSave(result,fn);
     matFree(result);
 }
@@ -135,7 +133,7 @@ void FindCyclic(int cf)
 
     // Read the generators and the condensed peak words
     sprintf(fn,"%s%s.%%dk",LI.BaseName,latCfName(&LI,cf));
-    MESSAGE(1, "Loading generators for %s%s",LI.BaseName,latCfName(&LI,cf));
+    MTX_LOGD("Loading generators for %s%s",LI.BaseName,latCfName(&LI,cf));
     Rep = mrLoad(fn,LI.NGen);
     sprintf(fn,"%s%s.np",LI.BaseName,latCfName(&LI,cf));
     mrAddGenerator(Rep,matLoad(fn),0);
@@ -151,12 +149,12 @@ void FindCyclic(int cf)
     {
 	++count;
 	if (count % 100 == 0)
-	    MESSAGE(2, "  %d vectors, %d submodules",count,NCyclic);
+	    MTX_LOG2("  %d vectors, %d submodules",count,NCyclic);
 	Spinup(seed);
     }
 
     // Write the result and clean up
-    MESSAGE(0, "%s%s: %d cyclic submodule%s (%d vectors tried)",
+    MTX_LOGI("%s%s: %d cyclic submodule%s (%d vectors tried)",
 	LI.BaseName,latCfName(&LI,cf),NCyclic,NCyclic == 1 ? " " : "s",
 	count);
     WriteResult(cf,cond_dim);

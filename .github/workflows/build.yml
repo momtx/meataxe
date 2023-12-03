@@ -23,3 +23,13 @@ jobs:
       run: echo "no configure"
     - name: make
       run: make test
+  build-linux-mt:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    - name: configure
+      run:
+      - echo "CFLAGS_THREADS=-pthread -DMTX_DEFAULT_THREADS=4" > Makefile.conf
+      - echo "LDFLAGS_THREADS=-pthread" >>Makefile.conf
+    - name: make
+      run: make test

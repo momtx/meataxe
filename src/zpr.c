@@ -111,7 +111,7 @@ static void printGapMatrix()
    PTR m1 = ffAlloc(1, noc);
    printString("MeatAxe.Matrix := [\n");
    for (uint32_t row = 1; row <= nor; ++row) {
-      mfReadRows(binaryFile, m1, 1, noc);
+      ffReadRows(binaryFile, m1, 1, noc);
       int cnt = 0;
       fprintf(textFile, "[");
       for (uint32_t col = 0; col < noc; ++col) {
@@ -250,7 +250,7 @@ static void printMatrix()
    fprintf(textFile, "matrix field=%lu rows=%lu cols=%lu\n",
            (unsigned long)q, (unsigned long)nor, (unsigned long)noc);
    for (uint32_t row = 0; row < nor; ++row) {
-      ffReadRows(binaryFile->file, m1, 1, noc);
+      ffReadRows(binaryFile, m1, 1, noc);
       for (int c = 0; c < noc; ++c) {
          const int value = ffToInt(ffExtract(m1, c));
          fprintf(textFile, "%*d", width, value);
@@ -265,7 +265,7 @@ static void printMatrix()
 
 static void printPolynomial()
 {
-   Poly_t* p = polReadData(binaryFile->file, binaryFile->header);
+   Poly_t* p = polReadData(binaryFile);
    print("polynomial field=%lu degree=%ld", (unsigned long)p->field, (long)p->degree);
    printNewLine();
    for (int32_t i = 0; i <= p->degree; ++i) {
@@ -277,7 +277,7 @@ static void printPolynomial()
 
 static void printPermutation()
 {
-   Perm_t* perm = permReadData(binaryFile->file, binaryFile->header);
+   Perm_t* perm = permReadData(binaryFile);
    print("permutation degree=%lu", (unsigned long) perm->degree);
    printNewLine();
    for (uint32_t i = 0; i < perm->degree; ++i) {
@@ -425,11 +425,11 @@ static void init(int argc, char** argv)
    App = appAlloc(&AppInfo, argc, argv);
    Gap = appGetOption(App, "-G --gap");
    Summary = appGetOption(App, "-s --summary");
-   if (Gap) {
-      MtxMessageLevel = -100;   /* Suppress messages in GAP mode */
-   }
+//   if (Gap) {
+//      MtxMessageLevel = -100;   /* Suppress messages in GAP mode */
+//   }
    appGetArguments(App, 1, 2);
-   binaryFile = mfOpen(App->argV[0]);
+   binaryFile = mfOpen(App->argV[0], "rb");
    textFile = (App->argC >= 2) ? sysFopen(App->argV[1], "w") : stdout;
 }
 
@@ -438,7 +438,7 @@ static void init(int argc, char** argv)
 int main(int argc, char** argv)
 {
    init(argc, argv);
-   while (mfTryReadHeader(binaryFile)) {
+   while (mfTryReadHeader(binaryFile) == 0) {
       if (Summary) {
          printSummary();
       }

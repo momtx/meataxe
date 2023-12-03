@@ -68,66 +68,54 @@
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static int CheckForLongOption(MtxApplication_t *app, int i, const char *long_name)
+static int checkForLongOption(MtxApplication_t *app, int i, const char *long_name, int hasArg)
 {
-   if (*long_name == 0) {
+   const char *val = strPrefix(app->origArgV[i] + 2, long_name);
+   if (val == NULL || (*val != 0 && *val != '='))
       return -1;
-   }
-   if (strcmp(app->origArgV[i] + 2,long_name)) {
-      return -1;
-   }
+   snprintf(app->optName, sizeof(app->optName), "--%s", long_name);
    app->isDone[i] = 0xFFFFFFFF;
+   app->optArg = (hasArg && *val == '=') ? val + 1 : NULL;
    return 0;
 }
 
-
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static int CheckForShortOption(MtxApplication_t *app, int i, char short_name, int needs_arg)
+static int CheckForShortOption(MtxApplication_t *app, int i, char short_name, int hasArg)
 {
    const char *tab = app->origArgV[i] + 1;
-   int k;
-   for (k = 0; tab[k] != 0; ++k) {
+   for (int k = 0; tab[k] != 0; ++k) {
+      MTX_ASSERT(k < 32);
       if (IS_DONE_1(app,i,k)) {
          continue;
       }
       if (tab[k] != short_name) {
          continue;
       }
-      if (needs_arg && ((k > 0) || (tab[k + 1] != 0))) {
-         mtxAbort(NULL,"Option '-%c' cannot be combined with other options", short_name);
-         MARK_DONE(app,i);
-         return -1;
-      }
       MARK_DONE_1(app,i,k);
+      snprintf(app->optName, sizeof(app->optName), "-%c", short_name);
+
+      if (hasArg) {
+         if (tab[1] != 0) {
+            mtxAbort(NULL,"Option '-%c' cannot be combined with other options", short_name);
+         }
+         if (IS_DONE(app, i+1) != 0) {
+            mtxAbort(NULL,"Option '-%c' needs an argument", short_name);
+         }
+         app->optArg = app->origArgV[i+1];
+         MARK_DONE(app,i+1);
+      }
       return 0;
    }
    return -1;
 }
 
-
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static int GetArg(MtxApplication_t *app, int i)
-{
-   if ((i >= app->optEnd - 1) || (app->isDone[i + 1] != 0)) {
-      mtxAbort(NULL,"Missing argument after '%s'",app->origArgV[i]);
-      return -1;
-   }
-   app->optArg = app->origArgV[i + 1];
-   app->isDone[i + 1] = 0xFFFFFFFF;
-   return 0;
-}
-
-
-////////////////////////////////////////////////////////////////////////////////////////////////////
-
-static int Find(MtxApplication_t *app, char short_name, const char *long_name,
-                int needs_arg)
+static int Find(MtxApplication_t *app, char short_name, const char *long_name, int needs_arg)
 {
    int i;
    for (i = 0; i < app->optEnd; ++i) {
-      int rc;
 
       if (IS_DONE(app,i)) {
          continue;
@@ -135,20 +123,15 @@ static int Find(MtxApplication_t *app, char short_name, const char *long_name,
       if (*app->origArgV[i] != '-') {
          continue;
       }
-      if (app->origArgV[i][1] == '-') {
-         rc = CheckForLongOption(app,i,long_name);
-      } else {
+      int rc = -1;
+      if (app->origArgV[i][1] == '-' && *long_name != 0) {
+         rc = checkForLongOption(app,i,long_name, needs_arg);
+      }
+      else if (short_name != 0) {
          rc = CheckForShortOption(app,i,short_name,needs_arg);
       }
-      if (rc == 0) {
-         if (needs_arg) {
-            if (GetArg(app,i) != 0) {
-               return -1;
-            }
-         }
-         app->optInd = i;
+      if (rc == 0)
          return 0;
-      }
    }
    return -1;
 }
@@ -160,21 +143,22 @@ static int Find(MtxApplication_t *app, char short_name, const char *long_name,
 static int FindSpec(MtxApplication_t *app, const char *spec, int needs_arg)
 {
    const char *c;
-   const char *short_name = "", *long_name = "";
+   char short_name = 0;
+   const char* long_name = "";
    const char *err_text = "Invalid option specification";
 
-   for (c = spec; *c != 0 && isspace((unsigned char)*c); ++c) {
+   for (c = spec; *c != 0 && isspace(*c); ++c) {
    }
    if (*c != '-') {
       mtxAbort(MTX_HERE,"%s", err_text);
       return -1;
    }
    if (c[1] != '-') {
-      short_name = c + 1;
-      while (*c != 0 && !isspace((unsigned char)*c)) {
+      short_name = c[1];
+      while (*c != 0 && !isspace(*c)) {
          ++c;
       }
-      while (*c != 0 && isspace((unsigned char)*c)) {
+      while (*c != 0 && isspace(*c)) {
          ++c;
       }
    }
@@ -184,7 +168,7 @@ static int FindSpec(MtxApplication_t *app, const char *spec, int needs_arg)
          return -1;
       }
       long_name = c + 2;
-      while (*c != 0 && !isspace((unsigned char)*c)) {
+      while (*c != 0 && !isspace(*c)) {
          ++c;
       }
       if (*c != 0) {
@@ -193,7 +177,7 @@ static int FindSpec(MtxApplication_t *app, const char *spec, int needs_arg)
       }
    }
 
-   return Find(app,*short_name,long_name,needs_arg);
+   return Find(app,short_name,long_name,needs_arg);
 }
 
 
@@ -226,7 +210,6 @@ static void PrintVersion(const MtxApplicationInfo_t *ai)
    printf("%s\n",mtxVersion());
 }
 
-
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 /// Initialize the application.
 /// This function initializes a MeatAxe application. It should be called
@@ -248,10 +231,9 @@ static void PrintVersion(const MtxApplicationInfo_t *ai)
 /// @param argv List of command line arguments.
 /// @return Pointer to the application object, or 0 on error.
 
-MtxApplication_t *appAlloc(MtxApplicationInfo_t const *ai, int argc, char **argv)
+MtxApplication_t *appAlloc(MtxApplicationInfo_t const *ai, int argc, char * const *argv)
 {
    MtxApplication_t *a;
-   const char *c;
    int time_limit;
    int i;
 
@@ -259,15 +241,12 @@ MtxApplication_t *appAlloc(MtxApplicationInfo_t const *ai, int argc, char **argv
    memset(a,0,sizeof(*a));
    a->context = mtxBegin(MTX_HERE, "Running program: %s", ai ? ai->name : "(no name)");
 
-   /* Save the command line for later use.
-      ------------------------------------ */
    a->optEnd = a->origArgC = argc - 1;
    a->origArgV = argv + 1;
    memset(a->isDone,0,sizeof(a->isDone));
    a->AppInfo = ai;
 
-   /* Look for '--'.
-      -------------- */
+   // Handle "--"
    for (i = 0; i < a->origArgC; ++i) {
       if (!strcmp(a->origArgV[i],"--")) {
          a->optEnd = i;
@@ -276,8 +255,20 @@ MtxApplication_t *appAlloc(MtxApplicationInfo_t const *ai, int argc, char **argv
       }
    }
 
-   MtxMessageLevel = appGetCountedOption(a,"-V --verbose");
-   MtxMessageLevel -= appGetCountedOption(a,"-Q --quiet");
+   // Set up logging
+   int level = MTX_LOG_INFO;
+   while (appGetOption(a, "-Q --quiet")) --level;
+   int hasLegacyLogOptions = (level != MTX_LOG_INFO);
+   while (appGetOption(a, "-V --verbose")) ++level;
+   hasLegacyLogOptions |= (level != MTX_LOG_INFO);
+   logSetDefaultThreshold(level);
+   const char *c;
+   if ((c = appGetTextOption(a,"--log", NULL)) != NULL) {
+      if (hasLegacyLogOptions) {
+         mtxAbort(MTX_HERE, "--log cannot be combined with -Q/-V");
+      }
+      logInit(c);
+   }
 
    // Initialize the library
    if ((c = appGetTextOption(a,"-L --mtxlib",NULL)) != NULL && *c != 0) {
@@ -316,8 +307,8 @@ MtxApplication_t *appAlloc(MtxApplicationInfo_t const *ai, int argc, char **argv
 void appFree(MtxApplication_t *a)
 {
    long t = sysTimeUsed();
-   MESSAGE(1, "%s: %ld.%ld seconds\n",a->AppInfo != NULL ?
-              a->AppInfo->name : "meataxe",t / 10,t % 10);
+   MTX_LOGD("%s: %ld.%ld seconds",
+         a->AppInfo != NULL ?  a->AppInfo->name : "meataxe",t / 10,t % 10);
    if (a->context > 0) mtxEnd(a->context);
    sysFree(a);
 }
@@ -352,7 +343,6 @@ void appFree(MtxApplication_t *a)
 /// { ... }
 /// @endcode
 /// The same remark applies to appGetIntOption() and appGetTextOption().
-/// You may also use appGetCountedOption() to achieve a similar behaviour.
 /// @param app Pointer to the application object.
 /// @param spec The option name(s), see below.
 /// @return 1 if the option is present, 0 otherwise.
@@ -362,56 +352,31 @@ int appGetOption(MtxApplication_t *app, const char *spec)
    return FindSpec(app,spec,0) == 0;
 }
 
-
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-/// Count repeatable command line option.
-/// This function counts how often a specific option is present on the
-/// command line. For example, if the command line is
-/// @code
-/// sample -a -a -aa input output
-/// @endcode
-/// then MtxGetCountedOption("-a") returns 4. As with all command line
-/// processing functions, you must call appAlloc() before
-/// using this function.
-///
-/// Note: This function is included for compatibility reasons only.
-/// New applications should not use it.
-/// @param app Pointer to the application object.
-/// @param spec The option name(s), see below.
-/// @return Number of times the option is present on the command line.
 
-int appGetCountedOption(MtxApplication_t *app, const char *spec)
-{
-   int count = 0;
-
-   while (FindSpec(app,spec,0) == 0) {
-      ++count;
-   }
-   return count;
-}
-
-
-/// Check for command line option.
-/// This function checks if an option is present on the command line. The
-/// option is expected to have a text value, and a pointer to the value is
-/// returned. On the command line, the value must be separated from the
-/// option by one or more spaces.
-/// If the option is present on the command line but has no value, an
-/// appropriate error message is generated. If the option is not present
-/// on the command line, the function returns @a dflt as a default value.
-/// @param app Pointer to the application object.
-/// @param spec A list of names for the option, separated by spaces. See appGetOption().
-/// @param dflt Default value.
-/// @return Value of the option, or @a dflt if the option is not present.
+/// Checks for an option with argument.
+/// If the option is not present on the command line or was already consumed by an earlier call
+/// the return value is NULL.
+/// If the option is present:
+/// - If an argument is present the argument is returned
+/// - If no argument is present and @a dflt is not NULL, @a dflt is returned.
+/// - If no argument is present and @a dflt is NULL the function fails and aborts the program.
 
 const char *appGetTextOption(MtxApplication_t *app, const char *spec, const char *dflt)
 {
    if (FindSpec(app,spec,1) != 0) {
-      return dflt;
+      // option not present
+      return NULL;
    }
-   return app->optArg;
+   if (app->optArg != NULL)
+      return app->optArg;
+   if (dflt != NULL)
+      return dflt;
+   mtxAbort(NULL, "Option \"%s\" requires an argument", app->optName);
+   return NULL;
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 static int IsInteger(const char *c)
 {
@@ -461,13 +426,12 @@ int appGetIntOption(MtxApplication_t *app, const char *spec, int dflt,
       return dflt;
    }
    if (!IsInteger(txt)) {
-      mtxAbort(NULL,"Invalid number after '%s'",app->origArgV[app->optInd]);
+      mtxAbort(NULL,"Invalid number after '%s'",app->optName);
       return dflt;
    }
    i = atoi(txt);
    if ((min <= max) && ((i < min) || (i > max))) {
-      mtxAbort(NULL,"Value after '%s' is out of range (%d..%d)",
-                 app->origArgV[app->optInd],min,max);
+      mtxAbort(NULL,"Value after '%s' is out of range (%d..%d)", app->optName,min,max);
       return dflt;
    }
    return i;

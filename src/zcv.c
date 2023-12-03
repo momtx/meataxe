@@ -13,12 +13,12 @@
 
 static int GrpLibFormat = 0;    /* File is in Group Library Format */
 static FILE *src = NULL;                // Input file
-static FILE *out;                       // Output file
+static MtxFile_t *fileOut;
 static int inpLineNo = 0;               // Input line number
 static char lbuf[MAXLINE] = {0};        // Input line buffer
 static char *lptr = lbuf;               // Read pointer
 static const char *inpname = "[stdin]";
-static const char *outname = "";
+static const char *fileNameOut = "";
 static int MemberCount = 0;             // Number of members
 
 static MtxApplicationInfo_t AppInfo = {
@@ -193,22 +193,9 @@ static uint32_t parse32u()
 static void WriteHeader(uint32_t a, uint32_t b, uint32_t c)
 {
    uint32_t hdr[3] = {a, b, c};
-   sysWrite32(out,hdr,3);
+   mfWrite32(fileOut,hdr,3);
 }
 
-////////////////////////////////////////////////////////////////////////////////////////////////////
-
-//static const char* strPrefix(const char* s, const char* prefix)
-//{
-//   if (s == NULL || prefix == NULL)
-//      return NULL;
-//   while (*prefix != 0 && *s == *prefix) {
-//      ++s;
-//      ++prefix;
-//   }
-//   return (*prefix == 0) ? s : NULL;
-//}
-//
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 int tryParseLiteral(const char *text)
@@ -283,7 +270,7 @@ static void convertMatrix()
    if (noc == MTX_NVAL) {mtxAbort(MTX_HERE, "Missing header field \"cols\".");}
    if (fl == MTX_NVAL) {mtxAbort(MTX_HERE, "Missing header field \"field\".");}
 
-   MESSAGE(0, "%dx%d matrix over GF(%d)\n", nor, noc, fl);
+   MTX_LOGI("%dx%d matrix over GF(%d)", nor, noc, fl);
    ffSetField(fl);
    PTR m1 = ffAlloc(1, noc);
    WriteHeader(fl, nor, noc);
@@ -294,7 +281,7 @@ static void convertMatrix()
          FEL a = readFel();
          ffInsert(m1, j, a);
       }
-      ffWriteRows(out, m1, 1, noc);
+      ffWriteRows(fileOut, m1, 1, noc);
       assertEndOfLine();
    }
    sysFree(m1);
@@ -317,14 +304,14 @@ static void convertIntegerMatrix()
    if (nor == MTX_NVAL) {mtxAbort(MTX_HERE, "Missing header field \"rows\".");}
    if (noc == MTX_NVAL) {mtxAbort(MTX_HERE, "Missing header field \"cols\".");}
 
-   MESSAGE(0, "%dx%d integer matrix\n",nor,noc);
+   MTX_LOGI("%dx%d integer matrix",nor,noc);
    int32_t* x = NALLOC(int32_t, noc);
    WriteHeader(MTX_TYPE_INTMATRIX, nor, noc);
    for (uint32_t i = 1; i <= nor; ++i) {
       for (uint32_t j = 0; j < noc; ++j) {
          x[j] = parse32s();
       }
-      sysWrite32(out,x,noc);
+      mfWrite32(fileOut,x,noc);
       assertEndOfLine();
    }
    free(x);
@@ -345,7 +332,7 @@ static void convertPermutation()
       mtxAbort(MTX_HERE,"Missing header field \"degree\".");
    }
 
-   MESSAGE(0, "Permutation on %lu points\n",(unsigned long) degree);
+   MTX_LOGI("Permutation on %lu points",(unsigned long) degree);
    uint32_t *buf = NALLOC(uint32_t,degree);
    WriteHeader(MTX_TYPE_PERMUTATION, degree, 1);
    for (uint32_t i = 0; i < degree; ++i) {
@@ -356,7 +343,7 @@ static void convertPermutation()
       }
       buf[i] = point - 1;
    }
-   sysWrite32(out, buf, degree);
+   mfWrite32(fileOut, buf, degree);
    sysFree(buf);
 }
 
@@ -380,14 +367,13 @@ static void convertPolynomial()
    if (!hasDegree) {mtxAbort(MTX_HERE, "Missing header field \"degree\".");}
    if (fieldOrder == MTX_NVAL) {mtxAbort(MTX_HERE, "Missing header field \"field\".");}
 
-   MESSAGE(0, "Polynomial of degree %ld over GF(%lu)\n",
-               (long) degree, (unsigned long)fieldOrder);
+   MTX_LOGI("Polynomial of degree %ld over GF(%lu)", (long) degree, (unsigned long)fieldOrder);
    ffSetField(fieldOrder);
    Poly_t* p = polAlloc(fieldOrder, degree);
    for (int32_t i = 0; i <= degree; ++i) {
       p->data[i] = readFel();
    }
-   polWrite(p, out);
+   polWrite(p, fileOut);
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -449,10 +435,10 @@ static void init(int argc, char **argv)
    }
 
    // output file
-   outname = App->argV[1];
-   out = sysFopen(outname,"wb");
-   if (out == NULL)
-      mtxAbort(MTX_HERE,"Cannot open %s for output",outname);
+   fileNameOut = App->argV[1];
+   fileOut = mfOpen(fileNameOut,"wb");
+   if (fileOut == NULL)
+      mtxAbort(MTX_HERE,"Cannot open %s for output",fileNameOut);
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -465,10 +451,10 @@ int main(int argc, char **argv)
       ++MemberCount;
    }
    if (MemberCount == 0) {
-      MESSAGE(0, "Warning: %s is empty\n",inpname);
+      MTX_LOGI("Warning: %s is empty",inpname);
    }
    mtxEnd(inputFileScope);
-   fclose(out);
+   mfClose(fileOut);
    appFree(App);
    return 0;
 }

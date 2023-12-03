@@ -78,64 +78,64 @@ static MtxApplication_t *App = NULL;
    ReadFiles()
    ----------------------------------------------------------------- */
 
-static void ReadFiles(const char *basename)
+static void ReadFiles(const char* basename)
 {
-    FILE *f;
-    char fn[200];
-    int i;
+   char fn[200];
+   int i;
 
-    latReadInfo(&LI,basename);
+   latReadInfo(&LI, basename);
 
-    cfstart[0] = 0;
-    for (i = 1; i <= LI.nCf; ++i)
-	cfstart[i] = cfstart[i-1] + (int)(LI.Cf[i-1].nmount);
+   cfstart[0] = 0;
+   for (i = 1; i <= LI.nCf; ++i) {
+      cfstart[i] = cfstart[i - 1] + (int)(LI.Cf[i - 1].nmount);
+   }
 
-    /* Read the incidence matrix
-       ------------------------- */
-    sprintf(fn,"%s.inc",LI.BaseName);
-    f = sysFopen(fn,"rb");
-    sysRead32(f,&nmountains,1);
-    if (nmountains != cfstart[LI.nCf]) 
-	mtxAbort(MTX_HERE,"Bad number of mountains in .inc file");
-    MESSAGE(1, "Reading incidence matrix (%lu mountains)",(unsigned long) nmountains);
-    fflush(stdout);
-    for (i = 0; i < (int) nmountains; ++i)
-	subof[i] = bsRead(f);
-    fclose(f);
+   /* Read the incidence matrix
+      ------------------------- */
+   sprintf(fn, "%s.inc", LI.BaseName);
+   MtxFile_t* f = mfOpen(fn, "rb");
+   mfRead32(f, &nmountains, 1);
+   if (nmountains != cfstart[LI.nCf]) {
+      mtxAbort(MTX_HERE, "Bad number of mountains in .inc file");
+   }
+   MTX_LOGD("Reading incidence matrix (%lu mountains)", (unsigned long) nmountains);
+   fflush(stdout);
+   for (i = 0; i < (int) nmountains; ++i) {
+      subof[i] = bsRead(f);
+   }
+   mfClose(f);
 
-    for (i = 0; i < (int) nmountains; ++i)
-    {
-	sumdim[i] = NALLOC(long,nmountains);
-	memset(sumdim[i],0,(size_t)nmountains * sizeof(long));
-    }
+   for (i = 0; i < (int) nmountains; ++i) {
+      sumdim[i] = NALLOC(long, nmountains);
+      memset(sumdim[i], 0, (size_t)nmountains * sizeof(long));
+   }
 
-    /* Read classes
-       ------------ */
-    sprintf(fn,"%s.mnt",LI.BaseName);
-    MESSAGE(1, "Reading classes (%s)",fn);
-    f = sysFopen(fn,"r");
-    for (i = 0; i < nmountains; ++i)
-    {
-	long mno, mdim, nvec, *p;
-	int k;
-	if (fscanf(f,"%ld%ld%ld",&mno,&mdim,&nvec) != 3 || mno != i || nvec < 1  || mdim < 1) {
-	    mtxAbort(MTX_HERE,"Invalid .mnt file");
-	}
-	p = class[i] = NALLOC(long,nvec+2);
-	*p++ = nvec;
-	for (k = 0; k < nvec; ++k, ++p) {
-	    if (fscanf(f,"%ld",p) != 1 || *p < 1) {
-		mtxAbort(MTX_HERE,"Invalid .mnt file");
-	    }
-	}
-	if (fscanf(f,"%ld",p) != 1 || *p != -1) {
-	    mtxAbort(MTX_HERE,"Invalid .mnt file");
-	}
-    }
+   /* Read classes
+      ------------ */
+   {
+      sprintf(fn, "%s.mnt", LI.BaseName);
+      MTX_LOGD("Reading classes (%s)", fn);
+      FILE *f = sysFopen(fn, "r");
+      for (i = 0; i < nmountains; ++i) {
+         long mno, mdim, nvec, * p;
+         int k;
+         if (fscanf(f, "%ld%ld%ld", &mno, &mdim, &nvec) != 3 || mno != i || nvec < 1 || mdim < 1) {
+            mtxAbort(MTX_HERE, "Invalid .mnt file");
+         }
+         p = class[i] = NALLOC(long, nvec + 2);
+         *p++ = nvec;
+         for (k = 0; k < nvec; ++k, ++p) {
+            if (fscanf(f, "%ld", p) != 1 || *p < 1) {
+               mtxAbort(MTX_HERE, "Invalid .mnt file");
+            }
+         }
+         if (fscanf(f, "%ld", p) != 1 || *p != -1) {
+            mtxAbort(MTX_HERE, "Invalid .mnt file");
+         }
+      }
+      fclose(f);
+   }
 }
-
-
-
 
 /* -----------------------------------------------------------------
    mkmount() - Make mountain
@@ -200,7 +200,7 @@ static void nextcf(int cf)
     for (j = LI.Cf[cf].spl - 1; j > 0; --j)
     	dotlen *= ffOrder;
     ++dotlen;
-    MESSAGE(1, "Length of dotted-lines is %d",dotlen);
+    MTX_LOGD("Length of dotted-lines is %d",dotlen);
 
     /* Calculate the mountains
        ----------------------- */
@@ -372,7 +372,7 @@ static void trydot(int i, int k, int beg, int next)
     {	
 	int d;
 
-	MESSAGE(1, "New dotted line: %d+%d",i,k);
+	MTX_LOGD("New dotted line: %d+%d",i,k);
 	if (ndotl >= MAXDOTL)
 	{
 	    mtxAbort(MTX_HERE,"Too many dotted lines (max %d)",MAXDOTL);
@@ -392,7 +392,7 @@ static void trydot(int i, int k, int beg, int next)
 	    {
 		bsFree(dot);
 		bsFree(MaxMountains[ndotl]);
-		MESSAGE(2, "Discarding %d+%d (= dl %d)",i,k,d);
+		MTX_LOG2("Discarding %d+%d (= dl %d)",i,k,d);
 	    }
 	    else
 		ndotl++;
@@ -428,7 +428,7 @@ static void mkdot(int cf)
     firstdotl = ndotl;
     for (i = firstm; i < nextm; ++i)
     {
-	MESSAGE(2, "Trying mountain %d",i);
+	MTX_LOG2("Trying mountain %d",i);
 	lock(i,lck);
     	for (k = i+1; k < nextm; ++k)
     	{	
@@ -439,34 +439,31 @@ static void mkdot(int cf)
     }
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
-
-/* -----------------------------------------------------------------
-   WriteResult() - Write dotted lines.
-   ----------------------------------------------------------------- */
+// Write dotted lines.
 
 static void WriteResult()
 {
-    char fn[200];
+   char fn[200];
 
-    strcat(strcpy(fn,LI.BaseName),".dot");
-    MESSAGE(1, "Writing %s (%d dotted line%s)", fn,ndotl,ndotl!=1 ? "s" : "");
-    FILE* f = sysFopen(fn,"wb");
-    const uint32_t l = ndotl;
-    sysWrite32(f,&l,1);
-    for (int i = 0; i < ndotl; ++i)
-	bsWrite(dotl[i],f);
-    fclose(f);
-    latWriteInfo(&LI);
+   strcat(strcpy(fn, LI.BaseName), ".dot");
+   MTX_LOGD("Writing %s (%d dotted line%s)", fn, ndotl, ndotl != 1 ? "s" : "");
+   MtxFile_t* f = mfOpen(fn, "wb");
+   const uint32_t l = ndotl;
+   mfWrite32(f, &l, 1);
+   for (int i = 0; i < ndotl; ++i) {
+      bsWrite(dotl[i], f);
+   }
+   mfClose(f);
+   latWriteInfo(&LI);
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
-/* -----------------------------------------------------------------
-   WriteResultGAP() - Write dotted lines in GAP format.
-   ----------------------------------------------------------------- */
+// Write dotted lines in GAP format.
 
 static void WriteResultGAP()
-
 {
     int i,j ;
 
@@ -498,11 +495,9 @@ static int Init(int argc, char **argv)
        ------------------ */
     opt_G = appGetOption(App,"-G --gap");
     Opt_FindDuplicates = appGetOption(App,"--nodup");
-    if (opt_G) 
-	MtxMessageLevel = -100;
     if (appGetArguments(App,1,1) != 1)
 	return -1;
-    MESSAGE(0, "\n*** DOTTED LINES ***");
+    MTX_LOGI("\n*** DOTTED LINES ***");
 
     ReadFiles(App->argV[0]);
     return 0;
@@ -527,7 +522,7 @@ int main(int argc, char *argv[])
 	nextcf(i);
 	mkdot(i);
 	LI.Cf[i].ndotl = ndotl - nn;
-	MESSAGE(0, "%s%s: %d vectors, %ld mountains, %ld dotted line%s",
+	MTX_LOGI("%s%s: %d vectors, %ld mountains, %ld dotted line%s",
 	    LI.BaseName,latCfName(&LI,i),  cycl->nor,LI.Cf[i].nmount,
 	    LI.Cf[i].ndotl, LI.Cf[i].ndotl != 1 ? "s": "");
 	nn = ndotl;

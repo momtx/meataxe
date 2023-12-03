@@ -1,13 +1,9 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-// C MeatAxe - Basic integer matrix functions
+// C MeatAxe - Integer matrices
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 #include "meataxe.h"
 #include <string.h>
-
-////////////////////////////////////////////////////////////////////////////////////////////////////
-// Local data
-
 
 #define IMAT_MAGIC 0x396AA2F2
 
@@ -34,7 +30,6 @@ void imatValidate(const struct MtxSourceLocation* sl, const IntMatrix_t *mat)
       mtxAbort(sl ? sl : MTX_HERE,"Invalid matrix (nor=%d, noc=%d)", mat->nor, mat->noc);
    }
 }
-
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -71,7 +66,6 @@ IntMatrix_t *imatAlloc(int nor, int noc)
    return m;
 }
 
-
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 /// Destroys an integer matrix, releasing the associated memory.
@@ -84,6 +78,65 @@ void imatFree(IntMatrix_t *mat)
    }
    memset(mat,0,sizeof(IntMatrix_t));
    sysFree(mat);
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+/// Reads an integer matrix from a file. See also @ref imatLoad.
+
+IntMatrix_t* imatRead(MtxFile_t* file)
+{
+   mfReadHeader(file);
+   if (mfObjectType(file) != MTX_TYPE_INTMATRIX) {
+      mtxAbort(MTX_HERE, "%s: unexpected object type 0x%lx (expected integer matrix)",
+               file->name, (unsigned long) file->header[0]);
+   }
+   IntMatrix_t* m = imatAlloc(file->header[1], file->header[2]);
+   mfRead32(file, m->data, m->nor * m->noc);
+   return m;
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+/// Read an integer matrix from a file.
+/// This function opens a file, reads a single integer matrix, and closes the file.
+/// See also use @ref imatRead.
+/// @param fn File name.
+/// @return Pointer to the matrix.
+
+IntMatrix_t *imatLoad(const char *fn)
+{
+   MtxFile_t* file = mfOpen(fn, "rb");
+   IntMatrix_t* m = imatRead(file);
+   mfClose(file);
+   return m;
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+/// Writes an integer matrix to a file.
+/// See also @ref imatSave.
+
+void imatWrite(const IntMatrix_t *mat, MtxFile_t *f)
+{
+   imatValidate(MTX_HERE, mat);
+   uint32_t hdr[3] = {MTX_TYPE_INTMATRIX, mat->nor, mat->noc};
+   mfWrite32(f,hdr,3);
+   mfWrite32(f, mat->data, (size_t) mat->nor * mat->noc);
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+/// Writes an integer matrix to a named file. If a file with the same name exists, its contents are
+/// replaced with the matrix.
+/// See also @ref imatWrite.
+
+void imatSave(const IntMatrix_t* mat, const char* file_name)
+{
+   imatValidate(MTX_HERE, mat);
+   MtxFile_t* f = mfOpen(file_name, "wb");
+   imatWrite(mat, f);
+   mfClose(f);
 }
 
 /// @}

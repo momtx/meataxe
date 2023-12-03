@@ -73,10 +73,10 @@ static void init(int argc, char **argv)
 {
     App = appAlloc(&AppInfo,argc,argv);
     opt_G = appGetOption(App,"-G --gap");
-    if (opt_G) 
-	MtxMessageLevel = -100;
+//    if (opt_G) 
+//	MtxMessageLevel = -100;
     appGetArguments(App,1,1);
-    MESSAGE(0, "\n*** INCIDENCE MATRIX ***");
+    MTX_LOGI("Start mkinc - Find mountains and their incidence relation");
     ReadFiles(App->argV[0]);
 }
 
@@ -91,7 +91,7 @@ static void WriteMountains()
 
     // Write dimensions and classes
     FILE* f = sysFopen(strcat(strcpy(fn,LI.BaseName),".mnt"),"w");
-    MESSAGE(1, "Writing dimensions and classes to %s",fn);
+    MTX_LOGD("Writing dimensions and classes to %s",fn);
     for (i = 0; i < nmount; ++i)
     {
 	int *p;
@@ -104,11 +104,11 @@ static void WriteMountains()
 
     // Write mountains
     strcat(strcpy(fn,LI.BaseName),".v");
-    MESSAGE(1, "Writing mountains to %s",fn);
+    MTX_LOGD("Writing mountains to %s",fn);
     MtxFile_t* mountainsFile = mfCreate(fn,ffOrder,nmount,Rep->Gen[0]->noc);
     for (i = 0; i < nmount; ++i)
     {
-	mfWriteRows(mountainsFile,mountlist[i]->data, 1, mountlist[i]->noc);
+	ffWriteRows(mountainsFile, mountlist[i]->data, 1, mountlist[i]->noc);
 	matFree(mountlist[i]);	// We don't need them for step 2*
         mountlist[i] = NULL;
     }
@@ -129,7 +129,7 @@ static int newmountain(Matrix_t *vec, int cf)
 
     // Spin up the vector and project back onto the condensed module where it came from.
     span = SpinUp(vec,Rep,SF_FIRST|SF_SUB,NULL,NULL);
-    MESSAGE(2, "Next vector spins up to %d",span->nor);
+    MTX_LOG2("Next vector spins up to %d",span->nor);
     backproj = QProjection(bild[cf],span);
     matEchelonize(backproj);
 
@@ -162,10 +162,10 @@ static int newmountain(Matrix_t *vec, int cf)
 	}
 	proj[nmount] = NALLOC(Matrix_t *,LI.nCf);
 
-    	MESSAGE(2, "New Mountain %d",(int)i);
+    	MTX_LOG2("New Mountain %d",(int)i);
 	for (k = 0; k < LI.nCf; ++k)
 	{
-    	    MESSAGE(2, "Projecting on %d",k);
+    	    MTX_LOG2("Projecting on %d",k);
 	    if (k == cf)
 	    	proj[nmount][cf] = backproj;
 	    else
@@ -203,7 +203,7 @@ static void makeclass(int mnt, int cf, Matrix_t* vectors)
    size_t nvec;
 
    nvec = 0;
-   MESSAGE(2, "Making equivalence class");
+   MTX_LOG2("Making equivalence class");
    for (k = 0; k < vectors->nor; ++k) {
       vec = matCutRows(vectors, k, 1);
       tmp[k] = 0;
@@ -237,7 +237,7 @@ static void FindMountains()
    int cf;
    int i;
 
-   MESSAGE(0, "Step 1 (Mountains)");
+   MTX_LOGI("Step 1 (Mountains)");
    nmount = 0;
    for (cf = 0; cf < LI.nCf; ++cf) {
       // Read the vectors and the uncondense matrix
@@ -259,28 +259,26 @@ static void FindMountains()
 
       matFree(vectors);
       matFree(uk);
-      MESSAGE(0, "%s%s: %ld mountain%s", LI.BaseName, latCfName(&LI, cf),
+      MTX_LOGI("%s%s: %ld mountain%s", LI.BaseName, latCfName(&LI, cf),
             LI.Cf[cf].nmount, LI.Cf[cf].nmount != 1 ? "s" : "");
 
    }
-   MESSAGE(0, "Total: %d mountain%s", nmount, nmount != 1 ? "s" : "");
+   MTX_LOGI("Total: %d mountain%s", nmount, nmount != 1 ? "s" : "");
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 static void WriteIncidenceMatrix()
 {
-   char* const fn = strMprintf("%s.inc", LI.BaseName);
-   FILE* f = sysFopen(fn, "wb");
-   MESSAGE(1, "Writing incidence matrix (%s)",fn);
-   sysFree(fn);
+   MtxFile_t* file = mfOpen(strEprintf("%s.inc", LI.BaseName), "wb");
+   MTX_LOGD("Writing incidence matrix (%s)", file->name);
    uint32_t l = nmount;
-   sysWrite32(f,&l,1);
-   for (int i = 0; i < nmount; ++i)
-      bsWrite(subof[i],f);
-   fclose(f);
+   mfWrite32(file, &l, 1);
+   for (int i = 0; i < nmount; ++i) {
+      bsWrite(subof[i], file);
+   }
+   mfClose(file);
 
-   // Write the .cfinfo file
    latWriteInfo(&LI);
 }
 
@@ -291,7 +289,7 @@ static void CalculateIncidences()
     int i, k;
     int cfi, cfk;	// Comp. factor corresponding to mountain i,j
 
-    MESSAGE(0, "Step 2 (Incidences)");
+    MTX_LOGI("Step 2 (Incidences)");
 
     // Allocate memory for the incidence matrix
     for (i = 0; i < nmount; ++i)
@@ -301,7 +299,7 @@ static void CalculateIncidences()
     for (cfi = i = 0; i < nmount; ++i)
     {
 	if (i == moffset[cfi])
-	    MESSAGE(0, "%s%s",LI.BaseName,latCfName(&LI,cfi));
+	    MTX_LOGI("%s%s",LI.BaseName,latCfName(&LI,cfi));
 	for (cfk=0, k = 0; k < nmount; ++k)
 	{
 	    int isubk, ksubi;

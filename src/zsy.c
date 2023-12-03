@@ -1,4 +1,4 @@
-////////////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////////////
 // C MeatAxe - Symmetric tensor product.
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -48,7 +48,7 @@ static Perm_t* permOut;
 static void prepare()
 {
    // Read input file.
-   MtxFile_t* f = mfOpen(fileNameInp);
+   MtxFile_t* f = mfOpen(fileNameInp, "rb");
    mfReadHeader(f);
    objectType = mfObjectType(f);
    if (mode != M_E2 && mode != M_S2 && mode != M_E3 && objectType != MTX_TYPE_MATRIX) {
@@ -60,14 +60,14 @@ static void prepare()
          nor = f->header[1];
          noc = f->header[2];
          ffSetField(field);
-         matrixInp = matReadData(f->file, f->header);
+         matrixInp = matReadData(f);
          rowIn = NALLOC(PTR, nor);
          for (uint32_t i = 0; i < nor; ++i) {
             rowIn[i] = matGetPtr(matrixInp, i);
          }
          break;
       case MTX_TYPE_PERMUTATION:
-         permInp = permReadData(f->file, f->header);
+         permInp = permReadData(f);
          field = 0;
          nor = noc = permInp->degree;
          break;
@@ -130,12 +130,12 @@ static void prepare()
    // Prepare output buffer and file.
    switch (objectType) {
       case MTX_TYPE_MATRIX:
-         MESSAGE(0, "Output is %ld x %ld\n", (long)norOut, (long)nocOut);
+         MTX_LOGI("Output is %ld x %ld\n", (long)norOut, (long)nocOut);
          rowOut = ffAlloc(1, nocOut);
          fileOut = mfCreate(fileNameOut, field, norOut, (field >= 2) ? nocOut : 1);
          break;
       case MTX_TYPE_PERMUTATION:
-         MESSAGE(0, "Output has degree %ld\n", (long)norOut);
+         MTX_LOGI("Output has degree %ld\n", (long)norOut);
          permOut = permAlloc(norOut);
          break;
    }
@@ -152,7 +152,7 @@ static void zs2()
    FEL f11, f12, f21, f22;
    FEL w1, w2, f1, f2;
 
-   MESSAGE(1, "Mode S2, part 1\n");
+   MTX_LOGD("Mode S2, part 1\n");
    for (i1 = 0; i1 < nor - 1; ++i1) {
       for (i2 = i1 + 1; i2 < nor; ++i2) {
          ffMulRow(rowOut, FF_ZERO, nocOut);
@@ -175,11 +175,11 @@ static void zs2()
             ffInsert(rowOut, j3, ffMul(f1, f2));
             ++j3;
          }
-         mfWriteRows(fileOut, rowOut, 1, nocOut);
+         ffWriteRows(fileOut, rowOut, 1, nocOut);
       }
    }
 
-   MESSAGE(1, "Mode S2, part 2\n");
+   MTX_LOGD("Mode S2, part 2\n");
    for (i1 = 0; i1 < nor; ++i1) {
       j3 = 0;
       ffMulRow(rowOut, FF_ZERO, nocOut);
@@ -197,7 +197,7 @@ static void zs2()
          ffInsert(rowOut, j3, ffMul(f1, f1));
          ++j3;
       }
-      mfWriteRows(fileOut, rowOut, 1, nocOut);
+      ffWriteRows(fileOut, rowOut, 1, nocOut);
    }
 }
 
@@ -283,7 +283,7 @@ static void ze2()
                ++j3;
             }
          }
-         mfWriteRows(fileOut, rowOut, 1, nocOut);
+         ffWriteRows(fileOut, rowOut, 1, nocOut);
       }
    }
 }
@@ -300,11 +300,11 @@ static void ze3()
    int i1, i2, i3, j1, j2, j3, jins;
 
    for (i1 = 0; i1 < nor - 2; ++i1) {
-      MESSAGE(1, "i1 = %d\n", i1);
+      MTX_LOGD("i1 = %d\n", i1);
       for (i2 = i1 + 1; i2 < nor - 1; ++i2) {
-         MESSAGE(2, "i2 = %d\n", i2);
+         MTX_LOG2("i2 = %d\n", i2);
          for (i3 = i2 + 1; i3 < nor; ++i3) {
-            MESSAGE(3, "i3 = %d\n", i3);
+            MTX_LOG2("i3 = %d\n", i3);
             ffMulRow(rowOut, FF_ZERO, nocOut);
             jins = 0;
             for (j1 = 0; j1 < noc - 2; ++j1) {
@@ -329,7 +329,7 @@ static void ze3()
                   }
                }
             }
-            mfWriteRows(fileOut, rowOut, 1l, nocOut);
+            ffWriteRows(fileOut, rowOut, 1l, nocOut);
          }
       }
    }
@@ -378,11 +378,11 @@ static void ze4()
    int i1, i2, i3, i4, j1, j2, j3, j4, jins;
 
    for (i1 = 0; i1 < nor - 3; ++i1) {
-      MESSAGE(1, "i1 = %d\n", i1);
+      MTX_LOGD("i1 = %d\n", i1);
       for (i2 = i1 + 1; i2 < nor - 2; ++i2) {
-         MESSAGE(2, "i2 = %d\n", i2);
+         MTX_LOG2("i2 = %d\n", i2);
          for (i3 = i2 + 1; i3 < nor - 1; ++i3) {
-            MESSAGE(3, "i3 = %d\n", i3);
+            MTX_LOG2("i3 = %d\n", i3);
             for (i4 = i3 + 1; i4 < nor; ++i4) {
                ffMulRow(rowOut, FF_ZERO, nocOut);
                jins = 0;
@@ -440,7 +440,7 @@ static void ze4()
                      }
                   }
                }
-               mfWriteRows(fileOut, rowOut, 1, nocOut);
+               ffWriteRows(fileOut, rowOut, 1, nocOut);
             }
          }
       }
@@ -461,9 +461,9 @@ static int init(int argc, char** argv)
       return -1;
    }
    opt_G = appGetOption(App, "-G --gap");
-   if (opt_G) {
-      MtxMessageLevel = -100;
-   }
+//   if (opt_G) {
+//      MtxMessageLevel = -100;
+//   }
 
    /* Process arguments.
       ------------------ */

@@ -51,7 +51,7 @@ static int Init(int argc, char **argv)
     if ((App = appAlloc(&AppInfo,argc,argv)) == NULL)
 	return -1;
     opt_G = appGetOption(App,"-G --gap");
-    if (opt_G) MtxMessageLevel = -100;
+//    if (opt_G) MtxMessageLevel = -100;
     if (appGetArguments(App,2,2) != 2)
 	return -1;
     iname = App->argV[0];
@@ -118,7 +118,7 @@ int main(int argc, char **argv)
 	if (opt_G)
 	    printf("MeatAxe.Rank := %d;\n",Mat->nor);
 	else
-	    MESSAGE(0, "RANK %d\n",Mat->nor);
+	    MTX_LOGI("RANK %d",Mat->nor);
     }
     Cleanup();
     return rc;

@@ -30,7 +30,7 @@ uint8_t
 	mtx_tinsert[8][256];
 uint8_t mtx_embed[MTX_MAXSUBFIELDS][MTX_MAXSUBFIELDORD]; /* Embeddings of subfields */
 uint8_t mtx_restrict[MTX_MAXSUBFIELDS][256];	  /* Restriction to subfields */
-static uint32_t mtx_embedord[MTX_MAXSUBFIELDS];		  /* Subfield orders */
+static uint32_t subfieldOrder[MTX_MAXSUBFIELDS];		  /* Subfield orders */
 
 static uint32_t info[4] = {0L,0L,0L,0L};
 static uint32_t ver = MTX_ZZZVERSION;
@@ -54,23 +54,23 @@ static uint8_t zech[256];		/*  Zech-logarithm for index i  */
 /* Tables for non-prime fields, q<=256
    ----------------------------------- */
 
-static POLY irreducibles[] = {			/* Parker's polynomials: */
-	{0,0,0,0,0,0,0,0,0,0,1,1,1},    /* F4   X2+X+1        */
-	{0,0,0,0,0,0,0,0,0,1,0,1,1},    /* F8   X3+X+1        */
-	{0,0,0,0,0,0,0,0,0,0,1,2,2},    /* F9   X2+2X+2       */
-	{0,0,0,0,0,0,0,0,1,0,0,1,1},    /* F16  X4+X+1        */
-	{0,0,0,0,0,0,0,0,0,0,1,4,2},    /* F25  X2+4X+2       */
-	{0,0,0,0,0,0,0,0,0,1,0,2,1},    /* F27  X3+2X+1       */
-	{0,0,0,0,0,0,0,1,0,0,1,0,1},    /* F32  X5+X2+1       */
-	{0,0,0,0,0,0,0,0,0,0,1,6,3},    /* F49  X2+6X+3       */
-	{0,0,0,0,0,0,1,0,1,1,0,1,1},    /* F64  X6+X4+X3+X+1  */
-	{0,0,0,0,0,0,0,0,1,2,0,0,2},    /* F81  X4+2X3+2      */
-	{0,0,0,0,0,0,0,0,0,0,1,7,2},    /* F121 X2+7X+2       */
-	{0,0,0,0,0,0,0,0,0,1,0,3,3},    /* F125 X3+3X+3       */
-	{0,0,0,0,0,1,0,0,0,0,0,1,1},    /* F128 X7+X+1        */
-	{0,0,0,0,0,0,0,0,0,0,1,12,2},   /* F169 X2+12X+2      */
-	{0,0,0,0,0,0,0,1,0,0,0,2,1},    /* F243 X5+2X+1       */
-	{0,0,0,0,1,0,0,0,1,1,1,0,1}     /* F256 X8+X4+X3+X2+1 */
+static POLY irreducibles[] = {		// Parker's polynomials:
+	{0,0,0,0,0,0,0,0,0,0,1,1,1},    // F4   X2+X+1
+	{0,0,0,0,0,0,0,0,0,1,0,1,1},    // F8   X3+X+1
+	{0,0,0,0,0,0,0,0,0,0,1,2,2},    // F9   X2+2X+2
+	{0,0,0,0,0,0,0,0,1,0,0,1,1},    // F16  X4+X+1
+	{0,0,0,0,0,0,0,0,0,0,1,4,2},    // F25  X2+4X+2
+	{0,0,0,0,0,0,0,0,0,1,0,2,1},    // F27  X3+2X+1
+	{0,0,0,0,0,0,0,1,0,0,1,0,1},    // F32  X5+X2+1
+	{0,0,0,0,0,0,0,0,0,0,1,6,3},    // F49  X2+6X+3
+	{0,0,0,0,0,0,1,0,1,1,0,1,1},    // F64  X6+X4+X3+X+1
+	{0,0,0,0,0,0,0,0,1,2,0,0,2},    // F81  X4+2X3+2
+	{0,0,0,0,0,0,0,0,0,0,1,7,2},    // F121 X2+7X+2 
+	{0,0,0,0,0,0,0,0,0,1,0,3,3},    // F125 X3+3X+3  
+	{0,0,0,0,0,1,0,0,0,0,0,1,1},    // F128 X7+X+1    
+	{0,0,0,0,0,0,0,0,0,0,1,12,2},   // F169 X2+12X+2   
+	{0,0,0,0,0,0,0,1,0,0,0,2,1},    // F243 X5+2X+1     
+	{0,0,0,0,1,0,0,0,1,1,1,0,1}     // F256 X8+X4+X3+X2+1
 	};
 
 /* The following tables contain the corresponding field orders
@@ -88,26 +88,22 @@ static uint8_t irredprs[] =	/* Prime field orders  */
 static uint8_t gen[] = {1,2,3,5,6,7,19,0};
 
 
-/* -----------------------------------------------------------------
-   printpol() - Print a polynomial
-   ----------------------------------------------------------------- */
 
-static void printpol(POLY a)
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+static void formatPoly(StrBuffer* buf, POLY a)
 {
-    int i,flag = 0;
+   int i, flag = 0;
 
-    for (i = MAXGRAD; i >= 0; i--)
-    {
-	if (a[i]!=0)
-	{	if (flag) printf("+");
-		if (a[i] != 1) printf("%d",(int)a[i]);
-		printf("x^%d",i);
-		flag=1;
-       	}
-    }
-    printf("\n");
+   for (i = MAXGRAD; i >= 0; i--) {
+      if (a[i] != 0) {
+         if (flag) { sbAppend(buf, "+"); }
+         if (a[i] != 1) { sbPrintf(buf, "%d", (int)a[i]); }
+         sbPrintf(buf, "x^%d", i);
+         flag = 1;
+      }
+   }
 }
-
 
 /* -------------------------------------------------------------------------
    number() - Convert polynomial to number
@@ -337,16 +333,17 @@ static void writeheader()
     info[2] = (long int) Q;
     info[3] = (long int) CPM;
 
-    MESSAGE(1, "ZZZ version : %lu\n",(unsigned long)ver);
-    MESSAGE(1, "Field order : %lu=%lu^%lu\n",
+    MTX_LOGD("ZZZ version : %lu",(unsigned long)ver);
+    MTX_LOGD("Field order : %lu=%lu^%lu",
              (unsigned long)info[2],(unsigned long)info[0],(unsigned long)N);
-    if (P != Q && MtxMessageLevel >= 1)
-    {
-	printf("Polynome    : ");
-	printpol(irred);
+    if (P != Q) {
+       MTX_XLOGD(msg) {
+          sbAppend(msg, "Polynome    : ");
+          formatPoly(msg, irred);
+       }
     }
-    MESSAGE(1, "Generator   : %lu\n",(unsigned long)info[1]);
-    MESSAGE(1, "Packing     : %lu/byte\n",(unsigned long)info[3]);
+    MTX_LOGD("Generator   : %lu",(unsigned long)info[1]);
+    MTX_LOGD("Packing     : %lu/byte",(unsigned long)info[3]);
 }
 
 
@@ -366,129 +363,108 @@ static void inittables()
 	memset(mtx_tinsert,0xFF,sizeof(mtx_tinsert));
 }
 
-/* -----------------------------------------------------------------
-   mkembed() - Calculate embeddings of all subfields.
-   ----------------------------------------------------------------- */
+////////////////////////////////////////////////////////////////////////////////////////////////////
+   
+// Calculate embeddings of all subfields.
 
 static void mkembed()
 {
-    int n;	/* Degree of subfield over Z_p */
-    long q; /* subfield order */
-    int i, k;
-    POLY a, subirred;
-    int count = 0;
-    uint8_t emb, f;
+   int n;   // degree of subfield over Z_p
+   long q;  // subfield order
+   int i, k;
+   POLY a, subirred;
+   int count = 0;  // number of proper subfields
+   uint8_t emb, f;
 
-    memset(mtx_embed,255,sizeof(mtx_embed));
-    memset(mtx_restrict,255,sizeof(mtx_restrict));
+   memset(mtx_embed, 255, sizeof(mtx_embed));
+   memset(mtx_restrict, 255, sizeof(mtx_restrict));
+   memset(subfieldOrder, 0, sizeof(subfieldOrder));       // mark as unused
 
-    MESSAGE(1, "Calculating embeddings of subfields\n");
+   MTX_LOGD("Calculating embeddings of subfields");
 
-    /* Clear the mtx_embedord array. mtx_embedord[i]=0 means
-       that the entry (and all subequent) is not used.
-       ----------------------------------------------- */
-    for (i = 0; i < MTX_MAXSUBFIELDS; ++i) mtx_embedord[i] = 0;
+   for (n = 1; n < N; ++n) {
+      // All subfields of GF(p^N) have order are p^n with n|N.
+      if (N % n != 0) { continue; }
 
+      // The prime field embedding is simple
+      if (n == 1) {
+         MTX_LOGD("GF(%ld)", P);
+         subfieldOrder[count] = P;
+         for (i = 0; i < (int) P; ++i) {
+            mtx_embed[count][i] = (uint8_t) i;
+            mtx_restrict[count][i] = (uint8_t) i;
+         }
+         ++count;
+         continue;
+      }
 
-    for (n = 1; n < N; ++n)
-    {
-	if (N % n != 0) continue;	/* n must divide N */
+      // Calculate the subfield order
+      for (q = 1, i = n; i > 0; --i, q *= P) {}
+      subfieldOrder[count] = q;
+      mtx_embed[count][0] = 0;
+      mtx_restrict[count][0] = 0;
+      MTX_ASSERT((Q - 1) % (q - 1) == 0);
 
-        /* The prime field is simple:
-           -------------------------- */
-	if (n == 1)
-	{
-	    MESSAGE(1, "GF(%ld)\n",P);
-    	    mtx_embedord[count] = P;
-    	    for (i = 0; i < (int) P; ++i)
-    	    {
-		mtx_embed[count][i] = (uint8_t) i;
-		mtx_restrict[count][i] = (uint8_t) i;
-    	    }
-	    ++count;
-	    continue;
-	}
+      // Calculate a generator for the subfield
+      emb = 1;
+      for (i = (Q - 1) / (q - 1); i > 0; --i) {
+         emb = mult(emb, (uint8_t) G);
+      }
 
-	/* Calculate the subfield order
-	   ---------------------------- */
-	for (q = 1, i = n; i > 0; --i, q *= P);
-	mtx_embedord[count] = q;
-	mtx_embed[count][0] = 0;
-	mtx_restrict[count][0] = 0;
-	if ((Q-1) % (q-1) != 0)
-	{
-	    fprintf(stderr,"*** q=%ld, Q=%ld.",q,Q);
-	    mtxAbort(MTX_HERE,"Internal error.");
-	}
+      // Look up the polynomial
+      for (k = 0; irrednrs[k] != 0 && irrednrs[k] != q; ++k) {}
+      MTX_ASSERT(irrednrs[k] != 0);
+      for (i = 0; i <= MAXGRAD; i++) {
+         subirred[i] = irreducibles[k][MAXGRAD - i];
+      }
 
-	/* Calculate a generator for the subfield
-	   -------------------------------------- */
-	emb = 1;
-	for (i = (Q-1)/(q-1); i > 0; --i) 
-	    emb = mult(emb,(uint8_t) G);
+      MTX_XLOGD(msg) {
+         sbPrintf(msg, "GF(%ld): gen=%d pol=", q, emb);
+         formatPoly(msg, subirred);
+      }
 
-	/* Look up the polynomial
-	   ---------------------- */
-	for (k = 0; irrednrs[k] != 0 && irrednrs[k] != q; ++k);
-	if (irrednrs[k] == 0) mtxAbort(MTX_HERE,"Internal error.");
-       	for (i = 0; i <= MAXGRAD; i++)
-            subirred[i] = irreducibles[k][MAXGRAD-i];
+      memset(a, 0, sizeof(POLY));
+      a[0] = 1;                 // a=X^0
+      f = FF_ONE;
+      for (i = 0; i < (int)q - 1; ++i) {
+         mtx_embed[count][number(a)] = f;
+         mtx_restrict[count][f] = number(a);
+         polmultx(a);
+         polymod(a, subirred);
+         f = mult(f, emb);
+      }
+      ++count;
+   }
 
-	MESSAGE(1, "GF(%ld): gen=%d pol=",q,emb);
-	if (MSG1) printpol(subirred);
-	fflush(stdout);
-
-	memset(a,0,sizeof(POLY));
-	a[0] = 1;		/* a=X^0  */
-	f = FF_ONE;
-	for (i = 0; i < (int)q-1; ++i)
-	{
-	    mtx_embed[count][number(a)] = f;
-	    MESSAGE(3, "mtx_embed[%d][%d]=%d\n",count,number(a),(int)f);
-	    mtx_restrict[count][f] = number(a);
-	    polmultx(a);
-	    polymod(a,subirred);
-	    f = mult(f,emb);
-        }
-	++count;
-    }
-    MESSAGE(1, "\n");
-
-    if (MtxMessageLevel >= 2)
-    {
-        for (i = 0; i < 4; ++i)
-        {
-	    printf("  GF(%2d): ", (int)mtx_embedord[i]);
-            for (k=0; k < 16; ++k)
-	        printf("%4d",mtx_embed[i][k]);
- 	    printf("\n");
-	    fflush(stdout);
-	}
-    }
+   for (i = 0; i < 4 && subfieldOrder[i] != 0; ++i) {
+      MTX_XLOG2(msg) {
+         sbPrintf(msg, "GF(%2d) embedding: ", (int)subfieldOrder[i]);
+         for (k = 0; k < 16; ++k) {
+            sbPrintf(msg, "%4d", mtx_embed[i][k]);
+         }
+      }
+   }
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 static void Init(int field)
 {
-    long q, d;
+   if (field < 2 || field > 256) {
+      mtxAbort(MTX_HERE, "Field order %d out of range (2-256)", field);
+   }
 
-    if (field < 2 || field > 256)
-    {
-	fprintf(stderr,"Field order out of range (2-256)\n");
-	exit(EXIT_ERR);
-    }
-
-    Q = field;
-    q = Q;
-    for (d = 2; q % d != 0; ++d); /* Find smallest prime divisor */
-    for (N = 0; (q % d) == 0; ++N)
-       	q /= d;
-    if (q != 1)
-    {
-	fprintf(stderr,"Illegal Field order\n");
-	exit(EXIT_ERR);
-    }
+   // Check that Q is a prime power
+   Q = field;
+   long q = Q;
+   long p;
+   for (p = 2; q % p != 0; ++p);
+   for (N = 0; (q % p) == 0; ++N) {
+      q /= p;
+   }
+   if (q != 1) {
+      mtxAbort(MTX_HERE, "Illegal field order %d", field);
+   }
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -509,27 +485,23 @@ int ffMakeTables(int field)
 
     // Make insert table
     memset(a,0,sizeof(a));
-    MESSAGE(1, "Calculating insert table\n");
+    MTX_LOGD("Calculating insert table");
     for (i = 0; i < (int) Q; i++)
     {
 	for (j = 0; j < (int) CPM; j++)
     	{
 	    a[j] = (uint8_t) i;
 	    mtx_tinsert[j][i] = pack(a);	/* Insert-table */
-	    MESSAGE(3, "insert[%d][%d]=%u (0x%x)\n",j,i,
+	    MTX_LOG2("insert[%d][%d]=%u (0x%x)",j,i,
 	     mtx_tinsert[j][i],mtx_tinsert[j][i]);
 	    a[j] = 0;
     	}
     }
 
     // Pack/unpack and arithmetic tables
-    MESSAGE(1, "Calculating pack/unpack and arithmetic tables\n");
+    MTX_LOGD("Calculating pack/unpack and arithmetic tables");
     for (i=0 ; i < (int) maxmem; i++)
     {
-	if (i % 10 == 0 && MtxMessageLevel >= 2)
-	{   if (i == 140) printf("\n");
-	    printf("%3d ",i);
-	}
 	unpack((uint8_t)i,a);   /* unpack 1.element in a[] */
 	flag = 0;
 	for (j = 0; j < (int) CPM; j++)
@@ -579,11 +551,9 @@ int ffMakeTables(int field)
 	    }
 	}
     }
-    MESSAGE(2, "\n");
 
     // Inversion table
-    MESSAGE(1, "Calculating inversion table\n");
-    fflush(stdout);
+    MTX_LOGD("Calculating inversion table");
     for (i = 0; i < (int)Q; i++)
     {
         for (j = 0; j < (int)Q; j++)
@@ -595,7 +565,7 @@ int ffMakeTables(int field)
 
     mkembed();
 
-    MESSAGE(1, "Writing tables to %s\n",filename);
+    MTX_LOGD("Writing tables to %s",filename);
     sysWrite32(fd,info,4);
     sysWrite32(fd,&ver,1);
     sysWrite8(fd,mtx_tmult,sizeof(mtx_tmult));
@@ -606,7 +576,7 @@ int ffMakeTables(int field)
     sysWrite8(fd, mtx_tmultinv,sizeof(mtx_tmultinv));
     sysWrite8(fd, mtx_tnull,sizeof(mtx_tnull));
     sysWrite8(fd, mtx_tinsert,sizeof(mtx_tinsert));
-    sysWrite32(fd,mtx_embedord,MTX_MAXSUBFIELDS);
+    sysWrite32(fd,subfieldOrder,MTX_MAXSUBFIELDS);
     sysWrite8(fd,mtx_embed, MTX_MAXSUBFIELDS * MTX_MAXSUBFIELDORD);
     sysWrite8(fd,mtx_restrict, MTX_MAXSUBFIELDS * 256);
 

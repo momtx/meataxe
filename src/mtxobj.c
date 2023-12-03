@@ -13,38 +13,30 @@
 #define IS_MATRIX(x) (((Matrix_t *)x)->typeId == MTX_TYPE_MATRIX)
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-
-static void *XRead(FILE *f)
-{
-   uint32_t header[3];
-   sysRead32(f,header,3);
-   if (header[0] < MTX_TYPE_BEGIN)
-      return matReadData(f, header);
-   if (header[0] == MTX_TYPE_PERMUTATION)
-      return permReadData(f, header);
-   mtxAbort(MTX_HERE, "Unsupported object type 0x%lx", (unsigned long) header[0]);
-   return NULL;
-}
-
-
-////////////////////////////////////////////////////////////////////////////////////////////////////
 /// Load a matrix or permutation.
 /// This function reads a matrix or permutation from a file.
 /// @param fn File name.
 /// @return Pointer to the matrix or permutation, NULL on error.
 /// @see MatLoad PermLoad
 
-void *objLoad(const char *fn)
+void* objLoad(const char* fn)
 {
-   FILE *f;
-   void *x;
-
-   f = sysFopen(fn,"rb");
-   if (f == NULL) {
-      mtxAbort(MTX_HERE,"Cannot open %s: %s",fn, strerror(errno));
-      return NULL;
+   MtxFile_t* f = mfOpen(fn, "rb");
+   const uint32_t objectType = mfReadHeader(f);
+   void* x = NULL;
+   switch (objectType) {
+      case MTX_TYPE_MATRIX:
+         x = matReadData(f);
+         break;
+      case MTX_TYPE_PERMUTATION:
+         x = permReadData(f);
+         break;
+      default:
+         mtxAbort(MTX_HERE, "%s: unsuported object type 0x%lx",
+            f->name, (unsigned long)objectType);
    }
-   x = XRead(f);
+
+   mfClose(f);
    return x;
 }
 

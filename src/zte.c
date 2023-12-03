@@ -42,8 +42,8 @@ static void tensormatrices()
     const uint32_t nocC = nocA * nocB;
 
 
-    MESSAGE(1, "Computing matrix tensor product:");
-    MESSAGE(1, " (%d,%d)*(%d,%d)=(%d,%d)\n", norA,nocA,norB,nocB,norC,nocC);
+    MTX_LOGD("Computing matrix tensor product:");
+    MTX_LOGD(" (%d,%d)*(%d,%d)=(%d,%d)", norA,nocA,norB,nocB,norC,nocC);
 
     // Allocate buffers.
     ffSetField(field);
@@ -52,7 +52,7 @@ static void tensormatrices()
     PTR m3 = ffAlloc(1, nocC);
 
     // Read the second matrix (B).
-    mfReadRows(fileB,m2,norB,nocB);
+    ffReadRows(fileB,m2,norB,nocB);
 
     // Open the outpt file.
     MtxFile_t *fileC = mfCreate(fileNameC,ffOrder,norC,nocC);
@@ -64,7 +64,7 @@ static void tensormatrices()
 	PTR bp;
 
 	// Read the next row from A.
-	mfReadRows(fileA,m1,1,norA);
+	ffReadRows(fileA,m1,1,norA);
 
 	bp = m2;
 	for (bi = 0; bi < norB; ++bi)
@@ -82,7 +82,7 @@ static void tensormatrices()
 		    ++cj;
 		}
 	    }
-	    mfWriteRows(fileC,m3,1,nocC);
+	    ffWriteRows(fileC,m3,1,nocC);
 	    ffStepPtr(&bp, nocB);
 	}
     }
@@ -102,8 +102,8 @@ static int tensorperms(void)
     const uint32_t c_deg = a_deg * b_deg;
     int i;
     
-    MESSAGE(1, "Computing permutation tensor product:");
-    MESSAGE(1, " %d*%d=%d\n", a_deg,b_deg,c_deg);
+    MTX_LOGD("Computing permutation tensor product:");
+    MTX_LOGD(" %d*%d=%d", a_deg,b_deg,c_deg);
 
     // Read permutations.
     uint32_t* a_buf = NALLOC(uint32_t,a_deg);
@@ -133,7 +133,7 @@ static int tensorperms(void)
 
 static void doit()
 {
-    fileA = mfOpen(fileNameA);
+    fileA = mfOpen(fileNameA, "rb");
     mfReadHeader(fileA);
     const uint32_t objectType = mfObjectType(fileA);
     if (objectType != MTX_TYPE_MATRIX && objectType != MTX_TYPE_PERMUTATION) {
@@ -141,7 +141,7 @@ static void doit()
               fileNameA,(unsigned long) objectType);
     }
 
-    fileB = mfOpen(fileNameB);
+    fileB = mfOpen(fileNameB, "rb");
     mfReadHeader(fileB);
     if (mfObjectType(fileB) != objectType) {
 	mtxAbort(MTX_HERE,"%s and %s: %s",fileNameA,fileNameB,MTX_ERR_INCOMPAT);

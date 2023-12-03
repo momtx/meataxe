@@ -196,19 +196,20 @@ static void getpol()
 
 // Prints a polynomial at message level 1.
 
-static void printpol(POLY a)
+static void formatPoly(StrBuffer* sb, POLY a)
 {
-   int i,flag = 0;
+   int flag = 0;
 
-   for (i = MAXPWR; i >= 0; i--) {
+   for (int i = MAXPWR; i >= 0; i--) {
       if (a[i] != 0) {
-         if (flag) { MESSAGE(1, "+");}
-         if (a[i] != 1) { MESSAGE(1, "%d",(int)a[i]);}
-         MESSAGE(1, "x^%d",i);
+         if (flag) {
+            sbAppend(sb, "+");
+         }
+         if (a[i] != 1) { sbPrintf(sb, "%d", (int)a[i]); }
+         sbPrintf(sb, "x^%d", i);
          flag = 1;
       }
    }
-   MESSAGE(1, "\n");
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -529,7 +530,7 @@ static void computeIncrementTable()
       const uint16_t j = (uint16_t)((i % P) == P - 1 ? i + 1 - P : i + 1);
       if (j == 0) {
          Minusone = FfFromIntTable[i];
-         MESSAGE(1, "MinusOne=%u(0x%04x)\n", i, FfFromIntTable[i]);
+         MTX_LOGD("MinusOne=%u(0x%04x)\n", i, FfFromIntTable[i]);
       }
       inc[FfFromIntTable[i]] = FfFromIntTable[j];
    }
@@ -541,16 +542,18 @@ static void computeIncrementTable()
 
 static void writeHeader()
 {
-   MESSAGE(1, "Generating arithmetic tables\n");
-   MESSAGE(1, "ZZZ version : %u\n", (unsigned) MTX_ZZZVERSION);
-   MESSAGE(1, "Field order : %u=%u^%u\n", (unsigned)Q, (unsigned)P, (unsigned) N);
+   MTX_LOGD("Generating arithmetic tables\n");
+   MTX_LOGD("ZZZ version : %u\n", (unsigned) MTX_ZZZVERSION);
+   MTX_LOGD("Field order : %u=%u^%u\n", (unsigned)Q, (unsigned)P, (unsigned) N);
    if (P != Q) {
-      MESSAGE(1, "Polynomial  : ");
-      printpol(irred);
-      MESSAGE(1, "Generator   : x\n");
+      MTX_XLOGD(msg) {
+         sbAppend(msg, "Polynomial  : ");
+         formatPoly(msg, irred);
+      }
+      MTX_LOGD("Generator   : x\n");
    }
    else {
-      MESSAGE(1, "Generator   : %u\n", (unsigned) Gen);
+      MTX_LOGD("Generator   : %u\n", (unsigned) Gen);
    }
 
    char fname[50];
@@ -601,7 +604,7 @@ static void writeTables()
    sysWrite16(fd, subfieldOrders, numberOfSubfields);
    sysWrite16(fd, embeddingTables, embeddingTablesSize);
    fclose(fd);
-   MESSAGE(1, "Ok\n");
+   MTX_LOGD("Ok\n");
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////

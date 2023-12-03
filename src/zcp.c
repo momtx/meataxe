@@ -27,7 +27,7 @@ static MtxApplicationInfo_t AppInfo = {
 MTX_COMMON_OPTIONS_DESCRIPTION
 "    -G ...................... GAP output\n"
 "    -m ...................... Calculate the minimal polynomial\n"
-"    -f ...................... Factor the polynomial\n"
+"    -f ...................... factor the polynomial\n"
 "    -p ...................... Do not factorize, print a single polynomial\n"
 "\n"
 "FILES\n"
@@ -53,7 +53,7 @@ static void init(int argc, char **argv)
     if (opt_f && opt_p) {
        mtxAbort(MTX_HERE, "-f and -p cannot be combined");
     }
-    if (opt_G) MtxMessageLevel = -100;
+//    if (opt_G) MtxMessageLevel = -100;
     appGetArguments(App,1,1);
     fname = App->argV[0];
 
@@ -112,9 +112,9 @@ static void writeP(const Poly_t *pol)
 
 static void writeF(const FPoly_t *fpol)
 { 
-   for (int i = 0; i < fpol->NFactors; ++i) {
-      const Poly_t* const factor = fpol->Factor[i];
-      const int exp = fpol->Mult[i];
+   for (int i = 0; i < fpol->nFactors; ++i) {
+      const Poly_t* const factor = fpol->factor[i];
+      const int exp = fpol->mult[i];
 
       if (opt_G) {
          if (!first)
@@ -195,7 +195,7 @@ Standard options, see @ref prog_stdopts
 Generate GAP output.
 
 @par -f
-Factor the polynomial.
+factor the polynomial.
 
 @par -m
 Calculate the minimal polynomial

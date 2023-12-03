@@ -85,11 +85,11 @@ static void ReadFiles()
 	mtxAbort(MTX_HERE,"The head (%d) is bigger than the ring itself (%d)!",
 		headdim,enddim);
     }
-    MESSAGE(1, "dim(M)=%d, dim(E)=%d, dim(Head)=%d\n",moddim,enddim,headdim);
+    MTX_LOGD("dim(M)=%d, dim(E)=%d, dim(Head)=%d",moddim,enddim,headdim);
 
     // Read the basis of the head.
     sprintf(fn,"%s.lrr.soc",EndoName);
-    MESSAGE(1, "Loading socle basis\n");
+    MTX_LOGD("Loading socle basis");
     tmp = matLoad(fn);
     tmp2 = matInverse(tmp);
     matFree(tmp);
@@ -119,21 +119,21 @@ static void WriteOutput(Matrix_t *bas)
     /* Write the decomposition basis.
        ------------------------------ */
     sprintf(name,"%s.dec", ModName);
-    MESSAGE(1, "Writing the decomposition basis (%s)\n",name);
+    MTX_LOGD("Writing the decomposition basis (%s)",name);
     matSave(bas,name);
 
     /* Transform the generators.
        ------------------------- */
     if (TransformGenerators || WriteAction)
     {
-	MESSAGE(1, "Transforming the generators\n");
+	MTX_LOGD("Transforming the generators");
 	sprintf(name,"%s.std",ModName);
 	rep = mrLoad(name, ModInfo.NGen);
 	mrChangeBasis(rep,bas);
 	if (TransformGenerators)
 	{
 	    sprintf(name,"%s.dec",ModName);
-	    MESSAGE(1, "Writing transformed generators (%s.1, ...)\n",name);
+	    MTX_LOGD("Writing transformed generators (%s.1, ...)",name);
 	    mrSave(rep,name);
 	}
     }
@@ -143,7 +143,7 @@ static void WriteOutput(Matrix_t *bas)
        ---------------------------------------------------------- */
     if (WriteAction)
     {
-	MESSAGE(1, "Writing the action on the direct summands\n");
+	MTX_LOGD("Writing the action on the direct summands");
 	for (i = 0; i < rep->NGen; i++)
 	{
 	    int k, block_start = 0;
@@ -186,7 +186,7 @@ int main(int argc, char **argv)
     headptr = head->data;
     for (i = 0; i < LrrInfo.nCf; i++)
     {
-	MESSAGE(1, "Next constituent is %s%s\n",LrrInfo.BaseName, latCfName(&LrrInfo,i));
+	MTX_LOGD("Next constituent is %s%s",LrrInfo.BaseName, latCfName(&LrrInfo,i));
 	for (j = 0; j < LrrInfo.Cf[i].dim / LrrInfo.Cf[i].spl; j++)
 	{
 	    num = LrrInfo.Cf[i].dim;
@@ -216,10 +216,10 @@ int main(int argc, char **argv)
 		    fpFree(pol);
 		pol = charpol(partbas);
 	    }
-	    while (LrrInfo.Cf[i].dim != 1 && pol->NFactors == 1 
-		&& pol->Factor[0]->degree == 1
-		&& pol->Factor[0]->data[0] == FF_ZERO 
-		&& pol->Factor[0]->data[1] == FF_ONE); /* i.e.,charpol == x^enddim */
+	    while (LrrInfo.Cf[i].dim != 1 && pol->nFactors == 1 
+		&& pol->factor[0]->degree == 1
+		&& pol->factor[0]->data[0] == FF_ZERO 
+		&& pol->factor[0]->data[1] == FF_ONE); /* i.e.,charpol == x^enddim */
 	    headptr = ffGetPtr(headptr,num, enddim);
 
 
@@ -234,7 +234,7 @@ int main(int argc, char **argv)
 	    else
 		compnm[i] = 'a';
 	    matFree(ker);
-	    MESSAGE(0, "The %d-th direct summand is: %d%c\n\n", j, compdim[i], compnm[i]);
+	    MTX_LOGI("The %d-th direct summand is: %d%c", j, compdim[i], compnm[i]);
 
 
 	    /* Append <partbas> to <bas>.

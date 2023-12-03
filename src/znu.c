@@ -47,8 +47,8 @@ static int Init(int argc, char **argv)
 	return -1;
     opt_G = appGetOption(App,"-G --gap");
     opt_n = appGetOption(App,"-n --no-echelon");
-    if (opt_G)
-	MtxMessageLevel = -100;
+//    if (opt_G)
+//	MtxMessageLevel = -100;
 
     /* Process arguments.
        ------------------ */
@@ -60,7 +60,7 @@ static int Init(int argc, char **argv)
 
     /* Read the matrix.
        ---------------- */
-    MESSAGE(1, "Reading %s\n",matname);
+    MTX_LOGD("Reading %s",matname);
     Matrix = matLoad(matname);
     if (Matrix == NULL)
 	return 1;
@@ -90,7 +90,7 @@ int main(int argc, char **argv)
 	Matrix_t *null_space = matNullSpace_(Matrix,opt_n ? 1 : 0);
 	if (null_space == NULL)
 	    return 1;
-        MESSAGE(1, "Writing null-space to %s\n",nspname);
+        MTX_LOGD("Writing null-space to %s",nspname);
 	matSave(null_space,nspname);
 	nspdim = null_space->nor;
     }
@@ -108,7 +108,7 @@ int main(int argc, char **argv)
 	fflush(stdout);
     }
     else
-        MESSAGE(0, "NULLITY %d\n",nspdim);
+        MTX_LOGI("NULLITY %d",nspdim);
 
 
     appFree(App);

@@ -46,7 +46,7 @@ static uint32_t nVectors = 0;
 
 static void readOrbits()
 {
-   MtxFile_t* orbitsFile = mfOpen(fileNameOrbits);
+   MtxFile_t* orbitsFile = mfOpen(fileNameOrbits, "rb");
    orbits = imatRead(orbitsFile);
    orbitSizes = imatRead(orbitsFile);
    degree = orbits->noc;
@@ -59,7 +59,7 @@ static void readOrbits()
 static void openFiles()
 {
    // Vector input file.
-   fileInp = mfOpen(fileNameInp);
+   fileInp = mfOpen(fileNameInp, "rb");
    mfReadHeader(fileInp);
    if (mfObjectType(fileInp) != MTX_TYPE_MATRIX)
       mtxAbort(MTX_HERE,"%s: %s",fileNameInp,MTX_ERR_NOTMATRIX);
@@ -79,7 +79,7 @@ static void openFiles()
 static void uncondense()
 {
    for (uint32_t i = 0; i < nVectors; ++i) {
-      mfReadRows(fileInp, rowInp, 1, nOrbits);
+      ffReadRows(fileInp, rowInp, 1, nOrbits);
 
       ffMulRow(rowOut, FF_ZERO, degree);
       for (uint32_t k = 0; k < nOrbits; ++k) {
@@ -94,7 +94,7 @@ static void uncondense()
          }
       }
 
-      mfWriteRows(fileOut, rowOut, 1, degree);
+      ffWriteRows(fileOut, rowOut, 1, degree);
    }
 }
 

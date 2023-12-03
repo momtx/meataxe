@@ -83,7 +83,7 @@ static int readdata()
    int i, n;
 
    // Read the orbit file.
-   MtxFile_t* fileOrb = mfOpen(orbname);
+   MtxFile_t* fileOrb = mfOpen(orbname, "rb");
    orbits = imatRead(fileOrb);
    orbitSizes = imatRead(fileOrb);
    NOrbits = orbitSizes->noc;
@@ -98,7 +98,7 @@ static int readdata()
    // Set field and allocate output buffer.
    if (fieldOrder != 0) {               /* Condensation over GF(q) */
       ffSetField(fieldOrder);
-      MESSAGE(1, "Condensation over GF(%d), characteristic is %d\n", fieldOrder, ffChar);
+      MTX_LOGD("Condensation over GF(%d), characteristic is %d", fieldOrder, ffChar);
       m1 = ffAlloc(1, NOrbits);
       hsz = ffAlloc(1, NOrbits);
 
@@ -113,9 +113,9 @@ static int readdata()
          }
       }
       ppow /= ffChar;
-      MESSAGE(0, "p-part taken has order %d\n", ppow);
+      MTX_LOGI("p-part taken has order %d", ppow);
    } else {                     /* Condensation over Z */
-      MESSAGE(1, "Condensation over Z\n");
+      MTX_LOGD("Condensation over Z");
       RowZ = NALLOC(uint32_t, NOrbits);
    }
 
@@ -213,7 +213,7 @@ int main(int argc, char **argv)
 	/* Write one row to the output file.
 	   --------------------------------- */
 	if (fieldOrder != 0)
-	    mfWriteRows(kondfile,m1,1, NOrbits);
+	    ffWriteRows(kondfile,m1,1, NOrbits);
 	else
 	    mfWrite32(kondfile, RowZ, NOrbits);
     }

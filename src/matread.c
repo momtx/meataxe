@@ -9,55 +9,49 @@
 /// @{
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-/// Read matrix contents from a file.
-/// @param f File to read from.
-/// @param header The object header.
-/// @return Pointer to the matrix, or 0 on error.
 
-Matrix_t *matReadData(FILE *f, const uint32_t header[3])
+/// Reads matrix contents from a file end returns the matrix.
+/// Note: this function can only be called after a matrix header has been read. 
+/// To simply read a matrix from the file, use @ref matRead instead.
+
+Matrix_t* matReadData(MtxFile_t* f)
 {
-   if (header[0] >= MTX_TYPE_BEGIN) {
-      mtxAbort(MTX_HERE,"%s",MTX_ERR_NOTMATRIX);
+   const uint32_t objectType = mfObjectType(f);
+   if (objectType != MTX_TYPE_MATRIX) {
+      mtxAbort(MTX_HERE, "%s: bad type 0x%lx, expected 0x%lx (MATRIX)",
+         f->name, (unsigned long) objectType, (unsigned long) MTX_TYPE_MATRIX);
    }
-   Matrix_t* m = matAlloc(header[0],header[1],header[2]);
-   ffReadRows(f,m->data,m->nor, m->noc);
+   Matrix_t* m = matAlloc(f->header[0], f->header[1], f->header[2]);
+   ffReadRows(f, m->data, m->nor, m->noc);
+
+   // Make sure a second read attempt will fail.
+   f->header[0] = 0xFFFFFFFF;
+
    return m;
 }
 
-
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-/// Read a matrix from a file.
-/// @param f File to read from.
-/// @return Pointer to the matrix, or 0 on error.
 
-Matrix_t *matRead(FILE *f)
+/// Reads a matrix from a file and returns the matrix.
+/// The given file must have been be opened for reading, see @ref mfOpen.
+
+Matrix_t* matRead(MtxFile_t* f)
 {
-   uint32_t header[3];
-   sysRead32(f,header,3);
-   return matReadData(f, header);
+   mfReadHeader(f);
+   return matReadData(f);
 }
 
-
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-/// Read a matrix from a file.
-/// This function opens a file, reads a single matrix, and closes the file.
-/// To read more than one matrix from a file, use |matRead()|.
-/// @param fn File name.
-/// @return Pointer to the matrix.
 
-Matrix_t *matLoad(const char *fn)
+/// Read a matrix from a named file and returns the matrix.
+
+Matrix_t* matLoad(const char* fn)
 {
-   FILE *f;
-   Matrix_t *m;
-
-   if ((f = sysFopen(fn,"rb")) == NULL) {
-      return NULL;
-   }
-   m = matRead(f);
-   fclose(f);
+   MtxFile_t* f = mfOpen(fn, "rb");
+   Matrix_t* m = matRead(f);
+   mfClose(f);
    return m;
 }
-
 
 /// @}
 // vim:fileencoding=utf8:sw=3:ts=8:et:cin

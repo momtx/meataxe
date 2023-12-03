@@ -94,40 +94,34 @@ int matEchelonize(Matrix_t *mat)
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
+
 /// Nullity of a matrix.
 /// This function calculates the dimension of the null-space of a matrix.
 /// Unlike matNullity__() this function does not modify the matrix.
 /// @param mat Pointer to the matrix.
 /// @return Nullity of the matrix, or -1 on error.
 
-int matNullity(const Matrix_t *mat)
+uint32_t matNullity(const Matrix_t *mat)
 {
-   if (mat == NULL) {
-      return -1;
-   }
    return matNullity__(matDup(mat));
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
+
 /// Nullity of a matrix.
 /// This function calculates the dimension of the null-space of a matrix
 /// and deletes the matrix.
 /// @param mat Pointer to the matrix.
 /// @return Nullity of @em mat, or -1 on error.
 
-int matNullity__(Matrix_t *mat)
+uint32_t matNullity__(Matrix_t *mat)
 {
-   if (mat == NULL) {
-      return -1;
-   }
-   if (matEchelonize(mat) < 0) {
-      return -1;
-   }
-   int nul = mat->noc - mat->nor;
+   matEchelonize(mat);
+   uint32_t nul = mat->noc - mat->nor;
    matFree(mat);
    return nul;
 }
 
-
 /// @}
+
 // vim:fileencoding=utf8:sw=3:ts=8:et:cin

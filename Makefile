@@ -7,7 +7,7 @@
 # ------------------------------------------------------------------------------
 
 # Directory where binaries and run-time files will be installed.
-MTXROOT = ${CURDIR}
+MTXINSTALLDIR=dist
 
 # ------------------------------------------------------------------------------
 # Common compiler and linker flags
@@ -61,8 +61,6 @@ SILENT0=@
 SILENT1=
 SILENT=${SILENT${V}}
 
-MTXBIN = ${MTXROOT}/bin
-
 CFLAGS=$(CFLAGS1) $(CFLAGS_THREADS) -I"include" -Itmp -DMTX_ZZZ=${ZZZ}
 LDFLAGS=$(LDFLAGS1) $(LDFLAGS_THREADS)
 
@@ -76,8 +74,7 @@ PROGRAMS = \
 # Main targets
 # ------------------------------------------------------------------------------
 
-all build: $(PROGRAMS:%=${MTXBIN}/%) ${MTXBIN}/zzztest \
-   ${MTXROOT}/lib/libmtx.a
+all build: $(PROGRAMS:%=bin/%) bin/zzztest lib/libmtx.a
 
 clean:
 	rm -rf bin tmp *.zzz check.ma1 check.pe1 check.po1
@@ -109,10 +106,10 @@ tmp/_mkdir:
 # Link programs
 # ------------------------------------------------------------------------------
 
-${MTXBIN}/%: tmp/%.o ${MTXROOT}/lib/libmtx.a
+bin/%: tmp/%.o lib/libmtx.a
 	@echo "# LD $@"
-	${SILENT}mkdir -p "${MTXBIN}"
-	${SILENT}$(CC) $(LDFLAGS) -o $@ tmp/$*.o "${MTXROOT}/lib/libmtx.a"
+	${SILENT}mkdir -p bin
+	${SILENT}$(CC) $(LDFLAGS) -o $@ tmp/$*.o "lib/libmtx.a"
 
 # ------------------------------------------------------------------------------
 # Library
@@ -126,13 +123,13 @@ LIB_OBJS=\
 	ephemeral_string \
 	error \
 	ffio \
-	fpcore fpdup fpmul fpmul2 fpprint \
+	fpoly \
 	gap_format \
 	gcd genseed\
 	grmaprow grmatcore grtable \
 	hashlittle2 \
 	homcomp \
-	imatcore imatread imatwrite\
+	int_matrix \
 	init intio issub \
 	isisom kernel-$(ZZZ) \
 	ldiag \
@@ -148,30 +145,28 @@ LIB_OBJS=\
 	mkendo\
 	mmulscal \
 	mprintf \
-	mraddgen mrcore mrread mrtranspose mrwrite \
+	mrep \
 	msclean mscore \
 	mtensor mtxobj os \
-	permcmp permcore permdup perminv permmul permorder\
-	permprint permpwr permread permwrite \
-	pex poladd\
-	polcmp polcore polderive poldiv poldup\
-	polgcd polmul polprint polread polwrite \
+	permutation \
+	pex\
+	polynomial\
 	quotient random rdcfgen \
 	saction \
 	spinup spinup2 \
 	split stabpwr stfcore \
 	stfread stfwrite \
+	string \
 	sumint \
 	temap \
 	tkinfo vec2mat \
 	wgen \
 	zcleanrow zcmprow zpermrow \
-	zzz2 \
-	version
+	zzz2
 
-${MTXROOT}/lib/libmtx.a: $(LIB_OBJS:%=tmp/%.o)
+lib/libmtx.a: $(LIB_OBJS:%=tmp/%.o)
 	@echo "# AR $@"
-	${SILENT}mkdir -p "${MTXROOT}/lib"
+	${SILENT}mkdir -p lib
 	${SILENT}rm -f "$@"
 	${SILENT}ar ${ARFLAGS1} r "$@" $(LIB_OBJS:%=tmp/%.o)
 
@@ -214,25 +209,26 @@ TESTS=\
   0214 \
   0215_m11_x_m11
 
-test: $(TESTS:%=tmp/test-%.done)
+test: $(TESTS:%=tmp/test_%.done)
 
 # meataxe library tests
 
 TS_OBJS1=c-args c-bitstring c-cfinfo c-charpol\
 	c-ffio c-fileio c-ffmat c-ffrow c-fpoly \
 	c-gap c-grease c-kernel c-matins c-matrix c-matset\
-	c-os c-perm c-poly c-pseed c-quot c-random \
-	c-stf c-tensor
+	c-os c-perm c-pex c-poly c-pseed c-quot c-random \
+	c-stf c-tensor c-wgen
 
-TS_OBJS=$(TS_OBJS1:%=tmp/%.o) tmp/testing.o tmp/test_table.o ${MTXROOT}/lib/libmtx.a
+TS_OBJS=$(TS_OBJS1:%=tmp/%.o) tmp/testing.o tmp/test_table.o lib/libmtx.a
 
-${MTXBIN}/zzztest: $(TS_OBJS) tmp/_mkdir
+bin/zzztest: $(TS_OBJS) tmp/_mkdir
 	@echo "# LD $@"
-	${SILENT}mkdir -p "${MTXBIN}"
+	${SILENT}mkdir -p bin
 	${SILENT}$(CC) $(LDFLAGS) -o "$@" $(TS_OBJS)
 
 tmp/test_table.c: tmp/_mkdir tmp/tex $(TS_OBJS1:%=tests/%.c)
-	tmp/tex $(TS_OBJS1:%=tests/%.c) >$@
+	tmp/tex $(TS_OBJS1:%=tests/%.c) >$@.new
+	mv $@.new $@
 
 tmp/tex: tests/tex.c tmp/_mkdir
 	@$(CC) -Itests -Isrc $(CFLAGS) $(LDFLAGS) $< -o $@
@@ -247,22 +243,31 @@ tmp/test_table.o: tmp/test_table.c
 	${SILENT}mkdir -p tmp
 	${SILENT}$(CC) $(CFLAGS) -Itests -Isrc -c tmp/test_table.c -o "$@"
 
-tmp/test-%.done: tests/common.sh ${MTXBIN}/zzztest tests/%/run \
-   $(PROGRAMS:%=${MTXBIN}/%) tmp/_mkdir
-	@cd tmp && MTXBIN="${MTXBIN}" MTXLIB="${MTXROOT}/lib" MTX_TEST_ID="$*" \
+tmp/test_%.done: tests/common.sh bin/zzztest tests/%/run \
+   $(PROGRAMS:%=bin/%) tmp/_mkdir
+	@cd tmp && MTXBIN="${CURDIR}/bin" MTXLIB="${CURDIR}/lib" MTX_TEST_ID="$*" \
            MTX_ZZZ="${ZZZ}" \
-	   PATH="${MTXBIN}:/usr/bin:/bin" ../tests/$*/run
+	   PATH="${CURDIR}/bin:/usr/bin:/bin" ../tests/$*/run
 	@touch "$@"
 
-.PHONY: tar clean install test
+.PHONY: tar clean test
 .PRECIOUS: tmp/%.o
 
 # ------------------------------------------------------------------------------
 # Package maintenance
 # ------------------------------------------------------------------------------
 
-info:
-	@echo "TS_OBJS=${TS_OBJS}"
+.PHONY: install
+install: $(PROGRAMS:%=bin/%) lib/libmtx.a
+	test -n "${MTXINSTALLDIR}"
+	test -d "${MTXINSTALLDIR}"
+	rm -rf "${MTXINSTALLDIR}/bin" "${MTXINSTALLDIR}/lib" "${MTXINSTALLDIR}/include"
+	mkdir "${MTXINSTALLDIR}/bin"
+	cp ${PROGRAMS:%=bin/%} "${MTXINSTALLDIR}/bin" 
+	mkdir "${MTXINSTALLDIR}/lib"
+	cp lib/libmtx.a "${MTXINSTALLDIR}/lib"
+	mkdir "${MTXINSTALLDIR}/include"
+	cp src/meataxe.h "${MTXINSTALLDIR}/include"
 
 # ------------------------------------------------------------------------------
 # Documentation (requires Doxygen)

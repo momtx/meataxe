@@ -154,14 +154,13 @@ static int ParseWord(const char* spec)
       return -1;
    }
 
-   MESSAGE(1, "Word %d..%d, Poly=", WordNo, WordNo2);
-   if (MSG1) {
+   MTX_XLOGD(msg) {
+      sbPrintf(msg, "Word %d..%d, Poly=", WordNo, WordNo2);
       if (Poly != NULL) {
-         polPrint(NULL, Poly);
-         printf("\n");
+         polFormat(msg, Poly);
       }
       else {
-         printf("x\n");
+         sbAppend(msg, "x");
       }
    }
    return 0;
@@ -182,7 +181,7 @@ static int Init(int argc, char** argv)
       return -1;
    }
    opt_G = appGetOption(App, "-G --gap");
-   if (opt_G) { MtxMessageLevel = -100; }
+//   if (opt_G) { MtxMessageLevel = -100; }
    NGen = appGetIntOption(App, "-g", -1, 1, MAXGEN);
 
    /* Process arguments.
@@ -224,50 +223,59 @@ static void Cleanup()
 
 static int MakeWord()
 {
-    Matrix_t *w;
-    int lastword = WordNo2 >= 0 ? WordNo2 : WordNo;
+   Matrix_t* w;
+   int lastword = WordNo2 >= 0 ? WordNo2 : WordNo;
 
+   if (Poly != NULL) {
+      MTX_XLOGI(sb) {
+         sbAppend(sb, "Using polynomial p(x)=");
+         polFormat(sb, Poly);
+      }
+   }
+   MTX_LOGI("Number Nullity Word");
+   for (; WordNo <= lastword; ++WordNo) {
+      w = wgMakeWord(WGen, WordNo);
+      if (w == NULL) {
+         return -1;
+      }
+      if (Poly != NULL) {
+         matInsert_(w, Poly);
+      }
+      if (WordFileName != NULL && WordNo2 == -1) {
+         matSave(w, WordFileName);
+      }
+      Matrix_t* nsp = NULL;
+      if (WordNo2 != -1 || NspFileName != NULL) {
+         nsp = matNullSpace_(w, 0);
+         if (WordNo2 == -1) {
+            matSave(nsp, NspFileName);
+         }
+      }
 
-    if (Poly != NULL && MSG0)
-    {
-	    polPrint("Using polynomial p(x)",Poly);
-    }
-    MESSAGE(0, "Number Nullity Word\n");
-    for (; WordNo <= lastword; ++WordNo)
-    {
-	w = wgMakeWord(WGen,WordNo);
-	if (w == NULL)
-	    return -1;
-	if (Poly != NULL)
-	    matInsert_(w,Poly);
-	MESSAGE(0, "%6d",WordNo);
-	if (WordFileName != NULL && WordNo2 == -1)
-	    matSave(w,WordFileName);
-	if (WordNo2 != -1 || NspFileName != NULL)
-	{
-	    Matrix_t *nsp = matNullSpace_(w,0);
-	    if (WordNo2 == -1)
-		matSave(nsp,NspFileName);
-	    MESSAGE(0, "%8d",nsp->nor);
-	    matFree(nsp);
-	}
-	else
-	    MESSAGE(0, "        ");
-	MESSAGE(0, " %s\n",wgSymbolicName(WGen,WordNo));
-	matFree(w);
-    }
-    return 0;
+      MTX_XLOGI(msg) {
+         sbPrintf(msg, "%6d", WordNo);
+         if (nsp != NULL) {
+            sbPrintf(msg, "%8d", nsp->nor);
+         }
+         else {
+            sbAppend(msg, "        ");
+         }
+         sbPrintf(msg, " %s", wgSymbolicName(WGen, WordNo));
+      }
+
+      if (nsp) matFree(nsp);
+      matFree(w);
+   }
+   return 0;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 int main(int argc, char **argv)
 {
-    int rc;
-
     if (Init(argc,argv) != 0)
 	return 1;
-    rc = MakeWord();
+    int rc = MakeWord();
     Cleanup();
     return rc;
 }

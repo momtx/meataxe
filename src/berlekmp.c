@@ -19,7 +19,7 @@ typedef struct { Poly_t *p; long n; } factor_t;
 /// Returns a factorization of the given polynomial into squarefree factors.
 /// The returned list is terminated by an entry with p=NULL, n=0.
 
-static factor_t *factorsquarefree(const Poly_t *pol)
+static factor_t *factorSquarefree(const Poly_t *pol)
 {
     long int j,k,tdeg;
     Poly_t *t, *w, *v;
@@ -37,8 +37,7 @@ static factor_t *factorsquarefree(const Poly_t *pol)
     size_t nfactors = 0;
     factor_t *factors = NALLOC(factor_t,pol->degree + 1);
 
-    /* Main loop
-       --------- */
+    // Main loop
     while (t0->degree > 0) {
 	Poly_t *der = polDerive(polDup(t0));
         t = polGcd(t0,der);
@@ -59,9 +58,9 @@ static factor_t *factorsquarefree(const Poly_t *pol)
 	    factors[nfactors].p = polDivMod(v,w);
 	    factors[nfactors].n = e * k;
 	    if (factors[nfactors].p->degree > 0)
-	       	++nfactors;			/* add to output */
+	       	++nfactors;			// add to output
 	    else
-	    	polFree(factors[nfactors].p);	/* discard const. */
+	    	polFree(factors[nfactors].p);	// discard constant
             polFree(v);
 	    v = w;
 	    tmp = polDivMod(t,v);
@@ -70,7 +69,7 @@ static factor_t *factorsquarefree(const Poly_t *pol)
 	} 
 	polFree(v);
 
-	/* shrink the polynomial */
+	// shrink the polynomial
       	tdeg = t->degree;
       	e *= ffChar;
       	if ( tdeg % ffChar != 0 )
@@ -113,13 +112,10 @@ static factor_t *factorsquarefree(const Poly_t *pol)
     factors[nfactors].n = 0;
     return factors;
 }
-		      
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
-/* ------------------------------------------------------------------
-   makekernel() - Determines the matrix of the frobenius and returns
-   its nullspace.
-   ------------------------------------------------------------------ */
+// Determines the matrix of the frobenius and returns its nullspace.
 
 static Matrix_t *makekernel(const Poly_t *pol)
 {
@@ -129,7 +125,7 @@ static Matrix_t *makekernel(const Poly_t *pol)
     const long fl = pol->field;
     Matrix_t* materg = matAlloc(fl,pdeg,pdeg);
     PTR rowptr = materg->data;
-    MESSAGE(3, "makekernel: fl=%ld pdeg=%ld", fl, pdeg);
+    MTX_LOG2("makekernel: fl=%ld pdeg=%ld", fl, pdeg);
 
     FEL* xbuf = NALLOC(FEL,pdeg+1);
     for (k = 0; k <= pdeg; ++k) 
@@ -169,10 +165,9 @@ static Matrix_t *makekernel(const Poly_t *pol)
     return matNullSpace__(materg);
  } 
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
-/* ------------------------------------------------------------------
-   berlekamp() - Find the irreducible factors of a squarefree polynomial.
-   ------------------------------------------------------------------ */
+// Find the irreducible factors of a squarefree polynomial.
 
 static Poly_t **berlekamp(const Poly_t *pol, const Matrix_t  *kernel)
 {
@@ -248,111 +243,35 @@ static Poly_t **berlekamp(const Poly_t *pol, const Matrix_t  *kernel)
     return list;
 }
 
-
-
-
+////////////////////////////////////////////////////////////////////////////////////////////////////
    
-/// Factor a polynomial.
-/// This function decomposes a polynomial into irreducible factors using the
-/// Berlekamp algorithm.
-/// @param pol Polynomial to factor.
-/// @return The factorization of @a pol.
+/// Factorize a polynomial.
+/// This function decomposes a polynomial into irreducible factors using the Berlekamp algorithm.
 
-FPoly_t *Factorization(const Poly_t *pol)
+FPoly_t* Factorization(const Poly_t* pol)
 {
-    FPoly_t *factors = fpAlloc();
+   int context = mtxBegin(MTX_HERE, "Polynomial Factorization");
+   FPoly_t* factors = fpAlloc(pol->field);
 
-    /* Step 1: Squarefree factorization
-       -------------------------------- */
-    factor_t *list = factorsquarefree(pol);
-    if (list == NULL)
-    {
-	mtxAbort(MTX_HERE,"Squarefree factorization failed");
-    }
+   // Step 1: Squarefree factorization
+   factor_t* list = factorSquarefree(pol);
 
-    /* Step 2: Decompose the squarefree factors using Berlekamp's algorithm
-       -------------------------------------------------------------------- */
-    for (factor_t* l = list; l->p != NULL; ++l)
-    {
-	Matrix_t *kernel;
-	Poly_t **irr, **i;
+   // Step 2: Decompose the squarefree factors using Berlekamp's algorithm
+   for (factor_t* l = list; l->p != NULL; ++l) {
+      Matrix_t* kernel = makekernel(l->p);
+      Poly_t** irr = berlekamp(l->p, kernel);
+      matFree(kernel);
+      for (Poly_t** i = irr; *i != NULL; ++i) {
+         fpMulP(factors, *i, l->n);
+         polFree(*i);
+      }
+      sysFree(irr);
+      polFree(l->p);
+   }
 
-	kernel = makekernel(l->p);
-	if ((irr = berlekamp(l->p,kernel)) == NULL)
-	{
-	    mtxAbort(MTX_HERE,"Berlekamp factorization failed");
-	}
-	matFree(kernel);
-	for (i = irr; *i != NULL; ++i)
-	{
-	    fpMulP(factors,*i,l->n);
-	    polFree(*i);
-	}
-
-	/* Clean up
-	   -------- */
-	sysFree(irr);
-	polFree(l->p);
-    }
-
-    /* Clean up
-       -------- */
-    sysFree(list);
-    return factors;
+   sysFree(list);
+   mtxEnd(context);
+   return factors;
 }
-
 
 /// @}
-
-
-
-
-
-
-
-#if 0
-
-Poly_t *p, *q, *r;
-factor_t *f, *ff;
-
-int main(void)
-{
-    int i;
-    int count = 0;
-
-    p = polAlloc(5,20);
-    while (1)
-    {
-	if (++count % 100 == 0)
-	{
-	    printf("%d\n",count);
-	    fflush(stdout);
-	}
-	memset(p->data,0,21);
-	p->data[20] = FF_ONE;
-	for (i = mtxRandomInt(20); i > 0; --i)
-	    p->data[RandInt(20)] = ffFromInt(mtxRandomInt(5));
-	/*polprint("p",p);*/
-	ff = f = polFactorization(p);
-	q = polAlloc(5,0);
-	for (; f->n != 0; ++f)
-	{
-    	    int i;
-    	    /*polprint("factor",f->p);*/
-    	    for (i = 0; i < f->n; ++i) 
-		polMul(q,f->p);
-    	    /*printf("exp = %ld\n",f->n);*/
-	    polFree(f->p);
-	}
-	free(ff);
-	/*polprint("q",q);*/
-	if (polCompare(p,q)) break;
-	polFree(q);
-    }
-    polprint("p",p);
-    polprint("q",q);
-    return 0;
-}
-
-#endif
-// vim:fileencoding=utf8:sw=3:ts=8:et:cin

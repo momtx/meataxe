@@ -71,7 +71,7 @@ static void init(int argc, char **argv)
     height = NALLOC(int,nrows);
 
     // Check if we are pasting matrices or permutations.
-    MtxFile_t* f = mfOpen(mkname(0,0));
+    MtxFile_t* f = mfOpen(mkname(0,0), "rb");
     mfReadHeader(f);
     const uint32_t objectType = mfObjectType(f);
     if (objectType != MTX_TYPE_MATRIX) {
@@ -92,7 +92,7 @@ static void checksizes()
 {
     uint32_t field0 = 0;
 
-    MESSAGE(1, "Checking sizes\n");
+    MTX_LOGD("Checking sizes");
     for (int i = 0; i < nrows; ++i) 
 	height[i] = -1;
     for (int k = 0; k < ncols; ++k) 
@@ -105,7 +105,7 @@ static void checksizes()
 	    const char *c = mkname(i,k);
 	    if (!strcmp(c,"-"))
 		continue;
-            MtxFile_t* f = mfOpen(c);
+            MtxFile_t* f = mfOpen(c, "rb");
             mfReadHeader(f);
             const uint32_t objectType = mfObjectType(f);
             if (objectType != MTX_TYPE_MATRIX)
@@ -146,7 +146,7 @@ static void checksizes()
     for (int k = 0; k < ncols; ++k)
 	nocOut += width[k];
 
-    MESSAGE(0, "Output is %dx%d\n",norOut,nocOut);
+    MTX_LOGI("Output is %dx%d",norOut,nocOut);
 }
 
 
@@ -159,7 +159,7 @@ static void pasteMatrices()
    fileOut = mfCreate(ofilename, fieldOut, norOut, nocOut);
    for (int i = 0; i < nrows; ++i)
    {	
-      MESSAGE(1, "Pasting row %d\n",i);
+      MTX_LOGD("Pasting row %d",i);
       for (uint32_t row = 0; row < maxnor; ++row)
          ffMulRow(ffGetPtr(bufOut, row, nocOut), FF_ZERO, nocOut);
       int colStart = 0;
@@ -168,12 +168,12 @@ static void pasteMatrices()
          const char *c = mkname(i,k);
          if (strcmp(c,"-"))
          {
-            MtxFile_t* fileP = mfOpen(c);
+            MtxFile_t* fileP = mfOpen(c, "rb");
             mfReadHeader(fileP);
             const uint32_t norP = fileP->header[1];
             const uint32_t nocP = fileP->header[2];
             PTR piece = ffAlloc(norP, nocP);
-            mfReadRows(fileP, piece, norP, nocP);
+            ffReadRows(fileP, piece, norP, nocP);
             mfClose(fileP);
             PTR rowOut = bufOut;
             PTR rowP = piece;
@@ -188,7 +188,7 @@ static void pasteMatrices()
          }
          colStart += width[k];
       }
-      mfWriteRows(fileOut, bufOut, height[i], nocOut);
+      ffWriteRows(fileOut, bufOut, height[i], nocOut);
    }
 }
 

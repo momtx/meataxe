@@ -54,7 +54,7 @@ int main(int argc, char **argv)
     {
 	ffMulRow(rowOut, FF_ZERO, norIn);
 	ffExtractColumn(matrixIn, norIn, nocIn, j, rowOut);
-	mfWriteRows(fileOut, rowOut, 1, norIn);
+	ffWriteRows(fileOut, rowOut, 1, norIn);
     }
     mfClose(fileOut);
     sysFree(rowOut);

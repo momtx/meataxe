@@ -23,10 +23,8 @@
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-/// Check a File Object.
-/// This function checks if the argument points to a valid MtxFile_t structure.
-/// @param file Pointer to the file.
-/// @return 1 if @a file points to a valid file object, 0 otherwise.
+/// Returns 1 if the given file object is valid or 0 otherwise.
+/// See also @ref mfValidate.
 
 int mfIsValid(const MtxFile_t *file)
 {
@@ -38,6 +36,9 @@ int mfIsValid(const MtxFile_t *file)
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
+
+/// Verifies that the given file is valid, aborts the program otherwise.
+/// See also @ref mfIsValid.
 
 void mfValidate(const struct MtxSourceLocation* src, const MtxFile_t *file)
 {
@@ -79,6 +80,8 @@ static int isNonNegative(uint32_t x)
    return (x & 0x8000000L) == 0;
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
 static int isValidFieldOrder(uint32_t x)
 {
    #if MTX_ZZZ == 0
@@ -119,8 +122,11 @@ static int isValidHeader(uint32_t* type, const uint32_t header[3])
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 /// Returns the object type.
-/// This function assumes that <tt>file->header</tt> contains a valid object header, i.e., that
-/// @ref mfReadHeader or @ref mfTryReadHeader was called before.
+///
+/// This function can only be called after @ref mfReadHeader returned or @ref mfTryReadHeader
+/// returned zero. It returns the type id (e.g., MTX_TYPE_MATRIX) corresponding to the header that
+/// has just been read.
+///
 /// The function fails and aborts the program if the header is invalid.
 
 uint32_t mfObjectType(const MtxFile_t* file)
@@ -144,44 +150,50 @@ static void checkHeader(MtxFile_t* f)
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-/// Reads the object header at the current position.
-/// On return, the members @c Field, @c Nor and @c Noc are set to the values found in the header.
+/// Reads the object header at the current position and returns the object type.
+///
 /// The function fails and aborts the program if the header cannot be read or is invalid. This
 /// includes the case that nothing could be read because the file pointer was already at the end of
-/// file when the function was called.
+/// file.
 /// See also @ref mfTryReadHeader.
 
-void mfReadHeader(MtxFile_t* file)
+uint32_t mfReadHeader(MtxFile_t* file)
 {
    sysRead32(file->file, file->header, 3);
-   checkHeader(file);
+   return mfObjectType(file);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 /// Tries to read an object header at the current position.
+///
 /// This function behaves like @ref mfReadHeader, but does not fail if the file pointer is already
-/// at end of file.
-/// @return 1 if an valid header was read, 0 otherwise (end of file or i/o error)
+/// at end of file. The function can still fail if
+/// - end of file was encountered after reading a part of the header, or
+/// - any other i/o error.
+///
+/// @return 0 if an valid header was read, 1 otherwise (end of file)
 
 int mfTryReadHeader(MtxFile_t* file)
 {
-   if (!sysTryRead32(file->file, file->header, 3))
-      return 0;
+   int result = mfTryRead32(file, file->header, 3);
+   if (result == 1)
+      return 1;
    checkHeader(file);
-   return 1;
+   return 0;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-/// Opens a file for reading.
-/// Fails if the file does not exist, or cannot be opened.
+/// Opens a file.
+/// Fails if the file does not exist or cannot be opened.
+/// See @ref mfOpen for the meaning of @a mode.
 
-MtxFile_t *mfOpen(const char *name)
+MtxFile_t* mfOpen(const char* name, const char* mode)
 {
-   MtxFile_t *f = allocFile(name);
+   MtxFile_t* f = allocFile(name);
    f->typeId = MF_MAGIC;
-   f->file = sysFopen(name,"rb");
+   f->file = sysFopen(name, mode);
    return f;
 }
 
@@ -220,36 +232,6 @@ void mfClose(MtxFile_t *file)
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-/// Reads row vectors from a file.
-/// @param f Pointer to the file.
-/// @param buf Data buffer.
-/// @param nor Number of rows to read.
-/// @param noc Row size (number of columns).
-
-void mfReadRows(MtxFile_t *f, PTR buf, uint32_t nor, uint32_t noc)
-{
-   mfValidate(MTX_HERE, f);
-
-   // Handle empty data.
-   if (nor == 0 || noc == 0)
-      return;
-
-   ffSetField(f->header[0]); // TODO: remove?
-   const size_t rowSizeUsed = ffRowSizeUsed(noc);
-   const size_t rowSize = ffRowSize(noc);
-
-   // Read rows.
-   uint8_t *b = (uint8_t *) buf;
-   for (uint32_t i = nor; i > 0; --i) {
-      if (fread(b, rowSizeUsed, 1, f->file) != 1) {
-         mtxAbort(MTX_HERE,"%s: read error: %s", f->name, strerror(errno));
-      }
-      b += rowSize;
-   }
-}
-
-////////////////////////////////////////////////////////////////////////////////////////////////////
-
 void mfSkip(MtxFile_t *file, size_t nBytes)
 {
    if (fseek(file->file, (long)nBytes, SEEK_CUR) != 0)
@@ -258,51 +240,40 @@ void mfSkip(MtxFile_t *file, size_t nBytes)
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-/// Write rows to a file.
-/// See also @ref ffWriteRows.
-///
-/// @param f Pointer to the file.
-/// @param buf Data buffer.
-/// @param nor Number of rows to write.
-/// @param noc Row size (number of columns).
+/// Writes raw bytes to a file.
+/// This function writes an array of 8-bit integers from a buffer to a data file.
 
-void mfWriteRows(MtxFile_t *f, PTR buf, uint32_t nor, uint32_t noc)
+void mfWrite8(MtxFile_t* f, const void* buf, size_t count)
 {
-   register char *b = (char *) buf;
-
    mfValidate(MTX_HERE, f);
+   sysWrite8(f->file, buf, count);
+}
 
-   // Handle empty data
-   if (nor == 0 || noc == 0) {
-      return;
-   }
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
-   // Write rows one by one
-   const size_t rowSize = ffRowSize(noc);
-   const size_t rowSizeUsed = ffRowSizeUsed(noc);
+/// Reads raw bytes from a file.
+/// This function reads @a count bytes from a data file to a buffer.
 
-   for (uint32_t i = nor; i > 0; --i) {
-      if (fwrite(b,rowSizeUsed,1,f->file) != 1) {
-         break;
-      }
-      b += rowSize;
-   }
-
-   if (ferror(f->file)) {
-      mtxAbort(MTX_HERE,"%s: Write failed: %s",f->name, strerror(errno));
+void mfRead8(MtxFile_t* f, void* buf, size_t count)
+{
+   mfValidate(MTX_HERE, f);
+   size_t nread = fread(buf, 1, count, f->file);
+   if (nread != count) {
+      const char *errorMessage = ferror(f->file) ? strerror(errno) : "unexpected end of file";
+      mtxAbort(MTX_HERE, "Error reading %s: %s", f->name, errorMessage);
    }
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 /// Writes 32-bit integers to a file.
-/// This function writes an array of 32-bit integers from @a buffer into a data file.
+/// This function writes an array of 32-bit integers from @a buf to a data file.
 /// Each integer is written in LSB first format to the file. See @ref sysWrite32 for details.
 /// @param f Pointer to the file.
 /// @param buf Data buffer.
 /// @param count Number of 32-bit integers to write.
 
-void mfWrite32(MtxFile_t *f, const void *buf, int count)
+void mfWrite32(MtxFile_t *f, const void *buf, size_t count)
 {
    mfValidate(MTX_HERE, f);
    sysWrite32(f->file,buf,count);
@@ -315,10 +286,34 @@ void mfWrite32(MtxFile_t *f, const void *buf, int count)
 /// Each integer is converted from file format (little-endian) into native format.
 /// See @ref sysRead32 for details.
 
-void mfRead32(MtxFile_t* f, void* buf, int count)
+void mfRead32(MtxFile_t* f, void* buf, size_t count)
 {
    mfValidate(MTX_HERE, f);
-   sysRead32(f->file,buf,count);
+   int result = mfTryRead32(f, buf, count);
+   if (result != 0) {
+      mtxAbort(MTX_HERE, "Error reading %s: unexpected end of file", f->name);
+   }
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+/// Reads 32-bit integers from a file.
+/// This function works like @ref mfRead32 but does not fail if the file pointer was already at the
+/// end of file. The function still fails if ony a part of the requested data could be read before
+/// the end of file was encountered, or if there was any other i/o error.
+///
+/// @return 0 on success (read complete), 1 on end-of-file (nothing as read)
+
+int mfTryRead32(MtxFile_t* f, void* buf, size_t count)
+{
+   mfValidate(MTX_HERE, f);
+   const int result = sysTryRead32(f->file, buf, count);
+   if (result == 0 || result == 1) {
+      return result;
+   }
+   mtxAbort(MTX_HERE, "Error reading %s: %s",
+      f->name, result != 0 ? strerror(errno) : "partial read");
+   return -1;
 }
 
 /// @}

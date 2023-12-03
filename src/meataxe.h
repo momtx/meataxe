@@ -47,20 +47,20 @@ int sysGetPid();
 void sysInit(void);
 void* sysMalloc(size_t nbytes);
 size_t sysPad(size_t x, size_t unit);
-void sysRead8(FILE *f, void* buf, size_t n);
 void sysRead16(FILE *f, void* buf, size_t n);
 void sysRead32(FILE *f, void* buf, size_t n);
-uint64_t sysTime();
-int sysTimeout(uint64_t* buf, unsigned intervalInSeconds);
-int sysTryRead32(FILE *f, void* buf, size_t n);
+void sysRead8(FILE *f, void* buf, size_t n);
 void* sysRealloc(void *buf, size_t nbytes);
 int sysRemoveDirectory(const char *name);
 int sysRemoveFile(const char *name);
 void sysSetTimeLimit(long nsecs);
+uint64_t sysTime();
+int sysTimeout(uint64_t* buf, unsigned intervalInSeconds);
 long sysTimeUsed(void);
-void sysWrite8(FILE *f, const void* buf, size_t n);
+int sysTryRead32(FILE *f, void* buf, size_t n);
 void sysWrite16(FILE *f, const void* buf, size_t n);
 void sysWrite32(FILE *f, const void* buf, size_t n);
+void sysWrite8(FILE *f, const void* buf, size_t n);
 
 #define ALLOC(type) ((type *) sysMalloc(sizeof(type)))
 #define NALLOC(type,n) ((type *) sysMalloc((size_t)(n) * sizeof(type)))
@@ -78,6 +78,7 @@ void sysWrite32(FILE *f, const void* buf, size_t n);
 
 typedef struct PexGroup PexGroup_t;
 
+struct ErrorContextStack* pexContextStack();
 PexGroup_t* pexCreateGroup();
 void pexExecute(PexGroup_t* group, void (*f)(void *userData), void* userData);
 void pexExecuteRange(PexGroup_t* group, void (*f)(void *userData, size_t begin, size_t end),
@@ -87,6 +88,7 @@ void pexInit(int nThreads);
 const char* pexLogPrefix();
 MTX_PRINTF(1,2)
 void pexSetThreadName(const char* name, ...);
+int pexThreadNumber();
 void pexShutdown();
 void pexSleep(unsigned timeInMs);
 unsigned pexThreadId();
@@ -95,7 +97,7 @@ void pexWait();
 /// @}
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-// Finite fields kernel
+// Finite fields kernel - basic types
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 /// @addtogroup ff
@@ -128,9 +130,124 @@ typedef uint16_t* PTR;
 
 #endif
 
-extern uint32_t ffOrder;
-extern int ffChar;
-extern FEL ffGen;
+/// @}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// Messages and error handling
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+// Error messages
+extern const char MTX_ERR_GAME_OVER[];
+extern const char MTX_ERR_DIV0[];
+extern const char MTX_ERR_FILEFMT[];
+extern const char MTX_ERR_BADARG[];
+extern const char MTX_ERR_RANGE[];
+extern const char MTX_ERR_NOTECH[];
+extern const char MTX_ERR_NOTSQUARE[];
+extern const char MTX_ERR_INCOMPAT[];
+extern const char MTX_ERR_OPTION[];
+extern const char MTX_ERR_NOTMATRIX[];
+extern const char MTX_ERR_NOTPERM[];
+
+/// Describes a source code location. Used for error messages.
+struct MtxSourceLocation {
+   const char* file;    ///< The source file name.
+   int line;            ///< The line number.
+   const char* func;    ///< The function name.
+};
+
+// /// Provides a source code location descriptor.
+// /// Both @a file and @a func must be pointers to static constant strings.
+// const struct MtxSourceLocation* mtxSourceLocation(const char* file, int line, const char* func);
+
+/// The current source code location
+#define MTX_HERE (&(const struct MtxSourceLocation){__FILE__, __LINE__, __func__})
+
+/// Run-time error information.
+struct MtxErrorInfo {
+   struct MtxSourceLocation source;
+   const char *message;
+};
+
+typedef void MtxErrorHandler_t(const struct MtxErrorInfo *);
+typedef const char* MtxErrorContextProvider(void* userData);
+
+/// @private
+struct ErrorContext {
+   struct MtxSourceLocation source;
+   char *title;
+   MtxErrorContextProvider* contextProvider;
+   void* userData;
+};
+
+/// @private
+struct ErrorContextStack {
+   struct ErrorContext* stack;
+   int capacity;
+   int size;
+};
+
+MTX_PRINTF(2,3)
+void mtxAbort(const struct MtxSourceLocation *sl, const char *text, ...);
+MTX_PRINTF(2,3)
+int mtxBegin(const struct MtxSourceLocation *sl, const char *s, ...);
+// TODO: rename (or join both to mtxBegin(sourceLoc, provider, userdata, msg, ...)
+int mtxBeginScope(MtxErrorContextProvider ec, void* userData);
+void mtxEnd(int id);
+
+MtxErrorHandler_t *MtxSetErrorHandler(MtxErrorHandler_t *h);
+
+#define MTX_ASSERT(e) do { \
+      if (!(e)) { \
+         mtxAbort(MTX_HERE,"Assertion failed: %s",# e); \
+      } \
+   } while (0)
+
+#ifdef MTX_DEBUG
+#define MTX_ASSERT_DEBUG(e) MTX_ASSERT(e)
+#define MTX_FALSE_DEBUG(e) MTX_FALSE(e)
+#else
+#define MTX_ASSERT_DEBUG(e)
+#define MTX_FALSE_DEBUG(e)
+#endif
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// Binary data files
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+/// Binary data file object.
+typedef struct {
+   uint32_t typeId;    ///< Used internally.
+   uint32_t header[3]; ///< Last read/written object header.
+   FILE *file;         ///< File handle.
+   char *name;         ///< File name.
+} MtxFile_t;
+
+void mfClose(MtxFile_t *file);
+MtxFile_t* mfCreate(const char *name, uint32_t field, uint32_t nor, uint32_t noc);
+int mfIsValid(const MtxFile_t *file);
+MtxFile_t* mfOpen(const char *name, const char* mode);
+void mfRead32(MtxFile_t *file, void *buf, size_t nrows);
+void mfRead8(MtxFile_t *file, void *buf, size_t nrows);
+void mfSkip(MtxFile_t *file, size_t nBytes);
+int mfTryRead32(MtxFile_t *file, void *buf, size_t nrows);
+int mfTryReadHeader(MtxFile_t* file);
+uint32_t mfReadHeader(MtxFile_t* file);
+uint32_t mfObjectType(const MtxFile_t* file);
+void mfValidate(const struct MtxSourceLocation* src, const MtxFile_t *file);
+void mfWrite32(MtxFile_t *file, const void *buf, size_t count);
+void mfWrite8(MtxFile_t *file, const void *buf, size_t count);
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// Finite fields kernel
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+/// @addtogroup ff
+/// @{
+
+extern uint32_t ffOrder;        // Current field order
+extern int ffChar;              // Current field characteristic
+extern FEL ffGen;               // Generator for the current field.
 
 /// An invalid value. Used in places where a row/colum index is expected to signal that no value
 /// is avalable.
@@ -164,7 +281,7 @@ FEL ffFromInt(int l);
 PTR ffGetPtr(PTR base, int row, int noc);
 int ffMakeTables(int field);
 void ffMulRow(PTR row, FEL mark, int noc);
-void ffReadRows(FILE *f, PTR buf, int n, int noc);
+void ffReadRows(MtxFile_t *file, PTR buf, uint32_t nor, uint32_t noc);
 FEL ffRestrict(FEL a, int subfield);
 size_t ffRowSize(int noc);
 size_t ffRowSizeUsed(int noc);
@@ -174,7 +291,7 @@ ssize_t ffSize(int nor, int noc);
 void ffStepPtr(PTR *x, int noc);
 void ffSwapRows(PTR dest, PTR src, int noc);
 int ffToInt(FEL f);
-void ffWriteRows(FILE *f, PTR buf, int n, int noc);
+void ffWriteRows(MtxFile_t *file, PTR buf, uint32_t nor, uint32_t noc);
 
 /// List of subfield orders, terminated with 0.
 extern int mtx_subfields[17];
@@ -243,8 +360,8 @@ const char* mtxVersion();
 
 typedef struct {
    uint32_t typeId;
-   size_t size;
-   size_t capacity;
+   size_t size;         // number of characters (not counting the terminating NUL)
+   size_t capacity;     // max number of charcters (not counting the terminating NUL)
    char *data;
 } StrBuffer;
 
@@ -260,6 +377,9 @@ char* sbToString(StrBuffer* sb);
 char* sbToEphemeralString(StrBuffer* sb);
 void sbVprintf(StrBuffer* sb, const char* fmt, va_list args);
 
+int strCompareRange(const char* x, const char* xEnd, const char* y, const char* yEnd);
+const char* strPrefix(const char* s, const char* prefix);
+char* strRange(const char *begin, const char* end);
 char* strMakeEphemeral(char* c);
 char *strVEprintf(const char* s, va_list args);
 char *strVMprintf(const char* s, va_list args);
@@ -296,19 +416,18 @@ typedef struct {
    MtxApplicationInfo_t const *AppInfo; ///< Program name and description.
    int context;                         ///< Used internally
    int origArgC;                        ///< Original argc from main().
-   char **origArgV;                     ///< Original argv from main().
+   char * const *origArgV;              ///< Original argv from main().
    int argC;                            ///< Number of arguments.
-   char **argV;                         ///< Arguments.
+   char * const *argV;                  ///< Arguments.
    int optEnd;                          ///< Used internally.
    unsigned long isDone[APP_MAX_ARGS];  ///< Used internally.
    const char *optArg;                  ///< Used internally.
-   int optInd;                          ///< Used internally.
+   char optName[100];                   ///< Used internally.
 } MtxApplication_t;
 
-MtxApplication_t *appAlloc(MtxApplicationInfo_t const *ai, int argc, char **argv);
+MtxApplication_t *appAlloc(MtxApplicationInfo_t const *ai, int argc, char * const *argv);
 void appFree(MtxApplication_t *a);
 int appGetOption(MtxApplication_t *app, const char *spec);
-int appGetCountedOption(MtxApplication_t *app, const char *spec);
 const char *appGetTextOption(MtxApplication_t *app, const char *spec,
                              const char *dflt);
 int appGetIntOption(MtxApplication_t *app, const char *spec, int dflt,
@@ -334,89 +453,50 @@ int appGetArguments(MtxApplication_t *app, int min_argc, int max_argc);
    "    -Q ...................... Quiet, no messages\n" \
    "    -V ...................... Verbose, more messages\n" \
    "    -T <MaxTime> ............ Set CPU time limit [s]\n" \
+   "    --log=[FILE]:LEVEL:[FMT]\n" \
+   "                              Log to FILE (default: stdout) up to LEVEL (error,warning,\n" \
+   "                              info,debug,debug2), using FORMAR (full,default).\n" \
    "    --help .................. Show help on command line syntax\n" \
    "    --version ............... Show version information\n" \
    MTX_THREAD_OPTION_DESCRIPTION
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-// Messages and error handling
-////////////////////////////////////////////////////////////////////////////////////////////////////
-
-// Error messages
-extern const char MTX_ERR_GAME_OVER[];
-extern const char MTX_ERR_DIV0[];
-extern const char MTX_ERR_FILEFMT[];
-extern const char MTX_ERR_BADARG[];
-extern const char MTX_ERR_RANGE[];
-extern const char MTX_ERR_NOTECH[];
-extern const char MTX_ERR_NOTSQUARE[];
-extern const char MTX_ERR_INCOMPAT[];
-extern const char MTX_ERR_OPTION[];
-extern const char MTX_ERR_NOTMATRIX[];
-extern const char MTX_ERR_NOTPERM[];
-
-/// Describes a source code location. Used for error messages.
-struct MtxSourceLocation {
-   const char* file;    ///< The source file name.
-   int line;            ///< The line number.
-   const char* func;    ///< The function name.
-};
-
-// /// Provides a source code location descriptor.
-// /// Both @a file and @a func must be pointers to static constant strings.
-// const struct MtxSourceLocation* mtxSourceLocation(const char* file, int line, const char* func);
-
-/// The current source code location
-#define MTX_HERE (&(const struct MtxSourceLocation){__FILE__, __LINE__, __func__}) 
-
-/// Run-time error information.
-struct MtxErrorInfo {
-   struct MtxSourceLocation source;
-   const char *message;
-};
-
-typedef void MtxErrorHandler_t(const struct MtxErrorInfo *);
-typedef const char* MtxErrorContextProvider(void* userData);
-
-MTX_PRINTF(2,3)
-void mtxAbort(const struct MtxSourceLocation *sl, const char *text, ...);
-MTX_PRINTF(2,3)
-int mtxBegin(const struct MtxSourceLocation *sl, const char *s, ...);
-int mtxBeginScope(MtxErrorContextProvider ec, void* userData);
-void mtxEnd(int id);
-
-MtxErrorHandler_t *MtxSetErrorHandler(MtxErrorHandler_t *h);
-
-#define MTX_ASSERT(e) do { \
-      if (!(e)) { \
-         mtxAbort(MTX_HERE,"Assertion failed: %s",# e); \
-      } \
-   } while (0)
-
-#ifdef MTX_DEBUG
-#define MTX_ASSERT_DEBUG(e) MTX_ASSERT(e)
-#define MTX_FALSE_DEBUG(e) MTX_FALSE(e)
-#else
-#define MTX_ASSERT_DEBUG(e)
-#define MTX_FALSE_DEBUG(e)
-#endif
-
-////////////////////////////////////////////////////////////////////////////////////////////////////
 // Messages
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-extern int MtxMessageLevel;
-#define MSG0 (MtxMessageLevel >= 0)
-#define MSG1 (MtxMessageLevel >= 1)
-#define MSG2 (MtxMessageLevel >= 2)
-#define MSG3 (MtxMessageLevel >= 3)
-#define MSG4 (MtxMessageLevel >= 4)
-#define MESSAGE(level, ...) \
-   do if (MtxMessageLevel >= (level)) mtxMessage(level, __VA_ARGS__); while(0)
+enum {
+   MTX_LOG_ERROR = -2,
+   MTX_LOG_WARNING = -1,
+   MTX_LOG_INFO = 0,
+   MTX_LOG_DEBUG = 1,
+   MTX_LOG_DEBUG2 = 2
+};
 
+void logBuffered(StrBuffer* buf);
+int logGetDefaultThreshold();
+int logEnabled(int level);
+void logInit(const char* spec);
+void logPrepareForAbort();
 MTX_PRINTF(2,3)
-void mtxMessage(int level, const char* msg, ...);
-void mtxMessage0(int level, const char* text);
+void logPrintf(int level, const char* msg, ...);
+StrBuffer* logStart(int level);
+void logSetDefaultThreshold(int level);
+
+#define MTX_LOG(level, ...) \
+   do { if (logEnabled(level)) { logPrintf((level), __VA_ARGS__);} } while(0)
+#define MTX_LOGE(...) MTX_LOG(MTX_LOG_ERROR, __VA_ARGS__)
+#define MTX_LOGW(...) MTX_LOG(MTX_LOG_WARNING, __VA_ARGS__)
+#define MTX_LOGI(...) MTX_LOG(MTX_LOG_INFO, __VA_ARGS__)
+#define MTX_LOGD(...) MTX_LOG(MTX_LOG_DEBUG, __VA_ARGS__)
+#define MTX_LOG2(...) MTX_LOG(MTX_LOG_DEBUG2, __VA_ARGS__)
+
+#define MTX_XLOG(level, sb) \
+   for (StrBuffer* sb = logStart(level); sb; sb = (logBuffered(sb), NULL))
+#define MTX_XLOGE(sb) MTX_XLOG(MTX_LOG_ERROR, sb)
+#define MTX_XLOGW(sb) MTX_XLOG(MTX_LOG_WARNING, sb)
+#define MTX_XLOGI(sb) MTX_XLOG(MTX_LOG_INFO, sb)
+#define MTX_XLOGD(sb) MTX_XLOG(MTX_LOG_DEBUG, sb)
+#define MTX_XLOG2(sb) MTX_XLOG(MTX_LOG_DEBUG2, sb)
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // Miscellaneous
@@ -436,14 +516,14 @@ uint32_t lcm32u(uint32_t a, uint32_t b);
 
 /// Structured text file.
 /// This structure is used for reading from and writing to structured text files.
- 
+
 typedef struct {
-   FILE *file;          /**< The stream we're using */
-   char *lineBuf;       /**< Buffers one 'line' */
-   char *getPtr;        /**< Current input position */
-   int lineBufSize;     /**< Current buffer size */
-   int outPos;          /**< Number of chars in current line (writing only) */
-   int lineNo;          /**< Current line number (reading and writing) */
+   FILE *file;          ///< The stream we're using
+   char *lineBuf;       ///< Buffers one 'line'
+   char *getPtr;        ///< Current input position
+   int lineBufSize;     ///< Current buffer size
+   int outPos;          ///< Number of chars in current line (writing only)
+   int lineNo;          ///< Current line number (reading and writing)
 } StfData;
 
 int stfBeginEntry(StfData *f, const char *name);
@@ -464,32 +544,6 @@ int stfWriteInt(StfData *f, const char *name, int value);
 int stfWriteString(StfData *f, const char *name, const char *value);
 int stfWriteVector(StfData *f, const char *name, int size, const int *value);
 int stfMatch(StfData *f, const char *pattern);
-
-////////////////////////////////////////////////////////////////////////////////////////////////////
-// Binary data files
-////////////////////////////////////////////////////////////////////////////////////////////////////
-
-/// Binary data file object.
-typedef struct {
-   uint32_t typeId;    ///< Used internally.
-   uint32_t header[3]; ///< Last read/written object header.
-   FILE *file;         ///< File handle.
-   char *name;         ///< File name.
-} MtxFile_t;
-
-void mfClose(MtxFile_t *file);
-MtxFile_t* mfCreate(const char *name, uint32_t field, uint32_t nor, uint32_t noc);
-int mfIsValid(const MtxFile_t *file);
-MtxFile_t* mfOpen(const char *name);
-void mfRead32(MtxFile_t *file, void *buf, int nrows);
-void mfReadRows(MtxFile_t *f, PTR buf, uint32_t nor, uint32_t noc);
-void mfSkip(MtxFile_t *file, size_t nBytes);
-int mfTryReadHeader(MtxFile_t* file);
-void mfReadHeader(MtxFile_t* file);
-uint32_t mfObjectType(const MtxFile_t* file);
-void mfValidate(const struct MtxSourceLocation* src, const MtxFile_t *file);
-void mfWrite32(MtxFile_t *file, const void *buf, int count);
-void mfWriteRows(MtxFile_t *file, PTR buf, uint32_t nrows, uint32_t noc);
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // Matrices over a finite field.
@@ -524,8 +578,8 @@ int matIsValid(const Matrix_t *m);
 Matrix_t *matLoad(const char *fn);
 Matrix_t *matMul(Matrix_t *dest, const Matrix_t *src);
 Matrix_t *matMulScalar(Matrix_t *dest, FEL coeff);
-int matNullity(const Matrix_t *mat);
-int matNullity__(Matrix_t *mat);
+uint32_t matNullity(const Matrix_t *mat);
+uint32_t matNullity__(Matrix_t *mat);
 Matrix_t *matNullSpace(const Matrix_t *mat);
 Matrix_t *matNullSpace_(Matrix_t *mat, int flags);
 Matrix_t *matNullSpace__(Matrix_t *mat);
@@ -533,13 +587,12 @@ int matOrder(const Matrix_t *mat);
 void matPivotize(Matrix_t *mat);
 Matrix_t *matPower(const Matrix_t *mat, long n);
 void matPrint(const char *name, const Matrix_t *m);
-Matrix_t *matRead(FILE *f);
-Matrix_t *matReadData(FILE *f, const uint32_t header[3]);
+Matrix_t *matReadData(MtxFile_t* f);
 void matSave(const Matrix_t *mat, const char *fn);
 FEL matTrace(const Matrix_t *mat);
 Matrix_t *matTransposed(const Matrix_t *src);
 void matValidate(const struct MtxSourceLocation* sl, const Matrix_t *m);
-void matWrite(const Matrix_t *mat, FILE *f);
+void matWrite(const Matrix_t *mat, MtxFile_t* file);
 
 /* For internal use only */
 void mat_DeletePivotTable(Matrix_t *mat);
@@ -603,11 +656,11 @@ Perm_t *permMul(Perm_t *dest, const Perm_t *src);
 uint32_t permOrder(const Perm_t *perm);
 Perm_t *permPower(const Perm_t *p, int n);
 void permPrint(const char *name, const Perm_t *perm);
-Perm_t* permRead(FILE *f);
-Perm_t* permReadData(FILE *f, const uint32_t header[3]);
+Perm_t* permRead(MtxFile_t *f);
+Perm_t* permReadData(MtxFile_t* f);
 void permSave(const Perm_t *perm, const char *fileName);
 void permValidate(const struct MtxSourceLocation* src, const Perm_t *p);
-void permWrite(const Perm_t *perm, FILE *f);
+void permWrite(const Perm_t *perm, MtxFile_t* file);
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // Polynomials over a finite field
@@ -637,14 +690,14 @@ int polIsValid(const Poly_t *p);
 Poly_t* polLoad(const char *fn);
 Poly_t* polMod(Poly_t *a, const Poly_t *b);
 Poly_t* polMul(Poly_t *dest, const Poly_t *src);
-void Pol_Normalize(Poly_t *p);
+void polNormalize(Poly_t *p);
 void polPrint(char *name, const Poly_t *p);
-Poly_t* polReadData(FILE *f, const uint32_t header[3]);
-Poly_t* polRead(FILE *f);
+Poly_t* polReadData(MtxFile_t *f);
+Poly_t* polRead(MtxFile_t *f);
 void polSave(const Poly_t *pol, const char *fn);
 char* polToEphemeralString(const Poly_t *p);
 void polValidate(const struct MtxSourceLocation* sl, const Poly_t *p);
-void polWrite(const Poly_t *p, FILE *f);
+void polWrite(const Poly_t* p, MtxFile_t* file);
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // Factored polynomials
@@ -652,20 +705,22 @@ void polWrite(const Poly_t *p, FILE *f);
 
 typedef struct {
    uint32_t typeId;     ///< Used internally.
-   int NFactors;        ///< Number of different irreducible factors.
-   int BufSize;         ///< Used internally for memory management.
-   Poly_t **Factor;     ///< List of irreducible factors.
-   int *Mult;           ///< Multiplicity of each factor.
+   uint32_t field;
+   int nFactors;        ///< Number of different irreducible factors.
+   int bufSize;         ///< Used internally for memory management.
+   Poly_t** factor;     ///< List of irreducible factors.
+   int *mult;           ///< Multiplicity of each factor.
 } FPoly_t;
 
-FPoly_t *fpAlloc();
-char* fpToEphemeralString(const FPoly_t *p);
+FPoly_t* fpAlloc(uint32_t field);
+int fpCompare(const FPoly_t* a, const FPoly_t* b);
 void fpFormat(StrBuffer* sb, const FPoly_t *p);
 int fpFree(FPoly_t *x);
 int fpIsValid(const FPoly_t *p);
-FPoly_t *fpMul(FPoly_t *dest, const FPoly_t *src);
-FPoly_t *fpMulP(FPoly_t *dest, const Poly_t *src, int pwr);
+FPoly_t* fpMul(FPoly_t *dest, const FPoly_t *src);
+FPoly_t* fpMulP(FPoly_t *dest, const Poly_t *src, int pwr);
 void fpPrint(const char *name, const FPoly_t *p);
+char* fpToEphemeralString(const FPoly_t *p);
 void fpValidate(const struct MtxSourceLocation* src, const FPoly_t *p);
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -683,30 +738,32 @@ typedef struct {
 BitString_t *bsAllocEmpty(void);
 BitString_t *bsAlloc(size_t size);
 
-void bsTrim(BitString_t* bs);
+void bsTrim(const BitString_t* bs);
 void bsResize(BitString_t* bs, size_t newSize);
 
 int bsFirst(const BitString_t* bs, size_t* i);
 int bsNext(const BitString_t* bs, size_t* i);
 
-void bsAnd(BitString_t *dest, const BitString_t *src);
-void bsClear(BitString_t *bs, size_t i);
-void bsClearAll(BitString_t *bs);
-int bsCompare(const BitString_t *a, const BitString_t *b);
-void bsCopy(BitString_t *dest, const BitString_t *src);
-BitString_t *bsDup(const BitString_t *src);
-int bsFree(BitString_t *bs);
-size_t bsIntersectionCount(const BitString_t *a, const BitString_t *b);
-int bsIsSub(const BitString_t *a, const BitString_t *b);
-int bsIsValid(const BitString_t *bs);
-void bsMinus(BitString_t *dest, const BitString_t *src);
+void bsAnd(BitString_t* dest, const BitString_t* src);
+void bsClear(BitString_t* bs, size_t i);
+void bsClearAll(BitString_t* bs);
+int bsCompare(const BitString_t* a, const BitString_t* b);
+void bsCopy(BitString_t* dest, const BitString_t* src);
+BitString_t* bsDup(const BitString_t* src);
+int bsFree(BitString_t* bs);
+size_t bsIntersectionCount(const BitString_t* a, const BitString_t* b);
+int bsIsSub(const BitString_t* a, const BitString_t* b);
+int bsIsValid(const BitString_t* bs);
+void bsMinus(BitString_t* dest, const BitString_t* src);
 void bsOr(BitString_t* dest, const BitString_t* src);
-void bsPrint(const char *name, const BitString_t *bs);
-BitString_t *bsRead(FILE *f);
+void bsPrint(const char* name, const BitString_t* bs);
+BitString_t* bsReadData(MtxFile_t* f);
+BitString_t* bsRead(MtxFile_t* f);
 void bsSet(BitString_t* bs, size_t i);
-int bsTest(const BitString_t *bs, size_t i);
-void bsValidate(const struct MtxSourceLocation* src, const BitString_t *bs);
-void bsWrite(BitString_t *bs, FILE *f);
+void bsSkip(MtxFile_t* f);
+int bsTest(const BitString_t* bs, size_t i);
+void bsValidate(const struct MtxSourceLocation* src, const BitString_t* bs);
+void bsWrite(const BitString_t* bs, MtxFile_t* file);
 
 // TODO: provide unsafe high-performance operations?
 //  BS_TEST_UNCHECKED(bs, bit)
@@ -739,7 +796,7 @@ IntMatrix_t *imatLoad(const char *fn);
 IntMatrix_t *imatRead(MtxFile_t* file);
 void imatSave(const IntMatrix_t *mat, const char *file_name);
 void imatValidate(const struct MtxSourceLocation* sl, const IntMatrix_t *m);
-void imatWrite(const IntMatrix_t *mat, FILE *f);
+void imatWrite(const IntMatrix_t *mat, MtxFile_t* f);
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // Polymorphic objects
@@ -755,14 +812,11 @@ long objOrder(void *a);
 void *objPower(void *a, int n);
 int objSave(void *a, const char *fn);
 
-   
-/* --------------------------------------------------------------------------
-   Matrix sets
-   -------------------------------------------------------------------------- */
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// Matrix sets
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
-/**
-** An element of a matrix set.
-**/
+/// An element of a matrix set.
 
 typedef struct {
    Matrix_t *Matrix;
@@ -771,9 +825,8 @@ typedef struct {
    FEL PivMark;
 } MatrixSetElement_t;
 
-/**
-** A set of matrices.
-**/
+/// A set of matrices.
+
 typedef struct {
    uint32_t typeId;
    int Len;
@@ -786,9 +839,9 @@ int msCleanAndAppend(MatrixSet_t *set, Matrix_t *mat);
 int msFree(MatrixSet_t *set);
 int msIsValid(const MatrixSet_t *set);
 
-/* --------------------------------------------------------------------------
-   Matrix representations
-   -------------------------------------------------------------------------- */
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// Matrix representations
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 typedef struct {
    uint32_t typeId;
@@ -798,19 +851,19 @@ typedef struct {
 
 #define MR_COPY_GENERATORS  0x0001
 
-int mrAddGenerator(MatRep_t *rep, Matrix_t *gen, int flags);
+void mrAddGenerator(MatRep_t *rep, Matrix_t *gen, int flags);
 MatRep_t *mrAlloc(int ngen, Matrix_t **gen, int flags);
 void mrChangeBasis(MatRep_t *rep, const Matrix_t *trans);
 MatRep_t* mrChangeBasis2(const MatRep_t *rep, const Matrix_t *trans);
 void mrValidate(const struct MtxSourceLocation* where, const MatRep_t *rep);
-int mrFree(MatRep_t *rep);
+void mrFree(MatRep_t *rep);
 MatRep_t *mrLoad(const char *basename, int ngen);
 int mrSave(const MatRep_t *rep, const char *basename);
 MatRep_t *mrTransposed(const MatRep_t *rep);
 
-/* ------------------------------------------------------------------
-   The word generator
-   ------------------------------------------------------------------ */
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// The word generator
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 #define MTX_WG_MAXLEN 8
 
@@ -829,12 +882,12 @@ int *wgDescribeWord(WgData_t *b, uint32_t n);
 int wgFree(WgData_t *b);
 Matrix_t *wgMakeWord(WgData_t *b, uint32_t n);
 Matrix_t *wgMakeWord2(WgData_t *b, uint32_t n);
-void wgMakeFingerPrint(WgData_t *b, int fp[6]);
+void wgMakeFingerPrint(WgData_t *b, uint32_t fp[6]);
 const char *wgSymbolicName(WgData_t *b, long n);
 
-/* ------------------------------------------------------------------
-   Spin-up, Split, Quotients, etc.
-   ------------------------------------------------------------------ */
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// Spin-up, Split, Quotients, etc.
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 #define SF_FIRST        0x0001  /* Try only the first seed vector */
 #define SF_EACH         0x0002  /* Try each seed vector */
@@ -908,7 +961,7 @@ FPoly_t *Factorization(const Poly_t *pol);
 /// State for characteristic/minimal polynomial computation.
 /// This structure is used by @ref charpolFactor / @ref minpolFactor.
 
-struct CharpolState 
+struct CharpolState
 {
    uint32_t typeId;
 
@@ -930,7 +983,7 @@ struct CharpolState
    long seed;    // Number of seed vector for the first cyclic subspace
 
    // Minimal polynomial on the current subspace dimension. Unused in PM_CHARPOL mode.
-   Poly_t* partialMinPol;  
+   Poly_t* partialMinPol;
 };
 typedef struct CharpolState Charpol_t;
 
@@ -963,11 +1016,11 @@ void gapFormatWord(StrBuffer* sb, const WgData_t *b, long n);
 /// @addtogroup cfinfo
 /// @{
 
-#define MAXGEN 20       /* Max. number of generators */
-#define LAT_MAXCF 200   /* Max. number of composition factors */
-#define MAXCYCL 30000   /* Max. number of cyclic submodules */
-#define MAXDOTL 90000   /* Max. number of dotted lines */
-#define MAXNSUB 20000   /* Max. number of submodules */
+#define MAXGEN 20       // Max. number of generators 
+#define LAT_MAXCF 200   // Max. number of composition factors
+#define MAXCYCL 30000   // Max. number of cyclic submodules
+#define MAXDOTL 90000   // Max. number of dotted lines
+#define MAXNSUB 20000   // Max. number of submodules
 #define LAT_MAXBASENAME 100
 
 typedef struct {
@@ -984,15 +1037,15 @@ typedef struct {
 CfInfo;
 
 typedef struct {
-   char BaseName[LAT_MAXBASENAME];      /**< Base name */
-   int field;                           /**< Field order */
-   int NGen;                            /**< Number of generators */
-   int nCf;                             /**< Number of irred. constituents */
-   CfInfo Cf[LAT_MAXCF];                /**< Data for irred. constituents */
-   int NSocles;                         /**< Loewy length */
-   int *Socle;                          /**< Mult. of constituents in socles */
-   int NHeads;                          /**< Number of radical layers */
-   int *Head;                           /**< Mult. of constituents in Heads */
+   char BaseName[LAT_MAXBASENAME];      ///< Base name
+   int field;                           ///< Field order
+   int NGen;                            ///< Number of generators
+   int nCf;                             ///< Number of irred. constituents
+   CfInfo Cf[LAT_MAXCF];                ///< Data for irred. constituents
+   int NSocles;                         ///< Loewy length
+   int *Socle;                          ///< Mult. of constituents in socles
+   int NHeads;                          ///< Number of radical layers
+   int *Head;                           ///< Mult. of constituents in Heads
 } Lat_Info;
 
 void latReadInfo(Lat_Info *li, const char *basename);
@@ -1001,9 +1054,9 @@ const char *latCfName(const Lat_Info *li, int cf);
 int latAddHead(Lat_Info *li, int *mult);
 int latAddSocle(Lat_Info *li, int *mult);
 
-#define LAT_RG_INVERT           0x0001  /* Invert generators */
-#define LAT_RG_TRANSPOSE        0x0002  /* Transpose generators */
-#define LAT_RG_STD              0x0004  /* Use standard form */
+#define LAT_RG_INVERT           0x0001  // Invert generators
+#define LAT_RG_TRANSPOSE        0x0002  // Transpose generators
+#define LAT_RG_STD              0x0004  // Use standard form
 
 MatRep_t *latReadCfGens(Lat_Info *info, int cf, int flags);
 
@@ -1080,6 +1133,6 @@ int ldSetPositions(LdLattice_t *l);
 
 void hashLittle2(const void *data, size_t len, uint32_t *pc, uint32_t *pb);
 
-#endif  /* !defined(_MEATAXE_H_) */
+#endif  // !defined(_MEATAXE_H_)
 
 // vim:fileencoding=utf8:sw=3:ts=8:et:cin

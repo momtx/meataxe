@@ -3,18 +3,18 @@
   <navindex>
     <tab type="mainpage" visible="yes" title=""/>
     <tab type="pages" visible="yes" title=""/>
-    <tab type="modules" visible="yes" title=""/>
+    <tab type="modules" visible="yes" title="Library Modules"/>
     <tab type="classes" visible="yes" title="Data Structures">
-      <tab type="classes" visible="yes" title=""/>
-      <tab type="classindex" visible="$ALPHABETICAL_INDEX" title=""/> 
-      <tab type="hierarchy" visible="yes" title=""/>
-      <tab type="classmembers" visible="yes" title=""/>
+      <tab type="classes" visible="no" title=""/>
+      <tab type="classindex" visible="no" title=""/> 
+      <tab type="hierarchy" visible="no" title=""/>
+      <tab type="classmembers" visible="no" title=""/>
     </tab>
-    <tab type="files" visible="yes" title="Files">
-      <tab type="files" visible="yes" title="Files"/>
-      <tab type="globals" visible="yes" title="Globals"/>
+    <tab type="files" visible="no" title="Files">
+      <tab type="files" visible="no" title="Files"/>
+      <tab type="globals" visible="no" title="Globals"/>
     </tab>
-    <tab type="examples" visible="yes" title=""/>  
+    <tab type="examples" visible="no" title=""/>  
   </navindex>
 
   <!-- Layout definition for a class page -->

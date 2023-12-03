@@ -197,7 +197,7 @@ void SvAddEntry(SvVector_t *vec, int n, FEL f)
     }
 } 
 
-void SvPrint(const SvVector_t *vec)
+static void svFormat(StrBuffer* sb, const SvVector_t *vec)
 {
     int i;
 
@@ -207,11 +207,11 @@ void SvPrint(const SvVector_t *vec)
 	int k;
 	NumToTuple(vec->V[i].Num,tuple);
 	if (i > 0)
-	    printf("+");
-	printf("%dv[",ffToInt(vec->V[i].Coeff));
+	    sbAppend(sb,"+");
+	sbPrintf(sb, "%dv[",ffToInt(vec->V[i].Coeff));
 	for (k = 0; k < Degree; ++k)
-	    printf(k == 0 ? "%d" : ",%d",tuple[k]);
-	printf("]");
+	    sbPrintf(sb, k == 0 ? "%d" : ",%d",tuple[k]);
+	sbAppend(sb,"]");
     }
 }
 
@@ -286,12 +286,10 @@ static void MakeSBasis()
 	SvClean(v,(const SvVector_t **)SBasis,SDim);
 	if (v->Size > 0)
 	{
-	    /* Add new basis vector */
-	    if (MSG2)
-	    {
-	    	printf("SBasis[%d]=",SDim);
-	    	SvPrint(v);
-	    	printf("\n");
+	    // Add new basis vector
+           MTX_XLOG2(msg) {
+              sbPrintf(msg,"SBasis[%d]=",SDim);
+              svFormat(msg, v);
 	    }
 	    SBasis[SDim++] = v;
 	    v = SvAlloc(OmegaLen);
@@ -299,7 +297,7 @@ static void MakeSBasis()
     }
     SvFree(v);
     /* OPT: free unused memory in <SBasis> */
-    MESSAGE(0, "Dim(S) = %d\n",SDim);
+    MTX_LOGI("Dim(S) = %d",SDim);
 }
 
 
@@ -311,9 +309,9 @@ static void BuildTables(const Symmetrizer_t *s, int dim_v)
     VDim = dim_v;
     for (i = Degree - 1, WDim = VDim; i > 0; --i)
 	WDim *= VDim;
-    MESSAGE(0, "Dim(V) = %d\n",VDim);
-    MESSAGE(0, "Degree = %d\n",Degree);
-    MESSAGE(0, "Dim(W) = %d\n",WDim);
+    MTX_LOGI("Dim(V) = %d",VDim);
+    MTX_LOGI("Degree = %d",Degree);
+    MTX_LOGI("Dim(W) = %d",WDim);
 
     MakeOmega(s);
     MakeSBasis();
@@ -373,7 +371,7 @@ static void CalculateSAction(PTR mat)
 	MapVector(n,mat,v);
 	fprintf(stderr,".");
 	SvClean2(v,(const SvVector_t **)SBasis,SDim,img);
-	mfWriteRows(OutputFile, img, 1, noc);
+	ffWriteRows(OutputFile, img, 1, noc);
     }
     sysFree(img);
 }
@@ -382,7 +380,7 @@ static void CalculateSAction(PTR mat)
 
 static void prepare()
 {
-    MtxFile_t *f = mfOpen(iname);
+    MtxFile_t *f = mfOpen(iname, "rb");
     mfReadHeader(f);
     if (mfObjectType(f) != MTX_TYPE_MATRIX)
 	mtxAbort(MTX_HERE,"%s: %s",iname,MTX_ERR_NOTMATRIX);
@@ -394,7 +392,7 @@ static void prepare()
 
     ffSetField(fl); 
     m1 = ffAlloc(nor, noc);
-    mfReadRows(f, m1, nor, noc);
+    ffReadRows(f, m1, nor, noc);
 
     // Set up pointers to the rows of the input matrix
     row = NALLOC(PTR,nor);
@@ -404,7 +402,7 @@ static void prepare()
 
     BuildTables(&E3,nor);
 
-    MESSAGE(0, "Output is %d x %d\n",SDim,SDim);
+    MTX_LOGI("Output is %d x %d",SDim,SDim);
     OutputFile = mfCreate(oname,fl,SDim,SDim);
 }
 
@@ -414,8 +412,8 @@ static int init(int argc, char **argv)
 {
     App = appAlloc(&AppInfo,argc,argv);
     opt_G = appGetOption(App,"-G --gap");
-    if (opt_G)
-	MtxMessageLevel = -100;
+//    if (opt_G)
+//	MtxMessageLevel = -100;
 
     /* Process arguments.
        ------------------ */

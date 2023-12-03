@@ -69,7 +69,7 @@ static void ReadConstituents()
 	    static int first_time = 1;
 	    if (first_time)
 	    {
-		MESSAGE(1, "Converting spinup script from MeatAxe 2.3 format\n");
+		MTX_LOGD("Converting spinup script from MeatAxe 2.3 format");
 		first_time = 0;
 	    }
 	}
@@ -77,7 +77,7 @@ static void ReadConstituents()
 	/* Read peak word kernel.
 	   ---------------------- */
 	sprintf(fn,"%s%s.k",LI.BaseName,latCfName(&LI,i));
-	MESSAGE(1, "Taking seed vectors from %s\n",fn);
+	MTX_LOGD("Taking seed vectors from %s",fn);
 	seed[i] = matLoad(fn);
     }
 }
@@ -105,7 +105,7 @@ static void WriteBasis(const Matrix_t *basis)
 {
     char name[200];
     sprintf(name, "%s.soc",App->argV[0]);
-    MESSAGE(1, "Writing basis to %s\n",name);
+    MTX_LOGD("Writing basis to %s",name);
     matSave(basis,name);
 }
 
@@ -151,7 +151,7 @@ static int NextLayer()
 	cfvec[j] = partbas->nor / LI.Cf[j].dim;
 	matCopyRegion(bas,SocDim,0,partbas,0,0,-1,-1);
 	SocDim += partbas->nor;
-	MESSAGE(2, "Socle dimension of %s is %d\n", latCfName(&LI,j), partbas->nor);
+	MTX_LOG2("Socle dimension of %s is %d", latCfName(&LI,j), partbas->nor);
     }
 
 
@@ -159,20 +159,19 @@ static int NextLayer()
    makes the output
    ---------------- */
     ++SocLen;
-    MESSAGE(0, "Socle %d: %d =",SocLen,SocDim);
+    MTX_LOGI("Socle %d: %d =",SocLen,SocDim);
     flag = 0;
     for (int j = 0; j < LI.nCf; j++)
     {
 	if (cfvec[j] <= 0) 
 	    continue;
 	if (flag++ > 0)
-	    MESSAGE(0, " +");
+	    MTX_LOGI(" +");
 	if (cfvec[j] == 1)
-	    MESSAGE(0, " %s",latCfName(&LI,j));
+	    MTX_LOGI(" %s",latCfName(&LI,j));
 	else
-	    MESSAGE(0, " %d*%s",cfvec[j],latCfName(&LI,j));
+	    MTX_LOGI(" %d*%s",cfvec[j],latCfName(&LI,j));
     }
-    MESSAGE(0, "\n");
     latAddSocle(&LI,cfvec);
 
   
@@ -268,7 +267,7 @@ static int NextLayer()
         matFree(stgen);
     }
     Dimension = Rep->Gen[0]->nor;
-    MESSAGE(1, "Reduced to dimension %d\n",Dimension);
+    MTX_LOGD("Reduced to dimension %d",Dimension);
 
     matFree(bas);
     matFree(basi);
@@ -297,7 +296,7 @@ int main( int argc, char **argv)
     wgFree(WGen);
     if (SocDim != Dimension)
     {
-	MESSAGE(0, "Warning: Calculation aborted at dimension %d of %d\n", SocDim,Dimension);
+	MTX_LOGI("Warning: Calculation aborted at dimension %d of %d", SocDim,Dimension);
     }
     appFree(App);
     return 0;

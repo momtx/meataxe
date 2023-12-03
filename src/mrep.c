@@ -5,10 +5,6 @@
 #include "meataxe.h"
 #include <string.h>
 
-////////////////////////////////////////////////////////////////////////////////////////////////////
-///   Local data
-
-
 #define MR_MAGIC 0x1bb50442
 
 /// @defgroup mrep Matrix Representations
@@ -89,13 +85,12 @@ void mrValidate(const struct MtxSourceLocation* where, const MatRep_t *rep)
 /// Creates a matrix representation.
 ///
 /// The matrices in @a gen must all be square, over the same field, and of the same size.
-/// @a flags may be zero or the special value MR_COPY_GENERATORS. In the latter case,
-/// a local copy of the generators is made, and the matrices in @a gen can
-/// be safely destroyed. If @a flags is 0, only references to the matrices
-/// are stored in the MatRep_t structure. Consequently, the application
-/// must not modify or destroy the matrices after calling mrAlloc(). They
-/// will be destroyed automatically when mrFree() is called to destroy the
-/// representation.
+///
+/// @a flags may be zero or the special value MR_COPY_GENERATORS. In the latter case, a local copy
+/// of the generators is made, and the matrices in @a gen can be safely destroyed. If @a flags is 0,
+/// the representation becomes owner of the genertors, and the caller must not modify or free any
+/// of them. The generators will be freed by @ref mrFree.
+
 /// @param ngen Number of generators in @a gen.
 /// @param gen List of generators. May be NULL if @a ngen is 0.
 /// @param flags Optional flags (see description).
@@ -152,17 +147,13 @@ MatRep_t *mrAlloc(int ngen, Matrix_t **gen, int flags)
 
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-/// Delete a matrix representation.
-/// This function frees a matrix representation which has beed created by
-/// mrAlloc(). This implies freeing the internal data buffers as well as
-/// the MatRep_t structure itself. Note: Even if the representation
-/// was created without MR_COPY_GENERATORS, the matrices that were passed
-/// to mrAlloc() are now destroyed. The same applies to matrices added to
-/// the representation with mrAddGenerator().
-/// @param rep Pointer to the matrix representation.
-/// @return 0 on success, -1 on error.
 
-int mrFree(MatRep_t *rep)
+/// Delete a matrix representation.
+///
+/// Note: All generators (added by @ref mrAlloc or @ref mrAddGenerator) are destroyed, even if the
+/// MR_COPY_GENERATORS was used.
+
+void mrFree(MatRep_t *rep)
 {
    int i;
    mrValidate(MTX_HERE,rep);
@@ -173,9 +164,149 @@ int mrFree(MatRep_t *rep)
    sysFree(rep->Gen);
    memset(rep,0,sizeof(MatRep_t));
    sysFree(rep);
-   return 0;
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+/// Add a generator to a matrix representation.
+///
+/// The matrix must be square. If there are already generators in the representation, the new
+/// matrix must be over the same field and have the same number of rows.
+///
+/// @a flags may be zero or the special value MR_COPY_GENERATORS. See @ref mrAlloc.
+
+void mrAddGenerator(MatRep_t *rep, Matrix_t *gen, int flags)
+{
+    mrValidate(MTX_HERE,rep);
+    if (gen->nor != gen->noc)
+	mtxAbort(MTX_HERE,"gen: %s",MTX_ERR_NOTSQUARE);
+    if (rep->NGen > 0)
+    {
+	if (gen->field != rep->Gen[0]->field || gen->nor != rep->Gen[0]->nor)
+	    mtxAbort(MTX_HERE,"%s",MTX_ERR_INCOMPAT);
+    }
+
+    rep->Gen = NREALLOC(rep->Gen, Matrix_t *,rep->NGen + 1);
+    rep->Gen[rep->NGen++] = (flags & MR_COPY_GENERATORS) ? matDup(gen) : gen;
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+/// Load a Matrix Representation.
+/// This function creates a new matrix representation and reads the generators
+/// from files. Each generator ist expected in a different file. The file name
+/// is constructed by appending ".1", ".2" etc. to @a basename or, if @a basename
+/// contains a "%d" placeholder, by replacing the "%d" with "1", "2", etc.
+/// For example, the following lines
+/// @code
+/// m11 = mrLoad("m11",2);
+/// m11 = mrLoad("m11.%d",2);
+/// @endcode
+/// are equivalent. In both cases, two matrices are read from "m11.2" and "m11.2",
+/// repectively.
+/// @param basename Base file name for generators.
+/// @param ngen Number of generators.
+/// @return Pointer to the representation.
+
+MatRep_t *mrLoad(const char *basename, int ngen)
+{
+   char *fn;
+   int ext_format;          /* '%d' found in <basename> */
+   MatRep_t *mr;
+   int i;
+
+   // Make a copy of the basename and reserve extra bytes for the extension.
+   fn = sysMalloc(strlen(basename) + 10);
+   if (fn == NULL) {
+      mtxAbort(MTX_HERE,"Cannot allocate buffer");
+   }
+
+   mr = mrAlloc(0,NULL,0);
+
+   // Read the generators
+   ext_format = strstr(basename,"%d") != NULL;
+   for (i = 0; i < ngen; ++i) {
+      Matrix_t *gen;
+      if (ext_format) {
+         sprintf(fn,basename,i + 1);
+      } else {
+         sprintf(fn,"%s.%d",basename,i + 1);
+      }
+      gen = matLoad(fn);
+      mrAddGenerator(mr,gen,0);
+   }
+
+   sysFree(fn);
+   return mr;
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+/// Transpose a Representation.
+/// This function transposes a matrix representation. A new representation
+/// is created, and the original representation is not changed.
+/// @param rep Matrix representation.
+/// @return Pointer to the transposed representation, or 0 on error.
+
+MatRep_t *mrTransposed(const MatRep_t *rep)
+{
+   mrValidate(MTX_HERE,rep);
+
+   Matrix_t **tr = NALLOC(Matrix_t *,rep->NGen);
+   for (int i = 0; i < rep->NGen; ++i) {
+      tr[i] = matTransposed(rep->Gen[i]);
+   }
+
+   MatRep_t *tr_rep = mrAlloc(rep->NGen,tr,0);
+
+   sysFree(tr);
+   return tr_rep;
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+/// Save a Matrix Representation.
+/// This function saves all generators of a matrix representation.
+/// Each generator ist written to different file. The file name
+/// is constructed by appending ".1", ".2" etc. to @a basename or, if
+/// @a basename contains a "%d" placeholder, by replacing the "%d"
+/// with "1", "2", etc.
+/// @param rep Pointer to the matrix representation.
+/// @param basename Base file name for generators.
+/// @return 0 on success, -1 on error.
+
+int mrSave(const MatRep_t *rep, const char *basename)
+{
+   char *fn;
+   int ext_format;          /* '%d' found in <basename> */
+   int i;
+
+   /* Make a copy of the basename an reserve extra bytes for the extension
+      -------------------------------------------------------------------- */
+   fn = sysMalloc(strlen(basename) + 10);
+   if (fn == NULL) {
+      mtxAbort(MTX_HERE,"Cannot allocate buffer");
+      return -1;
+   }
+
+   /* Write the generators.
+      --------------------- */
+   ext_format = strstr(basename,"%d") != NULL;
+   for (i = 0; i < rep->NGen; ++i) {
+      if (ext_format) {
+         sprintf(fn,basename,i + 1);
+      } else {
+         sprintf(fn,"%s.%d",basename,i + 1);
+      }
+      matSave(rep->Gen[i],fn);
+   }
+
+   /* Clean up.
+      --------- */
+   sysFree(fn);
+   return i >= rep->NGen ? 0 : -1;
+}
 
 /// @}
+
 // vim:fileencoding=utf8:sw=3:ts=8:et:cin

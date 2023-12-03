@@ -158,9 +158,6 @@ static int Spin1(SpinupContext_t* ctx, PTR seed, int seedno)
          ffStepPtr(&get, ctx->Dim);
          ffStepPtr(&stdget, ctx->Dim);
          ++iget;
-         if (MSG4 || (MSG3 && ctx->SpanDim % 50 == 0)) {
-            printf("SpinUp(): dim=%d, stack=%d\n", ctx->SpanDim, ctx->SpanDim - iget);
-         }
       }
 
       // Clean the image with the existing basis.
@@ -175,7 +172,7 @@ static int Spin1(SpinupContext_t* ctx, PTR seed, int seedno)
    }
 
    // Calculate return code.
-   //MESSAGE(2, "SpinUp(): sub=%d, quot=%d\n",SpanDim,Dim-SpanDim);
+   //MTX_LOG2("SpinUp(): sub=%d, quot=%d",SpanDim,Dim-SpanDim);
    switch (ctx->flags & SF_MODE_MASK) {
       case SF_SUB:
          return (ctx->SpanDim > 0 && ctx->SpanDim < ctx->Dim && ctx->SpanDim < maxdim) ?

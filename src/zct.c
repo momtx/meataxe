@@ -120,7 +120,7 @@ static void init(int argc, char **argv)
     parseargs();
 
 	
-    inputFile = mfOpen(inputFileName);
+    inputFile = mfOpen(inputFileName, "rb");
     mfReadHeader(inputFile);
     uint32_t objectType = mfObjectType(inputFile);
 	
@@ -172,7 +172,7 @@ static int cutmatrix()
       mfReadHeader(inputFile);
       sysFseekRelative(inputFile->file, ffRowSizeUsed(noc) * row0);
       for (uint32_t j = rowlist[i][1]-row0; j > 0; --j) {
-         mfReadRows(inputFile, inputRow, 1, noc);
+         ffReadRows(inputFile, inputRow, 1, noc);
          ffMulRow(outputRow, FF_ZERO, onoc);
          uint32_t colOut = 0;
          for (int k = 0; k < nColRanges; ++k) {
@@ -181,7 +181,7 @@ static int cutmatrix()
                ffInsert(outputRow, colOut++, f);
             }
          }
-         mfWriteRows(outputFile, outputRow, 1, onoc);
+         ffWriteRows(outputFile, outputRow, 1, onoc);
       }
    }
    mfClose(outputFile);

@@ -43,14 +43,14 @@ static MtxApplication_t *App = NULL;
 
 static void writeFiles()
 {	
-    MESSAGE(0, "Sum %d, Intersection %d\n",norA,norB);
+    MTX_LOGI("Sum %d, Intersection %d",norA,norB);
 
     MtxFile_t* of = mfCreate(sumname,ffOrder,norA,noc);
-    mfWriteRows(of,wrk1,norA, noc);
+    ffWriteRows(of,wrk1,norA, noc);
     mfClose(of);
 
     of = mfCreate(intname,ffOrder,norB,noc);
-    mfWriteRows(of,ffGetPtr(wrk2,norA,noc),norB, noc);
+    ffWriteRows(of,ffGetPtr(wrk2,norA,noc),norB, noc);
     mfClose(of);
 }
 
@@ -58,14 +58,14 @@ static void writeFiles()
 
 static void readFiles()
 {
-    MtxFile_t* af = mfOpen(aname);
+    MtxFile_t* af = mfOpen(aname, "rb");
     mfReadHeader(af);
     if (mfObjectType(af) != MTX_TYPE_MATRIX)
        mtxAbort(MTX_HERE, "%s: %s", aname, MTX_ERR_NOTMATRIX);
     norA = af->header[1];
     noc = af->header[2];
 
-    MtxFile_t* bf = mfOpen(bname);
+    MtxFile_t* bf = mfOpen(bname, "rb");
     mfReadHeader(bf);
     if (mfObjectType(bf) != MTX_TYPE_MATRIX)
        mtxAbort(MTX_HERE, "%s: %s", bname, MTX_ERR_NOTMATRIX);
@@ -80,8 +80,8 @@ static void readFiles()
     Piv = NALLOC(uint32_t,norA+norB);
 
     // Read both subspaces into wrk1.
-    mfReadRows(af,wrk1,norA,noc);
-    mfReadRows(bf,ffGetPtr(wrk1,norA,noc),norB, noc);
+    ffReadRows(af,wrk1,norA,noc);
+    ffReadRows(bf,ffGetPtr(wrk1,norA,noc),norB, noc);
 
     mfClose(af);
     mfClose(bf);

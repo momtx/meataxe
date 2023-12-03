@@ -15,9 +15,9 @@ MTX_TESTCASE_NO="${MTX_TESTCASE_NO%-*}"
 [ -n "$MTX_ZZZ" ] || error "\$MTX_ZZZ is not defined"
 
 # Create test directory
-rm -rf "T$MTX_TESTCASE_NO"
-mkdir "T$MTX_TESTCASE_NO"
-cd "T$MTX_TESTCASE_NO"
+rm -rf "test_$MTX_TESTCASE_NO"
+mkdir "test_$MTX_TESTCASE_NO"
+cd "test_$MTX_TESTCASE_NO"
 PATH="../../bin:$PATH"
 MTXLIB="../../lib"
 export MTXLIB

@@ -57,7 +57,7 @@ static int multpm(void)
 	mtxAbort(MTX_HERE,"%s and %s: %s",fileNameA,fileNameB,MTX_ERR_INCOMPAT);
 
     // read input files
-    Perm_t* permA = permReadData(fileA->file, fileA->header);
+    Perm_t* permA = permReadData(fileA);
     Matrix_t *matrixB = matAlloc(fieldB, norB, nocB);
 
     // Write out the rows of <B> in the order defined by <A>.
@@ -65,7 +65,7 @@ static int multpm(void)
     for (uint32_t i = 0; i < degreeA; ++i)
     {	
        PTR row = ffGetPtr(matrixB->data, permA->data[i], nocB);
-       mfWriteRows(fileC, row, 1, nocB);
+       ffWriteRows(fileC, row, 1, nocB);
     }
 
     permFree(permA);
@@ -87,7 +87,7 @@ static void multmp(void)
       mtxAbort(MTX_HERE,"%s and %s: %s", fileNameA, fileNameB, MTX_ERR_INCOMPAT);
 
    // Read the permutation (B)
-   Perm_t* perm = permReadData(fileB->file, fileB->header);
+   Perm_t* perm = permReadData(fileB);
 
    // Allocate workspace (two rows of A).
    ffSetField(fieldA);
@@ -100,9 +100,9 @@ static void multmp(void)
    // Process A row by row. Permute the marks of each row according to B.
    for (uint32_t i = 0; i < norA; ++i)
    {
-      mfReadRows(fileA, row_in, 1, nocA);
+      ffReadRows(fileA, row_in, 1, nocA);
       ffPermRow(row_out, row_in, perm->data, nocA);
-      mfWriteRows(fileC, row_out,1, nocA);
+      ffWriteRows(fileC, row_out,1, nocA);
    }
 
    permFree(perm);
@@ -119,7 +119,7 @@ static int multsm(MtxFile_t* fileS, MtxFile_t* fileM)
     const uint32_t field = fileS->header[0];
     ffSetField(field);
     PTR ms = ffAlloc(1,1);
-    mfReadRows(fileS,ms,1,1);
+    ffReadRows(fileS,ms,1,1);
     const FEL f = ffExtract(ms,0);
     ffFree(ms);
 
@@ -130,9 +130,9 @@ static int multsm(MtxFile_t* fileS, MtxFile_t* fileM)
     fileC = mfCreate(fileNameC,field ,norM,nocM);
     for (int i = 0; i < norM; ++i)
     {	
-	mfReadRows(fileM, mm, 1, nocM);
+	ffReadRows(fileM, mm, 1, nocM);
 	ffMulRow(mm, f, nocM);
-	mfWriteRows(fileC, mm,1, nocM);
+	ffWriteRows(fileC, mm,1, nocM);
     }
     sysFree(mm);
     return 0;
@@ -169,15 +169,15 @@ static void multmm(void)
     ffSetField(fieldA);
     PTR rowA = ffAlloc(1, nocA);
     PTR matrixB = ffAlloc(norB, nocB);
-    mfReadRows(fileB,matrixB, norB, nocB);
+    ffReadRows(fileB,matrixB, norB, nocB);
     PTR rowC = ffAlloc(1, nocB);
 
     fileC = mfCreate(fileNameC, fieldA, norA, nocB);
     for (uint32_t i = 0; i < norA; ++i)
     {
-        mfReadRows(fileA, rowA, 1, nocA);
+        ffReadRows(fileA, rowA, 1, nocA);
 	ffMapRow(rowC, rowA, matrixB, norB, nocB);
-	mfWriteRows(fileC,rowC, 1, nocB);
+	ffWriteRows(fileC,rowC, 1, nocB);
     }
     sysFree(rowC);
     sysFree(matrixB);
@@ -190,8 +190,8 @@ static void multmm(void)
 
 static void multpp(void)
 {
-    Perm_t *permA = permReadData(fileA->file, fileA->header);
-    Perm_t *permB = permReadData(fileB->file, fileB->header);
+    Perm_t *permA = permReadData(fileA);
+    Perm_t *permB = permReadData(fileB);
           
     permMul(permA,permB);
     permSave(permA,fileNameC);
@@ -214,9 +214,9 @@ static void init(int argc, char **argv)
 	mtxAbort(MTX_HERE,"Output file would overwrite input file");
 
     // Open input files
-    fileA = mfOpen(fileNameA);
+    fileA = mfOpen(fileNameA, "rb");
     mfReadHeader(fileA);
-    fileB = mfOpen(fileNameB);
+    fileB = mfOpen(fileNameB, "rb");
     mfReadHeader(fileB);
 }
 

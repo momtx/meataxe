@@ -67,7 +67,7 @@ static void checkFieldOrders()
 static void convertPermutationToMatrix()
 {
    ffSetField(outputFieldOrder);
-   Perm_t *perm = permReadData(inputFile->file, inputFile->header);
+   Perm_t *perm = permReadData(inputFile);
    const uint32_t nor = perm->degree;
    PTR row = ffAlloc(1, nor);
 
@@ -77,11 +77,11 @@ static void convertPermutationToMatrix()
    {	
       ffMulRow(row,FF_ZERO, nor);
       ffInsert(row,p[i],FF_ONE);
-      mfWriteRows(outputFile,row,1, nor);
+      ffWriteRows(outputFile,row,1, nor);
    }
    permFree(perm);
    sysFree(row);
-   MESSAGE(0, "Converted to GF(%d)\n",outputFieldOrder);
+   MTX_LOGI("Converted to GF(%d)",outputFieldOrder);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -109,7 +109,7 @@ static void changeField()
       // Read next chunk of rows into buffer.
       const uint32_t rowsRead = (rowsLeft <= MAX_ROWS) ? rowsLeft : MAX_ROWS;
       ffSetField(inputFieldOrder);
-      mfReadRows(inputFile,bufInp,nor,noc);
+      ffReadRows(inputFile,bufInp,nor,noc);
 
       // Unpack input rows
       {
@@ -149,7 +149,7 @@ static void changeField()
       }
 
       // Write output rows
-      mfWriteRows(outputFile, bufOut, rowsRead, noc);
+      ffWriteRows(outputFile, bufOut, rowsRead, noc);
 
       rowsLeft -= rowsRead;
    }
@@ -159,9 +159,9 @@ static void changeField()
    sysFree(bufInp);
 
    if (inputFieldOrder < outputFieldOrder)
-      MESSAGE(0, "Embedded into GF(%d)\n",outputFieldOrder);
+      MTX_LOGI("Embedded into GF(%d)",outputFieldOrder);
    else
-      MESSAGE(0, "Restricted to GF(%d)\n",outputFieldOrder);
+      MTX_LOGI("Restricted to GF(%d)",outputFieldOrder);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -193,7 +193,7 @@ int main(int argc, char** argv)
 {
    init(argc, argv);
 
-   inputFile = mfOpen(iname);
+   inputFile = mfOpen(iname, "rb");
    mfReadHeader(inputFile);
    switch (mfObjectType(inputFile)) {
       case MTX_TYPE_MATRIX:

@@ -103,7 +103,7 @@ int main(int argc, char *argv[])
         mycfinfo.Cf[j].mult = newnul / mycfinfo.Cf[j].spl;
         dim += mycfinfo.Cf[j].dim * mycfinfo.Cf[j].mult;
 
-        MESSAGE(0, "%s%s occurs %ld times (total dimension now %d out of %d)\n",
+        MTX_LOGI("%s%s occurs %ld times (total dimension now %d out of %d)\n",
 	    App->argV[1],latCfName(&mycfinfo,j),mycfinfo.Cf[j].mult, dim,gens->Gen[0]->nor);
 
 	/* Copy generators, std basis, and .op file for this constituent.

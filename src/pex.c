@@ -13,6 +13,7 @@
 struct PexGroup {
    struct PexGroup* next;
    struct PexGroup** prev;
+   uint32_t groupId;
    void* userData;
    void (*finalize)(void* userData);
    #if defined(MTX_DEFAULT_THREADS)
@@ -38,22 +39,34 @@ typedef struct Task {
    size_t end;
 } Task_t;
 
-#if defined(MTX_DEFAULT_THREADS)
+
 /// @private
 struct ThreadInfo {
+   #if defined(MTX_DEFAULT_THREADS)
    pthread_t id;
+   #endif
    int threadNumber;    // 1...mThreads (0 is reserved for the main thread)
    char name[100];
    char logPrefix[105];
+   struct ErrorContextStack contextStack;
 };
+
+static int tidWidth = 0;
+
+#if defined(MTX_DEFAULT_THREADS)
+
+static int threadPoolSize = 0;        // Fixed (from -j)
+static pthread_key_t tidKey;
+static pthread_t* threadId;           // Worker threads only.
+
+#else
+
+static const int threadPoolSize = 0;
+
 #endif
 
 #if defined(MTX_DEFAULT_THREADS)
-static int nThreads = 0;        // Fixed (from -j)
-static pthread_key_t tidKey;
-static struct ThreadInfo* threadInfo = NULL;
-#else
-static const int nThreads = 0;
+static pthread_once_t createTidKeyOnce = PTHREAD_ONCE_INIT;
 #endif
 
 // Data protected by tqMutex
@@ -61,12 +74,13 @@ static const int nThreads = 0;
 static pthread_mutex_t tqMutex = PTHREAD_MUTEX_INITIALIZER;
 static pthread_cond_t tqWakeup = PTHREAD_COND_INITIALIZER;   // task added or shutdown started
 static pthread_cond_t tqIdle = PTHREAD_COND_INITIALIZER;     // task finished
-static int nTotalThreads = 0;
-static int nBusyThreads = 0;
+static int nThreads = 0;           // Number of created threads
+static int nBusyThreads = 0;       // Number of threads executing a task
 static int tqShutdown = 0;
 static struct Task* tqHead = NULL;
 static struct Task** tqTail = &tqHead;
 #endif
+static int groupId = 0;
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -88,16 +102,16 @@ static void deleteGroup(PexGroup_t* group)
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#if defined(MTX_DEFAULT_THREADS)
 static void setThreadName(struct ThreadInfo* ti, const char* name)
 {
    snprintf(ti->name, sizeof(ti->name), "%s", name);
-   if (*name == 0)
-   snprintf(ti->logPrefix, sizeof(ti->logPrefix), "[%d] ", ti->threadNumber);
-   else
-   snprintf(ti->logPrefix, sizeof(ti->logPrefix), "[%d:%s] ", ti->threadNumber, name);
+   if (*name == 0) {
+      snprintf(ti->logPrefix, sizeof(ti->logPrefix), "[%*d] ", tidWidth, ti->threadNumber);
+   }
+   else {
+      snprintf(ti->logPrefix, sizeof(ti->logPrefix), "[%*d:%s] ", tidWidth, ti->threadNumber, name);
+   }
 }
-#endif
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -119,6 +133,7 @@ PexGroup_t* pexCreateGroup()
    pthread_mutex_init(&group->mutex, NULL);
    pthread_mutex_lock(&groupsMutex);
    #endif
+   group->groupId = ++groupId;
    MTX_ASSERT(groupsTail != NULL);
    MTX_ASSERT(*groupsTail == NULL);
    group->prev = groupsTail;
@@ -139,7 +154,7 @@ static void removeTaskFromGroup(PexGroup_t* group)
    MTX_ASSERT(group->nPending > 0);
    --group->nPending;
    const int finalize = group->nPending == 0 && group->finalize != NULL;
-   mtxMessage(1, "%s: nPending=%lu, finalize=%p",
+   MTX_LOG2("%s: nPending=%lu, finalize=%p",
          __func__, (unsigned long) group->nPending, group->finalize);
    pthread_mutex_unlock(&group->mutex);
    if (finalize) {
@@ -186,7 +201,7 @@ void pexFinally(PexGroup_t *group, void (*f)(void* userData), void* userData)
 {
    MTX_ASSERT(group != NULL);
    MTX_ASSERT(f != NULL);
-   if (nThreads == 0) {
+   if (threadPoolSize == 0) {
       // Execute immediately.
       f(userData);
       return;
@@ -195,7 +210,7 @@ void pexFinally(PexGroup_t *group, void (*f)(void* userData), void* userData)
 #if defined(MTX_DEFAULT_THREADS)
    pthread_mutex_lock(&group->mutex);
    MTX_ASSERT(group->finalize == NULL);
-   mtxMessage(1,"%s: grp=%p nPending=%lu", __func__, group, (unsigned long)group->nPending);
+   MTX_LOG2("%s: grp=%p nPending=%lu", __func__, group, (unsigned long)group->nPending);
    if (group->nPending != 0) {
       // schedule for execution after last task
       group->finalize = f;
@@ -216,18 +231,22 @@ void pexFinally(PexGroup_t *group, void (*f)(void* userData), void* userData)
 
 static void executeTask(Task_t* task)
 {
+   const int context = mtxBegin(MTX_HERE, "executing task");
+   const unsigned long groupId = (task->group != NULL) ? task->group->groupId : 0;
    if (task->fr != NULL) {
-     mtxMessage(1, "begin task %p.%p [%lu,%lu)",
-            task->userData, task->fr, (unsigned long) task->begin, (unsigned long) task->end) ;
+      MTX_LOG2("begin task %lx.%p.%p [%lu,%lu)",
+         groupId, task->userData, task->fr, (unsigned long) task->begin, (unsigned long) task->end);
       task->fr(task->userData, task->begin, task->end);
-   } else {
-      mtxMessage(1,"begin task %p.%p", task->userData, task->f);
+   }
+   else {
+      MTX_LOG2("begin task %lx.%p.%p", groupId, task->userData, task->f);
       task->f(task->userData);
    }
-   mtxMessage(1,"end task %p.%p", task->userData, task->fr ? (void*)task->fr : (void*)task->f);
+   MTX_LOG2("end task %p.%p", task->userData, task->fr ? (void*)task->fr : (void*)task->f);
    if (task->group) {
       removeTaskFromGroup(task->group);
    }
+   mtxEnd(context);
 }
 
 #endif
@@ -235,13 +254,98 @@ static void executeTask(Task_t* task)
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 #if defined(MTX_DEFAULT_THREADS)
+
+static void createTidKey()
+{
+    pthread_key_create(&tidKey, NULL);
+}
+
+#endif
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+static struct ThreadInfo* getThreadInfo()
+{
+   #if defined(MTX_DEFAULT_THREADS)
+
+   pthread_once(&createTidKeyOnce, createTidKey);
+   struct ThreadInfo* ti = pthread_getspecific(tidKey);
+   if (ti == NULL) {
+      ti = ALLOC(struct ThreadInfo);
+      pthread_setspecific(tidKey, ti);
+   }
+   // TODO: LINK (using cstackMutex)
+   return ti;
+
+   #else
+
+   static struct ThreadInfo mainThreadInfo = {0};
+   // TODO: LINK (using cstackMutex)
+   return &mainThreadInfo;
+
+   #endif
+}
+
+#if defined(MTX_DEFAULT_THREADS)
+
+static void destroyThreadInfo(struct ThreadInfo* ti)
+{
+   // TODO: UNLINK (using cstackMutex)
+   sysFree(ti);
+   pthread_setspecific(tidKey, NULL);
+}
+
+#endif
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+//void pexForEach(void (*f)(int threadNumber, struct ContextStack* cs), int skipThisThread)
+//{
+//   // TODO: synchronize with csMutex
+//   for (struct ErrorContextStack** pcs = &contextStacks; *pcs; pcs = &(*pcs)->next_) {
+//      if (skipThisThread && pthread_equal(getThreadInfo->id, pthread_self())) {
+//         continue;
+//      }
+//      f(cs
+//   }
+//}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+#if defined(MTX_DEFAULT_THREADS)
+
+static void threadCleanup()
+{
+   struct ThreadInfo *ti = getThreadInfo();
+   destroyThreadInfo(ti);
+}
+
+#endif
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+#if defined(MTX_DEFAULT_THREADS)
+
+static void threadInit(void* arg)
+{
+   int *threadNumber = (int*) arg;
+   struct ThreadInfo *ti = getThreadInfo();
+   ti->threadNumber = *threadNumber;
+   sysFree(threadNumber);
+   setThreadName(ti, "");
+}
+
+#endif 
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+#if defined(MTX_DEFAULT_THREADS)
+
 static void* threadMain(void* arg)
 {
-   struct ThreadInfo* ti = (struct ThreadInfo*) arg;
-   pthread_setspecific(tidKey, ti);
-   setThreadName(ti, "");
-   mtxMessage(1,"worker thread ready");
    pthread_mutex_lock(&tqMutex);
+   threadInit(arg);
+   MTX_LOG2("worker thread ready");
    while (1) {
        if (tqShutdown)
 	   break;
@@ -253,7 +357,7 @@ static void* threadMain(void* arg)
            ++nBusyThreads;
            pthread_mutex_unlock(&tqMutex);
 	   task->next = NULL;
-           setThreadName(ti, "");
+           setThreadName(getThreadInfo(), "");
 	   executeTask(task);
            pthread_mutex_lock(&tqMutex);
            --nBusyThreads;
@@ -263,67 +367,40 @@ static void* threadMain(void* arg)
           pthread_cond_wait(&tqWakeup, &tqMutex);
        }
    }
+   MTX_LOG2("worker thread exiting");
+   threadCleanup();
    pthread_mutex_unlock(&tqMutex);
-   mtxMessage(1, "worker thread exiting");
    return NULL;
 }
+
 #endif
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#if defined(MTX_DEFAULT_THREADS)
-static void createTidKey()
+/// Returns a unique number in the range [0,poolSize] which identifies thge calling thread.
+/// Thread number 0 is the program's main thread, numbers greater than 0 are used for member of the
+/// thread pool.
+
+int pexThreadNumber()
 {
-    pthread_key_create(&tidKey, NULL);
-}
-#endif
-
-////////////////////////////////////////////////////////////////////////////////////////////////////
-
-/// Initializes the parallel execution library.
-/// The argument determines the number of worker threads, i.e., the maximum number of tasks that
-/// can be executed concurrently (not counting the program's main thread).
-
-void pexInit(int nThreads_)
-{
-   #if defined(MTX_DEFAULT_THREADS)
-   MTX_ASSERT(nThreads_ > 0);
-   tqShutdown = 0;
-   nThreads = nThreads_;
-   nTotalThreads = 0;
-   nBusyThreads = 0;
-   threadInfo = NALLOC(struct ThreadInfo, nThreads);
-   static pthread_once_t createTidKeyOnce = PTHREAD_ONCE_INIT;
-   pthread_once(&createTidKeyOnce, createTidKey);
-   #endif
+   return getThreadInfo()->threadNumber;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-unsigned pexThreadId()
-{
-#if defined(MTX_DEFAULT_THREADS)
-   struct ThreadInfo* ti = (struct ThreadInfo*) pthread_getspecific(tidKey);
-   return  ti ? ti->threadNumber : 0;
-#else
-   return 0;
-#endif
-}
-
-////////////////////////////////////////////////////////////////////////////////////////////////////
+/// Returns a short text to be used in log messages to identify the logging thred. By default, the
+/// prefix is "[N]", where N ist the number returned by @ref pexThreadNumber. If a thread name is
+/// set (see @ref pexSetThreadName), the prefix becomes "[N:NAME]".
 
 const char* pexLogPrefix()
 {
-#if defined(MTX_DEFAULT_THREADS)
-   struct ThreadInfo* ti = (struct ThreadInfo*) pthread_getspecific(tidKey);
-   return ti ? ti->logPrefix : "";
-#else
-   return "";
-#endif
+   return getThreadInfo()->logPrefix;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
+/// Returns the thread name. The thread name is always empty when a thread starts working on a task.
+/// A new thread name, which need not be unique, can be set at any time with @ref pexSetThreadName.
 const char* pexThreadName()
 {
 #if defined(MTX_DEFAULT_THREADS)
@@ -336,22 +413,25 @@ const char* pexThreadName()
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
+struct ErrorContextStack* pexContextStack()
+{
+   return &getThreadInfo()->contextStack;
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
 /// Sets a short name for the thread, which will be used in log messages.
 /// The thread name is always reset to "" when a thread starts working on a task.
 
 void pexSetThreadName(const char* name, ...)
 {
-   #if defined(MTX_DEFAULT_THREADS)
-   struct ThreadInfo* ti = (struct ThreadInfo*) pthread_getspecific(tidKey);
-   if (ti == NULL)
-      return;
+   struct ThreadInfo* ti = getThreadInfo();
    va_list args;
    va_start(args, name);
    char formattedName[100];
    vsnprintf(formattedName, sizeof(formattedName), name, args);
    va_end(args);
    setThreadName(ti, formattedName);
-   #endif
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -367,7 +447,7 @@ void pexWait()
    while (1) {
       if (tqHead == NULL && nBusyThreads == 0)
          break;
-      mtxMessage(1,"Waiting for pending tasks");
+      MTX_LOG2("Waiting for pending tasks");
       pthread_cond_wait(&tqIdle, &tqMutex);
    }
    pthread_mutex_unlock(&tqMutex);
@@ -384,10 +464,12 @@ void pexWait()
 
 void pexShutdown()
 {
-#if defined(MTX_DEFAULT_THREADS)
-   if (nThreads == 0)
+   // Allow multiple calls
+   if (threadPoolSize == 0)
       return;
-   mtxMessage(1, "shutting down");
+      
+#if defined(MTX_DEFAULT_THREADS)
+   MTX_LOG2("PEX shutting down");
 
    pthread_mutex_lock(&tqMutex);
    MTX_ASSERT(tqHead == NULL);
@@ -396,20 +478,49 @@ void pexShutdown()
    tqShutdown = 1;
    pthread_cond_broadcast(&tqWakeup);
    pthread_mutex_unlock(&tqMutex);
-   for (int i = 0; i < nTotalThreads; ++i) {
-      pthread_join(threadInfo[i].id, NULL);
+   for (int i = 0; i < nThreads; ++i) {
+      pthread_join(threadId[i], NULL);
    }
    pthread_mutex_unlock(&tqMutex);
-   sysFree(threadInfo);
-   threadInfo = NULL;
+   // TODO: REALLOC(threadInfo, struct ThreadInfo, 1);
+   sysFree(threadId);
+   threadId = NULL;
+   threadPoolSize = 0;
    nThreads = 0;
-   nTotalThreads = 0;
 
    pthread_mutex_lock(&groupsMutex);
    MTX_ASSERT(groupsHead == NULL);
    pthread_mutex_unlock(&groupsMutex);
 #endif
+   groupId = 0;
 }
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+/// Initializes the parallel execution (PEX) library.
+/// The argument determines the number of worker threads, i.e., the maximum number of tasks that
+/// can be executed concurrently, not counting the program's main thread.
+/// 
+/// This function will fail if PEX is already initialized. To change the thread pool size, call
+/// @ref pexShutdown first, then reinitialize the library with the new number of threads.
+
+void pexInit(int poolSize)
+{
+   MTX_ASSERT(poolSize > 0);
+   if (threadId != NULL)
+      mtxAbort(MTX_HERE, "Multiple calls of pexInit()");
+   #if defined(MTX_DEFAULT_THREADS)
+   MTX_LOG2("PEX initializing, poolSize=%d", poolSize);
+   threadPoolSize = poolSize;
+   tqShutdown = 0;
+   nThreads = 0;
+   nBusyThreads = 0;
+   threadId = NALLOC(pthread_t, threadPoolSize);
+   #endif
+   tidWidth = threadPoolSize < 10 ? 1 : (threadPoolSize < 100 ? 2 : (threadPoolSize < 1000 ? 3 : 4));
+   setThreadName(getThreadInfo(), "");
+}
+
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -435,25 +546,23 @@ void pexSleep(unsigned timeInMs)
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 static void createTask(
-      PexGroup_t* group,
-      void (*f)(void *userData),
-      void (*fr)(void *userData, size_t begin, size_t end),
-      void* userData,
-      size_t begin,
-      size_t end)
+   PexGroup_t* group,
+   void (* f)(void* userData),
+   void (* fr)(void* userData, size_t begin, size_t end),
+   void* userData,
+   size_t begin,
+   size_t end)
 {
-   if (nThreads == 0) {
+   if (threadPoolSize == 0) {
       // Execute immediately.
-      if (f != NULL)
-         f(userData);
-      else
-         fr(userData, begin, end);
+      f ? f(userData) : fr(userData, begin, end);
       return;
    }
 
 #if defined(MTX_DEFAULT_THREADS)
-   if (group != NULL)
+   if (group != NULL) {
       addTaskToGroup(group);
+   }
    Task_t* task = ALLOC(Task_t);
    task->group = group;
    task->f = f;
@@ -461,21 +570,28 @@ static void createTask(
    task->userData = userData;
    task->begin = begin;
    task->end = end;
-   mtxMessage(1, "create task %p.%p [%lu,%lu)",
-      userData, fr ? (void*)fr : (void*) f,
-      (unsigned long) begin, (unsigned long) end);
+   const unsigned long gid = (group != NULL) ? group->groupId : 0;
+   if (fr == NULL) {
+      MTX_LOG2("create task %lu.%p.%p", gid, userData, fr ? (void*)fr : (void*)f);
+   }
+   else {
+      MTX_LOG2("create task %lu.%p.%p [%lu,%lu)",
+         gid, userData, fr ? (void*)fr : (void*)f,
+         (unsigned long) begin, (unsigned long) end);
+   }
+
    pthread_mutex_lock(&tqMutex);
    *tqTail = task;
    task->next = NULL;
    tqTail = &task->next;
 
-   if (nBusyThreads == nTotalThreads && nTotalThreads < nThreads) {
-      struct ThreadInfo* ti = threadInfo + nTotalThreads;
-      memset(ti, 0, sizeof(*ti));
-      int threadCreateResult = pthread_create(&ti->id, NULL, threadMain, ti);
+   // Create additional worker threads if necessary and possible.
+   if (nBusyThreads == nThreads && nThreads < threadPoolSize) {
+      int* threadNumber = ALLOC(int); // memory is released in worker thread
+      *threadNumber = nThreads + 1;
+      int threadCreateResult = pthread_create(threadId + nThreads, NULL, threadMain, threadNumber);
       MTX_ASSERT(threadCreateResult == 0);
-      ++nTotalThreads;
-      ti->threadNumber = nTotalThreads;
+      ++nThreads;
    }
 
    pthread_cond_signal(&tqWakeup);  // could this deadlock? broadcast required???

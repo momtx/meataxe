@@ -58,7 +58,7 @@ static void calculateMatrixOrder()
    ispiv = NALLOC(char,noc);
    memset(ispiv,0,noc);
    v = ffAlloc(1, noc);
-   mfReadRows(file,m1,noc,noc);
+   ffReadRows(file,m1,noc,noc);
    ord = 1;
    bend = base;
 
@@ -128,7 +128,7 @@ static void calculateMatrixOrder()
    }
 
    if (opt_q && ord != maxord) {
-      MESSAGE(0, "ORDER IS A MULTIPLE OF %d\n",ord);
+      MTX_LOGI("ORDER IS A MULTIPLE OF %d",ord);
    } else {
       if (opt_G) {
          printf("MeatAxe.Order := %d;\n",ord);
@@ -148,7 +148,7 @@ static void calculatePermutationOrder()
       printf("MeatAxe.Orders := [");
    }
    for (uint32_t i = 1; i <= numberOfPermutations; ++i) {
-      Perm_t* perm = permReadData(file->file, file->header);
+      Perm_t* perm = permReadData(file);
       uint32_t order = permOrder(perm);
       permFree(perm);
       if (order < 0) {
@@ -171,9 +171,9 @@ static void init(int argc, char** argv)
    // Process command line options.
    App = appAlloc(&AppInfo,argc,argv);
    opt_G = appGetOption(App,"-G --gap");
-   if (opt_G) {
-      MtxMessageLevel = -100;
-   }
+//   if (opt_G) {
+//      MtxMessageLevel = -100;
+//   }
    opt_q = appGetOption(App,"-q --quick");
    maxord = appGetIntOption(App,"-m --max-order",-1,1,1000000);
 
@@ -188,7 +188,7 @@ static void init(int argc, char** argv)
 int main(int argc, char** argv)
 {
    init(argc, argv);
-   file = mfOpen(fileName);
+   file = mfOpen(fileName, "rb");
    mfReadHeader(file);
    uint32_t objectType = mfObjectType(file);
    switch (objectType) {

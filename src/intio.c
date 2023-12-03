@@ -42,17 +42,22 @@ void sysRead32(FILE *f, void* buf, size_t n)
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 /// Tries to read an array of 32-bit integers
-/// Returns 0 on eof (nothing read) or 1 on success.
-/// Aborts the program on partial read or error.
+/// Returns 0 on success (read complete), 1 on end-of-file (nothing read), -1 on partial read
+/// and -2 on any other error.
 
 int sysTryRead32(FILE *f, void* buf, size_t n)
 {
    MTX_ASSERT(n >= 0);
    size_t nRead = fread(buf, 4, n, f);
-   if (nRead == 0 && feof(f))
-      return 0;
-   if (nRead != n || ferror(f))
-      mtxAbort(MTX_HERE, "File read error: %s", strerror(errno));
+   if (nRead == 0 && feof(f)) {
+      // TODO: this may be wrong if there were 1..3 bytes available 
+      // TODO: clarify the exact behaviour of fread if the first item is incomplete
+      // TODO: mayby use (buf,1,4*n,f) instead to avoid this problem
+      return 1;
+   }
+   if (nRead != n)
+      return ferror(f) ? -2 : -1;
+     
    if (mtxIsBigEndian()) {
       uint8_t* p = (uint8_t*) buf;
       uint8_t* end = p + 4 * n;
@@ -66,7 +71,7 @@ int sysTryRead32(FILE *f, void* buf, size_t n)
          p += 4;
       }
    }
-   return 1;
+   return 0;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////

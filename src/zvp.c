@@ -176,7 +176,7 @@ static int AllocateTables()
    int i;
 
    tabsize = maxvec + maxvec / 10 + 1;
-   MESSAGE(1, "Allocating tables (size=%d)\n",tabsize);
+   MTX_LOGD("Allocating tables (size=%d)",tabsize);
    vtable = ffAlloc(tabsize + 1, Seed->noc);
    tmp = ffAlloc(1, Seed->noc);
    vecpos = NALLOC(int,tabsize + 1);
@@ -227,7 +227,7 @@ static void Normalize(PTR row)
 
 static int MakeNextSeedVector()
 {
-   MESSAGE(1, "Starting with seed vector %ld\n",iseed);
+   MTX_LOGD("Starting with seed vector %ld",iseed);
    if (Generate) {
       iseed = MakeSeedVector(Seed,iseed,tmp);
       if (iseed < 0) {
@@ -293,7 +293,7 @@ static int MakeOrbit()
    int igen = 0;    // generator to apply
 
    while (nfinished < nvec && nvec <= maxvec) {
-      MESSAGE(3, "Vec[%d] * Gen[%d] = ",nfinished,igen);
+      MTX_LOG2("Vec[%d] * Gen[%d] = ",nfinished,igen);
       x = ffGetPtr(vtable,vecpos[nfinished],Seed->noc);
       ffMapRow(tmp, x,Gen[igen]->data,Seed->noc,Seed->noc);
       if (proj) {
@@ -315,7 +315,7 @@ static int MakeOrbit()
       }
 
       if (isfree[pos]) {        // new vector
-         MESSAGE(3, "%d (new)\n",nvec);
+         MTX_LOG2("%d (new)",nvec);
          ffCopyRow(x,tmp, Seed->noc);
          im = nvec;
          isfree[pos] = 0;
@@ -324,10 +324,10 @@ static int MakeOrbit()
          nvec++;
       } else {
          im = vecno[pos];
-         MESSAGE(3, "%d\n",im);
+         MTX_LOG2("%d",im);
       }
       if (nvec % 10000 == 0) {
-         MESSAGE(2, "%d vectors, %d finished\n",nvec,nfinished);
+         MTX_LOG2("%d vectors, %d finished",nvec,nfinished);
       }
       perm[igen][nfinished] = im;
 
@@ -370,21 +370,21 @@ static int WriteOutput()
       MtxFile_t *f;
       int i;
 
-      MESSAGE(1, "Writing orbit to %s\n",OrbName);
+      MTX_LOGD("Writing orbit to %s",OrbName);
       if ((f = mfCreate(OrbName,ffOrder,nvec,Seed->noc)) == 0) {
          mtxAbort(MTX_HERE,"Cannot open %s",OrbName);
          rc = -1;
       }
       for (i = 0; i < nvec; ++i) {
          PTR x = ffGetPtr(vtable,vecpos[i],Seed->noc);
-         mfWriteRows(f, x, 1, Seed->noc);
+         ffWriteRows(f, x, 1, Seed->noc);
       }
       mfClose(f);
    }
 
    /* Write permutations
       ------------------ */
-   MESSAGE(1, "Writing permutations\n");
+   MTX_LOGD("Writing permutations");
    for (i = 0; i < NGen; ++i) {
       sprintf(fn,"%s.%d",PermName,i + 1);
       MtxFile_t* f = mfCreate(fn,MTX_TYPE_PERMUTATION, nvec, 1);
@@ -415,12 +415,12 @@ int main(int argc, char **argv)
       }
       InitTables();
       if (MakeOrbit() == 0) {
-         MESSAGE(0, "Vector %ld: Orbit size = %d\n",iseed,nvec);
+         MTX_LOGI("Vector %ld: Orbit size = %d",iseed,nvec);
          WriteOutput();
          rc = 0;
          break;
       }
-      MESSAGE(0, "Orbit of vector %ld is longer than %d\n",iseed,maxvec);
+      MTX_LOGI("Orbit of vector %ld is longer than %d",iseed,maxvec);
    }
    Cleanup();
    return rc;

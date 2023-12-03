@@ -40,11 +40,11 @@ static void clean()
 
    for (uint32_t j = 0; j < matrixNor; ++j)
    {
-      mfReadRows(matrixFile, row, 1, noc);
+      ffReadRows(matrixFile, row, 1, noc);
       ffMulRow(op, FF_ZERO, spaceNor);
       ffCleanRow2(row,Space->data,spaceNor,noc,Space->pivotTable,op);
-      mfWriteRows(cleanedFile,row,1, noc);
-      mfWriteRows(opFile,op,1,spaceNor);
+      ffWriteRows(cleanedFile,row,1, noc);
+      ffWriteRows(opFile,op,1,spaceNor);
    }
    sysFree(op);
    sysFree(row);
@@ -65,7 +65,7 @@ static void init(int argc, char **argv)
     noc = Space->noc;
     spaceNor = Space->nor;
 
-    matrixFile = mfOpen(MatName);
+    matrixFile = mfOpen(MatName, "rb");
     mfReadHeader(matrixFile);
     if (matrixFile->header[0] != Space->field || matrixFile->header[2] != noc)
        mtxAbort(MTX_HERE, "%s and %s: %s", SpcName, MatName, MTX_ERR_INCOMPAT);

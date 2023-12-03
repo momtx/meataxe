@@ -83,7 +83,7 @@ static MtxApplication_t *App = NULL;
 
 static void readGenerators()
 {
-   MtxFile_t* f = mfOpen(genFileName[0]);
+   MtxFile_t* f = mfOpen(genFileName[0], "rb");
    mfReadHeader(f);
    uint32_t objectType = mfObjectType(f);
    switch (objectType) {
@@ -115,7 +115,7 @@ static void readGenerators()
 
 static void readSeed()
 {
-   MtxFile_t* sf = mfOpen(SeedName);
+   MtxFile_t* sf = mfOpen(SeedName, "rb");
    mfReadHeader(sf);
    if (mfObjectType(sf) != MTX_TYPE_MATRIX) {
       mtxAbort(MTX_HERE, "%s: %s", SeedName, MTX_ERR_NOTMATRIX);
@@ -142,7 +142,7 @@ static void readSeed()
    const uint32_t num_seed = TryOneVector ? 1 : norSeed - skip;
 
    Seed = matAlloc(ffOrder, num_seed, Dim);
-   mfReadRows(sf, Seed->data, num_seed, Dim);
+   ffReadRows(sf, Seed->data, num_seed, Dim);
    mfClose(sf);
 }
 
@@ -190,8 +190,8 @@ static void init_args()
     }
 
 
-    if (opt_G)
-	MtxMessageLevel = -100;
+//    if (opt_G)
+//	MtxMessageLevel = -100;
 
     /* Process arguments (generator and seed names).
        --------------------------------------------- */
@@ -249,12 +249,12 @@ static int WriteAction()
 static int WriteResult()
 {
     if (Span->nor < Dim && (Standard || FindCyclicVector))
-	MESSAGE(0, "ZSP: Warning: Span is only %d of %d\n",Span->nor,Dim);
+	MTX_LOGI("ZSP: Warning: Span is only %d of %d",Span->nor,Dim);
     else if (Span->nor == Dim && TryLinearCombinations)
-	MESSAGE(0, "ZSP: Warning: No invariant subspace found\n");
+	MTX_LOGI("ZSP: Warning: No invariant subspace found");
     else
     {
-	MESSAGE(0, "Subspace %d, quotient %d\n",Span->nor, Span->noc - Span->nor);
+	MTX_LOGI("Subspace %d, quotient %d",Span->nor, Span->noc - Span->nor);
     }
 
     /* Write the invariant subspace.

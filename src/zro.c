@@ -52,7 +52,7 @@ static void init(int argc, char **argv)
 
     opt_G = appGetOption(App,"-G --gap");
     opt_s = appGetOption(App,"-s --summary");
-    if (opt_G) MtxMessageLevel = -100;
+//    if (opt_G) MtxMessageLevel = -100;
     appGetArguments(App,2,MAXGEN+1);
     Count = atoi(App->argV[0]);
     if (Count < 1)

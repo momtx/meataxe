@@ -58,7 +58,7 @@ int main(int argc, char *argv[])
     }
 
     // Open files.
-    MtxFile_t* inputFile = mfOpen(iname);
+    MtxFile_t* inputFile = mfOpen(iname, "rb");
     mfReadHeader(inputFile);
     if (mfObjectType(inputFile) != MTX_TYPE_MATRIX)
 	mtxAbort(MTX_HERE,"%s: %s", iname, MTX_ERR_NOTMATRIX);
@@ -72,10 +72,10 @@ int main(int argc, char *argv[])
     PTR m1 = ffAlloc(1, noc);
     for (uint32_t i = 0; i < nor; ++i)
     {
-	mfReadRows(inputFile, m1, 1, noc);
+	ffReadRows(inputFile, m1, 1, noc);
 	for (uint32_t j = i + 1; j < noc; ++j)
 	    ffInsert(m1,j,FF_ZERO);
-	mfWriteRows(outputFile, m1, 1, noc);
+	ffWriteRows(outputFile, m1, 1, noc);
     }
     sysFree(m1);
 

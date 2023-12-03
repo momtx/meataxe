@@ -215,7 +215,7 @@ FPoly_t *charpol(const Matrix_t *mat)
    matValidate(MTX_HERE, mat);
    Charpol_t* state = charpolStart(mat, PM_CHARPOL, 0);
 
-   FPoly_t *cpol = fpAlloc();
+   FPoly_t *cpol = fpAlloc(mat->field);
    Poly_t *p;
    for (p = charpolFactor_(state); p != NULL; p = charpolFactor_(state)) {
       FPoly_t *factors = Factorization(p);
@@ -254,7 +254,7 @@ FPoly_t *minpol(const Matrix_t *mat)
 {
    matValidate(MTX_HERE, mat);
    Charpol_t* state = charpolStart(mat, PM_MINPOL, 0);
-   FPoly_t *mp = fpAlloc();
+   FPoly_t *mp = fpAlloc(mat->field);
    while (1)
    {
       Poly_t* f = charpolFactor_(state);

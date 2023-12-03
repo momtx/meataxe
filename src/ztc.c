@@ -39,7 +39,7 @@ static void trmat()
    PTR m1 = ffAlloc(1, noc);
    FEL tr = FF_ZERO;
    for (uint32_t i = 0; i < min; ++i) {
-      mfReadRows(InputFile, m1, 1, noc);
+      ffReadRows(InputFile, m1, 1, noc);
       tr = ffAdd(tr, ffExtract(m1, i));
    }
    if (!opt_G) {
@@ -79,7 +79,7 @@ static void init(int argc, char **argv)
 {
     App = appAlloc(&AppInfo,argc,argv);
     opt_G = appGetOption(App,"-G --gap");
-    if (opt_G) MtxMessageLevel = -100;
+//    if (opt_G) MtxMessageLevel = -100;
     appGetArguments(App,1,1);
     inpname = App->argV[0];
 }
@@ -89,7 +89,7 @@ static void init(int argc, char **argv)
 int main(int argc, char** argv)
 {
    init(argc, argv);
-   InputFile = mfOpen(inpname);
+   InputFile = mfOpen(inpname, "rb");
    mfReadHeader(InputFile);
    const uint32_t objectType = mfObjectType(InputFile);
    switch (objectType) {

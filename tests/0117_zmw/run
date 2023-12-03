@@ -3,6 +3,7 @@ echo "0117 - ZMW"
 . ../tests/common.sh
 
 cp "${MTX_TEST_DATA_DIR}"/m11.? .
+zmw 1 m11.1 m11.2 m11.w1q >zmw.log
 zmw -Q 1 m11.1 m11.2 m11.w1
 compareBinaryWithReference m11.w1 
 zmw -Q -g 2 2           m11 m11.w2 m11.nsp2

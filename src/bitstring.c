@@ -154,7 +154,7 @@ static void resizeBuffer(BitString_t* bs, size_t newCapacity)
 /// It may be used on variable-sized bit strings after clearing bits to release memory occupied by
 /// trailing 0 bits.
 
-void bsTrim(BitString_t* bs)
+void bsTrim(const BitString_t* bs)
 {
    bsValidate(MTX_HERE, bs);
    if (bs->typeId == BS_MAGIC_FIXED)
@@ -165,7 +165,7 @@ void bsTrim(BitString_t* bs)
       --lSize;
    size_t newCapacity = lSize * BPL;
    if (newCapacity < bs->capacity) {
-      resizeBuffer(bs, newCapacity);
+      resizeBuffer((BitString_t*)bs, newCapacity);
    }
 }
 
@@ -507,7 +507,7 @@ void bsPrint(const char *name, const BitString_t *bs)
 /// Writes a bit string to a file.
 /// The file must be open for writing.
 
-void bsWrite(BitString_t *bs, FILE *file)
+void bsWrite(const BitString_t *bs, MtxFile_t* file)
 {
    bsValidate(MTX_HERE, bs);
    MTX_ASSERT(file != NULL);
@@ -521,35 +521,62 @@ void bsWrite(BitString_t *bs, FILE *file)
       fileHeader[0] = MTX_TYPE_BITSTRING_DYNAMIC;
       fileHeader[1] = bs->capacity;
    }
-   sysWrite32(file, fileHeader, 3);
-   sysWrite8(file, bs->data, sysPad(fileHeader[1], 8) / 8);
+   mfWrite32(file, fileHeader, 3);
+   mfWrite8(file, bs->data, sysPad(fileHeader[1], 8) / 8);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-/// Reads a bit string from a file. The file must be open for reading.
-/// @return The bit string.
-
-BitString_t *bsRead(FILE *file)
+static uint32_t checkType(MtxFile_t *f)
 {
-   MTX_ASSERT(file != NULL);
-
-   uint32_t fileHeader[3];
-   sysRead32(file, fileHeader, 3);
-   if ((fileHeader[0] != MTX_TYPE_BITSTRING_FIXED && fileHeader[0] != MTX_TYPE_BITSTRING_DYNAMIC)
-         || fileHeader[2] != 0) {
-      mtxAbort(MTX_HERE,"Invalid bit string header (%lu,%lu,%lu)",
-            (unsigned long) fileHeader[0],
-            (unsigned long) fileHeader[1],
-            (unsigned long) fileHeader[2]);
+   const uint32_t objectType = mfObjectType(f);
+   if (objectType != MTX_TYPE_BITSTRING_FIXED && objectType != MTX_TYPE_BITSTRING_DYNAMIC) {
+      mtxAbort(MTX_HERE, "%s: bad type 0x%lx, expected 0x%lx or 0x%lx (BITSTRING)",
+         f->name, (unsigned long) objectType,
+         (unsigned long) MTX_TYPE_BITSTRING_FIXED,
+         (unsigned long) MTX_TYPE_BITSTRING_DYNAMIC);
    }
+   return objectType;
+}
 
-   BitString_t *bs = bsAlloc(fileHeader[1]);
-   if (fileHeader[0] == MTX_TYPE_BITSTRING_DYNAMIC) {
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+BitString_t *bsReadData(MtxFile_t *f)
+{
+   const uint32_t objectType = checkType(f);
+   BitString_t *bs = bsAlloc(f->header[1]);
+   if (objectType == MTX_TYPE_BITSTRING_DYNAMIC) {
       bs->typeId = BS_MAGIC_DYNAMIC;
    }
-   sysRead8(file, bs->data, sysPad(bs->size, 8) / 8);
+   mfRead8(f, bs->data, sysPad(bs->size, 8) / 8);
+
+   // Make sure a second read attempt will fail.
+   f->header[0] = 0xFFFFFFFF;
+
    return bs;
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+/// Reads a bit string from a file and returns the bit string.
+/// The file must be open for reading.
+
+BitString_t* bsRead(MtxFile_t* f)
+{
+   mfReadHeader(f);
+   return bsReadData(f);
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void bsSkip(MtxFile_t* f)
+{
+   mfReadHeader(f);
+   checkType(f);
+   const size_t bsSize = f->header[1];
+   const size_t nBytes = sysPad(bsSize, 8) / 8;
+   sysFseekRelative(f->file, nBytes);
+   f->header[0] = 0xFFFFFFFF;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////

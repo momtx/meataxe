@@ -6,20 +6,13 @@
 #include <string.h>
 #include <stdlib.h>
 
-
-
-/* ------------------------------------------------------------------
-   Global data
-   ------------------------------------------------------------------ */
-
-
-MatRep_t *Rep;			/* Generators for the algebra */
-Matrix_t *mountains;		/* Genrators for all mountains */
-int nmount;			/* Number of mountains */
-int modnum;
-BitString_t *bs;		/* Bit string read from .sub file */
-int opt_m = 0;			/* Option -m used */
-static Lat_Info LI;		/* Data from .cfinfo file */
+static MatRep_t *Rep;           // Generators for the algebra
+static Matrix_t *mountains;     // Genrators for all mountains
+static int nmount;              // Number of mountains
+static int submoduleNumber;     // Number of the submodule to generate
+static BitString_t *bs;         // Bit string read from .sub file
+static int opt_m = 0;           // Option -m used
+static Lat_Info LI;             // Data from .cfinfo file
 static const char *ModuleName = NULL;
 
 static MtxApplicationInfo_t AppInfo = { 
@@ -44,71 +37,54 @@ MTX_COMMON_OPTIONS_DESCRIPTION
 
 static MtxApplication_t *App = NULL;
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
-
-
-
-
-/* -----------------------------------------------------------------
-   init() - Read generators and mountains
-   ----------------------------------------------------------------- */
-
-static int Init(int argc, char **argv)
+static void init(int argc, char **argv)
 {
     char fn[200];
-    FILE *f;
     int i;
 
     App = appAlloc(&AppInfo,argc,argv);
     opt_m = appGetOption(App,"-m --mountain");
     appGetArguments(App,2,2);
     ModuleName = App->argV[0];
-    modnum = atoi(App->argV[1]);
+    submoduleNumber = atoi(App->argV[1]);
     latReadInfo(&LI,ModuleName);
 
-    /* Read the generators and mountains.
-       ---------------------------------- */
+    // Read the generators and mountains.
     Rep = mrLoad(ModuleName,LI.NGen);
     mountains = matLoad(strcat(strcpy(fn,LI.BaseName),".v"));
     nmount = mountains->nor;
-    MESSAGE(1, "%d mountains\n",nmount);
+    MTX_LOGD("%d mountains",nmount);
     
-
-    /* Read the bit string from xxx.sub or set up the bit string
-       to contain only the requested mountain (-m)
-      ------------------------ --------------------------------- */
+    // Read the bit string from xxx.sub or set up the bit string
+    // to contain only the requested mountain (-m)
     if (opt_m)
     {
 	bs = bsAlloc(nmount);
-	bsSet(bs,modnum);
+	bsSet(bs,submoduleNumber);
     }
     else
     {
-    	f = sysFopen(strcat(strcpy(fn,LI.BaseName),".sub"),"rb");
-    	if (f == NULL)
-	    mtxAbort(MTX_HERE,"CANNOT OPEN .sub FILE");
-	bs = bsAlloc(nmount);
-    	sysFseek(f,modnum * (12 + (bs->size + 7) / 8));	/* HACK: !!! */
-	bsFree(bs);
-    	bs = bsRead(f);
-    	if (MSG1)
-    	{
-	    printf("Mountains: ");
-	    for (i = 0; i < nmount; ++i)
-	    	if (bsTest(bs,i)) printf("%d ",i);
-	    printf("\n");
-    	}
-	fclose(f);
-    }
+    	MtxFile_t* f = mfOpen(strcat(strcpy(fn,LI.BaseName),".sub"),"rb");
+        for (int k = 0; k < submoduleNumber; ++k) {
+           bsSkip(f);
+        }
+        bs = bsRead(f);
+	mfClose(f);
 
-    return 0;
+        MTX_XLOGD(msg) {
+	    sbAppend(msg, "Mountains: ");
+	    for (i = 0; i < nmount; ++i) {
+	    	if (bsTest(bs,i)) {
+                   sbPrintf(msg, "%d ",i);
+                }
+            }
+    	}
+    }
 }
 
-
-
-/* -----------------------------------------------------------------
-   sp()
-   ----------------------------------------------------------------- */
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 static void sp()
 {
@@ -129,29 +105,20 @@ static void sp()
 	}
     }
     matEchelonize(m);
-    MESSAGE(0, "Seed space has dimension %d\n",m->nor);
+    MTX_LOGI("Seed space has dimension %d",m->nor);
     subsp = SpinUp(m,Rep,SF_EACH|SF_COMBINE,NULL,NULL);
-    MESSAGE(0, "Submodule has dimension %d\n",subsp->nor);
-    sprintf(fn,"%s.%c%d",LI.BaseName,opt_m ? 'm' : 's',modnum);
+    MTX_LOGI("Submodule has dimension %d",subsp->nor);
+    sprintf(fn,"%s.%c%d",LI.BaseName,opt_m ? 'm' : 's',submoduleNumber);
     matSave(subsp,fn);
-    MESSAGE(0, "Module written to %s\n",fn);
+    MTX_LOGI("Module written to %s",fn);
 }
 
 
-/* -----------------------------------------------------------------
-   main()
-   ----------------------------------------------------------------- */
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 int main(int argc, char *argv[])
-
 {
-    if (Init(argc, argv) != 0)
-    {
-	mtxAbort(MTX_HERE,"Initialization failed");
-	return -1;
-    }
-
-
+    init(argc, argv);
     sp();
     appFree(App);
     return 0;

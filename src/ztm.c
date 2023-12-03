@@ -110,7 +110,7 @@ static void readMatrices()
 static void openVectorFiles()
 {
     // Open the input vectors file.
-    fileVin = mfOpen(fileNameVin);
+    fileVin = mfOpen(fileNameVin, "rb");
     mfReadHeader(fileVin);
     if (mfObjectType(fileVin) != MTX_TYPE_MATRIX)
 	mtxAbort(MTX_HERE,"%s: %s",fileNameVin,MTX_ERR_NOTMATRIX);
@@ -163,7 +163,7 @@ int main(int argc, char **argv)
 	Matrix_t *mat3, *newmat;
 
         // Read one vector and convert to matrix.
-        mfReadRows(fileVin,tmp,1, nocV);
+        ffReadRows(fileVin,tmp,1, nocV);
         mat3 = VecToMat(tmp, ffOrder, matrixATr->nor, matrixB->nor);
        
         // Multiply from both sides.
@@ -173,7 +173,7 @@ int main(int argc, char **argv)
 
         // Turn matrix into vector and write out
         matToVec(newmat,tmp);
-        mfWriteRows(fileVout,tmp,1, nocV);
+        ffWriteRows(fileVout,tmp,1, nocV);
 
         matFree(mat3);
         matFree(newmat);

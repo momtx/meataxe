@@ -13,12 +13,13 @@
 
 TstResult FPoly_Allocation()
 {
-    const int NPOLY = 5;
-   FPoly_t *p[NPOLY];
+   const int NPOLY = 5;
+   FPoly_t* p[NPOLY];
    int i;
 
    for (i = 0; i < NPOLY; ++i) {
-      p[i] = fpAlloc();
+      p[i] = fpAlloc(3);
+      ASSERT_EQ_INT(p[i]->field, 3);
    }
    for (i = 0; i < NPOLY; ++i) {
       fpIsValid(p[i]);

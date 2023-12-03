@@ -15,10 +15,9 @@ TstResult FileIo()
 //    Matrix_t *mat1, *mat2;
 //    Poly_t *pol1, *pol2;
     Perm_t *perm1, *perm2;
-    FILE *f;
 
     SelectField(5);
-    f = sysFopen("check.1","wb");
+    MtxFile_t* f = mfOpen("check.1","wb");
 //    mat1 = RndMat(5,30,30);
 //    matSave(mat1,"check.ma1");
 //    matWrite(mat1,f);
@@ -28,7 +27,7 @@ TstResult FileIo()
     perm1 = RndPerm(100);
     permSave(perm1,"check.pe1");
     permWrite(perm1,f);
-    fclose(f);
+    mfClose(f);
 
 //    mat2 = matLoad("check.ma1");
 //    ASSERT_EQ_INT(matCompare(mat1,mat2), 0);

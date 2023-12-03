@@ -124,81 +124,87 @@ static MtxApplication_t *App = NULL;
 static void init(const char *basename)
 {	
     int i;
-    uint32_t l[2];
     char fn[40];
-    FILE *f;
 
     latReadInfo(&LI,basename);
     
     // Read incidence matrix
-    f = sysFopen(strcat(strcpy(fn,LI.BaseName),".inc"),"r");
-    sysRead32(f,l,1);
-    xnmount = (int) l[0];
-    MESSAGE(1, "Reading%s: %d mountain%s",fn,xnmount,xnmount == 1 ? "" : "s");
-    if (xnmount > MAXCYCL) 
     {
-	mtxAbort(MTX_HERE,"Too many mountains (%d, max=%d)",xnmount,MAXCYCL);
-	return;
+       MtxFile_t* f = mfOpen(strcat(strcpy(fn,LI.BaseName),".inc"),"r");
+       uint32_t l;
+       mfRead32(f, &l, 1);
+       xnmount = (int) l;
+       MTX_LOGD("Reading%s: %d mountain%s",fn,xnmount,xnmount == 1 ? "" : "s");
+       if (xnmount > MAXCYCL) 
+       {
+          mtxAbort(MTX_HERE,"Too many mountains (%d, max=%d)",xnmount,MAXCYCL);
+          return;
+       }
+       for (i = 0; i < xnmount; ++i)
+       {
+          if ((xsubof[i] = bsRead(f)) == NULL)
+          {
+             mtxAbort(MTX_HERE,"Error reading incidence matrix");
+             return;
+          }
+          if (xsubof[i]->size != xnmount)
+          {
+             mtxAbort(MTX_HERE,"Invalid bit string");
+             return;
+          }
+       }
+       mfClose(f);
     }
-    for (i = 0; i < xnmount; ++i)
-    {
-	if ((xsubof[i] = bsRead(f)) == NULL)
-	{
-	    mtxAbort(MTX_HERE,"Error reading incidence matrix");
-	    return;
-	}
-	if (xsubof[i]->size != xnmount)
-	{
-	    mtxAbort(MTX_HERE,"Invalid bit string");
-	    return;
-	}
-    }
-    fclose(f);
 
     // Read dotted lines
-    f = sysFopen(strcat(strcpy(fn,LI.BaseName),".dot"),"rb");
-    MESSAGE(1, "Reading %s: ",fn);
-    sysRead32(f,l,1);
-    xndotl = (int) l[0];
-    MESSAGE(1, "%d dotted line%s",xndotl,xndotl == 1 ? "" : "s");
-    if (xndotl > MAXDOTL) 
     {
-	mtxAbort(MTX_HERE,"Too many dotted-lines (%d, max=%d)",xndotl,MAXDOTL);
-	return;
+       MtxFile_t* f = mfOpen(strcat(strcpy(fn,LI.BaseName),".dot"),"rb");
+       MTX_LOGD("Reading %s: ",fn);
+       uint32_t l;
+       mfRead32(f,&l,1);
+       xndotl = (int) l;
+       MTX_LOGD("%d dotted line%s",xndotl,xndotl == 1 ? "" : "s");
+       if (xndotl > MAXDOTL) 
+       {
+          mtxAbort(MTX_HERE,"Too many dotted-lines (%d, max=%d)",xndotl,MAXDOTL);
+          return;
+       }
+       for (i = 0; i < xndotl; ++i)
+       {
+          if ((xdotl[i] = bsRead(f)) == NULL)
+          {
+             mtxAbort(MTX_HERE,"Error reading dotted lines");
+             return;
+          }
+       }
+       mfClose(f);
     }
-    for (i = 0; i < xndotl; ++i)
-    {
-	if ((xdotl[i] = bsRead(f)) == NULL)
-	{
-	    mtxAbort(MTX_HERE,"Error reading dotted lines");
-	    return;
-	}
-    }
-    fclose(f);
     y = bsAlloc(xnmount);
 
     // Read dimensions
-    f = sysFopen(strcat(strcpy(fn,LI.BaseName),".mnt"),"r");
-    MESSAGE(1, "Reading %s",fn);
-    for (i = 0; i < xnmount; ++i)
     {
-	long mno, mdim;
-	if (fscanf(f,"%ld%ld",&mno,&mdim) != 2 || mno != i || mdim < 1)
-	{
-	    mtxAbort(MTX_HERE,"Error in .mnt file");
-	    return;
-	}
-	xmdim[i] = mdim;
-	while (fgetc(f) != '\n')	// Skip class
-	{
-	    if (ferror(f) || feof(f))
-	    {
-		mtxAbort(MTX_HERE,"Error in .mnt file");
-		return;
-	    }
-	}
+       FILE* f = sysFopen(strcat(strcpy(fn,LI.BaseName),".mnt"),"r");
+       MTX_LOGD("Reading %s",fn);
+       for (i = 0; i < xnmount; ++i)
+       {
+          long mno, mdim;
+          if (fscanf(f,"%ld%ld",&mno,&mdim) != 2 || mno != i || mdim < 1)
+          {
+             mtxAbort(MTX_HERE,"Error in .mnt file");
+             return;
+          }
+          xmdim[i] = mdim;
+          while (fgetc(f) != '\n')	// Skip class
+          {
+             if (ferror(f) || feof(f))
+             {
+                mtxAbort(MTX_HERE,"Error in .mnt file");
+                return;
+             }
+          }
+       }
+       fclose(f);
     }
-    fclose(f);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -216,13 +222,13 @@ static int isotype(int mnt)
 
 static void sortBlock()
 {
-   MESSAGE(0, "Sorting %lu submodules", (unsigned long) nsub);
+   MTX_LOGI("Sorting %lu submodules", (unsigned long) nsub);
 
    BitString_t* x;
    for (int i = 0; i < nsub; ++i) {
       static uint64_t progressTimer = 0;
       if (sysTimeout(&progressTimer, 5)) {
-         MESSAGE(1,"%lu/%lu...", (unsigned long) i, (unsigned long) nsub);
+         MTX_LOGD("%lu/%lu...", (unsigned long) i, (unsigned long) nsub);
       }
       for (int k = i + 1; k < nsub; ++k) {
          if (bsIsSub(sub[k]->bs, sub[i]->bs)) {
@@ -245,7 +251,7 @@ void finishBlock()
 {
    sortBlock();
 
-   MESSAGE(0, "Calculating maximal submodules");
+   MTX_LOGI("Calculating maximal submodules");
    uint8_t* flag = NALLOC(uint8_t, nsub);   // 0=unknown, 1=maximal, 2=not maximal
    BitString_t* bs = bsAlloc(bnmount);
 
@@ -255,7 +261,7 @@ void finishBlock()
       memset(flag, 0, (size_t) nsub);
       static uint64_t progressTimer = 0;
       if (sysTimeout(&progressTimer, 5)) {
-         MESSAGE(1,"%lu/%lu...", (unsigned long) i, (unsigned long) nsub);
+         MTX_LOGD("%lu/%lu...", (unsigned long) i, (unsigned long) nsub);
       }
 
       // Find all maximal submodules
@@ -305,7 +311,7 @@ void finishBlock()
 
    // Calculate the radical series
    if (opt_o & O_RADICAL) {
-      MESSAGE(0, "Calculating radical series");
+      MTX_LOGI("Calculating radical series");
       sub[nsub-1]->radicalLayer = 0;
       int layer = 1;
       for (int i = nsub - 1; i > 0;) {
@@ -320,7 +326,7 @@ void finishBlock()
 
    // Calculate the socle series
    if (opt_o & O_SOCLE) {
-      MESSAGE(0, "Calculating socle series");
+      MTX_LOGI("Calculating socle series");
       sub[nsub-1]->socleLayer = 0;
       int layer = 1;
       for (int i = 0; i < nsub - 1;) {
@@ -387,20 +393,19 @@ static void extend(BitString_t *x, int i, int nextend)
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-FILE *openout(char *name)
+MtxFile_t* openOutputFile(char* name)
 {
-    FILE *f;
-    char fn[200];
+   char* fn = strEprintf(opt_b ? "%s%s.%d" : "%s%s", LI.BaseName, name, blockNumber);
+   MTX_LOGD("Writing %s", fn);
+   return mfOpen(fn, "wb");
+}
 
-    sprintf(fn,opt_b ? "%s%s.%d" : "%s%s",LI.BaseName,name,blockNumber);
-    MESSAGE(1, "Writing %s",fn);
-    f = sysFopen(fn, "w");
-    if (f == NULL)
-    {
-	mtxAbort(MTX_HERE,"Cannot open %s",fn);
-	return NULL;
-    }
-    return f;
+
+FILE* openTextOutputFile(char* name)
+{
+   char* fn = strEprintf(opt_b ? "%s%s.%d" : "%s%s", LI.BaseName, name, blockNumber);
+   MTX_LOGD("Writing %s", fn);
+   return sysFopen(fn, "w");
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -457,13 +462,12 @@ static int printbs(FILE *f, BitString_t *b)
 
 void writeresult()
 {
-   FILE* g;
    int i, k;
    char tmp[100];
    BitString_t* b = bsAlloc(bnmount);
 
-   MESSAGE(0, "Finished, %d submodules found", nsub);
-   FILE* f = openout(".out");
+   MTX_LOGI("Finished, %d submodules found", nsub);
+   FILE* f = openTextOutputFile(".out");
 
    // Write irreducible constituents
    fprintf(f, "Irreducibles:\n");
@@ -471,15 +475,15 @@ void writeresult()
    for (i = 0; i < blockSize; ++i) {
       sprintf(tmp, "%s", latCfName(&LI, blockMember[i]));
       fprintf(f, "    %-7s%-7ld%-5ld", tmp, LI.Cf[blockMember[i]].mult,
-              LI.Cf[blockMember[i]].spl);
+         LI.Cf[blockMember[i]].spl);
       sprintf(tmp, "%ld (%ld-%ld)", LI.Cf[blockMember[i]].nmount,
-              (long) firstm[blockMember[i]],
-              LI.Cf[blockMember[i]].nmount + firstm[blockMember[i]] - 1);
+         (long) firstm[blockMember[i]],
+         LI.Cf[blockMember[i]].nmount + firstm[blockMember[i]] - 1);
       fprintf(f, "%-20s", tmp);
       if (LI.Cf[blockMember[i]].ndotl > 0) {
          sprintf(tmp, "%ld (%ld-%ld)", LI.Cf[blockMember[i]].ndotl,
-                 (long) firstdl[blockMember[i]],
-                 LI.Cf[blockMember[i]].ndotl + firstdl[blockMember[i]] - 1);
+            (long) firstdl[blockMember[i]],
+            LI.Cf[blockMember[i]].ndotl + firstdl[blockMember[i]] - 1);
       }
       else {
          sprintf(tmp, "0");
@@ -497,12 +501,12 @@ void writeresult()
          bsCopy(b, bsupof[i]);
          bsClear(b, i);
          for (k = 0; k < bnmount; ++k) {
-            if (!bsTest(b, k)) { continue;}
+            if (!bsTest(b, k)) { continue; }
             bsMinus(b, bsupof[k]);
             bsSet(b, k);
          }
          for (k = 0; k < bnmount; ++k) {
-            if (bsTest(b, k)) { fprintf(f, "%d ", k);}}
+            if (bsTest(b, k)) { fprintf(f, "%d ", k); } }
          fprintf(f, "\n");
       }
       fprintf(f, "\n");
@@ -534,7 +538,7 @@ void writeresult()
    // Submodule list
    if (opt_o & O_SUBMODULES) {
       fflush(stdout);
-      g = openout(".sub");
+      MtxFile_t* g = openOutputFile(".sub");
       fprintf(f, "Submodules:\n");
       fprintf(f, "    No    Dim  Flags  Ident                           Max\n");
       for (i = 0; i < nsub; ++i) {
@@ -549,14 +553,14 @@ void writeresult()
          }
          fprintf(f, "  ");
          for (MaxSubmodule_t* lp = sub[i]->maxSubmodules; lp && lp->sub; ++lp) {
-            if (lp != sub[i]->maxSubmodules) { fputc(',', f);}
+            if (lp != sub[i]->maxSubmodules) { fputc(',', f); }
             fprintf(f, "%lu", (unsigned long) lp->sub->id);
          }
          fprintf(f, "\n");
          bsWrite(sub[i]->bs, g);
       }
       fprintf(f, "\n");
-      fclose(g);
+      mfClose(g);
    }
 
    // Radical series
@@ -580,7 +584,7 @@ void writeresult()
          MTX_ASSERT(rdim > 0);
          bsClearAll(x);
          bsClearAll(newrad);
-         MESSAGE(1, "Starting layer %d", layer);
+         MTX_LOGD("Starting layer %d", layer);
 
          // Extend the zero module = x by all those mountains
          // which are contained in the radical and extend y
@@ -619,48 +623,48 @@ void writeresult()
 
    if ((opt_o & O_EXTFILES) && (opt_o & O_SUBMODULES)) {
       // Write the .lat file
-      f = openout(".lat");
-      fprintf(f, "MeatAxe.Lattice := [\n");
+      FILE* latFile = openTextOutputFile(".lat");
+      fprintf(latFile, "MeatAxe.Lattice := [\n");
       for (i = 0; i < nsub; ++i) {
-         fprintf(f, "[%lu,[", (unsigned long) sub[i]->dimension);
+         fprintf(latFile, "[%lu,[", (unsigned long) sub[i]->dimension);
          k = 0;
          for (const MaxSubmodule_t* maxSub = sub[i]->maxSubmodules;
               maxSub && maxSub->sub;
               ++maxSub, ++k) {
-            fprintf(f, "[%lu,%d]", (unsigned long)maxSub->sub->id + 1, maxSub->isoType + 1);
+            fprintf(latFile, "[%lu,%d]", (unsigned long)maxSub->sub->id + 1, maxSub->isoType + 1);
             if (maxSub[1].sub) {
-               fprintf(f, ",");
-               if (k % 10 == 9) { fprintf(f, "\n");}
+               fprintf(latFile, ",");
+               if (k % 10 == 9) { fprintf(latFile, "\n"); }
             }
          }
          if (i < nsub - 1) {
-            fprintf(f, "]],\n");
+            fprintf(latFile, "]],\n");
          }
          else {
-            fprintf(f, "]]\n");
+            fprintf(latFile, "]]\n");
          }
       }
-      fprintf(f, "];\n");
+      fprintf(latFile, "];\n");
 
-      fclose(f);
+      fclose(latFile);
 
       // Write the .gra file
-      f = openout(".gra");
-      fprintf(f, "%d\n", nsub);
+      FILE* graFile = openTextOutputFile(".gra");
+      fprintf(graFile, "%d\n", nsub);
       for (i = 0; i < nsub; ++i) {
 
-         fputc(sub[i]->isMountain ? 'm' : '.', f);
-         fputc(sub[i]->radicalLayer > 0 ? 'r' : '.', f);
-         fputc(sub[i]->socleLayer > 0 ? 's' : '.', f);
+         fputc(sub[i]->isMountain ? 'm' : '.', graFile);
+         fputc(sub[i]->radicalLayer > 0 ? 'r' : '.', graFile);
+         fputc(sub[i]->socleLayer > 0 ? 's' : '.', graFile);
          const MaxSubmodule_t* lp = sub[i]->maxSubmodules;
          for (k = 0; lp && lp->sub; ++lp, ++k) {}
-         fprintf(f, " %2d", k);
+         fprintf(graFile, " %2d", k);
          for (lp = sub[i]->maxSubmodules; lp && lp->sub; ++lp) {
-            fprintf(f, " %lu %d", (unsigned long) lp->sub->id, lp->isoType);
+            fprintf(graFile, " %lu %d", (unsigned long) lp->sub->id, lp->isoType);
          }
-         fprintf(f, "\n");
+         fprintf(graFile, "\n");
       }
-      fclose(f);
+      fclose(graFile);
    }
 }
 
@@ -706,7 +710,7 @@ static int nextblock()
     }
 
     // Otherwise, make the next block
-    MESSAGE(1, "---\nMaking block %d",blockNumber);
+    MTX_LOGD("---\nMaking block %d",blockNumber);
     done[i] = 1;
     blockSize = 1;
     blockMember[0] = i;
@@ -723,7 +727,7 @@ static int nextblock()
     }
 
     // Sort block
-    MESSAGE(2, "Sorting block (size=%lu)", (unsigned long) blockSize);
+    MTX_LOG2("Sorting block (size=%lu)", (unsigned long) blockSize);
     for (i = 0; i < blockSize; ++i) {
 	for (k = i+1; k < blockSize; ++k)
 	{
@@ -735,14 +739,10 @@ static int nextblock()
 	    }
 	}
     }
-    if (MSG0)
-    {
-       StrBuffer* message = sbAlloc(100);
-       sbPrintf(message, "Block %d: ",blockNumber);
+    MTX_XLOGI(sb) {
+       sbPrintf(sb, "Block %d: ",blockNumber);
 	for (i = 0; i < blockSize; ++i)
-	    sbPrintf(message, " %s%s",LI.BaseName,latCfName(&LI,blockMember[i]));
-        MESSAGE(0, "%s", sbData(message));
-        sbFree(message);
+	    sbPrintf(sb, " %s%s",LI.BaseName,latCfName(&LI,blockMember[i]));
     }
     return 1;
 }
@@ -773,7 +773,7 @@ static int tryAddSubmodule(BitString_t *bs, int generation)
    ++nadd;
    static uint64_t progressTimer = 0;
    if (sysTimeout(&progressTimer, 5)) {
-      MESSAGE(1, "Generation %d: %d candidates, %d new...", generation, nadd, nsub - lastGenEnd);
+      MTX_LOGD("Generation %d: %d candidates, %d new...", generation, nadd, nsub - lastGenEnd);
    }
 
    const size_t key = hashKey(bs);
@@ -814,7 +814,7 @@ static void initBlock()
 	bnmount += LI.Cf[blockMember[i]].nmount;
 
     // Build the incidence matrix
-    MESSAGE(0, "Building incidence matrix");
+    MTX_LOGI("Building incidence matrix");
     fflush(stdout);
     for (int i = 0; i < bnmount; ++i)
     {
@@ -845,7 +845,7 @@ static void initBlock()
     }
 
     // Build the dotted lines for this block
-    MESSAGE(0, "Building dotted lines");
+    MTX_LOGI("Building dotted lines");
     fflush(stdout);
     bndotl = 0;
     for (int i = 0; i < blockSize; ++i)
@@ -976,8 +976,8 @@ static int ParseCommandLine()
     const char *c;
 
     opt_G = appGetOption(App,"-G --gap");
-    if (opt_G) 
-	MtxMessageLevel = -100;
+//    if (opt_G) 
+//	MtxMessageLevel = -100;
     opt_b = appGetOption(App,"-b --blocks");
     if ((c = appGetTextOption(App,"-o --output",NULL)) != NULL)
     {
@@ -1022,7 +1022,7 @@ static int Init(int argc, char **argv)
 	return -1;
     if (ParseCommandLine() != 0)
 	return -1;
-    MESSAGE(0, "\n*** CALCULATE ALL SUBMODULES ***");
+    MTX_LOGI("\n*** CALCULATE ALL SUBMODULES ***");
     init(App->argV[0]);
     calculateCfInfo();
     return 0;
@@ -1049,13 +1049,13 @@ int main(int argc, char **argv)
 		nadd = 0;
 		nextgen();
                 if (lastGenEnd == lastGenBegin) break;
-		MESSAGE(0, "Generation %d: %lu candidates, %lu new",
+		MTX_LOGI("Generation %d: %lu candidates, %lu new",
 		    generation, (unsigned long) nadd, (unsigned long)(lastGenEnd - lastGenBegin));
 	    }
 	    finishBlock();
 	}
 	else
-	    MESSAGE(0, "Submodules not calculated");
+	    MTX_LOGI("Submodules not calculated");
 
 	writeresult();
 	cleanupBlock();
