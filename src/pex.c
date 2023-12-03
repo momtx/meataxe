@@ -52,6 +52,7 @@ struct ThreadInfo {
 };
 
 static int tidWidth = 0;
+static int isInitialized = 0;
 
 #if defined(MTX_DEFAULT_THREADS)
 
@@ -493,6 +494,7 @@ void pexShutdown()
    pthread_mutex_unlock(&groupsMutex);
 #endif
    groupId = 0;
+   isInitialized = 0;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -507,8 +509,9 @@ void pexShutdown()
 void pexInit(int poolSize)
 {
    MTX_ASSERT(poolSize > 0);
-   if (threadId != NULL)
+   if (isInitialized)
       mtxAbort(MTX_HERE, "Multiple calls of pexInit()");
+   isInitialized = 1;
    #if defined(MTX_DEFAULT_THREADS)
    MTX_LOG2("PEX initializing, poolSize=%d", poolSize);
    threadPoolSize = poolSize;
