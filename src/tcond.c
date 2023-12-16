@@ -18,7 +18,7 @@ static Lat_Info InfoM, InfoN;	        /* Data from .cfinfo files */
 static const char *AName;		/* Left factor */
 static const char *BName;	        /* Right factor */
 static int NGen = 2;			/* No. of generators for A and B */
-static Matrix_t *SsBasisM, *SsBasisN;	/* Semisimplicity basis */
+static Matrix_t *ssBasisM, *ssBasisN;	/* Semisimplicity basis */
 static Matrix_t *SsBasisMi, *SsBasisNi;
 static Matrix_t *Q[LAT_MAXCF];		/* Q matrices (embeddings) */
 static Matrix_t *P[LAT_MAXCF];		/* P matrices (projections) */
@@ -89,7 +89,7 @@ static void MakeInvertible(Matrix_t *mat, const char *fn)
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static void Init(int argc, char** argv)
+static void init(int argc, char** argv)
 {
    char fn[200];
    int i;
@@ -137,17 +137,17 @@ static void Init(int argc, char** argv)
       int ctx = mtxBegin(MTX_HERE, "HINT: did you run 'pwkond -tb'?");
       MTX_LOGD("Reading and inverting semisimplicity bases");
       sprintf(fn, "%s.ssb", TKInfo.nameM);
-      SsBasisM = matLoad(fn);
-      MakeInvertible(SsBasisM, fn);
-      SsBasisMi = matInverse(SsBasisM);
+      ssBasisM = matLoad(fn);
+      MakeInvertible(ssBasisM, fn);
+      SsBasisMi = matInverse(ssBasisM);
       if (strcmp(AName, BName)) {
          sprintf(fn, "%s.ssb", TKInfo.nameN);
-         SsBasisN = matLoad(fn);
-         MakeInvertible(SsBasisN, fn);
-         SsBasisNi = matInverse(SsBasisN);
+         ssBasisN = matLoad(fn);
+         MakeInvertible(ssBasisN, fn);
+         SsBasisNi = matInverse(ssBasisN);
       }
       else {
-         SsBasisN = SsBasisM;
+         ssBasisN = ssBasisM;
          SsBasisNi = SsBasisMi;
       }
       mtxEnd(ctx);
@@ -304,7 +304,7 @@ static void condenseMat(int gen)
    // Change to semisimplicity basis.
    if (!NoBasisChange) {
       MTX_LOGD("  Changing basis");
-      x = matDup(SsBasisM);
+      x = matDup(ssBasisM);
       matMul(x, mmat);
 
       matMul(x, SsBasisMi);
@@ -312,7 +312,7 @@ static void condenseMat(int gen)
       mmat = x;
 
       if (strcmp(aname, bname)) {
-         x = matDup(SsBasisN);
+         x = matDup(ssBasisN);
          matMul(x, nmat);
          matMul(x, SsBasisNi);
          matFree(nmat);
@@ -380,19 +380,44 @@ static void condenseMat(int gen)
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
+static void cleanup()
+{
+   for (int i = 0; i < TKInfo.nCf; ++i) {
+      matFree(P[i]);
+      matFree(Q[i]);
+   }
+      
+   if (ssBasisM != NULL) {
+      matFree(ssBasisM);
+      matFree(SsBasisMi);
+      if (ssBasisN != NULL && ssBasisN != ssBasisM) {
+         matFree(ssBasisN);
+         matFree(SsBasisNi);
+      }
+   }
+   
+   latCleanup(&InfoM);
+   latCleanup(&InfoN);
+    appFree(App);
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
 int main(int argc, char **argv)
 {
-    Init(argc,argv);
+    init(argc,argv);
     for (int i = 0; i < NGen; ++i)
     {
 	// TODO: context "Condensation of %s.%d x %s.%d",AName,i+1,BName,i+1);
 	condenseMat(i);
     }
-    appFree(App);
+    cleanup();
     return 0;
 }  
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
+// *INDENT_OFF*
 
 /**
 @page prog_tcond tcond - Tensor Product Condensation
@@ -484,8 +509,6 @@ is in "result.1", "result.2", and "result.3".
 
 @section tcond_impl Implementatin Details
 The algorithm used by this program is described in @ref Wie94 "[Wie94]".
-
-
 */
 
 // vim:fileencoding=utf8:sw=3:ts=8:et:cin

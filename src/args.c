@@ -311,6 +311,7 @@ void appFree(MtxApplication_t *a)
          a->AppInfo != NULL ?  a->AppInfo->name : "meataxe",t / 10,t % 10);
    if (a->context > 0) mtxEnd(a->context);
    sysFree(a);
+   mmLeakCheck();
 }
 
 

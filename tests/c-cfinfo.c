@@ -58,13 +58,15 @@ static void Tst_RemoveTempFiles()
       Tst_TempFile *tf = TempFiles;
       TempFiles = TempFiles->next;
       remove(tf->name);
-      free(tf->name);
-      free(tf->base_name);
-      free(tf);
+      sysFree(tf->name);
+      sysFree(tf->base_name);
+      sysFree(tf);
    }
 }
 
-TstResult Cfinfo_BadIdWord()
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+TstResult Cfinfo_BadPeakWord()
 {
    static const char FILE_DATA[] =
       "CFInfo := rec();\n"

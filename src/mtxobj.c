@@ -78,61 +78,52 @@ void objMul(void *a, void *b)
 
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-/// Order of a matrix or permutation.
-/// This function calculates the order of a matrix or permutation.
-/// @param a The matrix or permutation.
-/// @see MatOrder PermOrder
 
-long objOrder(void *a)
+/// Returns the order of a matrix or permutation.
+
+long objOrder(void* a)
 {
    if (IS_MATRIX(a)) {
-      return matOrder((Matrix_t *)a);
-   } else {
-      return permOrder((Perm_t *)a);
+      return matOrder((Matrix_t*)a);
+   }
+   else {
+      return permOrder((Perm_t*)a);
    }
 }
 
-
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-/// Check object compatibility.
-/// This function checks if two objects are compatible for |objMul()|, i.e.,
-/// if they are of the same type (matrix or permutation) and have the same
-/// attributes.
-/// @param a First matrix or permutation.
-/// @param b Second matrix or permutation.
 
-int objCanMultiply(void *a, void *b)
+/// Check object compatibility.
+///
+/// This function checks if two objects can be multiplied by @ref objMul.
+
+int objCanMultiply(void* a, void* b)
 {
    if (IS_MATRIX(a)) {
-      Matrix_t *am = (Matrix_t *) a;
-      Matrix_t *bm = (Matrix_t *) b;
+      Matrix_t* am = (Matrix_t*) a;
+      Matrix_t* bm = (Matrix_t*) b;
       return IS_MATRIX(b) && am->field == bm->field && am->nor == bm->nor
              && am->noc == bm->noc;
-   } else {
-      Perm_t *ap = (Perm_t *) a;
-      Perm_t *bp = (Perm_t *) b;
+   }
+   else {
+      Perm_t* ap = (Perm_t*) a;
+      Perm_t* bp = (Perm_t*) b;
       return !IS_MATRIX(b) && ap->degree == bp->degree;
    }
 }
 
-
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-/// Duplicate a matrix or permutation.
-/// This function creates a copy of a matrix or permutation.
-/// @param a The matrix or permutation.
-/// @return Pointer to a copy of a, or NULL on error.
-/// @see
 
-void *objDup(void *a)
+/// Create an independent copy of a matrix or permutation.
+
+void* objDup(void* a)
 {
-   return IS_MATRIX(a) ? (void *) matDup(a) : (void *)permDup(a);
+   return IS_MATRIX(a) ? (void*)matDup(a) : (void*)permDup(a);
 }
 
-
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-/// Inverse of a matrix or permutation.
-/// @param a The matrix or permutation.
-/// @return Pointer to the inverse of a, or NULL on error.
+
+/// Returns the inverse of a matrix or permutation.
 
 void *objInverse(void *a)
 {
@@ -141,8 +132,8 @@ void *objInverse(void *a)
 
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-/// Free a matrix or permutation.
-/// @param a The matrix or permutation.
+
+/// Destroys a matrix or permutation.
 
 void objFree(void *a)
 {
@@ -153,14 +144,10 @@ void objFree(void *a)
    }
 }
 
-
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-/// Power of a matrix or permutation.
-/// This function calculates the n-th power of a matrix or permutation.
-/// $n$ may be negative.
-/// @param a The matrix or permutation.
-/// @param n The power.
-/// @return n-th power of a, or NULL on error.
+
+/// Calculates the n-th power of a matrix or permutation. @a n may be negative if the object is
+/// invertible.
 
 void *objPower(void *a, int n)
 {
@@ -186,4 +173,5 @@ void *objPower(void *a, int n)
    }
    return b;
 }
+
 // vim:fileencoding=utf8:sw=3:ts=8:et:cin

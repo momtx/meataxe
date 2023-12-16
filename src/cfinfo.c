@@ -8,11 +8,6 @@
 #include <stdlib.h>
 #include <ctype.h>
 
-////////////////////////////////////////////////////////////////////////////////////////////////////
-/// Local data
-
-
-
 /// @defgroup cfinfo Module Structure
 /// @{
 
@@ -22,27 +17,33 @@
 /// irreducible constituent of a module. Most of this information is
 /// useful only in the context of a Lat_Info structure.
 ///
-/// @c dim is the dimension of the constituent, and @c num enumerates
-/// constituents of same dimension. @c mult ist the multiplicity of this
-/// constituent in the module.
+/// @c dim is the dimension of the constituent. If there are more than one non-isomorphic
+/// constituents of the same dimension they are numbered in order of discovery with
+/// @c num = 1, 2, 3, ...
+///
+/// @c mult is the multiplicity of this in the module.
+///
 /// @c idWord and @c idPol specify the identifying word for this module.
-/// The identifying word is used by the CHOP program.
+/// The actual algebra element defined by these two inputs is a = p(w), where w is the
+/// algebra element with number @c idWord produced by the @ref wgen "word generator",
+/// and p(X) is the polynomial @c idPol.
+///
+/// Analogously, @c peakWord and @c peakPol specify the peak word for this module.
+/// See the @ref prog_pwkond "pwkond program" description for details.
 
 /// @class Lat_Info
 /// Module Structure Information.
 /// This data structure contains all information about a module which is
 /// gathered during the submodule lattice calculation.
 
-/* ------------------------------------------------------------------
-   writeword(), readword() - Write and read words
-   ------------------------------------------------------------------ */
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static void WriteWord(StfData *f, long w, Poly_t *p)
+static void WriteWord(StfData *f, uint32_t w, Poly_t *p)
 {
     int i;
 
     stfPut(f,"[");
-    stfPutInt(f,w);
+    stfPutU32(f,w);
     stfPut(f,",");
     stfPutInt(f,ffOrder);
     if (p == NULL)
@@ -63,10 +64,11 @@ static void WriteWord(StfData *f, long w, Poly_t *p)
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
+
 /// Reads a word number and the associated polynomial.
 /// @return 0 on success, -1 on error
 
-static void ReadWord(StfData *f, long *w, Poly_t **p, const char *fn)
+static void ReadWord(StfData *f, uint32_t *w, Poly_t **p, const char *fn)
 {
     int fl, deg;  
     int i;
@@ -233,15 +235,10 @@ void latReadInfo(Lat_Info *li, const char *basename)
     strcpy(li->BaseName,basename);
     li->NGen = 2;
 
-    // Open the file and read
     char fn[LAT_MAXBASENAME + 20];
     sprintf(fn,"%s.cfinfo",basename);
     StfData *f = stfOpen(fn,"r");
-    if (f == NULL) {
-	mtxAbort(MTX_HERE,"Cannot open %s",fn);
-    } else {
-       readCfFile(f, fn, li);
-    }
+    readCfFile(f, fn, li);
     stfClose(f);
 }
 
@@ -409,6 +406,24 @@ int latAddHead(Lat_Info *li, int *mult)
     ++li->NHeads;
     return li->NHeads;
 }
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void latCleanup(Lat_Info *li)
+{
+   for (int i = 0; i < li->nCf; ++i) {
+      CfInfo* cf = li->Cf + i;
+      if (cf->idPol != NULL) {
+         polFree(cf->idPol);
+         cf->idPol = NULL;
+      }
+      if (cf->peakPol != NULL) {
+         polFree(cf->peakPol);
+         cf->peakPol = NULL;
+      }
+   }
+}
+
 
 /// @}
 

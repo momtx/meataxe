@@ -83,6 +83,7 @@ TstResult BitString_Variable_WritingBeyondCapacity()
    for (size_t i = SIZE; i < 2*SIZE; ++i) {
       ASSERT_EQ_INT(bsTest(a1, i), 0);
    }
+   bsFree(a1);
    return 0;
 }
 
@@ -277,6 +278,8 @@ TstResult BitString_Fixed_BitwiseOps_AbortsOnSizeMismatch()
    ASSERT_ABORT(bsAnd(a, b));
    ASSERT_ABORT(bsOr(a, b));
    ASSERT_ABORT(bsMinus(a, b));
+   bsFree(a);
+   bsFree(b);
    return 0;
 }
 
@@ -292,6 +295,8 @@ TstResult BitString_BitwiseOps_AbortsOnTypeMismatch()
    ASSERT_ABORT(bsOr(variable, fixed));
    ASSERT_ABORT(bsMinus(fixed, variable));
    ASSERT_ABORT(bsMinus(variable, fixed));
+   bsFree(fixed);
+   bsFree(variable);
    return 0;
 }
 

@@ -9,7 +9,7 @@
 
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-/// @addtosection algo
+/// @addtogroup algo
 /// @{
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -84,67 +84,64 @@ static void checkArgs(int ngen, Matrix_t  **gen1, const CfInfo *info1, Matrix_t 
 /// @param use_pw If different from zero, use peak word instead of the identifying word.
 /// @return 1 if the representations are isomorphic, 0 otherwise
 
-int IsIsomorphic(const MatRep_t *rep1, const CfInfo *info1,
-    		 const MatRep_t *rep2, Matrix_t  **trans, int use_pw)
+int IsIsomorphic(
+   const MatRep_t* rep1, const CfInfo* info1,
+   const MatRep_t* rep2, Matrix_t** trans, int use_pw)
 {
-    int j;
-    WgData_t *wg;
-    Matrix_t  *word, *m, *seed, *b, *bi;
-    int result;
+   int j;
+   WgData_t* wg;
+   Matrix_t* word, * m, * seed, * b, * bi;
+   int result;
 
-    checkArgs(rep1->NGen,rep1->Gen,info1,rep2->Gen,use_pw);
- 
-    /* Check if the dimensions are equal
-       --------------------------------- */
-    if (rep1->Gen[0]->nor != rep2->Gen[0]->nor)
-	return 0;
+   checkArgs(rep1->NGen, rep1->Gen, info1, rep2->Gen, use_pw);
 
-    /* Make the idword on representation 2
-       ----------------------------------- */
-    wg = wgAlloc(rep2);
-    word = wgMakeWord(wg,use_pw ? info1->peakWord : info1->idWord);
-    m = matInsert(word,use_pw ? info1->peakPol : info1->idPol);
-    matFree(word);
-    wgFree(wg);
-    seed = matNullSpace__(m);
-    if (seed->nor != info1->spl)
-    {	
-	matFree(seed);
-	return 0;
-    }
+   // Check if the dimensions are equal
+   if (rep1->Gen[0]->nor != rep2->Gen[0]->nor) {
+      return 0;
+   }
 
-    /* Make the standard basis
-       ----------------------- */
-    b = SpinUp(seed,rep2,SF_FIRST|SF_CYCLIC|SF_STD,NULL,NULL);
-    matFree(seed);
-    if (b->nor != b->noc)
-    {
-	matFree(b);
-	return 0;
-    }
-    bi = matInverse(b);
+   // Make the idword on representation 2
+   wg = wgAlloc(rep2);
+   word = wgMakeWord(wg, use_pw ? info1->peakWord : info1->idWord);
+   m = matInsert(word, use_pw ? info1->peakPol : info1->idPol);
+   matFree(word);
+   wgFree(wg);
+   seed = matNullSpace__(m);
+   if (seed->nor != info1->spl) {
+      matFree(seed);
+      return 0;
+   }
 
-    /* Compare generators
-       ------------------ */
-    for (j = 0, result = 0; result == 0 && j < rep2->NGen; ++j)
-    {
-	Matrix_t *g = matDup(b);
-	matMul(g,rep2->Gen[j]);
-	matMul(g,bi);
-	if (matCompare(g,rep1->Gen[j]) != 0)
-	    result = 1;
-	matFree(g);
-    }
+   // Make the standard basis
+   b = SpinUp(seed, rep2, SF_FIRST | SF_CYCLIC | SF_STD, NULL, NULL);
+   matFree(seed);
+   if (b->nor != b->noc) {
+      matFree(b);
+      return 0;
+   }
+   bi = matInverse(b);
 
-    /* Clean up 
-       -------- */
-    if (trans != NULL && result == 0)
-	*trans = b;
-    else
-	matFree(b);
-    matFree(bi);
+   // Compare generators
+   for (j = 0, result = 0; result == 0 && j < rep2->NGen; ++j) {
+      Matrix_t* g = matDup(b);
+      matMul(g, rep2->Gen[j]);
+      matMul(g, bi);
+      if (matCompare(g, rep1->Gen[j]) != 0) {
+         result = 1;
+      }
+      matFree(g);
+   }
 
-    return (result == 0);
+   // Clean up
+   if (trans != NULL && result == 0) {
+      *trans = b;
+   }
+   else {
+      matFree(b);
+   }
+   matFree(bi);
+
+   return result == 0;
 }
 
 /// @}

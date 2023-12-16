@@ -231,8 +231,8 @@ TstResult Kernel_FileHeader(int q)
 
       result |= TestHdr2(nor,noc,buf1,buf2);
 
-      free(buf1);
-      free(buf2);
+      sysFree(buf1);
+      sysFree(buf2);
    }
    return result;
 }

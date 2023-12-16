@@ -91,7 +91,7 @@ int permIsValid(const Perm_t *p)
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-/// Checks if the given permuation is valid and aborts the program if the test fails.
+/// Aborts the program if the passed permutation object is not valid.
 
 void permValidate(const struct MtxSourceLocation* src, const Perm_t* p)
 {
@@ -120,21 +120,10 @@ void permValidate(const struct MtxSourceLocation* src, const Perm_t* p)
 
 Perm_t *permAlloc(uint32_t deg)
 {
-   Perm_t *p;
-   int i;
-
-   if (deg < 0)
-      mtxAbort(MTX_HERE,"deg=%d: %s",deg,MTX_ERR_BADARG);
-
-   p = ALLOC(Perm_t);
-   if (p == NULL)
-      mtxAbort(MTX_HERE,"Cannot allocate Perm_t structure");
-   p->typeId = MTX_TYPE_PERMUTATION;
+   Perm_t* p = (Perm_t*) mmAlloc(MTX_TYPE_PERMUTATION, sizeof(Perm_t));
    p->degree = deg;
    p->data = NALLOC(uint32_t,deg);
-   if (p->data == NULL)
-      mtxAbort(MTX_HERE,"Cannot allocate permutation data");
-   for (i = 0; i < deg; ++i) {
+   for (uint32_t i = 0; i < deg; ++i) {
       p->data[i] = i;
    }
    return p;
@@ -149,14 +138,13 @@ Perm_t *permAlloc(uint32_t deg)
 /// @param p Pointer to the permutation.
 /// @return 0 on success, -1 on error.
 
-int permFree(Perm_t *p)
+void permFree(Perm_t *p)
 {
    permValidate(MTX_HERE, p);
 
    sysFree(p->data);
-   memset(p,0,sizeof(Perm_t));
-   sysFree(p);
-   return 0;
+   p->data = NULL;
+   mmFree(p, MTX_TYPE_PERMUTATION);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -229,11 +217,12 @@ Perm_t *permMul(Perm_t *dest, const Perm_t *src)
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-/// Returs the order of a permutation.
+/// Returns the order of a permutation.
+///
+/// The function may fail if the order is too big.
 
 uint32_t permOrder(const Perm_t *perm)
 {
-   uint32_t order = 1;
 
    permValidate(MTX_HERE, perm);
    if (perm->degree < 2) {
@@ -248,6 +237,7 @@ uint32_t permOrder(const Perm_t *perm)
    uint8_t* seedEnd = done + deg;
 
    // Calculate the order by running through all orbits. 
+   uint32_t order = 1;
    while (1) {
       // Find start of next orbit.
       while (*++seed != 0 && seed != seedEnd);
@@ -292,18 +282,15 @@ static int width(uint32_t x)
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
+
 /// Print a permutation
-/// This function prints a permutation on the standard output using
-/// cycle notation. If @em name is not 0, the name followed by an
-/// equal sign is printed before the permutation. For example, the
-/// statement <tt>permPrint("Perm",P);</tt> could produce the following output:
+/// This function prints a permutation on the standard output using cycle notation. If @em name
+/// is not 0, the name followed by an equal sign is printed before the permutation. For example,
+/// the statement <tt>permPrint("Perm",P);</tt> could produce the following output:
 /// <pre>
 /// Perm=(1 9)(2 3 6)(4 5 7)
 /// </pre>
 /// Fixed points are always suppressed in the output.
-/// @param name Name to print before the permutation or 0.
-/// @param perm Pointer to the permutation.
-/// @return The function returns 0 on success and -1 on error.
 
 void permPrint(const char *name, const Perm_t *perm)
 {

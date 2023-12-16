@@ -76,7 +76,7 @@ TstResult Gap_PrimeFieldElements(int q)
 
 
          char buf[20];
-         snprintf(buf, sizeof(buf), gapFelToString(a));
+         snprintf(buf, sizeof(buf), "%s", gapFelToString(a));
          char *star = strchr(buf, '*');
          ASSERT(star != NULL);
          *star = 0;

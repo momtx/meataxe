@@ -2,17 +2,8 @@
 // C MeatAxe - This program calculates the null space of a matrix.
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-
-
 #include "meataxe.h"
 #include <stdlib.h>
-
-
-
-/* ------------------------------------------------------------------
-   Variables
-   ------------------------------------------------------------------ */
-
 
 static MtxApplicationInfo_t AppInfo = { 
 "znu", "Matrix Null-Space", 
@@ -34,65 +25,37 @@ static int opt_G = 0;
 static int opt_n = 0;				/* -n: no echelon form */
 static const char *matname = NULL;
 static const char *nspname = NULL;
-static Matrix_t *Matrix = NULL;
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
-
-static int Init(int argc, char **argv)
+static void init(int argc, char **argv)
 {
-    /* Process command line options.
-       ----------------------------- */
     App = appAlloc(&AppInfo,argc,argv);
-    if (App == NULL)
-	return -1;
     opt_G = appGetOption(App,"-G --gap");
     opt_n = appGetOption(App,"-n --no-echelon");
 //    if (opt_G)
 //	MtxMessageLevel = -100;
-
-    /* Process arguments.
-       ------------------ */
-    if (appGetArguments(App,1,2) < 0)
-	return -1;
+    appGetArguments(App,1,2);
     matname = App->argV[0];
     if (App->argC > 1)
 	nspname = App->argV[1];
-
-    /* Read the matrix.
-       ---------------- */
-    MTX_LOGD("Reading %s",matname);
-    Matrix = matLoad(matname);
-    if (Matrix == NULL)
-	return 1;
-
-    return 0;
 }
 
-
-
-/* ------------------------------------------------------------------
-   main()
-   ------------------------------------------------------------------ */
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 int main(int argc, char **argv)
-
 {   
-    int nspdim;
 
-    if (Init(argc,argv) != 0)
-    {
-	mtxAbort(MTX_HERE,"Initialization failed");
-	return 1;
-    }
-
+    init(argc,argv);
+    Matrix_t *Matrix = matLoad(matname);
+    uint32_t nspdim;
     if (nspname != NULL)
     {
 	Matrix_t *null_space = matNullSpace_(Matrix,opt_n ? 1 : 0);
-	if (null_space == NULL)
-	    return 1;
         MTX_LOGD("Writing null-space to %s",nspname);
 	matSave(null_space,nspname);
 	nspdim = null_space->nor;
+        matFree(null_space);
     }
     else
     {
@@ -100,17 +63,14 @@ int main(int argc, char **argv)
 	matEchelonize(Matrix);
 	nspdim = old_nor - Matrix->nor;
     }
-
-
     if (opt_G)
     {
-	printf("MeatAxe.Nullity := %d;\n",nspdim);
-	fflush(stdout);
+	printf("MeatAxe.Nullity := %lu;\n",(unsigned long)nspdim);
     }
     else
-        MTX_LOGI("NULLITY %d",nspdim);
+        MTX_LOGI("NULLITY %lu",(unsigned long)nspdim);
 
-
+    matFree(Matrix);
     appFree(App);
     return 0;
 }

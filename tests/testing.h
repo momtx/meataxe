@@ -58,6 +58,7 @@ int tstAssertEqString(const struct TstSourceLocation* where, const char* act, co
 struct TstAbortState {
    jmp_buf jumpTarget;
    int enabled;
+   uint32_t mmCheckpoint;
    struct TstSourceLocation where;
    const char* expr;
 };

@@ -241,7 +241,6 @@ static int writeresult()
 
 {   
     int cosize;
-    long *s, *p;
     int i;
     long k, im;
     MtxFile_t *f;
@@ -261,10 +260,10 @@ static int writeresult()
 	mtxAbort(MTX_HERE,"Invalid block system: orblen=%d, blksize=%d",
 	    orblen,blksize);
     }
-    s = NALLOC(long,orblen/blksize+1);
+    long* s = NALLOC(long,orblen/blksize+1);
     for (i = 1; i <= nperm; ++i)
     {	
-	p = perm[i];
+	long* p = perm[i];
 	for (k = 0; k < orblen/blksize; ++k)
 	    s[k] = -1;
 	for (k = 0; k < npoints; ++k)
@@ -287,7 +286,7 @@ static int writeresult()
 	    return -1;
 	mfClose(f);
     }
-    free(s);
+    sysFree(s);
     if (opt_b || cosize <= 0) 
 	return -1;
 
@@ -310,7 +309,7 @@ static int writeresult()
 	    return -1;
 	mfClose(f);
     }
-    free(s);
+    sysFree(s);
     return 0;
 }
 

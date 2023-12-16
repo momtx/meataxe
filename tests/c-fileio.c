@@ -14,20 +14,26 @@ TstResult FileIo()
 {
 //    Matrix_t *mat1, *mat2;
 //    Poly_t *pol1, *pol2;
-    Perm_t *perm1, *perm2;
+   Perm_t* perm2;
 
-    SelectField(5);
-    MtxFile_t* f = mfOpen("check.1","wb");
+   SelectField(5);
+   MtxFile_t* f = mfOpen("check.1", "wb");
 //    mat1 = RndMat(5,30,30);
 //    matSave(mat1,"check.ma1");
 //    matWrite(mat1,f);
 //    pol1 = RndPol(5,100,200);
 //    polSave(pol1,"check.po1");
 //    polWrite(pol1,f);
-    perm1 = RndPerm(100);
-    permSave(perm1,"check.pe1");
-    permWrite(perm1,f);
-    mfClose(f);
+   {
+      Perm_t* perm1 = RndPerm(100);
+      permSave(perm1, "check.pe1");
+      permWrite(perm1, f);
+      mfClose(f);
+      perm2 = permLoad("check.pe1");
+      ASSERT_EQ_INT(permCompare(perm1, perm2), 0);
+      permFree(perm1);
+      permFree(perm2);
+   }
 
 //    mat2 = matLoad("check.ma1");
 //    ASSERT_EQ_INT(matCompare(mat1,mat2), 0);
@@ -36,10 +42,6 @@ TstResult FileIo()
 //    pol2 = polLoad("check.po1");
 //    ASSERT_EQ_INT(polCompare(pol1,pol2), 0);
 //    polFree(pol2);
-
-    perm2 = permLoad("check.pe1");
-    ASSERT_EQ_INT(permCompare(perm1,perm2), 0);
-    permFree(perm2);
 
 //    f = sysFopen("check.1","rb");
 //    mat2 = matRead(f);
@@ -55,11 +57,9 @@ TstResult FileIo()
 //
 //    matFree(mat1);
 //    polFree(pol1);
-//    permFree(perm1);
 //    matFree(mat2);
 //    polFree(pol2);
-//    permFree(perm2);
-    return 0;
+   return 0;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////

@@ -7,13 +7,6 @@
 #include <string.h>
 #include <stdlib.h>
 
-
-
-/* --------------------------------------------------------------------------
-   Global data
-   -------------------------------------------------------------------------- */
-
-
 static Matrix_t *Seed = NULL;		/* Seed vectors */
 static MatRep_t *Rep = NULL;		/* Generators */
 static Matrix_t *Span = NULL;		/* Invariant subspace */
@@ -246,7 +239,7 @@ static int WriteAction()
 }
 
 
-static int WriteResult()
+static void WriteResult()
 {
     if (Span->nor < Dim && (Standard || FindCyclicVector))
 	MTX_LOGI("ZSP: Warning: Span is only %d of %d",Span->nor,Dim);
@@ -257,26 +250,20 @@ static int WriteResult()
 	MTX_LOGI("Subspace %d, quotient %d",Span->nor, Span->noc - Span->nor);
     }
 
-    /* Write the invariant subspace.
-       ----------------------------- */
+    // Write the invariant subspace.
     if (SubspaceName != NULL)
 	matSave(Span,SubspaceName);
     
-    /* Write <Op> file
-       --------------- */
+    // Write <Op> file
     if (OpName != NULL)
 	imatSave(OpTable,OpName);
 
-    /* Write the action on the subspace and/or quotient.
-       ------------------------------------------------- */
+    // Write the action on the subspace and/or quotient.
     if (SubName != NULL || QuotName != NULL)
 	WriteAction();
-
-    return 0;
 }
 
-
-
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 static void init(int argc, char **argv)
 {
@@ -286,39 +273,31 @@ static void init(int argc, char **argv)
     readSeed();
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 static void Cleanup()
-
 {
-    appFree(App);
+   if (Span) { matFree(Span); }
+   if (Seed) { matFree(Seed); }
+   if (Rep) { mrFree(Rep); }
+   if (OpTable) { imatFree(OpTable); }
+   appFree(App);
 }
 
-
-
-/* ------------------------------------------------------------------
-   main()
-   ------------------------------------------------------------------ */
-
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 int main(int argc, char **argv)
 {
-    IntMatrix_t **optab = NULL;
-    int flags;
-    SpinUpInfo_t SpInfo;
-
     init(argc,argv);
-
-    if (OpName != NULL)
-	optab = &OpTable;
-
+    IntMatrix_t **optab = (OpName != NULL) ? &OpTable : NULL;
+    SpinUpInfo_t SpInfo;
     SpinUpInfoInit(&SpInfo);
     if (MaxDim > 0)
 	SpInfo.MaxSubspaceDimension = MaxDim;
 
-    flags = 0;
+    int flags = 0;
 
-    /* Seed mode: SF_MAKE, SF_EACH, or SF_FIRST.
-       ----------------------------------------- */
+    // Seed mode: SF_MAKE, SF_EACH, or SF_FIRST.
     if (TryOneVector)
 	flags |= SF_FIRST;
     else if (TryLinearCombinations)
@@ -326,8 +305,7 @@ int main(int argc, char **argv)
     else
 	flags |= SF_EACH;
 
-    /* Search mode: SF_CYCLIC, SF_SUB, or SF_COMBINE.
-       ---------------------------------------------- */
+    // Search mode: SF_CYCLIC, SF_SUB, or SF_COMBINE.
     if (FindCyclicVector)
 	flags |= SF_CYCLIC;
     else if (FindClosure)
@@ -335,8 +313,7 @@ int main(int argc, char **argv)
     else
 	flags |= SF_SUB;
 
-    /* Spin-up mode: SF_STD or nothing.
-       -------------------------------- */
+    // Spin-up mode: SF_STD or nothing.
     if (Standard)
 	flags |= SF_STD;
 
@@ -344,17 +321,10 @@ int main(int argc, char **argv)
 	Span = SpinUp(Seed,Rep,flags,optab,&SpInfo);
     else
 	Span = SpinUpWithPermutations(Seed,ngen,Perm,flags,optab,&SpInfo);
-    if (Span == NULL)
-    {
-	mtxAbort(MTX_HERE,"Spin-up failed");
-	return -1;
-    }
-    if (WriteResult() != 0)
-	return 1;
+    WriteResult();
     Cleanup();
     return 0;
 }
-
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 

@@ -5,8 +5,6 @@
 #include "meataxe.h"
 #include <string.h>
 
-#define MR_MAGIC 0x1bb50442
-
 /// @defgroup mrep Matrix Representations
 /// @{
 /// @class MatRep_t
@@ -34,34 +32,29 @@
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static int GensAreValid(int ngen, Matrix_t **gen)
+static void validateGenerators(
+      const struct MtxSourceLocation* where, int ngen, Matrix_t **gen)
 {
    int i;
 
    if (ngen < 0) {
-      mtxAbort(MTX_HERE,"ngen: %s",MTX_ERR_BADARG);
-      return 0;
+      mtxAbort(where,"ngen: %s",MTX_ERR_BADARG);
    }
    if ((ngen > 0) && (gen == NULL)) {
-      mtxAbort(MTX_HERE,"gen == NULL: %s",MTX_ERR_BADARG);
-      return 0;
+      mtxAbort(where,"gen == NULL: %s",MTX_ERR_BADARG);
    }
    for (i = 0; i < ngen; ++i) {
-      matValidate(MTX_HERE, gen[i]);
+      matValidate(where, gen[i]);
       if (gen[i]->nor != gen[i]->noc) {
-         mtxAbort(MTX_HERE,"gen[%i]: %s",i,MTX_ERR_NOTSQUARE);
-         return 0;
+         mtxAbort(where,"gen[%i]: %s",i,MTX_ERR_NOTSQUARE);
       }
       if (i != 0) {
          if ((gen[i]->field != gen[0]->field) || (gen[i]->nor != gen[0]->nor)) {
-            mtxAbort(MTX_HERE,"gen[0] and gen[%d]: %s",i,MTX_ERR_INCOMPAT);
-            return 0;
+            mtxAbort(where,"gen[0] and gen[%d]: %s",i,MTX_ERR_INCOMPAT);
          }
       }
    }
-   return 1;
 }
-
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -71,12 +64,11 @@ void mrValidate(const struct MtxSourceLocation* where, const MatRep_t *rep)
 {
    if (rep == NULL)
       mtxAbort(where,"NULL representation");
-   if (rep->typeId != MR_MAGIC) 
-      mtxAbort(where,"Invalid matrix representation (magic=%d)",(int)rep->typeId);
+   if (rep->typeId != MTX_TYPE_MATREP) 
+      mtxAbort(where,"Invalid matrix representation (type=0x%lx)",(unsigned long)rep->typeId);
    if (rep->NGen < 0)
       mtxAbort(where,"Invalid number of generators (%d)",rep->NGen);
-   if (!GensAreValid(rep->NGen,rep->Gen))
-      mtxAbort(where,"Invalid generators");
+   validateGenerators(MTX_HERE, rep->NGen,rep->Gen);
 }
 
 
@@ -100,48 +92,13 @@ void mrValidate(const struct MtxSourceLocation* where, const MatRep_t *rep)
 
 MatRep_t *mrAlloc(int ngen, Matrix_t **gen, int flags)
 {
-   MatRep_t *rep;
-   int i;
-
-   if (!GensAreValid(ngen,gen)) {
-      mtxAbort(MTX_HERE,"%s",MTX_ERR_BADARG);
-      return NULL;
-   }
-
-   // Allocate a new MatRep_t structure
-   rep = ALLOC(MatRep_t);
-   if (rep == NULL) {
-      mtxAbort(MTX_HERE,"Cannot allocate MatRep_t structure");
-      return NULL;
-   }
-   memset(rep,0,sizeof(MatRep_t));
+   validateGenerators(MTX_HERE, ngen, gen);
+   MatRep_t*rep = (MatRep_t*) mmAlloc(MTX_TYPE_MATREP, sizeof(MatRep_t));
    rep->Gen = NALLOC(Matrix_t *,ngen);
-   if (rep->Gen == NULL) {
-      mtxAbort(MTX_HERE,"Cannot allocate generator list");
-      sysFree(rep);
-      return NULL;
-   }
-
-   // Copy generators
    rep->NGen = ngen;
-   for (i = 0; i < ngen; ++i) {
-      if (flags & MR_COPY_GENERATORS) {
-         rep->Gen[i] = matDup(gen[i]);
-         if (rep->Gen[i] == NULL) {
-            mtxAbort(MTX_HERE,"Cannot copy generator");
-            while (--i >= 0) {
-               matFree(rep->Gen[i]);
-            }
-            sysFree(rep->Gen);
-            sysFree(rep);
-            return NULL;
-         }
-      } else {
-         rep->Gen[i] = gen[i];
-      }
+   for (int i = 0; i < ngen; ++i) {
+      rep->Gen[i] = (flags & MR_COPY_GENERATORS) ?  matDup(gen[i]) : gen[i];
    }
-
-   rep->typeId = MR_MAGIC;
    return rep;
 }
 
@@ -155,15 +112,13 @@ MatRep_t *mrAlloc(int ngen, Matrix_t **gen, int flags)
 
 void mrFree(MatRep_t *rep)
 {
-   int i;
    mrValidate(MTX_HERE,rep);
-   for (i = 0; i < rep->NGen; ++i) {
+   for (int i = 0; i < rep->NGen; ++i)
       matFree(rep->Gen[i]);
-   }
    memset(rep->Gen,0,sizeof(Matrix_t *) * rep->NGen);
    sysFree(rep->Gen);
-   memset(rep,0,sizeof(MatRep_t));
-   sysFree(rep);
+   rep->Gen = NULL;
+   mmFree(rep, MTX_TYPE_MATREP);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -210,22 +165,14 @@ void mrAddGenerator(MatRep_t *rep, Matrix_t *gen, int flags)
 
 MatRep_t *mrLoad(const char *basename, int ngen)
 {
-   char *fn;
-   int ext_format;          /* '%d' found in <basename> */
-   MatRep_t *mr;
-   int i;
-
    // Make a copy of the basename and reserve extra bytes for the extension.
-   fn = sysMalloc(strlen(basename) + 10);
-   if (fn == NULL) {
-      mtxAbort(MTX_HERE,"Cannot allocate buffer");
-   }
+   char* fn = sysMalloc(strlen(basename) + 10);
 
-   mr = mrAlloc(0,NULL,0);
+   MatRep_t* mr = mrAlloc(0,NULL,0);
 
    // Read the generators
-   ext_format = strstr(basename,"%d") != NULL;
-   for (i = 0; i < ngen; ++i) {
+   int ext_format = strstr(basename,"%d") != NULL; // handle '%d' in <basename>
+   for (int i = 0; i < ngen; ++i) {
       Matrix_t *gen;
       if (ext_format) {
          sprintf(fn,basename,i + 1);

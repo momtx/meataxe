@@ -5,7 +5,6 @@
 #include "meataxe.h"
 #include <string.h>
 
-#define IMAT_MAGIC 0x396AA2F2
 
 /// @defgroup imat Integer matrices
 /// @{
@@ -26,7 +25,7 @@ void imatValidate(const struct MtxSourceLocation* sl, const IntMatrix_t *mat)
    if (mat == NULL) {
       mtxAbort(sl ? sl : MTX_HERE,"NULL matrix");
    }
-   if ((mat->typeId != IMAT_MAGIC) || mat->nor < 0 || mat->noc < 0) {
+   if ((mat->typeId != MTX_TYPE_INTMATRIX) || mat->nor < 0 || mat->noc < 0) {
       mtxAbort(sl ? sl : MTX_HERE,"Invalid matrix (nor=%d, noc=%d)", mat->nor, mat->noc);
    }
 }
@@ -37,47 +36,26 @@ void imatValidate(const struct MtxSourceLocation* sl, const IntMatrix_t *mat)
 ///
 /// @param nor Number of rows.
 /// @param noc Number of columns.
-/// @return Pointer to the new matrix or 0 on error.
 
-IntMatrix_t *imatAlloc(int nor, int noc)
+IntMatrix_t *imatAlloc(uint32_t nor, uint32_t noc)
 {
-   IntMatrix_t *m;
-
-   MTX_ASSERT(nor >= 0);
-   MTX_ASSERT(noc >= 0);
-
-   // allocate
-   m = ALLOC(IntMatrix_t);
-   if (m == NULL) {
-      mtxAbort(MTX_HERE,"Cannot allocate IntMatrix_t structure");
-      return NULL;
-   }
-
-   // initialize
-   m->typeId = IMAT_MAGIC;
+   IntMatrix_t *m = (IntMatrix_t*) mmAlloc(MTX_TYPE_INTMATRIX, sizeof(IntMatrix_t));
    m->nor = nor;
    m->noc = noc;
-   m->data = NALLOC(int32_t,nor * noc);
-   if (m->data == NULL) {
-      sysFree(m);
-      mtxAbort(MTX_HERE,"Cannot allocate matrix data");
-      return NULL;
-   }
+   m->data = NALLOC(int32_t,(size_t) nor * noc);
    return m;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-/// Destroys an integer matrix, releasing the associated memory.
+/// Destroys an integer matrix and releases the associated memory.
 
 void imatFree(IntMatrix_t *mat)
 {
    imatValidate(MTX_HERE, mat);
-   if (mat->data != NULL) {
-      sysFree(mat->data);
-   }
-   memset(mat,0,sizeof(IntMatrix_t));
-   sysFree(mat);
+   sysFree(mat->data);
+   mat->data = NULL;
+   mmFree(mat, MTX_TYPE_INTMATRIX);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////

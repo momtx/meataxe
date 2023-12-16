@@ -196,7 +196,7 @@ static void getpol()
 
 // Prints a polynomial at message level 1.
 
-static void formatPoly(StrBuffer* sb, POLY a)
+static void formatPoly(StrBuffer_t* sb, POLY a)
 {
    int flag = 0;
 
@@ -340,7 +340,7 @@ static void testprim()
          mtxAbort(MTX_HERE, "Internl error: polynomial is not primitive");
       }
    }
-   free(a);
+   sysFree(a);
 }
 
 
@@ -434,7 +434,7 @@ static void computeEmbedding(uint16_t r, uint16_t* table)
        restr[i] = j;
    }
 
-   free(subfieldMap);
+   sysFree(subfieldMap);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////

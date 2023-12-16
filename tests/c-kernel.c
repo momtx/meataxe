@@ -263,7 +263,7 @@ TstResult Kernel_RowOps_InsertExtract(int q)
    for (int pos = 0; result == 0 && pos < 14; ++pos) {
       result |= InsertExtract2(x,pos);
    }
-   free(x);
+   ffFree(x);
    return result;
 }
 
@@ -517,8 +517,8 @@ TstResult Kernel_RowOps_AddRow(int q)
          result |= TestAddRowPartial(x,y,noc,i,k);
       }
    }
-   free(x);
-   free(y);
+   ffFree(x);
+   ffFree(y);
    return result;
 }
 
@@ -563,7 +563,7 @@ TstResult Kernel_RowOps_MulRow(int q)
    PTR row = ffAlloc(1, noc);
    FEL* row2 = NALLOC(FEL, noc);
    result = TestMulRow1(row, row2, noc);
-   free(row);
+   ffFree(row);
    sysFree(row2);
   
    return result;
@@ -681,8 +681,8 @@ TstResult Kernel_RowOps_CmpRows(int q)
       m1 = ffAlloc(1, noc);
       m2 = ffAlloc(1, noc);
       result |= TestCmpRows2(m1,m2,noc);
-      free(m1);
-      free(m2);
+      ffFree(m1);
+      ffFree(m2);
    }
    return result;
 }

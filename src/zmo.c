@@ -48,70 +48,50 @@ static MtxApplication_t *App = NULL;
 
 
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
-
-
-
-static int ReadPermutations()
+static void readPermutations()
 {
-    int i;
-    char fn[200];
-
-    for (i = 0; i < nperm; ++i)
-    {
-	sprintf(fn,"%s.%d",permname,i+1);
-	Perm[i] = permLoad(fn);
-	if (Perm[i] == NULL)
-	    return -1;
-    }
+    for (int i = 0; i < nperm; ++i)
+	Perm[i] = permLoad(strEprintf("%s.%d",permname,i+1));
     Degree = Perm[0]->degree;
-    return 0;
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static int Init(int argc, char **argv)
-
+static void init(int argc, char **argv)
 {
     App = appAlloc(&AppInfo,argc,argv);
-    if (App == NULL)
-	return -1;
-
-    /* Command line.
-       ------------- */
     nperm = appGetIntOption(App,"-g",2,1,MAXPERM);
     Seed = appGetIntOption(App,"-s --seed",1,1,1000000) - 1;
-    if (appGetArguments(App,2,2) < 0)
-	return -1;
+    appGetArguments(App,2,2);
     permname = App->argV[0];
     orbname = App->argV[1];
-    return 0;
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static void Cleanup()
-
+static void cleanup()
 {
+   for (int i = 0; i < nperm; ++i)
+      permFree(Perm[i]);
     if (OrbNo!= NULL) 
 	sysFree(OrbNo);
     appFree(App);
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static int AllocWorkspace()
+static void allocWorkspace()
 {
-    int i;
-
     OrbNo = NALLOC(int32_t,Degree);
-    if (OrbNo == NULL)
-	return -1;
-    for (i = 0; i < Degree; ++i)
+    for (int i = 0; i < Degree; ++i)
 	OrbNo[i] = -1;
-    return 0;
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
-
-static int MakeOrbits()
+static int makeOrbits()
 {
     int points_remaining;
     int seedpos = 0;
@@ -126,9 +106,7 @@ static int MakeOrbits()
 	long orb;
 	int i;
 
-	/* If there is somthing on the stack, take it. 
-	   Otherwise start a new orbit.
-	   ------------------------------------------- */
+	// If there is somthing on the stack, take it. Otherwise start a new orbit.
 	if (Sp >= 0)
 	{
 	    pt = Stack[Sp--];
@@ -148,8 +126,7 @@ static int MakeOrbits()
 	    OrbNo[pt] = orb;
 	}
 
-	/* Apply all permutations.
-	   ----------------------- */
+	// Apply all permutations.
 	for (i = 0; i < nperm; ++i)
 	{
 	    long image = Perm[i]->data[pt];
@@ -177,21 +154,20 @@ static int MakeOrbits()
     return 0;
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
-
-static int CalcSizes()
+static void CalcSizes()
 {
     MTX_LOGD("Calculating orbit sizes");
     OrbSize = NALLOC(uint32_t,NOrbits);
     memset(OrbSize,0,sizeof(*OrbSize) * NOrbits);
     for (int i = 0; i < Degree; ++i)
 	++OrbSize[OrbNo[i]];
-    return 0;
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
-
-static int WriteOutput() 
+static void WriteOutput() 
 {
     FILE *f = sysFopen(orbname,"wb");
     // Write the orbit number table.
@@ -208,7 +184,6 @@ static int WriteOutput()
     sysWrite32(f,OrbSize,NOrbits);
     }
     fclose(f);
-    
 
     // Print orbit sizes
     int size[20];
@@ -229,11 +204,7 @@ static int WriteOutput()
        }
     }
     for (i = 0; i < dis; ++i)
-    {
        MTX_LOGI("%6d ORBIT%c OF SIZE %6d", count[i],count[i] > 1 ? 'S':' ',size[i]);
-    }
-
-    return 0;
 }
 
 
@@ -245,23 +216,13 @@ static int WriteOutput()
 int main(int argc, char **argv)
 
 {
-    if (Init(argc,argv) != 0)
-	return 1;
-    if (ReadPermutations() != 0)
-    {
-	mtxAbort(MTX_HERE,"Error reading input files");
-	return 1;
-    }
-    if (AllocWorkspace() != 0)
-	return 1;
-    if (MakeOrbits() != 0)
-	return 1;
-    if (CalcSizes() != 0)
-	return 1;
-    if (WriteOutput() != 0)
-	return 1;
-
-    Cleanup();
+    init(argc,argv);
+    readPermutations();
+    allocWorkspace();
+    makeOrbits();
+    CalcSizes();
+    WriteOutput();
+    cleanup();
     return (EXIT_OK);
 }
 

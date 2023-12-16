@@ -9,6 +9,9 @@
 #include <stdio.h>
 #include <stdarg.h>
 
+/// @defgroup pex Parallel Execution (Multithreading)
+/// @{
+
 /// @private
 struct PexGroup {
    struct PexGroup* next;
@@ -642,5 +645,6 @@ void pexExecuteRange(
    createTask(group, NULL, f, userData, begin, end);
 }
 
+/// @}
 
 // vim:sw=3:et:cin

@@ -83,7 +83,7 @@ static void test()
    const size_t N = sizeof(tmp) / sizeof(tmp[0]);
    for (int i = 0; i < N; ++i)
    {
-      StrBuffer* sb = sbAlloc(10);
+      StrBuffer_t* sb = sbAlloc(10);
       sbPrintf(sb, "test %d/%d ___________________________________________________", i, (int)N);
       tmp[i] = sbToEphemeralString(sb);
    }

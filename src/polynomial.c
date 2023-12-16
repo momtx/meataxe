@@ -194,8 +194,7 @@ Poly_t* polAlloc(uint32_t field, int32_t degree)
    MTX_ASSERT(degree < (int32_t) 2147483647L);
 
    ffSetField(field);
-   Poly_t* x = ALLOC(Poly_t);
-   x->typeId = MTX_TYPE_POLYNOMIAL;
+   Poly_t* x = (Poly_t*) mmAlloc(MTX_TYPE_POLYNOMIAL, sizeof(Poly_t));
    x->field = field;
    x->degree = degree;
    x->bufSize = degree + 1;
@@ -216,13 +215,12 @@ Poly_t* polAlloc(uint32_t field, int32_t degree)
 /// @param x Pointer to the polynomial.
 /// @return $0$ on success, $-1$ on error.
 
-int polFree(Poly_t *x)
+void polFree(Poly_t *x)
 {
    polValidate(MTX_HERE, x);
    sysFree(x->data);
-   memset(x,0,sizeof(Poly_t));
-   sysFree(x);
-   return 0;
+   x->data = NULL;
+   mmFree(x, MTX_TYPE_POLYNOMIAL);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -624,7 +622,7 @@ Poly_t *polMul(Poly_t *dest, const Poly_t *src)
 /// This function converts a polynomial to a human-readable text form and appends the text to the
 /// given string buffer.
 
-void polFormat(StrBuffer* sb, const Poly_t *p)
+void polFormat(StrBuffer_t* sb, const Poly_t *p)
 {
    polValidate(MTX_HERE, p);
    ffSetField(p->field);
@@ -669,7 +667,7 @@ void polPrint(char *name, const Poly_t *p)
    if (name != NULL) {
       printf("%s=",name);
    }
-   StrBuffer* sb = sbAlloc(30);
+   StrBuffer_t* sb = sbAlloc(30);
    polFormat(sb, p);
    fputs(sbData(sb), stdout);
    sbFree(sb);
@@ -685,7 +683,7 @@ void polPrint(char *name, const Poly_t *p)
 
 char* polToEphemeralString(const Poly_t *p)
 {
-   StrBuffer* sb = sbAlloc(100);
+   StrBuffer_t* sb = sbAlloc(100);
    polFormat(sb, p);
    return sbToEphemeralString(sb);
 }

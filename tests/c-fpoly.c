@@ -25,8 +25,39 @@ TstResult FPoly_Allocation()
       fpIsValid(p[i]);
    }
    for (i = 0; i < NPOLY; ++i) {
-      ASSERT(fpFree(p[i]) == 0);
+      fpFree(p[i]);
       ASSERT(!fpIsValid(p[i]));
    }
+   return 0;
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+TstResult FPoly_FailsOnWrongField()
+{
+   FPoly_t* fp = fpAlloc(2);
+   Poly_t* p = polAlloc(3,0);
+   ASSERT_ABORT(fpMulP(fp, p, 1));
+   fpFree(fp);
+   polFree(p);
+   return 0;
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+TstResult FPoly_OrderFactorsByDegree()
+{
+   FPoly_t* fp = fpAlloc(2);
+   for (int deg = 5; deg >= 0; --deg) {
+       Poly_t* p = polAlloc(2, deg);
+       fpMulP(fp, p, 1);
+       polFree(p);
+   }
+   ASSERT_EQ_INT(fp->nFactors, 6U);
+   for (int i = 0; i <= 5; ++i) {
+       ASSERT_EQ_INT(fp->factor[i]->degree, i);
+   }
+
+   fpFree(fp);
    return 0;
 }

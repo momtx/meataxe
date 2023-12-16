@@ -12,45 +12,23 @@
 /// Makes the standard basis for each basis vector of the peak word kernel.
 /// Returns the list of standard bases or NULL on error.
 
-static Matrix_t **MkStdBasis(Matrix_t *NPW, MatRep_t *M, const IntMatrix_t *op)
+static Matrix_t **MkStdBases(Matrix_t *NPW, MatRep_t *M, const IntMatrix_t *op)
 {
    const int num_seed = NPW->nor;
-
    Matrix_t **V = NALLOC(Matrix_t *,num_seed);
-   int ok = (V != NULL);
-
-   for (int i = 0; ok && i < num_seed; ++i)
+   for (int i = 0; i < num_seed; ++i)
    {
     	Matrix_t *seed = matCutRows(NPW,i,1);
     	V[i] = SpinUpWithScript(seed,M,op);
 	matFree(seed);
-	if (V[i] == NULL) {
+	if (V[i] == NULL)
 	    mtxAbort(MTX_HERE,"SpinUpWithScript() failed for vector %d",i);
-            return V;
-        }
    }
-
-   // Clean up
-   if (!ok && V != NULL) {
-      for (int i = 0; i < num_seed; ++i) {
-         if (V[i])
-            matFree(V[i]);
-      }
-      sysFree(V);
-      V = NULL;
-   }
-
    return V;
 }
     
-
-
-
-
-
-
     
-/// @addtosection algo
+/// @addtogroup algo
 /// @{
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -66,14 +44,12 @@ Matrix_t *HomogeneousPart(MatRep_t *m, MatRep_t *s, Matrix_t *npw,
                           const IntMatrix_t *op, int dimends)
 {
    Matrix_t
-	    **V,	    /*The standard basis for the given basis NPW */
 	    *A,		    /* The matrix, the nullspace of which gives the
 			       desired submodule */
 	    *sum,	    /* The standard basis for one submodule of M
 			       that is isomorphic to S */
-	    *bas, *base,    /* basis for the whole S-isomorphic part of M */
-	    *gensys,	    /* a module-generating system for the S-part  */
-	    *mat, *seed, 
+	    *base,    /* basis for the whole S-isomorphic part of M */
+	    *mat,
 	    *a, *b;
    int i, nr, dim, Sdim, nulldim, Mdim, fl, col, len;
    PTR row, vec, basptr;
@@ -83,17 +59,14 @@ Matrix_t *HomogeneousPart(MatRep_t *m, MatRep_t *s, Matrix_t *npw,
     Mdim = m->Gen[0]->nor;
     nulldim = npw->nor;
     MTX_ASSERT(op->nor == Sdim);
-    V = MkStdBasis(npw,m,op);
+    Matrix_t** V = MkStdBases(npw,m,op);
 
     /* Make the system of equations.
        ----------------------------- */
     len = Mdim * m->NGen * Sdim;		/* The number of equations */
     MTX_LOG2("HomogeneousPart(): len=%d",len);
     if ((A = matAlloc(fl, nulldim, len)) == NULL)
-    {
 	mtxAbort(MTX_HERE,"Cannot allocate buffer");
-	return NULL;
-    }
     for (i = 0; i < m->NGen; i++)
     {
         int colin, j;
@@ -127,29 +100,20 @@ Matrix_t *HomogeneousPart(MatRep_t *m, MatRep_t *s, Matrix_t *npw,
     }
 
     MTX_LOG2("Equation system is %dx%d",A->nor,A->noc);
-    gensys = matNullSpace__(A);    /* module-generating system for the S-part */
+    Matrix_t* gensys = matNullSpace__(A);    /* module-generating system for the S-part */
 
-/* spins up the basis of the whole S-part of M
-   ------------------------------------------- */
+    // spin up the basis of the whole S-part of M
     MTX_ASSERT(Sdim % dimends == 0);
     dim = gensys->nor * (Sdim/dimends);
     MTX_ASSERT(dim % Sdim == 0);
     nr = dim/Sdim;		
-    if ((bas = matAlloc(fl, dim, Mdim)) == NULL)
-    {
-	mtxAbort(MTX_HERE,"Cannot allocate buffer");
-	return NULL;
-    }
+    Matrix_t *bas = matAlloc(fl, dim, Mdim);
     basptr = bas->data;
     vec = gensys->data;
     for (i = 1; i <= gensys->nor; i++, ffStepPtr(&vec, nulldim))
     {
     	int j;
-	if ((seed = matAlloc (fl,1,Mdim)) == NULL)
-	{
-	    mtxAbort(MTX_HERE,"Cannot allocate buffer");
-	    return NULL;
-	}
+	Matrix_t* seed = matAlloc (fl,1,Mdim);
 	for (j = 0; j < nulldim; j++)
 	{
 	    FEL f;
@@ -166,17 +130,10 @@ Matrix_t *HomogeneousPart(MatRep_t *m, MatRep_t *s, Matrix_t *npw,
 	if (!IsSubspace(seed,base,0))
 	{
 	    PTR v;
-	    /* Copy into bas the standard basis for 
-	       one S-isomorphic submodule of M.
-               -------------------------------- */
-	    matFree(seed);
+	    // Copy into bas the standard basis for one S-isomorphic submodule of M.
 	    nr--;
-	    if((sum = matAlloc(fl, Sdim, Mdim)) == NULL)
-	    {
-		mtxAbort(MTX_HERE,"Cannot allocate buffer");
-		return NULL;
-	    }
-	    for (j = 0; j < nulldim; j++)	/* calculates the SB to u */
+	    sum = matAlloc(fl, Sdim, Mdim);
+	    for (j = 0; j < nulldim; j++)	// calculates the SB to u
 	    {
 		FEL f;
 		MTX_ASSERT(j < gensys->noc);
@@ -193,12 +150,19 @@ Matrix_t *HomogeneousPart(MatRep_t *m, MatRep_t *s, Matrix_t *npw,
 	    matFree(sum);
 	}
 	matFree(base); 
-/* if (!nr) break;	*/	/* the whole basis is found */
+	matFree(seed); 
+        // if (!nr) break;	// the whole basis is found
     }
+
+    matFree(gensys);
+    for (int i = 0; i < npw->nor; ++i) {
+       matFree(V[i]);
+    }
+    sysFree(V);
 
     return bas;
 }
 
-
 /// @}
+
 // vim:fileencoding=utf8:sw=3:ts=8:et:cin

@@ -133,20 +133,19 @@ LIB_OBJS=\
 	init intio issub \
 	isisom kernel-$(ZZZ) \
 	ldiag \
-	maddmul mat2vec matadd matclean matcmp \
+	maddmul mat2vec matadd \
 	maketab-$(ZZZ) \
-	matcopy matcore matcut \
-	matdup matech matid matins matinv matmul \
+	matcore matcut \
+	matid matins matio matinv matmul \
 	matnull matorder \
-	matpivot\
-	matprint matpwr matread mattr mattrace matwrite \
+	matprint matpwr mattr mattrace \
 	message \
 	mfcore \
 	mkendo\
+	mman \
 	mmulscal \
 	mprintf \
 	mrep \
-	msclean mscore \
 	mtensor mtxobj os \
 	permutation \
 	pex\
@@ -209,14 +208,14 @@ TESTS=\
   0214 \
   0215_m11_x_m11
 
-test: $(TESTS:%=tmp/test_%.done)
+test: $(TESTS:%=tmp/test_%/done)
 
 # meataxe library tests
 
 TS_OBJS1=c-args c-bitstring c-cfinfo c-charpol\
 	c-ffio c-fileio c-ffmat c-ffrow c-fpoly \
-	c-gap c-grease c-kernel c-matins c-matrix c-matset\
-	c-os c-perm c-pex c-poly c-pseed c-quot c-random \
+	c-gap c-grease c-kernel c-matins c-matrix \
+	c-mman c-os c-perm c-pex c-poly c-pseed c-quot c-random \
 	c-stf c-tensor c-wgen
 
 TS_OBJS=$(TS_OBJS1:%=tmp/%.o) tmp/testing.o tmp/test_table.o lib/libmtx.a
@@ -243,7 +242,7 @@ tmp/test_table.o: tmp/test_table.c
 	${SILENT}mkdir -p tmp
 	${SILENT}$(CC) $(CFLAGS) -Itests -Isrc -c tmp/test_table.c -o "$@"
 
-tmp/test_%.done: tests/common.sh bin/zzztest tests/%/run \
+tmp/test_%/done: tests/common.sh bin/zzztest tests/%/run \
    $(PROGRAMS:%=bin/%) tmp/_mkdir
 	@cd tmp && MTXBIN="${CURDIR}/bin" MTXLIB="${CURDIR}/lib" MTX_TEST_ID="$*" \
            MTX_ZZZ="${ZZZ}" \

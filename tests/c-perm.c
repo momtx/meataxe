@@ -50,11 +50,8 @@ TstResult Perm_AllocFree()
       }
    }
    for (i = 0; i < NPERM; ++i) {
-      ASSERT(permFree(p[i]) == 0);
-   }
-
-   for (i = 0; i < NPERM; ++i) {
-       ASSERT(!permIsValid(p[i]));
+      permFree(p[i]);
+      ASSERT(!permIsValid(p[i]));
    }
    return 0;
 }
@@ -123,12 +120,8 @@ TstResult Perm_Multiply()
 
 TstResult Perm_Power()
 {
-   Perm_t *p1;
-   int i;
-
-   p1 = RndPerm(1000);
-
-   for (i = 0; i < 20; ++i) {
+   Perm_t* p1 = RndPerm(1000);
+   for (int i = 0; i < 20; ++i) {
       Perm_t *p3 = permPower(p1,i);
       Perm_t *p2 = permAlloc(p1->degree);
       int k;
@@ -139,6 +132,7 @@ TstResult Perm_Power()
       permFree(p2);
       permFree(p3);
    }
+   permFree(p1);
    return 0;
 }
 

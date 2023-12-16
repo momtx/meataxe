@@ -393,6 +393,7 @@ int *wgDescribeWord(WgData_t *wg, uint32_t n)
 
 Matrix_t *wgMakeWord(WgData_t *wg, uint32_t n)
 {
+   MTX_ASSERT(n > 0);
    uint8_t n1;
    uint32_t blk;
    split(n, &n1, &blk);
@@ -415,12 +416,14 @@ Matrix_t *wgMakeWord(WgData_t *wg, uint32_t n)
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
+
 /// Calculates a word (threadsafe version)
 /// This function works like wgMakeWord() but does not access the internal state of the word
 /// generator. It may be used in different threads with the same WgData_t structure.
 
 Matrix_t *wgMakeWord2(WgData_t *wg, uint32_t n)
 {
+   MTX_ASSERT(n > 0);
    uint8_t mask;
    uint32_t blk;
    split(n, &mask, &blk);
@@ -442,55 +445,56 @@ Matrix_t *wgMakeWord2(WgData_t *wg, uint32_t n)
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-/// Initialize the word generator.
-/// This function initializes the word generator for a given matrix
-/// representation @a rep. There must be at least one generator.
-/// On success, wgAlloc() returns a pointer to an internal data
-/// structure which can be used in subsequent calls to wgMakeWord()
-/// and wgFree(). If an error occurs, the return value is 0.
+
+static void wgValidate(const struct MtxSourceLocation* where, WgData_t* wg)
+{
+   if (wg == NULL) {
+      mtxAbort(where, "Invalid word generator (NULL)");
+   }
+   mrValidate(where, wg->Rep);
+   for (int i = 0; i < 8; ++i) {
+      if (wg->Basis[i] != 0) {
+         matValidate(where, wg->Basis[i]);
+      }
+   }
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+/// Creates a word generator for a given matrix representation.
 ///
-/// Note that the word generator does not create internal copies of the
-/// generators. The caller must assure that the generators are not deleted
-/// or modified as long as the word generator is in use.
+/// There must be at least one generator in @a rep.
 ///
-/// @param rep Pointer to the matrix representation.
-/// @return Pointer to a new word generator data structure or 0 on error.
+/// The work generator only stores a reference to the generators but not take ownership.
+/// The generators must not be modified or destroyed while the word generator is alive.
+/// The caller remains responsible for destroying the generators after(!) the word generator
+/// was destroyed.
 
 WgData_t *wgAlloc(const MatRep_t *rep)
 {
-   int k;
-   WgData_t *wg;
-
    mrValidate(MTX_HERE, rep);
 
-   wg = ALLOC(WgData_t);
-
+   WgData_t *wg = (WgData_t*) mmAlloc(MTX_TYPE_WORD_GENERATOR, sizeof(WgData_t));
    wg->Rep = rep;
-   for (k = 0; k < 8; ++k) {
+   for (int k = 0; k < 8; ++k) {
       wg->Basis[k] = NULL;
       wg->N2[k] = -1;
    }
    wg->lastn2 = -1;
-
    return wg;
 }
 
-
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-/// Terminate the word generator.
-/// @param wg Pointer to word generator data.
-/// @return 0 on success, -1 on error.
-/// This function terminates the word generator and cleans up internal data structures.
-/// Note that the generators that were passed to wgAlloc() are not freed.
+
+/// Destroys a word generator and releases internal resources.
+/// Note: the matrix representation of the generators is not released.
+/// See also @ref wgAlloc.
 
 int wgFree(WgData_t *wg)
 {
-   int k;
+   wgValidate(MTX_HERE, wg);
 
-   if (wg == NULL)
-      mtxAbort(MTX_HERE,"%s",MTX_ERR_BADARG);
-
-   for (k = 0; k < 8; ++k) {
+   for (int k = 0; k < 8; ++k) {
       if (wg->Basis[k] != NULL) {
          matFree(wg->Basis[k]);
       }
@@ -498,8 +502,8 @@ int wgFree(WgData_t *wg)
    if (wg->Description != 0) {
       sysFree(wg->Description - 1);
    }
-   memset(wg,0,sizeof(WgData_t));
-   sysFree(wg);
+   wg->Rep = NULL;
+   mmFree(wg, MTX_TYPE_WORD_GENERATOR);
    return 0;
 }
 

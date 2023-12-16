@@ -23,22 +23,13 @@
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#define BS_MAGIC_DYNAMIC 0x3ff92541
-#define BS_MAGIC_FIXED 0x3ff92539
-
 static const size_t BPL = sizeof(long) * 8;
-
-#define BS(size) (((size) + sizeof(long) - 1) / sizeof(long))
-
-////////////////////////////////////////////////////////////////////////////////////////////////////
-
-/// Returns 1 if the given bit string is valid and 0 otherwise.
 
 int bsIsValid(const BitString_t *bs)
 {
    return bs != NULL
-      && (bs->typeId == BS_MAGIC_DYNAMIC || bs->typeId == BS_MAGIC_FIXED)
-      && bs->capacity >= bs->size / (sizeof(long) * 8);
+      && (bs->typeId == MTX_TYPE_BITSTRING_FIXED || bs->typeId == MTX_TYPE_BITSTRING_DYNAMIC)
+      && bs->capacity >= bs->size;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -53,22 +44,11 @@ void bsValidate(const struct MtxSourceLocation* src, const BitString_t *bs)
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-/// Creates a bit string.
-/// This function creates a empty bit string of variable size.
-///
-/// See also @ref bsFree
-
-static size_t count = 0;
-static size_t mem = 0;
-
-////////////////////////////////////////////////////////////////////////////////////////////////////
-
-/// Creates an empty, variable-sized bit string.
+/// Creates an empty, variable-sized bit string. The initial bit string length is 0.
 
 BitString_t *bsAllocEmpty()
 {
-   BitString_t *bs = (BitString_t *) sysMalloc(sizeof(BitString_t));
-   bs->typeId = BS_MAGIC_DYNAMIC;
+   BitString_t *bs = (BitString_t *) mmAlloc(MTX_TYPE_BITSTRING_DYNAMIC, sizeof(BitString_t));
    bs->size = 0;
    bs->capacity = 0;
    bs->data = NULL;
@@ -85,13 +65,10 @@ BitString_t *bsAllocEmpty()
 
 BitString_t *bsAlloc(size_t size)
 {
-   BitString_t *bs = (BitString_t *) sysMalloc(sizeof(BitString_t));
-   bs->typeId = BS_MAGIC_FIXED;
+   BitString_t *bs = (BitString_t *) mmAlloc(MTX_TYPE_BITSTRING_FIXED, sizeof(BitString_t));
    bs->size = size;
    bs->capacity = sysPad(size, BPL);
    bs->data = NALLOC(uint8_t, bs->capacity / 8);
-   ++count;
-   mem += bs->capacity / 8 + sizeof(BitString_t);
    return bs;
 }
 
@@ -101,12 +78,9 @@ BitString_t *bsAlloc(size_t size)
 int bsFree(BitString_t *bs)
 {
    bsValidate(MTX_HERE, bs);
-   --count;
-   mem -= bs->capacity / 8 + sizeof(BitString_t);
-
    sysFree(bs->data);
-   memset(bs,0,sizeof(BitString_t));
-   sysFree(bs);
+   bs->data = NULL;
+   mmFree(bs, bs->typeId);
    return 0;
 }
 
@@ -125,7 +99,7 @@ static void badIndex(const struct MtxSourceLocation* src, const BitString_t* bs,
 int bsTest(const BitString_t *bs, size_t i)
 {
    bsValidate(MTX_HERE, bs);
-   if (bs->typeId == BS_MAGIC_FIXED) {
+   if (bs->typeId == MTX_TYPE_BITSTRING_FIXED) {
       if (i >= bs->size)
          badIndex(MTX_HERE, bs, i);
    } else {
@@ -157,7 +131,7 @@ static void resizeBuffer(BitString_t* bs, size_t newCapacity)
 void bsTrim(const BitString_t* bs)
 {
    bsValidate(MTX_HERE, bs);
-   if (bs->typeId == BS_MAGIC_FIXED)
+   if (bs->typeId == MTX_TYPE_BITSTRING_FIXED)
       return;
    unsigned long* lData = (unsigned long*) bs->data;
    size_t lSize = bs->capacity / BPL;
@@ -190,7 +164,7 @@ void bsResize(BitString_t* bs, size_t newSize)
       bs->data[i / 8] &= ~(0x80 >> (i % 8));
    }
    bs->size = newSize;
-   bs->typeId = BS_MAGIC_FIXED;
+   bs->typeId = MTX_TYPE_BITSTRING_FIXED;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -202,7 +176,7 @@ void bsResize(BitString_t* bs, size_t newSize)
 void bsSet(BitString_t* bs, size_t i)
 {
    bsValidate(MTX_HERE, bs);
-   if (bs->typeId == BS_MAGIC_FIXED && i >= bs->size) {
+   if (bs->typeId == MTX_TYPE_BITSTRING_FIXED && i >= bs->size) {
       badIndex(MTX_HERE, bs, i);
    }
    if (i >= bs->capacity) {
@@ -220,7 +194,7 @@ void bsSet(BitString_t* bs, size_t i)
 void bsClear(BitString_t* bs, size_t i)
 {
    bsValidate(MTX_HERE, bs);
-   if (bs->typeId == BS_MAGIC_FIXED && i >= bs->size) {
+   if (bs->typeId == MTX_TYPE_BITSTRING_FIXED && i >= bs->size) {
       badIndex(MTX_HERE, bs, i);
    }
    if (i < bs->capacity)
@@ -236,7 +210,7 @@ void bsClear(BitString_t* bs, size_t i)
 void bsClearAll(BitString_t *bs)
 {
    bsValidate(MTX_HERE, bs);
-   if (bs->typeId == BS_MAGIC_DYNAMIC) {
+   if (bs->typeId == MTX_TYPE_BITSTRING_DYNAMIC) {
       bs->size = 0;
       bs->capacity = 0;
       sysFree(bs->data);
@@ -254,7 +228,7 @@ static void validate2(const BitString_t* a, const BitString_t* b)
    bsValidate(MTX_HERE, b);
    if (a->typeId != b->typeId)
       mtxAbort(MTX_HERE,"%s",MTX_ERR_INCOMPAT);
-   if (a->typeId == BS_MAGIC_FIXED && a->size != b->size)
+   if (a->typeId == MTX_TYPE_BITSTRING_FIXED && a->size != b->size)
       mtxAbort(MTX_HERE,"%s",MTX_ERR_INCOMPAT);
 }
 
@@ -267,7 +241,7 @@ static void validate2(const BitString_t* a, const BitString_t* b)
 void bsAnd(BitString_t* dest, const BitString_t* src)
 {
    validate2(dest, src);
-   if (dest->typeId == BS_MAGIC_DYNAMIC) {
+   if (dest->typeId == MTX_TYPE_BITSTRING_DYNAMIC) {
       // variable type - shrink dest if possible
       if (dest->capacity > src->capacity) {
          resizeBuffer(dest, src->capacity);
@@ -289,7 +263,7 @@ void bsOr(BitString_t* dest, const BitString_t* src)
 {
    validate2(dest, src);
 
-   if (dest->typeId == BS_MAGIC_DYNAMIC) {
+   if (dest->typeId == MTX_TYPE_BITSTRING_DYNAMIC) {
       // variable type - extend dest if necessary
       if (dest->capacity < src->capacity) {
          resizeBuffer(dest, src->capacity);
@@ -470,7 +444,7 @@ BitString_t *bsDup(const BitString_t *src)
 {
    bsValidate(MTX_HERE, src);
    BitString_t *n = NULL;
-   if (src->typeId == BS_MAGIC_FIXED)
+   if (src->typeId == MTX_TYPE_BITSTRING_FIXED)
       n = bsAlloc(src->size);
    else {
       n = bsAllocEmpty();
@@ -490,7 +464,7 @@ void bsPrint(const char *name, const BitString_t *bs)
       printf("%s=",name);
    }
    size_t end = bs->size;
-   if (bs->typeId == BS_MAGIC_DYNAMIC) {
+   if (bs->typeId == MTX_TYPE_BITSTRING_DYNAMIC) {
       uint8_t *b = bs->data + bs->capacity / 8;
       while (b > bs->data && b[-1] == 0) --b;
       end = (b - bs->data) * 8;
@@ -513,7 +487,7 @@ void bsWrite(const BitString_t *bs, MtxFile_t* file)
    MTX_ASSERT(file != NULL);
 
    uint32_t fileHeader[3] = {0,0,0};
-   if (bs->typeId == BS_MAGIC_FIXED) {
+   if (bs->typeId == MTX_TYPE_BITSTRING_FIXED) {
       fileHeader[0] = MTX_TYPE_BITSTRING_FIXED;
       fileHeader[1] = bs->size;
    } else {
@@ -546,7 +520,7 @@ BitString_t *bsReadData(MtxFile_t *f)
    const uint32_t objectType = checkType(f);
    BitString_t *bs = bsAlloc(f->header[1]);
    if (objectType == MTX_TYPE_BITSTRING_DYNAMIC) {
-      bs->typeId = BS_MAGIC_DYNAMIC;
+      bs->typeId = MTX_TYPE_BITSTRING_DYNAMIC;
    }
    mfRead8(f, bs->data, sysPad(bs->size, 8) / 8);
 
@@ -589,7 +563,7 @@ void bsSkip(MtxFile_t* f)
 int bsFirst(const BitString_t* bs, size_t* indexVar)
 {
    const unsigned long* lp = (const unsigned long*) bs->data;
-   const unsigned long* const end = (bs->typeId == BS_MAGIC_FIXED) ?
+   const unsigned long* const end = (bs->typeId == MTX_TYPE_BITSTRING_FIXED) ?
       lp + sysPad(bs->size, BPL) / BPL : lp + bs->capacity / BPL;
    while (lp < end && *lp == 0) ++lp;
    if (lp >= end)
@@ -621,7 +595,7 @@ int bsFirst(const BitString_t* bs, size_t* indexVar)
 int bsNext(const BitString_t* bs, size_t* indexVar)
 {
    const uint8_t* const end = bs->data +
-      ((bs->typeId == BS_MAGIC_FIXED) ? sysPad(bs->size, 8) / 8 : bs->capacity / 8);
+      ((bs->typeId == MTX_TYPE_BITSTRING_FIXED) ? sysPad(bs->size, 8) / 8 : bs->capacity / 8);
 
    // Start with the bit following *indexVar.
    size_t i = *indexVar + 1;

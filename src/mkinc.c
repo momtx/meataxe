@@ -52,7 +52,7 @@ int opt_G = 0;	    // GAP output
 
 /// Read generators and images of peak words
 
-static void ReadFiles(const char *basename)
+static void readFiles(const char *basename)
 {
     latReadInfo(&LI,basename);
     Rep = mrLoad(LI.BaseName,LI.NGen);
@@ -77,14 +77,14 @@ static void init(int argc, char **argv)
 //	MtxMessageLevel = -100;
     appGetArguments(App,1,1);
     MTX_LOGI("Start mkinc - Find mountains and their incidence relation");
-    ReadFiles(App->argV[0]);
+    readFiles(App->argV[0]);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 /// Write mountains, dimensions and classes (files XXX.v and XXX.mnt)
 
-static void WriteMountains()
+static void writeMountains()
 {
     char fn[200];
     int i;
@@ -121,7 +121,7 @@ static void WriteMountains()
 // mountain list and projection on each condensed module is calculated.
 // Returns 1 if a new mountain has been found, 0 if not.
 
-static int newmountain(Matrix_t *vec, int cf)
+static int newMountain(Matrix_t *vec, int cf)
 
 {
     Matrix_t *span, *backproj;
@@ -138,13 +138,7 @@ static int newmountain(Matrix_t *vec, int cf)
     {
 	if (backproj->nor == proj[i][cf]->nor)
 	{
-	    int issub = IsSubspace(proj[i][cf],backproj,0);
-	    if (issub == -1)
-	    {
-		mtxAbort(MTX_HERE,"IsSubspace() failed");
-		return -1;
-	    }
-	    if (issub != 0)
+	    if (IsSubspace(proj[i][cf],backproj,0))
 		break;
 	}
     }
@@ -156,10 +150,7 @@ static int newmountain(Matrix_t *vec, int cf)
 	int k;
 
 	if (nmount >= MAXCYCL)
-	{
 	    mtxAbort(MTX_HERE,"TOO MANY MOUNTAINS, INCREASE MAXCYCL");
-	    return -1;
-	}
 	proj[nmount] = NALLOC(Matrix_t *,LI.nCf);
 
     	MTX_LOG2("New Mountain %d",(int)i);
@@ -197,15 +188,10 @@ static int newmountain(Matrix_t *vec, int cf)
 static void makeclass(int mnt, int cf, Matrix_t* vectors)
 {
    char* tmp = NALLOC(char, vectors->nor + 2);
-   Matrix_t* vec;
-   int k;
-   int* p;
-   size_t nvec;
-
-   nvec = 0;
+   size_t nvec = 0;
    MTX_LOG2("Making equivalence class");
-   for (k = 0; k < vectors->nor; ++k) {
-      vec = matCutRows(vectors, k, 1);
+   for (int k = 0; k < vectors->nor; ++k) {
+      Matrix_t* vec = matCutRows(vectors, k, 1);
       tmp[k] = 0;
       if (IsSubspace(vec, proj[mnt][cf], 1)) {
          tmp[k] = 1;
@@ -214,15 +200,15 @@ static void makeclass(int mnt, int cf, Matrix_t* vectors)
       matFree(vec);
    }
 
-   p = Class[mnt] = NALLOC(int, nvec + 2);
+   int* p = Class[mnt] = NALLOC(int, nvec + 2);
    *p++ = nvec;
-   for (k = 0; k < vectors->nor; ++k) {
+   for (int k = 0; k < vectors->nor; ++k) {
       if (tmp[k]) {
          *p++ = k;
       }
    }
    *p = -1;
-   free(tmp);
+   sysFree(tmp);
 }
 
 
@@ -230,7 +216,7 @@ static void makeclass(int mnt, int cf, Matrix_t* vectors)
 
 // Make all mountains and calculate the projections of mountains on condensed modules.
 
-static void FindMountains()
+static void findMountains()
 {
    Matrix_t* vectors, * vec, * uk;
    char fn[200];
@@ -251,7 +237,7 @@ static void FindMountains()
       for (i = 0; i < vectors->nor; ++i) {
          vec = matCutRows(vectors, i, 1);
          matMul(vec, uk);       // Uncondense
-         if (newmountain(vec, cf)) {
+         if (newMountain(vec, cf)) {
             makeclass(nmount - 1, cf, vectors);
          }
       }
@@ -268,7 +254,7 @@ static void FindMountains()
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static void WriteIncidenceMatrix()
+static void writeIncidenceMatrix()
 {
    MtxFile_t* file = mfOpen(strEprintf("%s.inc", LI.BaseName), "wb");
    MTX_LOGD("Writing incidence matrix (%s)", file->name);
@@ -284,7 +270,7 @@ static void WriteIncidenceMatrix()
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static void CalculateIncidences()
+static void calculateIncidences()
 {
     int i, k;
     int cfi, cfk;	// Comp. factor corresponding to mountain i,j
@@ -367,16 +353,36 @@ static void WriteResultGAP()
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
+static void cleanup()
+{
+   for (int m = 0; m < nmount; ++m) {
+      for (int k = 0; k < LI.nCf; ++k) {
+         matFree(proj[m][k]);
+      }
+   }
+   for (int i = 0; i < LI.nCf; ++i) {
+      matFree(bild[i]);
+   }
+   for (int i = 0; i < nmount; ++i) {
+      bsFree(subof[i]);
+   }
+   mrFree(Rep);
+   latCleanup(&LI);
+   appFree(App);
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
 int main(int argc, char **argv)
 {
     init(argc,argv);
-    FindMountains();
-    WriteMountains();
-    CalculateIncidences();
-    WriteIncidenceMatrix();
+    findMountains();
+    writeMountains();
+    calculateIncidences();
+    writeIncidenceMatrix();
     if (opt_G) 
 	WriteResultGAP();
-    appFree(App);
+    cleanup();
     return 0;
 }
 

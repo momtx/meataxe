@@ -141,10 +141,9 @@ static void prepare()
    }
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
-/* ------------------------------------------------------------------
-   zs2() - Symmetric square
-   ------------------------------------------------------------------ */
+// Symmetric square (matrices)
 
 static void zs2()
 {
@@ -201,10 +200,9 @@ static void zs2()
    }
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
-/* ------------------------------------------------------------------
-   zs2p() - Antisymmetric square (permutations)
-   ------------------------------------------------------------------ */
+// Antisymmetric square (permutations)
 
 static uint32_t maps2(uint32_t i, uint32_t k)
 {
@@ -231,10 +229,9 @@ static void zs2p()
    permSave(permOut, fileNameOut);
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
-/* ------------------------------------------------------------------
-   ze2p() - Antisymmetric square (permutations)
-   ------------------------------------------------------------------ */
+// Antisymmetric square (permutations)
 
 static uint32_t mape2(uint32_t i, uint32_t k)
 {
@@ -244,7 +241,6 @@ static uint32_t mape2(uint32_t i, uint32_t k)
       return (i * (i - 1)) / 2 + k;
    }
 }
-
 
 static void ze2p()
 {
@@ -259,10 +255,9 @@ static void ze2p()
    permSave(permOut, fileNameOut);
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
-/* ------------------------------------------------------------------
-   ze2() - Antisymmetric square
-   ------------------------------------------------------------------ */
+// Antisymmetric square (matrices)
 
 static void ze2()
 {
@@ -288,10 +283,9 @@ static void ze2()
    }
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
-/* ------------------------------------------------------------------
-   ze3() - Antisymmetric cube
-   ------------------------------------------------------------------ */
+// Antisymmetric cube
 
 static void ze3()
 {
@@ -335,10 +329,9 @@ static void ze3()
    }
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
-/* ------------------------------------------------------------------
-   ze3p() - Antisymmetric cube (permutations)
-   ------------------------------------------------------------------ */
+// Antisymmetric cube (permutations)
 
 #define SWAP(x, y) {tmp = x; x = y; y = tmp;}
 
@@ -366,10 +359,9 @@ static void ze3p()
    permSave(permOut, fileNameOut);
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
-/* ------------------------------------------------------------------
-   ze4() - Antisymmetric fourth power
-   ------------------------------------------------------------------ */
+// Antisymmetric fourth power
 
 static void ze4()
 {
@@ -447,29 +439,19 @@ static void ze4()
    }
 }
 
-
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static int init(int argc, char** argv)
+static void init(int argc, char** argv)
 {
    const char* arg3;
 
-   /* Process command line options.
-      ----------------------------- */
    App = appAlloc(&AppInfo, argc, argv);
-   if (App == NULL) {
-      return -1;
-   }
    opt_G = appGetOption(App, "-G --gap");
 //   if (opt_G) {
 //      MtxMessageLevel = -100;
 //   }
 
-   /* Process arguments.
-      ------------------ */
-   if (appGetArguments(App, 3, 3) < 0) {
-      return -1;
-   }
+   appGetArguments(App, 3, 3);
    fileNameInp = App->argV[1];
    fileNameOut = App->argV[2];
    arg3 = App->argV[0];
@@ -479,9 +461,16 @@ static int init(int argc, char** argv)
       mode = M_S2;
    } else {
       mtxAbort(MTX_HERE, "Unknown mode '%s'", arg3);
-      return -1;
    }
-   return 0;
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+static void cleanup()
+{
+   if (permInp != NULL) permFree(permInp);
+   if (permOut != NULL) permFree(permOut);
+   if (matrixInp != NULL) matFree(matrixInp);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -506,6 +495,7 @@ int main(int argc, char** argv)
    if (fileOut != NULL) {
       mfClose(fileOut);
    }
+   cleanup();
    appFree(App);
    return 0;
 }

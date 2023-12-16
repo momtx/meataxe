@@ -53,6 +53,7 @@ static void cleanup()
    for (int i = 0; i < infoA.nCf; ++i) {
       mrFree(irredA[i]);
    }
+   latCleanup(&infoA);
    appFree(app);
 }
 

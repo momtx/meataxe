@@ -197,7 +197,7 @@ void SvAddEntry(SvVector_t *vec, int n, FEL f)
     }
 } 
 
-static void svFormat(StrBuffer* sb, const SvVector_t *vec)
+static void svFormat(StrBuffer_t* sb, const SvVector_t *vec)
 {
     int i;
 

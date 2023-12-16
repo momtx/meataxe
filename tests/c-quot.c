@@ -62,6 +62,7 @@ TstResult QuotientProjection2(int q)
          matFree(proj);
       }
       matFree(quot);
+      matFree(sub);
    }
    return 0;
 }

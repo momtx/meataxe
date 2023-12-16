@@ -179,12 +179,15 @@ static void init(int argc, char **argv)
 
 static void cleanUp()
 {
-    if (App != NULL)
-	appFree(App);
-    if (inputFile != NULL)
-	mfClose(inputFile);
-    if (outputFile != NULL)
-	mfClose(outputFile);
+   if (inputFile != NULL) {
+      mfClose(inputFile);
+   }
+   if (outputFile != NULL) {
+      mfClose(outputFile);
+   }
+   if (App != NULL) {
+      appFree(App);
+   }
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////

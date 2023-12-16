@@ -172,23 +172,20 @@ static int LoadTables(int fieldOrder)
 /// @param field Field order.
 /// @return 0 on success, -1 otherwise.
 
-int ffSetField(int field)
+void ffSetField(int field)
 {
    MTX_ASSERT(sizeof(FEL) == 2);
    MTX_ASSERT(sizeof(unsigned int) >= 4);
 
    if ((field == ffOrder) || (field < 2)) {
-      return 0;
+      return;
    }
    if (!LoadTables(field)) {
       ffMakeTables(field);
       if (!LoadTables(field)) {
          mtxAbort(MTX_HERE,"COULD NOT LOAD ARITHMETIC TABLE FILE");
-         return -1;
       }
    }
-
-   return 0;
 }
 
 

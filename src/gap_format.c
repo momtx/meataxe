@@ -115,14 +115,14 @@ const char* gapFelToString2()
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void gapFormatFel(StrBuffer* sb, FEL a)
+void gapFormatFel(StrBuffer_t* sb, FEL a)
 {
     sbAppend(sb, gapFelToString(a));
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void gapFormatPoly(StrBuffer* sb, const Poly_t *pol)
+void gapFormatPoly(StrBuffer_t* sb, const Poly_t *pol)
 {
    sbAppend(sb, "[");
    for (int i = 0; i < pol->degree; ++i) {
@@ -133,7 +133,7 @@ void gapFormatPoly(StrBuffer* sb, const Poly_t *pol)
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void gapFormatWord(StrBuffer* sb, const WgData_t *b, long n)
+void gapFormatWord(StrBuffer_t* sb, const WgData_t *b, uint32_t n)
 {
    wgDescribeWord((WgData_t *)b, n);
    int *x;

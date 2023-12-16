@@ -116,8 +116,11 @@ Here is a (possibly incomplete) list:
   To enable threading, the preprocessor symbol @c MTX_DEFAULT_THREADS must be defined
   and should be set to the available number of CPU cores. Depending on the operating
   system you may also need compiler and linker options to enable the POSIX threads
-  library.
-
+  library. Under Linux, the following settings should work:
+  ```
+  CFLAGS_THREADS=-pthread -DMTX_DEFAULT_THREADS=4
+  LDFLAGS_THREADS=-pthread
+  ```
 
 @page pg_userguide User's Guide
 
@@ -458,23 +461,58 @@ These options cannot be grouped together with other options.
 @section co Universal Options
 The following command line options are understood by all MeatAxe programs:
 
-@par --help
-  Print a help message and exit.
+@par \--help
+Print a help message and exit.
+
 @par -Q
-  Quiet, no messages.
+Quiet, fewer messages. A single -Q is equivalent to --log=:warning (warnings
+and error messages), -QQ is equivalent to --log=stdout:error (only error messages)
+
 @par -V
-  Verbose, more messages. Repeat this option (e.g., -VVV) to see more detailed information.
+Verbose, more messages. A single -V turns on debug messages (equivalent to 
+--log=:debug), -VV enables verbose debug messages (equivalent to --log=:debug2).
+
+@par \--log=[FILE]:LEVEL[:FORMAT]
+Configures message output. The argument consists of up to three parts separated
+by colons.<br>
+<i>FILE</i> is is the name of the log file or 'stdout' to write messages
+to the standard output. The special syntax +<i>FILE</i> means that messages
+are appended to the file instead of overwriting its contents.<br>
+<i>LEVEL</i> is one of the following keywords: 'error', 'warning', 'info', 'debug', 'debug2'.<br>
+<i>FORMAT</i> determines the output format and must be one of the following keywords.
+'none' (message text only), 'short' (level and thread ID), 'full' (level, thread ID,
+and timestamp). The thread ID is only printed if threads are enabled (see the explanation
+of CFLAGS_THREADS in @ref pg_building). The default is "none".<br><br>
+<i>FILE</i> and <i>FORMAT</i> can be omitted and default to "stdout" and "none",
+respectively. Here are some examples:
+```
+--log=meataxe.log:
+--log=:debug
+--log=:debug2:full
+```
+
 @par -T @em Time
-  Limit CPU time to \e Time seconds.
+Limit CPU time to \e Time seconds.
+
 @par -L @em LibDir
-  Used to specify a different library directory. This overrides both
-  the directory name compiled into the programs and the value of
-  MTXLIB.
+Used to specify a different library directory. This overrides both
+the directory name compiled into the programs and the value of
+MTXLIB.
+
+@par \--threads[=N]
+Enables multithreading. This option is currently implemented for
+@ref prog_pwkond "pwkond" only. Other program accept but ignore `--threads`.
+The value defines the number of worker threads and should normally be equal
+to the number of available CPU cores. If not specified, N takes its default
+value from the build-time option MTX_DEFAULT_THREADS.
+If the MeatAxe was build without thread support,
+this option is always ignored, even for programs that support multithreading.
+
 @par -o @em Options
-  This option is used to set various options for testing and debugging
-  the MeatAxe. Even if documented in the program descriptions, -o
-  options may be changed or removed in the next release, so you should
-  not rely on them.
+This option is used to set various options for testing and debugging
+the MeatAxe. Even if documented in the program descriptions, -o
+options may be changed or removed in the next release, so you should
+not rely on them.
 
 @section oo Other Commonly Used Options
 The following options are not supported by all programs, but their
@@ -485,9 +523,6 @@ meaning is always the same.
   by a positive integer.
 @par -G
   Generate output in GAP format.
-
-
-
 
 
 @page pg_file_formats File Formats

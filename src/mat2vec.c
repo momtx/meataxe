@@ -40,13 +40,9 @@ int MatrixToVector(const Matrix_t *mat, Matrix_t *vecs, int n)
       return -1;
    }
 
-   /* Convert the matrix.
-      ------------------- */
+   // Convert the matrix.
    for (i = 0; i < mat->nor; ++i) {
-      if (matCopyRegion(vecs,n,i * mat->noc, mat,i,0,1,mat->noc) != 0) {
-         mtxAbort(MTX_HERE,"Copying failed");
-         return -1;
-      }
+      matCopyRegion(vecs,n,i * mat->noc, mat,i,0,1,mat->noc);
    }
 
    return 0;

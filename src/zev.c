@@ -14,19 +14,11 @@
 #define LINEWIDTH 2048		/* Line width for input file */
 
 
-/* ------------------------------------------------------------------
-   Global data
-   ------------------------------------------------------------------ */
-
-
 static FILE *src; 		        /* Input file */
 static Matrix_t *Matrix;		/* Matrix A */
-static Matrix_t *W;			/* f(A) */
-static Poly_t *Poly;
-
 static const char *matname;
 static char grpname[LINEWIDTH] = "";	/* Input selector (empty = ALL) */
-static long deg;			/* Degree */
+static uint32_t deg;			/* Degree */
 static char name[LINEWIDTH];		/* Value (atlas notation) */
 static char thisgrp[LINEWIDTH];
 static int opt_G = 0;			/* -G option (GAP output) */
@@ -56,25 +48,14 @@ MTX_COMMON_OPTIONS_DESCRIPTION
 static MtxApplication_t *App = NULL;
 
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
-
-/* ------------------------------------------------------------------
-   init() - Initialze everything
-   ------------------------------------------------------------------ */
-
-static int Init(int argc, char **argv)
-
+static void init(int argc, char **argv)
 {
-    /* Parse command line
-       ------------------ */
-    if ((App = appAlloc(&AppInfo,argc,argv)) == NULL)
-	return -1;
+    App = appAlloc(&AppInfo,argc,argv);
     opt_G = appGetOption(App,"-G --gap");
 //    if (opt_G) MtxMessageLevel = -100;
-    if (appGetArguments(App,1,3) < 0)
-	return -1;
-    switch (App->argC)
-    {
+    switch (appGetArguments(App,1,3)) {
 	case 3:
 	    strcpy(grpname,App->argV[2]);
 	    /* NO BREAK! */
@@ -82,8 +63,6 @@ static int Init(int argc, char **argv)
 	    if (strcmp(App->argV[1],"-"))
 	    {
 		src = sysFopen(App->argV[1],"rb");
-		if (src == NULL)
-		    return -1;
 	    }
 	    else
 		src = stdin;
@@ -93,30 +72,20 @@ static int Init(int argc, char **argv)
             break;
     }
     matname = App->argV[0];
-    if ((Matrix = matLoad(matname)) == NULL)
-	return -1;
+    Matrix = matLoad(matname);
     if (Matrix->nor != Matrix->noc)
-    {
 	mtxAbort(MTX_HERE,"%s: %s",matname,MTX_ERR_NOTSQUARE);
-	return -1;
-    }
     ffSetField(Matrix->field);
-    return 0;
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
+// Calculate nullity and print the result. Releases the matrix.
 
-
-
-/* ------------------------------------------------------------------
-   Gauss() - Calculate nullity and print the result
-   ------------------------------------------------------------------ */
-
-void Gauss(void)
-
+void Gauss(Matrix_t* w)
 {
     static int first = 1;
-    int nullity = matNullity__(W);
+    int nullity = matNullity__(w);
     if (opt_G)	/* GAP output */
     {	
 	int mult = nullity / deg;
@@ -137,7 +106,7 @@ void Gauss(void)
     }
     else	/* Table output */
     {
-	printf("%10s %20s %4ld %4ld",thisgrp,name,deg,nullity/deg);
+	printf("%10s %20s %4ld %4ld",thisgrp,name,(unsigned long)deg,(unsigned long)nullity/deg);
 	if (nullity % deg != 0)
 	    printf(" (non-integer)\n");
 	else
@@ -165,24 +134,17 @@ int readLine(char *buf)
 }
 
 
-/* ------------------------------------------------------------------
-   getnextpol() - Read the next polynomial
-   ------------------------------------------------------------------ */
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
-int getnextpol(void)
+// Read the next polynomial
 
+Poly_t* getNextPolynomial(void)
 {
     char line[LINEWIDTH];
-    FEL coeff[MAXDEG+1];
-    FEL poly[MAXDEG+1];		/* Polynomial */
-    char *c;
-    int i;
-    FEL f;
- 
     while (!feof(src))
     {	
 	if (!readLine(line)) 
-	    return 0;
+	    return NULL;
 	if (*line != ' ')	/* new group */
 	{	
 	    strcpy(thisgrp,line);
@@ -191,50 +153,34 @@ int getnextpol(void)
 	if (grpname[0] == 0 || !strcmp(thisgrp,grpname))
 	    break;
     }
-    c = strtok(line," \t");
+    char* c = strtok(line," \t");
     strcpy(name,c);
+    FEL coeff[MAXDEG+1];
     for (deg = 0; (c = strtok(NULL," \t")) != NULL; ++deg)
     {	
-	if (!strcmp(c,"-1"))
-	    f = ffNeg(FF_ONE);
-	else
-	    f = ffFromInt(atoi(c));
-	coeff[deg] = f;
+        coeff[deg] = (strcmp(c,"-1") == 0) ? ffNeg(FF_ONE) : ffFromInt(atoi(c));
     }
     --deg;
-    for (i = 0; i <= (int) deg; ++i)
-	poly[deg-i] = coeff[i];
-
-    if (Poly != NULL)
-	polFree(Poly);
-    Poly = polAlloc(ffOrder,deg);
-    for (i = 0; i <= deg; ++i)
-	Poly->data[i] = poly[i];
-
-    return 1;
+    Poly_t* poly = polAlloc(ffOrder,deg);
+    for (uint32_t i = 0; i <= deg; ++i)
+	poly->data[i] = coeff[deg - i];
+    return poly;
 }
 
-
-
-
-/* ------------------------------------------------------------------
-   main()
-   ------------------------------------------------------------------ */
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 int main(int argc, char **argv)
-
 {
-    if (Init(argc,argv) != 0)
+    init(argc,argv);
+    Poly_t* poly;
+    while ((poly = getNextPolynomial()) != NULL)
     {
-	mtxAbort(MTX_HERE,"Initialization failed");
-	return 1;
-    }
-    while (getnextpol())
-    {
-	W = matInsert(Matrix,Poly);
-	Gauss();
+	Matrix_t* w = matInsert(Matrix,poly);
+        polFree(poly);
+	Gauss(w);
     }
     if (opt_G) printf(";\n");
+    matFree(Matrix);
     appFree(App);
     return 0;
 }

@@ -7,7 +7,6 @@
 
 /// @defgroup mat Matrices over Finite Fields
 /// @{
-/// @details
 /// In the MeatAxe, a matrix over a finite field is represented by a Matrix_t structure.
 /// Matrices can be created in many ways, for example
 /// - by calling matAlloc(),
@@ -17,7 +16,7 @@
 /// Matrices that no longer needed must be deleted by calling matFree(). Matrices can consume
 /// large amounts of memory, so it always a good idea to delete a matrix as early as possible.
 ///
-/// As with row vectors, row and column indexs are zero-based. For example, in a 3 by 5 matrix
+/// Row and column indexes are zero-based. For example, in a 3 by 5 matrix
 /// the row index runs from 0 to 2 and the column index runs from 0 to 4.
 ///
 /// A matrix A with entries (a<sub>ij</sub>) is said to be in <b>echelon form</b>
@@ -99,36 +98,32 @@ Matrix_t *matAlloc(int field, int nor, int noc)
    MTX_ASSERT(nor >= 0);
    MTX_ASSERT(noc >= 0);
 
-   // Initialize the data structure
-   if (ffSetField(field) != 0) {
-      mtxAbort(MTX_HERE,"Cannot select field GF(%d)",field);
-      return NULL;
-   }
-
-   // Allocate a new Matrix_t structure
-   m = ALLOC(Matrix_t);
-   if (m == NULL) {
-      mtxAbort(MTX_HERE,"Cannot allocate Matrix_t structure");
-      return NULL;
-   }
-
-   // Initialize the data structure
-   m->typeId = MTX_TYPE_MATRIX;
+   ffSetField(field);
+   m = (Matrix_t*) mmAlloc(MTX_TYPE_MATRIX, sizeof(Matrix_t));
    m->field = field;
    m->nor = nor;
    m->noc = noc;
    m->pivotTable = NULL;
    m->data = ffAlloc(nor, noc);
-   if (m->data == NULL) {
-      sysFree(m);
-      mtxAbort(MTX_HERE,"Cannot allocate matrix data");
-      return NULL;
-   }
    return m;
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+/// Duplicate a matrix
+/// This function creates an independent copy of a matrix.
+
+Matrix_t *matDup(const Matrix_t *src)
+{
+   matValidate(MTX_HERE, src);
+   Matrix_t* m = matAlloc(src->field,src->nor,src->noc);
+   memcpy(m->data,src->data,ffSize(src->nor, src->noc));
+   // copy pivot table, too?
+   return m;
+}
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
+
 /// Pointer to a row of a matrix.
 /// This function returns a pointer to the specified row of a matrix.
 /// Row numbers start from 0. The current row size is not changed.
@@ -156,11 +151,10 @@ PTR matGetPtr(const Matrix_t *mat, int row)
 
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
+
 /// Delete the pivot table of a matrix.
 /// This function deletes the pivot table associated with a matrix. It is used internally,
 /// applications should never call this function directly.
-/// @param mat Pointer to the matrix.
-////
 
 void mat_DeletePivotTable(Matrix_t *mat)
 {
@@ -170,24 +164,149 @@ void mat_DeletePivotTable(Matrix_t *mat)
    }
 }
 
-
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-/// Delete a matrix.
-/// This function frees a matrix which has beed created by matAlloc(). Freeing includes the
-/// internal data buffers as well as the Matrix_t structure itself.
-/// @param mat Pointer to the matrix.
-/// @return 0 on success, -1 on error.
 
-int matFree(Matrix_t *mat)
+/// Deletes a matrix and releases all associated resources.
+
+void matFree(Matrix_t *mat)
 {
    matValidate(MTX_HERE, mat);
    mat_DeletePivotTable(mat);
-   if (mat->data != NULL) {
-      sysFree(mat->data);
+   sysFree(mat->data);
+   mat->data = NULL;
+   mmFree(mat, MTX_TYPE_MATRIX);
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+/// Compare two matrices
+/// If the matrices are equal, the return value is 0. Otherwise the return value is positive,
+/// if @em a is "greater" than @em b and negative, if @em a is "less" than @em b. The ordering
+/// matrices is defined as follows:
+///
+/// - If the matrices are over different fields, the matrix over the smaller field is smaller.
+/// - Otherwise, if the matrices have different number of columns, the matrix with the smaller
+///   number of columns is smaller.
+/// - Otherwise, if the matrices have different number of rows, the matrix with the smaller
+///   number of rows is smaller.
+/// - Otherwise, the relation is determined by the return value of ffCmpRow() on the first row
+///   that is not equal in both matrices.
+///
+/// In case an error occurs, the return value is -2.
+///
+/// @param a First matrix.
+/// @param b Second matrix.
+/// @return 0 if the matrices are equal, ±1 otherwise, -2 on error
+
+int matCompare(const Matrix_t *a, const Matrix_t *b)
+{
+   int i;
+
+   // check arguments
+   matValidate(MTX_HERE,a);
+   matValidate(MTX_HERE, b);
+
+   // compare fields and dimensions
+   if (a->field > b->field) return 1;
+   if (a->field < b->field) return -1;
+   if (a->noc > b->noc) return 1;
+   if (a->noc < b->noc) return -1;
+   if (a->nor > b->nor) return 1;
+   if (a->nor < b->nor) return -1;
+
+   // Compare the marks row by row. We cannot use memcmp() on the whole matrix
+   // because we must ignore padding bytes.
+   ffSetField(a->field);
+   for (i = 0; i < a->nor; ++i) {
+      PTR pa = matGetPtr(a,i);
+      PTR pb = matGetPtr(b,i);
+      const int diff = ffCmpRows(pa,pb, a->noc);
+      if (diff > 0) return 1;
+      if (diff < 0) return -1;
    }
-   memset(mat,0,sizeof(Matrix_t));
-   sysFree(mat);
-   return 0;
+
+   return 0;	// equal
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+/// Copy a rectangular region of a matrix
+/// This function copies a rectangular region of @em src tp @em dest. The source region
+/// is defined by its upper left corner and dimensions, the destination region is specified
+/// by its upper left corner and has the same dimensions.
+/// Both @em nrows and @em ncols can be given as -1. In this case the region extends up to
+/// the last row or last column, respectively.
+/// The two matrices must be over the same field. Both source and destination region must
+/// not exceed the matrices' dimensions. In particular, it is not possible to extend the
+/// destination matrix by using %matCopyRegion().
+/// @param dest Pointer to the destination matrix.
+/// @param destrow Destination row.
+/// @param destcol Destination column.
+/// @param src Pointer to the source matrix.
+/// @param row1 First row in region.
+/// @param col1 First column in region.
+/// @param nrows Number of rows to copy. -1 means as many rows as possible.
+/// @param ncols Number of columns to copy. -1 means as many columns as possible.
+
+void matCopyRegion(Matrix_t *dest, int destrow, int destcol,
+                  const Matrix_t *src, int row1, int col1, int nrows, int ncols)
+{
+   PTR s, d;
+   int i, k;
+
+   // Check the arguments
+   matValidate(MTX_HERE, src);
+   matValidate(MTX_HERE, dest);
+   if (src->field != dest->field) {
+      mtxAbort(MTX_HERE,"%s",MTX_ERR_INCOMPAT);
+   }
+   if (nrows == -1) {
+      nrows = src->nor - row1;
+   }
+   if (ncols == -1) {
+      ncols = src->noc - col1;
+   }
+   if ((row1 < 0) || (nrows < 0) || (row1 + nrows > src->nor)) {
+      mtxAbort(MTX_HERE,"Source row index out of range");
+   }
+   if ((col1 < 0) || (ncols < 0) || (col1 + ncols > src->noc)) {
+      mtxAbort(MTX_HERE,"Source column index out of range");
+   }
+   if ((destrow < 0) || (destrow + nrows > dest->nor)) {
+      mtxAbort(MTX_HERE,"Destination row index out of range");
+   }
+   if ((destcol < 0) || (destcol + ncols > dest->noc)) {
+      mtxAbort(MTX_HERE,"Destination column index out of range");
+   }
+
+   /* Initialize data pointers
+      ------------------------ */
+   ffSetField(src->field);
+#ifdef MTX_DEBUG
+   s = row1 < src->nor ? matGetPtr(src,row1) : NULL;
+   d = destrow < dest->nor ? matGetPtr(dest,destrow) : NULL;
+#else
+   s = matGetPtr(src,row1);
+   d = matGetPtr(dest,destrow);
+#endif
+
+   /* Copy the rectangle
+      ------------------ */
+   for (i = row1; i < row1 + nrows; ++i) {
+      for (k = col1; k < col1 + ncols; ++k) {
+#ifdef MTX_DEBUG
+         FEL f;
+         f = ffExtract(s,k);
+         ffInsert(d,destcol + k - col1,f);
+#else
+         ffInsert(d,destcol + k - col1,ffExtract(s,k));
+#endif
+      }
+      ffStepPtr(&s, src->noc);
+      ffStepPtr(&d, dest->noc);
+   }
+
+   mat_DeletePivotTable(dest);
 }
 
 

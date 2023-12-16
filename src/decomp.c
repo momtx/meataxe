@@ -33,28 +33,28 @@ MTX_COMMON_OPTIONS_DESCRIPTION
 };                                                                              
                                                                                 
 static MtxApplication_t *App = NULL;                                            
-static const char *ModName = NULL;
-static const char *EndoName = NULL;
-static Lat_Info ModInfo;		/* Data from .cfinfo file */
-static Lat_Info LrrInfo;		/* Data from .cfinfo file */
+static const char *modName = NULL;
+static const char *endoName = NULL;
+static Lat_Info ModInfo;		// Data from .cfinfo file
+static Lat_Info LrrInfo;		// Data from .cfinfo file
 static int moddim = 0;
 static int enddim = 0;
 static int headdim = 0;
 static int compdim[LAT_MAXCF];
 static char compnm[LAT_MAXCF];
 static Matrix_t *head = NULL;
-static int TransformGenerators = 0;	/* -t: Transform into decomp. basis */
-static int WriteAction = 0;		/* -a: Write action on components */
+static int transformGenerators = 0;	// -t: Transform into decomp. basis
+static int writeAction = 0;		// -a: Write action on components
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 static void ParseArgs()
 {
-    TransformGenerators = appGetOption(App,"-t");
-    WriteAction = appGetOption(App,"-a");
+    transformGenerators = appGetOption(App,"-t");
+    writeAction = appGetOption(App,"-a");
     appGetArguments(App,2,2);
-    ModName = App->argV[0];
-    EndoName = App->argV[1];
+    modName = App->argV[0];
+    endoName = App->argV[1];
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -62,13 +62,11 @@ static void ParseArgs()
 static void ReadFiles()
 {
     char fn[200];
-    Matrix_t *tmp, *tmp2;
     int i;
 
-    /* Read the .cfinfo files and calculate some dimensions.
-       ----------------------------------------------------- */
-    latReadInfo(&ModInfo,ModName);
-    sprintf(fn,"%s.lrr",EndoName);
+    // Read the .cfinfo files and calculate some dimensions.
+    latReadInfo(&ModInfo,modName);
+    sprintf(fn,"%s.lrr",endoName);
     latReadInfo(&LrrInfo,fn);
     moddim = 0;
     for (i = 0; i < ModInfo.nCf; ++i)
@@ -88,20 +86,20 @@ static void ReadFiles()
     MTX_LOGD("dim(M)=%d, dim(E)=%d, dim(Head)=%d",moddim,enddim,headdim);
 
     // Read the basis of the head.
-    sprintf(fn,"%s.lrr.soc",EndoName);
+    sprintf(fn,"%s.lrr.soc",endoName);
     MTX_LOGD("Loading socle basis");
-    tmp = matLoad(fn);
-    tmp2 = matInverse(tmp);
+    Matrix_t* tmp = matLoad(fn);
+    Matrix_t* tmp2 = matInverse(tmp);
     matFree(tmp);
     tmp = matTransposed(tmp2);
     matFree(tmp2);
     head = matCutRows(tmp,0,headdim);
+    matFree(tmp);
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
-
-
-static void Init(int argc, char **argv)
+static void init(int argc, char **argv)
 {
     App = appAlloc(&AppInfo,argc,argv);
     ParseArgs();
@@ -110,38 +108,35 @@ static void Init(int argc, char **argv)
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static void WriteOutput(Matrix_t *bas)
+static void writeOutput(Matrix_t *bas)
 {
     char name[200];
-    MatRep_t *rep = NULL;
     int i;
 
-    /* Write the decomposition basis.
-       ------------------------------ */
-    sprintf(name,"%s.dec", ModName);
+    // Write the decomposition basis.
+    sprintf(name,"%s.dec", modName);
     MTX_LOGD("Writing the decomposition basis (%s)",name);
     matSave(bas,name);
 
-    /* Transform the generators.
-       ------------------------- */
-    if (TransformGenerators || WriteAction)
+    // Transform the generators.
+    MatRep_t* rep = NULL;
+    if (transformGenerators || writeAction)
     {
 	MTX_LOGD("Transforming the generators");
-	sprintf(name,"%s.std",ModName);
+	sprintf(name,"%s.std",modName);
 	rep = mrLoad(name, ModInfo.NGen);
 	mrChangeBasis(rep,bas);
-	if (TransformGenerators)
+	if (transformGenerators)
 	{
-	    sprintf(name,"%s.dec",ModName);
+	    sprintf(name,"%s.dec",modName);
 	    MTX_LOGD("Writing transformed generators (%s.1, ...)",name);
 	    mrSave(rep,name);
 	}
     }
 
 
-    /* Write the action of the generators on the direct summands.
-       ---------------------------------------------------------- */
-    if (WriteAction)
+    // Write the action of the generators on the direct summands.
+    if (writeAction)
     {
 	MTX_LOGD("Writing the action on the direct summands");
 	for (i = 0; i < rep->NGen; i++)
@@ -155,7 +150,7 @@ static void WriteOutput(Matrix_t *bas)
 		    Matrix_t *tmp = matCut(rep->Gen[i],block_start,block_start,
 			compdim[k],compdim[k]);
 		    block_start += compdim[k];
-		    sprintf(name, "%s.comp%d%c%d.%d", ModName,compdim[k], 
+		    sprintf(name, "%s.comp%d%c%d.%d", modName,compdim[k], 
 			compnm[k],l+1,i+1);
 		    matSave(tmp, name);
 		    matFree(tmp);
@@ -163,6 +158,18 @@ static void WriteOutput(Matrix_t *bas)
 	    }
 	}
     }
+    if (rep != NULL)
+       mrFree(rep);
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+static void cleanup()
+{
+   matFree(head);
+   latCleanup(&ModInfo);
+   latCleanup(&LrrInfo);
+   appFree(App);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -170,19 +177,15 @@ static void WriteOutput(Matrix_t *bas)
 int main(int argc, char **argv)
 {
     int i, j, l, num, dim = 0;
-    Matrix_t *bas, *partbas = NULL, *mat, *ker;
+    Matrix_t *partbas = NULL, *mat, *ker;
     PTR headptr;
     FEL f;
     char name[200];
-    FPoly_t *pol = NULL;
 
-    Init(argc,argv);
+    init(argc,argv);
 
-/* -------------------------------------------------------
-   makes the corresponding element of the endomorphismring
-   ------------------------------------------------------- */
-
-    bas = matAlloc(ffOrder,moddim,moddim);
+    // makes the corresponding element of the endomorphismring
+    Matrix_t* bas = matAlloc(ffOrder,moddim,moddim);
     headptr = head->data;
     for (i = 0; i < LrrInfo.nCf; i++)
     {
@@ -190,21 +193,18 @@ int main(int argc, char **argv)
 	for (j = 0; j < LrrInfo.Cf[i].dim / LrrInfo.Cf[i].spl; j++)
 	{
 	    num = LrrInfo.Cf[i].dim;
-	    do
+	    while (1)
 	    {
 		if (partbas != NULL)
 		    matFree(partbas);
 		partbas = matAlloc(ffOrder, moddim, moddim);
-		if (num-- == 0)
-		{
-		    mtxAbort(MTX_HERE,"na, most mi van?");
-		    return 1;
-		}
+		MTX_ASSERT(num > 0);
+		--num;
 		for (l = 0; l < enddim; l++)
 		{
 		    if ((f = ffExtract(headptr, l)) == FF_ZERO)
 		    	continue;
-		    sprintf(name, "%s.%d", EndoName, l+1);
+		    sprintf(name, "%s.%d", endoName, l+1);
 		    if ((mat = matLoad(name)) == NULL)
 			return 1;
 		    matAddMul(partbas,mat,f);
@@ -212,19 +212,20 @@ int main(int argc, char **argv)
 		}
 		ffStepPtr(&headptr, enddim);
 
-		if (pol != NULL)
-		    fpFree(pol);
-		pol = charpol(partbas);
+		FPoly_t* pol = charpol(partbas);
+                // continue while charpol == x^enddim
+                int mustContinue = 
+	           (LrrInfo.Cf[i].dim != 1 && pol->nFactors == 1 
+		   && pol->factor[0]->degree == 1
+		   && pol->factor[0]->data[0] == FF_ZERO 
+		   && pol->factor[0]->data[1] == FF_ONE);
+		fpFree(pol);
+                if (!mustContinue) break;
 	    }
-	    while (LrrInfo.Cf[i].dim != 1 && pol->nFactors == 1 
-		&& pol->factor[0]->degree == 1
-		&& pol->factor[0]->data[0] == FF_ZERO 
-		&& pol->factor[0]->data[1] == FF_ONE); /* i.e.,charpol == x^enddim */
 	    headptr = ffGetPtr(headptr,num, enddim);
 
 
-            /* Make the stable kernel.
-               ----------------------- */
+            // Make the stable kernel.
 	    StablePower_(partbas,NULL,&ker);
 	    compdim[i] = moddim - ker->nor;
 	    for (l = i - 1; l >= 0 && compdim[i] != compdim[l]; l--)
@@ -236,9 +237,7 @@ int main(int argc, char **argv)
 	    matFree(ker);
 	    MTX_LOGI("The %d-th direct summand is: %d%c", j, compdim[i], compnm[i]);
 
-
-	    /* Append <partbas> to <bas>.
-	       -------------------------- */
+	    // Append <partbas> to <bas>.
 	    matEchelonize(partbas);
 	    #ifdef MTX_DEBUG
 	    #endif
@@ -257,16 +256,15 @@ int main(int argc, char **argv)
 	return 1;
     }
 
-
-
-    WriteOutput(bas);
-
-
-    appFree(App);
+    writeOutput(bas);
+    matFree(bas);
+    cleanup();
     return 0;
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
+// *INDENT_OFF*
 
 /**
 @page prog_decomp decomp - Decompose a Module                                                  

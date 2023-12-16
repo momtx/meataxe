@@ -17,7 +17,6 @@
 
 static int opt_G = 0;	/* GAP output */
 static const char *iname, *oname;
-static Matrix_t *Mat = NULL;
 
 static MtxApplicationInfo_t AppInfo = { 
 "zef", "Echelon Form",
@@ -41,87 +40,44 @@ static MtxApplication_t *App = NULL;
 
 
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
-
-static int Init(int argc, char **argv)
-
+static void init(int argc, char **argv)
 {
-    /* Process command line options and arguments.
-       ------------------------------------------- */
-    if ((App = appAlloc(&AppInfo,argc,argv)) == NULL)
-	return -1;
+    App = appAlloc(&AppInfo,argc,argv);
     opt_G = appGetOption(App,"-G --gap");
 //    if (opt_G) MtxMessageLevel = -100;
-    if (appGetArguments(App,2,2) != 2)
-	return -1;
+    appGetArguments(App,2,2);
     iname = App->argV[0];
     oname = App->argV[1];
-
-    return 0;
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
-
-static void Cleanup()
-
+int main(int argc, char** argv)
 {
-    if (App != NULL)
-	appFree(App);
-    if (Mat != NULL)
-	matFree(Mat);
-}
+   init(argc, argv);
+   Matrix_t* mat = matLoad(iname);
+   matEchelonize(mat);
+   // Normalize
+   for (uint32_t i = 0; i < mat->nor; ++i) {
+      PTR rp = matGetPtr(mat, i);
+      FEL a = ffExtract(rp, mat->pivotTable[i]);
+      if (a != FF_ONE) {
+         ffMulRow(rp, ffInv(a), mat->noc);
+      }
+   }
+   matSave(mat, oname);
 
-
-
-
-
-/* ------------------------------------------------------------------
-   main()
-   ------------------------------------------------------------------ */
-
-int main(int argc, char **argv)
-
-{
-    int rc = 0;
-
-    if (Init(argc,argv) != 0)
-    {
-	mtxAbort(MTX_HERE,"Initialization failed");
-	return 1;
-    }
-
-    Mat = matLoad(iname);
-    if (Mat == NULL)
-	rc = -1;
-    if (rc == 0)
-    {
-	if (matEchelonize(Mat) < 0)
-	    rc = 1;
-    }
-    if (rc == 0)
-    {
-	/* Normalize.
-	   ---------- */
-	int i;
-	for (i = 0; i < Mat->nor; ++i)
-	{
-	    PTR rp = matGetPtr(Mat,i);
-	    ffMulRow(rp,ffInv(ffExtract(rp,Mat->pivotTable[i])),Mat->noc);
-	}
-    }
-    if (rc == 0)
-    {
-	matSave(Mat,oname);
-    }
-    if (rc == 0)
-    {
-	if (opt_G)
-	    printf("MeatAxe.Rank := %d;\n",Mat->nor);
-	else
-	    MTX_LOGI("RANK %d",Mat->nor);
-    }
-    Cleanup();
-    return rc;
+   if (opt_G) {
+      printf("MeatAxe.Rank := %d;\n", mat->nor);
+   }
+   else {
+      MTX_LOGI("RANK %d", mat->nor);
+   }
+   matFree(mat);
+   appFree(App);
+   return 0;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////

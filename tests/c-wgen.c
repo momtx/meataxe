@@ -33,8 +33,9 @@ static WgData_t* makeWgen(int field, int ngen, int dim)
 
 static void destroy(WgData_t* wg)
 {
-   mrFree((MatRep_t*)wg->Rep);
+   MatRep_t* rep = (MatRep_t*)wg->Rep;
    wgFree(wg);
+   mrFree(rep);
 }
 
 TstResult WordGenerator_RejectsWordNumberZero(int q)

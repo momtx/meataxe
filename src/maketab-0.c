@@ -91,7 +91,7 @@ static uint8_t gen[] = {1,2,3,5,6,7,19,0};
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static void formatPoly(StrBuffer* buf, POLY a)
+static void formatPoly(StrBuffer_t* buf, POLY a)
 {
    int i, flag = 0;
 

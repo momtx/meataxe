@@ -8,9 +8,6 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // Local data
 
-
-#define FP_MAGIC 0x17B69244
-
 /// @addtogroup poly
 /// @{
 
@@ -29,17 +26,16 @@
 
 int fpIsValid(const FPoly_t *p)
 {
-   int i;
    if (p == NULL) {
       return 0;
    }
-   if ((p->typeId != FP_MAGIC) || (p->nFactors < 0) || (p->bufSize < p->nFactors)) {
+   if (p->typeId != MTX_TYPE_FPOLY || p->bufSize < p->nFactors) {
       return 0;
    }
    if ((p->factor == NULL) || (p->mult == NULL)) {
       return 0;
    }
-   for (i = 0; i < p->nFactors; ++i) {
+   for (uint32_t i = 0; i < p->nFactors; ++i) {
       if (!polIsValid(p->factor[i]))
          return 0;
       if (p->factor[i]->field != p->field) {
@@ -59,20 +55,19 @@ int fpIsValid(const FPoly_t *p)
 
 void fpValidate(const struct MtxSourceLocation* src, const FPoly_t* p)
 {
-   int i;
    if (p == NULL) {
       mtxAbort(src, "NULL polynomial");
    }
-   if ((p->typeId != FP_MAGIC) || (p->nFactors < 0) || (p->bufSize < p->nFactors)) {
-      mtxAbort(src, "Invalid FPoly_t: Magic=%d, nFactors=%d, MaxLen=%d",
-         (int)p->typeId, p->nFactors, p->bufSize);
+   if (p->typeId != MTX_TYPE_FPOLY || p->bufSize < p->nFactors) {
+      mtxAbort(src, "Invalid FPoly_t: Magic=%d, nFactors=%lu, MaxLen=%d",
+         (int)p->typeId, (unsigned long) p->nFactors, p->bufSize);
    }
    if ((p->factor == NULL) || (p->mult == NULL)) {
       mtxAbort(src, "Invalid FPoly_t: factor:%s, mult:%s",
          p->factor == 0 ? "NULL" : "ok",
          p->mult == 0 ? "NULL" : "ok");
    }
-   for (i = 0; i < p->nFactors; ++i) {
+   for (uint32_t i = 0; i < p->nFactors; ++i) {
       polValidate(src, p->factor[i]);
       if (p->factor[i]->field != p->field) {
          mtxAbort(src, "Invalid FPoly_t: Inconsistent field orders (%lu vs %lu)",
@@ -98,13 +93,12 @@ void fpValidate(const struct MtxSourceLocation* src, const FPoly_t* p)
 
 FPoly_t *fpAlloc(uint32_t field)
 {
-   FPoly_t* x = ALLOC(FPoly_t);
+   FPoly_t* x = (FPoly_t*)mmAlloc(MTX_TYPE_FPOLY, sizeof(FPoly_t));
    x->field = field;
    x->bufSize = 5;
    x->factor = NALLOC(Poly_t *,x->bufSize);
    x->mult = NALLOC(int,x->bufSize);
    x->nFactors = 0;
-   x->typeId = FP_MAGIC;
    return x;
 }
 
@@ -117,9 +111,9 @@ FPoly_t *fpDup(const FPoly_t *src)
    fpValidate(MTX_HERE, src);
 
    // Copy the factors
-   Poly_t **new_factor = NALLOC(Poly_t *,src->nFactors);
+   Poly_t **new_factor = NALLOC(Poly_t *, src->nFactors);
    int* new_mult = NALLOC(int,src->nFactors);
-   for (int i = 0; i < src->nFactors; ++i) {
+   for (uint32_t i = 0; i < src->nFactors; ++i) {
       new_mult[i] = src->mult[i];
       new_factor[i] = polDup(src->factor[i]);
    }
@@ -146,7 +140,7 @@ int fpCompare(const FPoly_t* a, const FPoly_t* b)
    if (a->field < b->field) {
       return -1;
    }
-   int i;
+   uint32_t i;
    for (i = 0; i < a->nFactors && i < b->nFactors; ++i)
    {
       int cmp = polCompare(a->factor[i], b->factor[i]);
@@ -172,37 +166,30 @@ int fpCompare(const FPoly_t* a, const FPoly_t* b)
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 /// Free a factored polynomial.
-/// @return 0 on success, -1 on error.
-/// @see FPoly_t FpAlloc
 
-int fpFree(FPoly_t *x)
+void fpFree(FPoly_t *x)
 {
-   int i;
-
-   /* Check the argument
-      ------------------ */
    fpValidate(MTX_HERE, x);
 
-   /* Free all factors
-      ---------------- */
-   for (i = 0; i < x->nFactors; ++i) {
+   for (uint32_t i = 0; i < x->nFactors; ++i) {
       polFree(x->factor[i]);
    }
 
-   /* Free the <FPoly_t> structure
-      ---------------------------- */
    sysFree(x->factor);
+   x->factor = NULL;
    sysFree(x->mult);
-   memset(x,0,sizeof(FPoly_t));
-   sysFree(x);
-   return 0;
+   x->mult = NULL;
+   mmFree(x, MTX_TYPE_FPOLY);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
+
 /// Multiply with an irreducible polynomial.
+///
 /// This function multiplies a factored polynomial with the power of an
 /// an irreducible factor. It is not checked that @em src is irreducible.
-/// @see fpMul()
+/// See also @ref fpMul()
+///
 /// @param dest Factored polynomial to modify.
 /// @param src Irreducible polynomial.
 /// @param pwr Power of the irreducible polynomial.
@@ -210,30 +197,25 @@ int fpFree(FPoly_t *x)
 
 FPoly_t* fpMulP(FPoly_t* dest, const Poly_t* src, int pwr)
 {
-   int i;
-   int cmp = 0;
-
-   // Check the arguments
    polValidate(MTX_HERE, src);
    fpValidate(MTX_HERE, dest);
    if (src->field != dest->field) {
       mtxAbort(MTX_HERE, "Inconsistent fields (%lu vs %lu)",
          (unsigned long) src->field, (unsigned long) dest->field);
-      return NULL;
    }
    if (pwr <= 0) {
       mtxAbort(MTX_HERE, "pwr=%d: %s", pwr, MTX_ERR_BADARG);
-      return NULL;
    }
 
    // Find the insert position
+   uint32_t i;
+   int cmp = 0;
    for (i = 0;
         i < dest->nFactors && (cmp = polCompare(dest->factor[i], src)) < 0;
         ++i) {}
 
    // Extend the buffer, if necessary
    if ((i >= dest->nFactors) || (cmp != 0)) {
-      int k;
       if (dest->nFactors >= dest->bufSize) {
          int newsize = dest->bufSize + 5;
          Poly_t** x = NREALLOC(dest->factor, Poly_t*, newsize);
@@ -244,7 +226,7 @@ FPoly_t* fpMulP(FPoly_t* dest, const Poly_t* src, int pwr)
       }
 
       // Make room for the new factor
-      for (k = dest->nFactors; k > i; --k) {
+      for (uint32_t k = dest->nFactors; k > i; --k) {
          dest->factor[k] = dest->factor[k - 1];
          dest->mult[k] = dest->mult[k - 1];
       }
@@ -275,12 +257,10 @@ FPoly_t* fpMulP(FPoly_t* dest, const Poly_t* src, int pwr)
 
 FPoly_t *fpMul(FPoly_t *dest, const FPoly_t *src)
 {
-   int i;
-
    fpValidate(MTX_HERE, src);
    fpValidate(MTX_HERE, dest);
 
-   for (i = 0; i < src->nFactors; ++i) {
+   for (uint32_t i = 0; i < src->nFactors; ++i) {
       fpMulP(dest,src->factor[i],src->mult[i]);
    }
    return dest;
@@ -290,7 +270,7 @@ FPoly_t *fpMul(FPoly_t *dest, const FPoly_t *src)
 
 /// Format a factored polynomial
 
-void fpFormat(StrBuffer* sb, const FPoly_t *p)
+void fpFormat(StrBuffer_t* sb, const FPoly_t *p)
 {
    fpValidate(MTX_HERE, p);
    if (p->nFactors == 0) {
@@ -298,7 +278,7 @@ void fpFormat(StrBuffer* sb, const FPoly_t *p)
       return;
    }
 
-   for (int i = 0; i < p->nFactors; ++i) {
+   for (uint32_t i = 0; i < p->nFactors; ++i) {
       int e = p->mult[i];
       if (i > 0) { sbAppend(sb, " * "); }
       sbAppend(sb, "(");
@@ -323,7 +303,7 @@ void fpFormat(StrBuffer* sb, const FPoly_t *p)
 void fpPrint(const char *name, const FPoly_t *p)
 {
    fpValidate(MTX_HERE, p);
-   StrBuffer* sb = sbAlloc(100);
+   StrBuffer_t* sb = sbAlloc(100);
    if (name != NULL) {
       sbPrintf(sb, "%s =",name);
    }
@@ -339,7 +319,7 @@ void fpPrint(const char *name, const FPoly_t *p)
 
 char* fpToEphemeralString(const FPoly_t *p)
 {
-   StrBuffer* sb = sbAlloc(100);
+   StrBuffer_t* sb = sbAlloc(100);
    fpFormat(sb, p);
    return sbToEphemeralString(sb);
 }

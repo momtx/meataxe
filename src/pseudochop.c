@@ -77,10 +77,7 @@ int main(int argc, char *argv[])
     {
 	int oldnul, newnul;
         if (mycfinfo.Cf[j].peakWord == 0)
-        {
-	    mtxAbort(MTX_HERE,"0 is definitly not a peakword! - Did you run mkpeak?");
-            return 1;
-        }
+	    mtxAbort(MTX_HERE,"No peak word defined - Did you run mkpeak?");
         old = matInsert(wgMakeWord(rep,mycfinfo.Cf[j].peakWord),mycfinfo.Cf[j].peakPol);
 	nulsp = matNullSpace(old);
 	newnul = nulsp->nor; 

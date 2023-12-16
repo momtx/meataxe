@@ -864,11 +864,9 @@ int main(int argc, char **argv)
    relations obtained at the last step.
    ------------------------------------------------------------------ */
 
-            if ((mat = matAlloc(ffOrder, esys->nor + ker2->nor, esys->noc + ker2->nor)) == NULL)
-                return 1;
+            mat = matAlloc(ffOrder, esys->nor + ker2->nor, esys->noc + ker2->nor);
             matMulScalar(mat, FF_ZERO);
-            if (matCopyRegion(mat, 0, 0, esys, 0, 0, oldNor, esys->noc) == -1)
-                return 1;
+            matCopyRegion(mat, 0, 0, esys, 0, 0, oldNor, esys->noc);
             matFree(esys);
             esys = mat;
             MTX_LOGD("Building equation system (%dx%d)\n",

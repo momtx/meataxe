@@ -51,79 +51,82 @@
 /// The format has been chosen such that GAP can read the text file without modification.
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
+
+static void validateBase(const struct MtxSourceLocation* src, const StfData* f)
+{
+   if (f == NULL) {
+      mtxAbort(src, "NULL file");
+   }
+   if (f->typeId != MTX_TYPE_STFILE) {
+      mtxAbort(src, "Invalid text file (type=0x%lu)", (unsigned long) f->typeId);
+   }
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+/// Aborts the program if the passed STF object is not valid.
+
+void stfValidate(const struct MtxSourceLocation* where, const StfData* f)
+{
+   validateBase(where, f);
+   if (f->fileName == NULL) {
+      mtxAbort(where, "Invalid text file (name=NULL)");
+   }
+   if (f->file == NULL) {
+      mtxAbort(where, "Invalid text file (file=NULL)");
+   }
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
 /// Close a structured text file.
-/// This function closes a structured text file.
 /// Closing the file implies that the memory occupied by the StfData structure is freed.
 /// Thus, after return, @a f is invalid and must not be dereferenced.
 /// @param f Pointer to an open structured text file (STF) object.
-/// @return 0 on success, non-zero on error.
 
-int stfClose(StfData *f)
+void stfClose(StfData *f)
 {
-   if (f == NULL) {
-      return -1;
-   }
+   validateBase(MTX_HERE, f);
+   mtxEnd(f->context);
+   sysFree(f->fileName);
    if (f->file != NULL) {
       fclose(f->file);
+      f->file = NULL;
    }
    if (f->lineBuf != NULL) {
-      free(f->lineBuf);
+      sysFree(f->lineBuf);
+      f->lineBuf = NULL;
    }
-   memset(f,0,sizeof(StfData));
-   free(f);
-   return 0;
+   mmFree(f, MTX_TYPE_STFILE);
 }
 
-
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-/// Initialize a STF data structure
-/// This funcion initializes a StfData structure.
-///  The function assures that either the data structure is completely
-///  initialized or, in case of any error, no resources are allocated.
-/// @return 0 on success, -1 on error
 
-static int stfInitData(StfData *f)
+static const char* provideFilePosition(void* userData)
 {
-   memset(f,0,sizeof(StfData));
-   f->lineBufSize = 250;
-   f->lineBuf = NALLOC(char,f->lineBufSize);
-   if (f->lineBuf == NULL) {
-      mtxAbort(MTX_HERE,"Cannot allocate line buffer");
-      return -1;
-   }
-   return 0;
+   StfData* f = (StfData*) userData;
+   static char buffer[300];
+   snprintf(buffer, sizeof(buffer), "at %s, line %d", f->fileName, f->lineNo);
+   return buffer;
 }
 
-
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-/// Open a structured text file.
-/// This function opens a structured text file. It returns to a StfData structure which
-/// can be used with stfXxx() functions.
+
+/// Opens a structured text file.
 /// @a name and @a mode have the same semantics as with sysFopen().
 ///
-/// @return StfData structure or 0 on error.
+/// Note: each call of @c stfOpen() creates a log context, which is closed in the corresponding
+/// call of @ref stfClose. Applications creating log contexts must make sure that calls of
+/// @ref mtxBegin / @ref mtxEnd call are properly nested with @ref stfOpen / @ref stfClose.
 
 StfData *stfOpen(const char *name, const char* mode)
 {
-   StfData *f;
-
-   // allocate and initialize a new STF data structure
-   f = ALLOC(StfData);
-   if (f == NULL) {
-      return NULL;
-   }
-   if (stfInitData(f) != 0) {
-      free(f);
-      return NULL;
-   }
-
-   // open the file
+   StfData *f = (StfData*) mmAlloc(MTX_TYPE_STFILE, sizeof(StfData));
+   f->lineBufSize = 250;
+   f->lineBuf = NALLOC(char,f->lineBufSize);
+   f->fileName = strdup(name);
    f->file = sysFopen(name, mode);
-   if (f->file == NULL) {
-      stfClose(f);
-      return NULL;
-   }
-
+   f->context = mtxBeginScope(provideFilePosition, f);
    return f;
 }
 

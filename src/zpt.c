@@ -33,8 +33,6 @@ static MtxApplication_t *App = NULL;
 int nrows = 0;
 int ncols = 0;
 const char *ofilename;
-MtxFile_t* ifile;
-MtxFile_t* fileOut;
 int fieldOut, norOut, nocOut, maxnor;
 int *width, *height;
 
@@ -156,7 +154,7 @@ static void pasteMatrices()
 {   
    ffSetField(fieldOut);
    PTR bufOut = ffAlloc(maxnor, nocOut);
-   fileOut = mfCreate(ofilename, fieldOut, norOut, nocOut);
+   MtxFile_t* fileOut = mfCreate(ofilename, fieldOut, norOut, nocOut);
    for (int i = 0; i < nrows; ++i)
    {	
       MTX_LOGD("Pasting row %d",i);
@@ -190,6 +188,7 @@ static void pasteMatrices()
       }
       ffWriteRows(fileOut, bufOut, height[i], nocOut);
    }
+   mfClose(fileOut);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////

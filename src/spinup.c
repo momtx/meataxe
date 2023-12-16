@@ -333,6 +333,10 @@ static SpinupContext_t* CreateContextP(
 
 void DestroyContext(SpinupContext_t* ctx)
 {
+   if (ctx->Span != NULL) {
+      matFree(ctx->Span);
+      ctx->Span = NULL;
+   }
    memset(ctx, 0, sizeof(*ctx));
    sysFree(ctx);
 }

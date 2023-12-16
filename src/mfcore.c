@@ -9,9 +9,6 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // Local data
 
-
-#define MF_MAGIC 0x229AE77B
-
 /// @defgroup mf File I/O
 /// @{
 
@@ -23,41 +20,28 @@
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-/// Returns 1 if the given file object is valid or 0 otherwise.
-/// See also @ref mfValidate.
-
-int mfIsValid(const MtxFile_t *file)
-{
-   if (file == NULL)
-      return 0;
-   if (file->typeId != MF_MAGIC)
-      return 0;
-   return 1;
-}
-
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 /// Verifies that the given file is valid, aborts the program otherwise.
-/// See also @ref mfIsValid.
 
 void mfValidate(const struct MtxSourceLocation* src, const MtxFile_t *file)
 {
    if (file == NULL) {
       mtxAbort(src,"NULL file");
    }
-   if (file->typeId != MF_MAGIC) {
-      mtxAbort(src,"Invalid file");
+   if (file->typeId != MTX_TYPE_BINFILE) {
+      mtxAbort(src,"Invalid file (bad typeId 0x%lx", (unsigned long) file->typeId);
    }
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static MtxFile_t *allocFile(const char *name)
+static MtxFile_t *allocFile(const char *fileName)
 {
-   MtxFile_t *f = ALLOC(MtxFile_t);
-   memset(f,0,sizeof(*f));
-   f->name = sysMalloc(strlen(name) + 1);
-   strcpy(f->name,name);
+   MTX_ASSERT(fileName != NULL);
+   MtxFile_t *f = (MtxFile_t*) mmAlloc(MTX_TYPE_BINFILE, sizeof(MtxFile_t));
+   f->name = sysMalloc(strlen(fileName) + 1);
+   strcpy(f->name, fileName);
    return f;
 }
 
@@ -67,10 +51,11 @@ static void freeFile(MtxFile_t *f)
 {
    if (f->file != NULL) {
       fclose(f->file);
+      f->file = NULL;
    }
    sysFree(f->name);
-   memset(f,0,sizeof(*f));
-   sysFree(f);
+   f->name = NULL;
+   mmFree(f, MTX_TYPE_BINFILE);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -192,7 +177,6 @@ int mfTryReadHeader(MtxFile_t* file)
 MtxFile_t* mfOpen(const char* name, const char* mode)
 {
    MtxFile_t* f = allocFile(name);
-   f->typeId = MF_MAGIC;
    f->file = sysFopen(name, mode);
    return f;
 }
@@ -208,15 +192,11 @@ MtxFile_t *mfCreate(const char *name, uint32_t field, uint32_t nor, uint32_t noc
    MtxFile_t *f = allocFile(name);
    f->file = sysFopen(name,"wb");
 
-   /* Write the file header.
-      ---------------------- */
    uint32_t header[3];
-   header[0] = /*f->field = */ field;
-   header[1] = /*f->nor = */nor;
-   header[2] = /*f->noc = */noc;
+   header[0] = field;
+   header[1] = nor;
+   header[2] = noc;
    sysWrite32(f->file,header,3);
-
-   f->typeId = MF_MAGIC;
    return f;
 }
 
@@ -231,6 +211,8 @@ void mfClose(MtxFile_t *file)
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
+
+/// Advances the file pointer by a given number of bytes.
 
 void mfSkip(MtxFile_t *file, size_t nBytes)
 {

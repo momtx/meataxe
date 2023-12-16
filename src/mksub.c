@@ -121,7 +121,7 @@ static MtxApplication_t *App = NULL;
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static void init(const char *basename)
+static void init1(const char *basename)
 {	
     int i;
     char fn[40];
@@ -464,7 +464,6 @@ void writeresult()
 {
    int i, k;
    char tmp[100];
-   BitString_t* b = bsAlloc(bnmount);
 
    MTX_LOGI("Finished, %d submodules found", nsub);
    FILE* f = openTextOutputFile(".out");
@@ -494,6 +493,7 @@ void writeresult()
 
    // Write mountains
    if (opt_o & O_MOUNTAINS) {
+      BitString_t* b = bsAlloc(bnmount);
       fprintf(f, "Mountains:\n");
       fprintf(f, "    No     Dim    Maximal Submountains\n");
       for (i = 0; i < bnmount; ++i) {
@@ -510,6 +510,7 @@ void writeresult()
          fprintf(f, "\n");
       }
       fprintf(f, "\n");
+      bsFree(b);
    }
 
    // Write incidence matrix
@@ -618,6 +619,10 @@ void writeresult()
          bsCopy(rad, newrad);
       }
       fprintf(f, "\n");
+      bsFree(rad);
+      bsFree(newrad);
+      bsFree(x);
+      bsFree(zero);
    }
    fclose(f);
 
@@ -778,8 +783,9 @@ static int tryAddSubmodule(BitString_t *bs, int generation)
 
    const size_t key = hashKey(bs);
    for (Submodule_t* item = hashTable[key]; item != NULL; item = item->htNext) {
-      if (bsCompare(item->bs, bs) == 0)
+      if (bsCompare(item->bs, bs) == 0) {
          return 0;
+      }
    }
    if (nsub >= MAXNSUB) {
       mtxAbort(MTX_HERE, "Too many submodules (> %d)", MAXNSUB);
@@ -877,7 +883,9 @@ static void initBlock()
     lastGenEnd = 0;
     lastGenBegin = 0;
     // Add generation 0 (null module)
-    tryAddSubmodule(bsAlloc(bnmount), 0);
+    BitString_t *seed = bsAlloc(bnmount);
+    tryAddSubmodule(seed, 0);
+    bsFree(seed);
     lastGenEnd = nsub;
     generation = 0;
 }
@@ -892,12 +900,13 @@ static void cleanupBlock()
 
     for (i = 0; i < bnmount; ++i)
     {
-	free(bsubof[i]);
-	free(bsupof[i]);
+	bsFree(bsubof[i]);
+	bsFree(bsupof[i]);
     }
     for (i = 0; i < bndotl; ++i)
     {
-	free(bdotl[i]);
+	bsFree(bdotl[i]);
+	bsFree(bdlspan[i]);
     }
     if (opt_o & O_SUBMODULES)
     {
@@ -930,6 +939,7 @@ static void nextgen()
          tryAddSubmodule(x, generation);
       }
    }
+   bsFree(x);
 
    lastGenBegin = begin;
    lastGenEnd = nsub;
@@ -937,7 +947,7 @@ static void nextgen()
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static int setFormatFlags(const char *c, int set)
+static void setFormatFlags(const char *c, int set)
 {
     static int FirstTime = 1;
     if (FirstTime)
@@ -959,19 +969,17 @@ static int setFormatFlags(const char *c, int set)
 	    case 'i': flag = O_INCIDENCES; break;
 	    default: 
 		mtxAbort(MTX_HERE,"Unknown format flag '%c'",*c);
-		return -1;
 	}
 	if (set)
 	    opt_o |= flag;
 	else
 	    opt_o &= ~flag;
     }
-    return 0;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static int ParseCommandLine()
+static void ParseCommandLine()
 {
     const char *c;
 
@@ -981,17 +989,13 @@ static int ParseCommandLine()
     opt_b = appGetOption(App,"-b --blocks");
     if ((c = appGetTextOption(App,"-o --output",NULL)) != NULL)
     {
-	if (setFormatFlags(c,1) != 0)
-	    return -1;
+	setFormatFlags(c,1);
     }
     if ((c = appGetTextOption(App,"-n --no-output",NULL)) != NULL)
     {
-	if (setFormatFlags(c,0) != 0)
-	    return -1;
+	setFormatFlags(c,0);
     }
-    if (appGetArguments(App,1,1) != 1)
-	return -1;
-    return 0;
+    appGetArguments(App,1,1);
 }
 
 
@@ -1016,27 +1020,35 @@ static void calculateCfInfo()
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static int Init(int argc, char **argv)
+static void init(int argc, char** argv)
 {
-    if ((App = appAlloc(&AppInfo,argc,argv)) == NULL)
-	return -1;
-    if (ParseCommandLine() != 0)
-	return -1;
-    MTX_LOGI("\n*** CALCULATE ALL SUBMODULES ***");
-    init(App->argV[0]);
-    calculateCfInfo();
-    return 0;
+   App = appAlloc(&AppInfo, argc, argv);
+   ParseCommandLine();
+   MTX_LOGI("Start mksub - Calculate submodule lattice");
+   init1(App->argV[0]);
+   calculateCfInfo();
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+static void cleanup()
+{
+   bsFree(y);
+   for (int i = 0; i < xnmount; ++i) {
+      bsFree(xsubof[i]);
+   }
+   for (int i = 0; i < xndotl; ++i) {
+      bsFree(xdotl[i]);
+   }
+   latCleanup(&LI);
+   appFree(App);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 int main(int argc, char **argv)
 {
-    if (Init(argc,argv) != 0)
-    {
-	mtxAbort(MTX_HERE,"Initialization failed");
-	return -1;
-    }
+    init(argc,argv);
 
     while (nextblock())
     {
@@ -1060,10 +1072,9 @@ int main(int argc, char **argv)
 	writeresult();
 	cleanupBlock();
     }
-    appFree(App);
+    cleanup();
     return 0;
 }
-
 
 
 /**

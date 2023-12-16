@@ -109,11 +109,11 @@ static void WriteBasis(const Matrix_t *basis)
     matSave(basis,name);
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
 static int NextLayer()
 {
-    Matrix_t *echbas;
     int flag = 0;
-    Matrix_t *basi = NULL;
 
     SocDim = 0;
     Matrix_t* bas = matAlloc(ffOrder,Dimension,Dimension);
@@ -121,56 +121,46 @@ static int NextLayer()
 
     for (int j = 0; j < LI.nCf; j++)
     {
-	Matrix_t *sed;
-	int dimendS;
-	Matrix_t *partbas;
-
-        if (LI.Cf[j].peakWord <= 0)
+        if (LI.Cf[j].peakWord == 0)
             mtxAbort(MTX_HERE,"Missing peak word for constituent %d - run pwkond!",j);
 	
-	sed = seed[j];
-	dimendS = LI.Cf[j].spl;
-
-
-	/* determines a basis for the corresponding part in the socle
-	   ---------------------------------------------------------- */
-	if (sed->nor != 0) 
+	// determine a basis for the corresponding part in the socle
+	Matrix_t *partbas;
+	if (seed[j]->nor != 0) 
 	{
-	    partbas = HomogeneousPart(Rep,CfRep[j],sed,OpTableMat[j],dimendS);
+	    const int dimEndoS = LI.Cf[j].spl;
+	    partbas = HomogeneousPart(Rep,CfRep[j],seed[j],OpTableMat[j],dimEndoS);
 	    if (partbas == NULL)
-	    {
 		mtxAbort(MTX_HERE,"The module is too big");
-		return -1;
-	    }
 	}
 	else 
-	    partbas = matDup(sed);
+	    partbas = matDup(seed[j]);
                 
-	/* Append the new basis to the old one.
-	   ------------------------------------ */
+	// Append the new basis to the old one.
 	cfvec[j] = partbas->nor / LI.Cf[j].dim;
 	matCopyRegion(bas,SocDim,0,partbas,0,0,-1,-1);
 	SocDim += partbas->nor;
 	MTX_LOG2("Socle dimension of %s is %d", latCfName(&LI,j), partbas->nor);
+        matFree(partbas);
     }
 
 
-/* ----------------
-   makes the output
-   ---------------- */
+    // makes the output
     ++SocLen;
-    MTX_LOGI("Socle %d: %d =",SocLen,SocDim);
-    flag = 0;
-    for (int j = 0; j < LI.nCf; j++)
-    {
-	if (cfvec[j] <= 0) 
-	    continue;
-	if (flag++ > 0)
-	    MTX_LOGI(" +");
-	if (cfvec[j] == 1)
-	    MTX_LOGI(" %s",latCfName(&LI,j));
-	else
-	    MTX_LOGI(" %d*%s",cfvec[j],latCfName(&LI,j));
+    MTX_XLOGI(msg) {
+       sbPrintf(msg, "Socle %d: %d =",SocLen,SocDim);
+       flag = 0;
+       for (int j = 0; j < LI.nCf; j++)
+       {
+          if (cfvec[j] <= 0) 
+             continue;
+          if (flag++ > 0)
+             sbPrintf(msg," +");
+          if (cfvec[j] == 1)
+             sbPrintf(msg, " %s",latCfName(&LI,j));
+          else
+             sbPrintf(msg, " %d*%s",cfvec[j],latCfName(&LI,j));
+       }
     }
     latAddSocle(&LI,cfvec);
 
@@ -199,11 +189,12 @@ static int NextLayer()
 	    matCopyRegion(basis,basis->nor - SocDim,0,bas,0,0,SocDim,-1);
 	    WriteBasis(basis);
 	}
+        matFree(bas);
         return 1;
     }
 
     // Extend the basis of the socle to a basis of the whole module.
-    echbas = matAlloc(bas->field,bas->noc,bas->noc);
+    Matrix_t* echbas = matAlloc(bas->field,bas->noc,bas->noc);
     matCopyRegion(echbas,0,0,bas,0,0,-1,-1);
     matEchelonize(bas);
     for (uint32_t i = bas->nor; i < bas->noc; ++i)
@@ -216,7 +207,6 @@ static int NextLayer()
 	basis = matDup(bas);
     else
     {
-
 	Matrix_t* mat = matCutRows(basis,basis->nor - Dimension,Dimension);
 	Matrix_t* stgen = matDup(bas);
 	matMul(stgen, mat);
@@ -225,24 +215,19 @@ static int NextLayer()
 	matFree(mat);
     }
 
-/* ------------------------------------------------------
-   exiting when the first MaxLen socles have been calculated
-   ------------------------------------------------------ */
-
+    // exiting when the first MaxLen socles have been calculated
     if (SocLen == MaxLen)
     {
 	WriteBasis(basis);
+        matFree(bas);
 	return 1;
     }
 
-/* --------------------------
-   factorizing with the socle
-   -------------------------- */
+    // factorizing with the socle
 
-    basi = matInverse(bas);
+    Matrix_t* basi = matInverse(bas);
 
-/* the kernels
-   ----------- */
+    // the kernels
     for (int j = 0; j < LI.nCf; j++)
     {
 	Matrix_t *tmp;
@@ -255,8 +240,7 @@ static int NextLayer()
 	matEchelonize(seed[j]);
     }
 
-    /* the generators
-       -------------- */
+    // the generators
     for (int i = 0; i < LI.NGen; i++)
     {
         Matrix_t *stgen = matDup(bas);
@@ -275,30 +259,37 @@ static int NextLayer()
     return 0;
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
+static void cleanup()
+{
+   if (basis != NULL)
+      matFree(basis);
+   wgFree(WGen);
+   for (int i = 0; i < LI.nCf; ++i) {
+      mrFree(CfRep[i]);
+      imatFree(OpTableMat[i]);
+      matFree(seed[i]);
+   }
+   latCleanup(&LI);
+   mrFree(Rep);
+   appFree(App);
+}
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 int main( int argc, char **argv)
 {
     init(argc,argv);
 
-    int rc;
-    while ((rc = NextLayer()) == 0);
-    if (rc < 0)
-    {
-	mtxAbort(MTX_HERE,"Error calculating socle series");
-	return 1;
-    }
+    while (NextLayer() == 0);
 
-    /* Clean up
-       -------- */
     latWriteInfo(&LI);
-    wgFree(WGen);
     if (SocDim != Dimension)
     {
 	MTX_LOGI("Warning: Calculation aborted at dimension %d of %d", SocDim,Dimension);
     }
-    appFree(App);
+    cleanup();
     return 0;
 }
 

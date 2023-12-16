@@ -17,7 +17,7 @@
 /// Create a complex log message (level MTX_LOG_ERROR).
 /// The MTX_XLOG? macros can be used to write complex log messages with minimal overhead if the
 /// message is disabled by the current log threshold. The macro must be followed by a block
-/// statement which has access to a string buffer (see @ref StrBuffer) under the name @a sb.
+/// statement which has access to a string buffer (see @ref StrBuffer_t) under the name @a sb.
 /// Inside the block statement you can use @ref sbAppend, @ref sbPrintf or any other formatting
 /// function that works with a string buffer target. The block will only be executed if the message
 /// is permitted by the current log threshold.
@@ -95,7 +95,7 @@ static int init(int level)
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static void startLine(StrBuffer* sb, int level)
+static void startLine(StrBuffer_t* sb, int level)
 {
    if (fmtHash)
       sbAppend(sb, "#");
@@ -136,11 +136,11 @@ static void startLine(StrBuffer* sb, int level)
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-StrBuffer* logStart(int level)
+StrBuffer_t* logStart(int level)
 {
    if (init(level) != 0)
       return NULL;
-   StrBuffer* sb = sbAlloc(100);
+   StrBuffer_t* sb = sbAlloc(100);
    startLine(sb, level);
    return sb;
 }
@@ -156,7 +156,7 @@ int logEnabled(int level)
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void logBuffered(StrBuffer* buf)
+void logBuffered(StrBuffer_t* buf)
 {
    sbAppend(buf, "\n");
    fwrite(buf->data, 1, buf->size, logFile);
@@ -167,7 +167,7 @@ void logBuffered(StrBuffer* buf)
 
 void logPrintf(int level, const char* msg, ...)
 {
-   StrBuffer* buffer = logStart(level);
+   StrBuffer_t* buffer = logStart(level);
    if (buffer == NULL)
       return;
    va_list args;
@@ -235,11 +235,12 @@ static int setThreshold(const char* begin, const char *end)
 
 static int setFormat(const char* spec)
 {
-   if (*spec == 0 || strcmp(spec, "default") == 0) {
+   if (strcmp(spec, "short") == 0) {
       fmtLevel = 1;
+      fmtThread = 1;
       fmtTime = 0;
    }
-   else if (strcmp(spec, "none") == 0) {
+   else if (*spec == 0 || strcmp(spec, "none") == 0) {
       fmtTime = 0;
       fmtThread = 0;
       fmtLevel = 0;
@@ -249,7 +250,7 @@ static int setFormat(const char* spec)
       fmtThread = 1;
       fmtTime = 1;
    } else {
-      return -1;
+      mtxAbort(MTX_HERE, "Unsupported log format \"%s\"", spec);
    }
    return 0;
 }
@@ -264,15 +265,18 @@ static int setFormat(const char* spec)
 
 void logInit(const char* spec)
 {
+   fmtTime = 0;
+   fmtThread = 0;
+   fmtLevel = 0;
    const char* const sep1 = strchr(spec,':');
-   const char* const sep2 = sep1 ? strchr(sep1 + 1, ':') : NULL;
    if (sep1 == NULL)
       mtxAbort(MTX_HERE, "Invalid log specification (missing ':'): \"%s\"", spec);
    setFile(spec, sep1);
+   const char* const sep2 = sep1 ? strchr(sep1 + 1, ':') : NULL;
    if (setThreshold(sep1 + 1, sep2) != 0) {
       mtxAbort(MTX_HERE, "Invalid log specification (unknown level): \"%s\"", spec);
    }
-   if (setFormat(sep2 ? sep2 + 1 : "default") != 0) {
+   if (setFormat(sep2 ? sep2 + 1 : "none") != 0) {
       mtxAbort(MTX_HERE, "Invalid log specification (unknown format): \"%s\"", spec);
    }
 }

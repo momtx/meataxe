@@ -51,10 +51,7 @@ TstResult Polynomial_Alloc(int q)
       }
    }
    for (i = 0; i < NPOLY; ++i) {
-       ASSERT(polFree(p[i]) == 0);
-   }
-      
-   for (i = 0; i < NPOLY; ++i) {
+       polFree(p[i]);
        ASSERT(!polIsValid(p[i]));
    }
    return 0;

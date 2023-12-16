@@ -45,10 +45,7 @@ Matrix_t *VectorToMatrix(Matrix_t *vecs, int n, int noc)
       return NULL;
    }
    for (i = 0; i < result->nor; ++i) {
-      if (matCopyRegion(result,i,0, vecs,n,i * noc,1,noc) != 0) {
-         mtxAbort(MTX_HERE,"Copy failed");
-	 return NULL;
-      }
+      matCopyRegion(result,i,0, vecs,n,i * noc,1,noc);
    }
    return result;
 }

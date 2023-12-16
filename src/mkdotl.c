@@ -7,44 +7,38 @@
 #include <string.h>
 #include <stdlib.h>
 
-
-/* --------------------------------------------------------------------------
-   Global data
-   -------------------------------------------------------------------------- */
-
-
-MatRep_t *Rep;			/* Generators of the current constituent */
-Matrix_t *cycl = NULL;		/* List of cyclic submodules */
-long *class[MAXCYCL];		/* Classes of vectors */
-uint32_t nmountains = 0;	/* Number of mountains */
-Matrix_t *mountlist[MAXCYCL];	/* Mountains */
-BitString_t *subof[MAXCYCL];	/* Incidence matrix */
-int cfstart[LAT_MAXCF+1];	/* First mountain of each c.f. */
+MatRep_t *Rep;			// Generators of the current constituent
+Matrix_t *cycl = NULL;		// List of cyclic submodules
+long *class[MAXCYCL];		// Classes of vectors
+uint32_t nmountains = 0;	// Number of mountains
+Matrix_t *mountlist[MAXCYCL];	// Mountains
+BitString_t *subof[MAXCYCL];	// Incidence matrix
+int cfstart[LAT_MAXCF+1];	// First mountain of each c.f.
 char lck[MAXCYCL];
 char lck2[MAXCYCL];
-BitString_t *dotl[MAXDOTL];	    /* Dotted lines */
-BitString_t *MaxMountains[MAXDOTL]; /* Maximal mountains in dotted lines */
-int ndotl = 0;			/* Number of dotted-lines in <dotl> */
-int firstdotl = 0;		/* Used for locking */
-int firstm, nextm;		/* First and last+1 mountain for the */
-				/* current constituent */
+BitString_t *dotl[MAXDOTL];	    // Dotted lines
+BitString_t *MaxMountains[MAXDOTL]; // Maximal mountains in dotted lines
+int ndotl = 0;			// Number of dotted-lines in <dotl>
+int firstdotl = 0;		// Used for locking
+int firstm, nextm;		// First and last+1 mountain for the
+				// current constituent
 
+// sumdim[i][j] contains the dimension of mountain[i] + mountain[j].
+// Most of the program's work constists in comparing sums of pairs of
+// mountains and looking if they are equal. Thus, a given sum may be 
+// needed many times. Since we don't keep the sums in memory we have
+// to recalculate them each time. But comparing the dimensions we can 
+// avoid many unnecessary calculations.
 long *sumdim[MAXCYCL];
-    /* sumdim[i][j] contains the dimension of mountain[i] + mountain[j].
-       Most of the program's work constists in comparing sums of pairs of
-       mountains and looking if they are equal. Thus, a given sum may be 
-       needed many times. Since we don't keep the sums in memory we have
-       to recalculate them each time. But comparing the dimensions we can 
-       avoid many unnecessary calculations. */
 
+// This is the length of a dotted line for the current constituent.
+// For theoretical reasions the is always Q+1, where GF(Q) is the
+// splitting field for the constituent.
 int dotlen;
-    /* This is the length of a dotted line for the current constituent.
-       For theoretical reasions the is always Q+1, where GF(Q) is the
-       splitting field for the constituent. */
 
-int opt_G = 0;			    /* GAP output */
-static int Opt_FindDuplicates = 0;  /* Find 'duplicate' dotted-lines */
-static Lat_Info LI;		    /* Data from .cfinfo file */
+static int writeGapOutput = 0;
+static int Opt_FindDuplicates = 0;  // Find 'duplicate' dotted-lines
+static Lat_Info LI;		    // Data from .cfinfo file
 
 
 
@@ -60,7 +54,7 @@ static MtxApplicationInfo_t AppInfo = {
 "OPTIONS\n"
 MTX_COMMON_OPTIONS_DESCRIPTION
 "    -G ...................... GAP output (implies -Q)\n"
-"    --nodup ................. Find, and discard, duplicate dotted lines\n"
+"    --nodup ................. Find and discard duplicate dotted lines\n"
 "\n"
 "FILES\n"
 "    <Name>.cfinfo ........... IO Constituent info file\n"
@@ -72,13 +66,9 @@ MTX_COMMON_OPTIONS_DESCRIPTION
 
 static MtxApplication_t *App = NULL;
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
-
-/* -----------------------------------------------------------------
-   ReadFiles()
-   ----------------------------------------------------------------- */
-
-static void ReadFiles(const char* basename)
+static void readFiles(const char* basename)
 {
    char fn[200];
    int i;
@@ -90,8 +80,7 @@ static void ReadFiles(const char* basename)
       cfstart[i] = cfstart[i - 1] + (int)(LI.Cf[i - 1].nmount);
    }
 
-   /* Read the incidence matrix
-      ------------------------- */
+   // Read the incidence matrix
    sprintf(fn, "%s.inc", LI.BaseName);
    MtxFile_t* f = mfOpen(fn, "rb");
    mfRead32(f, &nmountains, 1);
@@ -110,8 +99,7 @@ static void ReadFiles(const char* basename)
       memset(sumdim[i], 0, (size_t)nmountains * sizeof(long));
    }
 
-   /* Read classes
-      ------------ */
+   // Read classes
    {
       sprintf(fn, "%s.mnt", LI.BaseName);
       MTX_LOGD("Reading classes (%s)", fn);
@@ -137,9 +125,7 @@ static void ReadFiles(const char* basename)
    }
 }
 
-/* -----------------------------------------------------------------
-   mkmount() - Make mountain
-   ----------------------------------------------------------------- */
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 static void mkmount(int i)
 {
@@ -171,59 +157,46 @@ static void mkmount(int i)
 }
 
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
-/* -----------------------------------------------------------------
-   nextcf() - Initialize everything for the next composition
-	factor: Read generators and vectors, calculate mountains...
-   ----------------------------------------------------------------- */
+/// Initialize everything for the next composition factor:
+/// Read generators and vectors, calculate mountains...
 
-static void nextcf(int cf)
-
+static void initCf(int cf)
 {
     char fn[200];
     int j;
 
-    /* Read the generators of the condensed module
-       ------------------------------------------- */
+    // Read the generators of the condensed module
     sprintf(fn,"%s%s.%%dk",LI.BaseName,latCfName(&LI,cf));
     Rep = mrLoad(fn,LI.NGen);
 
-    /* Read generating vectors for the cyclic submodules
-       ------------------------------------------------- */
+    // Read generating vectors for the cyclic submodules
     sprintf(fn,"%s%s.v",LI.BaseName,latCfName(&LI,cf));
     cycl = matLoad(fn);
 
-    /* Calculate the length of dotted-lines. This is always 
-       Q + 1 where Q is the splitting field order.
-       ---------------------------------------------------- */
+    // Calculate the length of dotted-lines. This is always 
+    // Q + 1 where Q is the splitting field order.
     dotlen = ffOrder;
     for (j = LI.Cf[cf].spl - 1; j > 0; --j)
     	dotlen *= ffOrder;
     ++dotlen;
     MTX_LOGD("Length of dotted-lines is %d",dotlen);
 
-    /* Calculate the mountains
-       ----------------------- */
+    // Calculate the mountains
     for (j = cfstart[cf]; j < cfstart[cf+1]; ++j)
 	mkmount(j);
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
-
-/* -----------------------------------------------------------------
-   ----------------------------------------------------------------- */
-
-static void CleanupCf()
-
+static void cleanupCf()
 {
     matFree(cycl);
     mrFree(Rep);
 }
 
-
-/* -----------------------------------------------------------------
-   sum() - Sum of two mountains
-   ----------------------------------------------------------------- */
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 static Matrix_t *sum(int i, int k)
 
@@ -241,21 +214,15 @@ static Matrix_t *sum(int i, int k)
 
     matEchelonize(s);
 
-    /* Remember the dimension of the sum. We use this information 
-       later to avoid unnecessary recalculations.
-       ----------------------------------------------------------- */
+    // Remember the dimension of the sum. We use this information 
+    // later to avoid unnecessary recalculations.
     sumdim[i][k] = sumdim[k][i] = s->nor;
     return s;
 }
 
-
-
-/* -----------------------------------------------------------------
-   lock()
-   ----------------------------------------------------------------- */
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 static void lock(int i, char *c)
-
 {	
     int l, m;
     BitString_t *b;
@@ -279,10 +246,9 @@ static void lock(int i, char *c)
     }
 }
 
-
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 static void FindMaxMountains(Matrix_t *span, BitString_t *bs)
-
 {
     int m;
 
@@ -291,12 +257,12 @@ static void FindMaxMountains(Matrix_t *span, BitString_t *bs)
     {
 	Matrix_t *tmp = matDup(mountlist[m]);
 	matClean(tmp,span);
-	if (tmp->nor == 0)	    /* Mountain is countained in <span> */
+	if (tmp->nor == 0) // Mountain is countained in <span>
 	    bsSet(bs,m);
 	matFree(tmp);
     }
 
-    /* Remove non-maximal mountains */
+    // Remove non-maximal mountains
     for (m = firstm; m < nextm; ++m)
     {
 	int k;
@@ -311,23 +277,17 @@ static void FindMaxMountains(Matrix_t *span, BitString_t *bs)
 }
 
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
-
-/* -----------------------------------------------------------------
-   trydot() - Find out if mountains #i and #k generate a dotted
-	line.
-   ----------------------------------------------------------------- */
+// Find out if mountains #i and #k generate a dotted line.
 
 static void trydot(int i, int k, int beg, int next)
-
 {
     Matrix_t *span, *sp;
-    BitString_t *dot;
     int count, l, m;
 
 /*
      OPTIMIERUNG, FUNKTIONIERT NICHT!
-
     if (i == 1 && k == 13)
 	i = 1;
 
@@ -338,7 +298,7 @@ static void trydot(int i, int k, int beg, int next)
     }
 */
     lock(k,lck2);
-    dot = bsAlloc(nmountains);
+    BitString_t *dot = bsAlloc(nmountains);
     bsSet(dot,i);
     bsSet(dot,k);
     span = sum(i,k);
@@ -402,24 +362,15 @@ static void trydot(int i, int k, int beg, int next)
 	
     }
     else
-	free(dot);
+	bsFree(dot);
     matFree(span);
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
-/* --------------------------------------------------------------------------
-   mkdot() - Find dotted-lines in one constituent
-
-   Arguments:
-     <cf>: Index of the constituent.
-
-   Description:
-     This function finds all dotted-lines corresponding to a given 
-     constituent.
-   -------------------------------------------------------------------------- */
+// Find dotted-lines in one constituent
 
 static void mkdot(int cf)
-
 {
     int i, k;
 
@@ -479,54 +430,52 @@ static void WriteResultGAP()
     printf( "];\n" );
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
-
-
-/* -------------------------------------------------------------------------
-   Init() - Program initialization
-   ------------------------------------------------------------------------- */
-
-static int Init(int argc, char **argv)
+static void init(int argc, char** argv)
 {
-    if ((App = appAlloc(&AppInfo,argc,argv)) == NULL)
-	return -1;
+   App = appAlloc(&AppInfo, argc, argv);
+   writeGapOutput = appGetOption(App, "-G --gap");
+   Opt_FindDuplicates = appGetOption(App, "--nodup");
+   appGetArguments(App, 1, 1);
+   MTX_LOGI("Start mkdotl - Find dotted-lines");
 
-    /* Parse command line
-       ------------------ */
-    opt_G = appGetOption(App,"-G --gap");
-    Opt_FindDuplicates = appGetOption(App,"--nodup");
-    if (appGetArguments(App,1,1) != 1)
-	return -1;
-    MTX_LOGI("\n*** DOTTED LINES ***");
-
-    ReadFiles(App->argV[0]);
-    return 0;
+   readFiles(App->argV[0]);
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
+static void cleanup()
+{
+   latCleanup(&LI);
+   for (int i = 0; i < nmountains; ++i) {
+      matFree(mountlist[i]);
+      bsFree(subof[i]);
+   }
+   for (int i = 0; i < ndotl; ++i) {
+      bsFree(dotl[i]);
+      if (Opt_FindDuplicates) bsFree(MaxMountains[i]);
+   }
+   appFree(App);
+}
 
-/* -----------------------------------------------------------------
-   main()
-   ----------------------------------------------------------------- */
-
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 int main(int argc, char *argv[])
-
 {
     int i, nn = 0;
 
-    if (Init(argc,argv) != 0)
-	return -1;
+    init(argc,argv);
     for (i = 0; i < LI.nCf; ++i)
     {
-	nextcf(i);
+	initCf(i);
 	mkdot(i);
 	LI.Cf[i].ndotl = ndotl - nn;
 	MTX_LOGI("%s%s: %d vectors, %ld mountains, %ld dotted line%s",
 	    LI.BaseName,latCfName(&LI,i),  cycl->nor,LI.Cf[i].nmount,
 	    LI.Cf[i].ndotl, LI.Cf[i].ndotl != 1 ? "s": "");
 	nn = ndotl;
-	CleanupCf();
+	cleanupCf();
     }
 
 /*
@@ -544,9 +493,9 @@ int main(int argc, char *argv[])
     }
 */
     WriteResult();
-    if (opt_G)
+    if (writeGapOutput)
          WriteResultGAP();
-    appFree(App);
+    cleanup();
     return 0;
 }
 

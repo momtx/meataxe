@@ -4,7 +4,7 @@ echo "0106 - ZOR"
 
 testPermutationOrder()
 {
-   output=`zor ${MTX_TEST_DATA_DIR}/$1`
+   output=`zor -Q ${MTX_TEST_DATA_DIR}/$1`
    [ "$output" = "ELEMENT 1 HAS ORDER $2" ] || error "Bad order: ($1)"
 }
 
@@ -13,7 +13,7 @@ testPermutationOrder Perm2 5
 
 testMatrixOrder()
 {
-   output=`zor ${MTX_TEST_DATA_DIR}/$1`
+   output=`zor -Q ${MTX_TEST_DATA_DIR}/$1`
    [ "$output" = "ORDER IS $2" ] || error "Bad order: ($1)"
 }
 

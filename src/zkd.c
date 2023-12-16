@@ -144,83 +144,78 @@ static void init2()
     }
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
-
-int main(int argc, char **argv)
+int main(int argc, char** argv)
 {
-    int orbit;	/* Current orbit */
+   if (Init(argc, argv) != 0) {
+      mtxAbort(MTX_HERE, "Initialization failed");
+      return 1;
+   }
+   if (readdata() != 0) {
+      mtxAbort(MTX_HERE, "Error reading input files");
+      return 1;
+   }
+   if (fieldOrder != 0) {
+      init2();
+      if ((kondfile = mfCreate(kondname, fieldOrder, NOrbits, NOrbits)) == NULL) {
+         return 1;
+      }
+   }
+   else {
+      if ((kondfile = mfCreate(kondname, -8, NOrbits, NOrbits)) == NULL) {
+         return 1;
+      }
+   }
 
-    if (Init(argc,argv) != 0)
-    {
-	mtxAbort(MTX_HERE,"Initialization failed");
-	return 1;
-    }
-    if (readdata() != 0)
-    {
-	mtxAbort(MTX_HERE,"Error reading input files");
-	return 1;
-    }
-    if (fieldOrder != 0)
-    {
-	init2();
-    	if ((kondfile = mfCreate(kondname,fieldOrder,NOrbits,NOrbits)) == NULL)
-	    return 1;
-    }
-    else
-    {
-    	if ((kondfile = mfCreate(kondname,-8,NOrbits,NOrbits)) == NULL)
-	    return 1;
-    }
+   for (int orbit = 0; orbit < NOrbits; ++orbit) {
+      int pt;
 
+      // Clear the output buffer.
+      if (fieldOrder != 0) {
+         ffMulRow(m1, FF_ZERO, NOrbits);
+      }
+      else {
+         memset(RowZ, 0, sizeof(RowZ[0]) * NOrbits);
+      }
 
-    for (orbit = 0; orbit < NOrbits; ++orbit)
-    {
-	int pt;
+      for (pt = 0; pt < Degree; ++pt) {
+         int image_orbit;
+         FEL f;
+         if (orbits->data[pt] != orbit) {
+            // Ignore other orbits
+            continue;
+         }
 
-	/* Clear the output buffer.
-	   ------------------------ */
-	if (fieldOrder != 0) {
-	    ffMulRow(m1,FF_ZERO, NOrbits);
-        }
-	else
-	    memset(RowZ,0,sizeof(RowZ[0]) * NOrbits);
+         // Find out to which orbit <pt> is mapped.
+         image_orbit = orbits->data[Perm->data[pt]];
 
-	for (pt = 0; pt < Degree; ++pt)
-	{
-	    int image_orbit;
-	    FEL f;
-	    if (orbits->data[pt] != orbit)	    /* Ignore other orbits */
-		continue;
+         // Update the condensed row.
+         if (fieldOrder != 0) {
+            f = ffExtract(m1, image_orbit);
+            f = ffAdd(f, ffExtract(hsz, image_orbit));
+            ffInsert(m1, image_orbit, f);
+         }
+         else {
+            RowZ[image_orbit]++;
+         }
+      }
 
-	    /* Find out to which orbit <pt> is mapped.
-	       --------------------------------------- */
-	    image_orbit = orbits->data[Perm->data[pt]];
+      // Write one row to the output file.
+      if (fieldOrder != 0) {
+         ffWriteRows(kondfile, m1, 1, NOrbits);
+      }
+      else {
+         mfWrite32(kondfile, RowZ, NOrbits);
+      }
+   }
 
-	    /* Update the condensed row.
-	       ------------------------- */
-	    if (fieldOrder != 0)
-	    {
-		f = ffExtract(m1,image_orbit);
-		f = ffAdd(f,ffExtract(hsz,image_orbit));
-		ffInsert(m1,image_orbit,f);
-	    }
-	    else
-	    {
-		 RowZ[image_orbit]++;
-	    }
-	}
-
-	/* Write one row to the output file.
-	   --------------------------------- */
-	if (fieldOrder != 0)
-	    ffWriteRows(kondfile,m1,1, NOrbits);
-	else
-	    mfWrite32(kondfile, RowZ, NOrbits);
-    }
-
-    mfClose(kondfile);
-    appFree(App);
-    return 0;
+   mfClose(kondfile);
+   permFree(Perm);
+   imatFree(orbits);
+   imatFree(orbitSizes);
+   appFree(App);
+   return 0;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////

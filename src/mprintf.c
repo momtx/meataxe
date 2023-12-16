@@ -11,19 +11,17 @@
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static const uint32_t TYPEID_STRING_BUFFER = 0x3B628F15LU;
-
 /// @defgroup str String Builder
 /// @{
 /// These functions are used to work with dynamically allocated strings.
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static int sbIsValid(const StrBuffer* sb)
+static int sbIsValid(const StrBuffer_t* sb)
 {
    if (sb == NULL)
       return 0;
-   if (sb->typeId != TYPEID_STRING_BUFFER)
+   if (sb->typeId != MTX_TYPE_STRBUF)
       return 0;
    if (sb->size > sb->capacity)
       return 0;
@@ -34,24 +32,22 @@ static int sbIsValid(const StrBuffer* sb)
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static void sbValidate(const struct MtxSourceLocation* sl, const StrBuffer* sb)
+static void sbValidate(const struct MtxSourceLocation* where, const StrBuffer_t* sb)
 {
    if (!sbIsValid(sb))
-      mtxAbort(sl, "Invalid string builder");
+      mtxAbort(where, "Invalid string builder");
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 /// Allocates a new string builder.
 
-StrBuffer* sbAlloc(size_t initialCapacity)
+StrBuffer_t* sbAlloc(size_t initialCapacity)
 {
-   StrBuffer* sb = ALLOC(StrBuffer);
-   memset(sb, 0, sizeof(*sb));
+   StrBuffer_t* sb = (StrBuffer_t*) mmAlloc(MTX_TYPE_STRBUF, sizeof(StrBuffer_t));
    sb->capacity = initialCapacity;
    sb->data = NALLOC(char, initialCapacity + 1);
    *sb->data = 0;
-   sb->typeId = TYPEID_STRING_BUFFER;
    return sb;
 }
 
@@ -59,12 +55,12 @@ StrBuffer* sbAlloc(size_t initialCapacity)
 
 /// Deletes a string builder and releases all associated memory.
 
-void sbFree(StrBuffer *sb)
+void sbFree(StrBuffer_t *sb)
 {
    sbValidate(MTX_HERE, sb);
    sysFree(sb->data);
-   memset(sb, 0, sizeof(*sb));
-   sysFree(sb);
+   sb->data = NULL;
+   mmFree(sb, MTX_TYPE_STRBUF);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -72,7 +68,7 @@ void sbFree(StrBuffer *sb)
 /// Returns the string builder data.
 /// The returned pointer becomes invalid if the string is modified, for example with @ref sbAppend.
 
-const char* sbData(StrBuffer *sb)
+const char* sbData(StrBuffer_t *sb)
 {
    sbValidate(MTX_HERE, sb);
    char *copy = NALLOC(char, sb->size + 1);
@@ -86,7 +82,7 @@ const char* sbData(StrBuffer *sb)
 /// The returned pointer is dynamically allocated and remains valid after the string builder is
 /// destroyed. The caller must release the string with sysFree() if it no longer needed.
 
-char* sbCopy(StrBuffer* sb)
+char* sbCopy(StrBuffer_t* sb)
 {
    sbValidate(MTX_HERE, sb);
    char* copy = NALLOC(char, sb->size + 1);
@@ -98,7 +94,7 @@ char* sbCopy(StrBuffer* sb)
 
 /// Clears the string builder data. The string builder remains valid.
 
-void sbClear(StrBuffer* sb)
+void sbClear(StrBuffer_t* sb)
 {
    sbValidate(MTX_HERE, sb);
    sb->size = 0;
@@ -112,7 +108,7 @@ void sbClear(StrBuffer* sb)
 /// This is a (slightly more efficient) variant of sbCopy() + sbFree(). Like with @ref sbCopy(), the
 /// caller becomes the owner the returned string and must release it with sysFree().
 
-char* sbToString(StrBuffer* sb)
+char* sbToString(StrBuffer_t* sb)
 {
    char* data = sb->data;
    sb->data = NULL;
@@ -128,7 +124,7 @@ char* sbToString(StrBuffer* sb)
 /// The returned string is managed automatically and must not be release by the caller. 
 /// See @ref strMakeEphemeral.
 
-char* sbToEphemeralString(StrBuffer* sb)
+char* sbToEphemeralString(StrBuffer_t* sb)
 {
    char* data = strMakeEphemeral(sb->data);
    sb->data = NULL;
@@ -142,7 +138,7 @@ char* sbToEphemeralString(StrBuffer* sb)
 
 // Makes sure that at least minFree characters (plus the terminating NUL) can be appended.
 
-static void reserve(StrBuffer* sb, size_t minFree)
+static void reserve(StrBuffer_t* sb, size_t minFree)
 {
    if (sb->size + minFree > sb->capacity) {
       sb->capacity = sb->size + ((minFree < 100) ? 100 : minFree);
@@ -154,7 +150,7 @@ static void reserve(StrBuffer* sb, size_t minFree)
 
 /// Appends a fixed text fragment to the string.
 
-void sbAppend(StrBuffer* sb, const char* fragment)
+void sbAppend(StrBuffer_t* sb, const char* fragment)
 {
    sbValidate(MTX_HERE, sb);
    if (fragment == NULL)
@@ -169,7 +165,7 @@ void sbAppend(StrBuffer* sb, const char* fragment)
 
 /// Appends a formatted string with multiple arguments (vprintf style) to the string.
 
-void sbVprintf(StrBuffer* sb, const char* fmt, va_list args)
+void sbVprintf(StrBuffer_t* sb, const char* fmt, va_list args)
 {
    sbValidate(MTX_HERE, sb);
    reserve(sb, 100);
@@ -192,7 +188,7 @@ void sbVprintf(StrBuffer* sb, const char* fmt, va_list args)
 
 /// Appends a formatted string with multiple arguments (printf style) to the string.
 
-void sbPrintf(StrBuffer* sb, const char* fmt, ...)
+void sbPrintf(StrBuffer_t* sb, const char* fmt, ...)
 {
    va_list args;
    va_start(args, fmt);
@@ -208,7 +204,7 @@ void sbPrintf(StrBuffer* sb, const char* fmt, ...)
 
 char *strVMprintf(const char* s, va_list args)
 {
-   StrBuffer* sb = sbAlloc(100);
+   StrBuffer_t* sb = sbAlloc(100);
    sbVprintf(sb, s, args);
    return sbToString(sb);
 }
@@ -235,7 +231,7 @@ char *strMprintf(const char* s, ...)
 
 char *strVEprintf(const char* s, va_list args)
 {
-   StrBuffer* sb = sbAlloc(100);
+   StrBuffer_t* sb = sbAlloc(100);
    sbVprintf(sb, s, args);
    return sbToEphemeralString(sb);
 }

@@ -48,68 +48,49 @@ MTX_COMMON_OPTIONS_DESCRIPTION
 static MtxApplication_t *App = NULL;
 
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
-/* --------------------------------------------------------------------------
-   Init() - Initialize everything
+// Initialize global variables, processes command line arguments, reads the .cfinfo and .tki files.
 
-   Description:
-     This function initializes global variables, processes command line
-     options and arguments, and reads the .cfinfo and .tki files.
-
-   Arguments:
-     <argc>: Number of arguments
-     <argv>: Command line arguments
-   -------------------------------------------------------------------------- */
-
-static int Init(int argc, char **argv)
-
+static void init(int argc, char **argv)
 {
     int i;
     char fn[LAT_MAXBASENAME+20];
 
-    /* Initialize global data
-       ---------------------- */
+    // Initialize global data
     memset(&TKInfo,0,sizeof(TKInfo));
     memset(TkiName,0,sizeof(TkiName));
     memset(CfIsLinked,0,sizeof(CfIsLinked));
 
-    /* Initialize the MeatAxe library
-       ------------------------------ */
-    if ((App = appAlloc(&AppInfo,argc,argv)) == NULL)
-	return -1;
+    // Initialize the MeatAxe library
+    App = appAlloc(&AppInfo,argc,argv);
     opt_s = appGetOption(App,"-s");
-    if (appGetArguments(App,3,3) != 3)
-	return -1;
+    appGetArguments(App,3,3);
     strcpy(TkiName,App->argV[0]);
 
-    /* Read info files
-       --------------- */
+    // Read info files
     strncpy(TKInfo.nameM,App->argV[1],sizeof(TKInfo.nameM)-1);
     strncpy(TKInfo.nameN,App->argV[2],sizeof(TKInfo.nameN)-1);
     latReadInfo(&InfoM,App->argV[1]);
     latReadInfo(&InfoN,App->argV[2]);
 
-    /* Initialize the TKInfo structure
-       ------------------------------- */
+    // Initialize the TKInfo structure
     TKInfo.nCf = 0;
     for (i = 0; i < LAT_MAXCF; ++i)
 	TKInfo.cfIndex[0][i] = TKInfo.cfIndex[1][i] = -1;
 
-    /* Some additional checks on input files
-       ------------------------------------- */
+    // Some additional checks on input files
     if (InfoM.field != InfoN.field)
     {
 	mtxAbort(MTX_HERE,"Incompatible representations: %s is over GF(%d), "
 	   "%s is over GF(%d)",InfoM.BaseName,InfoM.field,InfoN.BaseName,
 	   InfoN.field);
-	return -1;
     }
     if (InfoM.NGen != InfoN.NGen)
     {
 	mtxAbort(MTX_HERE,"Incompatible representations: %s has %d generators, "
 	   "%s has %d generators",InfoM.BaseName,InfoM.NGen,InfoN.BaseName,
 	   InfoN.NGen);
-	return -1;
     }
 
     /* Print start message
@@ -127,31 +108,23 @@ static int Init(int argc, char **argv)
     mfClose(f);
 
     MTX_LOGI("Beginning pre-condensation of dimension %d x %d = %d\n", nor1,nor2,nor1*nor2);
-    return 0;
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
-
-/* --------------------------------------------------------------------------
-   IsDual() - Find matching constituent
-
-   Description:
-     This function decides if a given contituent of M is dual to a given 
-     contituent of N.
-
-   Arguments:
-     <mj>: Index of constituent of M.
-     <rep_m>: Generators of the constituent of M.
-     <nj>: Index of constituent of N.
-
-   Return:
-     1 = the constituents are dual, 0 = they are not dual.
-   -------------------------------------------------------------------------- */
+// This function decides if a given contituent of M is dual to a given contituent of N.
+//
+// Arguments:
+//     <mj>: Index of constituent of M.
+//     <rep_m>: Generators of the constituent of M.
+//     <nj>: Index of constituent of N.
+//
+// Return:
+//     1 = the constituents are dual, 0 = they are not dual.
 
 static int IsDual(int mj, MatRep_t *rep_m, int nj)
-
 {
-    MatRep_t *rep_n;	    /* Generators of constituent of N */
+    MatRep_t *rep_n; // Generators of constituent of N
     int result;
     CfInfo *minfo = InfoM.Cf + mj;
 
@@ -164,89 +137,68 @@ static int IsDual(int mj, MatRep_t *rep_m, int nj)
        ------------------------------------------------ */
     MTX_LOG2(" (%s%s)",InfoN.BaseName,latCfName(&InfoN,nj));
     rep_n = latReadCfGens(&InfoN,nj,LAT_RG_INVERT|LAT_RG_TRANSPOSE
-	| (InfoN.Cf[nj].peakWord >= 0 ? LAT_RG_STD : 0));
+	| (InfoN.Cf[nj].peakWord > 0 ? LAT_RG_STD : 0));
     
-    result = IsIsomorphic(rep_m,minfo,rep_n,Trans + TKInfo.nCf,
-	minfo->peakWord >= 0);
+    result = IsIsomorphic(rep_m,minfo,rep_n,Trans + TKInfo.nCf, minfo->peakWord > 0);
     mrFree(rep_n);
     return result;
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
-
-
-/* --------------------------------------------------------------------------
-   FindConstituentInN() - Find matching constituent
-
-   Description:
-     This function finds, for a given constituent of M, the corresponding
-     constituent in N (if any exists). The generators in <mgen> are supposed
-     to be in standard basis with respect to the constituent's idword.
-
-   Arguments:
-     <mj>: Index of the constituent of M.
-     <rep_m>: Generators of the constituent of M.
-
-   Return:
-     Index of corresponding constituent of N, or -1 if not found.
-   -------------------------------------------------------------------------- */
+// Find matching constituent
+// This function finds, for a given constituent of M, the corresponding
+// constituent in N (if any exists). The generators in <mgen> are supposed
+// to be in standard basis with respect to the constituent's idword.
+//
+// Arguments:
+//   <mj>: Index of the constituent of M.
+//   <rep_m>: Generators of the constituent of M.
+//
+// Return:
+//   Index of corresponding constituent of N, or -1 if not found.
 
 static int FindConstituentInN(int mj, MatRep_t *rep_m)
-
 {
     int nj;
 
-    /* Main loop: for each constituent of N
-       ------------------------------------ */
+    // Main loop: for each constituent of N
     for (nj = 0; nj < InfoN.nCf; ++nj)
     {
-	/* Discard constituents which are already linked
-	   --------------------------------------------- */
+	// Discard constituents which are already linked
 	if (CfIsLinked[nj])
 	   continue;
 
-	/* Compare with <nj>-th constituent of N
-	   ------------------------------------- */
+	// Compare with <nj>-th constituent of N
 	if (IsDual(mj,rep_m,nj))
 	{
-	    CfIsLinked[nj] = 1;	    /* Mark as linked */
+	    CfIsLinked[nj] = 1;	    // Mark as linked 
 	    return nj;
 	}
     }
 
-    /* Corresponding constituent was not found
-       --------------------------------------- */
+    // Corresponding constituent was not found
     return -1;
 }
 
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
-/* --------------------------------------------------------------------------
-   MkEndo() - Calculate endomorphism ring
+// Calculate a basis for the endomorphism ring of a given irreducible constituent.
+//   <rep>: Generators.
+//   <cf>: Pointer to constituent information.
+//   <endo>: Pointer to an array where the basis of End(V) is stored.
+//   <maxendo>: Maximum number of matrices that can be stored in <endo>.
+//   <basis>: The 'E-basis' is stored here
 
-   Description:
-     This function calculates, for a given irreducible constituent, a
-     basis for the endomoprhism ring.
-
-   Arguments:
-     <rep>: Generators.
-     <cf>: Pointer to constituent information.
-     <endo>: Pointer to an array where the basis of End(V) is stored.
-     <maxendo>: Maximum number of matrices that can be stored in <endo>.
-     <basis>: The 'E-basis' is stored here
-   -------------------------------------------------------------------------- */
-
-static void MkEndo(const MatRep_t *rep, const CfInfo *cf,
-    Matrix_t **endo, int maxendo)
-
+static void MkEndo(const MatRep_t *rep, const CfInfo *cf, Matrix_t **endo, int maxendo)
 {
     Matrix_t *pw, *nsp;
     WgData_t *wg;
 
     MTX_ASSERT(maxendo >= cf->spl);
 
-    /* Make the peak word kernel
-       ------------------------- */
+    // Make the peak word kernel
     wg = wgAlloc(rep);
     pw = wgMakeWord(wg,cf->idWord);
     wgFree(wg);
@@ -254,32 +206,26 @@ static void MkEndo(const MatRep_t *rep, const CfInfo *cf,
     MTX_ASSERT(nsp->nor == cf->spl);
     matFree(pw);
 
-    /* Calculate a basis of the the endomorphism ring
-       ---------------------------------------------- */
+    // Calculate a basis of the the endomorphism ring
     const int i = MakeEndomorphisms(rep,nsp,endo);
     MTX_ASSERT(i == 0);
 
     matFree(nsp);
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
-
-
-/* --------------------------------------------------------------------------
-   MakeQ() - Calculate the Q matrix
-
-   Description:
-     This function calculates the embedding of the condensed tensor product
-     (VxW)e into the tensor product VxW for one irreducible constituent.
-
-   Arguments:
-     <n>: Constituent index.
-     <spl>: Splitting field degree.
-     <endo>: Basis of endomorphism ring.
-   -------------------------------------------------------------------------- */
+// Calculate the Q matrix
+// 
+// This function calculates the embedding of the condensed tensor product
+// (VxW)e into the tensor product VxW for one irreducible constituent.
+// 
+// Arguments:
+//   <n>: Constituent index.
+//   <spl>: Splitting field degree.
+//   <endo>: Basis of endomorphism ring.
 
 static void MakeQ(int n, int spl, const Matrix_t **endo)
-
 {		  
     int i;
     int dim = endo[0]->nor;
@@ -337,7 +283,6 @@ static FEL matProd(Matrix_t *a, Matrix_t *b)
 #define MAXENDO 20
 
 static void MakePQ(int n, int mj, int nj)
-
 {
     MatRep_t *rep_m;
     Matrix_t *estar[MAXENDO], *endo[MAXENDO], *e, *ei;
@@ -347,27 +292,28 @@ static void MakePQ(int n, int mj, int nj)
     int i;
     Matrix_t *p;
 
-    MTX_LOGD("Condensing %s%s x ",InfoM.BaseName,latCfName(&InfoM,mj));
-    MTX_LOGD("%s%s, [E:k]=%d\n",InfoN.BaseName,latCfName(&InfoN,nj),spl);
+    MTX_LOGD("Condensing %s%s x %s%s, [E:k]=%d",
+          InfoM.BaseName,latCfName(&InfoM,mj),
+          InfoN.BaseName,latCfName(&InfoN,nj),spl);
 
     /* Read the generators for the constituent of M and make the
        endomorphism ring.
        --------------------------------------------------------- */
-    rep_m = latReadCfGens(&InfoM,mj,InfoM.Cf[mj].peakWord >= 0 ? LAT_RG_STD : 0);
-    MTX_LOG2("Calculating endomorphism ring\n");
+    rep_m = latReadCfGens(&InfoM,mj,InfoM.Cf[mj].peakWord > 0 ? LAT_RG_STD : 0);
+    MTX_LOG2("Calculating endomorphism ring");
     MkEndo(rep_m,InfoM.Cf + mj,endo,MAXENDO);
     mrFree(rep_m);
 
     /* Calculate the Q matrix
        ---------------------- */
-    MTX_LOG2("Calculating embedding of E\n");
+    MTX_LOG2("Calculating embedding of E");
     MakeQ(n,spl,(const Matrix_t **)endo);
     
     /* Calculate the E* matrices
        Note: We should use the symmetry under i<-->k here!
        --------------------------------------------------- */
-    MTX_LOG2("Calculating projection on E\n");
-    MTX_LOG2("   E* matrices\n");
+    MTX_LOG2("Calculating projection on E");
+    MTX_LOG2("   E* matrices");
     e = matAlloc(ffOrder,spl,spl);
     for (i = 0; i < spl; ++i)
     {
@@ -400,7 +346,7 @@ static void MakePQ(int n, int mj, int nj)
     /* Transpose the E* matrices. This simplifies the 
        calculation of tr(z E*) below.
        ----------------------------------------------- */
-    MTX_LOG2("   Transposing E* matrices\n");
+    MTX_LOG2("   Transposing E* matrices");
     for (i = 0; i < spl; ++i)
     {
 	Matrix_t *x = matTransposed(estar[i]);
@@ -410,7 +356,7 @@ static void MakePQ(int n, int mj, int nj)
 
     /* Calculate the P matrix
        ---------------------- */
-    MTX_LOG2("   P matrix\n");
+    MTX_LOG2("   P matrix");
     p = matAlloc(ffOrder,dim*dim,spl);
     for (i = 0; i < dim; ++i)
     {
@@ -431,7 +377,7 @@ static void MakePQ(int n, int mj, int nj)
     }
 
     sprintf(fn,"%s.p.%d",TkiName,n+1);
-    MTX_LOG2("Writing %s\n",fn);
+    MTX_LOG2("Writing %s",fn);
 #if 0
     if (InfoM.Cf[mj].peakWord < 0)
 	matMulScalar(p,FF_ZERO);
@@ -441,25 +387,18 @@ static void MakePQ(int n, int mj, int nj)
     /* Clean up
        -------- */
     matFree(p);
-    for (i = 0; i < spl; ++i)
+    for (i = 0; i < spl; ++i) {
         matFree(endo[i]);
+        matFree(estar[i]);
+    }
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
-
-
-/* --------------------------------------------------------------------------
-   CalcDim() - Calculate dimension of condensed module
-
-   Description:
-     This function calculates the dimension of the condensed tensor product.
-
-   Remarks:
-     The dimension is stored into <TKInfo.dim>.
-   -------------------------------------------------------------------------- */
+// Calculates the dimension of the condensed tensor product.
+// The dimension is stored into <TKInfo.dim>.
 
 static void CalcDim()
-
 {
     int i;
 
@@ -474,65 +413,57 @@ static void CalcDim()
 }
 
 
-/* --------------------------------------------------------------------------
-   main() - Program entry point
-   -------------------------------------------------------------------------- */
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 int main(int argc, char **argv)
-
 {
     int mj;
 
-    if (Init(argc,argv) != 0)
-    {
-	mtxAbort(MTX_HERE,"Initialization failed");
-	return -1;
-    }
+    init(argc,argv);
 
-    /* Main loop: for all constituents of M
-       ------------------------------------ */
+    // Main loop: for all constituents of M
     for (mj = 0; mj < InfoM.nCf; mj++)
     {
-	MatRep_t *rep_m;	    /* Generators for const. of M */
-	int nj;
-
-	if (InfoM.Cf[mj].peakWord < 0)
+	if (InfoM.Cf[mj].peakWord == 0)
 	{
 	    MTX_LOGI("WARNING: No peak word word available for %s%s\n",
 		InfoM.BaseName,latCfName(&InfoM,mj));
 	}
-	MTX_LOGI("%s%s ",InfoM.BaseName,latCfName(&InfoM,mj));
 
-	/* Read the generators for the <mj>-th contituent of M, and find
-	   the corresponding (=contragredient) constituent in N.
-	   ------------------------------------------------------------- */
-	rep_m = latReadCfGens(&InfoM,mj,InfoM.Cf[mj].peakWord >= 0 ? LAT_RG_STD : 0);
-	nj = FindConstituentInN(mj,rep_m);
+	// Read the generators for the <mj>-th contituent of M, and find
+	// the corresponding (=contragredient) constituent in N.
+	MatRep_t* rep_m = latReadCfGens(&InfoM,mj,InfoM.Cf[mj].peakWord > 0 ? LAT_RG_STD : 0);
+	int nj = FindConstituentInN(mj,rep_m);
 
-	/* Calculate the P and Q matrix for this constituent
-	   ------------------------------------------------- */
+	// Calculate the P and Q matrix for this constituent
 	if (nj >= 0)
 	{
-	    MTX_LOGI(" <--> %s%s\n",InfoN.BaseName, latCfName(&InfoN,nj));
+	    MTX_LOGI("%s%s <--> %s%s",
+                 InfoM.BaseName,latCfName(&InfoM,mj), InfoN.BaseName, latCfName(&InfoN,nj));
 	    TKInfo.cfIndex[0][TKInfo.nCf] = mj;
 	    TKInfo.cfIndex[1][TKInfo.nCf] = nj;
 	    MakePQ(TKInfo.nCf,mj,nj);
 	    TKInfo.nCf++;
 	}
 	else
-	    MTX_LOGI(" not found in %s\n",InfoN.BaseName);
+	   MTX_LOGI("%s%s not found in %s",InfoM.BaseName,latCfName(&InfoM,mj),InfoN.BaseName);
 
-	/* Clean up
-	   -------- */
 	mrFree(rep_m);
     }
 
-    CalcDim();				/* Calculate dimension */
-    tkWriteInfo(&TKInfo,TkiName);	/* Write .tki file */
-    if (App != NULL) appFree(App);
+    CalcDim();
+    tkWriteInfo(&TKInfo,TkiName);
+    for (int i = 0; i < TKInfo.nCf; ++i)
+       matFree(Trans[i]);
+    latCleanup(&InfoM);
+    latCleanup(&InfoN);
+    appFree(App);
     return 0;
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+// *INDENT_OFF*
 
 /**
 @page prog_precond precond - Precondensation of Tensor Products"
@@ -600,6 +531,6 @@ and End<sub>kH</sub>(V), which is used to calculate the projection from
 Hom<sub>k</sub>(V,V) on End<sub>kH</sub>(V).
 
 More details on the algorithm used in Step 2 can be found in @ref Ri98 "[Ri98]".
-
 **/
+
 // vim:fileencoding=utf8:sw=3:ts=8:et:cin

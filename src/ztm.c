@@ -7,12 +7,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-
-/* ------------------------------------------------------------------
-   Variables
-   ------------------------------------------------------------------ */
-
-
 static MtxApplicationInfo_t AppInfo = { 
 "ztm", "Tensor Multiply",
 "SYNTAX\n"
@@ -27,10 +21,12 @@ static MtxApplicationInfo_t AppInfo = {
 "OPTIONS\n"
 MTX_COMMON_OPTIONS_DESCRIPTION
 };
+
 static MtxApplication_t *App = NULL;
 static const char *fileNameA, *fileNameB;	/* Matrices */
 static const char *fileNameVin, *fileNameVout;	/* Vectors, Result */
-static Matrix_t *matrixA=NULL, *matrixB=NULL;	/* Matrices */
+static Matrix_t *matrixB = NULL;        // second matrix
+static Matrix_t *matrixATr = NULL;      // first matrix (transposed)
 static MtxFile_t *fileVin = NULL, 
     *fileVout = NULL;
 static uint32_t nocV = 0;               // Tensor product dimension
@@ -39,18 +35,13 @@ static uint32_t nocV = 0;               // Tensor product dimension
 
 // Convert vector to matrix
 
-static Matrix_t *VecToMat(PTR vec, int fl, int nor, int noc)
-
+static Matrix_t *VecToMat(PTR vec, uint32_t fl, uint32_t nor, uint32_t noc)
 {
-    Matrix_t *mat;
-    PTR d;
-    int i, k;
-
-    mat = matAlloc(fl,nor,noc);
-    d = mat->data;
-    for (i = 0; i < nor; i++) 
+    Matrix_t* mat = matAlloc(fl,nor,noc);
+    PTR d = mat->data;
+    for (uint32_t i = 0; i < nor; i++) 
     {
-        for (k = 0; k < noc; k++) 
+        for (uint32_t k = 0; k < noc; k++) 
             ffInsert(d,k,ffExtract(vec,i*noc+k));
         ffStepPtr(&d, noc);
     }
@@ -84,7 +75,7 @@ static void matToVec(Matrix_t *mat, PTR vec)
 
 static void readMatrices()
 {
-    matrixA = matLoad(fileNameA);
+    Matrix_t* matrixA = matLoad(fileNameA);
     matrixB = matLoad(fileNameB);
     if (matrixA == NULL || matrixB == NULL)
     {
@@ -103,6 +94,8 @@ static void readMatrices()
 	mtxAbort(MTX_HERE,"%s and %s: %s",fileNameA,fileNameB,MTX_ERR_INCOMPAT);
     }
     nocV = matrixA->noc * matrixB->noc;
+    matrixATr = matTransposed(matrixA);
+    matFree(matrixA);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -114,7 +107,7 @@ static void openVectorFiles()
     mfReadHeader(fileVin);
     if (mfObjectType(fileVin) != MTX_TYPE_MATRIX)
 	mtxAbort(MTX_HERE,"%s: %s",fileNameVin,MTX_ERR_NOTMATRIX);
-    if (fileVin->header[0] != matrixA->field || fileVin->header[2] != nocV)
+    if (fileVin->header[0] != matrixATr->field || fileVin->header[2] != nocV)
 	mtxAbort(MTX_HERE,"%s and %s/%s: %s",fileNameVin,fileNameA,fileNameB,MTX_ERR_INCOMPAT);
     
     // Create output file.
@@ -123,69 +116,47 @@ static void openVectorFiles()
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static void init(int argc, char **argv)
+int main(int argc, char** argv)
 {
-    App = appAlloc(&AppInfo,argc,argv);
-    appGetArguments(App,4,4);
-    fileNameVin = App->argV[0];
-    fileNameA = App->argV[1];
-    fileNameB = App->argV[2];
-    fileNameVout = App->argV[3];
-    readMatrices();
-    openVectorFiles();
-}
+   App = appAlloc(&AppInfo, argc, argv);
+   appGetArguments(App, 4, 4);
+   fileNameVin = App->argV[0];
+   fileNameA = App->argV[1];
+   fileNameB = App->argV[2];
+   fileNameVout = App->argV[3];
+   readMatrices();
+   openVectorFiles();
 
-////////////////////////////////////////////////////////////////////////////////////////////////////
+   // Allocate buffer for one vector
+   PTR tmp = ffAlloc(1, nocV);
 
-static void Cleanup()
-{
-   appFree(App);
+   // Process input vectors one by one.
+   for (uint32_t i = 0; i < fileVin->header[1]; ++i) {
+      // Read one vector and convert to matrix.
+      ffReadRows(fileVin, tmp, 1, nocV);
+      Matrix_t* mat3 = VecToMat(tmp, ffOrder, matrixATr->nor, matrixB->nor);
+
+      // Multiply from both sides.
+      Matrix_t* newmat = matDup(matrixATr);
+      matMul(newmat, mat3);
+      matMul(newmat, matrixB);
+
+      // Turn matrix into vector and write out
+      matToVec(newmat, tmp);
+      ffWriteRows(fileVout, tmp, 1, nocV);
+
+      matFree(mat3);
+      matFree(newmat);
+   }
+   sysFree(tmp);
+
    mfClose(fileVout);
    mfClose(fileVin);
+   matFree(matrixATr);
+   matFree(matrixB);
+   appFree(App);
+   return 0;
 }
-
-////////////////////////////////////////////////////////////////////////////////////////////////////
-
-int main(int argc, char **argv)
-{  
-    init(argc,argv);
-
-    // Transpose first matrix 
-    Matrix_t *matrixATr = matTransposed(matrixA);
-    matFree(matrixA);
-
-    // Allocate buffer for one vector
-    PTR tmp = ffAlloc(1, nocV);
-
-    // Process input vectors one by one.
-    for (uint32_t i = 0; i < fileVin->header[1]; ++i)
-    {
-	Matrix_t *mat3, *newmat;
-
-        // Read one vector and convert to matrix.
-        ffReadRows(fileVin,tmp,1, nocV);
-        mat3 = VecToMat(tmp, ffOrder, matrixATr->nor, matrixB->nor);
-       
-        // Multiply from both sides.
-	newmat = matDup(matrixATr);
-	matMul(newmat,mat3);
-	matMul(newmat,matrixB);
-
-        // Turn matrix into vector and write out
-        matToVec(newmat,tmp);
-        ffWriteRows(fileVout,tmp,1, nocV);
-
-        matFree(mat3);
-        matFree(newmat);
-    }
-    sysFree(tmp);
-   
-    Cleanup();
-    return 0;
-}
-
-
-
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 

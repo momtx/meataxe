@@ -10,7 +10,7 @@ static MatRep_t *Rep;           // Generators for the algebra
 static Matrix_t *mountains;     // Genrators for all mountains
 static int nmount;              // Number of mountains
 static int submoduleNumber;     // Number of the submodule to generate
-static BitString_t *bs;         // Bit string read from .sub file
+static BitString_t *bs;         // Corresponding bit string (read from .sub file)
 static int opt_m = 0;           // Option -m used
 static Lat_Info LI;             // Data from .cfinfo file
 static const char *ModuleName = NULL;
@@ -107,12 +107,24 @@ static void sp()
     matEchelonize(m);
     MTX_LOGI("Seed space has dimension %d",m->nor);
     subsp = SpinUp(m,Rep,SF_EACH|SF_COMBINE,NULL,NULL);
+    matFree(m);
     MTX_LOGI("Submodule has dimension %d",subsp->nor);
     sprintf(fn,"%s.%c%d",LI.BaseName,opt_m ? 'm' : 's',submoduleNumber);
     matSave(subsp,fn);
+    matFree(subsp);
     MTX_LOGI("Module written to %s",fn);
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+static void cleanup()
+{
+   bsFree(bs);
+   matFree(mountains);
+   latCleanup(&LI);
+   mrFree(Rep);
+   appFree(App);
+}
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -120,7 +132,7 @@ int main(int argc, char *argv[])
 {
     init(argc, argv);
     sp();
-    appFree(App);
+    cleanup();
     return 0;
 }
 

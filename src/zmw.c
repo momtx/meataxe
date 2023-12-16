@@ -9,14 +9,6 @@
 #include <string.h>
 #include <stdlib.h>
 
-
-
-
-/* ------------------------------------------------------------------
-   Global data
-   ------------------------------------------------------------------ */
-
-
 static int opt_G = 0;
 static int NGen = -1;
 static Matrix_t *Gen[MAXGEN];
@@ -57,42 +49,38 @@ MTX_COMMON_OPTIONS_DESCRIPTION
 
 static MtxApplication_t *App = NULL;
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static int ReadGenerators()
+static void readGenerators()
 {
-    int ngen = NGen == -1 ? 2 : NGen;
-    int i;
-    char fn0[200];
+   int ngen = NGen == -1 ? 2 : NGen;
+   int i;
+   char fn0[200];
 
-    for (i = 0; i < ngen; ++i)
-    {
-	char fn[200];
-	if (NGen != -1)
-	    sprintf(fn,"%s.%d",App->argV[1],i + 1);
-	else
-	    strcpy(fn,App->argV[1 + i]);
-	if ((Gen[i] = matLoad(fn)) == NULL)
-	    return -1;
-	if (i > 0)
-	{
-	    if (Gen[i]->field != Gen[0]->field 
-		|| Gen[i]->nor != Gen[0]->nor || Gen[i]->noc != Gen[0]->noc)
-	    {
-		mtxAbort(MTX_HERE,"%s and %s: %s",App->argV[1],App->argV[i+1],
-		    MTX_ERR_INCOMPAT);
-	    }
-	}
-	else
-	    strcpy(fn0,fn);
-    }
+   for (i = 0; i < ngen; ++i) {
+      char fn[200];
+      if (NGen != -1) {
+         sprintf(fn, "%s.%d", App->argV[1], i + 1);
+      }
+      else {
+         strcpy(fn, App->argV[1 + i]);
+      }
+      Gen[i] = matLoad(fn);
+      if (i > 0) {
+         if (Gen[i]->field != Gen[0]->field
+             || Gen[i]->nor != Gen[0]->nor || Gen[i]->noc != Gen[0]->noc) {
+            mtxAbort(MTX_HERE, "%s and %s: %s", App->argV[1], App->argV[i + 1],
+               MTX_ERR_INCOMPAT);
+         }
+      }
+      else {
+         strcpy(fn0, fn);
+      }
+   }
 
-    NGen = ngen;
-    if ((Rep = mrAlloc(NGen,Gen,0)) == NULL)
-	return -1;
-    if ((WGen = wgAlloc(Rep)) == NULL)
-	return -1;
-
-    return 0;
+   NGen = ngen;
+   Rep = mrAlloc(NGen, Gen, 0);
+   WGen = wgAlloc(Rep);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -106,7 +94,7 @@ static int ReadGenerators()
 //   30/1,-1       30       -1        x-1
 //   30-32/1,1,1   30       31        x^2+x+1
 
-static int ParseWord(const char* spec)
+static int parseWord(const char* spec)
 {
    if (!isdigit(*spec)) {
       return -1;
@@ -174,22 +162,13 @@ static int Init(int argc, char** argv)
 {
    int min_num_args;
 
-   /* Process command line options.
-      ----------------------------- */
    App = appAlloc(&AppInfo, argc, argv);
-   if (App == NULL) {
-      return -1;
-   }
    opt_G = appGetOption(App, "-G --gap");
 //   if (opt_G) { MtxMessageLevel = -100; }
    NGen = appGetIntOption(App, "-g", -1, 1, MAXGEN);
 
-   /* Process arguments.
-      ------------------ */
    min_num_args = (NGen == -1) ? 3 : 2;
-   if (appGetArguments(App, min_num_args, min_num_args + 2) < 0) {
-      return -1;
-   }
+   appGetArguments(App, min_num_args, min_num_args + 2);
    if (App->argC > min_num_args) {
       WordFileName = App->argV[min_num_args];
    }
@@ -197,12 +176,8 @@ static int Init(int argc, char** argv)
       NspFileName = App->argV[min_num_args + 1];
    }
 
-   /* Other initialization.
-      --------------------- */
-   if (ReadGenerators() != 0) {
-      return -1;
-   }
-   if (ParseWord(App->argV[0]) != 0) {
+   readGenerators();
+   if (parseWord(App->argV[0]) != 0) {
       mtxAbort(MTX_HERE, "Invalid word/polynomial specification");
       return -1;
    }
@@ -212,8 +187,10 @@ static int Init(int argc, char** argv)
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static void Cleanup()
+static void cleanup()
 {
+   if (Poly != NULL)
+      polFree(Poly);
     wgFree(WGen);
     mrFree(Rep);
     appFree(App);
@@ -276,7 +253,7 @@ int main(int argc, char **argv)
     if (Init(argc,argv) != 0)
 	return 1;
     int rc = MakeWord();
-    Cleanup();
+    cleanup();
     return rc;
 }
 

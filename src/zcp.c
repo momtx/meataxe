@@ -112,7 +112,7 @@ static void writeP(const Poly_t *pol)
 
 static void writeF(const FPoly_t *fpol)
 { 
-   for (int i = 0; i < fpol->nFactors; ++i) {
+   for (uint32_t i = 0; i < fpol->nFactors; ++i) {
       const Poly_t* const factor = fpol->factor[i];
       const int exp = fpol->mult[i];
 
@@ -165,10 +165,12 @@ int main(int argc, char **argv)
        if (opt_p)
           writeP(poly);
        polFree(poly);
+       charpolFree(state);
     } else if (opt_f) {
        // Full factorization
        FPoly_t* poly = opt_m ? minpol(mat) : charpol(mat);
        writeF(poly);
+       fpFree(poly);
     }
 
     writeEnd();

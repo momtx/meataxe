@@ -45,7 +45,7 @@ TstResult Matrix_Allocation(int q)
       ASSERT(m[i]->noc == noc[i]);
    }
    for (i = 0; i < NMAT; ++i) {
-      ASSERT_EQ_INT(matFree(m[i]), 0);
+      matFree(m[i]);
       ASSERT(!matIsValid(m[i]));
    }
    return 0;
@@ -416,7 +416,7 @@ TstResult Matrix_Copy(int q)
       int dc0 = mtxRandomInt(noc - snoc);
 
       matMulScalar(b,FF_ZERO);
-      ASSERT(matCopyRegion(b,dr0,dc0,a,sr0,sc0,snor,snoc) == 0);
+      matCopyRegion(b,dr0,dc0,a,sr0,sc0,snor,snoc);
       for (int r = 0; r < nor; ++r) {
          for (int c = 0; c < noc; ++c) {
             FEL fb = ffExtract(matGetPtr(b,r),c);
@@ -465,6 +465,8 @@ TstResult Matrix_MultiplyAdd(int q)
          Matrix_t *c = RndMat(ffOrder,nor,noc);
          result |= TestMatAddMul2(nor,noc,a,b,c);
          matFree(a);
+         matFree(b);
+         matFree(c);
       }
    }
    return result;

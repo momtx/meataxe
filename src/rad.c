@@ -154,11 +154,8 @@ static int DualizeConstituents()
 	Matrix_t *word, *word_tr, *sb, *seed;
 
 	WgData_t *wg = wgAlloc(CfRep[j]);
-	if (Info.Cf[j].peakWord <= 0)
-	{
+	if (Info.Cf[j].peakWord == 0)
 	    mtxAbort(MTX_HERE,"No peak word found. Run PWKOND first!");
-	    return -1;
-	}
 	word = wgMakeWord(wg,Info.Cf[j].peakWord);
 	word_tr = matTransposed(word);
 	matFree(word);
@@ -168,10 +165,7 @@ static int DualizeConstituents()
 	OpTable[j] = NULL;
 	sb = SpinUp(seed,CfRep[j],SF_FIRST|SF_CYCLIC|SF_STD,OpTable + j,NULL);
 	if (sb == NULL)
-	{
 	    mtxAbort(MTX_HERE,"Cannot make standard basis");
-	    return -1;
-	}
 	mrChangeBasis(CfRep[j],sb);
 	matFree(sb);
     }

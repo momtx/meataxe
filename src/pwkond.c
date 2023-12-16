@@ -145,9 +145,8 @@ static void AddConstituents(int mod)
    Lat_Info *li = &ModList[mod].Info;
    int i;
    for (i = 0; i < li->nCf; ++i) {
-      MatRep_t *cf;
       char* const fn = strMprintf("%s%s",li->BaseName,latCfName(li,i));
-      cf = mrLoad(fn,li->NGen);
+      MatRep_t* cf = mrLoad(fn,li->NGen);
       sysFree(fn);
       AddConstituent(cf,li->Cf + i,mod,i);
    }
@@ -219,7 +218,7 @@ static void loadModules()
 
       // Clear any existing peak words.
       for (int k = 0; k < ModList[i].Info.nCf; ++k) {
-         ModList[i].Info.Cf[k].peakWord = -1;
+         ModList[i].Info.Cf[k].peakWord = 0;
       }
 
       // Read the generators, set up ss bases and word generators.
@@ -418,8 +417,8 @@ static void WriteOutput(int final)
             const CfInfo * const Cf = ModInfo->Cf + i;
             printf("    # irreducible factor: %s\n", latCfName(ModInfo,i));
 
-            StrBuffer* sb = sbAlloc(100);
-            sbPrintf(sb, "    [ %ld, ", (long) Cf->peakWord);
+            StrBuffer_t* sb = sbAlloc(100);
+            sbPrintf(sb, "    [ %lu, ", (unsigned long) Cf->peakWord);
             gapFormatWord(sb, CfList[i].Wg,Cf->peakWord);
             sbAppend(sb, ", ");
             gapFormatPoly(sb, Cf->peakPol);
@@ -436,20 +435,30 @@ static void WriteOutput(int final)
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
+static void replacePol(Poly_t** ppol, Poly_t* newPol)
+{
+   if (*ppol != NULL)
+      polFree(*ppol);
+   *ppol = newPol;
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
 /// Copies the peak word and polynomial just found to all modules having an appropriate constituent.
 /// Alo prints a nice message showing the peak word and to which constituents it applies.
 
 static void CopyPeakWordToAllModules(struct cf_struct* cf)
 {
    CfInfo * const info = cf->Info;
-   const unsigned long pw = info->peakWord;
+   const uint32_t pw = info->peakWord;
+   MTX_ASSERT(pw > 0);
    const Poly_t* const pp = info->peakPol;
 
    // Copy peak word and peak polynomial to the other modules
    for (size_t k = 1; k < cf->mult; ++k) {
       CfInfo* const other = ModList[cf->CfMap[k][0]].Info.Cf + cf->CfMap[k][1];
       other->peakWord = pw;
-      other->peakPol = polDup(pp);
+      replacePol(&other->peakPol, polDup(pp));
    }
 }
 
@@ -466,14 +475,15 @@ static void CopyPeakWordToAllModules(struct cf_struct* cf)
 
 static void peakWordFound(void* arg)
 {
-   struct cf_struct*cf = (struct cf_struct*)arg;
+   struct cf_struct* cf = (struct cf_struct*)arg;
    CfInfo* const info = cf->Info;
-   const unsigned long pw = info->peakWord;
+   const uint32_t pw = info->peakWord;
 
    MTX_XLOGI(sb) {
-      sbPrintf(sb, "%s peakWord=%ld(%s)", cf->displayName, pw, wgSymbolicName(cf->Wg,pw));
+      sbPrintf(sb, "%s peakWord=%lu(%s)",
+         cf->displayName, (unsigned long) pw, wgSymbolicName(cf->Wg, pw));
       sbPrintf(sb, " peakPol=");
-      polFormat(sb,info->peakPol);
+      polFormat(sb, info->peakPol);
    }
 
    CopyPeakWordToAllModules(cf);
@@ -594,7 +604,7 @@ static void peakWordFound_pex(void* arg)
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static void tryLinear2(long w, FEL f)
+static void tryLinear2(uint32_t w, FEL f)
 {
    int i, ppos = -1;
    long nul;
@@ -638,7 +648,7 @@ static void tryLinear2(long w, FEL f)
       // Compute the peak polynomial (linear case)
       Poly_t *pp = polAlloc(ffOrder,1);
       pp->data[0] = f;
-      cf->Info->peakPol = pp;
+      replacePol(&cf->Info->peakPol, pp);
 
       --PeakWordsMissing;
       pexExecute(NULL, peakWordFound_pex, cf);
@@ -650,7 +660,7 @@ static void tryLinear2(long w, FEL f)
 // For a fixed word W, given by its word number, this function finds all peak words of the form
 // W+λ1 with λ∈F.
 
-static void tryLinear(long w)
+static void tryLinear(uint32_t w)
 {
    for (uint32_t f = 0; f < ffOrder && PeakWordsMissing > 0; ++f)
    {
@@ -660,7 +670,7 @@ static void tryLinear(long w)
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static int tryp2(long w, int cf, Poly_t *pol)
+static int tryp2(uint32_t w, int cf, Poly_t *pol)
 {
    int i;
 
@@ -688,7 +698,7 @@ static int tryp2(long w, int cf, Poly_t *pol)
 // For a fixed word W, given by its word number, this function finds all peak words of the form
 // p(W) where p∈F[x].
 
-static int tryPoly(long w)
+static int tryPoly(uint32_t w)
 {
    int i;
 
@@ -702,8 +712,8 @@ static int tryPoly(long w)
       word = wgMakeWord(CfList[i].Wg,w);
       mp = minpol(word);
       MTX_LOG2("Constituent %d, minpol = %s", i, fpToEphemeralString(mp));
-      int k;
-      for (k = 0; k < (int) mp->nFactors; ++k) {
+      uint32_t k;
+      for (k = 0; k < mp->nFactors; ++k) {
          if (mp->factor[k]->degree * mp->mult[k] == CfList[i].Info->spl) {
             Matrix_t *wp, *wp2;
             long nul;
@@ -725,9 +735,9 @@ static int tryPoly(long w)
          }
       }
 
-      if (k < (int) mp->nFactors) {
+      if (k < mp->nFactors) {
          CfList[i].Info->peakWord = w;
-         CfList[i].Info->peakPol = polDup(mp->factor[k]);
+         replacePol(&CfList[i].Info->peakPol, polDup(mp->factor[k]));
          CfList[i].PWNullSpace = matNullSpace__(matInsert(word,mp->factor[k]));
          --PeakWordsMissing;
          pexExecute(NULL, peakWordFound_pex, CfList + i);
@@ -746,14 +756,14 @@ static int tryPoly(long w)
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static void tryWord(long w)
+static void tryWord(uint32_t w)
 {
    if (isexcluded(w)) {
       return;
    }
    static uint64_t progressTimer = 0;
    if (sysTimeout(&progressTimer, 10))
-      MTX_LOGD("Word %ld",w);
+      MTX_LOGD("Word %lu",(unsigned long) w);
    if (opt_p) {
       tryPoly(w);
    } else {
@@ -763,30 +773,47 @@ static void tryWord(long w)
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
+static void cleanup()
+{
+   for (int i = 0; i < NumMods; ++i) {
+      latCleanup(&ModList[i].Info);
+      wgFree(ModList[i].Wg);
+      mrFree(ModList[i].Rep);
+      if (ModList[i].SsBasis != NULL) matFree(ModList[i].SsBasis);
+   }
+
+   for (int i = 0; i < NumCf; ++i) {
+      wgFree(CfList[i].Wg);
+      mrFree(CfList[i].Gen);
+      CfList[i].Gen = NULL;
+      if (CfList[i].PWNullSpace != NULL) matFree(CfList[i].PWNullSpace);
+   }
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
 int main(int argc, char** argv)
 {
-   int i;
-   long w;
-
    init(argc, argv);
 
    if (ninclude > 0) {
       MTX_LOGD("Trying words from inclusion list");
-      for (i = 0; PeakWordsMissing > 0 && i < ninclude; ++i) {
-         for (w = include[i][0]; w <= include[i][1]; ++w) {
+      for (int i = 0; PeakWordsMissing > 0 && i < ninclude; ++i) {
+         for (uint32_t w = include[i][0]; w <= include[i][1]; ++w) {
             tryWord(w);
          }
       }
    }
-   for (w = 1; PeakWordsMissing > 0; ++w) {
+   for (uint32_t w = 1; PeakWordsMissing > 0; ++w) {
       tryWord(w);
    }
 
    pexWait();
-
    WriteOutput(1);
    pexShutdown();
-   if (App != NULL) { appFree(App); }
+
+   cleanup();
+   appFree(App);
    return 0;
 }
 

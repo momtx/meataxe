@@ -8,7 +8,7 @@
 //   Local data
 
 
-/// @addtogroup mat
+/// @addtogroup algo
 /// @{
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -108,6 +108,6 @@ int StablePower(const Matrix_t *mat, int *pwr, Matrix_t **ker)
    return rc;
 }
 
-
 /// @}
+
 // vim:fileencoding=utf8:sw=3:ts=8:et:cin

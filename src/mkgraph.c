@@ -123,7 +123,7 @@ static void readFile(void)
 	*kp = *lp = -1;
     }
     fclose(f);
-    free(buf);
+    sysFree(buf);
 /*
 printf("max[3] = %d %d %d\n",max[3][0],max[3][1],max[3][2]);
 printf("typ[3] = %d %d %d\n",maxtype[3][0],maxtype[3][1],maxtype[3][2]);

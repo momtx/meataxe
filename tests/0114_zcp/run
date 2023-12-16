@@ -23,12 +23,5 @@ for f in \
    zcp -G ${MTX_TEST_DATA_DIR}/$f >> zcp.log || error "ZCP -G $f failed"
 done
 
-#zcp ${MTX_TEST_DATA_DIR}/ac.1 > zcp.log || error "ZCP failed"
-#zcp -f ${MTX_TEST_DATA_DIR}/ac.1 >> zcp.log || error "ZCP failed"
-#zcp -G ${MTX_TEST_DATA_DIR}/ac.1 >> zcp.log || error "ZCP failed"
-#zcp ${MTX_TEST_DATA_DIR}/ac.2 >> zcp.log || error "ZCP failed"
-#zcp -f ${MTX_TEST_DATA_DIR}/ac.2 >> zcp.log || error "ZCP failed"
-#zcp -G ${MTX_TEST_DATA_DIR}/ac.2 >> zcp.log || error "ZCP failed"
-
 compareWithReference zcp.log
 

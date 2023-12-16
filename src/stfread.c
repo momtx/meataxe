@@ -108,7 +108,31 @@ const char *stfGetName(StfData *f)
     return name;
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
+int stfGetULong(StfData *f, unsigned long *buf)
+{
+    char *c = f->getPtr;
+
+    if (c == NULL)
+	return -1;
+
+    // Skip leading whitespace
+    while (*c != 0 && isspace(*c)) ++c;
+
+    // Parse number */
+    if (!isdigit(*c)) 
+	mtxAbort(MTX_HERE,"Invalid unsigned integer: %.20s",f->getPtr);
+    *buf = 0;
+    while (*c != 0 && isdigit(*c))
+    {
+	*buf = *buf * 10 + (unsigned char) (*c - '0');
+	++c;
+    }
+
+    f->getPtr = c;
+    return 0;
+}
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 /// Read an integer.
@@ -178,6 +202,14 @@ int stfGetInt(StfData *f, int *buf)
     return 0;
 }
 
+
+int stfGetU32(StfData *f, uint32_t *buf)
+{
+   unsigned long value;
+   if (stfGetULong(f, &value) != 0)
+      return -1;
+   return (uint32_t) value;
+}
 
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////

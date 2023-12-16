@@ -198,37 +198,31 @@ static FILE *OpenTableFile(int fl)
    char fn[250];
    FILE *fd;
 
-   /* Try to open the table file
-      -------------------------- */
+   // Try to open the table file
    sprintf(fn,"p%3.3d.zzz",fl);
    if ((fd = sysFopen(fn,"rb::lib:noerror")) != NULL) {
       return fd;
    }
 
-   /* Create the table file.
-      ---------------------- */
+   // Create the table file.
    if (ffMakeTables(fl) != 0) {
       mtxAbort(MTX_HERE,"Unable to build arithmetic tables");
-      return NULL;
    }
-   fd = sysFopen(fn,"rb::lib");
-   return fd;
+   return sysFopen(fn,"rb::lib");
 }
 
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static int ReadTableFile(FILE *fd, int field)
+static void ReadTableFile(FILE *fd, int field)
 {
    uint32_t hdr[5];
 
-   /* Read header, perform some checks
-      -------------------------------- */
+   // Read header, perform some checks
    sysRead32(fd,hdr,5);
    if ((hdr[2] != field) || (hdr[1] < 0) || (hdr[1] > field) ||
        (hdr[0] <= 1) || (hdr[2] % hdr[0] != 0) || (hdr[3] < 1) || (hdr[3] > 8)) {
       mtxAbort(MTX_HERE,"Table file is corrupted");
-      return -1;
    }
    ffChar = hdr[0];
    ffGen = (FEL) hdr[1];
@@ -236,8 +230,6 @@ static int ReadTableFile(FILE *fd, int field)
    if (hdr[4] != (long) MTX_ZZZVERSION) {
       mtxAbort(MTX_HERE,"Bad table file version: expected %d, found %d",
                  (int)MTX_ZZZVERSION,(int)hdr[4]);
-      fclose(fd);
-      return -1;
    }
 
    uint32_t subfields[4];
@@ -263,34 +255,34 @@ static int ReadTableFile(FILE *fd, int field)
    }
 
    ffOrder = field;
-   return 0;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-/// Sets the field order.
-/// This function sets the current field to GF(@em field) and initializes the field arithmetic.
-/// Most kernel functions require that a field has been selected before they are used.
-/// @param field Field order.
-/// @return 0 on success, -1 otherwise.
 
-int ffSetField(int field)
+/// Sets the field order.
+///
+/// This function sets the current field to GF(@em field) and initializes the field arithmetic.
+/// Most kernel functions require that a field has been selected before they are used. Higher level
+/// functions like matXxx() call @c ffSetField internally.
+///
+/// This function is not treadsafe! Programs working with different fields must make sure that
+/// all threads are working with the same field at all times.
+
+void ffSetField(int field)
 {
    FILE *fd;
-   int result;
 
    if ((field == ffOrder) || (field < 2)) {
-      return 0;
+      return;
    }
+   const int context = mtxBegin(MTX_HERE, "Loading arithmetic tables for GF(%d)", field);
    fd = OpenTableFile(field);
    if (fd == NULL) {
       mtxAbort(MTX_HERE,"Cannot open table file for GF(%d)", field);
-      return -1;
    }
-   const int context = mtxBegin(MTX_HERE, "Loading arithmetic tables for GF(%d)", field);
-   result = ReadTableFile(fd,field);
+   ReadTableFile(fd,field);
    mtxEnd(context);
    fclose(fd);
-   return result;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////

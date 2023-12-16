@@ -216,7 +216,7 @@ TstResult Os_IntegerIo()
    uint32_t *buf = NALLOC(uint32_t, 10000);
    int result = TestIntIo1(buf,10000);
    result |= TestIntIo2();
-   free(buf);
+   sysFree(buf);
    return result;
 }
 

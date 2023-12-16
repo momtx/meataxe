@@ -11,13 +11,11 @@
 /// @defgroup charpol Characteristic and Minimal Polynomials
 /// @{
 
-static const uint32_t CHARPOL_MAGIC = 0xb92bbdc5;
-
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void charpolValidate(const struct MtxSourceLocation* src, Charpol_t* cp)
 {
-   if (cp == NULL || cp->typeId != CHARPOL_MAGIC)
+   if (cp == NULL || cp->typeId != MTX_TYPE_CPSTATE)
       mtxAbort(src,"Invalid charpol state");
 }
 
@@ -37,9 +35,7 @@ Charpol_t* charpolStart(const Matrix_t* matrix, enum CharpolMode mode, long seed
    if (matrix->nor != matrix->noc) {
       mtxAbort(MTX_HERE,"%s",MTX_ERR_NOTSQUARE);
    }
-   Charpol_t* state = ALLOC(Charpol_t);
-   
-   state->typeId = CHARPOL_MAGIC;
+   Charpol_t* state = (Charpol_t*)mmAlloc(MTX_TYPE_CPSTATE, sizeof(Charpol_t));
    state->mode = mode;
    state->fl = matrix->field;
    state->vsDim = matrix->nor;
@@ -72,14 +68,16 @@ Charpol_t* charpolStart(const Matrix_t* matrix, enum CharpolMode mode, long seed
 void charpolFree(struct CharpolState* state)
 {
    charpolValidate(MTX_HERE, state);
-   sysFree(state->mat);
-   sysFree(state->A);
-   sysFree(state->B);
+   ffFree(state->mat);
+   ffFree(state->A);
+   ffFree(state->B);
    sysFree(state->piv);
    sysFree(state->ispiv);
-   if (state->partialMinPol != NULL) polFree(state->partialMinPol);
-   memset(state, 0, sizeof(*state));
-   sysFree(state);
+   if (state->partialMinPol != NULL) {
+      polFree(state->partialMinPol);
+      state->partialMinPol = NULL;
+   }
+   mmFree(state, MTX_TYPE_CPSTATE);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -216,8 +214,7 @@ FPoly_t *charpol(const Matrix_t *mat)
    Charpol_t* state = charpolStart(mat, PM_CHARPOL, 0);
 
    FPoly_t *cpol = fpAlloc(mat->field);
-   Poly_t *p;
-   for (p = charpolFactor_(state); p != NULL; p = charpolFactor_(state)) {
+   for (Poly_t* p = charpolFactor_(state); p != NULL; p = charpolFactor_(state)) {
       FPoly_t *factors = Factorization(p);
       polFree(p);
       fpMul(cpol,factors);
@@ -254,17 +251,15 @@ FPoly_t *minpol(const Matrix_t *mat)
 {
    matValidate(MTX_HERE, mat);
    Charpol_t* state = charpolStart(mat, PM_MINPOL, 0);
-   FPoly_t *mp = fpAlloc(mat->field);
-   while (1)
-   {
-      Poly_t* f = charpolFactor_(state);
-      if (f == NULL) break;
-      FPoly_t *ff = Factorization(f);
-      polFree(f);
-      fpMul(mp,ff);
-      fpFree(ff);
+   FPoly_t *mpol = fpAlloc(mat->field);
+   for (Poly_t* p = charpolFactor_(state); p != NULL; p = charpolFactor_(state)) {
+      FPoly_t *factors = Factorization(p);
+      polFree(p);
+      fpMul(mpol,factors);
+      fpFree(factors);
    }
-   return mp;
+   charpolFree(state);
+   return mpol;
 }
 
 /// @}
