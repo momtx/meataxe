@@ -57,7 +57,6 @@ int main(int argc, char *argv[])
     Matrix_t *old, *mat;
     Matrix_t *nulsp;
     WgData_t *rep;
-    Lat_Info mycfinfo;
     IntMatrix_t *OpTable;
     mtxInitLibrary(argv[0]);
     if ((App = appAlloc(&AppInfo,argc,argv)) == NULL)
@@ -66,19 +65,19 @@ int main(int argc, char *argv[])
 	return 1;
 
     /* Read <ref>.cfinfo */
-    latReadInfo(&mycfinfo,App->argV[1]);
+    LatInfo_t* mycfinfo = latLoad(App->argV[1]);
 
     /* Read generators of <mod>, and set up the word generator */
-    gens = mrLoad(App->argV[0],mycfinfo.NGen);
+    gens = mrLoad(App->argV[0],mycfinfo->NGen);
     rep = wgAlloc(gens);
 
     /* Run through all possible constituents and calculate their multiplicity in <mod> */
-    for ( j = 0; j < mycfinfo.nCf; j++ )
+    for ( j = 0; j < mycfinfo->nCf; j++ )
     {
 	int oldnul, newnul;
-        if (mycfinfo.Cf[j].peakWord == 0)
+        if (mycfinfo->Cf[j].peakWord == 0)
 	    mtxAbort(MTX_HERE,"No peak word defined - Did you run mkpeak?");
-        old = matInsert(wgMakeWord(rep,mycfinfo.Cf[j].peakWord),mycfinfo.Cf[j].peakPol);
+        old = matInsert(wgMakeWord(rep,mycfinfo->Cf[j].peakWord),mycfinfo->Cf[j].peakPol);
 	nulsp = matNullSpace(old);
 	newnul = nulsp->nor; 
         oldnul = 0;
@@ -97,24 +96,24 @@ int main(int argc, char *argv[])
             newnul= nulsp->nor;
         }
         matFree(old);
-        mycfinfo.Cf[j].mult = newnul / mycfinfo.Cf[j].spl;
-        dim += mycfinfo.Cf[j].dim * mycfinfo.Cf[j].mult;
+        mycfinfo->Cf[j].mult = newnul / mycfinfo->Cf[j].spl;
+        dim += mycfinfo->Cf[j].dim * mycfinfo->Cf[j].mult;
 
-        MTX_LOGI("%s%s occurs %ld times (total dimension now %d out of %d)\n",
-	    App->argV[1],latCfName(&mycfinfo,j),mycfinfo.Cf[j].mult, dim,gens->Gen[0]->nor);
+        MTX_LOGI("%s%s occurs %d times (total dimension now %d out of %d)\n",
+	    App->argV[1],latCfName(mycfinfo,j),mycfinfo->Cf[j].mult, dim,gens->Gen[0]->nor);
 
 	/* Copy generators, std basis, and .op file for this constituent.
            Note: we do this even if this constituent does not occcur in <mod> */
-        sprintf(name, "%s%s.k", App->argV[0], latCfName(&mycfinfo,j));
+        sprintf(name, "%s%s.k", App->argV[0], latCfName(mycfinfo,j));
         matSave(nulsp,name);
-        sprintf(name, "%s%s.op", App->argV[0], latCfName(&mycfinfo,j));
-        sprintf(name2, "%s%s.op", App->argV[1], latCfName(&mycfinfo,j));
+        sprintf(name, "%s%s.op", App->argV[0], latCfName(mycfinfo,j));
+        sprintf(name2, "%s%s.op", App->argV[1], latCfName(mycfinfo,j));
         OpTable = imatLoad(name2);
         imatSave(OpTable,name);
-        for ( i = 0; i < mycfinfo.NGen; i++ )
+        for ( i = 0; i < mycfinfo->NGen; i++ )
         {
-            sprintf(name, "%s%s.%d", App->argV[0], latCfName(&mycfinfo,j), i+1);
-            sprintf(name2, "%s%s.%d", App->argV[1], latCfName(&mycfinfo,j), i+1);
+            sprintf(name, "%s%s.%d", App->argV[0], latCfName(mycfinfo,j), i+1);
+            sprintf(name2, "%s%s.%d", App->argV[1], latCfName(mycfinfo,j), i+1);
             mat = matLoad(name2);
             if (mat->field != gens->Gen[0]->field)
             {
@@ -123,8 +122,8 @@ int main(int argc, char *argv[])
             }
             matSave(mat, name);
             matFree(mat);
-            sprintf(name, "%s%s.std.%d", App->argV[0], latCfName(&mycfinfo,j), i+1);
-            sprintf(name2, "%s%s.std.%d", App->argV[1], latCfName(&mycfinfo,j), i+1);
+            sprintf(name, "%s%s.std.%d", App->argV[0], latCfName(mycfinfo,j), i+1);
+            sprintf(name2, "%s%s.std.%d", App->argV[1], latCfName(mycfinfo,j), i+1);
             mat = matLoad(name2);
             matSave(mat, name);
             matFree(mat);
@@ -134,8 +133,9 @@ int main(int argc, char *argv[])
         fprintf(stderr, "The given compositionfactors form only %d from whole dimension %d!\n\n",
 		dim, gens->Gen[0]->nor);
 
-    strcpy(mycfinfo.BaseName,App->argV[0]);
-    latWriteInfo(&mycfinfo);
+    strcpy(mycfinfo->BaseName,App->argV[0]);
+    latSave(mycfinfo);
+    latDestroy(mycfinfo);
 
     return 0;	
 }

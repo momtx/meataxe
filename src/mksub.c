@@ -37,7 +37,7 @@ int xndotl = 0;			// Number of dotted lines
 BitString_t *xsubof[MAXCYCL];	// Incidence matrix
 BitString_t *xdotl[MAXDOTL];	// Dotted lines
 long xmdim[MAXCYCL];		// Mountain dimensions
-static Lat_Info LI;		// Data from .cfinfo file
+static LatInfo_t* LI;		// Data from .cfinfo file
 
 
 // Data for current block
@@ -126,11 +126,11 @@ static void init1(const char *basename)
     int i;
     char fn[40];
 
-    latReadInfo(&LI,basename);
+    LI = latLoad(basename);
     
     // Read incidence matrix
     {
-       MtxFile_t* f = mfOpen(strcat(strcpy(fn,LI.BaseName),".inc"),"r");
+       MtxFile_t* f = mfOpen(strcat(strcpy(fn,LI->BaseName),".inc"),"r");
        uint32_t l;
        mfRead32(f, &l, 1);
        xnmount = (int) l;
@@ -158,7 +158,7 @@ static void init1(const char *basename)
 
     // Read dotted lines
     {
-       MtxFile_t* f = mfOpen(strcat(strcpy(fn,LI.BaseName),".dot"),"rb");
+       MtxFile_t* f = mfOpen(strcat(strcpy(fn,LI->BaseName),".dot"),"rb");
        MTX_LOGD("Reading %s: ",fn);
        uint32_t l;
        mfRead32(f,&l,1);
@@ -183,7 +183,7 @@ static void init1(const char *basename)
 
     // Read dimensions
     {
-       FILE* f = sysFopen(strcat(strcpy(fn,LI.BaseName),".mnt"),"r");
+       FILE* f = sysFopen(strcat(strcpy(fn,LI->BaseName),".mnt"),"r");
        MTX_LOGD("Reading %s",fn);
        for (i = 0; i < xnmount; ++i)
        {
@@ -214,7 +214,7 @@ static void init1(const char *basename)
 static int isotype(int mnt)
 {
     int m;
-    for (m = 0; (mnt -= LI.Cf[blockMember[m]].nmount) >= 0; ++m);
+    for (m = 0; (mnt -= LI->Cf[blockMember[m]].nmount) >= 0; ++m);
     return blockMember[m];
 }
 
@@ -305,7 +305,7 @@ void finishBlock()
       }
       else {
          const MaxSubmodule_t* max0 = sub[i]->maxSubmodules;
-         sub[i]->dimension = max0->sub->dimension + LI.Cf[max0->isoType].dim;
+         sub[i]->dimension = max0->sub->dimension + LI->Cf[max0->isoType].dim;
       }
    }
 
@@ -395,7 +395,7 @@ static void extend(BitString_t *x, int i, int nextend)
 
 MtxFile_t* openOutputFile(char* name)
 {
-   char* fn = strEprintf(opt_b ? "%s%s.%d" : "%s%s", LI.BaseName, name, blockNumber);
+   char* fn = strEprintf(opt_b ? "%s%s.%d" : "%s%s", LI->BaseName, name, blockNumber);
    MTX_LOGD("Writing %s", fn);
    return mfOpen(fn, "wb");
 }
@@ -403,7 +403,7 @@ MtxFile_t* openOutputFile(char* name)
 
 FILE* openTextOutputFile(char* name)
 {
-   char* fn = strEprintf(opt_b ? "%s%s.%d" : "%s%s", LI.BaseName, name, blockNumber);
+   char* fn = strEprintf(opt_b ? "%s%s.%d" : "%s%s", LI->BaseName, name, blockNumber);
    MTX_LOGD("Writing %s", fn);
    return sysFopen(fn, "w");
 }
@@ -472,17 +472,17 @@ void writeresult()
    fprintf(f, "Irreducibles:\n");
    fprintf(f, "    Type   Mult   SF   Mountains           Dotted lines\n");
    for (i = 0; i < blockSize; ++i) {
-      sprintf(tmp, "%s", latCfName(&LI, blockMember[i]));
-      fprintf(f, "    %-7s%-7ld%-5ld", tmp, LI.Cf[blockMember[i]].mult,
-         LI.Cf[blockMember[i]].spl);
-      sprintf(tmp, "%ld (%ld-%ld)", LI.Cf[blockMember[i]].nmount,
+      sprintf(tmp, "%s", latCfName(LI, blockMember[i]));
+      fprintf(f, "    %-7s%-7d%-5ld", tmp, LI->Cf[blockMember[i]].mult,
+         LI->Cf[blockMember[i]].spl);
+      sprintf(tmp, "%ld (%ld-%ld)", LI->Cf[blockMember[i]].nmount,
          (long) firstm[blockMember[i]],
-         LI.Cf[blockMember[i]].nmount + firstm[blockMember[i]] - 1);
+         LI->Cf[blockMember[i]].nmount + firstm[blockMember[i]] - 1);
       fprintf(f, "%-20s", tmp);
-      if (LI.Cf[blockMember[i]].ndotl > 0) {
-         sprintf(tmp, "%ld (%ld-%ld)", LI.Cf[blockMember[i]].ndotl,
+      if (LI->Cf[blockMember[i]].ndotl > 0) {
+         sprintf(tmp, "%ld (%ld-%ld)", LI->Cf[blockMember[i]].ndotl,
             (long) firstdl[blockMember[i]],
-            LI.Cf[blockMember[i]].ndotl + firstdl[blockMember[i]] - 1);
+            LI->Cf[blockMember[i]].ndotl + firstdl[blockMember[i]] - 1);
       }
       else {
          sprintf(tmp, "0");
@@ -578,8 +578,8 @@ void writeresult()
       }
       bsClearAll(zero);
       long rdim = 0;
-      for (i = 0, rdim = 0; i < LI.nCf; ++i) {
-         rdim += LI.Cf[i].dim * LI.Cf[i].mult;
+      for (i = 0, rdim = 0; i < LI->nCf; ++i) {
+         rdim += LI->Cf[i].dim * LI->Cf[i].mult;
       }
       for (int layer = 1; bsCompare(rad, zero) != 0; ++layer) {
          MTX_ASSERT(rdim > 0);
@@ -604,15 +604,15 @@ void writeresult()
                extend(x, i, 0);
                k = isotype(i);
                ++mult[k];
-               rdim -= LI.Cf[k].dim;
+               rdim -= LI->Cf[k].dim;
             }
          }
          // TODO: add layer 0 (full module)
          // TODO: output module number for each layer
          fprintf(f, "    Layer %d: Dim=%-4ld  ", layer, rdim);
-         for (i = 0; i < LI.nCf; ++i) {
+         for (i = 0; i < LI->nCf; ++i) {
             for (; mult[i] > 0; --mult[i]) {
-               fprintf(f, "%s ", latCfName(&LI, i));
+               fprintf(f, "%s ", latCfName(LI, i));
             }
          }
          fprintf(f, "\n");
@@ -699,14 +699,14 @@ static int nextblock()
     int i, k;
 
     ++blockNumber;
-    for (i = 0; i < LI.nCf && done[i]; ++i);
-    if (i >= LI.nCf) return 0;
+    for (i = 0; i < LI->nCf && done[i]; ++i);
+    if (i >= LI->nCf) return 0;
 
     // If -b was not used, build a single block containing all irreducibles.
     if (!opt_b)
     {
-	blockSize = LI.nCf;
-	for (i = 0; i < LI.nCf; ++i)
+	blockSize = LI->nCf;
+	for (i = 0; i < LI->nCf; ++i)
 	{
 	    blockMember[i] = i;
 	    done[i] = 1;
@@ -722,7 +722,7 @@ static int nextblock()
     i = 0;
     while (i < blockSize)
     {
-	for (k = 0; k < LI.nCf; ++k)
+	for (k = 0; k < LI->nCf; ++k)
     	    if (!done[k] && sameblock(blockMember[i],k))
     	    {
 	        done[k] = 1;
@@ -747,7 +747,7 @@ static int nextblock()
     MTX_XLOGI(sb) {
        sbPrintf(sb, "Block %d: ",blockNumber);
 	for (i = 0; i < blockSize; ++i)
-	    sbPrintf(sb, " %s%s",LI.BaseName,latCfName(&LI,blockMember[i]));
+	    sbPrintf(sb, " %s%s",LI->BaseName,latCfName(LI,blockMember[i]));
     }
     return 1;
 }
@@ -817,7 +817,7 @@ static void initBlock()
     // Determine the number of mountains in this block
     bnmount = 0;
     for (int i = 0; i < blockSize; ++i)
-	bnmount += LI.Cf[blockMember[i]].nmount;
+	bnmount += LI->Cf[blockMember[i]].nmount;
 
     // Build the incidence matrix
     MTX_LOGI("Building incidence matrix");
@@ -1008,14 +1008,14 @@ static void calculateCfInfo()
     // Set firstm and firstdl
     firstm[0] = 0;
     firstdl[0] = 0;
-    for (i = 0; i < LI.nCf; ++i)
+    for (i = 0; i < LI->nCf; ++i)
     {
-	firstm[i+1] = firstm[i] + LI.Cf[i].nmount;
-	firstdl[i+1] = firstdl[i] + LI.Cf[i].ndotl;
+	firstm[i+1] = firstm[i] + LI->Cf[i].nmount;
+	firstdl[i+1] = firstdl[i] + LI->Cf[i].ndotl;
     }
 
     // Initialize done[]
-    for (i = 0; i < LI.nCf; ++i) done[i] = 0;
+    for (i = 0; i < LI->nCf; ++i) done[i] = 0;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1040,7 +1040,7 @@ static void cleanup()
    for (int i = 0; i < xndotl; ++i) {
       bsFree(xdotl[i]);
    }
-   latCleanup(&LI);
+   latDestroy(LI);
    appFree(App);
 }
 

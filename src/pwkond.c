@@ -13,7 +13,7 @@ int NumMods = 0;                    // Number of modules
 
 /// @private
 static struct module_struct {
-   Lat_Info Info;                   // Data from .cfinfo file
+   LatInfo_t* Info;                // Data from .cfinfo file
    MatRep_t *Rep;                   // Generators
    WgData_t *Wg;                    // Word generators
    Matrix_t *SsBasis;               // Semisimplicity basis
@@ -27,7 +27,7 @@ struct cf_struct {
    MatRep_t *Gen;                   // Generators
    CfInfo *Info;                    // Constituent info
    WgData_t *Wg;                    // Word generators
-   Lat_Info *Mod;                   // Which module does this come from
+   LatInfo_t *Mod;                 // Which module does this come from
    int CfNo;                        // Constituent index within that module
    Matrix_t *PWNullSpace;           // Peak word null space
    int mult;                        // In how many modules does it appear?
@@ -122,7 +122,7 @@ static void AddConstituent(MatRep_t *cf, CfInfo *info, int modno, int cfno)
       CfList[i].Gen = cf;
       CfList[i].Info = info;
       CfList[i].Wg = wgAlloc(cf);
-      CfList[i].Mod = &ModList[modno].Info;
+      CfList[i].Mod = ModList[modno].Info;
       CfList[i].mult = 0;
 
       ++NumCf;
@@ -142,7 +142,7 @@ static void AddConstituent(MatRep_t *cf, CfInfo *info, int modno, int cfno)
 
 static void AddConstituents(int mod)
 {
-   Lat_Info *li = &ModList[mod].Info;
+   LatInfo_t *li = ModList[mod].Info;
    int i;
    for (i = 0; i < li->nCf; ++i) {
       char* const fn = strMprintf("%s%s",li->BaseName,latCfName(li,i));
@@ -179,7 +179,7 @@ static void loadConstituents()
          sbPrintf(sb, "%s is", cf->displayName);
          for (size_t k = 0; k < cf->mult; ++k) {
             struct module_struct *mod = ModList + cf->CfMap[k][0];
-            const Lat_Info* const li = &mod->Info;
+            const LatInfo_t* const li = mod->Info;
             sbPrintf(sb, " %s%s", li->BaseName,latCfName(li,cf->CfMap[k][1]));
          }
       }
@@ -191,8 +191,8 @@ static void loadConstituents()
 
 static void checkCompatibility(int i)
 {
-   const Lat_Info* infoI = &ModList[i].Info;
-   const Lat_Info* info0 = &ModList[0].Info;
+   const LatInfo_t* infoI = ModList[i].Info;
+   const LatInfo_t* info0 = ModList[0].Info;
    if (infoI->NGen != info0->NGen || infoI->field != info0->field) {
       mtxAbort(MTX_HERE,"%s and %s: %s",App->argV[0],App->argV[i], MTX_ERR_INCOMPAT);
    }
@@ -212,18 +212,18 @@ static void loadModules()
 
    // Read the .cfinfo files and load the generators (if needed).
    for (int i = 0; i < NumMods; ++i) {
-      latReadInfo(&ModList[i].Info,App->argV[i]);
-      MTX_LOGI("%s: %d composition factors",App->argV[i],ModList[i].Info.nCf);
+      ModList[i].Info = latLoad(App->argV[i]);
+      MTX_LOGI("%s: %d composition factors",App->argV[i],ModList[i].Info->nCf);
       checkCompatibility(i);
 
       // Clear any existing peak words.
-      for (int k = 0; k < ModList[i].Info.nCf; ++k) {
-         ModList[i].Info.Cf[k].peakWord = 0;
+      for (int k = 0; k < ModList[i].Info->nCf; ++k) {
+         ModList[i].Info->Cf[k].peakWord = 0;
       }
 
       // Read the generators, set up ss bases and word generators.
       if (!opt_n || opt_k || opt_b) {
-         ModList[i].Rep = mrLoad(App->argV[i],ModList[i].Info.NGen);
+         ModList[i].Rep = mrLoad(App->argV[i],ModList[i].Info->NGen);
          ModList[i].Wg = wgAlloc(ModList[i].Rep);
          if (opt_b) {
             int dim = ModList[i].Rep->Gen[0]->nor;
@@ -237,12 +237,18 @@ static void loadModules()
 
 /// Generalized condensation of one matrix.
 
-static void gkond(const Lat_Info *li, int i, Matrix_t *b, Matrix_t *k, Matrix_t *w, const char *name)
+static void gkond(
+   const LatInfo_t* li,
+   int i,
+   Matrix_t* b,
+   Matrix_t* k,
+   Matrix_t* w,
+   const char* name)
 {
    Matrix_t* x1 = matDup(k);
-   matMul(x1,w);
-   Matrix_t *x2 = QProjection(b,x1);
-   char *fn = strMprintf("%s%s.%s",li->BaseName,latCfName(li,i),name);
+   matMul(x1, w);
+   Matrix_t* x2 = QProjection(b, x1);
+   char* fn = strMprintf("%s%s.%s", li->BaseName, latCfName(li, i), name);
    matSave(x2, fn);
    sysFree(fn);
    matFree(x2);
@@ -268,7 +274,7 @@ static void transformToStandardBasis(struct cf_struct* cf)
    // Write the transformed generators and the spin-up script.
    for (int m = 0; m < cf->mult; ++m) {
       char fn[200];
-      Lat_Info *li = &ModList[cf->CfMap[m][0]].Info;
+      LatInfo_t *li = ModList[cf->CfMap[m][0]].Info;
       int i = cf->CfMap[m][1];
       sprintf(fn,"%s%s.op",li->BaseName,latCfName(li,i));
       MTX_LOG2("%s wrote operations to %s", cf->displayName, fn);
@@ -291,7 +297,7 @@ static void transformToStandardBasis(struct cf_struct* cf)
 
 // Find the starting point for a constituent.
 
-static int CfPosition(const Lat_Info *li, int cf)
+static int CfPosition(const LatInfo_t *li, int cf)
 {
    int pos = 0;
    int i;
@@ -309,61 +315,61 @@ static int CfPosition(const Lat_Info *li, int cf)
 
 static void kond(struct cf_struct* cfData, struct module_struct* mod, int cf)
 {
-   const Lat_Info * const li = &mod->Info;
+   const LatInfo_t* const li = mod->Info;
    char fn[LAT_MAXBASENAME + 10];
-   Matrix_t *peakword, *kern, *m, *k, *pw;
+   Matrix_t* peakword, * kern, * m, * k, * pw;
    int j, pwr;
 
    // Make the peak word, find its stable power, and calculate both kernel and image.
-   peakword = wgMakeWord2(mod->Wg,li->Cf[cf].peakWord);
-   matInsert_(peakword,li->Cf[cf].peakPol);
+   peakword = wgMakeWord2(mod->Wg, li->Cf[cf].peakWord);
+   matInsert_(peakword, li->Cf[cf].peakPol);
    pw = matDup(peakword);
-   StablePower_(peakword,&pwr,&kern);
+   StablePower_(peakword, &pwr, &kern);
    MTX_LOGD("%s stablePwr=%d, nul=%lu, mult=%lu, spl=%lu",
-            cfData->displayName,
-            pwr, (unsigned long) kern->nor,
-            (unsigned long) li->Cf[cf].mult, (unsigned long) li->Cf[cf].spl);
+      cfData->displayName,
+      pwr, (unsigned long) kern->nor,
+      (unsigned long) li->Cf[cf].mult, (unsigned long) li->Cf[cf].spl);
 
    if (kern->nor != li->Cf[cf].mult * li->Cf[cf].spl) {
-      mtxAbort(MTX_HERE,"%s Something is wrong here", cfData->displayName);
+      mtxAbort(MTX_HERE, "%s Something is wrong here", cfData->displayName);
    }
    matEchelonize(peakword);
 
    // Write out the image
    if (!opt_n) {
-      sprintf(fn,"%s%s.im",li->BaseName,latCfName(li,cf));
-      matSave(peakword,fn);
+      sprintf(fn, "%s%s.im", li->BaseName, latCfName(li, cf));
+      matSave(peakword, fn);
    }
 
    // Write out the `uncondense matrix'
-   m = QProjection(peakword,kern);
+   m = QProjection(peakword, kern);
    k = matInverse(m);
    matFree(m);
-   matMul(k,kern);
-   sprintf(fn,"%s%s.k",li->BaseName,latCfName(li,cf));
-   matSave(k,fn);
+   matMul(k, kern);
+   sprintf(fn, "%s%s.k", li->BaseName, latCfName(li, cf));
+   matSave(k, fn);
 
    // Condense all generators
    for (j = 0; j < li->NGen; ++j) {
-      sprintf(fn,"%dk",j + 1);
-      gkond(li,cf,peakword,k,mod->Rep->Gen[j],fn);
+      sprintf(fn, "%dk", j + 1);
+      gkond(li, cf, peakword, k, mod->Rep->Gen[j], fn);
    }
 
    // Condense the peak word
-   gkond(li,cf,peakword,k,pw,"np");
+   gkond(li, cf, peakword, k, pw, "np");
 
    // Calculate the semisimplicity basis.
    if (opt_b) {
-      Matrix_t *seed, *partbas;
-      int pos = CfPosition(li,cf);
-      seed = matNullSpace_(pw,0);
-      partbas = SpinUp(seed,mod->Rep,SF_EACH | SF_COMBINE | SF_STD,NULL,NULL);
+      Matrix_t* seed, * partbas;
+      int pos = CfPosition(li, cf);
+      seed = matNullSpace_(pw, 0);
+      partbas = SpinUp(seed, mod->Rep, SF_EACH | SF_COMBINE | SF_STD, NULL, NULL);
       matFree(seed);
 
       if (pos < 0 || pos + partbas->nor > mod->SsBasis->nor) {
-         mtxAbort(MTX_HERE,"Error making basis - '%s' is probably not semisimple", li->BaseName);
+         mtxAbort(MTX_HERE, "Error making basis - '%s' is probably not semisimple", li->BaseName);
       }
-      matCopyRegion(mod->SsBasis,pos,0,partbas,0,0,-1,-1);
+      matCopyRegion(mod->SsBasis, pos, 0, partbas, 0, 0, partbas->nor, partbas->noc);
       matFree(partbas);
    }
    matFree(pw);
@@ -379,7 +385,7 @@ static void condense(struct cf_struct* cf)
    for (int k = 0; k < cf->mult; ++k) {
       struct module_struct* const mod = ModList + cf->CfMap[k][0];
       const int i = cf->CfMap[k][1];
-      MTX_LOGD("%s condensing %s%s", cf->displayName, mod->Info.BaseName, latCfName(&mod->Info,i));
+      MTX_LOGD("%s condensing %s%s", cf->displayName, mod->Info->BaseName, latCfName(mod->Info,i));
       kond(cf, mod, i);
    }
 }
@@ -393,10 +399,10 @@ static void WriteOutput(int final)
 {
    int i;
    for (i = 0; i < NumMods; ++i) {
-      latWriteInfo(&ModList[i].Info);
-      MTX_LOGD("Wrote %s.cfinfo", ModList[i].Info.BaseName);
+      latSave(ModList[i].Info);
+      MTX_LOGD("Wrote %s.cfinfo", ModList[i].Info->BaseName);
       if (opt_b) {
-         char* const fn = strMprintf("%s.ssb",ModList[i].Info.BaseName);
+         char* const fn = strMprintf("%s.ssb",ModList[i].Info->BaseName);
          matSave(ModList[i].SsBasis,fn);
          MTX_LOGD("Wrote %s", fn);
          sysFree(fn);
@@ -411,7 +417,7 @@ static void WriteOutput(int final)
       int m, i;
       printf("MeatAxe.PeakWords := [\n");
       for (m = 0; m < NumMods; ++m) {
-         const Lat_Info * const ModInfo = &ModList[m].Info;
+         const LatInfo_t * const ModInfo = ModList[m].Info;
          printf("# module: %s\n[\n", ModInfo->BaseName);
          for (i = 0; i < ModInfo->nCf; ++i) {
             const CfInfo * const Cf = ModInfo->Cf + i;
@@ -456,7 +462,7 @@ static void CopyPeakWordToAllModules(struct cf_struct* cf)
 
    // Copy peak word and peak polynomial to the other modules
    for (size_t k = 1; k < cf->mult; ++k) {
-      CfInfo* const other = ModList[cf->CfMap[k][0]].Info.Cf + cf->CfMap[k][1];
+      CfInfo* const other = ModList[cf->CfMap[k][0]].Info->Cf + cf->CfMap[k][1];
       other->peakWord = pw;
       replacePol(&other->peakPol, polDup(pp));
    }
@@ -776,7 +782,7 @@ static void tryWord(uint32_t w)
 static void cleanup()
 {
    for (int i = 0; i < NumMods; ++i) {
-      latCleanup(&ModList[i].Info);
+      latDestroy(ModList[i].Info);
       wgFree(ModList[i].Wg);
       mrFree(ModList[i].Rep);
       if (ModList[i].SsBasis != NULL) matFree(ModList[i].SsBasis);

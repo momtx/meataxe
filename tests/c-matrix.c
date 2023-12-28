@@ -358,20 +358,23 @@ TstResult Matrix_Order(int q)
 
 TstResult Matrix_Cut(int q)
 {
-   Matrix_t *a, *b;
-   int anor = 10, anoc = 20;
-   int i;
+   const uint32_t anor = 10;
+   const uint32_t anoc = 20;
+   Matrix_t* a = RndMat(ffOrder,anor,anoc);
 
-   a = RndMat(ffOrder,anor,anoc);
+   {
+      Matrix_t* b = matDupRegion(a,0,0,a->nor, a->noc);
+      ASSERT(matCompare(a,b) == 0);
+      matFree(b);
+   }
 
-   b = matCut(a,0,0,-1,-1);
-   ASSERT(matCompare(a,b) == 0);
-   matFree(b);
-   b = matCutRows(a,0,-1);
-   ASSERT(matCompare(a,b) == 0);
-   matFree(b);
+   {
+      Matrix_t* b = matDupRows(a,0,a->nor);
+      ASSERT(matCompare(a,b) == 0);
+      matFree(b);
+   }
 
-   for (i = 0; i < anor * anoc * 10; ++i) {
+   for (uint32_t i = 0; i < anor * anoc * 10; ++i) {
       int bnor, bnoc;
       int nor0, noc0;
       int r;
@@ -380,7 +383,7 @@ TstResult Matrix_Cut(int q)
       noc0 = mtxRandomInt(anoc);
       bnor = mtxRandomInt(anor - nor0);
       bnoc = mtxRandomInt(anoc - noc0);
-      b = matCut(a,nor0,noc0,bnor,bnoc);
+      Matrix_t* b = matDupRegion(a,nor0,noc0,bnor,bnoc);
       for (r = 0; r < bnor; ++r) {
          int c;
          for (c = 0; c < bnoc; ++c) {
@@ -439,7 +442,7 @@ static int TestMatAddMul2(int nor, int noc, Matrix_t *a, Matrix_t *b, Matrix_t *
 {
    for (int i = 0; i < ffOrder; i += i / 10 + 1) {
       FEL f = ffFromInt(i);
-      matCopyRegion(b,0,0,a,0,0,-1,-1);
+      matCopyRegion(b,0,0,a,0,0,a->nor, a->noc);
       matAddMul(a,c,f);
       for (int r = 0; r < nor; ++r) {
          int co;

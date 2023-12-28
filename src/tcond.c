@@ -11,19 +11,20 @@
 
 
 
-static const char *TkiName;		/* Base name for .tki file */
-static const char *ResultName;		/* Base name for result */
-static TkData_t TKInfo;			/* Data from .tki file */
-static Lat_Info InfoM, InfoN;	        /* Data from .cfinfo files */
-static const char *AName;		/* Left factor */
-static const char *BName;	        /* Right factor */
-static int NGen = 2;			/* No. of generators for A and B */
-static Matrix_t *ssBasisM, *ssBasisN;	/* Semisimplicity basis */
+static const char *TkiName;		// Base name for .tki file
+static const char *ResultName;		// Base name for result
+static TkData_t TKInfo;			// Data from .tki file
+static LatInfo_t* InfoM;	        // Data from .cfinfo files
+static LatInfo_t* InfoN;	        // Data from .cfinfo files
+static const char *AName;		// Left factor
+static const char *BName;	        // Right factor
+static int NGen = 2;			// No. of generators for A and B
+static Matrix_t *ssBasisM, *ssBasisN;	// Semisimplicity basis
 static Matrix_t *SsBasisMi, *SsBasisNi;
-static Matrix_t *Q[LAT_MAXCF];		/* Q matrices (embeddings) */
-static Matrix_t *P[LAT_MAXCF];		/* P matrices (projections) */
-static int WriteGenerators = 0;		/* -t: Write transformed gens of A, B */
-static int NoBasisChange = 0;		/* -n: No basis change */
+static Matrix_t *Q[LAT_MAXCF];		// Q matrices (embeddings)
+static Matrix_t *P[LAT_MAXCF];		// P matrices (projections)
+static int WriteGenerators = 0;		// -t: Write transformed gens of A, B
+static int NoBasisChange = 0;		// -n: No basis change
 
 static MtxApplicationInfo_t AppInfo = { 
 "tcond", "Condense tensor product", 
@@ -120,16 +121,16 @@ static void init(int argc, char** argv)
       mtxEnd(ctx);
    }
 
-   latReadInfo(&InfoM, TKInfo.nameM);
-   latReadInfo(&InfoN, TKInfo.nameN);
+   InfoM = latLoad(TKInfo.nameM);
+   InfoN = latLoad(TKInfo.nameN);
 
    // Some checks on info file data
-   if (InfoM.field != InfoN.field) {
+   if (InfoM->field != InfoN->field) {
       mtxAbort(MTX_HERE, "Different fields in .cfinfo files");
    }
-   if (InfoN.NGen != InfoM.NGen) {
+   if (InfoN->NGen != InfoM->NGen) {
       mtxAbort(MTX_HERE, "Different number of generators in %s and %s",
-         InfoM.BaseName, InfoN.BaseName);
+         InfoM->BaseName, InfoN->BaseName);
    }
 
    // Read the semisimplicity bases.
@@ -156,8 +157,8 @@ static void init(int argc, char** argv)
    // Read P and Q matrices.
    for (i = 0; i < TKInfo.nCf; ++i) {
       int ctx = mtxBegin(MTX_HERE, "HINT: did you run 'precond'?");
-      int spl = InfoM.Cf[TKInfo.cfIndex[0][i]].spl;
-      int tdim = InfoM.Cf[TKInfo.cfIndex[0][i]].dim;
+      int spl = InfoM->Cf[TKInfo.cfIndex[0][i]].spl;
+      int tdim = InfoM->Cf[TKInfo.cfIndex[0][i]].dim;
       int f;
       tdim *= tdim;
       sprintf(fn, "%s.p.%d", TkiName, i + 1);
@@ -175,30 +176,27 @@ static void init(int argc, char** argv)
    }
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
+// Get first row in Q matrix
+//
+// Description:
+//     This function calculates the index of the first row in the Q matrix 
+//     which belongs to a given constituent. The constituent is identified by
+//     it isomorphism type <cf>, and, if the constituent occurs more than once,
+//     an additional index, <k>, running from 0 to $m-1$, where $m$ is the 
+//     multiplicity.
+//     All Indexes are 0-based. 
+//
+// Arguments:
+//     <info>: Pointer to constituent information
+//     <cf>: Constituent index
+//     <k>: Counter for multiple copies of the same constituent.
+//
+// Return:
+//     Index of first row belonging to the constituent.
 
-/* --------------------------------------------------------------------------
-   FirstRow() - Get first row in Q matrix
-
-   Description:
-     This function calculates the index of the first row in the Q matrix 
-     which belongs to a given constituent. The constituent is identified by
-     it isomorphism type <cf>, and, if the constituent occurs more than once,
-     an additional index, <k>, running from 0 to $m-1$, where $m$ is the 
-     multiplicity.
-     All Indexes are 0-based. 
-
-   Arguments:
-     <info>: Pointer to constituent information
-     <cf>: Constituent index
-     <k>: Counter for multiple copies of the same constituent.
-
-   Return:
-     Index of first row belonging to the constituent.
-   -------------------------------------------------------------------------- */
-
-static int FirstRow(Lat_Info *info, int cf, int k)
-
+static int FirstRow(LatInfo_t *info, int cf, int k)
 {
     int ind = 0;
     int i;
@@ -220,59 +218,43 @@ static int FirstRow(Lat_Info *info, int cf, int k)
     return ind;
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
+// the vectors from "q" are mapped under g*e
 
-
-
-
-
-
-/*----------------------------------------------------------------------------*/
-
-static void gemap(Matrix_t *conma, Matrix_t *q, Matrix_t *mrow, Matrix_t *nrow)
-
-  /* the vectors from "q" are mapped under g*e */
-
+static void gemap(Matrix_t* conma, Matrix_t* q, Matrix_t* mrow, Matrix_t* nrow)
 {
-    int j;
-    int bcol = 0;
+   int j;
+   int bcol = 0;
 
+   // For each irreducible constituent I
+   for (j = 0; j < TKInfo.nCf; ++j) {
+      int cfm = TKInfo.cfIndex[0][j];  // Index of constituent in M
+      int cfn = TKInfo.cfIndex[1][j];  // Index of constituent in M
+      int d = InfoM->Cf[cfm].dim;       // Dimension
+      int mj;
 
-    /* For each irreducible constituent I
-       ---------------------------------- */
-    for (j = 0; j < TKInfo.nCf; ++j)
-    {
-	int cfm = TKInfo.cfIndex[0][j];		/* Index of constituent in M */
-	int cfn = TKInfo.cfIndex[1][j];		/* Index of constituent in M */
-	int d = InfoM.Cf[cfm].dim;		/* Dimension */
-	int mj;
-	
-	/* For each copy of I in M
-	   ----------------------- */
-        for (mj = 0; mj < InfoM.Cf[cfm].mult; ++mj)
-        {
-	    long mstart = FirstRow(&InfoM,cfm,mj);
-	    Matrix_t *mop = matCut(mrow,0,mstart,-1,d);
-	    int nj;
+      // For each copy of I in M
+      for (mj = 0; mj < InfoM->Cf[cfm].mult; ++mj) {
+         long mstart = FirstRow(InfoM, cfm, mj);
+         Matrix_t* mop = matDupRegion(mrow, 0, mstart, mrow->nor, d);
+         int nj;
 
-	    /* For each copy of I in N
-	       ----------------------- */
-            for (nj = 0; nj < InfoN.Cf[cfn].mult; nj++)
-            {   
-		long nstart = FirstRow(&InfoN,cfn,nj);
-                Matrix_t *nop = matCut(nrow,0,nstart,-1,d);
-		Matrix_t *image = TensorMap(q,mop,nop);
-                matFree(nop);
-                matMul(image, P[j]);   /* projection */
-		matCopyRegion(conma,0,bcol,image,0,0,-1,-1);
-                matFree(image);
-                bcol += P[j]->noc;
-            }
-	    matFree(mop);
-        }
-    }
+         // For each copy of I in N
+         for (nj = 0; nj < InfoN->Cf[cfn].mult; nj++) {
+            long nstart = FirstRow(InfoN, cfn, nj);
+            Matrix_t* nop = matDupRegion(nrow, 0, nstart, nrow->nor, d);
+            Matrix_t* image = TensorMap(q, mop, nop);
+            matFree(nop);
+            matMul(image, P[j]);       // projection
+            matCopyRegion(conma, 0, bcol, image, 0, 0, image->nor, image->noc);
+            matFree(image);
+            bcol += P[j]->noc;
+         }
+         matFree(mop);
+      }
+   }
 }
-
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -341,25 +323,25 @@ static void condenseMat(int gen)
    for (cf = 0; cf < TKInfo.nCf; ++cf) {
       const int cfm = TKInfo.cfIndex[0][cf];  // Index in M
       const int cfn = TKInfo.cfIndex[1][cf];  // Index in N
-      const int rownb = InfoM.Cf[cfm].dim;    // Number of rows to extract
+      const int rownb = InfoM->Cf[cfm].dim;    // Number of rows to extract
 
-      MTX_LOG2("Processing %s x %s", latCfName(&InfoM, cfm), latCfName(&InfoN, cfn));
+      MTX_LOG2("Processing %s x %s", latCfName(InfoM, cfm), latCfName(InfoN, cfn));
 
-      for (int mi = 0; mi < InfoM.Cf[cfm].mult; ++mi) {
+      for (int mi = 0; mi < InfoM->Cf[cfm].mult; ++mi) {
          Matrix_t* mrow;
          int ni;
-         int firstrow = FirstRow(&InfoM, cfm, mi);
-         mrow = matCutRows(mmat, firstrow, rownb);
+         int firstrow = FirstRow(InfoM, cfm, mi);
+         mrow = matDupRows(mmat, firstrow, rownb);
 
-         for (ni = 0; ni < InfoN.Cf[cfn].mult; ++ni) {
+         for (ni = 0; ni < InfoN->Cf[cfn].mult; ++ni) {
             Matrix_t* nrow, * condmat;
 
-            firstrow = FirstRow(&InfoN, cfn, ni);
-            nrow = matCutRows(nmat, firstrow, rownb);
+            firstrow = FirstRow(InfoN, cfn, ni);
+            nrow = matDupRows(nmat, firstrow, rownb);
             condmat = matAlloc(ffOrder, Q[cf]->nor, TKInfo.dim);
             MTX_LOG2("Processing %s(%d) x %s(%d)",
-               latCfName(&InfoM, cfm), mi,
-               latCfName(&InfoN, cfn), ni);
+               latCfName(InfoM, cfm), mi,
+               latCfName(InfoN, cfn), ni);
             gemap(condmat, Q[cf], mrow, nrow);
 
             /* write result */
@@ -396,8 +378,8 @@ static void cleanup()
       }
    }
    
-   latCleanup(&InfoM);
-   latCleanup(&InfoN);
+   latDestroy(InfoM);
+   latDestroy(InfoN);
     appFree(App);
 }
 

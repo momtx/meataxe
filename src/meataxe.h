@@ -37,6 +37,7 @@ enum MtxObjectType {
    MTX_TYPE_CPSTATE = 0xFFFFFFF5,
    MTX_TYPE_STRBUF = 0xFFFFFFF4,
    MTX_TYPE_FPOLY = 0xFFFFFFF3,
+   MTX_TYPE_LATINFO = 0xFFFFFFF2,
    MTX_TYPE_MATRIX = 0xFFFFFF01,
    MTX_TYPE_BEGIN = 0xFFFFFF00
 };
@@ -525,6 +526,7 @@ long gcd(long a, long b);
 long lcm(long a, long b);
 uint32_t gcd32u(uint32_t a, uint32_t b);
 uint32_t lcm32u(uint32_t a, uint32_t b);
+void hashLittle2(const void* data, size_t len, uint32_t* pc, uint32_t* pb);
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // Structured text files (stfXXX.c)
@@ -582,26 +584,28 @@ typedef struct {
    uint32_t seq;         ///< @private
    uint32_t typeId;      ///< @private
    int field;            ///< Field order.
-   int nor;              ///< Number of rows.
-   int noc;              ///< Number of columns.
+   uint32_t nor;         ///< Number of rows.
+   uint32_t noc;         ///< Number of columns.
    PTR data;             ///< Data, organized as array of rows.
    uint32_t* pivotTable; ///< Pivot table (if matrix is in echelon form).
 } Matrix_t;
 
 Matrix_t* matAdd(Matrix_t* dest, const Matrix_t* src);
 Matrix_t* matAddMul(Matrix_t* dest, const Matrix_t* src, FEL coeff);
-Matrix_t* matAlloc(int field, int nor, int noc);
-int matClean(Matrix_t* mat, const Matrix_t* sub);
+Matrix_t* matAlloc(int field, uint32_t nor, uint32_t noc);
+uint32_t matClean(Matrix_t* mat, const Matrix_t* sub);
 int matCompare(const Matrix_t* a, const Matrix_t* b);
-void matCopyRegion(Matrix_t* dest, int destrow, int destcol,
-                  const Matrix_t* src, int row1, int col1, int nrows, int ncols);
-Matrix_t* matCut(const Matrix_t* src, int row1, int col1, int nrows, int ncols);
-Matrix_t* matCutRows(const Matrix_t* src, int row1, int nrows);
+void matCopyRegion(
+   Matrix_t* dest, uint32_t destrow, uint32_t destcol,
+   const Matrix_t* src, uint32_t row1, uint32_t col1, uint32_t nrows, uint32_t ncols);
 Matrix_t* matDup(const Matrix_t* src);
-int matEchelonize(Matrix_t* mat);
+Matrix_t* matDupRegion(
+   const Matrix_t* src, uint32_t row0, uint32_t col0, uint32_t nrows, uint32_t ncols);
+Matrix_t* matDupRows(const Matrix_t* src, uint32_t row1, uint32_t nrows);
+uint32_t matEchelonize(Matrix_t* mat);
 void matFree(Matrix_t* mat);
-PTR matGetPtr(const Matrix_t* mat, int row);
-Matrix_t* matId(int fl, int nor);
+PTR matGetPtr(const Matrix_t* mat, uint32_t row);
+Matrix_t* matId(int fl, uint32_t nor);
 Matrix_t* matInverse(const Matrix_t* src);
 int matIsValid(const Matrix_t* m);
 Matrix_t* matLoad(const char* fn);
@@ -625,42 +629,6 @@ void matWrite(const Matrix_t* mat, MtxFile_t* file);
 
 /* For internal use only */
 void mat_DeletePivotTable(Matrix_t* mat);
-
-////////////////////////////////////////////////////////////////////////////////////////////////////
-/// Greased matrices
-////////////////////////////////////////////////////////////////////////////////////////////////////
-
-/// Extraction table for greasing.
-/// This  structure is used internally for all greased matrix operations.
-
-typedef struct {
-   long ***tabs;  // tables for different remainders of byte numbers mod grrows
-   int* nrvals;   // number of values produced by each table
-   int nrtabs;    // number of tables used
-} GrExtractionTable_t;
-
-const GrExtractionTable_t* GrGetExtractionTable(int fl,int grrows);
-
-/// A greased matrix.
-
-typedef struct {
-   uint32_t typeId;
-   int field;
-   int nor;
-   int noc;
-   int grRows;                  /* Grease level (# of rows, 0=no grease) */
-   int grBlockSize;             /* Vectors per block (= Field^GrRows) */
-   int numVecs;                 /* Total number of vectors in <PrecalcData> */
-   PTR precalcData;             /* Precalculated data */
-   const GrExtractionTable_t
-   *extrTab;                    /* Extraction table */
-   int MPB;                     /* Number of marks per byte */
-} GreasedMatrix_t;
-
-void GrMapRow(PTR v,GreasedMatrix_t* M, PTR w);
-GreasedMatrix_t* GrMatAlloc(const Matrix_t* m, int gr_rows);
-int GrMatFree(GreasedMatrix_t* mat);
-int GrMatIsValid(const GreasedMatrix_t* mat);
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // Permutations
@@ -1049,7 +1017,7 @@ void gapFormatWord(StrBuffer_t* sb, const WgData_t* b, uint32_t n);
 typedef struct {
    long dim;                    ///< Constituent dimension
    long num;                    ///< Constituent number (per dimension)
-   long mult;                   ///< Multiplicity of the constituent
+   int mult;                    ///< Multiplicity of the constituent
    char name[30];               ///< DimNum, e.g., "20b"
    uint32_t idWord;             ///< Identifying word number
    Poly_t* idPol;               ///< Identifying polynomial
@@ -1062,6 +1030,10 @@ typedef struct {
 CfInfo;
 
 typedef struct {
+   void* next;                          ///< @private
+   void** prev;                         ///< @private
+   uint32_t seq;                        ///< @private
+   uint32_t typeId;                     ///< @private
    char BaseName[LAT_MAXBASENAME];      ///< Base name
    int field;                           ///< Field order
    int NGen;                            ///< Number of generators
@@ -1071,20 +1043,21 @@ typedef struct {
    int* Socle;                          ///< Mult. of constituents in socles
    int NHeads;                          ///< Number of radical layers
    int* Head;                           ///< Mult. of constituents in Heads
-} Lat_Info;
+} LatInfo_t;
 
-int latAddHead(Lat_Info* li, int* mult);
-int latAddSocle(Lat_Info* li, int* mult);
-const char* latCfName(const Lat_Info* li, int cf);
-void latCleanup(Lat_Info* li);
-void latReadInfo(Lat_Info* li, const char* basename);
-void latWriteInfo(const Lat_Info* li);
+LatInfo_t* latCreate(const char* baseName);
+int latAddHead(LatInfo_t* li, int* mult);
+int latAddSocle(LatInfo_t* li, int* mult);
+const char* latCfName(const LatInfo_t* li, int cf);
+void latDestroy(LatInfo_t* li);
+LatInfo_t* latLoad(const char* basename);
+void latSave(const LatInfo_t* li);
 
 #define LAT_RG_INVERT           0x0001  // Invert generators
 #define LAT_RG_TRANSPOSE        0x0002  // Transpose generators
 #define LAT_RG_STD              0x0004  // Use standard form
 
-MatRep_t* latReadCfGens(Lat_Info* info, int cf, int flags);
+MatRep_t* latReadCfGens(LatInfo_t* info, int cf, int flags);
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // Tensor condensation package
@@ -1151,10 +1124,6 @@ LdLattice_t* ldAlloc(int num_nodes);
 int ldFree(LdLattice_t* l);
 int ldAddIncidence(LdLattice_t* lat, int sub, int sup);
 int ldSetPositions(LdLattice_t* l);
-
-////////////////////////////////////////////////////////////////////////////////////////////////////
-
-void hashLittle2(const void* data, size_t len, uint32_t* pc, uint32_t* pb);
 
 #endif  // !defined(_MEATAXE_H_)
 

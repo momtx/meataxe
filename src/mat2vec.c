@@ -25,24 +25,24 @@
 /// @param n Row number where the vector is stored.
 /// @return 0 on success, -1 on error.
 
-int MatrixToVector(const Matrix_t *mat, Matrix_t *vecs, int n)
+int MatrixToVector(const Matrix_t* mat, Matrix_t* vecs, int n)
 {
    int i;
    matValidate(MTX_HERE, mat);
    matValidate(MTX_HERE, vecs);
    if ((mat->nor * mat->noc != vecs->noc)
        || (mat->field != vecs->field)) {
-      mtxAbort(MTX_HERE,"mat and vecs: %s",MTX_ERR_INCOMPAT);
+      mtxAbort(MTX_HERE, "mat and vecs: %s", MTX_ERR_INCOMPAT);
       return -1;
    }
    if ((n < 0) || (n >= vecs->nor)) {
-      mtxAbort(MTX_HERE,"n=%d (nor=%d): %s",n,vecs->nor,MTX_ERR_BADARG);
+      mtxAbort(MTX_HERE, "n=%d (nor=%lu): %s", n, (unsigned long)vecs->nor, MTX_ERR_BADARG);
       return -1;
    }
 
    // Convert the matrix.
    for (i = 0; i < mat->nor; ++i) {
-      matCopyRegion(vecs,n,i * mat->noc, mat,i,0,1,mat->noc);
+      matCopyRegion(vecs, n, i * mat->noc, mat, i, 0, 1, mat->noc);
    }
 
    return 0;

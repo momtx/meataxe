@@ -4,83 +4,51 @@
 
 #include "meataxe.h"
 
-////////////////////////////////////////////////////////////////////////////////////////////////////
-// Local data
-
-
 /// @addtogroup mat
 /// @{
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-/// Cut a rectangle out of a matrix.
-/// This function creates a new matrix containing a copy of a rectangular region of the
-/// source matrix. The region, defined by @em row1, @em col1, @em nrows and @em ncols,
-/// must not exceed the matrix. However, both @em nrows and @em ncols may be -1. In this
-/// case the region extends up to the last row or last column, respectivly. For example,
-/// to extract the first 10 rows from a matrix independently of the number of columns,
-/// you could say
-/// @code
-/// matCut(mat,0,0,10,-1)
-/// @endcode
-/// @see MatCopyRegion MatCutRows
+
+/// Extracts a rectangular part of a matrix.
 ///
-/// @param src Pointer to the matrix.
-/// @param row1 First row in region.
-/// @param col1 First column in region.
-/// @param nrows Number of rows to cut. -1 means as many rows as possible.
-/// @param ncols Number of columns to cut. -1 means as many columns as possible.
+/// This function creates a new matrix containing a copy of a rectangular region of the source
+/// matrix. The region must not exceed the matrix boundaries.
+///
+/// See also @ref matDupRows.
+///
+/// @param src Pointer to the source matrix.
+/// @param row0 First row in region.
+/// @param col0 First column in region.
+/// @param nrows Number of rows to extract.
+/// @param ncols Number of columns to extract.
 /// @return Pointer to a new matrix containing the specified region, or NULL on error.
 
-Matrix_t *matCut(const Matrix_t *src, int row1, int col1, int nrows, int ncols)
+Matrix_t* matDupRegion(
+   const Matrix_t* src, uint32_t row0, uint32_t col0, uint32_t nrows, uint32_t ncols)
 {
-   Matrix_t *result;
-   PTR s, d;
-   int n;
-
-   /* Check arguments
-      --------------- */
    matValidate(MTX_HERE, src);
-   if (nrows == -1) {
-      nrows = src->nor - row1;
+   if (row0 + nrows > src->nor) {
+      mtxAbort(MTX_HERE, "Source row index out of bounds");
    }
-   if (ncols == -1) {
-      ncols = src->noc - col1;
-   }
-   if ((row1 < 0) || (nrows < 0) || (row1 + nrows > src->nor)) {
-      mtxAbort(MTX_HERE,"Source row index out of bounds");
-      return NULL;
-   }
-   if ((col1 < 0) || (ncols < 0) || (col1 + ncols > src->noc)) {
-      mtxAbort(MTX_HERE,"Source column index out of bounds");
-      return NULL;
+   if (col0 + ncols > src->noc) {
+      mtxAbort(MTX_HERE, "Source column index out of bounds");
    }
 
-   /* Allocate a new matrix for the result
-      ------------------------------------ */
-   result = matAlloc(src->field,nrows,ncols);
-   if (result == NULL) {
-      return NULL;
-   }
-   if (nrows == 0) {
+   Matrix_t* result = matAlloc(src->field, nrows, ncols);
+   if (nrows == 0 || ncols == 0) {
       return result;
    }
 
-   /* Initialize pointers to the source and destination matrix
-      -------------------------------------------------------- */
-   s = matGetPtr(src,row1);
-   if (s == NULL) {
-      return NULL;
-   }
-   d = result->data;
-
-   /* Copy the requested data
-      ----------------------- */
-   for (n = nrows; n > 0; --n) {
-      if (col1 == 0) {
-         ffCopyRow(d,s, ncols);
-      } else {
-         for (int k = 0; k < ncols; ++k) {
-            ffInsert(d,k,ffExtract(s,col1 + k));
+   // Copy the requested region
+   PTR s = matGetPtr(src, row0);
+   PTR d = result->data;
+   for (uint32_t n = nrows; n > 0; --n) {
+      if (col0 == 0) {
+         ffCopyRow(d, s, ncols);
+      }
+      else {
+         for (uint32_t k = 0; k < ncols; ++k) {
+            ffInsert(d, k, ffExtract(s, col0 + k));
          }
       }
       ffStepPtr(&d, ncols);
@@ -90,21 +58,23 @@ Matrix_t *matCut(const Matrix_t *src, int row1, int col1, int nrows, int ncols)
    return result;
 }
 
-
 ////////////////////////////////////////////////////////////////////////////////////////////////////
+
 /// Copy a range of rows of a matrix.
-/// This function creates a new matrix containing a range of consecutive rows of
-/// the source matrix. The range must now exceed the matrix's dimensions. However,
-/// @em nrows may be given as -1, meaning "up to the last row".
-/// @see MatCopyRegion MatCutRows
-/// @param src Pointer to the matrix.
-/// @param row1 First row in region.
-/// @param nrows Number of rows to cut. -1 means as many rows as possible.
+///
+/// This function creates a new matrix containing a range of consecutive rows of the source matrix.
+/// The range must now exceed the matrix's dimensions.
+///
+/// See also @ref matDupRegion
+///
+/// @param src Pointer to the source matrix.
+/// @param row0 First row in region.
+/// @param nrows Number of rows to cut.
 /// @return A new matrix containing the specified rows of @em src, or 0 on error.
 
-Matrix_t *matCutRows(const Matrix_t *src, int row1, int nrows)
+Matrix_t *matDupRows(const Matrix_t *src, uint32_t row0, uint32_t nrows)
 {
-   return matCut(src,row1,0,nrows,-1);
+   return matDupRegion(src, row0, 0, nrows, src->noc);
 }
 
 

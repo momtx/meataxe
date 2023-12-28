@@ -24,7 +24,7 @@
 /// @return Pointer to a matrix representation of the specified constituent,
 /// or 0 on error.
 
-MatRep_t *latReadCfGens(Lat_Info *info, int cf, int flags)
+MatRep_t *latReadCfGens(LatInfo_t *info, int cf, int flags)
 {
     MatRep_t *rep;
     char fn[sizeof(info->BaseName) + 20];

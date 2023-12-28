@@ -401,7 +401,6 @@ multiplication.
 - @ref mf
 - @ref mrep
 - @ref imat
-- @ref matset
 
 # Layer 3 - Algorithms
 This layer provides more complex operations which typically involve

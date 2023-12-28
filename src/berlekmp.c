@@ -115,53 +115,59 @@ static factor_t *factorSquarefree(const Poly_t *pol)
 
 // Determines the matrix of the frobenius and returns its nullspace.
 
-static Matrix_t *makekernel(const Poly_t *pol)
+static Matrix_t* makekernel(const Poly_t* pol)
 {
-    FEL* const pbuf = pol->data;
-    const long pdeg = pol->degree;
-    int k, xshift;
-    const long fl = pol->field;
-    Matrix_t* materg = matAlloc(fl,pdeg,pdeg);
-    PTR rowptr = materg->data;
-    MTX_LOG2("makekernel: fl=%ld pdeg=%ld", fl, pdeg);
+   FEL* const pbuf = pol->data;
+   MTX_ASSERT(pol->degree >= 0);
+   const uint32_t pdeg = pol->degree;
+   int k, xshift;
+   const long fl = pol->field;
+   Matrix_t* materg = matAlloc(fl, pdeg, pdeg);
+   PTR rowptr = materg->data;
+   MTX_LOG2("makekernel: fl=%ld pdeg=%lu", fl, (unsigned long) pdeg);
 
-    FEL* xbuf = NALLOC(FEL,pdeg+1);
-    for (k = 0; k <= pdeg; ++k) 
-	xbuf[k] = FF_ZERO;
-    xbuf[0] = FF_ONE;
+   FEL* xbuf = NALLOC(FEL, pdeg + 1);
+   for (k = 0; k <= pdeg; ++k) {
+      xbuf[k] = FF_ZERO;
+   }
+   xbuf[0] = FF_ONE;
 
-    for (k = 0; k < pdeg; ++k)
-    {
-	int l;
-	for (l = 0; l < pdeg; ++l) 
-	    ffInsert(rowptr,l,xbuf[l]);
-	ffInsert(rowptr,k,ffSub(xbuf[k],FF_ONE));
-	ffStepPtr(&rowptr, pdeg);
-        for (xshift = (int) fl; xshift > 0; )
-	{
-	    FEL f;
-	    int d;
+   for (k = 0; k < pdeg; ++k) {
+      int l;
+      for (l = 0; l < pdeg; ++l) {
+         ffInsert(rowptr, l, xbuf[l]);
+      }
+      ffInsert(rowptr, k, ffSub(xbuf[k], FF_ONE));
+      ffStepPtr(&rowptr, pdeg);
+      for (xshift = (int) fl; xshift > 0;) {
+         FEL f;
+         int d;
 
-	    /* Find leading pos */
-	    for (l = pdeg-1; xbuf[l] == FF_ZERO && l >= 0; --l);
+         // Find leading pos
+         for (l = pdeg - 1; xbuf[l] == FF_ZERO && l >= 0; --l) {}
 
-	    /* Shift left as much as possible */
-	    if ((d = pdeg - l) > xshift) d = xshift;
-	    for (; l >= 0; l--) xbuf[l+d] = xbuf[l];
-	    for (l = d-1; l >= 0; --l) xbuf[l] = FF_ZERO;
-	    xshift -= d;
-	    if (xbuf[pdeg] == FF_ZERO) continue;
+         // Shift left as much as possible
+         if ((d = pdeg - l) > xshift) { d = xshift; }
+         for (; l >= 0; l--) {
+            xbuf[l + d] = xbuf[l];
+         }
+         for (l = d - 1; l >= 0; --l) {
+            xbuf[l] = FF_ZERO;
+         }
+         xshift -= d;
+         if (xbuf[pdeg] == FF_ZERO) { continue; }
 
-	    /* Reduce with pol */
-	    f = ffNeg(ffDiv(xbuf[pdeg],pbuf[pdeg]));
-	    for (l = pdeg-1; l >= 0; --l)
-		xbuf[l] = ffAdd(xbuf[l],ffMul(pbuf[l],f));
-	    xbuf[pdeg] = FF_ZERO;
-	}
-    }
-    sysFree(xbuf);
-    return matNullSpace__(materg);
- } 
+         // Reduce with pol
+         f = ffNeg(ffDiv(xbuf[pdeg], pbuf[pdeg]));
+         for (l = pdeg - 1; l >= 0; --l) {
+            xbuf[l] = ffAdd(xbuf[l], ffMul(pbuf[l], f));
+         }
+         xbuf[pdeg] = FF_ZERO;
+      }
+   }
+   sysFree(xbuf);
+   return matNullSpace__(materg);
+}
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 

@@ -10,23 +10,23 @@
 /// @{
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
+
 /// @class IntMatrix_t
-/// An integer matrix.
-/// The IntMatrix_t structure represents a matrix with integer entries.
-/// Both @c Nor and @c Noc may be zero. In this case, @c Data ist still a valid pointer,
-/// but the memory block it points to has size zero.
+/// A matrix with (32 bit singed) integer entries.
+/// Both @c nor and @c noc may be zero.
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 /// Checks an integer matrix and aborts the program if the marix is not valid.
 
-void imatValidate(const struct MtxSourceLocation* sl, const IntMatrix_t *mat)
+void imatValidate(const struct MtxSourceLocation* sl, const IntMatrix_t* mat)
 {
    if (mat == NULL) {
-      mtxAbort(sl ? sl : MTX_HERE,"NULL matrix");
+      mtxAbort(sl ? sl : MTX_HERE, "NULL matrix");
    }
    if ((mat->typeId != MTX_TYPE_INTMATRIX) || mat->nor < 0 || mat->noc < 0) {
-      mtxAbort(sl ? sl : MTX_HERE,"Invalid matrix (nor=%d, noc=%d)", mat->nor, mat->noc);
+      mtxAbort(sl ? sl : MTX_HERE, "Invalid matrix (nor=%lu, noc=%lu)",
+         (unsigned long)mat->nor, (unsigned long)mat->noc);
    }
 }
 

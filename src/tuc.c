@@ -10,14 +10,15 @@
    -------------------------------------------------------------------------- */
 
 
-const char *TkiName;		    /* Base name for .tki file */
-TkData_t TkInfo;		    /* Data from .tki file */
-Lat_Info InfoM, InfoN;		    /* Data from .cfinfo files */
-Matrix_t *CondMat;		    /* Condensed vectors (read from file) */
-Matrix_t *UncondMat;		    /* Uncondensed vectors (calculated here) */
-const char *UncondName;		    /* Name of output file */
-long DimM, DimN;		    /* Dimensions of M and N */
-Matrix_t *QMat[LAT_MAXCF];	    /* Q matrices */
+const char *TkiName;		    // Base name for .tki file
+TkData_t TkInfo;		    // Data from .tki file
+LatInfo_t* InfoM;		    // Data from .cfinfo files
+LatInfo_t* InfoN;		    // Data from .cfinfo files
+Matrix_t *CondMat;		    // Condensed vectors (read from file)
+Matrix_t *UncondMat;		    // Uncondensed vectors (calculated here)
+const char *UncondName;		    // Name of output file
+long DimM, DimN;		    // Dimensions of M and N
+Matrix_t *QMat[LAT_MAXCF];	    // Q matrices
 
 static MtxApplicationInfo_t AppInfo = { 
 "tuc", "Tensor Uncondense", 
@@ -64,14 +65,14 @@ static void AllocateResult()
     /* Calculate the dimension of M
        ---------------------------- */
     DimM = 0;
-    for (i = 0; i < InfoM.nCf; ++i)
-	DimM += InfoM.Cf[i].dim * InfoM.Cf[i].mult;
+    for (i = 0; i < InfoM->nCf; ++i)
+	DimM += InfoM->Cf[i].dim * InfoM->Cf[i].mult;
 
     /* Calculate the dimension of N 
        ---------------------------- */
     DimN = 0;
-    for (i = 0; i < InfoN.nCf; ++i)
-	DimN += InfoN.Cf[i].dim * InfoN.Cf[i].mult;
+    for (i = 0; i < InfoN->nCf; ++i)
+	DimN += InfoN->Cf[i].dim * InfoN->Cf[i].mult;
 
     UncondMat = matAlloc(CondMat->field,CondMat->nor,DimM * DimN);
 }
@@ -123,8 +124,8 @@ static void Init(int argc, char **argv)
        ---------------- */
     TkiName = App->argV[0];
     tkReadInfo(&TkInfo,TkiName);
-    latReadInfo(&InfoM,TkInfo.nameM);
-    latReadInfo(&InfoN,TkInfo.nameN);
+    InfoM = latLoad(TkInfo.nameM);
+    InfoN = latLoad(TkInfo.nameN);
     CondMat = matLoad(App->argV[1]);
 
     /* Other initializations
@@ -166,19 +167,19 @@ static void CalculatePositions(int cf, int num_m, int num_n, int *condpos,
     int startm = 0, startn = 0;
     int i;
 
-    MTX_ASSERT(cfm >= 0 && cfm <= InfoM.nCf);
-    MTX_ASSERT(cfn >= 0 && cfn <= InfoN.nCf);
-    MTX_ASSERT(InfoM.Cf[cfm].dim == InfoN.Cf[cfn].dim);
+    MTX_ASSERT(cfm >= 0 && cfm <= InfoM->nCf);
+    MTX_ASSERT(cfn >= 0 && cfn <= InfoN->nCf);
+    MTX_ASSERT(InfoM->Cf[cfm].dim == InfoN->Cf[cfn].dim);
 
 
     /* Calculate starting position in M x N.
        ------------------------------------- */
     for (i = 0; i < cfm; ++i)
-	startm += InfoM.Cf[i].dim * InfoM.Cf[i].mult;
-    startm += InfoM.Cf[cfm].dim * num_m;
+	startm += InfoM->Cf[i].dim * InfoM->Cf[i].mult;
+    startm += InfoM->Cf[cfm].dim * num_m;
     for (i = 0; i < cfn; ++i)
-	startn += InfoN.Cf[i].dim * InfoN.Cf[i].mult;
-    startn += InfoN.Cf[cfn].dim * num_n;
+	startn += InfoN->Cf[i].dim * InfoN->Cf[i].mult;
+    startn += InfoN->Cf[cfn].dim * num_n;
     *uncondpos = startm * DimN + startn;
 
     /* Calculate starting position in (M x N)e.
@@ -188,63 +189,51 @@ static void CalculatePositions(int cf, int num_m, int num_n, int *condpos,
     {
 	int m = TkInfo.cfIndex[0][i];
 	int n = TkInfo.cfIndex[1][i];
-	*condpos += InfoM.Cf[m].mult * InfoN.Cf[n].mult * InfoM.Cf[m].spl;
+	*condpos += InfoM->Cf[m].mult * InfoN->Cf[n].mult * InfoM->Cf[m].spl;
     }
-    *condpos += (num_m * InfoN.Cf[cfn].mult +num_n)* InfoM.Cf[cfm].spl;
+    *condpos += (num_m * InfoN->Cf[cfn].mult +num_n)* InfoM->Cf[cfm].spl;
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
-/* --------------------------------------------------------------------------
-   UncondenseCf() - Uncondense one component of a vector
-
-   Description:
-
-   Arguments:
-     <row>: Number of vector to uncondense (0-based).
-     <cf>: Constituent Index in Tki-File (0-based).
-   -------------------------------------------------------------------------- */
+// Uncondense one component of a vector
+//  <row>: Number of vector to uncondense (0-based).
+//  <cf>: Constituent Index in Tki-File (0-based).
 
 static void UncondenseCf(int row, int cf)
 {
-    int i;
-    int cfm, cfn, mult_m, mult_n, cf_dim;
+   int i;
+   int cfm, cfn, mult_m, mult_n, cf_dim;
 
-    MTX_ASSERT(row >= 0);
-    MTX_ASSERT(cf >= 0 && cf < TkInfo.nCf);
+   MTX_ASSERT(row >= 0);
+   MTX_ASSERT(cf >= 0 && cf < TkInfo.nCf);
 
-    cfm = TkInfo.cfIndex[0][cf];    /* Constituent index in M */
-    cfn = TkInfo.cfIndex[1][cf];    /* Constituent index in N */
-    mult_m = InfoM.Cf[cfm].mult;    /* Mutiplicity of constituent in M */
-    mult_n = InfoN.Cf[cfn].mult;    /* Mutiplicity of constituent in N */
-    cf_dim = InfoM.Cf[cfm].dim;	    /* Dimension of the constituent */
+   cfm = TkInfo.cfIndex[0][cf];     // Constituent index in M
+   cfn = TkInfo.cfIndex[1][cf];     // Constituent index in N
+   mult_m = InfoM->Cf[cfm].mult;     // Mutiplicity of constituent in M
+   mult_n = InfoN->Cf[cfn].mult;     // Mutiplicity of constituent in N
+   cf_dim = InfoM->Cf[cfm].dim;      // Dimension of the constituent
 
-    for (i = 0; i < mult_m; ++i)
-    {
-	int j;
-	for (j = 0; j < mult_n; ++j)
-	{
-	    int k;
-	    Matrix_t *condvec;
-	    int pos, condpos, uncondpos;
+   for (i = 0; i < mult_m; ++i) {
+      int j;
+      for (j = 0; j < mult_n; ++j) {
+         int k;
+         Matrix_t* condvec;
+         int pos, condpos, uncondpos;
 
-	    CalculatePositions(cf,i,j,&condpos,&uncondpos);
-	    condvec = matCut(CondMat,row,condpos,1,QMat[cf]->nor);
-	    matMul(condvec,QMat[cf]);
-	    pos = 0;
-	    for (k = 1; k <= InfoM.Cf[cfm].dim; ++k)
-	    {
-		matCopyRegion(UncondMat,row,uncondpos,condvec,0,pos,1,
-		    cf_dim);
-		uncondpos += DimN;
-		pos += cf_dim;
-	    }
-	    matFree(condvec);
-	}
-    }
+         CalculatePositions(cf, i, j, &condpos, &uncondpos);
+         condvec = matDupRegion(CondMat, row, condpos, 1, QMat[cf]->nor);
+         matMul(condvec, QMat[cf]);
+         pos = 0;
+         for (k = 1; k <= InfoM->Cf[cfm].dim; ++k) {
+            matCopyRegion(UncondMat, row, uncondpos, condvec, 0, pos, 1, cf_dim);
+            uncondpos += DimN;
+            pos += cf_dim;
+         }
+         matFree(condvec);
+      }
+   }
 }
-
-
-
 
 /* --------------------------------------------------------------------------
    Uncondense() - Uncondense one vector
@@ -279,6 +268,8 @@ int main(int argc, char **argv)
     for (int row = 0; row < CondMat->nor; ++row)
 	Uncondense(row);
     matSave(UncondMat,UncondName);
+    latDestroy(InfoM);
+    latDestroy(InfoN);
     if (App != NULL)
 	appFree(App);
     return 0;

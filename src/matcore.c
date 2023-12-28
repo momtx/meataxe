@@ -65,39 +65,33 @@ int matIsValid(const Matrix_t *mat)
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-/// Checks whether the given matrix is valid.
-/// If it is not, the program is aborted with an error message.
+/// Aborts the program if the passed matrix is not valid.
 
-void matValidate(const struct MtxSourceLocation* src, const Matrix_t *mat)
+void matValidate(const struct MtxSourceLocation* src, const Matrix_t* mat)
 {
-   if (mat == NULL)
-      mtxAbort(src,"NULL matrix");
+   if (mat == NULL) {
+      mtxAbort(src, "NULL matrix");
+   }
    if (mat->typeId != MTX_TYPE_MATRIX || mat->field < 2 || mat->nor < 0 || mat->noc < 0) {
-      mtxAbort(src ? src : MTX_HERE,"Invalid matrix (field=%d, nor=%d, noc=%d)",
-            mat->field, mat->nor,mat->noc);
+      mtxAbort(src ? src : MTX_HERE, "Invalid matrix (field=%d, nor=%lu, noc=%lu)",
+         mat->field, (unsigned long)mat->nor, (unsigned long) mat->noc);
    }
 }
 
-
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-/// Create a new matrix.
-/// This function creates a new matrix with given dimensions over a given field.
-/// @attention
-/// To destroy a matrix, use matFree(), not sysFree().
+
+/// Creates a new matrix.
 ///
 /// @param field Field order.
 /// @param nor Number of rows.
 /// @param noc Number of columns.
-/// @return Pointer to the new matrix or NULL on error.
+/// @return Pointer to the new matrix
 
-Matrix_t *matAlloc(int field, int nor, int noc)
+Matrix_t *matAlloc(int field, uint32_t nor, uint32_t noc)
 {
    Matrix_t *m;
 
    MTX_ASSERT(field >= 2);
-   MTX_ASSERT(nor >= 0);
-   MTX_ASSERT(noc >= 0);
-
    ffSetField(field);
    m = (Matrix_t*) mmAlloc(MTX_TYPE_MATRIX, sizeof(Matrix_t));
    m->field = field;
@@ -131,14 +125,14 @@ Matrix_t *matDup(const Matrix_t *src)
 /// @param row Row index.
 /// @return Pointer to the selected row or 0 on error.
 
-PTR matGetPtr(const Matrix_t *mat, int row)
+PTR matGetPtr(const Matrix_t *mat, uint32_t row)
 {
 #ifdef MTX_DEBUG
    matValidate(MTX_HERE, mat);
 #ifdef PARANOID
-   if ((row < 0) || (row >= mat->nor))
+   if ((row >= mat->nor))
 #else
-   if ((row < 0) || (row > mat->nor + 5))
+   if (row > mat->nor)
 #endif
    {
       mtxAbort(MTX_HERE,"row=%d: %s",row,MTX_ERR_BADARG);
@@ -234,72 +228,61 @@ int matCompare(const Matrix_t *a, const Matrix_t *b)
 /// This function copies a rectangular region of @em src tp @em dest. The source region
 /// is defined by its upper left corner and dimensions, the destination region is specified
 /// by its upper left corner and has the same dimensions.
-/// Both @em nrows and @em ncols can be given as -1. In this case the region extends up to
-/// the last row or last column, respectively.
 /// The two matrices must be over the same field. Both source and destination region must
 /// not exceed the matrices' dimensions. In particular, it is not possible to extend the
 /// destination matrix by using %matCopyRegion().
+//
 /// @param dest Pointer to the destination matrix.
-/// @param destrow Destination row.
-/// @param destcol Destination column.
+/// @param drow Destination row.
+/// @param dcol Destination column.
 /// @param src Pointer to the source matrix.
-/// @param row1 First row in region.
-/// @param col1 First column in region.
-/// @param nrows Number of rows to copy. -1 means as many rows as possible.
-/// @param ncols Number of columns to copy. -1 means as many columns as possible.
+/// @param srow First row in region.
+/// @param scol First column in region.
+/// @param snor Number of rows to copy.
+/// @param snoc Number of columns to copy.
 
-void matCopyRegion(Matrix_t *dest, int destrow, int destcol,
-                  const Matrix_t *src, int row1, int col1, int nrows, int ncols)
+void matCopyRegion(
+      Matrix_t *dest, uint32_t drow, uint32_t dcol,
+      const Matrix_t *src, uint32_t srow, uint32_t scol, uint32_t snor, uint32_t snoc)
 {
-   PTR s, d;
-   int i, k;
-
    // Check the arguments
    matValidate(MTX_HERE, src);
    matValidate(MTX_HERE, dest);
    if (src->field != dest->field) {
       mtxAbort(MTX_HERE,"%s",MTX_ERR_INCOMPAT);
    }
-   if (nrows == -1) {
-      nrows = src->nor - row1;
-   }
-   if (ncols == -1) {
-      ncols = src->noc - col1;
-   }
-   if ((row1 < 0) || (nrows < 0) || (row1 + nrows > src->nor)) {
+   if (srow + snor > src->nor) {
       mtxAbort(MTX_HERE,"Source row index out of range");
    }
-   if ((col1 < 0) || (ncols < 0) || (col1 + ncols > src->noc)) {
+   if (scol + snoc > src->noc) {
       mtxAbort(MTX_HERE,"Source column index out of range");
    }
-   if ((destrow < 0) || (destrow + nrows > dest->nor)) {
+   if (drow + snor > dest->nor) {
       mtxAbort(MTX_HERE,"Destination row index out of range");
    }
-   if ((destcol < 0) || (destcol + ncols > dest->noc)) {
+   if (dcol + snoc > dest->noc) {
       mtxAbort(MTX_HERE,"Destination column index out of range");
    }
 
-   /* Initialize data pointers
-      ------------------------ */
+   // Initialize data pointers
    ffSetField(src->field);
 #ifdef MTX_DEBUG
-   s = row1 < src->nor ? matGetPtr(src,row1) : NULL;
-   d = destrow < dest->nor ? matGetPtr(dest,destrow) : NULL;
+   PTR s = srow < src->nor ? matGetPtr(src,srow) : NULL;
+   PTR d = drow < dest->nor ? matGetPtr(dest,drow) : NULL;
 #else
-   s = matGetPtr(src,row1);
-   d = matGetPtr(dest,destrow);
+   PTR s = matGetPtr(src,srow);
+   PTR d = matGetPtr(dest,drow);
 #endif
 
-   /* Copy the rectangle
-      ------------------ */
-   for (i = row1; i < row1 + nrows; ++i) {
-      for (k = col1; k < col1 + ncols; ++k) {
+   // Copy the rectangle
+   for (uint32_t i = srow; i < srow + snor; ++i) {
+      for (uint32_t k = scol; k < scol + snoc; ++k) {
 #ifdef MTX_DEBUG
          FEL f;
          f = ffExtract(s,k);
-         ffInsert(d,destcol + k - col1,f);
+         ffInsert(d,dcol + k - scol,f);
 #else
-         ffInsert(d,destcol + k - col1,ffExtract(s,k));
+         ffInsert(d,dcol + k - scol,ffExtract(s,k));
 #endif
       }
       ffStepPtr(&s, src->noc);

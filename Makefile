@@ -126,7 +126,6 @@ LIB_OBJS=\
 	fpoly \
 	gap_format \
 	gcd genseed\
-	grmaprow grmatcore grtable \
 	hashlittle2 \
 	homcomp \
 	int_matrix \
@@ -214,7 +213,7 @@ test: $(TESTS:%=tmp/test_%/done)
 
 TS_OBJS1=c-args c-bitstring c-cfinfo c-charpol\
 	c-ffio c-fileio c-ffmat c-ffrow c-fpoly \
-	c-gap c-grease c-kernel c-matins c-matrix \
+	c-gap c-kernel c-matins c-matrix \
 	c-mman c-os c-perm c-pex c-poly c-pseed c-quot c-random \
 	c-stf c-tensor c-wgen
 

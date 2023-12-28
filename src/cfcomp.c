@@ -23,7 +23,7 @@ static MtxApplicationInfo_t AppInfo = {
 };
 
 static MtxApplication_t *app = NULL;
-static Lat_Info infoA;
+static LatInfo_t* infoA;
 static MatRep_t *irredA[LAT_MAXCF];
 static MatRep_t *repB;
 
@@ -36,13 +36,13 @@ static void init(int argc, char **argv)
 
    app = appAlloc(&AppInfo,argc,argv);
    appGetArguments(app,2,2000);
-   latReadInfo(&infoA,app->argV[0]);
+   infoA = latLoad(app->argV[0]);
 
    // Read the generators for each composition factor
-   for (i = 0; i < infoA.nCf; ++i) {
-      sprintf(fn,"%s%s",infoA.BaseName,latCfName(&infoA,i));
+   for (i = 0; i < infoA->nCf; ++i) {
+      sprintf(fn,"%s%s",infoA->BaseName,latCfName(infoA,i));
       MTX_LOGD("Reading %s",fn);
-      irredA[i] = mrLoad(fn,infoA.NGen);
+      irredA[i] = mrLoad(fn,infoA->NGen);
    }
 }
 
@@ -50,10 +50,10 @@ static void init(int argc, char **argv)
 
 static void cleanup()
 {
-   for (int i = 0; i < infoA.nCf; ++i) {
+   for (int i = 0; i < infoA->nCf; ++i) {
       mrFree(irredA[i]);
    }
-   latCleanup(&infoA);
+   latDestroy(infoA);
    appFree(app);
 }
 
@@ -61,23 +61,23 @@ static void cleanup()
 
 static void findEquiv(const char *name)
 {
-   for (int i = 0; i < infoA.nCf; ++i) {
+   for (int i = 0; i < infoA->nCf; ++i) {
       if (repB->Gen[0]->nor != irredA[i]->Gen[0]->nor) {
          continue;
       }
-      if (IsIsomorphic(irredA[i],infoA.Cf + i,repB,NULL,0)) {
-         MTX_LOGI("%s = %s%s",name,infoA.BaseName,latCfName(&infoA,i));
+      if (IsIsomorphic(irredA[i],infoA->Cf + i,repB,NULL,0)) {
+         MTX_LOGI("%s = %s%s",name,infoA->BaseName,latCfName(infoA,i));
          return;
       }
    }
-   MTX_LOGI("%s not found in %s",name,infoA.BaseName);
+   MTX_LOGI("%s not found in %s",name,infoA->BaseName);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 static void compare(const char *nameB)
 {
-   repB = mrLoad(nameB,infoA.NGen);
+   repB = mrLoad(nameB,infoA->NGen);
    findEquiv(nameB);
    mrFree(repB);
 }

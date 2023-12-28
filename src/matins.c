@@ -20,25 +20,18 @@
 /// @param pol Pointer to the polynomial.
 /// @return The function returns @em mat, or 0 on error.
 
-Matrix_t *matInsert_(Matrix_t *mat, const Poly_t *pol)
+Matrix_t* matInsert_(Matrix_t* mat, const Poly_t* pol)
 {
-   Matrix_t *x = NULL;
    int i;
-   int nor;
    int l;
    PTR v;
    FEL f;
 
-   // Check the arguments
    matValidate(MTX_HERE, mat);
    polValidate(MTX_HERE, pol);
-   if ((nor = mat->nor) != mat->noc) {
-      mtxAbort(MTX_HERE,"%s",MTX_ERR_NOTSQUARE);
-      return NULL;
-   }
-   if (mat->field != pol->field) {
-      mtxAbort(MTX_HERE,"%s",MTX_ERR_INCOMPAT);
-      return NULL;
+   const uint32_t nor = mat->nor;
+   if (nor != mat->noc || mat->field != pol->field) {
+      mtxAbort(MTX_HERE, "%s", MTX_ERR_NOTSQUARE);
    }
 
    ffSetField(mat->field);
@@ -46,7 +39,7 @@ Matrix_t *matInsert_(Matrix_t *mat, const Poly_t *pol)
    // Special case: p(x) = 0
    if (pol->degree == -1) {
       for (l = 0, v = mat->data; l < nor; ffStepPtr(&v, nor), ++l) {
-         ffMulRow(v,FF_ZERO, nor);
+         ffMulRow(v, FF_ZERO, nor);
       }
       return mat;
    }
@@ -54,35 +47,35 @@ Matrix_t *matInsert_(Matrix_t *mat, const Poly_t *pol)
    // Special case: deg(p) = 0
    if (pol->degree == 0) {
       for (l = 0, v = mat->data; l < nor; ffStepPtr(&v, nor), ++l) {
-         ffMulRow(v,FF_ZERO, nor);
-         ffInsert(v,l,pol->data[0]);
+         ffMulRow(v, FF_ZERO, nor);
+         ffInsert(v, l, pol->data[0]);
       }
       return mat;
    }
 
    // Evaluate p(A)
+   Matrix_t* x = NULL;
    if (pol->degree > 1) {
       x = matDup(mat);
-      if (x == NULL) {
-	  return NULL;
-      }
    }
    if ((f = pol->data[pol->degree]) != FF_ONE) {
       for (l = nor, v = mat->data; l > 0; --l, ffStepPtr(&v, nor)) {
-         ffMulRow(v,f, nor);
+         ffMulRow(v, f, nor);
       }
    }
    for (i = pol->degree - 1; i >= 0; --i) {
       if ((f = pol->data[i]) != FF_ZERO) {
          for (l = 0, v = mat->data; l < nor; ++l, ffStepPtr(&v, nor)) {
-            ffInsert(v,l,ffAdd(ffExtract(v,l),f));
+            ffInsert(v, l, ffAdd(ffExtract(v, l), f));
          }
       }
       if (i > 0) {
-         matMul(mat,x);
+         matMul(mat, x);
       }
    }
-   if (pol->degree > 1) { matFree(x); }
+   if (x != NULL) {
+      matFree(x);
+   }
    return mat;
 }
 
@@ -100,7 +93,7 @@ Matrix_t *matInsert(const Matrix_t *mat, const Poly_t *pol)
 {
    Matrix_t *x;
    int i;
-   int nor;
+   uint32_t nor;
    int l;
    PTR v;
    FEL f;

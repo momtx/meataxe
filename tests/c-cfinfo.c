@@ -15,8 +15,7 @@
 
 TstResult Cfinfo_FileNotFound()
 {
-   Lat_Info info;
-   ASSERT_ABORT(latReadInfo(&info, "/file_not_found"));
+   ASSERT_ABORT(latLoad("/file_not_found"));
    return 0;
 }
 
@@ -88,10 +87,8 @@ TstResult Cfinfo_BadPeakWord()
       "CFInfo.Heads := [];\n";
 
    const Tst_TempFile* const tf = TstCreateTemporaryFile(".cfinfo",FILE_DATA);
-   static Lat_Info info; // static to avoid unwinding by longjmp
-   ASSERT_ABORT(latReadInfo(&info, tf->base_name));
-
-   ASSERT(info.nCf == 1);
+   ASSERT_ABORT(latLoad(tf->base_name));
+   // note: LatInfo_t object is destroyed during rollback
    Tst_RemoveTempFiles();
    return 0;
 }

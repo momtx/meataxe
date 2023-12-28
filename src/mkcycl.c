@@ -28,10 +28,10 @@ MTX_COMMON_OPTIONS_DESCRIPTION
 
 static MtxApplication_t *App = NULL;
 static int opt_G = 0;
-static MatRep_t *Rep;		// The representation
-int NCyclic;			// Number of cyclic submodules found
-Matrix_t *Cyclic[MAXCYCL];	// List of cyclic submodules
-Lat_Info LI;			// Data from .cfinfo file
+static MatRep_t *Rep;           // The representation
+int NCyclic;                    // Number of cyclic submodules found
+Matrix_t *Cyclic[MAXCYCL];      // List of cyclic submodules
+LatInfo_t* LI;                 // Data from .cfinfo file
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -41,7 +41,7 @@ static void init(int argc, char **argv)
     opt_G = appGetOption(App,"-G --gap");
     appGetArguments(App,1,1);
     MTX_LOGI("Start mkcycl - Find cyclic submodules");
-    latReadInfo(&LI,App->argV[0]);
+    LI = latLoad(App->argV[0]);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -84,7 +84,7 @@ static void Spinup(Matrix_t *seed)
 // This function collects the generating vectors of all syclic submodules
 // into a single matrix and write this matrix to a file.
 
-void WriteResult(int cf, int cond_dim)
+void WriteResult(int cf, uint32_t cond_dim)
 {
     int i;
     char fn[200];
@@ -92,8 +92,8 @@ void WriteResult(int cf, int cond_dim)
 
     result = matAlloc(ffOrder,NCyclic,cond_dim);
     for (i = 0; i < NCyclic; ++i)
-	matCopyRegion(result,i,0,Cyclic[i],0,0,1,-1);
-    sprintf(fn,"%s%s.v",LI.BaseName,latCfName(&LI,cf));
+	matCopyRegion(result,i,0,Cyclic[i],0,0,1,Cyclic[i]->noc);
+    sprintf(fn,"%s%s.v",LI->BaseName,latCfName(LI,cf));
     MTX_LOGD("Writing %s",fn);
     matSave(result,fn);
     matFree(result);
@@ -128,18 +128,17 @@ void FindCyclic(int cf)
     char fn[200];
     long vec_no;		// Seed vector number
     int count;			// Number of vectors tried
-    int cond_dim;		// Dimension of the condensed module
     int i;
 
     // Read the generators and the condensed peak words
-    sprintf(fn,"%s%s.%%dk",LI.BaseName,latCfName(&LI,cf));
-    MTX_LOGD("Loading generators for %s%s",LI.BaseName,latCfName(&LI,cf));
-    Rep = mrLoad(fn,LI.NGen);
-    sprintf(fn,"%s%s.np",LI.BaseName,latCfName(&LI,cf));
+    sprintf(fn,"%s%s.%%dk",LI->BaseName,latCfName(LI,cf));
+    MTX_LOGD("Loading generators for %s%s",LI->BaseName,latCfName(LI,cf));
+    Rep = mrLoad(fn,LI->NGen);
+    sprintf(fn,"%s%s.np",LI->BaseName,latCfName(LI,cf));
     mrAddGenerator(Rep,matLoad(fn),0);
 
     // Spin up all seed vectors
-    cond_dim = Rep->Gen[0]->nor;
+    const uint32_t cond_dim = Rep->Gen[0]->nor; // Dimension of the condensed module
     seed = matAlloc(ffOrder,1,cond_dim);
     seed_basis = matId(ffOrder,cond_dim);
     NCyclic = 0;
@@ -155,7 +154,7 @@ void FindCyclic(int cf)
 
     // Write the result and clean up
     MTX_LOGI("%s%s: %d cyclic submodule%s (%d vectors tried)",
-	LI.BaseName,latCfName(&LI,cf),NCyclic,NCyclic == 1 ? " " : "s",
+	LI->BaseName,latCfName(LI,cf),NCyclic,NCyclic == 1 ? " " : "s",
 	count);
     WriteResult(cf,cond_dim);
     matFree(seed);
@@ -171,7 +170,7 @@ void FindCyclic(int cf)
 
 static void cleanup()
 {
-   latCleanup(&LI);
+   latDestroy(LI);
    appFree(App);
 }
 
@@ -180,7 +179,7 @@ static void cleanup()
 int main(int argc, char *argv[])
 {
     init(argc, argv);
-    for (int i = 0; i < LI.nCf; ++i)
+    for (int i = 0; i < LI->nCf; ++i)
 	FindCyclic(i);
     cleanup();
     return 0;

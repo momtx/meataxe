@@ -24,9 +24,8 @@ typedef struct nodestruct {
    unsigned nodeId;
    char logPrefix[50];          // "[ID:DIM]"
    struct nodestruct *sub, *quot, *parent;
-   int dim;                     // Dimension 
+   int dim;                     // Dimension (TODO: uint32_t)
    int num;                     // (irreducibles only) constituent number
-   int mult;                    // (irreducibles only) Multiplicity
    MatRep_t *Rep;               // Generators
    MatRep_t *TrRep;             // Transposed generators
    long spl;                    // Degree of splitting field
@@ -69,7 +68,7 @@ int opt_G = 0;              // GAP output
 int opt_i = 0;              // -i: read an existing .cfinfo file
 BitString_t *goodWords;     // List of `good' words
 static unsigned nodeId = 0; // Counter for node IDs.
-Lat_Info LI;                // Data for .cfinfo
+LatInfo_t* LI;             // Data for .cfinfo
 
 static long stat_svsplit = 0; // Statistics
 static long stat_cpirred = 0;
@@ -118,7 +117,7 @@ static node_t *CreateNode(MatRep_t *rep, node_t *parent)
    n->dim = rep->Gen[0]->nor;
    snprintf(n->logPrefix, sizeof(n->logPrefix), "[%u:%u]", n->nodeId, n->dim);
    n->num = -1;
-   n->mult = -1;
+//   n->mult = -1;
    n->spl = -1;
    n->idWord = 0;
    n->badWords = parent ? bsDup(parent->badWords) : bsAllocEmpty();
@@ -203,24 +202,14 @@ static void CreateRoot()
    const int scope = mtxBegin(MTX_HERE, "Load module");
    if (opt_i) {
       // Read the number of generators from the cfinfo file.
-      FILE *f;
-      char fn[200];
-      sprintf(fn,"%s.cfinfo",LI.BaseName);
-      f = sysFopen(fn,"r::noerror");
-      if (f != NULL) {
-         Lat_Info info;
-         fclose(f);
-         latReadInfo(&info,LI.BaseName);
-         LI.NGen = info.NGen;
-         if (info.NGen > MAXGEN) {
-            mtxAbort(MTX_HERE,"Too many generators (max. %d)",MAXGEN);
-         }
-         MTX_LOGD("Set number of generators = %d from %s",info.NGen,fn);
-      }
+      LatInfo_t* li = latLoad(LI->BaseName);
+      LI->NGen = li->NGen;
+      latDestroy(li);
+      MTX_LOGD("Set number of generators = %d from existing .cfinfo",LI->NGen);
    }
 
-   MatRep_t *rep = mrLoad(LI.BaseName,LI.NGen);
-   LI.field = ffOrder;
+   MatRep_t *rep = mrLoad(LI->BaseName,LI->NGen);
+   LI->field = ffOrder;
    root = CreateNode(rep,NULL);
    mtxEnd(scope);
 }
@@ -250,11 +239,11 @@ static void printCompositionSeries(StrBuffer_t* sb, node_t *n, int leading)
    MTX_ASSERT(n != NULL);
    if (n->sub == NULL) {        // Irreducible
       int i;
-      for (i = 0; LI.Cf[i].dim != n->dim || LI.Cf[i].num != n->num; ++i);
+      for (i = 0; LI->Cf[i].dim != n->dim || LI->Cf[i].num != n->num; ++i);
       if (opt_G) {
          printf(leading ? "%d" : ",%d",i + 1);
       } else {
-         sbPrintf(sb, " %s", latCfName(&LI,i));
+         sbPrintf(sb, " %s", latCfName(LI,i));
       }
    } else {
       printCompositionSeries(sb, n->sub, leading);
@@ -268,28 +257,16 @@ static void printCompositionSeries(StrBuffer_t* sb, node_t *n, int leading)
 
 static void WriteResult(node_t *root)
 {
-   int i, k;
-
-   MTX_LOGI("Chopping completed: %d different composition factors", LI.nCf);
-
-   for (i = 0; i < LI.nCf; ++i) {
-      LI.Cf[i].dim = irred[i]->dim;
-      LI.Cf[i].num = irred[i]->num;
-      LI.Cf[i].mult = irred[i]->mult;
-      LI.Cf[i].spl = irred[i]->spl;
-      LI.Cf[i].idWord = irred[i]->idWord;
-      LI.Cf[i].idPol = irred[i]->idPol;
-   }
-   MTX_LOGI("Writing %s.cfinfo", LI.BaseName);
-   latWriteInfo(&LI);
+   MTX_LOGI("Chopping completed: %d different composition factors", LI->nCf);
+   MTX_LOGI("Writing %s.cfinfo", LI->BaseName);
+   latSave(LI);
 
    // Write composition factors
    if (opt_G) {
       printf("MeatAxe.CompositionFactors := [\n");
-      for (i = 0; i < LI.nCf; ++i) {
-         printf("  [ \"%s\", %d, %ld ]",latCfName(&LI,i),
-                irred[i]->mult,irred[i]->spl);
-         if (i < LI.nCf - 1) {printf(",");}
+      for (int i = 0; i < LI->nCf; ++i) {
+         printf("  [ \"%s\", %d, %ld ]",latCfName(LI,i), LI->Cf[i].mult,irred[i]->spl);
+         if (i < LI->nCf - 1) {printf(",");}
          printf("\n");
       }
       printf("\n];\n");
@@ -297,10 +274,10 @@ static void WriteResult(node_t *root)
    else {
       MTX_LOGI("%s","");
       MTX_LOGI("Name   mult  SF  Fingerprint");
-      for (i = 0; i < LI.nCf; ++i) {
+      for (int i = 0; i < LI->nCf; ++i) {
          MTX_XLOGI(sb) {
-            sbPrintf(sb, "%-6s %4d  %2ld  ",latCfName(&LI,i), irred[i]->mult,irred[i]->spl);
-            for (k = 0; k < MAXFP; ++k) {
+            sbPrintf(sb, "%-6s %4d  %2ld  ",latCfName(LI,i), LI->Cf[i].mult,irred[i]->spl);
+            for (int k = 0; k < MAXFP; ++k) {
                sbPrintf(sb, "%s%lu", k == 0 ? "" : ",", (unsigned long) irred[i]->fprint[k]);
             }
          }
@@ -360,7 +337,7 @@ static void splitnode(node_t *n, int tr)
    if (tr) {
       int i;
       Matrix_t *x, *y;
-      for (i = 0; i < LI.NGen; ++i) {
+      for (i = 0; i < LI->NGen; ++i) {
          x = matTransposed(sub->Gen[i]);
          matFree(sub->Gen[i]);
          y = matTransposed(quot->Gen[i]);
@@ -395,7 +372,7 @@ static void splitnode(node_t *n, int tr)
 // Finds a vector in 'space' which is not a linear combination of 'basis'.
 // 'basis' must be linearly independent.
 
-static Matrix_t *extendbasis(Matrix_t *basis, Matrix_t *space)
+static Matrix_t* extendbasis(Matrix_t* basis, Matrix_t* space)
 {
    long i, j;
    long dimb = basis->nor;
@@ -405,35 +382,34 @@ static Matrix_t *extendbasis(Matrix_t *basis, Matrix_t *space)
 
    // Concatenate basis and space
    tmp = ffAlloc(dimb + dims, basis->noc);
-   memcpy(tmp,basis->data,ffSize(dimb, basis->noc));
+   memcpy(tmp, basis->data, ffSize(dimb, basis->noc));
    /*x = ffGetPtr(tmp,dimb,basis->noc);*/
    x = (PTR)((char*)tmp + dimb * ffRowSize(basis->noc));
-   memcpy(x,space->data,ffSize(dims, basis->noc));
+   memcpy(x, space->data, ffSize(dims, basis->noc));
 
    // Clean with basis
    for (i = 0, x = tmp; i < dimb; ffStepPtr(&x, basis->noc), ++i) {
-      const uint32_t piv = ffFindPivot(x,&f,basis->noc);
+      const uint32_t piv = ffFindPivot(x, &f, basis->noc);
       if (piv == MTX_NVAL) {
-         mtxAbort(MTX_HERE,"extendbasis(): zero vector in basis");
+         mtxAbort(MTX_HERE, "extendbasis(): zero vector in basis");
       }
       y = x;
       for (j = i + 1; j < dimb + dims; ++j) {
          ffStepPtr(&y, basis->noc);
-         ffAddMulRow(y,x,ffSub(FF_ZERO,ffDiv(ffExtract(y,piv),f)),basis->noc);
+         ffAddMulRow(y, x, ffSub(FF_ZERO, ffDiv(ffExtract(y, piv), f)), basis->noc);
       }
    }
 
    // Find the first non-zero row
    /*    x = ffGetPtr(tmp,dimb,basis->noc);*/
    x = (PTR)((char*)tmp + ffSize(dimb, basis->noc));
-   for (j = 0; ffFindPivot(x,&f,basis->noc) == MTX_NVAL; ++j, ffStepPtr(&x, basis->noc)) {
-   }
+   for (j = 0; ffFindPivot(x, &f, basis->noc) == MTX_NVAL; ++j, ffStepPtr(&x, basis->noc)) {}
    ffFree(tmp);
    if (j > dims) {
-      mtxAbort(MTX_HERE,"extendbasis() failed");
+      mtxAbort(MTX_HERE, "extendbasis() failed");
       return NULL;
    }
-   return matCutRows(space,j,1);
+   return matDupRows(space, j, 1);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -451,7 +427,7 @@ static int checkspl(node_t* n, const MatRep_t *rep, Matrix_t *nsp)
    MatRep_t* sr2 = NULL;  // representation in standard basis sb2
    int i, result = 0;
 
-   MTX_LOG2("%s checkspl(): nsp=%d", n->logPrefix, nsp->nor);
+   MTX_LOG2("%s checkspl(): nsp=%lu", n->logPrefix, (unsigned long)nsp->nor);
 
    // Take the first vector from nsp and change to standard basis.
    sb1 = SpinUp(nsp,rep,SF_FIRST | SF_CYCLIC | SF_STD,NULL,NULL);
@@ -491,7 +467,7 @@ static int checkspl(node_t* n, const MatRep_t *rep, Matrix_t *nsp)
       // Compare the two representations. If they are different, we know that the splitting
       // field degree must be smaller than dim(nsp).
       result = 1;
-      for (i = 0; result != 0 && i < LI.NGen; ++i) {
+      for (i = 0; result != 0 && i < LI->NGen; ++i) {
          if (matCompare(sr1->Gen[i],sr2->Gen[i]) != 0) {
             result = 0;
          }
@@ -614,37 +590,38 @@ static void FindIdWord(node_t* n)
 
 static void newirred(node_t* n)
 {
-   int i, k;
+   int i;
    Matrix_t* b;
 
    // Check if the module is already in the list
    wgMakeFingerPrint(n->wg, n->fprint);
-   for (i = 0; i < LI.nCf && n->dim >= irred[i]->dim; ++i) {
+   for (i = 0; i < LI->nCf && n->dim >= irred[i]->dim; ++i) {
       // Compare dimensions and fingerprints
       if (n->dim != irred[i]->dim ||
           memcmp(n->fprint, irred[i]->fprint, sizeof(n->fprint))) {
          continue;
       }
 
-      if (IsIsomorphic(irred[i]->Rep, LI.Cf + i, n->Rep, NULL, 0)) {
-         ++irred[i]->mult;
+      if (IsIsomorphic(irred[i]->Rep, LI->Cf + i, n->Rep, NULL, 0)) {
+         ///++irred[i]->mult;
+         ++LI->Cf[i].mult;
          n->num = irred[i]->num;
-         MTX_LOGI("%s Irreducible (%s)", n->logPrefix, latCfName(&LI, i));
+         MTX_LOGI("%s Irreducible (%s)", n->logPrefix, latCfName(LI, i));
          cleanUpNode(n, 1);
          return;
       }
    }
 
    // It's a new irreducible!
-   if (LI.nCf >= LAT_MAXCF) {
+   if (LI->nCf >= LAT_MAXCF) {
       mtxAbort(MTX_HERE, "TOO MANY CONSTITUENTS");
    }
-   for (k = LI.nCf - 1; k >= i; --k) {
+   for (int k = LI->nCf - 1; k >= i; --k) {
       irred[k + 1] = irred[k];
-      LI.Cf[k + 1] = LI.Cf[k];
+      LI->Cf[k + 1] = LI->Cf[k];
    }
    irred[i] = n;
-   ++LI.nCf;
+   ++LI->nCf;
 
    // Set the fields
    if (i == 0 || irred[i]->dim != irred[i - 1]->dim) {
@@ -653,10 +630,8 @@ static void newirred(node_t* n)
    else {
       irred[i]->num = irred[i - 1]->num + 1;
    }
-   irred[i]->mult = 1;
-   LI.Cf[i].dim = irred[i]->dim;   /* cfname() needs this */
-   LI.Cf[i].num = irred[i]->num;
-   MTX_LOGI("%s Irreducible (%s)", n->logPrefix, latCfName(&LI, i));
+   //irred[i]->mult = 1;
+   LI->Cf[i].mult = 1;
 
    // Make idWord and change to std basis
    MATFREE(n->nsp);
@@ -669,21 +644,25 @@ static void newirred(node_t* n)
       m = matInsert(n->word, irred[i]->idPol);
       n->nsp = matNullSpace__(m);
    }
-   LI.Cf[i].idWord = n->idWord;
-   LI.Cf[i].idPol = n->idPol;
-   LI.Cf[i].spl = n->spl = n->nsp->nor;
+   LI->Cf[i].dim = irred[i]->dim;   /* cfname() needs this */
+   LI->Cf[i].num = irred[i]->num;
+   LI->Cf[i].mult = 1;
+   LI->Cf[i].idWord = n->idWord;
+   LI->Cf[i].idPol = polDup(n->idPol);
+   LI->Cf[i].spl = n->spl = n->nsp->nor;
    b = SpinUp(n->nsp, n->Rep, SF_FIRST | SF_CYCLIC | SF_STD, NULL, NULL);
    MTX_ASSERT(b != NULL && b->nor == b->noc);
    mrChangeBasis(n->Rep, b);
    matFree(b);
+   MTX_LOGI("%s Irreducible (%s)", n->logPrefix, latCfName(LI, i));
 
    // Write out the generators
    if (irred[i]->spl > 1) {
       MTX_LOGD("%s Splitting field has degree %ld", n->logPrefix, irred[i]->spl);
    }
-   for (k = 0; k < LI.NGen; ++k) {
+   for (int k = 0; k < LI->NGen; ++k) {
       char fn[200];
-      sprintf(fn, "%s%s.%d", LI.BaseName, latCfName(&LI, i), k + 1);
+      sprintf(fn, "%s%s.%d", LI->BaseName, latCfName(LI, i), k + 1);
       matSave(irred[i]->Rep->Gen[k], fn);
    }
    cleanUpNode(n, 0);
@@ -965,7 +944,7 @@ static int try_poly(node_t *n, Poly_t *pol, long vfh)
          matFree(n->nsp);
          n->nsp = matNullSpace__(matInsert(n->word,pol));
          MATFREE(n->subsp);
-         MTX_LOG2("%s 2nd spin-up, null-space = %d",n->logPrefix, n->nsp->nor);
+         MTX_LOG2("%s 2nd spin-up, null-space = %lu",n->logPrefix, (unsigned long)n->nsp->nor);
          sub = SpinUp(n->nsp,n->Rep,SF_MAKE | SF_SUB,NULL,NULL);
          if (sub->nor > 0 && sub->nor < sub->noc) {
             // Module was split
@@ -1034,15 +1013,13 @@ static int try_ex_factor(node_t* n, Poly_t* cp, FPoly_t* cpf, int factor)
       sbPrintf(msg, ")^%lu", (unsigned long) cpf->mult[factor]);
    }
 
-   /* Calculate p(x) = maximal power of the irred factor in c(x)
-      ---------------------------------------------------------- */
+   // Calculate p(x) = maximal power of the irred factor in c(x)
    p = polDup(cpf->factor[factor]);
    for (k = 1; k < cpf->mult[factor]; ++k) {
       polMul(p, cpf->factor[factor]);
    }
 
-   /* Calculate the complement q(x) with q(x)p(x)=c(x)
-      ------------------------------------------------ */
+   // Calculate the complement q(x) with q(x)p(x)=c(x)
    tmp = polDup(cp);
    q = polDivMod(tmp, p);
    MTX_ASSERT(tmp->degree == -1);
@@ -1268,32 +1245,33 @@ static void Chop(node_t *n)
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static void Init(int argc, char **argv)
+static void init(int argc, char **argv)
 {
    App = appAlloc(&AppInfo,argc,argv);
    const int scope = mtxBegin(MTX_HERE, "Initialize program");
    goodWords = bsAllocEmpty();
-   memset(&LI,0,sizeof(Lat_Info));
    opt_G = appGetOption(App,"-G --gap");
    opt_i = appGetOption(App,"-i --read-cfinfo");
    firstword = appGetIntOption(App,"-s", 1, 1, 100000);
-   LI.NGen = appGetIntOption(App,"-g --generators",2,1,MAXGEN);
+   int ngen = appGetIntOption(App,"-g --generators",2,1,MAXGEN);
    opt_deglimit = appGetIntOption(App,"-d --max-polynomial-degree", -1, -1, 100);
    opt_nullimit = appGetIntOption(App,"-n", 3, 1, 20);
    appGetArguments(App,1,1);
-   strcpy(LI.BaseName,App->argV[0]);
+   LI = latCreate(App->argV[0]);
+   LI->NGen = ngen;
    mtxEnd(scope);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static void Cleanup()
+static void cleanup()
 {
    bsFree(goodWords);
-   for (size_t i = 0; i < LI.nCf; ++i) {
+   for (size_t i = 0; i < LI->nCf; ++i) {
       cleanUpNode(irred[i], 1);
       irred[i] = NULL;
    }
+   latDestroy(LI);
 
    if (App != NULL) {
       appFree(App);
@@ -1304,12 +1282,12 @@ static void Cleanup()
 
 int main(int argc, char **argv)
 {
-   Init(argc,argv);
+   init(argc,argv);
    MTX_LOGI("Start chop - Find irredicible constituents");
    CreateRoot();
    Chop(root);
    WriteResult(root);
-   Cleanup();
+   cleanup();
    return 0;
 }
 

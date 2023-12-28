@@ -35,9 +35,9 @@ MTX_COMMON_OPTIONS_DESCRIPTION
 static MtxApplication_t *App = NULL;                                            
 static const char *modName = NULL;
 static const char *endoName = NULL;
-static Lat_Info ModInfo;		// Data from .cfinfo file
-static Lat_Info LrrInfo;		// Data from .cfinfo file
-static int moddim = 0;
+static LatInfo_t* ModInfo = NULL;	// Data from .cfinfo file
+static LatInfo_t* LrrInfo = NULL;      // Data from .cfinfo file
+static uint32_t moddim = 0;
 static int enddim = 0;
 static int headdim = 0;
 static int compdim[LAT_MAXCF];
@@ -61,40 +61,35 @@ static void ParseArgs()
 
 static void ReadFiles()
 {
-    char fn[200];
-    int i;
+   // Read the .cfinfo files and calculate some dimensions.
+   ModInfo = latLoad(modName);
+   LrrInfo = latLoad(strEprintf("%s.lrr", endoName));
+   moddim = 0;
+   for (int i = 0; i < ModInfo->nCf; ++i) {
+      moddim += ModInfo->Cf[i].dim * ModInfo->Cf[i].mult;
+   }
 
-    // Read the .cfinfo files and calculate some dimensions.
-    latReadInfo(&ModInfo,modName);
-    sprintf(fn,"%s.lrr",endoName);
-    latReadInfo(&LrrInfo,fn);
-    moddim = 0;
-    for (i = 0; i < ModInfo.nCf; ++i)
-	moddim += ModInfo.Cf[i].dim * ModInfo.Cf[i].mult;
+   enddim = headdim = 0;
+   for (int i = 0; i < LrrInfo->nCf; i++) {
+      enddim += LrrInfo->Cf[i].dim * LrrInfo->Cf[i].mult;
+      headdim += LrrInfo->Cf[i].dim * LrrInfo->Cf[i].dim / LrrInfo->Cf[i].spl;
+   }
+   if (headdim > enddim || headdim <= 0) {
+      mtxAbort(MTX_HERE, "The head (%d) is bigger than the ring itself (%d)!",
+         headdim, enddim);
+   }
+   MTX_LOGD("dim(M)=%lu, dim(E)=%d, dim(Head)=%d",
+      (unsigned long) moddim, enddim, headdim);
 
-    enddim = headdim = 0;
-    for (i = 0; i < LrrInfo.nCf; i++)
-    {
-	enddim += LrrInfo.Cf[i].dim * LrrInfo.Cf[i].mult;
-	headdim += LrrInfo.Cf[i].dim * LrrInfo.Cf[i].dim / LrrInfo.Cf[i].spl;
-    }
-    if (headdim > enddim || headdim <= 0)
-    {
-	mtxAbort(MTX_HERE,"The head (%d) is bigger than the ring itself (%d)!",
-		headdim,enddim);
-    }
-    MTX_LOGD("dim(M)=%d, dim(E)=%d, dim(Head)=%d",moddim,enddim,headdim);
-
-    // Read the basis of the head.
-    sprintf(fn,"%s.lrr.soc",endoName);
-    MTX_LOGD("Loading socle basis");
-    Matrix_t* tmp = matLoad(fn);
-    Matrix_t* tmp2 = matInverse(tmp);
-    matFree(tmp);
-    tmp = matTransposed(tmp2);
-    matFree(tmp2);
-    head = matCutRows(tmp,0,headdim);
-    matFree(tmp);
+   // Read the basis of the head.
+   MTX_LOGD("Loading socle basis");
+   Matrix_t* tmp = matLoad(strEprintf("%s.lrr.soc", endoName));
+   Matrix_t* tmp2 = matInverse(tmp);
+   matFree(tmp);
+   tmp = matTransposed(tmp2);
+   matFree(tmp2);
+   head = matDupRows(tmp, 0, headdim);
+   matFree(tmp);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -124,7 +119,7 @@ static void writeOutput(Matrix_t *bas)
     {
 	MTX_LOGD("Transforming the generators");
 	sprintf(name,"%s.std",modName);
-	rep = mrLoad(name, ModInfo.NGen);
+	rep = mrLoad(name, ModInfo->NGen);
 	mrChangeBasis(rep,bas);
 	if (transformGenerators)
 	{
@@ -142,12 +137,12 @@ static void writeOutput(Matrix_t *bas)
 	for (i = 0; i < rep->NGen; i++)
 	{
 	    int k, block_start = 0;
-	    for (k = 0; k < LrrInfo.nCf; k++)
+	    for (k = 0; k < LrrInfo->nCf; k++)
 	    {
 		int l;
-		for (l = 0; l < LrrInfo.Cf[k].dim / LrrInfo.Cf[k].spl; l++)
+		for (l = 0; l < LrrInfo->Cf[k].dim / LrrInfo->Cf[k].spl; l++)
 		{
-		    Matrix_t *tmp = matCut(rep->Gen[i],block_start,block_start,
+		    Matrix_t *tmp = matDupRegion(rep->Gen[i],block_start,block_start,
 			compdim[k],compdim[k]);
 		    block_start += compdim[k];
 		    sprintf(name, "%s.comp%d%c%d.%d", modName,compdim[k], 
@@ -167,99 +162,96 @@ static void writeOutput(Matrix_t *bas)
 static void cleanup()
 {
    matFree(head);
-   latCleanup(&ModInfo);
-   latCleanup(&LrrInfo);
+   latDestroy(ModInfo);
+   latDestroy(LrrInfo);
    appFree(App);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-int main(int argc, char **argv)
+int main(int argc, char** argv)
 {
-    int i, j, l, num, dim = 0;
-    Matrix_t *partbas = NULL, *mat, *ker;
-    PTR headptr;
-    FEL f;
-    char name[200];
+   int i, j, l, num, dim = 0;
+   Matrix_t* partbas = NULL, * mat, * ker;
+   PTR headptr;
+   FEL f;
+   char name[200];
 
-    init(argc,argv);
+   init(argc, argv);
 
-    // makes the corresponding element of the endomorphismring
-    Matrix_t* bas = matAlloc(ffOrder,moddim,moddim);
-    headptr = head->data;
-    for (i = 0; i < LrrInfo.nCf; i++)
-    {
-	MTX_LOGD("Next constituent is %s%s",LrrInfo.BaseName, latCfName(&LrrInfo,i));
-	for (j = 0; j < LrrInfo.Cf[i].dim / LrrInfo.Cf[i].spl; j++)
-	{
-	    num = LrrInfo.Cf[i].dim;
-	    while (1)
-	    {
-		if (partbas != NULL)
-		    matFree(partbas);
-		partbas = matAlloc(ffOrder, moddim, moddim);
-		MTX_ASSERT(num > 0);
-		--num;
-		for (l = 0; l < enddim; l++)
-		{
-		    if ((f = ffExtract(headptr, l)) == FF_ZERO)
-		    	continue;
-		    sprintf(name, "%s.%d", endoName, l+1);
-		    if ((mat = matLoad(name)) == NULL)
-			return 1;
-		    matAddMul(partbas,mat,f);
-		    matFree(mat);
-		}
-		ffStepPtr(&headptr, enddim);
+   // makes the corresponding element of the endomorphismring
+   Matrix_t* bas = matAlloc(ffOrder, moddim, moddim);
+   headptr = head->data;
+   for (i = 0; i < LrrInfo->nCf; i++) {
+      MTX_LOGD("Next constituent is %s%s", LrrInfo->BaseName, latCfName(LrrInfo, i));
+      for (j = 0; j < LrrInfo->Cf[i].dim / LrrInfo->Cf[i].spl; j++) {
+         num = LrrInfo->Cf[i].dim;
+         while (1) {
+            if (partbas != NULL) {
+               matFree(partbas);
+            }
+            partbas = matAlloc(ffOrder, moddim, moddim);
+            MTX_ASSERT(num > 0);
+            --num;
+            for (l = 0; l < enddim; l++) {
+               if ((f = ffExtract(headptr, l)) == FF_ZERO) {
+                  continue;
+               }
+               sprintf(name, "%s.%d", endoName, l + 1);
+               if ((mat = matLoad(name)) == NULL) {
+                  return 1;
+               }
+               matAddMul(partbas, mat, f);
+               matFree(mat);
+            }
+            ffStepPtr(&headptr, enddim);
 
-		FPoly_t* pol = charpol(partbas);
-                // continue while charpol == x^enddim
-                int mustContinue = 
-	           (LrrInfo.Cf[i].dim != 1 && pol->nFactors == 1 
-		   && pol->factor[0]->degree == 1
-		   && pol->factor[0]->data[0] == FF_ZERO 
-		   && pol->factor[0]->data[1] == FF_ONE);
-		fpFree(pol);
-                if (!mustContinue) break;
-	    }
-	    headptr = ffGetPtr(headptr,num, enddim);
+            FPoly_t* pol = charpol(partbas);
+            // continue while charpol == x^enddim
+            int mustContinue =
+               (LrrInfo->Cf[i].dim != 1 && pol->nFactors == 1
+                && pol->factor[0]->degree == 1
+                && pol->factor[0]->data[0] == FF_ZERO
+                && pol->factor[0]->data[1] == FF_ONE);
+            fpFree(pol);
+            if (!mustContinue) { break; }
+         }
+         headptr = ffGetPtr(headptr, num, enddim);
 
+         // Make the stable kernel.
+         StablePower_(partbas, NULL, &ker);
+         compdim[i] = moddim - ker->nor;
+         for (l = i - 1; l >= 0 && compdim[i] != compdim[l]; l--) {}
+         if (l >= 0) {
+            compnm[i] = (char)(compnm[l] + 1);
+         }
+         else {
+            compnm[i] = 'a';
+         }
+         matFree(ker);
+         MTX_LOGI("The %d-th direct summand is: %d%c", j, compdim[i], compnm[i]);
 
-            // Make the stable kernel.
-	    StablePower_(partbas,NULL,&ker);
-	    compdim[i] = moddim - ker->nor;
-	    for (l = i - 1; l >= 0 && compdim[i] != compdim[l]; l--)
-		;
-	    if (l >= 0)
-		compnm[i] = (char)(compnm[l] + 1);
-	    else
-		compnm[i] = 'a';
-	    matFree(ker);
-	    MTX_LOGI("The %d-th direct summand is: %d%c", j, compdim[i], compnm[i]);
+         // Append <partbas> to <bas>.
+         matEchelonize(partbas);
+         matCopyRegion(bas, dim, 0, partbas, 0, 0, partbas->nor, partbas->noc);
+         dim += partbas->nor;
+      }
+   }
+   matFree(partbas);
 
-	    // Append <partbas> to <bas>.
-	    matEchelonize(partbas);
-	    #ifdef MTX_DEBUG
-	    #endif
-	    matCopyRegion(bas,dim,0,partbas,0,0,-1,-1);
-	    dim += partbas->nor;
-	}
-    }
-    matFree(partbas);
+   if (dim != moddim) {
+      mtxAbort(MTX_HERE, "Something is wrong - dimension mismatch (%d vs. %d)", dim, moddim);
+      for (i = 0; i < LrrInfo->nCf; i++) {
+         printf("%d  ", compdim[i]);
+      }
+      printf("\n");
+      return 1;
+   }
 
-    if (dim != moddim)
-    {
-	mtxAbort(MTX_HERE,"Something is wrong - dimension mismatch (%d vs. %d)", dim, moddim);
-	for (i = 0; i < LrrInfo.nCf; i++)
-    	    printf("%d  ", compdim[i]);
-    	printf("\n");
-	return 1;
-    }
-
-    writeOutput(bas);
-    matFree(bas);
-    cleanup();
-    return 0;
+   writeOutput(bas);
+   matFree(bas);
+   cleanup();
+   return 0;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////

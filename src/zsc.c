@@ -158,14 +158,7 @@ static int Init(int argc, char **argv)
     return 0;
 }
 
-
-
-
-
-
-/* ------------------------------------------------------------------
-   main()
-   ------------------------------------------------------------------ */
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 int main(int argc, char *argv[])
 {
@@ -177,12 +170,11 @@ int main(int argc, char *argv[])
 	return 1;
     }
 
-    /* Spinup each seed vector.
-       ------------------------ */
+    // Spinup each seed vector.
     for (seedno = 0; seedno < Seed->nor; ++seedno)
     {
 	char fn[200];
-	Matrix_t *seed_vec = matCutRows(Seed,seedno,1);
+	Matrix_t *seed_vec = matDupRows(Seed,seedno,1);
 	Matrix_t *result = SpinUpWithScript(seed_vec,Rep,OpTable);
         if (result == NULL)
 	    return 1;
@@ -192,8 +184,6 @@ int main(int argc, char *argv[])
 	matFree(seed_vec);
     }
 
-    /* Clean up.
-       --------- */
     appFree(App);
     return 0;
 }

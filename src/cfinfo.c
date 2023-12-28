@@ -15,7 +15,7 @@
 /// Constituent data structure.
 /// The CFInfo data structure contains all information about one 
 /// irreducible constituent of a module. Most of this information is
-/// useful only in the context of a Lat_Info structure.
+/// useful only in the context of a LatInfo_t structure.
 ///
 /// @c dim is the dimension of the constituent. If there are more than one non-isomorphic
 /// constituents of the same dimension they are numbered in order of discovery with
@@ -31,7 +31,7 @@
 /// Analogously, @c peakWord and @c peakPol specify the peak word for this module.
 /// See the @ref prog_pwkond "pwkond program" description for details.
 
-/// @class Lat_Info
+/// @class LatInfo_t
 /// Module Structure Information.
 /// This data structure contains all information about a module which is
 /// gathered during the submodule lattice calculation.
@@ -125,7 +125,7 @@ static void ReadWord(StfData *f, uint32_t *w, Poly_t **p, const char *fn)
 	}
 
 
-static void readCfFile(StfData* f, const char* fn, Lat_Info* li)
+static void readCfFile(StfData* f, const char* fn, LatInfo_t* li)
 {
     // Read header
     if (stfReadLine(f) || strcmp(stfGetName(f),"CFInfo"))
@@ -215,42 +215,68 @@ static void readCfFile(StfData* f, const char* fn, Lat_Info* li)
     }
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+LatInfo_t* latCreate(const char* baseName)
+{
+   MTX_ASSERT(baseName != NULL);
+   MTX_ASSERT(strlen(baseName) < LAT_MAXBASENAME - 1); // TODO: remove limit
+   LatInfo_t* li = mmAlloc(MTX_TYPE_LATINFO, sizeof(LatInfo_t));
+   strcpy(li->BaseName, baseName);
+   li->NGen = 2;
+   return li;
+}
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-/// Reads a Lattice Information File.
-/// This funktion reads a .cfinfo file and stores the data into a Lat_Info structure.
-/// @param li Pointer to the data structure.
-/// @param basename Base name (without the trailing ".cfinfo").
-/// @return 0 on success, -1 on error.
+/// Destroys a LatInfo_t object and releases associated resources.
 
-void latReadInfo(Lat_Info *li, const char *basename)
+void latDestroy(LatInfo_t* li)
 {
-    MTX_ASSERT(li != NULL);
-    MTX_ASSERT(basename != NULL);
-    MTX_ASSERT(strlen(basename) < LAT_MAXBASENAME - 1);
-
-    // Initialize the data structure.
-    memset(li,0,sizeof(Lat_Info));
-    strcpy(li->BaseName,basename);
-    li->NGen = 2;
-
-    char fn[LAT_MAXBASENAME + 20];
-    sprintf(fn,"%s.cfinfo",basename);
-    StfData *f = stfOpen(fn,"r");
-    readCfFile(f, fn, li);
-    stfClose(f);
+   for (int i = 0; i < li->nCf; ++i) {
+      CfInfo* cf = li->Cf + i;
+      if (cf->idPol != NULL) {
+         polFree(cf->idPol);
+         cf->idPol = NULL;
+      }
+      if (cf->peakPol != NULL) {
+         polFree(cf->peakPol);
+         cf->peakPol = NULL;
+      }
+   }
+   mmFree(li, MTX_TYPE_LATINFO);
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
+/// Reads a lattice information file.
+///
+/// This function reads a .cfinfo file and returns a LatInfo_t object containing the data read
+/// fro the file.
+///
+/// @param basename Base name (without the trailing ".cfinfo").
 
-/// Write a Lattice Information File.
-/// This funktion writes the contents of a Lat_Info structure into a file.
+LatInfo_t* latLoad(const char* baseName)
+{
+   LatInfo_t* li = latCreate(baseName);
+
+   char fn[LAT_MAXBASENAME + 20];
+   sprintf(fn, "%s.cfinfo", baseName);
+   StfData* f = stfOpen(fn, "r");
+   readCfFile(f, fn, li);
+   stfClose(f);
+   return li;
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+/// Writes a lattice information file.
+///
+/// This function writes the contents of a LatInfo_t structure into a file.
 /// The file name is constructed from the @c BaseName field of the structure
 /// by appending ".cfinfo".
-/// @param li Pointer to the data structure.
 
-void latWriteInfo(const Lat_Info *li)
+void latSave(const LatInfo_t *li)
 {
     StfData *f;
     int i;
@@ -350,7 +376,7 @@ void latWriteInfo(const Lat_Info *li)
 /// Note: The returned pointer points to a member of the @c CfInfo structure associated with the
 /// constituent.
 
-const char* latCfName(const Lat_Info* li, int cf)
+const char* latCfName(const LatInfo_t* li, int cf)
 {
    MTX_ASSERT(li != NULL);
    MTX_ASSERT(cf >= 0 && cf < li->nCf);
@@ -377,7 +403,7 @@ const char* latCfName(const Lat_Info* li, int cf)
 
 /// Add a Layer to the Socle Series.
 
-int latAddSocle(Lat_Info *li, int *mult)
+int latAddSocle(LatInfo_t *li, int *mult)
 {
     int i;
     int *ptr;
@@ -394,7 +420,7 @@ int latAddSocle(Lat_Info *li, int *mult)
 
 /// Add a Layer to the Radical Series.
 
-int latAddHead(Lat_Info *li, int *mult)
+int latAddHead(LatInfo_t *li, int *mult)
 {
     int i;
     int *ptr;
@@ -406,24 +432,6 @@ int latAddHead(Lat_Info *li, int *mult)
     ++li->NHeads;
     return li->NHeads;
 }
-
-////////////////////////////////////////////////////////////////////////////////////////////////////
-
-void latCleanup(Lat_Info *li)
-{
-   for (int i = 0; i < li->nCf; ++i) {
-      CfInfo* cf = li->Cf + i;
-      if (cf->idPol != NULL) {
-         polFree(cf->idPol);
-         cf->idPol = NULL;
-      }
-      if (cf->peakPol != NULL) {
-         polFree(cf->peakPol);
-         cf->peakPol = NULL;
-      }
-   }
-}
-
 
 /// @}
 

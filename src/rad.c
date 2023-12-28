@@ -44,17 +44,15 @@ MTX_COMMON_OPTIONS_DESCRIPTION
 
 static MtxApplication_t *App = NULL;
 static const char *Name = NULL;
-static Lat_Info Info;
-static int Head = 0;		/* Make head */
-static int Len = 0;		/* Max. length of radical series */
-static MatRep_t *Rep;		/* The representation (on M) */
-static MatRep_t *CfRep[LAT_MAXCF];  /* Constituents in standard basis */
-static Matrix_t *sed[LAT_MAXCF];   /* Kernel of the peak words */
-static IntMatrix_t *OpTable[LAT_MAXCF];    /* Operations, written to <Op> */
+static LatInfo_t* Info;
+static int Head = 0;                    // Make head
+static int Len = 0;                     // Max. length of radical series
+static MatRep_t *Rep;                   // The representation (on M)
+static MatRep_t *CfRep[LAT_MAXCF];      // Constituents in standard basis
+static Matrix_t *sed[LAT_MAXCF];        // Kernel of the peak words
+static IntMatrix_t *OpTable[LAT_MAXCF]; // Operations, written to <Op> 
 
-
-
-/*-----------------------------------------------------------------------*/
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 Matrix_t *intersect(Matrix_t *mat1, Matrix_t *mat2)
 {
@@ -80,13 +78,11 @@ Matrix_t *intersect(Matrix_t *mat1, Matrix_t *mat2)
 }
 
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
-
-/* making the dual of a representation given by gens 
-   -------------------------------------------------- */
+// making the dual of a representation given by gens 
 
 static void Dualize(MatRep_t *rep)
-
 {
     int i;
     for (i=0; i < rep->NGen; i++)
@@ -102,17 +98,17 @@ static void Dualize(MatRep_t *rep)
 static void ReadFiles()
 {
     Name = App->argV[0];
-    latReadInfo(&Info,Name);
+    Info = latLoad(Name);
     if (!Head)
-	Info.NHeads = 0;
+	Info->NHeads = 0;
 
     // Read the generators for the module and the constituents.
-    Rep = mrLoad(Name,Info.NGen);
-    for (int i = 0; i < Info.nCf; ++i)
+    Rep = mrLoad(Name,Info->NGen);
+    for (int i = 0; i < Info->nCf; ++i)
     {
 	char fn[200];
-	sprintf(fn,"%s%s.std", Info.BaseName,latCfName(&Info,i));
-	CfRep[i] = mrLoad(fn,Info.NGen);
+	sprintf(fn,"%s%s.std", Info->BaseName,latCfName(Info,i));
+	CfRep[i] = mrLoad(fn,Info->NGen);
     }
 }
 
@@ -149,17 +145,17 @@ static int DualizeConstituents()
 {
     int j;
 
-    for (j = 0; j < Info.nCf; ++j)
+    for (j = 0; j < Info->nCf; ++j)
     {
 	Matrix_t *word, *word_tr, *sb, *seed;
 
 	WgData_t *wg = wgAlloc(CfRep[j]);
-	if (Info.Cf[j].peakWord == 0)
+	if (Info->Cf[j].peakWord == 0)
 	    mtxAbort(MTX_HERE,"No peak word found. Run PWKOND first!");
-	word = wgMakeWord(wg,Info.Cf[j].peakWord);
+	word = wgMakeWord(wg,Info->Cf[j].peakWord);
 	word_tr = matTransposed(word);
 	matFree(word);
-	seed = matNullSpace__(matInsert_(word_tr,Info.Cf[j].peakPol));
+	seed = matNullSpace__(matInsert_(word_tr,Info->Cf[j].peakPol));
 	wgFree(wg);
 	Dualize(CfRep[j]);
 	OpTable[j] = NULL;
@@ -194,25 +190,25 @@ int main(int argc, char **argv)
     while(1) 
     {
 	Matrix_t *bas, *basi;
-	cfvec = NALLOC(int,Info.nCf);
+	cfvec = NALLOC(int,Info->nCf);
 	bas = matAlloc(ffOrder, Rep->Gen[0]->nor, Rep->Gen[0]->noc);
 
         // determining the nullspace of the peakwords in the dual module
 	rep = wgAlloc(Rep);
-	for (j = 0; j < Info.nCf; j++)
+	for (j = 0; j < Info->nCf; j++)
 	{
 	    Matrix_t *word, *w;
-	    word = wgMakeWord(rep,Info.Cf[j].peakWord);
+	    word = wgMakeWord(rep,Info->Cf[j].peakWord);
 	    w = matTransposed(word);
 	    matFree(word);
-            sed[j] = matNullSpace__(matInsert_(w, Info.Cf[j].peakPol)); 
+            sed[j] = matNullSpace__(matInsert_(w, Info->Cf[j].peakPol)); 
 	}
 	wgFree(rep);
 
 
 	Dualize(Rep);
 
-	for (j=0; j < Info.nCf; j++)
+	for (j=0; j < Info->nCf; j++)
 	{
 
 /* ------------------------------------------------------------------
@@ -222,14 +218,14 @@ int main(int argc, char **argv)
             if (sed[j]->nor != 0) 
 	    {
                 partbas = HomogeneousPart(Rep,CfRep[j],sed[j],OpTable[j],
-		    Info.Cf[j].spl);
+		    Info->Cf[j].spl);
 		matFree(sed[j]);
 	    }
             else 
 		partbas = sed[j];
 
-	    cfvec[j] = partbas->nor / Info.Cf[j].dim;
-	    matCopyRegion(bas,socdim,0,partbas,0,0,-1,-1);
+	    cfvec[j] = partbas->nor / Info->Cf[j].dim;
+	    matCopyRegion(bas,socdim,0,partbas,0,0,partbas->nor, partbas->noc);
             socdim += partbas->nor;
 	    MTX_LOG2("  headdim of the first %d cfs is %d\n", j+1, socdim);
             matFree(partbas);
@@ -240,20 +236,20 @@ int main(int argc, char **argv)
 	++soclen;
 	MTX_LOGI("Head %d: %d =",soclen,socdim);
 	flag = 0;
-	for (j = 0; j < Info.nCf; j++)
+	for (j = 0; j < Info->nCf; j++)
 	{
 	    if (cfvec[j] <= 0) 
 		continue;
 	    if (flag++ > 0)
 		MTX_LOGI(" +");
 	    if (cfvec[j] == 1)
-		MTX_LOGI(" %s",latCfName(&Info,j));
+		MTX_LOGI(" %s",latCfName(Info,j));
 	    else
-		MTX_LOGI(" %d*%s",cfvec[j],latCfName(&Info,j));
+		MTX_LOGI(" %d*%s",cfvec[j],latCfName(Info,j));
 	}
 	MTX_LOGI("\n");
 	if (!Head)
-	    latAddHead(&Info,cfvec);
+	    latAddHead(Info,cfvec);
 	sysFree(cfvec);
 
 
@@ -263,7 +259,7 @@ int main(int argc, char **argv)
 
 	if (Head && Len == soclen)
 	{
-	    soc2 = matCut(bas,0,0,socdim,bas->noc);
+	    soc2 = matDupRegion(bas,0,0,socdim,bas->noc);
 	    matFree(bas);
 	    break;
 	}
@@ -283,10 +279,10 @@ int main(int argc, char **argv)
 		matSave(bas,name);
 	    else
 	    {
-		Matrix_t *mat = matCutRows(basis,basis->nor - socdim,socdim);
+		Matrix_t *mat = matDupRows(basis,basis->nor - socdim,socdim);
 		matMul(bas,mat);
 		matFree(mat);
-		matCopyRegion(basis,basis->nor - socdim,0,bas,0,0,-1,-1);
+		matCopyRegion(basis,basis->nor - socdim,0,bas,0,0,bas->nor, bas->noc);
 		matSave(basis, name);
 	    }
             break;
@@ -298,7 +294,7 @@ int main(int argc, char **argv)
 
 	matEchelonize(bas);
 	echbas = matAlloc(bas->field,bas->noc,bas->noc);
-	matCopyRegion(echbas,0,0,bas,0,0,-1,-1);
+	matCopyRegion(echbas,0,0,bas,0,0,bas->nor, bas->noc);
 	for (i = bas->nor; i < bas->noc; ++i)
 	    ffInsert(matGetPtr(echbas,i),bas->pivotTable[i],FF_ONE);
 	matFree(bas);
@@ -319,9 +315,9 @@ int main(int argc, char **argv)
 	    else
 	    {
 		Matrix_t *mat;
-		mat = matCutRows(basis,basis->nor - stgen->nor,stgen->nor);
+		mat = matDupRows(basis,basis->nor - stgen->nor,stgen->nor);
 		matMul(stgen, mat);
-		matCopyRegion(basis,basis->nor - stgen->nor,0,stgen,0,0,-1,-1);
+		matCopyRegion(basis,basis->nor - stgen->nor,0,stgen,0,0,stgen->nor, stgen->noc);
 		matFree(mat);
 		matFree(stgen);
 	    }
@@ -338,7 +334,7 @@ int main(int argc, char **argv)
    -------------------------------------------------------------- */
 	if (Len == soclen + 1 && Head)
 	{
-	    emb = matCutRows(basis,basis->nor - dim,dim);
+	    emb = matDupRows(basis,basis->nor - dim,dim);
 	    if (emb == NULL)
 	    {
 		mtxAbort(MTX_HERE,"Cannot allocate matrxi");
@@ -346,23 +342,20 @@ int main(int argc, char **argv)
 	    }
 	}
 
-/* --------------------------------------
-   basis transformation and factorization
-   -------------------------------------- */
-
-	MTX_LOGD("Reducing to dimension %d\n",Rep->Gen[0]->noc-socdim);
-        for (i = 0; i < Info.NGen; ++i)
+        // basis transformation and factorization
+	MTX_LOGD("Reducing to dimension %lu",(unsigned long)(Rep->Gen[0]->noc-socdim));
+        for (i = 0; i < Info->NGen; ++i)
         {
             stgen = matDup(bas);
             matMul(stgen,Rep->Gen[i]);
-            matMul(stgen,basi);		    /* the transformation */
+            matMul(stgen,basi);		    // the transformation
             matFree(Rep->Gen[i]);
 
-	    partbas = matCutRows(stgen,socdim,dim);
+	    partbas = matDupRows(stgen,socdim,dim);
 	    matFree(stgen);
-	    stgen = matTransposed(partbas);	/* 'dualizing' */
+	    stgen = matTransposed(partbas);	// 'dualizing'
 	    matFree(partbas);
-	    Rep->Gen[i] = matCutRows(stgen,socdim,dim);
+	    Rep->Gen[i] = matDupRows(stgen,socdim,dim);
 	    matFree(stgen);
         }
 
@@ -372,9 +365,7 @@ int main(int argc, char **argv)
     }
 
 
-    latWriteInfo(&Info);
-
-
+    latSave(Info);
 
     if (socdim == Rep->Gen[0]->nor && !Head)
 	return 0;	
@@ -385,9 +376,7 @@ int main(int argc, char **argv)
 	    return 0;	
      }
 
-    
-
-/*----------------------------------------------------------------------------*/
+    //----------------------------------------------------------------------------
 
     if (soc2 == NULL)
     {
@@ -396,25 +385,21 @@ int main(int argc, char **argv)
 	return 0;
     }
 
-/* -----------------------------
-   computing the <Len>th radical
-   ----------------------------- */
+   // computing the <Len>th radical
 
-    rad2 = matNullSpace__(matTransposed(soc2));	/* rad^Len given in rad^(Len - 1) */
+    rad2 = matNullSpace__(matTransposed(soc2));	// rad^Len given in rad^(Len - 1)
 
-    Dualize(Rep);	/* the action on rad^(Len - 1) */
+    Dualize(Rep);	// the action on rad^(Len - 1)
 
-/* ------------------------------------------------------------------
-   calculates the vecors generating the irreducibles lying in rad^Len
-   ------------------------------------------------------------------ */
+    // calculates the vecors generating the irreducibles lying in rad^Len
     rep = wgAlloc(Rep);
-    for(j = 0; j < Info.nCf; j++)
+    for(j = 0; j < Info->nCf; j++)
     {
-	Matrix_t *word = wgMakeWord(rep,Info.Cf[j].peakWord);
+	Matrix_t *word = wgMakeWord(rep,Info->Cf[j].peakWord);
 	Matrix_t *seed2;
 
-	/* makes the iterated nullspace of the peakword */
-	matInsert_(word, Info.Cf[j].peakPol);
+	// makes the iterated nullspace of the peakword
+	matInsert_(word, Info->Cf[j].peakPol);
 	if ((seed = matAlloc(ffOrder, 0, 0)) == NULL)
 	    return 1;
 	for (seed2 = matNullSpace(word); seed->nor < seed2->nor; 
@@ -428,12 +413,12 @@ int main(int argc, char **argv)
 
 	if (seed->nor > 0)
 	{
-	    Matrix_t *sec = intersect(seed, rad2); /* the nullspace in rad^2 */
+	    Matrix_t *sec = intersect(seed, rad2); // the nullspace in rad^2
 	    matPivotize(sec);
 	    matClean(seed,sec);
 	    matFree(sec);
 	    if (emb != NULL)
-		matMul(seed, emb); /* embedding into the original module */
+		matMul(seed, emb); // embedding into the original module
 	    mat = seed;
 	}
 	else
@@ -447,16 +432,17 @@ int main(int argc, char **argv)
 	    }
 	}
 
-	sprintf(name,"%s%s.h%d", Name, latCfName(&Info,j), Len);
+	sprintf(name,"%s%s.h%d", Name, latCfName(Info,j), Len);
 	matSave(mat,name);
 /*	matPrint(name, mat);*/
 	matFree(mat);
     }
     wgFree(rep);
+    latDestroy(Info);
     return(0);
 }
 
-
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 /**
 @page prog_rad rad - Radical Series

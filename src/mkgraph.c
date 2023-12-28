@@ -42,7 +42,7 @@ static char name[100];
 static char* fileNameInp = NULL;
 static char* fileNameOut = NULL;
 static long block = -1;
-static Lat_Info LI;		/* Data from .cfinfo file */
+static LatInfo_t* LI;		// Data from .cfinfo file
 static enum { O_PS, O_GAP } OutputMode = O_PS;
 
 struct { char name[20]; long r, b, g; } ColorMap[] =
@@ -297,7 +297,7 @@ static void init(int argc, char** argv)
          break;
    }
 
-   latReadInfo(&LI, name);
+   LI = latLoad(name);
    if (block > 0) {
       fileNameInp = strMprintf("%s.gra.%ld", name, block);
       fileNameOut = strMprintf("%s.ps.%ld", name, block);
@@ -502,7 +502,7 @@ void writelegend()
     int i;
 
     fprintf(psfile,"%% Legend\n%% -------\nnewpath\n");
-    for (i = 0; i < LI.nCf; ++i)
+    for (i = 0; i < LI->nCf; ++i)
     {
 	fprintf(psfile,
 	    "lineColor %s setdash %1.1f %1.1f moveto 60 0 rlineto stroke\n",
@@ -510,7 +510,7 @@ void writelegend()
 	fprintf(psfile,
 	    "stdColor [] 0 setdash %1.1f %1.1f moveto ",
 	    XMAP(0.8)+65.0,YMAP(1.0)-10.0*i-3.0);
-	fprintf(psfile,"(%s) show stroke\n",latCfName(&LI,i));
+	fprintf(psfile,"(%s) show stroke\n",latCfName(LI,i));
     }
     fprintf(psfile,"\n");
 }

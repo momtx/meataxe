@@ -10,17 +10,13 @@
 #include <string.h>
 
 
-/* --------------------------------------------------------------------------
-   Global data
-   -------------------------------------------------------------------------- */
-
-
-char TkiName[LAT_MAXBASENAME];	/* Base name for .tki file */
-TkData_t TKInfo;			/* Data from .tki file */
-Lat_Info InfoM, InfoN;		/* Data from .cfinfo files */
-int CfIsLinked[LAT_MAXCF];	/* Constituent (of N) is already linked */
-Matrix_t *Trans[LAT_MAXCF];	/* */
-int opt_s = 0;			/* Do NOT use standard generators */
+char TkiName[LAT_MAXBASENAME];	// Base name for .tki file
+TkData_t TKInfo;		// Data from .tki file
+LatInfo_t* InfoM;		// Data from .cfinfo file
+LatInfo_t* InfoN;		// Data from .cfinfo file
+int CfIsLinked[LAT_MAXCF];	// Constituent (of N) is already linked */
+Matrix_t *Trans[LAT_MAXCF];	//
+int opt_s = 0;			// Do NOT use standard generators */
 
 
 static MtxApplicationInfo_t AppInfo = { 
@@ -52,62 +48,61 @@ static MtxApplication_t *App = NULL;
 
 // Initialize global variables, processes command line arguments, reads the .cfinfo and .tki files.
 
-static void init(int argc, char **argv)
+static void init(int argc, char** argv)
 {
-    int i;
-    char fn[LAT_MAXBASENAME+20];
+   int i;
+   char fn[LAT_MAXBASENAME + 20];
 
-    // Initialize global data
-    memset(&TKInfo,0,sizeof(TKInfo));
-    memset(TkiName,0,sizeof(TkiName));
-    memset(CfIsLinked,0,sizeof(CfIsLinked));
+   // Initialize global data
+   memset(&TKInfo, 0, sizeof(TKInfo));
+   memset(TkiName, 0, sizeof(TkiName));
+   memset(CfIsLinked, 0, sizeof(CfIsLinked));
 
-    // Initialize the MeatAxe library
-    App = appAlloc(&AppInfo,argc,argv);
-    opt_s = appGetOption(App,"-s");
-    appGetArguments(App,3,3);
-    strcpy(TkiName,App->argV[0]);
+   // Initialize the MeatAxe library
+   App = appAlloc(&AppInfo, argc, argv);
+   opt_s = appGetOption(App, "-s");
+   appGetArguments(App, 3, 3);
+   strcpy(TkiName, App->argV[0]);
 
-    // Read info files
-    strncpy(TKInfo.nameM,App->argV[1],sizeof(TKInfo.nameM)-1);
-    strncpy(TKInfo.nameN,App->argV[2],sizeof(TKInfo.nameN)-1);
-    latReadInfo(&InfoM,App->argV[1]);
-    latReadInfo(&InfoN,App->argV[2]);
+   // Read info files
+   snprintf(TKInfo.nameM, sizeof(TKInfo.nameM), "%s", App->argV[1]);
+   snprintf(TKInfo.nameN, sizeof(TKInfo.nameN), "%s", App->argV[2]);
+   InfoM = latLoad(App->argV[1]);
+   InfoN = latLoad(App->argV[2]);
 
-    // Initialize the TKInfo structure
-    TKInfo.nCf = 0;
-    for (i = 0; i < LAT_MAXCF; ++i)
-	TKInfo.cfIndex[0][i] = TKInfo.cfIndex[1][i] = -1;
+   // Initialize the TKInfo structure
+   TKInfo.nCf = 0;
+   for (i = 0; i < LAT_MAXCF; ++i) {
+      TKInfo.cfIndex[0][i] = TKInfo.cfIndex[1][i] = -1;
+   }
 
-    // Some additional checks on input files
-    if (InfoM.field != InfoN.field)
-    {
-	mtxAbort(MTX_HERE,"Incompatible representations: %s is over GF(%d), "
-	   "%s is over GF(%d)",InfoM.BaseName,InfoM.field,InfoN.BaseName,
-	   InfoN.field);
-    }
-    if (InfoM.NGen != InfoN.NGen)
-    {
-	mtxAbort(MTX_HERE,"Incompatible representations: %s has %d generators, "
-	   "%s has %d generators",InfoM.BaseName,InfoM.NGen,InfoN.BaseName,
-	   InfoN.NGen);
-    }
+   // Some additional checks on input files
+   if (InfoM->field != InfoN->field) {
+      mtxAbort(MTX_HERE, "Incompatible representations: %s is over GF(%d), "
+         "%s is over GF(%d)", InfoM->BaseName, InfoM->field, InfoN->BaseName,
+         InfoN->field);
+   }
+   if (InfoM->NGen != InfoN->NGen) {
+      mtxAbort(MTX_HERE, "Incompatible representations: %s has %d generators, "
+         "%s has %d generators", InfoM->BaseName, InfoM->NGen, InfoN->BaseName,
+         InfoN->NGen);
+   }
 
-    /* Print start message
-       ------------------- */
-    sprintf(fn,"%s.1",InfoM.BaseName);
-    MtxFile_t* f = mfOpen(fn, "rb");
-    mfReadHeader(f);
-    int nor1 = f->header[1];
-    mfClose(f);
+   /* Print start message
+      ------------------- */
+   sprintf(fn, "%s.1", InfoM->BaseName);
+   MtxFile_t* f = mfOpen(fn, "rb");
+   mfReadHeader(f);
+   int nor1 = f->header[1];
+   mfClose(f);
 
-    sprintf(fn,"%s.1",InfoN.BaseName);
-    f = mfOpen(fn, "rb");
-    mfReadHeader(f);
-    int nor2 = f->header[1];
-    mfClose(f);
+   sprintf(fn, "%s.1", InfoN->BaseName);
+   f = mfOpen(fn, "rb");
+   mfReadHeader(f);
+   int nor2 = f->header[1];
+   mfClose(f);
 
-    MTX_LOGI("Beginning pre-condensation of dimension %d x %d = %d\n", nor1,nor2,nor1*nor2);
+   MTX_LOGI("Beginning pre-condensation of dimension %d x %d = %d\n", nor1, nor2, nor1 * nor2);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -126,18 +121,18 @@ static int IsDual(int mj, MatRep_t *rep_m, int nj)
 {
     MatRep_t *rep_n; // Generators of constituent of N
     int result;
-    CfInfo *minfo = InfoM.Cf + mj;
+    CfInfo *minfo = InfoM->Cf + mj;
 
     /* First check: Dimensions and splitting field must match
        ------------------------------------------------------ */
-    if (InfoN.Cf[nj].dim != minfo->dim || InfoN.Cf[nj].spl != minfo->spl)
+    if (InfoN->Cf[nj].dim != minfo->dim || InfoN->Cf[nj].spl != minfo->spl)
 	return 0;
 
     /* Read the (contragrediate) generators and compare
        ------------------------------------------------ */
-    MTX_LOG2(" (%s%s)",InfoN.BaseName,latCfName(&InfoN,nj));
-    rep_n = latReadCfGens(&InfoN,nj,LAT_RG_INVERT|LAT_RG_TRANSPOSE
-	| (InfoN.Cf[nj].peakWord > 0 ? LAT_RG_STD : 0));
+    MTX_LOG2(" (%s%s)",InfoN->BaseName,latCfName(InfoN,nj));
+    rep_n = latReadCfGens(InfoN,nj,LAT_RG_INVERT|LAT_RG_TRANSPOSE
+	| (InfoN->Cf[nj].peakWord > 0 ? LAT_RG_STD : 0));
     
     result = IsIsomorphic(rep_m,minfo,rep_n,Trans + TKInfo.nCf, minfo->peakWord > 0);
     mrFree(rep_n);
@@ -163,7 +158,7 @@ static int FindConstituentInN(int mj, MatRep_t *rep_m)
     int nj;
 
     // Main loop: for each constituent of N
-    for (nj = 0; nj < InfoN.nCf; ++nj)
+    for (nj = 0; nj < InfoN->nCf; ++nj)
     {
 	// Discard constituents which are already linked
 	if (CfIsLinked[nj])
@@ -225,33 +220,34 @@ static void MkEndo(const MatRep_t *rep, const CfInfo *cf, Matrix_t **endo, int m
 //   <spl>: Splitting field degree.
 //   <endo>: Basis of endomorphism ring.
 
-static void MakeQ(int n, int spl, const Matrix_t **endo)
-{		  
-    int i;
-    int dim = endo[0]->nor;
-    Matrix_t *q = matAlloc(endo[0]->field,spl,dim*dim);
-    char fn[200];
-    for (i = 0; i < spl; ++i)
-    {
-	int j;
-	Matrix_t *y = matInverse(Trans[n]), *x;
-	matMul(y,endo[i]);
-	x = matTransposed(y);
-	matFree(y);
-	for (j = 0; j < dim; ++j)
-	    matCopyRegion(q,i,j * dim,x,j,0,1,-1);
-	matFree(x);
-    }
-    sprintf(fn,"%s.q.%d",TkiName,n+1);
-    MTX_LOG2("Writing %s\n",fn);
+static void MakeQ(int n, uint32_t spl, const Matrix_t** endo)
+{
+   int i;
+   int dim = endo[0]->nor;
+   Matrix_t* q = matAlloc(endo[0]->field, spl, dim * dim);
+   char fn[200];
+   for (i = 0; i < spl; ++i) {
+      int j;
+      Matrix_t* y = matInverse(Trans[n]), * x;
+      matMul(y, endo[i]);
+      x = matTransposed(y);
+      matFree(y);
+      for (j = 0; j < dim; ++j) {
+         matCopyRegion(q, i, j * dim, x, j, 0, 1, x->noc);
+      }
+      matFree(x);
+   }
+   sprintf(fn, "%s.q.%d", TkiName, n + 1);
+   MTX_LOG2("Writing %s\n", fn);
 
 #if 0
-    if (InfoM.Cf[TKInfo.cfIndex[0][n]].peakWord < 0)
-	matMulScalar(q,FF_ZERO);
+   if (InfoM->Cf[TKInfo.cfIndex[0][n]].peakWord < 0) {
+      matMulScalar(q, FF_ZERO);
+   }
 #endif
 
-    matSave(q,fn);
-    matFree(q);
+   matSave(q, fn);
+   matFree(q);
 }
 
 
@@ -287,21 +283,21 @@ static void MakePQ(int n, int mj, int nj)
     MatRep_t *rep_m;
     Matrix_t *estar[MAXENDO], *endo[MAXENDO], *e, *ei;
     char fn[200];
-    int dim = InfoM.Cf[mj].dim;
-    int spl = InfoM.Cf[mj].spl;
+    int dim = InfoM->Cf[mj].dim;
+    uint32_t spl = InfoM->Cf[mj].spl;
     int i;
     Matrix_t *p;
 
     MTX_LOGD("Condensing %s%s x %s%s, [E:k]=%d",
-          InfoM.BaseName,latCfName(&InfoM,mj),
-          InfoN.BaseName,latCfName(&InfoN,nj),spl);
+          InfoM->BaseName,latCfName(InfoM,mj),
+          InfoN->BaseName,latCfName(InfoN,nj),spl);
 
     /* Read the generators for the constituent of M and make the
        endomorphism ring.
        --------------------------------------------------------- */
-    rep_m = latReadCfGens(&InfoM,mj,InfoM.Cf[mj].peakWord > 0 ? LAT_RG_STD : 0);
+    rep_m = latReadCfGens(InfoM,mj,InfoM->Cf[mj].peakWord > 0 ? LAT_RG_STD : 0);
     MTX_LOG2("Calculating endomorphism ring");
-    MkEndo(rep_m,InfoM.Cf + mj,endo,MAXENDO);
+    MkEndo(rep_m,InfoM->Cf + mj,endo,MAXENDO);
     mrFree(rep_m);
 
     /* Calculate the Q matrix
@@ -379,7 +375,7 @@ static void MakePQ(int n, int mj, int nj)
     sprintf(fn,"%s.p.%d",TkiName,n+1);
     MTX_LOG2("Writing %s",fn);
 #if 0
-    if (InfoM.Cf[mj].peakWord < 0)
+    if (InfoM->Cf[mj].peakWord < 0)
 	matMulScalar(p,FF_ZERO);
 #endif
     matSave(p,fn);
@@ -407,7 +403,7 @@ static void CalcDim()
     {
 	int m = TKInfo.cfIndex[0][i];
 	int n = TKInfo.cfIndex[1][i];
-	TKInfo.dim += InfoM.Cf[m].mult * InfoN.Cf[n].mult * InfoM.Cf[m].spl;
+	TKInfo.dim += InfoM->Cf[m].mult * InfoN->Cf[n].mult * InfoM->Cf[m].spl;
     }
     MTX_LOGI("Dimension of condensed module = %d\n",TKInfo.dim);
 }
@@ -422,31 +418,31 @@ int main(int argc, char **argv)
     init(argc,argv);
 
     // Main loop: for all constituents of M
-    for (mj = 0; mj < InfoM.nCf; mj++)
+    for (mj = 0; mj < InfoM->nCf; mj++)
     {
-	if (InfoM.Cf[mj].peakWord == 0)
+	if (InfoM->Cf[mj].peakWord == 0)
 	{
 	    MTX_LOGI("WARNING: No peak word word available for %s%s\n",
-		InfoM.BaseName,latCfName(&InfoM,mj));
+		InfoM->BaseName,latCfName(InfoM,mj));
 	}
 
 	// Read the generators for the <mj>-th contituent of M, and find
 	// the corresponding (=contragredient) constituent in N.
-	MatRep_t* rep_m = latReadCfGens(&InfoM,mj,InfoM.Cf[mj].peakWord > 0 ? LAT_RG_STD : 0);
+	MatRep_t* rep_m = latReadCfGens(InfoM,mj,InfoM->Cf[mj].peakWord > 0 ? LAT_RG_STD : 0);
 	int nj = FindConstituentInN(mj,rep_m);
 
 	// Calculate the P and Q matrix for this constituent
 	if (nj >= 0)
 	{
 	    MTX_LOGI("%s%s <--> %s%s",
-                 InfoM.BaseName,latCfName(&InfoM,mj), InfoN.BaseName, latCfName(&InfoN,nj));
+                 InfoM->BaseName,latCfName(InfoM,mj), InfoN->BaseName, latCfName(InfoN,nj));
 	    TKInfo.cfIndex[0][TKInfo.nCf] = mj;
 	    TKInfo.cfIndex[1][TKInfo.nCf] = nj;
 	    MakePQ(TKInfo.nCf,mj,nj);
 	    TKInfo.nCf++;
 	}
 	else
-	   MTX_LOGI("%s%s not found in %s",InfoM.BaseName,latCfName(&InfoM,mj),InfoN.BaseName);
+	   MTX_LOGI("%s%s not found in %s",InfoM->BaseName,latCfName(InfoM,mj),InfoN->BaseName);
 
 	mrFree(rep_m);
     }
@@ -455,8 +451,8 @@ int main(int argc, char **argv)
     tkWriteInfo(&TKInfo,TkiName);
     for (int i = 0; i < TKInfo.nCf; ++i)
        matFree(Trans[i]);
-    latCleanup(&InfoM);
-    latCleanup(&InfoN);
+    latDestroy(InfoM);
+    latDestroy(InfoN);
     appFree(App);
     return 0;
 }

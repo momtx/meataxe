@@ -208,7 +208,9 @@ static void destroy(void* object)
       case MTX_TYPE_STFILE: stfClose((StfData*) obj); return;
       case MTX_TYPE_STRBUF: sbFree((StrBuffer_t*) obj); return;
       case MTX_TYPE_WORD_GENERATOR: wgFree((WgData_t*)obj); return;
+      case MTX_TYPE_LATINFO: latDestroy((LatInfo_t*)obj); return;
    }
+   fprintf(stderr, "UNSUPPORTED OBJECT TYPE 0x%lx", (unsigned long) obj->typeId);
    abort();
 }
 

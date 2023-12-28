@@ -8,11 +8,11 @@
 
 static MatRep_t *Rep;           // Generators for the algebra
 static Matrix_t *mountains;     // Genrators for all mountains
-static int nmount;              // Number of mountains
+static uint32_t nmount;         // Number of mountains
 static int submoduleNumber;     // Number of the submodule to generate
 static BitString_t *bs;         // Corresponding bit string (read from .sub file)
 static int opt_m = 0;           // Option -m used
-static Lat_Info LI;             // Data from .cfinfo file
+static LatInfo_t* LI;          // Data from .cfinfo file
 static const char *ModuleName = NULL;
 
 static MtxApplicationInfo_t AppInfo = { 
@@ -42,20 +42,19 @@ static MtxApplication_t *App = NULL;
 static void init(int argc, char **argv)
 {
     char fn[200];
-    int i;
 
     App = appAlloc(&AppInfo,argc,argv);
     opt_m = appGetOption(App,"-m --mountain");
     appGetArguments(App,2,2);
     ModuleName = App->argV[0];
     submoduleNumber = atoi(App->argV[1]);
-    latReadInfo(&LI,ModuleName);
+    LI = latLoad(ModuleName);
 
     // Read the generators and mountains.
-    Rep = mrLoad(ModuleName,LI.NGen);
-    mountains = matLoad(strcat(strcpy(fn,LI.BaseName),".v"));
+    Rep = mrLoad(ModuleName,LI->NGen);
+    mountains = matLoad(strcat(strcpy(fn,LI->BaseName),".v"));
     nmount = mountains->nor;
-    MTX_LOGD("%d mountains",nmount);
+    MTX_LOGD("%lu mountains", (unsigned long)nmount);
     
     // Read the bit string from xxx.sub or set up the bit string
     // to contain only the requested mountain (-m)
@@ -66,7 +65,7 @@ static void init(int argc, char **argv)
     }
     else
     {
-    	MtxFile_t* f = mfOpen(strcat(strcpy(fn,LI.BaseName),".sub"),"rb");
+    	MtxFile_t* f = mfOpen(strcat(strcpy(fn,LI->BaseName),".sub"),"rb");
         for (int k = 0; k < submoduleNumber; ++k) {
            bsSkip(f);
         }
@@ -75,9 +74,9 @@ static void init(int argc, char **argv)
 
         MTX_XLOGD(msg) {
 	    sbAppend(msg, "Mountains: ");
-	    for (i = 0; i < nmount; ++i) {
+	    for (uint32_t i = 0; i < nmount; ++i) {
 	    	if (bsTest(bs,i)) {
-                   sbPrintf(msg, "%d ",i);
+                   sbPrintf(msg, "%lu ", (unsigned long)i);
                 }
             }
     	}
@@ -88,14 +87,12 @@ static void init(int argc, char **argv)
 
 static void sp()
 {
-    int i;
-    Matrix_t *m, *subsp;
     PTR p;
     char fn[200];
 
-    m = matAlloc(ffOrder,nmount,Rep->Gen[0]->noc);
+    Matrix_t* m = matAlloc(ffOrder,nmount,Rep->Gen[0]->noc);
     p = m->data;
-    for (i = 0; i < nmount; ++i)
+    for (uint32_t i = 0; i < nmount; ++i)
     {
 	if (bsTest(bs,i))
 	{
@@ -105,11 +102,11 @@ static void sp()
 	}
     }
     matEchelonize(m);
-    MTX_LOGI("Seed space has dimension %d",m->nor);
-    subsp = SpinUp(m,Rep,SF_EACH|SF_COMBINE,NULL,NULL);
+    MTX_LOGI("Seed space has dimension %lu",(unsigned long)m->nor);
+    Matrix_t* subsp = SpinUp(m,Rep,SF_EACH|SF_COMBINE,NULL,NULL);
     matFree(m);
-    MTX_LOGI("Submodule has dimension %d",subsp->nor);
-    sprintf(fn,"%s.%c%d",LI.BaseName,opt_m ? 'm' : 's',submoduleNumber);
+    MTX_LOGI("Submodule has dimension %lu", (unsigned long) subsp->nor);
+    sprintf(fn,"%s.%c%d",LI->BaseName,opt_m ? 'm' : 's',submoduleNumber);
     matSave(subsp,fn);
     matFree(subsp);
     MTX_LOGI("Module written to %s",fn);
@@ -121,7 +118,7 @@ static void cleanup()
 {
    bsFree(bs);
    matFree(mountains);
-   latCleanup(&LI);
+   latDestroy(LI);
    mrFree(Rep);
    appFree(App);
 }

@@ -59,15 +59,17 @@ static uint32_t zmkechelon(PTR matrix, uint32_t nor, uint32_t noc, uint32_t *piv
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 /// Reduce to echelon form
-/// This function performs a Gaussian elimination on the matrix @a mat.
-/// After return, @a mat is in semi echelon form and a pivot table has been
-/// attatched to the matrix. If the rank of @a mat was smaller than the number
-/// of rows, some rows are removed during the process. This function can also
-/// be used to rebuild the pivot table after the matrix has been modified.
+///
+/// This function performs a Gaussian elimination on the matrix @a mat. After return, @a mat is in
+/// semi echelon form and its pivot table has been set up.
+/// If the rank of @a mat was smaller than the number of rows, some rows are removed during the
+/// process. This function can also be used to rebuild the pivot table after the matrix has been
+/// modified.
+///
 /// @param mat Pointer to the matrix.
-/// @return Rank of @a mat, or -1 on error.
+/// @return Rank (=number of rows) of the echelongized matrix.
 
-int matEchelonize(Matrix_t *mat)
+uint32_t matEchelonize(Matrix_t *mat)
 {
    matValidate(MTX_HERE, mat);
 
@@ -151,7 +153,7 @@ static int zmkpivot(PTR matrix, uint32_t nor, uint32_t noc, uint32_t *piv, uint8
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 /// Create pivot table.
-/// This function creates or updates the pivot table of a matrix. Unlike @c matEchelonize() this
+/// This function creates or updates the pivot table of a matrix. Unlike @ref matEchelonize this
 /// function assumes that @a mat is already in echelon form. If it is not, @c matPivotize() fails
 /// and aborts the program.
 
@@ -327,47 +329,32 @@ Matrix_t *matNullSpace__(Matrix_t *mat)
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 /// Clean a matrix.
+///
 /// This function "cleans" a matrix with a space, i.e., it adds suitable linear combinations
 /// of the rows in @em sub to the rows of @em mat such that all pivot columns in @em mat are
 /// zero. Both matrices must be over the same field and have the same number of columns.
 /// The second matrix, @em sub, must be in echelon form. The cleaned matrix is reduced to
 /// echelon form.
-/// @return Rank of the cleaned matrix, or -1 on error.
+/// @return Rank (= number of rows) of the cleaned matrix.
 
-int matClean(Matrix_t *mat, const Matrix_t *sub)
+uint32_t matClean(Matrix_t* mat, const Matrix_t* sub)
 {
-   int i;
-
-   /* Check the arguments
-      ------------------- */
    matValidate(MTX_HERE, mat);
    matValidate(MTX_HERE, sub);
-   if ((mat->field != sub->field) || (mat->noc != sub->noc)) {
-      mtxAbort(MTX_HERE,"%s",MTX_ERR_INCOMPAT);
-      return -1;
-   }
-   if (sub->pivotTable == NULL) {
-      mtxAbort(MTX_HERE,"Subspace: %s",MTX_ERR_NOTECH);
-      return -1;
+   if (mat->field != sub->field || mat->noc != sub->noc)
+      mtxAbort(MTX_HERE, "%s", MTX_ERR_INCOMPAT);
+   if (sub->pivotTable == NULL)
+      mtxAbort(MTX_HERE, "Subspace: %s", MTX_ERR_NOTECH);
+
+   // Clean
+   for (uint32_t i = 0; i < mat->nor; ++i) {
+      PTR m = matGetPtr(mat, i);
+      ffCleanRow(m, sub->data, sub->nor, sub->noc, sub->pivotTable);
    }
 
-   /* Clean
-      ----- */
-   for (i = 0; i < mat->nor; ++i) {
-      PTR m = matGetPtr(mat,i);
-      ffCleanRow(m,sub->data,sub->nor,sub->noc, sub->pivotTable);
-   }
-
-   /* Reduce to echelon form
-      ---------------------- */
-   if (matEchelonize(mat) < 0) {
-      return -1;
-   }
-   return mat->nor;
+   // Reduce to echelon form
+   return matEchelonize(mat);
 }
-
-
-
 
 /// @}
 

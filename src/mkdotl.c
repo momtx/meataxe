@@ -9,7 +9,7 @@
 
 MatRep_t *Rep;			// Generators of the current constituent
 Matrix_t *cycl = NULL;		// List of cyclic submodules
-long *class[MAXCYCL];		// Classes of vectors
+uint32_t *class[MAXCYCL];		// Classes of vectors
 uint32_t nmountains = 0;	// Number of mountains
 Matrix_t *mountlist[MAXCYCL];	// Mountains
 BitString_t *subof[MAXCYCL];	// Incidence matrix
@@ -37,8 +37,8 @@ long *sumdim[MAXCYCL];
 int dotlen;
 
 static int writeGapOutput = 0;
-static int Opt_FindDuplicates = 0;  // Find 'duplicate' dotted-lines
-static Lat_Info LI;		    // Data from .cfinfo file
+static int Opt_FindDuplicates = 0;      // Find 'duplicate' dotted-lines
+static LatInfo_t* LI;                  // Data from .cfinfo file
 
 
 
@@ -73,18 +73,18 @@ static void readFiles(const char* basename)
    char fn[200];
    int i;
 
-   latReadInfo(&LI, basename);
+   LI = latLoad(basename);
 
    cfstart[0] = 0;
-   for (i = 1; i <= LI.nCf; ++i) {
-      cfstart[i] = cfstart[i - 1] + (int)(LI.Cf[i - 1].nmount);
+   for (i = 1; i <= LI->nCf; ++i) {
+      cfstart[i] = cfstart[i - 1] + (int)(LI->Cf[i - 1].nmount);
    }
 
    // Read the incidence matrix
-   sprintf(fn, "%s.inc", LI.BaseName);
+   sprintf(fn, "%s.inc", LI->BaseName);
    MtxFile_t* f = mfOpen(fn, "rb");
    mfRead32(f, &nmountains, 1);
-   if (nmountains != cfstart[LI.nCf]) {
+   if (nmountains != cfstart[LI->nCf]) {
       mtxAbort(MTX_HERE, "Bad number of mountains in .inc file");
    }
    MTX_LOGD("Reading incidence matrix (%lu mountains)", (unsigned long) nmountains);
@@ -101,25 +101,25 @@ static void readFiles(const char* basename)
 
    // Read classes
    {
-      sprintf(fn, "%s.mnt", LI.BaseName);
+      sprintf(fn, "%s.mnt", LI->BaseName);
       MTX_LOGD("Reading classes (%s)", fn);
       FILE *f = sysFopen(fn, "r");
       for (i = 0; i < nmountains; ++i) {
-         long mno, mdim, nvec, * p;
+         long mno, mdim, nvec;
          int k;
-         if (fscanf(f, "%ld%ld%ld", &mno, &mdim, &nvec) != 3 || mno != i || nvec < 1 || mdim < 1) {
+         if (fscanf(f,"%ld%ld%ld", &mno, &mdim, &nvec) != 3 || mno != i || nvec < 1 || mdim < 1) {
             mtxAbort(MTX_HERE, "Invalid .mnt file");
          }
-         p = class[i] = NALLOC(long, nvec + 2);
+         uint32_t* p = class[i] = NALLOC(uint32_t, nvec + 2);
          *p++ = nvec;
-         for (k = 0; k < nvec; ++k, ++p) {
-            if (fscanf(f, "%ld", p) != 1 || *p < 1) {
+         long x;
+         for (k = 0; k < nvec; ++k) {
+            if (fscanf(f, "%ld", &x) != 1 || x < 1)
                mtxAbort(MTX_HERE, "Invalid .mnt file");
-            }
+            *p++ = (uint32_t) x;
          }
-         if (fscanf(f, "%ld", p) != 1 || *p != -1) {
+         if (fscanf(f, "%ld", &x) != 1 || x != -1)
             mtxAbort(MTX_HERE, "Invalid .mnt file");
-         }
       }
       fclose(f);
    }
@@ -129,20 +129,13 @@ static void readFiles(const char* basename)
 
 static void mkmount(int i)
 {
-    Matrix_t *seed;
-    PTR x, y;
-    long *p;
-
-    seed = matAlloc(cycl->field,class[i][0],cycl->noc);
-    x = seed->data;
-    for (p = class[i] + 1; *p > 0; ++p)
+    Matrix_t *seed = matAlloc(cycl->field,class[i][0],cycl->noc);
+    PTR x = seed->data;
+    for (uint32_t* p = class[i] + 1; *p > 0; ++p)
     {
 	if (*p < 1 || *p > cycl->nor)
-	{
-	    mtxAbort(MTX_HERE,"BAD VECTOR IN CLASS");
-	    return;
-	}
-	y = matGetPtr(cycl,*p - 1);
+	    mtxAbort(MTX_HERE,"BAD VECTOR %lu IN CLASS", (unsigned long)*p);
+	PTR y = matGetPtr(cycl,*p - 1);
 	ffCopyRow(x,y, cycl->noc);
 	ffStepPtr(&x, cycl->noc);
     }
@@ -168,17 +161,17 @@ static void initCf(int cf)
     int j;
 
     // Read the generators of the condensed module
-    sprintf(fn,"%s%s.%%dk",LI.BaseName,latCfName(&LI,cf));
-    Rep = mrLoad(fn,LI.NGen);
+    sprintf(fn,"%s%s.%%dk",LI->BaseName,latCfName(LI,cf));
+    Rep = mrLoad(fn,LI->NGen);
 
     // Read generating vectors for the cyclic submodules
-    sprintf(fn,"%s%s.v",LI.BaseName,latCfName(&LI,cf));
+    sprintf(fn,"%s%s.v",LI->BaseName,latCfName(LI,cf));
     cycl = matLoad(fn);
 
     // Calculate the length of dotted-lines. This is always 
     // Q + 1 where Q is the splitting field order.
     dotlen = ffOrder;
-    for (j = LI.Cf[cf].spl - 1; j > 0; --j)
+    for (j = LI->Cf[cf].spl - 1; j > 0; --j)
     	dotlen *= ffOrder;
     ++dotlen;
     MTX_LOGD("Length of dotted-lines is %d",dotlen);
@@ -199,18 +192,13 @@ static void cleanupCf()
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 static Matrix_t *sum(int i, int k)
-
 {
-    Matrix_t *s;
-    int dim_i, dim_k;
+    const uint32_t dim_i = mountlist[i]->nor;
+    const uint32_t dim_k = mountlist[k]->nor;
+    Matrix_t *s = matAlloc(ffOrder,dim_i + dim_k,mountlist[i]->noc);
 
-    dim_i = mountlist[i]->nor;
-    dim_k = mountlist[k]->nor;
-
-    s = matAlloc(ffOrder,dim_i + dim_k,mountlist[i]->noc);
-
-    matCopyRegion(s,0,0,mountlist[i],0,0,dim_i,-1);
-    matCopyRegion(s,dim_i,0,mountlist[k],0,0,dim_k,-1);
+    matCopyRegion(s,0,0,mountlist[i],0,0,dim_i,mountlist[i]->noc);
+    matCopyRegion(s,dim_i,0,mountlist[k],0,0,dim_k,mountlist[i]->noc);
 
     matEchelonize(s);
 
@@ -248,34 +236,33 @@ static void lock(int i, char *c)
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static void FindMaxMountains(Matrix_t *span, BitString_t *bs)
+static void FindMaxMountains(Matrix_t* span, BitString_t* bs)
 {
-    int m;
+   int m;
 
-    bsClearAll(bs);
-    for (m = firstm; m < nextm; ++m)
-    {
-	Matrix_t *tmp = matDup(mountlist[m]);
-	matClean(tmp,span);
-	if (tmp->nor == 0) // Mountain is countained in <span>
-	    bsSet(bs,m);
-	matFree(tmp);
-    }
+   bsClearAll(bs);
+   for (m = firstm; m < nextm; ++m) {
+      Matrix_t* tmp = matDup(mountlist[m]);
+      if (matClean(tmp, span) == 0) {
+         // Mountain is countained in <span>
+         bsSet(bs, m);
+      }
+      matFree(tmp);
+   }
 
-    // Remove non-maximal mountains
-    for (m = firstm; m < nextm; ++m)
-    {
-	int k;
-	if (!bsTest(bs,m))
-	    continue;
-	for (k = firstm; k < nextm; ++k)
-	{
-	    if (k != m && bsTest(subof[k],m))
-		bsClear(bs,k);
-	}
-    }
+   // Remove non-maximal mountains
+   for (m = firstm; m < nextm; ++m) {
+      int k;
+      if (!bsTest(bs, m)) {
+         continue;
+      }
+      for (k = firstm; k < nextm; ++k) {
+         if (k != m && bsTest(subof[k], m)) {
+            bsClear(bs, k);
+         }
+      }
+   }
 }
-
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -398,7 +385,7 @@ static void WriteResult()
 {
    char fn[200];
 
-   strcat(strcpy(fn, LI.BaseName), ".dot");
+   strcat(strcpy(fn, LI->BaseName), ".dot");
    MTX_LOGD("Writing %s (%d dotted line%s)", fn, ndotl, ndotl != 1 ? "s" : "");
    MtxFile_t* f = mfOpen(fn, "wb");
    const uint32_t l = ndotl;
@@ -407,7 +394,7 @@ static void WriteResult()
       bsWrite(dotl[i], f);
    }
    mfClose(f);
-   latWriteInfo(&LI);
+   latSave(LI);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -447,7 +434,7 @@ static void init(int argc, char** argv)
 
 static void cleanup()
 {
-   latCleanup(&LI);
+   latDestroy(LI);
    for (int i = 0; i < nmountains; ++i) {
       matFree(mountlist[i]);
       bsFree(subof[i]);
@@ -466,14 +453,14 @@ int main(int argc, char *argv[])
     int i, nn = 0;
 
     init(argc,argv);
-    for (i = 0; i < LI.nCf; ++i)
+    for (i = 0; i < LI->nCf; ++i)
     {
 	initCf(i);
 	mkdot(i);
-	LI.Cf[i].ndotl = ndotl - nn;
+	LI->Cf[i].ndotl = ndotl - nn;
 	MTX_LOGI("%s%s: %d vectors, %ld mountains, %ld dotted line%s",
-	    LI.BaseName,latCfName(&LI,i),  cycl->nor,LI.Cf[i].nmount,
-	    LI.Cf[i].ndotl, LI.Cf[i].ndotl != 1 ? "s": "");
+	    LI->BaseName,latCfName(LI,i),  cycl->nor,LI->Cf[i].nmount,
+	    LI->Cf[i].ndotl, LI->Cf[i].ndotl != 1 ? "s": "");
 	nn = ndotl;
 	cleanupCf();
     }

@@ -12,34 +12,22 @@
 /// @{
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-/// Identity matrix
-/// This function creates an identity matrix with @em nor nows over GF(@em fl).
+
+/// Returns a new identity matrix.
+///
 /// @param fl Field order.
-/// @param nor Number of rows.
-/// @return Pointer to the matrix, or 0 on error.
-/// @see matAlloc
+/// @param nor Number of rows (= number of columns).
 
-Matrix_t *matId(int fl, int nor)
+Matrix_t* matId(int fl, uint32_t nor)
 {
-   Matrix_t *m;
-   PTR x;
-   long i;
+   if (fl < 2)
+      mtxAbort(MTX_HERE, "matId(%d,%lu): %s", fl, (unsigned long)nor, MTX_ERR_BADARG);
 
-   // check arguments
-   if ((fl < 2) || (nor < 0)) {
-      mtxAbort(MTX_HERE,"Matid(%d,%d): %s",fl,nor,MTX_ERR_BADARG);
-      return NULL;
-   }
-
-   // Allocate an empty matrix
-   m = matAlloc(fl,nor,nor);
-   if (m == NULL) {
-      return NULL;
-   }
-
-   // Set diagonal elements to 1
-   for (i = 0, x = m->data; i < nor; ++i, ffStepPtr(&x, nor)) {
-      ffInsert(x,i,FF_ONE);
+   Matrix_t* m = matAlloc(fl, nor, nor);
+   PTR x = m->data;
+   for (uint32_t i = 0; i < nor; ++i) {
+      ffInsert(x, i, FF_ONE);
+      ffStepPtr(&x, nor);
    }
 
    return m;
@@ -47,4 +35,5 @@ Matrix_t *matId(int fl, int nor)
 
 
 /// @}
+
 // vim:fileencoding=utf8:sw=3:ts=8:et:cin

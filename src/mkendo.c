@@ -78,7 +78,7 @@ int MakeEndomorphisms(const MatRep_t *rep, const Matrix_t *nsp,
        -------------------------------------------------------------------- */
     while (nendo < nsp->nor)
     {
-	Matrix_t *vec = matCutRows(nsp,nendo,1);
+	Matrix_t *vec = matDupRows(nsp,nendo,1);
 	endo[nendo] = MakeEndo(rep,sb1,vec);
 	matFree(vec);
 	if (endo[nendo] == NULL)	/* Error */
