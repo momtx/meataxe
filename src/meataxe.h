@@ -489,7 +489,9 @@ enum {
    MTX_LOG_DEBUG2 = 2
 };
 
+/// @private
 void logBuffered(StrBuffer_t* buf);
+
 int logGetDefaultThreshold();
 int logEnabled(int level);
 void logInit(const char* spec);

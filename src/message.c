@@ -78,6 +78,15 @@ int logGetDefaultThreshold()
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
+/// Returns 1 if the given log level is enabled and 0 otherwise.
+
+int logEnabled(int level)
+{
+   return level <= logThreshold;
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
 static int init(int level)
 {
    if (logFile == NULL) {
@@ -136,22 +145,64 @@ static void startLine(StrBuffer_t* sb, int level)
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-StrBuffer_t* logStart(int level)
+static StrBuffer_t* logBufferPool;
+#if defined(MTX_DEFAULT_THREADS)
+   pthread_mutex_t logBufferPoolMutex = PTHREAD_MUTEX_INITIALIZER;
+   #define LOCK_BUFFER_POOL() pthread_mutex_lock(&logBufferPoolMutex)
+   #define UNLOCK_BUFFER_POOL() pthread_mutex_unlock(&logBufferPoolMutex)
+#else
+   #define LOCK_BUFFER_POOL()
+   #define UNLOCK_BUFFER_POOL()
+#endif
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+/// Returns a buffer from the pool or creates a new buffer.
+/// New buffers are created without calling sbAlloc() to avoid a possible infinite loop by logging
+/// in mmAlloc(). These buffer are not subject to leak checking and must not be mixed with
+/// "normal" buffers created by sbAlloc.
+
+static StrBuffer_t* provideBuffer()
 {
-   if (init(level) != 0)
-      return NULL;
-   StrBuffer_t* sb = sbAlloc(100);
-   startLine(sb, level);
+   StrBuffer_t* sb = NULL;
+   LOCK_BUFFER_POOL();
+   if ((sb = logBufferPool) != NULL)
+      logBufferPool = sb->next;
+   UNLOCK_BUFFER_POOL();
+   if (sb == NULL) {
+      sb = ALLOC(StrBuffer_t);
+      sb->capacity = 100;
+      sb->data = NALLOC(char, sb->capacity + 1);
+      sb->typeId = MTX_TYPE_STRBUF;
+   }
+   sb->size = 0;
    return sb;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-/// Returns 1 if the given log level is enabled and 0 otherwise.
+/// Returns the buffer to the pool.
 
-int logEnabled(int level)
+static void releaseBuffer(StrBuffer_t* sb)
 {
-   return level <= logThreshold;
+   // Protect against usage with buffers not created by logStart().
+   MTX_ASSERT(sb->prev == NULL);
+
+   LOCK_BUFFER_POOL();
+   sb->next = logBufferPool;
+   logBufferPool = sb;
+   UNLOCK_BUFFER_POOL();
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+StrBuffer_t* logStart(int level)
+{
+   if (init(level) != 0)
+      return NULL;
+   StrBuffer_t* sb = provideBuffer();
+   startLine(sb, level);
+   return sb;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -160,7 +211,7 @@ void logBuffered(StrBuffer_t* buf)
 {
    sbAppend(buf, "\n");
    fwrite(buf->data, 1, buf->size, logFile);
-   sbFree(buf);
+   releaseBuffer(buf);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////

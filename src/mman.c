@@ -99,13 +99,13 @@ static void unlockedMmFree(struct Object* obj, uint32_t typeId)
 void mmFree(void* obj, uint32_t typeId)
 {
    struct Object*o = (struct Object*) obj;
-    #if defined(MTX_DEFAULT_THREADS)
-    pthread_mutex_lock(&listLock);
-    #endif
-    unlockedMmFree(o, typeId);
-    #if defined(MTX_DEFAULT_THREADS)
-    pthread_mutex_unlock(&listLock);
-    #endif
+   #if defined(MTX_DEFAULT_THREADS)
+   pthread_mutex_lock(&listLock);
+   #endif
+   unlockedMmFree(o, typeId);
+   #if defined(MTX_DEFAULT_THREADS)
+   pthread_mutex_unlock(&listLock);
+   #endif
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////

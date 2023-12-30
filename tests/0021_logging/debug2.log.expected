@@ -1,0 +1,5 @@
+LogTest debug2: 2
+LogTest debug: 1
+LogTest info: 0
+LogTest warning: -1
+LogTest error: -2

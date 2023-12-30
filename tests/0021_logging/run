@@ -1,0 +1,17 @@
+echo "0021 - Logging"
+
+. ../tests/common.sh
+
+#set -x
+
+for level in error warning info debug debug2; do
+   zzzlogtest --log=${level}.log:${level}
+   grep ^LogTest ${level}.log >temp.log
+   mv -f temp.log ${level}.log
+   compareWithReference ${level}.log ${level}.log.expected
+   zzzlogtest --log=+${level}.log:${level}
+   grep ^LogTest ${level}.log >temp.log
+   mv -f temp.log ${level}.log
+   compareWithReference ${level}.log ${level}_appended.log.expected
+done
+

@@ -68,7 +68,8 @@ PROGRAMS = \
   cfcomp playground chop decomp genmod mkcycl mkdotl mkgraph mkhom \
   mkinc mksub mktree orbrep precond pseudochop pwkond rad soc symnew tcond tuc \
   zad zbl zcf zcl zcp zct zcv zef zev zfr ziv zkd zmo zmu zmw znu zor zpo zpr \
-  zpt zqt zro zsc zsi zsp zsy ztc zte ztm ztr zts zuk zvp
+  zpt zqt zro zsc zsi zsp zsy ztc zte ztm ztr zts zuk zvp \
+  zzzlogtest
 
 # ------------------------------------------------------------------------------
 # Main targets
