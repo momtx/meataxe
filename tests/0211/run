@@ -9,9 +9,27 @@ cp "${MTX_TEST_DATA_DIR}/Th-m.1" Th-m.1
 cp "${MTX_TEST_DATA_DIR}/Th-m.2" Th-m.2
 cp "${MTX_TEST_DATA_DIR}/Th-m.3" Th-m.3
 
+set -x 
+
 chop -Q -g 3 Th-m || error "CHOP failed"
+compareWithReference Th-m.cfinfo cfinfo_after_chop.expected
+
 pwkond -Qbt Th-m || error "PWKOND failed"
+compareWithReference Th-m.cfinfo cfinfo_after_pwkond.expected
+compareBinaryWithReference Th-m.ssb
+for c in 20a 20b 20c 20d 20e 20f 128a; do
+   compareBinaryWithReference Th-m${c}.std.1
+   compareBinaryWithReference Th-m${c}.std.2
+   compareBinaryWithReference Th-m${c}.std.3
+done
+
 precond -Q tp Th-m Th-m || error "PRECOND failed"
+compareWithReference tp.tki
+for i in 1 2 3 4 5 6 7; do
+   compareBinaryWithReference tp.p.${i}
+   compareBinaryWithReference tp.q.${i}
+done
+
 tcond -Q -g 2 tp Th-r Th-r result || error "TCOND failed"
 
 compareBinaryWithReference result.1

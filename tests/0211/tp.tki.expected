@@ -1,0 +1,7 @@
+TKInfo := rec();
+TKInfo.NameM := "Th-m";
+TKInfo.NameN := "Th-m";
+TKInfo.Dim := 10;
+TKInfo.NCf := 7;
+TKInfo.CfIndexM := [0,1,2,3,4,5,6];
+TKInfo.CfIndexN := [0,1,2,3,4,5,6];
