@@ -2,168 +2,147 @@
 // C MeatAxe - Calculate a representative for each cyclic submodule of the condensed modules.
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-
 #include "meataxe.h"
-#include <string.h>
-#include <stdlib.h>
 
-static MtxApplicationInfo_t AppInfo = { 
-"mkcycl", "Find Cyclic Submodules",
-"SYNTAX\n"
-"    mkcycl [<Options>] <Name>\n"
-"\n"
-"ARGUMENTS\n"
-"    <Name> .................. Name of the representation\n"
-"\n"
-"OPTIONS\n"
-MTX_COMMON_OPTIONS_DESCRIPTION
-"    -G ...................... GAP output (implies -Q)\n"
-"\n"
-"FILES\n"
-"    <Name>.cfinfo ........... I Constituent info file\n"
-"    <Name><Cf>.{1,2...}k .... I Generators on condensed modules\n"
-"    <Name><Cf>.np ........... I Condensed peak words\n"
-"    <Name><Cf>.v ............ O Cyclic submodules\n"
+#include <inttypes.h>
+#include <stdlib.h>
+#include <string.h>
+
+static MtxApplicationInfo_t AppInfo = {
+   "mkcycl", "Find Cyclic Submodules",
+   "SYNTAX\n"
+   "    mkcycl [<Options>] <Name>\n"
+   "\n"
+   "ARGUMENTS\n"
+   "    <Name> .................. Name of the representation\n"
+   "\n"
+   "OPTIONS\n"
+   MTX_COMMON_OPTIONS_DESCRIPTION
+   "    -G ...................... GAP output (implies -Q)\n"
+   "\n"
+   "FILES\n"
+   "    <Name>.cfinfo ........... I Constituent info file\n"
+   "    <Name><Cf>.{1,2...}k .... I Generators on condensed modules\n"
+   "    <Name><Cf>.np ........... I Condensed peak words\n"
+   "    <Name><Cf>.v ............ O Cyclic submodules\n"
 };
 
-static MtxApplication_t *App = NULL;
+static MtxApplication_t* App = NULL;
 static int opt_G = 0;
-static MatRep_t *Rep;           // The representation
-int NCyclic;                    // Number of cyclic submodules found
-Matrix_t *Cyclic[MAXCYCL];      // List of cyclic submodules
-LatInfo_t* LI;                 // Data from .cfinfo file
+static uint32_t nCyclic;        // Number of cyclic submodules found
+Matrix_t* cyclic[MAXCYCL];      // Bases for cyclic submodules
+LatInfo_t* LI;                  // Data from .cfinfo file
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static void init(int argc, char **argv)
+static void init(int argc, char** argv)
 {
-    App = appAlloc(&AppInfo,argc,argv);
-    opt_G = appGetOption(App,"-G --gap");
-    appGetArguments(App,1,1);
-    MTX_LOGI("Start mkcycl - Find cyclic submodules");
-    LI = latLoad(App->argV[0]);
+   App = appAlloc(&AppInfo, argc, argv);
+   opt_G = appGetOption(App, "-G --gap");
+   appGetArguments(App, 1, 1);
+   MTX_LOGI("Start mkcycl - Find cyclic submodules");
+   LI = latLoad(App->argV[0]);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-/// This function spins up one seed vector and compares the resulting module with the list of
-/// cyclic submodules found so far. If the module is new, it is added to the list.
+/// Spins up one seed vector and adds the resulting submodule to the set of cyclic submodules.
 
-static void Spinup(Matrix_t *seed)
+static void spinupVector(Matrix_t* seed, MatRep_t* rep)
 {
-    Matrix_t *sub;
-    int i;
-
-    sub = SpinUp(seed,Rep,SF_FIRST|SF_SUB,NULL,NULL);
-    for (i = 0; i < NCyclic; ++i)
-    {
-	int issub = IsSubspace(sub,Cyclic[i],1);
-	if (issub == -1)
-	{
-	    mtxAbort(MTX_HERE,"Subspace comparison failed");
-	    return;
-	}
-	if (issub && sub->nor == Cyclic[i]->nor)
-	{
-	    matFree(sub);	// Module already in list
-	    return;
-	}
-    }
-    if (NCyclic >= MAXCYCL)
-    {
-	mtxAbort(MTX_HERE,"Too many cyclic submodules (maximum = %d)",MAXCYCL);
-	return;
-    }
-    Cyclic[NCyclic] = sub;
-    ++NCyclic;
+   Matrix_t* sub = spinup(seed, rep);
+   for (uint32_t i = 0; i < nCyclic; ++i) {
+      int issub = IsSubspace(sub, cyclic[i], 1);
+      if (issub == -1) {
+         mtxAbort(MTX_HERE, "Subspace comparison failed");
+         return;
+      }
+      if (issub && sub->nor == cyclic[i]->nor) {
+         matFree(sub);          // Module already in list
+         return;
+      }
+   }
+   if (nCyclic >= MAXCYCL) {
+      mtxAbort(MTX_HERE, "Too many cyclic submodules (maximum = %d)", MAXCYCL);
+      return;
+   }
+   cyclic[nCyclic] = sub;
+   ++nCyclic;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-// Write the output file
-// This function collects the generating vectors of all syclic submodules
-// into a single matrix and write this matrix to a file.
+// Writes generating vectors for all cyclic submodules to the output file («module»«constituent».v).
 
-void WriteResult(int cf, uint32_t cond_dim)
+static void writeResult(int cf, uint32_t condDim)
 {
-    int i;
-    char fn[200];
-    Matrix_t *result;
+   char fn[200];
+   Matrix_t* result;
 
-    result = matAlloc(ffOrder,NCyclic,cond_dim);
-    for (i = 0; i < NCyclic; ++i)
-	matCopyRegion(result,i,0,Cyclic[i],0,0,1,Cyclic[i]->noc);
-    sprintf(fn,"%s%s.v",LI->BaseName,latCfName(LI,cf));
-    MTX_LOGD("Writing %s",fn);
-    matSave(result,fn);
-    matFree(result);
+   result = matAlloc(ffOrder, nCyclic, condDim);
+   for (uint32_t i = 0; i < nCyclic; ++i) {
+      MTX_ASSERT(cyclic[i]->noc == condDim);
+      matCopyRegion(result, i, 0, cyclic[i], 0, 0, 1, condDim);
+   }
+   sprintf(fn, "%s%s.v", LI->BaseName, latCfName(LI, cf));
+   MTX_LOGD("Writing %s", fn);
+   matSave(result, fn);
+   matFree(result);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
+// This function is called once for each constituent. It finds all cyclic submodules in the
+// corresponding condensed module. After return, the global variable «cyclic» contains all
+// (distinct) cyclic submodules found.
+//
+// Generating vectors for the cyclic submodules are written to the file «module»«constituent».v,
+// e.g., test44a).
+//
+// Note:
+// Strictly speaking we find all cyclic submodules which are invariant under the condensed
+// generators. The algebra generated by the condensed generators may not be the full condensed
+// algebra. For this reason we add the condensed peak word to the set of generators.
 
-// FindCyclic() - Find cyclic submodules
-//
-// This function is called once for each constituent. It finds all cyclic
-// submodules in the corresponding condensed module, i.e., in the module
-// that was condensed with a peak word for this constituent.
-//
-// The function uses the seed vector generator to get one vector from each
-// one-dimensional subspace. It spins up the seed vectors and stores the 
-// distinct submodules obtained in the global variable <Cyclic>.
-//
-// Generating vectors for the cyclic sumodules are written to the file
-// xxxx.v where xxxx is the constituent name (e.g., test44a).
-//
-// Note: 
-// Strictly speaking we find all cyclic submodules which are invariant 
-// under the condensed generators. The algebra generated by the condensed
-// generators may not be the full condensed algebra. For this reason we
-// add the kondensed peak word to the set of generators.
-
-void FindCyclic(int cf)
+static void findCyclicSubmodules(int cf)
 {
-    Matrix_t *seed;
-    Matrix_t *seed_basis;
-    char fn[200];
-    long vec_no;		// Seed vector number
-    int count;			// Number of vectors tried
-    int i;
+   char fn[200];
 
-    // Read the generators and the condensed peak words
-    sprintf(fn,"%s%s.%%dk",LI->BaseName,latCfName(LI,cf));
-    MTX_LOGD("Loading generators for %s%s",LI->BaseName,latCfName(LI,cf));
-    Rep = mrLoad(fn,LI->NGen);
-    sprintf(fn,"%s%s.np",LI->BaseName,latCfName(LI,cf));
-    mrAddGenerator(Rep,matLoad(fn),0);
+   // Read the generators and the condensed peak words
+   sprintf(fn, "%s%s.%%dk", LI->BaseName, latCfName(LI, cf));
+   MTX_LOGD("Loading generators for %s%s", LI->BaseName, latCfName(LI, cf));
+   MatRep_t* rep = mrLoad(fn, LI->NGen);
+   sprintf(fn, "%s%s.np", LI->BaseName, latCfName(LI, cf));
+   mrAddGenerator(rep, matLoad(fn), 0);
 
-    // Spin up all seed vectors
-    const uint32_t cond_dim = Rep->Gen[0]->nor; // Dimension of the condensed module
-    seed = matAlloc(ffOrder,1,cond_dim);
-    seed_basis = matId(ffOrder,cond_dim);
-    NCyclic = 0;
-    count = 0;
-    vec_no = 0;
-    while ((vec_no = MakeSeedVector(seed_basis,vec_no,seed->data)) >= 0)
-    {
-	++count;
-	if (count % 100 == 0)
-	    MTX_LOG2("  %d vectors, %d submodules",count,NCyclic);
-	Spinup(seed);
-    }
+   // Spin up all seed vectors
+   const uint32_t condDim = rep->Gen[0]->nor;  // Dimension of the condensed module
+   Matrix_t* seed = matAlloc(ffOrder, 1, condDim);
+   Matrix_t* seed_basis = matId(ffOrder, condDim);
+   nCyclic = 0;
+   unsigned long count = 0;
+   uint32_t vec_no = 0;
+   uint64_t progressTimer = 0;
+   while (svgMakeNext(seed->data, &vec_no, seed_basis) == 0) {
+      ++count;
+      if (sysTimeout(&progressTimer, 5)) {
+         MTX_LOG2("  %lu vectors, %" PRIu32 " submodules", count, nCyclic);
+      }
+      spinupVector(seed, rep);
+   }
 
-    // Write the result and clean up
-    MTX_LOGI("%s%s: %d cyclic submodule%s (%d vectors tried)",
-	LI->BaseName,latCfName(LI,cf),NCyclic,NCyclic == 1 ? " " : "s",
-	count);
-    WriteResult(cf,cond_dim);
-    matFree(seed);
-    matFree(seed_basis);
+   // Write the result and clean up
+   MTX_LOGI("%s%s: %d cyclic submodule%s (%lu vectors tried)",
+      LI->BaseName, latCfName(LI, cf), nCyclic, nCyclic == 1 ? " " : "s", count);
+   writeResult(cf, condDim);
+   matFree(seed);
+   matFree(seed_basis);
 
-    // Clean up
-    for (i = 0; i < NCyclic; ++i)
-	matFree(Cyclic[i]);
-    mrFree(Rep);
+   // Clean up
+   for (uint32_t i = 0; i < nCyclic; ++i) {
+      matFree(cyclic[i]);
+   }
+   mrFree(rep);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -176,13 +155,14 @@ static void cleanup()
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-int main(int argc, char *argv[])
+int main(int argc, char* argv[])
 {
-    init(argc, argv);
-    for (int i = 0; i < LI->nCf; ++i)
-	FindCyclic(i);
-    cleanup();
-    return 0;
+   init(argc, argv);
+   for (int i = 0; i < LI->nCf; ++i) {
+      findCyclicSubmodules(i);
+   }
+   cleanup();
+   return 0;
 }
 
 /**

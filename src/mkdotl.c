@@ -4,23 +4,25 @@
 
 
 #include "meataxe.h"
+
+#include <inttypes.h>
 #include <string.h>
 #include <stdlib.h>
 
-MatRep_t *Rep;			// Generators of the current constituent
-Matrix_t *cycl = NULL;		// List of cyclic submodules
-uint32_t *class[MAXCYCL];		// Classes of vectors
-uint32_t nmountains = 0;	// Number of mountains
-Matrix_t *mountlist[MAXCYCL];	// Mountains
-BitString_t *subof[MAXCYCL];	// Incidence matrix
-int cfstart[LAT_MAXCF+1];	// First mountain of each c.f.
-char lck[MAXCYCL];
-char lck2[MAXCYCL];
-BitString_t *dotl[MAXDOTL];	    // Dotted lines
-BitString_t *MaxMountains[MAXDOTL]; // Maximal mountains in dotted lines
-int ndotl = 0;			// Number of dotted-lines in <dotl>
-int firstdotl = 0;		// Used for locking
-int firstm, nextm;		// First and last+1 mountain for the
+static MatRep_t *rep;			// Generators of the current constituent
+static Matrix_t *cycl = NULL;		// List of cyclic submodules
+static uint32_t *class[MAXCYCL];		// Classes of vectors
+static uint32_t nmountains = 0;	// Number of mountains
+static Matrix_t *mountlist[MAXCYCL];	// Mountains
+static BitString_t *subof[MAXCYCL];	// Incidence matrix
+static int cfstart[LAT_MAXCF+1];	// First mountain of each c.f.
+static char lck[MAXCYCL];
+static char lck2[MAXCYCL];
+static BitString_t *dotl[MAXDOTL];	    // Dotted lines
+static BitString_t *MaxMountains[MAXDOTL]; // Maximal mountains in dotted lines
+static int ndotl = 0;			// Number of dotted-lines in <dotl>
+static int firstdotl = 0;		// Used for locking
+static int firstm, nextm;		// First and last+1 mountain for the
 				// current constituent
 
 // sumdim[i][j] contains the dimension of mountain[i] + mountain[j].
@@ -140,12 +142,11 @@ static void mkmount(int i)
 	ffStepPtr(&x, cycl->noc);
     }
 
-    mountlist[i] = SpinUp(seed,Rep,SF_EACH|SF_COMBINE,NULL,NULL);
-    if (mountlist[i] == NULL)
-    {
-	mtxAbort(MTX_HERE,"Cannot spin up mountain");
-	return;
-    }
+    mountlist[i] = spinup(seed,rep);
+    //OLD: Matrix_t* mountlistOLD = SpinUp(seed,rep,SF_EACH|SF_COMBINE,NULL,NULL);
+    //fprintf(stderr, "spinup %"PRIu32"x%"PRIu32"\n", mountlistOLD->nor, mountlistOLD->noc);
+    //MTX_ASSERT(matCompare(mountlistOLD, mountlist[i]) == 0);
+    //matFree(mountlistOLD);
     matFree(seed);
 }
 
@@ -162,7 +163,7 @@ static void initCf(int cf)
 
     // Read the generators of the condensed module
     sprintf(fn,"%s%s.%%dk",LI->BaseName,latCfName(LI,cf));
-    Rep = mrLoad(fn,LI->NGen);
+    rep = mrLoad(fn,LI->NGen);
 
     // Read generating vectors for the cyclic submodules
     sprintf(fn,"%s%s.v",LI->BaseName,latCfName(LI,cf));
@@ -186,7 +187,7 @@ static void initCf(int cf)
 static void cleanupCf()
 {
     matFree(cycl);
-    mrFree(Rep);
+    mrFree(rep);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////

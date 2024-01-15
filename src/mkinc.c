@@ -3,18 +3,20 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 #include "meataxe.h"
+
+#include <inttypes.h>
 #include <string.h>
 #include <stdlib.h>
 
-MatRep_t *Rep;				// Generators
-Matrix_t *bild[LAT_MAXCF];		// Image of peak word (gkond)
-int nmount = 0;				// Number of mountains
-Matrix_t * mountlist[MAXCYCL];		// List of mountains
-int MountDim[MAXCYCL];			// Dim. of mountains
-Matrix_t **proj[MAXCYCL];		// Projections of mountains
-int moffset[LAT_MAXCF];			// Number of first mountain
-int *Class[MAXCYCL];			// Classes of vectors
-BitString_t *subof[MAXCYCL];		// Incidence matrix
+static MatRep_t *Rep;                   // Generators
+static Matrix_t *bild[LAT_MAXCF];       // Image of peak word (gkond)
+static int nmount = 0;                  // Number of mountains
+static Matrix_t * mountlist[MAXCYCL];   // List of mountains
+static int MountDim[MAXCYCL];           // Dim. of mountains
+static Matrix_t **proj[MAXCYCL];        // Projections of mountains
+static int moffset[LAT_MAXCF];          // Number of first mountain
+static int *Class[MAXCYCL];             // Classes of vectors
+static BitString_t *subof[MAXCYCL];     // Incidence matrix
 static LatInfo_t* LI;			// Data from .cfinfo file
 
 static MtxApplicationInfo_t AppInfo = { 
@@ -122,18 +124,22 @@ static void writeMountains()
 // Returns 1 if a new mountain has been found, 0 if not.
 
 static int newMountain(Matrix_t *vec, int cf)
-
 {
-    Matrix_t *span, *backproj;
-    int i;
 
     // Spin up the vector and project back onto the condensed module where it came from.
-    span = SpinUp(vec,Rep,SF_FIRST|SF_SUB,NULL,NULL);
-    MTX_LOG2("Next vector spins up to %d",span->nor);
-    backproj = QProjection(bild[cf],span);
+    MTX_ASSERT(vec->nor == 1);
+    Matrix_t* span = spinup(vec,Rep);
+    //fprintf(stderr, "NEWMOUNTAIN %"PRIu32"x%"PRIu32"\n", span->nor, span->noc);
+    //Matrix_t* spanOLD = SpinUp(vec,Rep,SF_FIRST|SF_SUB,NULL,NULL);
+    //MTX_ASSERT(matCompare(span, spanOLD) == 0);
+    //matFree(spanOLD);
+
+    MTX_LOG2("Next vector spins up to %"PRIu32,span->nor);
+    Matrix_t* backproj = QProjection(bild[cf],span);
     matEchelonize(backproj);
 
     // Check if it is a new mountain
+    int i;
     for (i = moffset[cf]; i < nmount; ++i)
     {
 	if (backproj->nor == proj[i][cf]->nor)

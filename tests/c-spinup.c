@@ -1,0 +1,33 @@
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// C MeatAxe - Tests for spinup.
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+#include "meataxe.h"
+#include "testing.h"
+
+#include <stdlib.h>
+#include <stdio.h>
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+//TstResult Spinup_Api()
+//{
+//   Matrix_t *subsp = NULL;
+//   MatRep_t *rep = NULL;
+//   Matrix_t *seed = NULL;
+//
+//   SpinupArgs_t args = { 
+//       .subspace = &subsp,
+//       .rep = rep,
+//       .seed = seed,
+//       .flags = SF_CYCLIC
+//   };
+//   spinup(args);
+//   spinup((SpinupArgs_t){.rep = rep, .seed = seed});
+//   return 0;
+//}
+
+
+
+// vim:fileencoding=utf8:sw=3:ts=8:et:cin

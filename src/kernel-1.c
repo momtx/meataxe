@@ -297,7 +297,7 @@ FEL ffInv(FEL a)
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-size_t ffRowSize(int noc)
+size_t ffRowSize(uint32_t noc)
 {
    MTX_ASSERT(noc >= 0);
    if (noc == 0) {
@@ -308,7 +308,7 @@ size_t ffRowSize(int noc)
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-ssize_t ffSize(int nor, int noc)
+ssize_t ffSize(uint32_t nor, uint32_t noc)
 {
    return nor == 0 ? 0 : nor * (ssize_t) ffRowSize(noc);
 }
@@ -391,17 +391,18 @@ FEL ffEmbed(FEL a, int subfield)
    return table ? table[a] : FF_ZERO;
 }
 
-
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-uint32_t ffFindPivot(PTR row,FEL *mark, int noc)
+uint32_t ffFindPivot(PTR row, FEL* mark, int noc)
 {
    register long i;
    register PTR p = row;
 
    for (i = 0; i < noc; ++i, ++p) {
       if (*p != FF_ZERO) {
-         *mark = *p;
+         if (mark != NULL) {
+            *mark = *p;
+         }
          return i;
       }
    }
@@ -410,13 +411,12 @@ uint32_t ffFindPivot(PTR row,FEL *mark, int noc)
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-PTR ffAddRow(PTR dest, PTR src, int noc)
+PTR ffAddRow(PTR dest, PTR src, uint32_t noc)
 {
-   register int i;
-   register FEL *p1 = dest;
-   register FEL *p2 = src;
+   FEL *p1 = dest;
+   FEL *p2 = src;
 
-   for (i = noc; i != 0; --i) {
+   for (uint32_t i = noc; i != 0; --i) {
       *p1 = ffAdd(*p1,*p2++);
       ++p1;
    }
@@ -425,14 +425,13 @@ PTR ffAddRow(PTR dest, PTR src, int noc)
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void ffAddRowPartial(PTR dest, PTR src, int first, int noc)
+void ffAddRowPartial(PTR dest, PTR src, uint32_t first, uint32_t noc)
 {
    MTX_ASSERT(first >= 0 && first < noc);
-   long i;
 
    PTR p1 = dest + first;
    PTR p2 = src + first;
-   for (i = noc - first; i != 0; --i) {
+   for (uint32_t i = noc - first; i != 0; --i) {
       *p1 = ffAdd(*p1,*p2);
       p1++;
       p2++;
@@ -471,7 +470,7 @@ void ffMulRow(PTR row, FEL mark, int noc)
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void ffAddMulRow(PTR row1, PTR row2, FEL f, int noc)
+void ffAddMulRow(PTR row1, PTR row2, FEL f, uint32_t noc)
 {
    CHECKFEL(f);
    if (f == FF_ONE) {
@@ -481,7 +480,7 @@ void ffAddMulRow(PTR row1, PTR row2, FEL f, int noc)
    else if (f != FF_ZERO) {
       FEL* p1 = row1;
       FEL* p2 = row2;
-      for (int i = noc; i > 0; --i) {
+      for (uint32_t i = noc; i > 0; --i) {
          *p1 = ffAdd(*p1,ffMul(*p2,f));
          ++p1;
          ++p2;
@@ -491,7 +490,7 @@ void ffAddMulRow(PTR row1, PTR row2, FEL f, int noc)
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void ffAddMulRowPartial(PTR dest, PTR src, FEL f, int firstcol, int noc)
+void ffAddMulRowPartial(PTR dest, PTR src, FEL f, uint32_t firstcol, uint32_t noc)
 {
    CHECKFEL(f);
    MTX_ASSERT(firstcol >= 0 && firstcol < noc);
@@ -503,7 +502,7 @@ void ffAddMulRowPartial(PTR dest, PTR src, FEL f, int firstcol, int noc)
    else if (f != FF_ZERO) {
       PTR p1 = dest + firstcol;
       PTR p2 = src + firstcol;
-      for (int i = noc - firstcol; i != 0; --i) {
+      for (uint32_t i = noc - firstcol; i != 0; --i) {
          if (*p2 != FF_ZERO) {
             *p1 = ffAdd(*p1,ffMul(*p2,f));
          }

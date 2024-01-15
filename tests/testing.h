@@ -71,6 +71,7 @@ void tstMissingAbort();
       if (setjmp(tstAbortState.jumpTarget) == 0) { \
          e; \
          tstMissingAbort(); \
+         return 1; \
       } \
       tstAbortState.enabled = 0; \
    } while (0)

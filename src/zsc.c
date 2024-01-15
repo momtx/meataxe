@@ -175,7 +175,7 @@ int main(int argc, char *argv[])
     {
 	char fn[200];
 	Matrix_t *seed_vec = matDupRows(Seed,seedno,1);
-	Matrix_t *result = SpinUpWithScript(seed_vec,Rep,OpTable);
+	Matrix_t *result = spinupWithScript(seed_vec,Rep,OpTable);
         if (result == NULL)
 	    return 1;
 	sprintf(fn,"%s.%d",OutName,seedno+1);

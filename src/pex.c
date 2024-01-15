@@ -21,8 +21,10 @@ struct PexGroup {
    void (*finalize)(void* userData);
    #if defined(MTX_DEFAULT_THREADS)
    pthread_mutex_t mutex;
+   pthread_cond_t stateChanged;
    #endif
    size_t nPending;             // number of tasks waiting or being executed
+   int isDeleting;
 };
 
 #if defined(MTX_DEFAULT_THREADS)
@@ -80,6 +82,7 @@ static pthread_cond_t tqWakeup = PTHREAD_COND_INITIALIZER;   // task added or sh
 static pthread_cond_t tqIdle = PTHREAD_COND_INITIALIZER;     // task finished
 static int nThreads = 0;           // Number of created threads
 static int nBusyThreads = 0;       // Number of threads executing a task
+static int nQueuedTasks = 0;
 static int tqShutdown = 0;
 static struct Task* tqHead = NULL;
 static struct Task** tqTail = &tqHead;
@@ -88,21 +91,24 @@ static int groupId = 0;
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#if defined(MTX_DEFAULT_THREADS)
 static void deleteGroup(PexGroup_t* group)
 {
+#if defined(MTX_DEFAULT_THREADS)
    MTX_ASSERT(group->prev != NULL);
    pthread_mutex_lock(&groupsMutex);
+#endif
    if ((*group->prev = group->next) == NULL)
       groupsTail = group->prev;
    else
       group->next->prev = group->prev;
+#if defined(MTX_DEFAULT_THREADS)
    pthread_mutex_unlock(&groupsMutex);
    pthread_mutex_destroy(&group->mutex);
+   pthread_cond_destroy(&group->stateChanged);
+#endif
    memset(group, 0, sizeof(PexGroup_t));
    sysFree(group);
 }
-#endif
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -120,14 +126,9 @@ static void setThreadName(struct ThreadInfo* ti, const char* name)
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 /// Creates a task group.
-/// Task groups are used to execute a "finalizer" function after all tasks in the group are done.
-/// Using a task group always requires the following steps:
-/// 1. Create the task group.
-/// 2. Add arbitrary tasks to the group by passing the group as first argument to @ref pexExecute.
-/// 3. Call @ref pexFinally to define the finalizer.
-///
-/// It is an error to create a task group without calling @ref pexFinally for this
-/// group. The error will be detected by @ref pexShutdown.
+/// To add tasks to the group, pass the group as first argument to @ref pexExecute. Tasks can be
+/// added from the main thread or from existing tasks in the group.
+/// Each task group must be destroyed by using @ref pexWait.
 
 PexGroup_t* pexCreateGroup()
 {
@@ -135,6 +136,7 @@ PexGroup_t* pexCreateGroup()
    memset(group, 0, sizeof(PexGroup_t));
    #if defined(MTX_DEFAULT_THREADS)
    pthread_mutex_init(&group->mutex, NULL);
+   pthread_cond_init(&group->stateChanged, NULL);
    pthread_mutex_lock(&groupsMutex);
    #endif
    group->groupId = ++groupId;
@@ -155,16 +157,11 @@ PexGroup_t* pexCreateGroup()
 static void removeTaskFromGroup(PexGroup_t* group)
 {
    pthread_mutex_lock(&group->mutex);
+   MTX_ASSERT(!group->isDeleting);
    MTX_ASSERT(group->nPending > 0);
    --group->nPending;
-   const int finalize = group->nPending == 0 && group->finalize != NULL;
-   MTX_LOG2("%s: nPending=%lu, finalize=%p",
-         __func__, (unsigned long) group->nPending, group->finalize);
+   pthread_cond_broadcast(&group->stateChanged);
    pthread_mutex_unlock(&group->mutex);
-   if (finalize) {
-      group->finalize(group->userData);
-      deleteGroup(group);
-   }
 }
 #endif
 
@@ -174,7 +171,7 @@ static void removeTaskFromGroup(PexGroup_t* group)
 static void addTaskToGroup(PexGroup_t* group)
 {
    pthread_mutex_lock(&group->mutex);
-   MTX_ASSERT(group->finalize == NULL);
+   MTX_ASSERT(!group->isDeleting);
    ++group->nPending;
    pthread_mutex_unlock(&group->mutex);
 }
@@ -182,51 +179,22 @@ static void addTaskToGroup(PexGroup_t* group)
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-/// Sets the task group finalizer.
-/// If PEX is not initialized, pexFinally() calls the finalizer function, @a f, with the argument
-/// @a userData and ignores @a group.
-///
-/// Otherwise the finalizer call is scheduled for execution after all tasks in the given group
-/// are completed. If this is already the case, the finalizer is executed immediately in the 
-/// calling thread.
-///
-/// pexFinally() must be called exactly once for any group. Calling pexFinally() a second time
-/// fails immediately. Task groups without finalizers are detected in @ref pexShutdown and cause
-/// an error, too.
-///
-/// After return from pexFinally() the group pointer must be treated as invalid and not be passed
-/// to any other PEX function. In particular, no more tasks can be added to the group.
-///
-/// pexFinally() may be called from any thread. In particular, pexFinally() may be called from a
-/// task in the same group.
-///
+/// Waits for all tasks in a group to finish and deletes the group.
 
-void pexFinally(PexGroup_t *group, void (*f)(void* userData), void* userData)
+void pexWait(PexGroup_t *group)
 {
    MTX_ASSERT(group != NULL);
-   MTX_ASSERT(f != NULL);
-   if (threadPoolSize == 0) {
-      // Execute immediately.
-      f(userData);
-      return;
-   }
 
 #if defined(MTX_DEFAULT_THREADS)
    pthread_mutex_lock(&group->mutex);
-   MTX_ASSERT(group->finalize == NULL);
-   MTX_LOG2("%s: grp=%p nPending=%lu", __func__, group, (unsigned long)group->nPending);
-   if (group->nPending != 0) {
-      // schedule for execution after last task
-      group->finalize = f;
-      group->userData = userData;
-      pthread_mutex_unlock(&group->mutex);
-   } else {
-      // finalize immediately
-      pthread_mutex_unlock(&group->mutex);
-      f(userData);
-      deleteGroup(group);
+   while (group->nPending > 0) {
+      pthread_cond_wait(&group->stateChanged, &group->mutex);
    }
+   group->isDeleting = 1;
+   MTX_LOG2("%s: deleting grp=%p", __func__, group);
 #endif
+
+   deleteGroup(group);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -358,6 +326,7 @@ static void* threadMain(void* arg)
 	   if ((tqHead = tqHead->next) == NULL) {
 	       tqTail = &tqHead;
 	   }
+           --nQueuedTasks;
            ++nBusyThreads;
            pthread_mutex_unlock(&tqMutex);
 	   task->next = NULL;
@@ -442,9 +411,7 @@ void pexSetThreadName(const char* name, ...)
 
 /// Waits until all pending tasks are finished.
 
-// TODO: pexWait(PexGroup* group) ?
-
-void pexWait()
+void pexWaitAll()
 {
 #if defined(MTX_DEFAULT_THREADS)
    pthread_mutex_lock(&tqMutex);
@@ -498,6 +465,15 @@ void pexShutdown()
 #endif
    groupId = 0;
    isInitialized = 0;
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+/// Returns the number of worker threads.
+
+int pexPoolSize()
+{
+   return threadPoolSize;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -590,9 +566,10 @@ static void createTask(
    *tqTail = task;
    task->next = NULL;
    tqTail = &task->next;
+   ++nQueuedTasks;
 
    // Create additional worker threads if necessary and possible.
-   if (nBusyThreads == nThreads && nThreads < threadPoolSize) {
+   if (nThreads < threadPoolSize && nQueuedTasks + nBusyThreads > nThreads) {
       int* threadNumber = ALLOC(int); // memory is released in worker thread
       *threadNumber = nThreads + 1;
       int threadCreateResult = pthread_create(threadId + nThreads, NULL, threadMain, threadNumber);
@@ -600,8 +577,8 @@ static void createTask(
       ++nThreads;
    }
 
-   pthread_cond_signal(&tqWakeup);  // could this deadlock? broadcast required???
    pthread_mutex_unlock(&tqMutex);
+   pthread_cond_broadcast(&tqWakeup);
 #endif
 }
 
@@ -618,9 +595,8 @@ static void createTask(
 /// in task A, B may be finished before A is finished.
 ///
 /// If @a group is not NULL, it must be a pointer to a task group created by @ref pexCreateGroup.
-/// The task becomes a member of this group, i.e., the group's finalizer function
-/// will not be executed before the task is finished. See @ref pexFinally.
-/// pexExecute() fails if @ref pexFinally has already been called on the given group.
+/// The task becomes a member of this group, i.e., @ref pexWait will not return before this task
+/// is finished.
 
 void pexExecute(PexGroup_t* group, void (*f)(void *userData), void* userData)
 {
@@ -643,6 +619,45 @@ void pexExecuteRange(
 {
    MTX_ASSERT(f != NULL);
    createTask(group, NULL, f, userData, begin, end);
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+/// Keeps the number of pending tasks for a group in defined limits.
+/// Call this function in a task creation loop before @ref pexExecute. If there are too many
+/// pending tasks, the function will block.
+///
+/// @param group is the task group
+///
+/// @param isEnabled is a pointer to a variable that will be used by pexThrottle to store the
+/// current state. Its initial value is not important, but you must use the same variable for
+/// all calls with the same @a group.
+///
+/// @param loadFactor defines the queue size limit. If the value is positive, it is interpreted
+/// as a percentage of the available CPU cores. For example, a value of 100 means that the queue
+/// size is limited to the number of CPU cores. Negative values are interpreted as absolute queue
+/// sizes. For example @a loadFactor = -8 means that up to 8 tasks can be queued.
+
+void pexThrottle(PexGroup_t* group, int* isEnabled, int loadFactor)
+{
+   size_t upperLimit = loadFactor < 0 ? -loadFactor : (size_t) threadPoolSize * loadFactor / 100;
+   if (upperLimit == 0) upperLimit = 1;
+   //const size_t lowerLimit = upperLimit / 3;
+
+#if defined(MTX_DEFAULT_THREADS)
+   if (!isInitialized)
+      return;
+   pthread_mutex_lock(&group->mutex);
+   if (*isEnabled)
+      *isEnabled = (group->nPending + 1 < upperLimit);
+   else {
+      while (group->nPending >= upperLimit) {
+         pthread_cond_wait(&group->stateChanged, &group->mutex);
+      }
+      *isEnabled = 1;
+   }
+   pthread_mutex_unlock(&group->mutex);
+#endif
 }
 
 /// @}

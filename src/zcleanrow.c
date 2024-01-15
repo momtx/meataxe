@@ -58,9 +58,9 @@ void ffCleanRow(PTR row, PTR matrix, int nor, int noc, const uint32_t *piv)
 ///    by the caller!
 /// @return 0 on success, -1 on error (if any of the pointer arguments is NULL).
 
-int ffCleanRow2(PTR row, PTR mat, int nor, int noc, const uint32_t *piv, PTR row2)
+int ffCleanRow2(PTR row, PTR mat, uint32_t nor, uint32_t noc, const uint32_t *piv, PTR row2)
 {
-   int i;
+   uint32_t i;
    PTR x;
 
    if (row == NULL || mat == NULL || row2 == NULL || piv == NULL) {
@@ -69,6 +69,9 @@ int ffCleanRow2(PTR row, PTR mat, int nor, int noc, const uint32_t *piv, PTR row
    }
    for (i = 0, x = mat; i < nor; ++i, ffStepPtr(&x, noc)) {
       FEL f = ffExtract(row,piv[i]);
+      FEL fb = ffExtract(x,piv[i]);
+      MTX_ASSERT(fb != FF_ZERO);
+
       if (f != FF_ZERO) {
          f = ffDiv(f,ffExtract(x,piv[i]));
          ffAddMulRow(row,x,ffNeg(f), noc);

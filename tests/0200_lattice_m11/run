@@ -12,6 +12,10 @@ compareWithReference m11.cfinfo cfinfo_after_chop.expected
 
 pwkond -Qt m11 || error "PWKOND failed"
 compareWithReference m11.cfinfo cfinfo_after_pwkond.expected
+for cf in 1a 10a 44a; do
+   compareBinaryWithReference m11${cf}.std.1
+   compareBinaryWithReference m11${cf}.std.2
+done
 
 mkcycl -Q m11 || error "MKCYCL FAILED"
 

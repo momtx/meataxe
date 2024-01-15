@@ -25,8 +25,8 @@
 #endif
 
 enum MtxObjectType {
-   MTX_TYPE_PERMUTATION = 0xFFFFFFFF,         // -1
-   MTX_TYPE_POLYNOMIAL = 0xFFFFFFFE,          // -2
+   MTX_TYPE_PERMUTATION = 0xFFFFFFFF,
+   MTX_TYPE_POLYNOMIAL = 0xFFFFFFFE,
    MTX_TYPE_BITSTRING_FIXED = 0xFFFFFFFD,
    MTX_TYPE_BITSTRING_DYNAMIC = 0xFFFFFFFC,
    MTX_TYPE_WORD_GENERATOR = 0xFFFFFFFA,
@@ -101,16 +101,20 @@ PexGroup_t* pexCreateGroup();
 void pexExecute(PexGroup_t* group, void (*f)(void* userData), void* userData);
 void pexExecuteRange(PexGroup_t* group, void (*f)(void* userData, size_t begin, size_t end),
 	void* userData, size_t begin, size_t end);
-void pexFinally(PexGroup_t* group, void(*f)(void* userData), void* userData);
+//void pexFinally(PexGroup_t* group, void(*f)(void* userData), void* userData);
 void pexInit(int nThreads);
 const char* pexLogPrefix();
+int pexPoolSize();
 MTX_PRINTF(1,2)
 void pexSetThreadName(const char* name, ...);
 int pexThreadNumber();
+void pexThrottle(PexGroup_t* group, int* isEnabled, int loadFactor);
 void pexShutdown();
 void pexSleep(unsigned timeInMs);
 unsigned pexThreadId();
-void pexWait();
+void pexWaitAll();
+void pexWait(PexGroup_t* group);
+
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // Finite fields kernel - basic types
@@ -275,12 +279,12 @@ FEL ffDiv(FEL a, FEL b);
 FEL ffNeg(FEL a);
 FEL ffInv(FEL a);
 
-void ffAddMulRowPartial(PTR dest, PTR src, FEL f, int firstcol, int noc);
-void ffAddMulRow(PTR dest, PTR src, FEL f, int noc);
-void ffAddRowPartial(PTR dest, PTR src, int first, int noc);
-PTR ffAddRow(PTR dest, PTR src, int noc);
+void ffAddMulRowPartial(PTR dest, PTR src, FEL f, uint32_t firstcol, uint32_t noc);
+void ffAddMulRow(PTR dest, PTR src, FEL f, uint32_t noc);
+void ffAddRowPartial(PTR dest, PTR src, uint32_t first, uint32_t noc);
+PTR ffAddRow(PTR dest, PTR src, uint32_t noc);
 PTR ffAlloc(int nor, int noc);
-int ffCleanRow2(PTR row, PTR matrix, int nor, int noc, const uint32_t* piv, PTR row2);
+int ffCleanRow2(PTR row, PTR matrix, uint32_t nor, uint32_t noc, const uint32_t* piv, PTR row2);
 int ffCleanRowAndRepeat(
       PTR row, PTR mat, int nor, int noc, const uint32_t* piv, PTR row2, PTR mat2);
 void ffCleanRow(PTR row, PTR matrix, int nor, int noc, const uint32_t* piv);
@@ -297,11 +301,11 @@ int ffMakeTables(int field);
 void ffMulRow(PTR row, FEL mark, int noc);
 void ffReadRows(MtxFile_t* file, PTR buf, uint32_t nor, uint32_t noc);
 FEL ffRestrict(FEL a, int subfield);
-size_t ffRowSize(int noc);
+size_t ffRowSize(uint32_t noc);
 size_t ffRowSizeUsed(int noc);
 FEL ffScalarProduct(PTR a, PTR b, int noc);
 void ffSetField(int field);
-ssize_t ffSize(int nor, int noc);
+ssize_t ffSize(uint32_t nor, uint32_t noc);
 void ffStepPtr(PTR *x, int noc);
 void ffSwapRows(PTR dest, PTR src, int noc);
 int ffToInt(FEL f);
@@ -472,7 +476,7 @@ int appGetArguments(MtxApplication_t* app, int min_argc, int max_argc);
    "    -T <MaxTime> ............ Set CPU time limit [s]\n" \
    "    --log=[FILE]:LEVEL:[FMT]\n" \
    "                              Log to FILE (default: stdout) up to LEVEL (error,warning,\n" \
-   "                              info,debug,debug2), using FORMAR (full,default).\n" \
+   "                              info,debug,debug2), using FORMAT (full,default).\n" \
    "    --help .................. Show help on command line syntax\n" \
    "    --version ............... Show version information\n" \
    MTX_THREAD_OPTION_DESCRIPTION
@@ -585,7 +589,7 @@ typedef struct {
    void** prev;          ///< @private
    uint32_t seq;         ///< @private
    uint32_t typeId;      ///< @private
-   int field;            ///< Field order.
+   uint32_t field;       ///< Field order.
    uint32_t nor;         ///< Number of rows.
    uint32_t noc;         ///< Number of columns.
    PTR data;             ///< Data, organized as array of rows.
@@ -600,6 +604,7 @@ int matCompare(const Matrix_t* a, const Matrix_t* b);
 void matCopyRegion(
    Matrix_t* dest, uint32_t destrow, uint32_t destcol,
    const Matrix_t* src, uint32_t row1, uint32_t col1, uint32_t nrows, uint32_t ncols);
+Matrix_t* matCreateFromBuffer(PTR rows, int field, uint32_t nor, uint32_t noc);
 Matrix_t* matDup(const Matrix_t* src);
 Matrix_t* matDupRegion(
    const Matrix_t* src, uint32_t row0, uint32_t col0, uint32_t nrows, uint32_t ncols);
@@ -805,6 +810,9 @@ typedef struct {
 } IntMatrix_t;
 
 IntMatrix_t* imatAlloc(uint32_t nor, uint32_t noc);
+int imatCompare(const IntMatrix_t* a, const IntMatrix_t* b);
+IntMatrix_t* imatCreateFromBuffer(int32_t* buffer, uint32_t nor, uint32_t noc);
+IntMatrix_t *imatDup(const IntMatrix_t* mat);
 void imatFree(IntMatrix_t* mat);
 IntMatrix_t* imatLoad(const char* fn);
 IntMatrix_t* imatRead(MtxFile_t* file);
@@ -843,6 +851,7 @@ typedef struct {
 
 void mrAddGenerator(MatRep_t* rep, Matrix_t* gen, int flags);
 MatRep_t* mrAlloc(int ngen, Matrix_t* *gen, int flags);
+int mrAreIsomorphic(const MatRep_t* repA, const MatRep_t* repB, Matrix_t* trans);
 void mrChangeBasis(MatRep_t* rep, const Matrix_t* trans);
 MatRep_t* mrChangeBasis2(const MatRep_t* rep, const Matrix_t* trans);
 void mrValidate(const struct MtxSourceLocation* where, const MatRep_t* rep);
@@ -883,48 +892,47 @@ const char* wgSymbolicName(WgData_t* b, long n);
 // Spin-up, Split, Quotients, etc.
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#define SF_FIRST        0x0001  // Try only the first seed vector
-#define SF_EACH         0x0002  // Try each seed vector
-#define SF_MAKE         0x0004  // Try all 1-dimensional subspaces
-#define SF_SUB          0x0010  // Try until finding a proper subspace
-#define SF_CYCLIC       0x0020  // Try until finding a cyclic vector
-#define SF_COMBINE      0x0040  // Combine the spans
-#define SF_SEED_MASK    0x000F
-#define SF_MODE_MASK    0x00F0
-#define SF_STD          0x0100  // Spin up 'canonically' (standard basis)
+#define SF_SEED_MASK      0x0007  // Defines how to select seed vectors from the seed space
+#define SF_FIRST          0x0001  // Use only the first basis vector
+#define SF_EACH           0x0002  // Use each seed vector
+#define SF_MAKE           0x0004  // Use all 1-dimensional subspaces of the seed space
+
+#define SF_MODE_MASK      0x00F0  // Defines how to spin up and when to stop    
+#define SF_SUB            0x0010  // Try finding a proper subspace
+#define SF_CYCLIC         0x0020  // Try finding a cyclic vector (spins up to the whole space)
+#define SF_COMBINE        0x0040  // Combine the spans
+
+#define SF_STD            0x0100  // Spin up 'canonically' (standard basis)
+
+#define SF_RESERVED_MASK  0xFFFFFE00
 
 Matrix_t* QProjection(const Matrix_t* subspace, const Matrix_t* vectors);
 Matrix_t* QAction(const Matrix_t* sub, const Matrix_t* gen);
 Matrix_t* SAction(const Matrix_t* sub, const Matrix_t* gen);
 
-typedef struct {
-   /// Subspace dimension limit. 0 = unlimited.
-   uint32_t MaxSubspaceDimension;
-   uint32_t Result;
-} SpinUpInfo_t;
-
-void SpinUpInfoInit(SpinUpInfo_t* info);
-Matrix_t* SpinUp(const Matrix_t* seed, const MatRep_t* rep, int flags,
-                 IntMatrix_t **script, SpinUpInfo_t* info);
-Matrix_t* SpinUpWithScript(const Matrix_t* seed, const MatRep_t* rep,
-                           const IntMatrix_t* script);
-int Split(Matrix_t* subspace, const MatRep_t* rep,
-          MatRep_t **sub, MatRep_t **quot);
+int Split(const Matrix_t* subspace, const MatRep_t* rep, MatRep_t **sub, MatRep_t **quot);
 
 int ConvertSpinUpScript(IntMatrix_t* script);
 
-Matrix_t* SpinUpWithPermutations(const Matrix_t* seed,
-                                 int ngen,
-                                 const Perm_t **gen,
-                                 int flags,
-                                 IntMatrix_t **script,
-                                 SpinUpInfo_t* info);
+
+Matrix_t* spinup(const Matrix_t* seed, const MatRep_t* rep);
+Matrix_t* spinupStandardBasis(
+      IntMatrix_t** script, const Matrix_t* seed, const MatRep_t* rep, unsigned seedMode);
+uint32_t spinupFindSubmodule(
+      Matrix_t** basis,
+      const Matrix_t* seed, const MatRep_t* rep, unsigned seedMode, uint32_t maxDimension);
+uint32_t spinupFindCyclicVector(
+      Matrix_t** basis,
+      const Matrix_t* seed, const MatRep_t* rep, unsigned seedMode);
+
+Matrix_t* spinupWithScript(const Matrix_t* seed, const MatRep_t* rep, const IntMatrix_t* script);
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // Seed vector generator
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-long MakeSeedVector(const Matrix_t* basis, long lastno, PTR vec);
+void svgMake(PTR vec, uint32_t number, const Matrix_t *basis);
+int svgMakeNext(PTR vec, uint32_t* number, const Matrix_t* basis);
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // Miscellaneous algorithms
@@ -1090,7 +1098,7 @@ int tkWriteInfo(TkData_t* tki, const char* name);
 
 int IsIsomorphic(const MatRep_t* rep1, const CfInfo* info1,
                  const MatRep_t* rep2, Matrix_t  **trans, int use_pw);
-int MakeEndomorphisms(const MatRep_t* rep, const Matrix_t* nsp,
+int makeEndomorphisms(const MatRep_t* rep, const Matrix_t* nsp,
                       Matrix_t* endo[]);
 Matrix_t* HomogeneousPart(MatRep_t* m, MatRep_t* s, Matrix_t* npw,
                           const IntMatrix_t* op, int dimends);

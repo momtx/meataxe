@@ -193,7 +193,6 @@ See also @ref pg_bib.
     Journal of Pure and Applied Algebra 37 (1985), 111-116.
 
 
-
 @page pg_progs_index Program Index
 
 Thd following list contains a detailed description of each MeatAxe program.
@@ -407,7 +406,7 @@ This layer provides more complex operations which typically involve
 several objects. The spin-up and split functions are examples for this
 layer.
 - @ref charpol
-- @ref spinup
+- @ref g_spinup
 - @ref wgen
 
 Throughout this documentation, layers 1 to 3 are referred to as the

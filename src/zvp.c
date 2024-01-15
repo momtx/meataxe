@@ -2,9 +2,11 @@
 // C MeatAxe - Vector permute (make permutations from matrices)
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
+#include "meataxe.h"
+
+#include <inttypes.h>
 #include <stdlib.h>
 #include <string.h>
-#include "meataxe.h"
 
 #define MAXVEC 100000   /* Default value for maxvec */
 
@@ -47,7 +49,7 @@ static int NGen = 2;                    // number of generators
 static Matrix_t *Gen[MAX_GENERATORS];   // generators
 static Matrix_t *Seed;                  // seed space
 static int Generate = 0;                // generate vectors (-m)
-static int SeedStart = 0;               // first seed vector to use (-s)
+static uint32_t SeedStart = 0;          // first seed vector to use (-s)
 static int maxvec = MAXVEC;             // max. orbit size (-l)
 
 static int tabsize;                     // size of hash table
@@ -58,9 +60,9 @@ static int nvec;                        // number of vectors obtained so far
 static int nfinished;                   // number of finished vectors
 static PTR vtable;                      // holds the vectors
 static PTR tmp;
-static uint32_t *perm[MAX_GENERATORS];      // permutations
+static uint32_t *perm[MAX_GENERATORS];  // permutations
 
-static long iseed = 0;                  // current seed vector
+static uint32_t iseed = 0;              // current seed vector
 int proj = 0;                           // operate on 1-spaces (-p)
 static int vecout = 0;                  // output vectors, too (-v)
 static int noout = 0;                   // no output, print orbit sizes only (-n)
@@ -117,7 +119,7 @@ static int ParseCommandLine()
    NGen = appGetIntOption(App,"-g",2,1,MAX_GENERATORS);
    maxvec = appGetIntOption(App,"-l",MAXVEC,0,-1);
    Generate = appGetOption(App,"-m");
-   SeedStart = appGetIntOption(App,"-s",1,1,10000000) - 1;
+   SeedStart = (uint32_t)(appGetIntOption(App,"-s",1,1,10000000) - 1);
 
    // arguments
    if (appGetArguments(App,3,4) < 0) {
@@ -227,12 +229,10 @@ static void Normalize(PTR row)
 
 static int MakeNextSeedVector()
 {
-   MTX_LOGD("Starting with seed vector %ld",iseed);
+   MTX_LOGD("Starting with seed vector %lu", (unsigned long) iseed);
    if (Generate) {
-      iseed = MakeSeedVector(Seed,iseed,tmp);
-      if (iseed < 0) {
+      if (svgMakeNext(tmp, &iseed, Seed) != 0)
          return -1;
-      }
    } else {
       if ((int) iseed >= Seed->nor) {
          return -1;
@@ -415,12 +415,12 @@ int main(int argc, char **argv)
       }
       InitTables();
       if (MakeOrbit() == 0) {
-         MTX_LOGI("Vector %ld: Orbit size = %d",iseed,nvec);
+         MTX_LOGI("Vector %" PRIu32 ": Orbit size = %d",iseed, nvec);
          WriteOutput();
          rc = 0;
          break;
       }
-      MTX_LOGI("Orbit of vector %ld is longer than %d",iseed,maxvec);
+      MTX_LOGI("Orbit of vector %" PRIu32 " is longer than %d",iseed,maxvec);
    }
    Cleanup();
    return rc;

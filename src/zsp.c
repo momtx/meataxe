@@ -4,37 +4,35 @@
 
 #include "meataxe.h"
 
+#include <inttypes.h>
 #include <string.h>
 #include <stdlib.h>
 
-static Matrix_t *Seed = NULL;		/* Seed vectors */
-static MatRep_t *Rep = NULL;		/* Generators */
-static Matrix_t *Span = NULL;		/* Invariant subspace */
-static IntMatrix_t *OpTable = NULL;	/* Spin-up script */
+static uint32_t field = 0;              // Field order
+static Matrix_t *Seed = NULL;		// Seed vectors
+static MatRep_t *Rep = NULL;		// Generators
+static Matrix_t *Span = NULL;		// Invariant subspace
+static IntMatrix_t *OpTable = NULL;	// Spin-up script
 static int Dim = -1;                    // Dimension / permutation size
-static int ngen = 2;			/* Number of generators */
-static int opt_G = 0;		        /* GAP output */
-static long SeedVecNo = 0;		/* Current seed vector */
-static const char *genFileName[MAXGEN];	/* File name for generators */
-static const char *SeedName = NULL;	/* File name for seed vectors */
-static const char *SubspaceName = NULL;	/* File name for invariant subspace */
-static const char *SubName = NULL;	/* File name for action on subspace */
-static const char *QuotName = NULL;	/* File name for action on quotient */
-static const char *OpName = NULL;	/* File name for spin-up script */
-static int Permutations = 0;		/* Spin up with permutations */
-static const Perm_t *Perm[MAXGEN];	/* Permutations */
-static int MaxDim = -1;			/* -d: subspace dim. limit */
-static int TryOneVector = 0;		/* -1: try only one seed vector */
-static int TryLinearCombinations = 0;	/* -m: try all linear combinations */
-static int FindCyclicVector = 0;	/* -e: find a cyclic vector */
-static int FindClosure = 0;		/* -c: make closure of the seed space */
-static int Standard = 0;		/* -t: standard basis */
-
+static int ngen = 2;			// Number of generators
+static int opt_G = 0;		        // GAP output
+static long SeedVecNo = 0;		// Current seed vector
+static const char *genFileName[MAXGEN];	// File name for generators
+static const char *SeedName = NULL;	// File name for seed vectors
+static const char *SubspaceName = NULL;	// File name for invariant subspace
+static const char *SubName = NULL;	// File name for action on subspace
+static const char *QuotName = NULL;	// File name for action on quotient
+static const char *OpName = NULL;	// File name for spin-up script
+static int MaxDim = -1;			// -d: subspace dim. limit
+static int TryOneVector = 0;		// -1: try only one seed vector
+static int TryLinearCombinations = 0;	// -m: try all linear combinations
+static int FindCyclicVector = 0;	// -e: find a cyclic vector
+static int FindClosure = 0;		// -c: make closure of the seed space
+static int makeStandardBasis = 0;		// -t: standard basis
 
 
 static MtxApplicationInfo_t AppInfo = { 
 "zsp", "Spinup, split, and standard basis",
-"\n"
 "SYNTAX\n"
 "    zsp [<Options>] <Gen1> <Gen2> <Seed>\n"
 "    zsp [<Options>] [-g <#Gen>] <Gen> <Seed>\n"
@@ -58,7 +56,7 @@ MTX_COMMON_OPTIONS_DESCRIPTION
 "    -m ...................... Make (generate) seed vectors\n"
 "    -e ...................... Find a cyclic vector\n"
 "    -c ...................... Combine, make the closure\n"
-"    -t ...................... Make standard basis\n"
+"    -t ...................... Make standard basis (implies -1, cannot be combined with -c, -m)\n"
 "\n"
 "FILES\n"
 "    <Gen1>,<Gen2>............ I  Generators (without -g)\n"
@@ -74,38 +72,6 @@ static MtxApplication_t *App = NULL;
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static void readGenerators()
-{
-   MtxFile_t* f = mfOpen(genFileName[0], "rb");
-   mfReadHeader(f);
-   uint32_t objectType = mfObjectType(f);
-   switch (objectType) {
-      case MTX_TYPE_PERMUTATION:
-         if (SubName != NULL || QuotName != NULL) {
-            mtxAbort(MTX_HERE, "'-s' and '-q' are not supported for permutations");
-         }
-         for (int i = 0; i < ngen; ++i) {
-            Perm[i] = permLoad(genFileName[i]);
-         }
-         Dim = Perm[0]->degree;
-         break;
-      case MTX_TYPE_MATRIX:
-         ffSetField(f->header[0]);
-         Rep = mrAlloc(0, NULL, 0);
-         for (int i = 0; i < ngen; ++i) {
-            mrAddGenerator(Rep, matLoad(genFileName[i]), 0);
-         }
-         Dim = Rep->Gen[0]->noc;
-         break;
-      default:
-         mtxAbort(MTX_HERE, "%s: unsupported object type 0x%lx",
-            genFileName[0], (unsigned long) objectType);
-   }
-   mfClose(f);
-}
-
-////////////////////////////////////////////////////////////////////////////////////////////////////
-
 static void readSeed()
 {
    MtxFile_t* sf = mfOpen(SeedName, "rb");
@@ -113,16 +79,14 @@ static void readSeed()
    if (mfObjectType(sf) != MTX_TYPE_MATRIX) {
       mtxAbort(MTX_HERE, "%s: %s", SeedName, MTX_ERR_NOTMATRIX);
    }
-   const uint32_t field = sf->header[0];
+   field = sf->header[0];
    const int norSeed = sf->header[1];
    const int nocSeed = sf->header[2];
-
-   if (Permutations) {
-      ffSetField(field);
-   }
-   if (nocSeed != Dim || field != ffOrder) {
-      mtxAbort(MTX_HERE, "%s and %s: %s", genFileName[0], SeedName, MTX_ERR_INCOMPAT);
-   }
+   Dim = nocSeed;
+   
+//   if (nocSeed != Dim || field != ffOrder) {
+//      mtxAbort(MTX_HERE, "%s and %s: %s", genFileName[0], SeedName, MTX_ERR_INCOMPAT);
+//   }
 
    size_t skip = 0;
    if (!TryLinearCombinations && SeedVecNo > 0) {
@@ -134,10 +98,52 @@ static void readSeed()
    }
    const uint32_t num_seed = TryOneVector ? 1 : norSeed - skip;
 
-   Seed = matAlloc(ffOrder, num_seed, Dim);
+   Seed = matAlloc(field, num_seed, Dim);
    ffReadRows(sf, Seed->data, num_seed, Dim);
    mfClose(sf);
 }
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+static Matrix_t* makePermutationMatrix(const Perm_t *p, uint32_t field)
+{
+   Matrix_t *m = matAlloc(field, p->degree, p->degree);
+   for (uint32_t i = 0; i < p->degree; ++i) {
+      ffInsert(matGetPtr(m, i), p->data[i], FF_ONE);
+   }
+   return m;
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+static void readGenerators()
+{
+   MtxFile_t* f = mfOpen(genFileName[0], "rb");
+   mfReadHeader(f);
+   const uint32_t objectType = mfObjectType(f);
+   mfClose(f);
+
+   Rep = mrAlloc(0, NULL, 0);
+   switch (objectType) {
+      case MTX_TYPE_PERMUTATION:
+         for (int i = 0; i < ngen; ++i) {
+            Perm_t* perm = permLoad(genFileName[i]);
+            mrAddGenerator(Rep, makePermutationMatrix(perm, field), 0);
+            permFree(perm);
+         }
+         break;
+      case MTX_TYPE_MATRIX:
+         for (int i = 0; i < ngen; ++i) {
+            mrAddGenerator(Rep, matLoad(genFileName[i]), 0);
+         }
+         Dim = Rep->Gen[0]->noc;
+         break;
+      default:
+         mtxAbort(MTX_HERE, "%s: unsupported object type 0x%lx",
+            genFileName[0], (unsigned long) objectType);
+   }
+}
+
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -155,8 +161,8 @@ static void init_args()
     TryLinearCombinations = appGetOption(App,"-m --seed-generate");
     FindCyclicVector = appGetOption(App,"-e --find-cyclic-vector");
     FindClosure = appGetOption(App,"-c --combine");
-    Standard = appGetOption(App,"-t --standard-basis");
-
+    makeStandardBasis = appGetOption(App,"-t --standard-basis");
+    
     opt_G = appGetOption(App,"-G --gap");
     ngen = appGetIntOption(App,"-g",-1,1,MAXGEN);
     SeedVecNo = appGetIntOption(App,"-n",0,1,10000000);
@@ -164,30 +170,28 @@ static void init_args()
     if (MaxDim != -1 && (FindClosure || FindCyclicVector))
 	mtxAbort(MTX_HERE,"'-d' cannot be used together with '-c' or '-e'");
 
-    if (   FindClosure
-	&& (FindCyclicVector || TryOneVector || TryLinearCombinations)
-	)
-    if (FindCyclicVector && FindClosure)
+    if (FindClosure &&
+          (FindCyclicVector || TryOneVector || TryLinearCombinations || makeStandardBasis))
     {
-	mtxAbort(MTX_HERE,"'-c' cannot be combined with any of '-e', '-1', '-m'");
+	mtxAbort(MTX_HERE,"'-c' cannot be combined with any of '-e', '-1', '-m', '-t'");
     }
-
-
     if (TryLinearCombinations && TryOneVector)
     {
-	mtxAbort(MTX_HERE,"Options '-n' and '-1' cannot be used together");
+	mtxAbort(MTX_HERE,"Options '-m' and '-1' cannot be combined");
     }
     if (TryLinearCombinations && SeedVecNo > 0)
     {
-	mtxAbort(MTX_HERE,"Options '-m' and '-n' cannot be used together");
+	mtxAbort(MTX_HERE,"Options '-m' and '-n' cannot be combined");
+    }
+    if (OpName != NULL && !makeStandardBasis) {
+	mtxAbort(MTX_HERE,"Option '-o' is only available for standard basis (-t)");
     }
 
 
 //    if (opt_G)
 //	MtxMessageLevel = -100;
 
-    /* Process arguments (generator and seed names).
-       --------------------------------------------- */
+    // Process arguments (generator and seed names).
     if (ngen == -1)
     {
 	ngen = 2;
@@ -211,14 +215,15 @@ static void init_args()
     }
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
-
-static int WriteAction()
-
+static int writeAction()
 {
     MatRep_t *sub = NULL, *quot = NULL;
     MatRep_t **subp = SubName != NULL ? &sub : NULL;
     MatRep_t **quotp = QuotName != NULL ? &quot : NULL;
+
+    matSave(Span,"split_subspace");
 
     if (Split(Span,Rep,subp,quotp) != 0)
     {
@@ -238,29 +243,28 @@ static int WriteAction()
     return 0;
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static void WriteResult()
+static void writeResult()
 {
-    if (Span->nor < Dim && (Standard || FindCyclicVector))
-	MTX_LOGI("ZSP: Warning: Span is only %d of %d",Span->nor,Dim);
-    else if (Span->nor == Dim && TryLinearCombinations)
-	MTX_LOGI("ZSP: Warning: No invariant subspace found");
-    else
-    {
-	MTX_LOGI("Subspace %d, quotient %d",Span->nor, Span->noc - Span->nor);
-    }
+   if (Span == NULL) {
+      return;
+   }
 
-    // Write the invariant subspace.
-    if (SubspaceName != NULL)
-	matSave(Span,SubspaceName);
-    
-    // Write <Op> file
-    if (OpName != NULL)
-	imatSave(OpTable,OpName);
+   // Write the submodule
+   if (SubspaceName != NULL) {
+      matSave(Span, SubspaceName);
+   }
 
-    // Write the action on the subspace and/or quotient.
-    if (SubName != NULL || QuotName != NULL)
-	WriteAction();
+   // Write the spin-up script
+   if (OpName != NULL) {
+      imatSave(OpTable, OpName);
+   }
+
+   // Write the action on the subspace and/or quotient.
+   if (SubName != NULL || QuotName != NULL) {
+      writeAction();
+   }
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -269,13 +273,13 @@ static void init(int argc, char **argv)
 {
     App = appAlloc(&AppInfo,argc,argv);
     init_args();
-    readGenerators();
     readSeed();
+    readGenerators();
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static void Cleanup()
+static void cleanup()
 {
    if (Span) { matFree(Span); }
    if (Seed) { matFree(Seed); }
@@ -289,11 +293,6 @@ static void Cleanup()
 int main(int argc, char **argv)
 {
     init(argc,argv);
-    IntMatrix_t **optab = (OpName != NULL) ? &OpTable : NULL;
-    SpinUpInfo_t SpInfo;
-    SpinUpInfoInit(&SpInfo);
-    if (MaxDim > 0)
-	SpInfo.MaxSubspaceDimension = MaxDim;
 
     int flags = 0;
 
@@ -313,16 +312,34 @@ int main(int argc, char **argv)
     else
 	flags |= SF_SUB;
 
-    // Spin-up mode: SF_STD or nothing.
-    if (Standard)
-	flags |= SF_STD;
+    if (makeStandardBasis) {
+        if (FindClosure) mtxAbort(MTX_HERE,"-t and -c cannot be combined");
+        if (TryLinearCombinations) mtxAbort(MTX_HERE,"-t and -m cannot be combined");
+        if (SubName != NULL) mtxAbort(MTX_HERE, "-t and -s cannot be combined");
+        if (QuotName != NULL) mtxAbort(MTX_HERE, "-t and -q cannot be combined");
+	flags = SF_STD | SF_CYCLIC | SF_FIRST;
+    }
 
-    if (!Permutations)
-	Span = SpinUp(Seed,Rep,flags,optab,&SpInfo);
-    else
-	Span = SpinUpWithPermutations(Seed,ngen,Perm,flags,optab,&SpInfo);
-    WriteResult();
-    Cleanup();
+    if (makeStandardBasis) {
+       IntMatrix_t **optab = (OpName != NULL) ? &OpTable : NULL;
+       Span = spinupStandardBasis(optab, Seed, Rep, SF_FIRST);
+    } else if (FindClosure){
+       Span = spinup(Seed, Rep);
+    } else {
+       int seedMode = TryLinearCombinations ? SF_MAKE : SF_EACH;
+       if (FindCyclicVector)
+          spinupFindCyclicVector(&Span, Seed, Rep, seedMode);
+       else
+          spinupFindSubmodule(&Span, Seed, Rep, seedMode, MaxDim == -1 ? 0 : MaxDim);
+    }
+    if (Span != NULL) {
+       MTX_LOGI("ZSP: subspace=%"PRIu32", quotient=%"PRIu32,
+             Span->nor, Span->nor - Span->noc);
+    } else {
+       MTX_LOGI("ZSP: failed");
+    }
+    writeResult();
+    cleanup();
     return 0;
 }
 
@@ -405,25 +422,27 @@ Standard options, see @ref prog_stdopts
 @section zsp_desc Description
 This program takes as input a set of matrices or permutations (the "generators"), 
 and a list of seed vectors. It uses the spin-up algorithm to find a subspace which
-is invariant under the generators. If the generators are matrices, @b zsp can optionally split the representation, i.e., calculate the
-action of the generators on both subspace and quotient. Splitting is currently
-not possible for permutations.
-
+is invariant under the generators and can optionally split the representation,
+i.e., calculate the action of the generators on both subspace and quotient.
 
 @subsection inp Specifying Input Files
-There are two ways to inkove @b zsp. The first form, without `-g' expects three 
-arguments, the two generators and the seed vector file. For example,
-||    zsp mat1 mat2 seed
-reads the generators from `mat1' and `mat2', and the seed vector from 
-`seed'.
-
+There are two ways to invoke @b zsp. The first form has three arguments,
+the two generators and the seed vector file. For example,
+<pre>
+zsp mat1 mat2 seed
+</pre>
+reads the generators from @c mat1 and @c mat2, and the seed vector from @c seed.
 If the number of generators is not two, you must use the second form, 
-which expects only two arguments. The first argument is treated as a base name.
-The actual file names are built by appending suffixes ".1", ".2",... to @em Gen.
+which expects only two arguments. The first argument is used as base name, and the
+actual file names are derived by appending suffixes ".1", ".2",... to the base name.
 For example,
 <pre>
 zsp -g 3 module seed</pre>
-reads three genrators from "module.1", "module.2", and "module.3".
+reads three generators from "module.1", "module.2", and "module.3".
+
+In any case, all generators must be of the same type (matrix or permutation)
+and compatible.
+
 The last argument, @em Seed is always treated as a single file name, 
 containing the seed vectors. Of course, the seed vectors must be 
 compatible with the generators, i.e., they must be over the save field
@@ -433,8 +452,8 @@ matrices of the same size and over the same field.
 @subsection seedmode Specifying the Seed Mode
 @b zsp has three ways of interpreting the seed vector file. The default is
 to treat @em Seed as a list of seed vectors, which are used ony-by-one
-until one seed vector is successful (see below for the meaning of 
-successful), or until all vectors have been used. Normally, @b zsp starts
+until one seed vector is successful (see "Search Mode" below for the meaning
+of successful), or until all vectors have been used. Normally, @b zsp starts
 with the first row of @em Seed, but this can be changed using the `-n' 
 option. For example,
 <pre>
@@ -445,8 +464,7 @@ seed vector file.
 
 With "-1" @b zsp spins up only the first seed vector and stops, even if 
 the spin-up was not successful. You can use "-n" to select a different
-row as seed vector. If any of these options is used, @b zsp loads only
-the seed vectors that are actually needed.
+row as seed vector.
 
 If you use the "-m" option, @b zsp treats @em Seed as the basis of a 
 seed space and tries all 1-dimensional subspaces as seed vectors. In
@@ -454,9 +472,7 @@ this mode, seed vectors are constructed by taking linear combinations
 of the rows of @em Seed. This option is typically used to search a 
 subspace exhaustively for vectors generating a nontrivial invariant 
 subspace. 
-Of course "-1" and "-m" cannot be used together. Also, "-m" cannot be 
-used together with "-n".
-
+"-m" cannot be combined with "-1" nor with "-n".
 
 @subsection srchmode  Specifying the Search Mode
 What @b zsp does after spinning up a seed vector depends on the options
@@ -535,8 +551,8 @@ The spin-up script contains the operations performed by the spin-up
 algorithm to create the subspace from the seed vectors and the 
 generators. It can be used with the @ref prog_zsc "zsc" program to
 repeat the same process with different seed vectors and generators.
-Details on the format of the spin-up script can be found in the library reference
-under SpinUp().
+Details on the format of the spin-up script can be found in the library
+reference under @ref spinupscripts "Spin-up Scripts".
 
 
 @section zsp_impl Implementation Details

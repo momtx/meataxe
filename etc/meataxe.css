@@ -253,6 +253,13 @@ ul {
   overflow-y: hidden;
 }
 
+pre {
+  margin-left: 2em;
+  background-color: #f0f0f0;
+  border: 1px,solid,#c0c0c0;
+  font-family: monospace, fixed;
+}
+
 pre.fragment {
   padding: 0px 0px 0px 0px;
   margin: 0px 0px 0px 0px;
@@ -1773,6 +1780,7 @@ tt, code, kbd, samp
 {
   display: inline-block;
   direction:ltr; 
+  font-family: "courier new",courier,monospace;
 }
 /* @end */
 

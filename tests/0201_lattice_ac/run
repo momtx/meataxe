@@ -11,6 +11,12 @@ cp ${MTX_TEST_DATA_DIR}/ac.2 ac.2
 
 chop ${quiet} ac || error "CHOP failed"
 pwkond ${quiet} -t ac || error "PWKOND failed"
+
+for cf in 1a 1b 6a 6b 13a 13b 15a 15b 20a; do
+   compareBinaryWithReference ac${cf}.std.1
+   compareBinaryWithReference ac${cf}.std.2
+done
+
 mkcycl ${quiet} ac || error "MKCYCL FAILED"
 mkinc ${quiet} ac || error "MKINC FAILED"
 mkdotl ${quiet} ac || error "MKDOTL FAILED"

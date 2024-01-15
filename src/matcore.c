@@ -80,7 +80,7 @@ void matValidate(const struct MtxSourceLocation* src, const Matrix_t* mat)
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-/// Creates a new matrix.
+/// Creates a new matrix. All marks are initialized to zero.
 ///
 /// @param field Field order.
 /// @param nor Number of rows.
@@ -99,6 +99,35 @@ Matrix_t *matAlloc(int field, uint32_t nor, uint32_t noc)
    m->noc = noc;
    m->pivotTable = NULL;
    m->data = ffAlloc(nor, noc);
+   return m;
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+/// Creates a new matrix from an existing row buffer.
+/// The passed row buffer may contain more than @p nor rows. In this case the buffer is resized
+/// to the given number of rows.
+/// After return the buffer is owned by the matrix and must not be modified except by using the
+/// matXxx() functions.
+///
+/// @param rows Matrix contents. Must contains at least @p nor rows of size @p noc.
+/// @param field Field order.
+/// @param nor Number of rows.
+/// @param noc Number of columns.
+/// @return Pointer to the new matrix
+
+Matrix_t *matCreateFromBuffer(PTR rows, int field, uint32_t nor, uint32_t noc)
+{
+   Matrix_t *m;
+
+   MTX_ASSERT(field >= 2);
+   ffSetField(field);
+   m = (Matrix_t*) mmAlloc(MTX_TYPE_MATRIX, sizeof(Matrix_t));
+   m->field = field;
+   m->nor = nor;
+   m->noc = noc;
+   m->pivotTable = NULL;
+   m->data = sysRealloc(rows, ffSize(nor, noc));
    return m;
 }
 

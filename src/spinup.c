@@ -3,9 +3,10 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 #include "meataxe.h"
+#include <inttypes.h>
 #include <string.h>
 
-/// @defgroup spinup Spin-Up and Split
+/// @defgroup g_spinup Spin-Up and Split
 /// @{
 /// @details
 /// Given a matrix representation and a seed vector v, the spin-up algorithm
@@ -15,517 +16,646 @@
 /// generating the whole space, and generate seed vectors as linear combinations
 /// of a given basis.
 ///
-/// <b>Spin-up scripts</b>
+/// @anchor spinupscripts <b>Spin-up Scripts</b><br>
 /// When spinning up a seed vector, you can record the operations performed
 /// by the algorithm in a spin-up script. This script can then be fed into
-/// SpinUpWithScript() to repeat the procedure with a different seed vector 
+/// spinupWithScript() to repeat the procedure with a different seed vector 
 /// and different generators.
+/// A spin-up consists of a pair (v,g)∈ℤ<sup>2</sup> for each subspace basis vector that was
+/// produced by the spin-up process. 
+/// The pair is either of the form (v,-1) with v>0, meaning that the basis vector is the
+/// v-th seed vector. Otherwise the pair is of the form (v,g) with g≥0, meaning that the
+/// vector is the image of the v-th basis vector under the g-th generator. Note that
+/// vector numbers are 1-based, but generator indices start with 0!
 ///
-/// <b>Standard basis</b>
-/// Normally, the basis vectors computed during the spin-up process are chosen
-/// randomly. However, the spin-up algorithm can be used in "standard basis" mode.
+/// @anchor stdbasis <b>Standard Basis</b><br>
+/// Normally, the basis vectors computed during the spin-up process are chosen randomly.
+/// However, the spin-up algorithm can be used in "standard basis" mode.
 /// In this mode, the result is invariant under a change of basis.
 /// More precisely, if a given seed vector v and generators g<sub>1</sub>,...g<sub>n</sub>
 /// produce the basis (b<sub>1</sub>,...b_<sub>m</sub>), and A is a nonsingular matrix,
 /// then vA and A<sup>-1</sup>g<sub>1</sub>A,...A<sup>-1</sup>g<sub>n</sub>A produce the basis
 /// (b<sub>1</sub>A,...b<sub>m</sub>A).
+/// The standard basis algorithm performs a normal spinup but maintains a second
+/// basis by mirroring all operations on the original vectors except the cleaning passes.
+/// It consumes more memory and computing time, and the resulting basis is not in
+/// echelon form.
 ///
-/// <b>Splitting a representation</b>
+/// <b>Splitting a representation</b><br>
 /// If a proper invariant subspace U<V has been found for a matrix representation M,
 /// the restriction of M to U as well as the representation on V/U can be calculated.
 /// This is called splitting the representation. The basis for V/U is chosen randomly.
 
-////////////////////////////////////////////////////////////////////////////////////////////////////
-/// @class SpinUpInfo_t
-/// Spin-up Parameters.
-/// The SpinUpInfo_t data structure is used to pass additional parameters
-/// to the spin-up algorithm, and to return extended results to the caller.
-/// @c Result is set by SpinUp() to report the success of the spin-up.
-/// Possible values are 0 (successful), 1 (not found), and -1 (error).
+#if defined(MTX_DEFAULT_THREADS)
+   #define MUTEX_INIT(mutex) pthread_mutex_init(&mutex, NULL)
+   #define MUTEX_DESTROY(mutex) pthread_mutex_destroy(&mutex)
+   #define MUTEX_LOCK(mutex) pthread_mutex_lock(&mutex)
+   #define MUTEX_UNLOCK(mutex) pthread_mutex_unlock(&mutex)
+#else
+   #define MUTEX_INIT(mutx)
+   #define MUTEX_DESTROY(mutx)
+   #define MUTEX_LOCK(mutex)
+   #define MUTEX_UNLOCK(ctx)
+#endif
 
-////////////////////////////////////////////////////////////////////////////////////////////////////
-// Local data
+/// @private
+struct Workspace {
+    struct Workspace* next;
+    int isInPool;
+    int isValid;
+    PTR rows;
+    PTR stdRows;        // Only used with SF_STD, NULL otherwise
+    uint32_t* piv;
+    int32_t *ops;       // Only used if reccording a spin-up script, NULL otherwise
+    uint32_t field;
+    uint32_t dim;       // Subspace dimension (= number of valid entries in rows and piv)
+    uint32_t noc;       // Row size (number of columns, maximum subspace dimension)
+};
 
-/// Internal state for spin up.
-typedef struct {
-   // user data
+/// @private
+typedef struct SpinupContext {
+
+   // Constant during context lifetime. Pointers are not owning.
+   unsigned flags;
+   uint32_t field;		// Field order
+   uint32_t noc;		// Dimension of the whole space
    const Matrix_t* seed;
    const MatRep_t* rep;
-   int nPerms;
-   Perm_t *perms;                       // NULL for matrix representation
-   int flags;
-   IntMatrix_t** script;
-   uint32_t maxSubspaceDimension;
-   int result;
+   uint32_t maxSubspaceDim;
 
-   // internal data
-   uint32_t Dim;		// Dimension of the whole space
-   uint32_t *Piv;		// Pivot table
-   Matrix_t *Span;		// Span
-   int SpanDim;			// Dimension of the span
-   int NGen;			// Number of generators 
-   const Matrix_t **Gen;		// Generators
-   const Perm_t **GenP;		// Generators (permutation mode)
-   Matrix_t *StdSpan;	        // Span
-   int32_t *ops;
+   #if defined(MTX_DEFAULT_THREADS)
+   pthread_mutex_t mutex;
+   #endif
+
+   Matrix_t* submodule;         // Submodule found by spinup
+   IntMatrix_t* script;         // Spin-up script (if requested)
+   uint32_t resultSeed;         // Seed vector which produced the result
+
+   struct Workspace* workspaces;// Workspace pool
+   PexGroup_t* pexGroup;
 } SpinupContext_t;
 
-#define OPVEC(ctx,i) ctx->ops[2*(i)]
-#define OPGEN(ctx,i) ctx->ops[2*(i)+1]
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
+void imatMove(IntMatrix_t** dst, IntMatrix_t** src)
+{
+   MTX_ASSERT(src != NULL);
+   if (dst != NULL) {
+      if (*dst != NULL)
+         imatFree(*dst);
+      *dst = *src;
+      *src = NULL;
+   }
+}
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-/// This function spins up the next seed vector.
-/// @param seed The seed vector.
-/// @param seedno The seed vector number.
-/// @return 0 = success, 1 = no success, -1 = error
-
-static int Spin1(SpinupContext_t* ctx, PTR seed, int seedno)
+void matMove(Matrix_t** dst, Matrix_t** src)
 {
-   int igen;        // Generator to apply next
-   PTR get;         // Vector to map
-   PTR put;         // New vectors go here
-   PTR stdget, stdput;
-   FEL f;
-   int iget;
-   uint32_t num_tries = 0;
-
-   const uint32_t maxdim =
-      ctx->maxSubspaceDimension > 0 ? ctx->maxSubspaceDimension + 1 : ctx->Dim + 1;
-
-   // If we are not in 'combine' mode, start with an empty space.
-   // In 'combine' mode, keep what has been found so far.
-   if ((ctx->flags & SF_MODE_MASK) != SF_COMBINE) {
-      ctx->SpanDim = 0;
+   MTX_ASSERT(src != NULL);
+   if (dst != NULL) {
+      if (*dst != NULL)
+         matFree(*dst);
+      *dst = *src;
+      *src = NULL;
    }
+}
 
-   // Initialize <get> and <put> to point to the first free row in <Span>
-   get = matGetPtr(ctx->Span, ctx->SpanDim);
-   iget = ctx->SpanDim;
-   put = get;
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+static struct Workspace* provideWorkspace(struct SpinupContext* ctx)
+{
+   struct Workspace* ws = NULL;
+   MUTEX_LOCK(ctx->mutex);
+   if (ctx->workspaces != NULL) {
+      ws = ctx->workspaces;
+      ctx->workspaces = ws->next;
+   }
+   MUTEX_UNLOCK(ctx->mutex);
+   if (ws == NULL) {
+      ws = ALLOC(struct Workspace);
+      ws->rows = ffAlloc(ctx->noc + 1, ctx->noc);
+   }
    if (ctx->flags & SF_STD) {
-      stdget = matGetPtr(ctx->StdSpan, ctx->SpanDim);
-      stdput = stdget;
+      ws->stdRows = ffAlloc(ctx->noc + 1, ctx->noc);
+      ws->ops = NALLOC(int32_t, 2 * (ctx->noc + 1));
    }
+   ws->piv = NALLOC(uint32_t, ctx->noc + 1);
 
-   // Copy the seed vector to <put>, extending the pivot table
-   ffCopyRow(put, seed, ctx->Span->noc);
-   ffCleanRow(put, ctx->Span->data, ctx->SpanDim, ctx->Span->noc, ctx->Piv);
-   if (ctx->ops != NULL) {
-      OPVEC(ctx, ctx->SpanDim) = seedno;
-      OPGEN(ctx, ctx->SpanDim) = -1;    // it's a seed vector
-   }
-   if ((ctx->Piv[ctx->SpanDim] = ffFindPivot(put, &f, ctx->Span->noc)) != MTX_NVAL) {
-      ++ctx->SpanDim;
-      ffStepPtr(&put, ctx->Dim);
-      if (ctx->flags & SF_STD) {
-         ffCopyRow(stdput, seed, ctx->Span->noc);
-         ffStepPtr(&stdput, ctx->Dim);
-      }
-   }
-
-   // Spin up
-   igen = 0;
-   while (get != put && ctx->SpanDim < ctx->Dim && ctx->SpanDim < maxdim && ctx->NGen > 0) {
-      // Map the current vector using the current generator.
-      if (ctx->flags & SF_STD) {
-         if (ctx->Gen != NULL) {
-            ffMapRow(stdput, stdget, ctx->Gen[igen]->data, ctx->Dim, ctx->Dim);
-         }
-         else {
-            ffPermRow(stdput, stdget, ctx->GenP[igen]->data, ctx->Dim);
-         }
-         ffCopyRow(put, stdput, ctx->Dim);
-      }
-      else {
-         if (ctx->Gen != NULL) {
-            ffMapRow(put, get, ctx->Gen[igen]->data, ctx->Dim, ctx->Dim);
-         }
-         else {
-            ffPermRow(put, get, ctx->GenP[igen]->data, ctx->Dim);
-         }
-      }
-      if (ctx->ops != NULL) {
-         OPVEC(ctx, ctx->SpanDim) = iget;
-         OPGEN(ctx, ctx->SpanDim) = igen;
-      }
-
-      // If this was the last generator, continue with the next vector.
-      if (++igen >= ctx->NGen) {
-         ++num_tries;
-         igen = 0;
-         ffStepPtr(&get, ctx->Dim);
-         ffStepPtr(&stdget, ctx->Dim);
-         ++iget;
-      }
-
-      // Clean the image with the existing basis.
-      ffCleanRow(put, ctx->Span->data, ctx->SpanDim, ctx->Span->noc, ctx->Piv);
-      if ((ctx->Piv[ctx->SpanDim] = ffFindPivot(put, &f, ctx->Span->noc)) != MTX_NVAL) {
-         // Ne basis vector
-         num_tries = 0;
-         ++ctx->SpanDim;
-         ffStepPtr(&put, ctx->Dim);
-         ffStepPtr(&stdput, ctx->Dim);
-      }
-   }
-
-   // Calculate return code.
-   //MTX_LOG2("SpinUp(): sub=%d, quot=%d",SpanDim,Dim-SpanDim);
-   switch (ctx->flags & SF_MODE_MASK) {
-      case SF_SUB:
-         return (ctx->SpanDim > 0 && ctx->SpanDim < ctx->Dim && ctx->SpanDim < maxdim) ?
-                0 : 1;
-      case SF_CYCLIC:
-      case SF_COMBINE:
-         return ctx->SpanDim < ctx->Dim ? 1 : 0;
-   }
-   mtxAbort(MTX_HERE, "Invalid search mode %d", ctx->flags & SF_MODE_MASK);
-   return -1;
+   ws->isInPool = 0;
+   ws->next = NULL;
+   ws->dim = 0;
+   ws->noc = ctx->noc;
+   ws->field = ctx->field;
+   return ws;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-/// Check arguments (common to matrix and permutation mode)
-
-static void CheckArgs0(const Matrix_t *seed, int flags, SpinUpInfo_t* info)
+static void destroyWorkspace(struct Workspace* ws)
 {
-    matValidate(MTX_HERE, seed);
-    if (seed->nor < 1) 
-	mtxAbort(MTX_HERE,"Empty seed space");
-    if (flags == -1)
-	mtxAbort(MTX_HERE,"Invalid flags");
-    if (info) {
-       // Max + 1 must not overflow
-       MTX_ASSERT(info->MaxSubspaceDimension < 0xFFFFFFFF);
+   MTX_ASSERT(!ws->isInPool);
+   sysFree(ws->ops);
+   ws->ops = NULL;
+   sysFree(ws->piv);
+   ws->piv = NULL;
+   if (ws->rows != NULL) {
+      ffFree(ws->rows);
+      ws->rows = NULL;
+   }
+   if (ws->stdRows != NULL) {
+      ffFree(ws->stdRows);
+      ws->stdRows = NULL;
+   }
+   sysFree(ws);
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+static void returnWorkspaceToPool(SpinupContext_t* ctx, struct Workspace* ws)
+{
+   if (!ws->isValid)
+      destroyWorkspace(ws);
+   else {
+      ws->isInPool = 1;
+      MUTEX_LOCK(ctx->mutex);
+      ws->next = ctx->workspaces;
+      ctx->workspaces = ws;
+      MUTEX_UNLOCK(ctx->mutex);
+   }
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+static void cleanVector(PTR vector, struct Workspace* ws)
+{
+   for (uint32_t j = 0; j < ws->dim; ++j) {
+      FEL a = ffExtract(vector, ws->piv[j]);
+      if (a != FF_ZERO) {
+         PTR basisVector = ffGetPtr(ws->rows, j, ws->noc);
+         FEL b = ffExtract(basisVector, ws->piv[j]);
+         ffAddMulRow(vector, basisVector, ffNeg(ffDiv(a, b)), ws->noc);
+      }
+   }
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+/// Tries to extend the basis with a "candidate" vector.
+/// Returns 0 on success (ws->dim was incremented, rows and pivot table were extended)
+/// or -1 if the candidate was a linear combination of the existing basis vectors.
+///
+/// The caller may store the candidate at the next free workspace position (row index ws->dim + 1)
+/// and pass this address in @p vec. This avoids copying the vector internally.
+/// 
+/// If a spinup script is recorded, «opvec» and «opgen» define the entry to be appended to the
+/// script if the cleaned vector is not zero. If no spinup script is recorded «opvec» and «opgen»
+/// are ignored.
+/// 
+/// addToBasis() does not extend the standard basis, this must be done by the caller.
+
+static int addToBasis(struct Workspace* ws, PTR vec, uint32_t opvec, uint32_t opgen)
+{
+   if (ws->dim >= ws->noc)
+      return -1;
+
+   // Copy to next free position if necessary.
+   PTR newVec = ffGetPtr(ws->rows, ws->dim, ws->noc);
+   if (newVec != vec)
+       memcpy(newVec, vec, ffRowSize(ws->noc));
+
+   // Clean with existing basis and add cleaned vector to basis (if not zero).
+   cleanVector(newVec, ws);
+   if ((ws->piv[ws->dim] = ffFindPivot(newVec, NULL, ws->noc)) == MTX_NVAL) 
+      return -1;
+   if (ws->ops != NULL) {
+      ws->ops[2 * ws->dim] = (int32_t) opvec;
+      ws->ops[2 * ws->dim + 1] = (int32_t) opgen;
+   }
+   ++ws->dim;
+   return 0;
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+/// Maps the «srcIndex»-th basis vector by all generators in «rep» and tries to extend the subspace
+/// basis with the resulting images.
+/// If a spinup script is recorded, «opvec» define the source vector value for all script lines
+/// that are added.
+
+static void mapAndAddToBasis(struct Workspace* ws, uint32_t srcIndex, const MatRep_t *rep)
+{
+   PTR srcVec = ffGetPtr(ws->rows, srcIndex, ws->noc);
+   for (uint32_t g = 0; g < rep->NGen && ws->dim < ws->noc; ++g) {
+      PTR newVec = ffGetPtr(ws->rows, ws->dim, ws->noc);
+      ffMapRow(newVec, srcVec, rep->Gen[g]->data, ws->noc, ws->noc);
+      const int wasAdded = addToBasis(ws, newVec, srcIndex, g) == 0;
+      if (wasAdded && ws->stdRows != NULL) {
+         PTR stdSrcVec = ffGetPtr(ws->stdRows, srcIndex, ws->noc);
+         PTR stdNewVec = ffGetPtr(ws->stdRows, ws->dim - 1, ws->noc); // dim was already incremented
+         ffMapRow(stdNewVec, stdSrcVec, rep->Gen[g]->data, ws->noc, ws->noc);
+      }
+   }
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+// Transfers the result (subspace + spinup script) from the workspace to the spin up context.
+// The workspace becomes invalid and will be deleted by returnWorkspaceToPool().
+
+static void setResult(
+      SpinupContext_t* ctx, uint32_t seedVectorNumber, struct Workspace* ws)
+{
+   ctx->resultSeed = seedVectorNumber;
+
+   Matrix_t* basis = NULL;
+   if (ws->stdRows != NULL) {
+      basis = matCreateFromBuffer(ws->stdRows, ws->field, ws->dim, ws->noc);
+      ws->stdRows = NULL;
+   } else {
+      basis = matCreateFromBuffer(ws->rows, ws->field, ws->dim, ws->noc);
+      ws->rows = NULL;
+      matEchelonize(basis);
+   }
+   if (ctx->submodule != NULL)
+      matFree(ctx->submodule);
+   ctx->submodule = basis;
+
+   if (ws->ops != NULL) {
+      IntMatrix_t* script = imatCreateFromBuffer(ws->ops, ws->dim, 2);
+      ws->ops = NULL;
+      if (ctx->script != NULL)
+         imatFree(ctx->script);
+      ctx->script = script;
+   }
+
+   ws->isValid = 0;
+
+   MTX_LOG2("Spinup successful for seed #%"PRIu32, seedVectorNumber);
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+static void destroyAllWorkspaces(SpinupContext_t* ctx)
+{
+    MUTEX_LOCK(ctx->mutex);
+    struct Workspace* wsList = ctx->workspaces;
+    ctx->workspaces = NULL;
+    MUTEX_UNLOCK(ctx->mutex);
+    while (wsList != NULL) {
+	struct Workspace* ws = wsList;
+	wsList = wsList->next;
+        ws->isInPool = 0;
+        destroyWorkspace(ws);
     }
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static void CheckArgsM(const Matrix_t *seed, const MatRep_t *rep, int flags, SpinUpInfo_t* info)
+static struct SpinupContext* createContext(const Matrix_t* seed, const MatRep_t* rep, int flags)
 {
-    CheckArgs0(seed, flags, info);
-    mrValidate(MTX_HERE, rep);
-    if (rep->NGen > 0) {
-       if (seed->noc != rep->Gen[0]->nor || seed->field != rep->Gen[0]->field)
-          mtxAbort(MTX_HERE, "Seed vector(s) are not compatible with representation");
-    }
-}
-
-////////////////////////////////////////////////////////////////////////////////////////////////////
-
-/// Common initialization for matrix and permutation mode
-
-static void Init0(SpinupContext_t* ctx)
-{
-    int ws_size;
-    ffSetField(ctx->seed->field);
-    ctx->Dim = ctx->seed->noc;
-
-    // Allocate workspace, assuming the worst case.
-    if (ctx->maxSubspaceDimension > 0)
-    	ws_size = ctx->maxSubspaceDimension + 1;
-    else
-	ws_size = ctx->Dim + 1;
-    ctx->Span = matAlloc(ctx->seed->field,ws_size,ctx->Dim);
-
-    ctx->SpanDim = 0;
-    ctx->Piv = NALLOC(uint32_t,ctx->Dim+2);
-    if (ctx->script != NULL)
-    {
-       // Reuse existing script if possible
-	if (*ctx->script != NULL && ((*ctx->script)->noc != 2 || (*ctx->script)->nor < ctx->Dim + 1))
-	{
-	    imatFree(*ctx->script);
-	    *ctx->script = NULL;
-	}
-	if (*ctx->script == NULL)
-	    *ctx->script = imatAlloc(ctx->Dim+1,2);
-	ctx->ops = (*ctx->script)->data;
-    }
-    else
-	ctx->ops = NULL;
-
-    if (ctx->flags & SF_STD)
-	ctx->StdSpan = matAlloc(ctx->seed->field,ctx->Dim+1,ctx->Dim);
-}
-
-////////////////////////////////////////////////////////////////////////////////////////////////////
-
-static void CheckArgsP(
-   const Matrix_t* seed,
-   int ngen,
-   const Perm_t** gen,
-   int flags,
-   SpinUpInfo_t* info)
-{
-   CheckArgs0(seed, flags, info);
-   if (ngen <= 0) {
-      mtxAbort(MTX_HERE, "Invalid number of generators (%d)", ngen);
+   mrValidate(MTX_HERE, rep);
+   matValidate(MTX_HERE, seed);
+   if (seed->noc == 0) {
+      mtxAbort(MTX_HERE, "Dimension is zero");
+   if (rep->NGen > 0 && rep->Gen[0]->field != seed->field) {
+      mtxAbort(MTX_HERE,
+            "Seed is not compatible with representation (field %"PRIu32" vs. %"PRIu32")",
+            seed->field, rep->Gen[0]->field);
    }
-   for (int i = 0; i < ngen; ++i) {
-      permValidate(MTX_HERE, gen[i]);
-      if (gen[i]->degree != seed->noc) {
-         mtxAbort(MTX_HERE, "Gen=%d, seed=%d: %s", gen[i]->degree, seed->noc, MTX_ERR_INCOMPAT);
-      }
    }
-}
+   if (rep->NGen > 0 && rep->Gen[0]->noc != seed->noc) {
+      mtxAbort(MTX_HERE,
+            "Seed is not compatible with representation (noc %"PRIu32" vs. %"PRIu32")",
+            seed->noc, rep->Gen[0]->noc);
+   }
 
-////////////////////////////////////////////////////////////////////////////////////////////////////
-
-static SpinupContext_t* CreateContext0(
-      const Matrix_t* seed,
-      int flags,
-      IntMatrix_t** script,
-      SpinUpInfo_t* info)
-{
-   SpinupContext_t* ctx = ALLOC(SpinupContext_t);
+   struct SpinupContext* ctx = ALLOC(SpinupContext_t);
+   MUTEX_INIT(ctx->mutex);
    ctx->seed = seed;
-   ctx->flags = flags;
-   ctx->script = script;
-   if (info) {
-      ctx->maxSubspaceDimension = info->MaxSubspaceDimension;
-      ctx->result = info->Result;
-   }
-   return ctx;
-}
-
-////////////////////////////////////////////////////////////////////////////////////////////////////
-
-static SpinupContext_t* CreateContextM(
-      const Matrix_t* seed,
-      const MatRep_t* rep,
-      int flags,
-      IntMatrix_t** script,
-      SpinUpInfo_t* info)
-{
-   CheckArgsM(seed, rep, flags, info);
-   SpinupContext_t* ctx = CreateContext0(seed, flags, script, info);
-   Init0(ctx);
    ctx->rep = rep;
-   ctx->Gen =  (const Matrix_t **) ctx->rep->Gen;
-   ctx->GenP = NULL;
-   ctx->NGen = rep->NGen;
-   return ctx;
-}
-
-static SpinupContext_t* CreateContextP(
-      const Matrix_t* seed,
-      int nPerms,
-      const Perm_t** perms,
-      int flags,
-      IntMatrix_t** script,
-      SpinUpInfo_t* info)
-{
-   CheckArgsP(seed, nPerms, perms, flags, info);
-   SpinupContext_t* ctx = CreateContext0(seed, flags, script, info);
-   Init0(ctx);
-   ctx->rep = NULL;
-   ctx->Gen = NULL;
-   ctx->GenP = perms,
-   ctx->NGen = nPerms;
+   ctx->field = seed->field;
+   ctx->noc = seed->noc;
+   ctx->flags = flags;
    return ctx;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void DestroyContext(SpinupContext_t* ctx)
+static void destroyContext(struct SpinupContext* ctx)
 {
-   if (ctx->Span != NULL) {
-      matFree(ctx->Span);
-      ctx->Span = NULL;
+   if (ctx->submodule != NULL) {
+      matFree(ctx->submodule);
+      ctx->submodule = NULL;
    }
-   memset(ctx, 0, sizeof(*ctx));
+   if (ctx->script != NULL) {
+      imatFree(ctx->script);
+      ctx->script = NULL;
+   }
+   destroyAllWorkspaces(ctx);
+   MUTEX_DESTROY(ctx->mutex);
    sysFree(ctx);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-/// Spin up
-/// @return 0 = Ok, 1 = Not found, -1 = Error
 
-static int DoSpinup(SpinupContext_t* ctx)
+static void spinupOneVector(void* userData, size_t begin, size_t end)
 {
-    long n;
-    int result;
-    PTR seed;
+   struct SpinupContext* const ctx = (struct SpinupContext*) userData;
+   MTX_ASSERT((ctx->flags & SF_MODE_MASK) != SF_COMBINE);
+   const uint32_t seedVectorNumber = (uint32_t) begin;
+   MTX_ASSERT(seedVectorNumber > 0);
 
-    switch (ctx->flags & SF_SEED_MASK)
-    {
-    	case SF_FIRST:
-	    /* Try the first seed vector only
-	       ------------------------------ */
-	    return Spin1(ctx, ctx->seed->data,1);
+   // If there is already a result for an earlier seed vector, there is nothing to do.
+   MUTEX_LOCK(ctx->mutex);
+   const int haveOlderResult = (ctx->submodule != NULL && ctx->resultSeed < seedVectorNumber);
+   MUTEX_UNLOCK(ctx->mutex);
+   if (haveOlderResult)
+      return;
 
-    	case SF_EACH:
-	    /* Try each seed vector until successful
-	       ------------------------------------- */
-	    for (seed = ctx->seed->data, n = 1; n <= ctx->seed->nor; ffStepPtr(&seed, ctx->Dim),++n)
-	    {
-	    	if (Spin1(ctx,seed,n) == 0)
-		    return 0;
-	    }
-	    return 1;
+   MTX_LOG2("Executing spinup task for seed #%"PRIu32, seedVectorNumber);
+   struct Workspace* ws = provideWorkspace(ctx);
+   const uint32_t maxSubspaceDim =
+      (ctx->maxSubspaceDim > 0) ? ctx->maxSubspaceDim : ws->noc - 1;
 
-    	case SF_MAKE:
-	    /* Try each 1-dimensional subspace until successfull
-	       ------------------------------------------------- */
-	    if ((seed = ffAlloc(1, ctx->Dim)) == NULL) 
-	    {
-		mtxAbort(MTX_HERE,"Cannot allocate seed vector");
-		return -1;
-	    }
-	    result = 1;
-	    for (n = 0; result == 1 && (n = MakeSeedVector(ctx->seed,n,seed)) > 0; )
-	    {
-	    	if (Spin1(ctx, seed,n) == 0)
-		    result = 0;
-	    }
-	    sysFree(seed);
-	    return result;
+
+   // Start with seed vector
+   switch (ctx->flags & SF_SEED_MASK) {
+      case SF_FIRST:
+      case SF_EACH:
+         memcpy(ws->rows, matGetPtr(ctx->seed, seedVectorNumber - 1), ffRowSize(ws->noc));
+         break;
+      case SF_MAKE:
+         svgMake(ws->rows, seedVectorNumber, ctx->seed);
+         break;
+      default:
+         mtxAbort(MTX_HERE, "Unexpected seed mode (flags=0x%04x", (unsigned) ctx->flags);
+   }
+
+   // Initialize spin-up with seed vector
+   if (ws->stdRows != NULL)
+      memcpy(ws->stdRows, ws->rows, ffRowSize(ws->noc));
+   if (addToBasis(ws, ws->rows, seedVectorNumber, MTX_NVAL) != 0) {
+      mtxAbort(MTX_HERE, "Seed vector is zero");
+   }
+
+   // Spin-up loop
+   uint32_t srcIndex = 0;
+   while (srcIndex < ws->dim && ws->dim <= maxSubspaceDim) {
+      mapAndAddToBasis(ws, srcIndex, ctx->rep);
+      ++srcIndex;
+   }
+
+   int haveResult = 0;
+   switch (ctx->flags & SF_MODE_MASK) {
+      case SF_SUB:
+         haveResult = (srcIndex >= ws->dim && ws->dim <= maxSubspaceDim);
+         break;
+      case SF_CYCLIC:
+         haveResult = (ws->dim == ws->noc);
+         break;
+      default:
+         mtxAbort(MTX_HERE, "Unexpected search mode");
+   }
+   if (haveResult) {
+      // Store the result unless there is already a result for an earlier seed vector.
+      MUTEX_LOCK(ctx->mutex);
+      if (ctx->submodule == NULL || ctx->resultSeed > seedVectorNumber)
+          setResult(ctx, seedVectorNumber, ws);
+      MUTEX_UNLOCK(ctx->mutex);
+   }
+   returnWorkspaceToPool(ctx, ws);
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+// Implementation of seed vector search (spinupFindXxx). Uses threads to spin up multiple seed
+// vectors in parallel.
    
-	default:
-	    mtxAbort(MTX_HERE,"Invalid seed mode");
-    }
-    return -1;
-}
-
-////////////////////////////////////////////////////////////////////////////////////////////////////
-
-static void DoIt(SpinupContext_t* ctx)
+static void parallelSpinup(SpinupContext_t* ctx)
 {
-   ctx->result = DoSpinup(ctx);
-   if (ctx->result < 0)
-      mtxAbort(MTX_HERE,"Spin-up failed"); // TODO: remove (fail in DoSpinup)
+   ctx->pexGroup = pexCreateGroup();
+   
+   uint32_t seedVectorNumber = 0;
+   int mayAddTasks = 1;
+   while (1) {
+      // TODO(?): Always wait for the first attempt before producing more tasks?
+      // --> mayAddTasks = -1, extend logic in pexThrottle
 
-    // Adjust the result size.
-    if (ctx->flags & SF_STD)
-    {
-	matFree(ctx->Span);
-	ctx->Span = ctx->StdSpan;
-    }
-    else
-    {
-	matEchelonize(ctx->Span);
-    }
-    ctx->Span->nor = ctx->SpanDim;
-    ctx->Span->data = (PTR) sysRealloc(ctx->Span->data,ffSize(ctx->SpanDim, ctx->seed->noc));
-    if (ctx->script != NULL)
-    {
-	(*ctx->script)->data = NREALLOC((*ctx->script)->data,int32_t,2 * ctx->SpanDim);
-	(*ctx->script)->nor = ctx->SpanDim;
-    }
-}
+      // Throttle task creation (keep queue size below 200%)
+      pexThrottle(ctx->pexGroup, &mayAddTasks, 200);
 
-////////////////////////////////////////////////////////////////////////////////////////////////////
-/// Spin up.
-/// This function calculates the submodule generated by one or more "seed"
-/// vectors under the action of a set of matrices. @a seed must be a matrix
-/// with the same number of columns as the generators and any number of rows.
-/// Of course, all matrices, generators and seed, must be over the same field.
-///
-/// The spinup mode and various options are controlled by two arguments,
-/// @a flags and @a info. @a flags must be a combination of the following
-/// values:
-/// - @c SF_FIRST: Only the first row of @a seed is taken as seed vector.
-/// - @c SF_EACH: Each row of @a seed is taken as seed vector.
-/// - @c SF_MAKE: One vector from each 1-dimensional subspace of the row space of @a seed is taken
-///      as seed vector.
-/// - @c SF_SUB: Find a submodule: spin up seed vectors one-by-one until a seed vector generates a
-///      proper submodule.
-/// - @c SF_CYCLIC: Find a cyclic vector: spin up vectors one-by-one until a seed vector generates
-///      the whole space.
-/// - @c SF_COMBINE: Calculate the submodule generated by the set of all seed vectors. This ist
-///      typically used with @c SF_EACH to calculate the submodule generate by the row space of
-///      @a seed.
-/// - @c SF_STD: Create the standard basis. This increases both computation time and memory usage.
-///
-/// The seed modes, @c SF_FIRST, @c SF_EACH and @c SF_MAKE, and the search modes, @c SF_SUB,
-/// @c SF_CYCLIC, @c SF_COMBINE, are mutually exclusive. If, in mode @c SF_SUB or @c SF_CYCLIC, no
-/// seed vector generates a proper submodule or the whole space, respectively, this is not
-/// considered an error, and the return value is not @c NULL. The rows of the matrix returned by
-/// SpinUp() always form a basis of an invariant subspace, but you must examine the number of rows
-/// of that matrix to find out if it is a proper subspace, or null, or the whole space.
-///
-/// The subspace returned by SpinUp() is always in echelon form, if @c SF_STD is not used. With
-/// @c SF_STD however, the subspace is not necessarily in echelon form.
-///
-/// SpinUp() can record the operations that led to the invariant subspace in a "spin-up script".
-/// You can use the script as input to SpinUpWithScript() to repeat the spin-up with a different
-/// seed vector. Typically, a spin-up script is created together with @em SF_STD, and then used to
-/// reconstruct the standard basis in a different representation.
-/// In order to create a spin-up script, @a script must point to a variable of type IntMatrix_t*.
-/// This variable must either be 0 or contain a valid pointer. In the second case, the buffer
-/// pointed to by @a script is first deallocated before a new script is created. After SpinUp()
-/// returns, the variable contains a pointer to the script. If no spinup script is needed, pass NULL
-/// as 4th parameter.
-///
-/// The format of the spinup script is a matrix with 2 columns and one row for each basis vector.
-/// A row (n,-1) means that the corresponding basis vector is the n-th seed vector. Seed vector
-/// numbers start from 1. An entry (n,g) with g≥0 means that the corresponding basis vector was
-/// obtained by multiplying the n-th basis vector by the g-th generator. Basis vector number and
-/// generator number start from 0.
-///
-/// Additional parameters can be passed via the @a info argument. To be compatible with future
-/// versions of SpinUpInfo_t, you should always initialize the parameter structure with
-/// SpinUpinfoInit().
-///
-/// @param seed Matrix with seed vectors.
-/// @param rep Pointer to a MatRep_t structure with generators.
-/// @param flags Flags, a combination of @c SF_XXXX constants (see description).
-/// @param script Pointer to a variable where the spinup script will be stored (see description).
-///    May be NULL if the script is not needed.
-/// @param info Pointer to a data structure with additional parameters, or NULL.
-/// @return Span of the seed vector(s) under the action of the generators, or NULL on error.
+      // Get next seed vector number or stop if the seed space is exhausted.
+      int haveSeed = 0;
+      switch (ctx->flags & SF_SEED_MASK) {
+         case SF_FIRST:
+            haveSeed = (seedVectorNumber == 0);
+            ++seedVectorNumber;
+            break;
+         case SF_EACH:
+            haveSeed = (seedVectorNumber < ctx->seed->nor);
+            ++seedVectorNumber;
+            break;
+         case SF_MAKE:
+            haveSeed = svgMakeNext(NULL, &seedVectorNumber, ctx->seed) == 0;
+            break;
+      }
+      if (!haveSeed)
+         break;
 
+      // Stop if we have a result
+      MUTEX_LOCK(ctx->mutex);
+      int hasResult = ctx->submodule != NULL;
+      MUTEX_UNLOCK(ctx->mutex);
+      if (hasResult) break;
 
-Matrix_t* SpinUp(
-   const Matrix_t* seed,
-   const MatRep_t* rep,
-   int flags,
-   IntMatrix_t** script,
-   SpinUpInfo_t* info)
-{
-   SpinupContext_t* ctx = CreateContextM(seed, rep, flags, script, info);
-   DoIt(ctx);
-   Matrix_t* result = ctx->Span;
-   ctx->Span = NULL;
-   if (info) {
-      info->Result = ctx->result;
+      pexExecuteRange(ctx->pexGroup, spinupOneVector, ctx, seedVectorNumber, 0);
    }
-   DestroyContext(ctx);
-   return result;
+
+   // Wait for running tasks.
+   MTX_LOGD("Stopped at seed #%"PRIu32, seedVectorNumber);
+   pexWait(ctx->pexGroup);
+   ctx->pexGroup = NULL;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-/// Spin Up With Permutations.
-/// This function works like Spinup() but expects permutations instead of matrices
-/// for the generators.
 
-Matrix_t* SpinUpWithPermutations(
-   const Matrix_t* seed, int ngen,
-   const Perm_t** gen, int flags, IntMatrix_t** script, SpinUpInfo_t* info)
+// Spin up one or multiple vectors under the action of the generators.
+
+static void simpleSpinup(SpinupContext_t* ctx)
 {
-   SpinupContext_t* ctx = CreateContextP(seed, ngen, gen, flags, script, info);
-   DoIt(ctx);
-   Matrix_t* result = ctx->Span;
-   ctx->Span = NULL;
-   if (info) {
-      info->Result = ctx->result;
+   struct Workspace* ws = provideWorkspace(ctx);
+
+   // Add seed vector(s).
+   uint32_t nSeedVectors = 0;
+   switch (ctx->flags & SF_SEED_MASK) {
+      case SF_FIRST: nSeedVectors = 1; break;
+      case SF_EACH: nSeedVectors = ctx->seed->nor; break;
+      default: mtxAbort(MTX_HERE, "Unsuported seed mode: 0x%04x", ctx->flags);
    }
-   DestroyContext(ctx);
-   return result;
+
+   for (uint32_t i = 0; i < nSeedVectors; ++i) {
+      // Next seed vector
+      PTR seedVec = matGetPtr(ctx->seed, i);
+      if (ws->stdRows) {
+         memcpy(ffGetPtr(ws->stdRows, ws->dim, ws->noc), seedVec, ffRowSize(ws->noc));
+      }
+      addToBasis(ws, seedVec, i + 1, MTX_NVAL);
+      if (ws->dim >= ws->noc)
+         break;
+
+      // Spin up
+      for (uint32_t srcIndex = 0; srcIndex < ws->dim; ++srcIndex) {
+         mapAndAddToBasis(ws, srcIndex, ctx->rep);
+      }
+      if (ws->dim >= ws->noc)
+         break;
+   }
+
+   setResult(ctx, 0, ws);
+   returnWorkspaceToPool(ctx, ws);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-/// Initialize spin-up parameters.
-/// @param info Pointer to parameter structure.
 
-void SpinUpInfoInit(SpinUpInfo_t* info)
+/// Finds the smallest submodule U of a module V ({0}≤U≤V) containing a given set of vectors.
+/// Returns a basis for the submodule.
+///
+/// @param seed Matrix containing the seed vectors (as rows). The vectors need not be linearly
+///    independent.
+/// @param rep The matrix representation of the module.
+
+Matrix_t* spinup(const Matrix_t* seed, const MatRep_t* rep)
 {
-   memset(info, 0, sizeof(*info));
+   SpinupContext_t* ctx = createContext(seed, rep, SF_EACH | SF_COMBINE);
+   simpleSpinup(ctx);
+   Matrix_t* submodule = NULL;
+   matMove(&submodule, &ctx->submodule);
+   destroyContext(ctx);
+   return submodule;
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+/// Computes the standard basis for a given set of seed vectors.
+///
+/// The set S of seed vectors is determined by the rows of @p seed and the value of @p seedMode:
+/// - <tt>seedMode = SF_FIRST</tt>: S contains only the first row of @p seed.
+/// - <tt>seedMode = SF_EACH</tt>: S contains all rows of @p seed.
+/// The rows of @c seed need not be linearly independent.
+///
+/// The returned matrix is a basis (in standard form, see @ref stdbasis) of the closure of S under
+/// the generators. The function does not require that S generates the whole module. If necessary,
+/// the caller must check that the returned basis is complete.
+///
+/// @param seed The seed vector(s).
+/// @param rep The matrix representation.
+/// @param seedMode Seed mode (SF_FIRST or SF_EACH), see description.
+/// @param script Pointer to a variable receiving the spin-up script. May be NULL if the script is
+///    not needed.
+
+Matrix_t* spinupStandardBasis(
+      IntMatrix_t** script,
+      const Matrix_t* seed, const MatRep_t* rep, unsigned seedMode)
+{
+   if (seed == NULL || seed->nor == 0) {
+      mtxAbort(MTX_HERE, "Empty seed");
+   }
+   switch (seedMode) {
+      case SF_FIRST:
+      case SF_EACH:
+         break;
+      default:
+         mtxAbort(MTX_HERE, "Invalid seed mode 0x%04x", (unsigned) seedMode);
+   }
+   SpinupContext_t* ctx = createContext(seed, rep, seedMode | SF_STD);
+   simpleSpinup(ctx);
+   Matrix_t* basis = NULL;
+   matMove(&basis, &ctx->submodule);
+   imatMove(script, &ctx->script);
+   destroyContext(ctx);
+   return basis;
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+static uint32_t findVector(
+      const struct MtxSourceLocation* where,
+      Matrix_t** basis,
+      const Matrix_t* seed, const MatRep_t* rep, unsigned seedMode, uint32_t maxDimension)
+{
+   switch (seedMode & SF_SEED_MASK) {
+      case SF_FIRST: break;
+      case SF_EACH: break;
+      case SF_MAKE: break;
+      default: mtxAbort(where, "Invalid seed mode 0x%04x", seedMode);
+   }
+   if (basis == NULL && *basis != NULL) {
+      mtxAbort(where, "Basis was not NULL on call");
+   }
+
+   SpinupContext_t* ctx = createContext(seed, rep, seedMode);
+   if (maxDimension >= ctx->noc)
+      mtxAbort(where, "Illegal dimension limit %"PRIu32" (max %"PRIu32")", maxDimension, ctx->noc);
+   ctx->maxSubspaceDim = maxDimension;
+   parallelSpinup(ctx);
+   const uint32_t seedVectorNumber = ctx->resultSeed;
+   matMove(basis, &ctx->submodule);
+   destroyContext(ctx);
+   return seedVectorNumber;
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+/// Searches for a seed vector which generates a proper submodule.
+/// Returns the seed vector number or 0 if no seed vector generated a proper submodule.
+///
+/// @param basis
+///    If NULL, this parameter is ignored. Otherwise, @p basis must point to a variable which
+///    receives the basis created by spinning up the seed vector. The variable must be NULL when
+///    spinupFindCyclicVector() is called. If no cyclic vector was found, the variable remains
+///    unchanged. The first vector of the returned basis is the seed vector.
+/// @param seed The seed vector(s).
+/// @param rep The representation.
+/// @param seedMode controls how seed vectors are derived from @p seed. The following values
+///    can be used:
+///    - SF_FIRST
+///    - SF_EACH
+///    - SF_MAKE
+/// @param maxDimension Submodule dimension limit. If not 0, the search is limited to submodules of
+///    dimension not greater than @p maxDim. The dimension limit must be strictly less than the
+///    module dimension, otherwise the function fails.
+
+uint32_t spinupFindSubmodule(
+   Matrix_t** basis,
+   const Matrix_t* seed, const MatRep_t* rep, unsigned seedMode, uint32_t maxDimension)
+{
+   return findVector(MTX_HERE, basis, seed, rep, seedMode | SF_SUB, maxDimension);
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+/// Searches for a seed vector which generates the whole module.
+/// Returns the seed vector number or 0 if no seed vector generates the whole module.
+/// @param basis
+///    If NULL, this parameter is ignored. Otherwise, @p basis must point to a variable which
+///    receives the basis created by spinning up the seed vector. The variable must be NULL when
+///    spinupFindCyclicVector() is called. If no cyclic vector was found, the variable remains
+///    unchanged. The first vector of the returned basis is the seed vector.
+/// @param seed
+///    Seed vector list.
+/// @param rep
+///    The matrix representation to spin up with.
+/// @param seedMode
+///    @c SF_FIRST, @c SF_EACH, or @c SF_MAKE. See @ref spinupFindSubmodule.
+
+uint32_t spinupFindCyclicVector(
+      Matrix_t** basis,
+      const Matrix_t* seed, const MatRep_t* rep, unsigned seedMode)
+{
+   return findVector(MTX_HERE, basis, seed, rep, seedMode | SF_CYCLIC , 0);
 }
 
 /// @}
+
 // vim:fileencoding=utf8:sw=3:ts=8:et:cin

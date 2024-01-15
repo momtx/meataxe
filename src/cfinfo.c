@@ -254,7 +254,7 @@ void latDestroy(LatInfo_t* li)
 /// This function reads a .cfinfo file and returns a LatInfo_t object containing the data read
 /// fro the file.
 ///
-/// @param basename Base name (without the trailing ".cfinfo").
+/// @param baseName Base name (without the trailing ".cfinfo").
 
 LatInfo_t* latLoad(const char* baseName)
 {

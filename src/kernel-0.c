@@ -288,9 +288,9 @@ void ffSetField(int field)
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 // Long ints per row.
-static int lpr(int noc)
+static uint32_t lpr(uint32_t noc)
 {
-   const int mpl = MPB * sizeof(long);
+   const uint32_t mpl = MPB * sizeof(long);
    return (noc + mpl - 1) / mpl;
 }
 
@@ -300,7 +300,7 @@ static int lpr(int noc)
 /// The row size is always a multiple of <tt>sizeof(long)</tt>. Depending on the number of
 /// columns there may be unused padding bytes at the end of the row.
 
-size_t ffRowSize(int noc)
+size_t ffRowSize(uint32_t noc)
 {
    MTX_ASSERT(noc >= 0);
    return lpr(noc) * sizeof(long);
@@ -309,12 +309,8 @@ size_t ffRowSize(int noc)
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 /// Returns the number of bytes occupied in memory by @a nor rows of @a noc elements.
-/// @a nor may be negative, resulting in a negative return value such that
-/// <tt>ffSize(nor,-noc) == -ffSize(nor,noc)</tt>. Thus, @c ffSize() can be used to calculate
-/// row pointer differences in both directions.
-/// @a noc must be greater than or equal to zero.
 
-ssize_t ffSize(int nor, int noc)
+ssize_t ffSize(uint32_t nor, uint32_t noc)
 {
    return nor == 0 ? 0 : nor * ffRowSize(noc);
 }
@@ -398,7 +394,7 @@ FEL ffRestrict(FEL a, int subfield)
 /// @param noc Row size (number of columns).
 /// @return Always returns dest.
 
-PTR ffAddRow(PTR dest, PTR src, int noc)
+PTR ffAddRow(PTR dest, PTR src, uint32_t noc)
 {
    register int i;
 
@@ -436,16 +432,16 @@ PTR ffAddRow(PTR dest, PTR src, int noc)
 /// @param first First column to add.
 /// @param noc Row size (number of columns).
 
-void ffAddRowPartial(PTR dest, PTR src, int first, int noc)
+void ffAddRowPartial(PTR dest, PTR src, uint32_t first, uint32_t noc)
 {
    MTX_ASSERT(first < noc);
 
    if (ffChar == 2)     /* characteristic 2 is simple... */
    {
-      const int firstl = first / MPB / sizeof(long);
+      const uint32_t firstl = first / MPB / sizeof(long);
       long *l1 = (long *) dest + firstl;
       long *l2 = (long *) src + firstl;
-      for (int i = ffRowSize(noc) / sizeof(long) - firstl; i > 0; --i) {
+      for (uint32_t i = ffRowSize(noc) / sizeof(long) - firstl; i > 0; --i) {
          long x = *l2++;
          *l1 ^= x;
          l1++;
@@ -494,7 +490,7 @@ void ffMulRow(PTR row, FEL mark, int noc)
 /// Adds a multiple of a row (@a src) to another row (@a dest). Both rows must have the same
 /// size (@a noc).
 
-void ffAddMulRow(PTR dest, PTR src, FEL f, int noc)
+void ffAddMulRow(PTR dest, PTR src, FEL f, uint32_t noc)
 {
    MTX_ASSERT_DEBUG(isFel(f));
    if (f == FF_ONE) {
@@ -529,10 +525,10 @@ void ffAddMulRow(PTR dest, PTR src, FEL f, int noc)
 /// @param firstcol First column to add.
 /// @param noc Row size (number of columns).
 
-void ffAddMulRowPartial(PTR dest, PTR src, FEL f, int firstcol, int noc)
+void ffAddMulRowPartial(PTR dest, PTR src, FEL f, uint32_t firstcol, uint32_t noc)
 {
    MTX_ASSERT_DEBUG(isFel(f));
-   MTX_ASSERT_DEBUG(firstcol >= 0 && firstcol < noc);
+   MTX_ASSERT_DEBUG(firstcol < noc);
 
    if (f == FF_ONE) {
       ffAddRowPartial(dest, src, firstcol, noc);
@@ -541,7 +537,7 @@ void ffAddMulRowPartial(PTR dest, PTR src, FEL f, int firstcol, int noc)
       BYTE * const multab = mtx_tmult[f];
       BYTE *p1 = dest + firstcol / MPB;
       BYTE *p2 = src + firstcol / MPB;
-      for (int i = ffRowSize(noc) - firstcol / MPB; i != 0; --i) {
+      for (uint32_t i = ffRowSize(noc) - firstcol / MPB; i != 0; --i) {
          if (*p2 != 0) {
             *p1 = mtx_tadd[*p1][multab[*p2]];
          }
@@ -791,7 +787,7 @@ FEL ffExtract(PTR row, int col)
 /// If the whole vector is zero, <tt>ffFindPivot()</tt> returns @ref MTX_NVAL and
 /// leaves <tt>*mark</tt> unchanged.
 /// @param row Pointer to the row vector (@a noc columns).
-/// @param mark Buffer for pivot element.
+/// @param mark Buffer for pivot element. May be NULL if the value is not needed.
 /// @param noc Number of columns.
 /// @return Index of the first non-zero entry in @a row or -1 if all entries are zero.
 
@@ -817,7 +813,8 @@ uint32_t ffFindPivot(PTR row, FEL *mark, int noc)
    if (idx >= noc) {          // Ignore garbage in padding bytes
       return MTX_NVAL;
    }
-   *mark = mtx_tffirst[*m][0];
+   if (mark != NULL)
+      *mark = mtx_tffirst[*m][0];
    return idx;
 }
 // vim:fileencoding=utf8:sw=3:ts=8:et:cin

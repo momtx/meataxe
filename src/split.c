@@ -5,12 +5,12 @@
 #include "meataxe.h"
 #include <stdlib.h>
 
-/// @addtogroup spinup
+/// @addtogroup g_spinup
 /// @{
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static int CheckArguments(Matrix_t *subspace, const MatRep_t *rep)
+static int CheckArguments(const Matrix_t *subspace, const MatRep_t *rep)
 {
     mrValidate(MTX_HERE, rep);
     matValidate(MTX_HERE, subspace);
@@ -70,9 +70,7 @@ static int CheckArguments(Matrix_t *subspace, const MatRep_t *rep)
 /// @param quot Matrix representation on the quotient.
 /// @return 0 on success, -1 on error.
 
-int Split(Matrix_t *subspace, const MatRep_t *rep, 
-	  MatRep_t **sub, MatRep_t **quot)
-
+int Split(const Matrix_t *subspace, const MatRep_t *rep, MatRep_t **sub, MatRep_t **quot)
 {
     int g;
 

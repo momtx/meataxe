@@ -15,10 +15,10 @@ static Matrix_t** MkStdBases(Matrix_t* NPW, MatRep_t* M, const IntMatrix_t* op)
    Matrix_t** V = NALLOC(Matrix_t*, num_seed);
    for (int i = 0; i < num_seed; ++i) {
       Matrix_t* seed = matDupRows(NPW, i, 1);
-      V[i] = SpinUpWithScript(seed, M, op);
+      V[i] = spinupWithScript(seed, M, op);
       matFree(seed);
       if (V[i] == NULL) {
-         mtxAbort(MTX_HERE, "SpinUpWithScript() failed for vector %d", i);
+         mtxAbort(MTX_HERE, "spinupWithScript() failed for vector %d", i);
       }
    }
    return V;
@@ -40,11 +40,6 @@ Matrix_t* HomogeneousPart(
    MatRep_t* m, MatRep_t* s, Matrix_t* npw,
    const IntMatrix_t* op, int dimends)
 {
-   Matrix_t
-   * mat,
-   * a, * b;
-   PTR row, vec, basptr;
-
    const int fl = s->Gen[0]->field;
    const uint32_t Sdim = s->Gen[0]->nor;
    const uint32_t Mdim = m->Gen[0]->nor;
@@ -62,8 +57,8 @@ Matrix_t* HomogeneousPart(
       for (uint32_t j = 0; j < nulldim; j++) {
          PTR matptr = matGetPtr(A, j);
          int u;
-         a = matDup(V[j]);
-         b = matDup(s->Gen[i]);
+         Matrix_t* a = matDup(V[j]);
+         Matrix_t* b = matDup(s->Gen[i]);
          matMul(a, m->Gen[i]);                  /* the equations that describe  */
          matMul(b, V[j]);                       /* that a vector in the null-   */
          matMulScalar(b, ffNeg(FF_ONE));        /* space is the first element   */
@@ -92,14 +87,14 @@ Matrix_t* HomogeneousPart(
    MTX_ASSERT(dim % Sdim == 0);
    uint32_t nr = dim / Sdim;
    Matrix_t* bas = matAlloc(fl, dim, Mdim);
-   basptr = bas->data;
-   vec = gensys->data;
+   PTR basptr = bas->data;
+   PTR vec = gensys->data;
    for (uint32_t i = 1; i <= gensys->nor; i++, ffStepPtr(&vec, nulldim)) {
       Matrix_t* seed = matAlloc(fl, 1, Mdim);
       for (uint32_t j = 0; j < nulldim; j++) {
          FEL f = ffExtract(vec, j);
-         mat = matDup(V[j]);
-         row = mat->data;
+         Matrix_t* mat = matDup(V[j]);
+         PTR row = mat->data;
          ffMulRow(row, f, Mdim);
          ffAddRow(seed->data, row, Mdim);
          matFree(mat);

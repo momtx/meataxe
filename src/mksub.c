@@ -23,10 +23,6 @@ int opt_o = O_ALL;
 int opt_G = 0;
 int done[LAT_MAXCF];
 
-int blockNumber;		// Number of current block
-int blockSize;			// Block size
-int blockMember[LAT_MAXCF];	// Block members (index in constituent list)
-
 int firstm[LAT_MAXCF+1];	// First mountain per constituent
 int firstdl[LAT_MAXCF+1];	// First dotted line per constituent
 
@@ -41,19 +37,22 @@ static LatInfo_t* LI;		// Data from .cfinfo file
 
 
 // Data for current block
+int blockNumber;		// Number of current block
+int blockSize;			// Block size
+int blockMember[LAT_MAXCF];	// Block members (index in constituent list)
 int bnmount;		        // Number of mountains in block
-int bndotl;		        // Number of dotted-lines in block
 long bmdim[MAXCYCL];            // Mountain dimensions
 BitString_t *bsubof[MAXCYCL];   // Incidence matrix for block
 BitString_t *bsupof[MAXCYCL];	// Transposed incidence matrix
+int bndotl;		        // Number of dotted-lines in block
 BitString_t *bdotl[MAXDOTL];    // Dotted-lines for block
 BitString_t *bdlspan[MAXDOTL];  // Closure of dotted-lines
 
 /// @private
 /// List of submodules found so far.
 typedef struct MaxSubmodule {
-      struct Submodule* sub;    // maximal submodule
-      int isoType;              // type of factor module (index in constituents list)
+   struct Submodule* sub;    // maximal submodule
+   int isoType;              // type of factor module (index in constituents list)
 } MaxSubmodule_t;
 
 /// @private
@@ -134,7 +133,7 @@ static void init1(const char *basename)
        uint32_t l;
        mfRead32(f, &l, 1);
        xnmount = (int) l;
-       MTX_LOGD("Reading%s: %d mountain%s",fn,xnmount,xnmount == 1 ? "" : "s");
+       MTX_LOGD("Reading %s: %d mountain%s",fn,xnmount,xnmount == 1 ? "" : "s");
        if (xnmount > MAXCYCL) 
        {
           mtxAbort(MTX_HERE,"Too many mountains (%d, max=%d)",xnmount,MAXCYCL);
@@ -159,11 +158,10 @@ static void init1(const char *basename)
     // Read dotted lines
     {
        MtxFile_t* f = mfOpen(strcat(strcpy(fn,LI->BaseName),".dot"),"rb");
-       MTX_LOGD("Reading %s: ",fn);
        uint32_t l;
        mfRead32(f,&l,1);
        xndotl = (int) l;
-       MTX_LOGD("%d dotted line%s",xndotl,xndotl == 1 ? "" : "s");
+       MTX_LOGD("Reading %s: %d dotted line%s",fn, xndotl,xndotl == 1 ? "" : "s");
        if (xndotl > MAXDOTL) 
        {
           mtxAbort(MTX_HERE,"Too many dotted-lines (%d, max=%d)",xndotl,MAXDOTL);
@@ -209,13 +207,77 @@ static void init1(const char *basename)
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-/// Determine the isomorphism type of a mountain.
+/// Determines the isomorphism type of a mountain.
 
 static int isotype(int mnt)
 {
     int m;
     for (m = 0; (mnt -= LI->Cf[blockMember[m]].nmount) >= 0; ++m);
     return blockMember[m];
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+// Find all maximal submodules of sub[begin]..sub[end-1]
+// Sets sub[i]->isMountain and sub[i]->maxSubmodules
+static void findMaxTask(void* data, const size_t part, const size_t nParts)
+{
+   //MTX_LOGD("Start  task %lu/%lu", (unsigned long) part, (unsigned long) nParts);
+   uint8_t* flag = NALLOC(uint8_t, nsub);   // 0=unknown, 1=maximal, 2=not maximal
+   for (unsigned topIndex = part; topIndex < nsub; topIndex += nParts) {
+      struct Submodule* const top = sub[topIndex];
+      unsigned nMaxSubmodules = 0;
+      memset(flag, 0, sizeof(uint8_t) * topIndex);
+
+      for (unsigned k = topIndex; k > 0;) {
+         --k;
+         if (flag[k] == 0 && bsIsSub(sub[k]->bs, top->bs)) {
+            flag[k] = 1;
+            ++nMaxSubmodules;
+            for (unsigned l = k; l > 0;) {
+               --l;
+               if (flag[l] == 0 && bsIsSub(sub[l]->bs, sub[k]->bs)) {
+                  flag[l] = 2;
+               }
+            }
+         }
+      }
+      top->isMountain = (nMaxSubmodules == 1);
+
+      // Build a list of maximal submodules and simple factors.
+      top->maxSubmodules = NALLOC(MaxSubmodule_t, nMaxSubmodules + 1);
+      MaxSubmodule_t* lp = top->maxSubmodules;
+      for (int k = 0; k < topIndex; ++k) {
+         if (flag[k] != 1) continue;
+         MTX_ASSERT(lp < top->maxSubmodules + nMaxSubmodules);
+         lp->sub = sub[k];
+         size_t l;
+         for (l = 0; !bsTest(top->bs, l) || bsTest(sub[k]->bs, l); ++l) {}
+         MTX_ASSERT(l < bnmount);
+         lp->isoType = isotype((int)l);
+         ++lp;
+      }
+      lp->sub = NULL;
+      lp->isoType = 0;
+   }
+
+   sysFree(flag);
+   //MTX_LOGD("Done   task %lu/%lu", (unsigned long) part, (unsigned long) nParts);
+   //pexSleep(1000);
+   //MTX_LOGD("Exit   task %lu/%lu", (unsigned long) part, (unsigned long) nParts);
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+static void findMaxSubmodules()
+{
+   size_t nParts = pexPoolSize() * 2 + 1;
+   PexGroup_t* grp = pexCreateGroup();
+   for (unsigned part = 0; part < nParts; ++part) {
+      //MTX_LOGD("Create task %lu/%lu", (unsigned long) part, (unsigned long) nParts);
+      pexExecuteRange(grp, findMaxTask, NULL, part, nParts);
+   }
+   pexWait(grp);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -252,64 +314,22 @@ void finishBlock()
    sortBlock();
 
    MTX_LOGI("Calculating maximal submodules");
-   uint8_t* flag = NALLOC(uint8_t, nsub);   // 0=unknown, 1=maximal, 2=not maximal
-   BitString_t* bs = bsAlloc(bnmount);
 
-   // Calculate maximal submodules and submodule dimensions
+   findMaxSubmodules();
+
+   // Calculate submodule dimensions.
    for (int i = 0; i < nsub; ++i) {
-      int maxcount = 0;
-      memset(flag, 0, (size_t) nsub);
-      static uint64_t progressTimer = 0;
-      if (sysTimeout(&progressTimer, 5)) {
-         MTX_LOGD("%lu/%lu...", (unsigned long) i, (unsigned long) nsub);
-      }
-
-      // Find all maximal submodules
-      for (int k = i; k > 0;) {
-         --k;
-         if (flag[k] != 0) { continue; }
-         if (bsIsSub(sub[k]->bs, sub[i]->bs)) {
-            flag[k] = 1;
-            ++maxcount;
-            for (size_t l = k; l > 0;) {
-               --l;
-               if (bsIsSub(sub[l]->bs, sub[k]->bs)) {
-                  flag[l] = 2;
-               }
-            }
-         }
-      }
-      sub[i]->isMountain = (maxcount == 1);
-
-      // Build a list of maximal submodules and simple factors.
-      sub[i]->maxSubmodules = NALLOC(MaxSubmodule_t, maxcount + 1);
-      MaxSubmodule_t* lp = sub[i]->maxSubmodules;
-      for (int k = 0; k < i; ++k) {
-         if (flag[k] != 1) continue;
-         MTX_ASSERT(lp < sub[i]->maxSubmodules + maxcount);
-         lp->sub = sub[k];
-         size_t l;
-         for (l = 0; !bsTest(sub[i]->bs, l) || bsTest(sub[k]->bs, l); ++l) {}
-         MTX_ASSERT(l < bnmount);
-         lp->isoType = isotype((int)l);
-         ++lp;
-      }
-      // Terminate list
-      lp->sub = NULL;
-      lp->isoType = 0;
-
-      // Calculate submodule dimension. Since we are working from bottom to top,
-      // the dimension of maximal submodules is already known.
-      if (maxcount == 0) {
+      if (sub[i]->maxSubmodules->sub == NULL) {
+         MTX_ASSERT(i == 0);
          sub[i]->dimension = 0;
-      }
-      else {
+      } else {
          const MaxSubmodule_t* max0 = sub[i]->maxSubmodules;
          sub[i]->dimension = max0->sub->dimension + LI->Cf[max0->isoType].dim;
       }
    }
 
    // Calculate the radical series
+   BitString_t* bs = bsAlloc(bnmount);
    if (opt_o & O_RADICAL) {
       MTX_LOGI("Calculating radical series");
       sub[nsub-1]->radicalLayer = 0;
@@ -324,9 +344,11 @@ void finishBlock()
       }
    }
 
+
    // Calculate the socle series
    if (opt_o & O_SOCLE) {
       MTX_LOGI("Calculating socle series");
+      uint8_t* flag = NALLOC(uint8_t, nsub); 
       sub[nsub-1]->socleLayer = 0;
       int layer = 1;
       for (int i = 0; i < nsub - 1;) {
@@ -354,9 +376,9 @@ void finishBlock()
          MTX_ASSERT(i < nsub);
          sub[i]->socleLayer = layer++;
       }
+      sysFree(flag);
    }
 
-   sysFree(flag);
    bsFree(bs);
 }
 

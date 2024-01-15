@@ -103,7 +103,8 @@ static void sp()
     }
     matEchelonize(m);
     MTX_LOGI("Seed space has dimension %lu",(unsigned long)m->nor);
-    Matrix_t* subsp = SpinUp(m,Rep,SF_EACH|SF_COMBINE,NULL,NULL);
+    // OLD: Matrix_t* subsp = SpinUp(m,Rep,SF_EACH|SF_COMBINE,NULL,NULL);
+    Matrix_t* subsp = spinup(m,Rep);
     matFree(m);
     MTX_LOGI("Submodule has dimension %lu", (unsigned long) subsp->nor);
     sprintf(fn,"%s.%c%d",LI->BaseName,opt_m ? 'm' : 's',submoduleNumber);

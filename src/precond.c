@@ -128,13 +128,14 @@ static int IsDual(int mj, MatRep_t *rep_m, int nj)
     if (InfoN->Cf[nj].dim != minfo->dim || InfoN->Cf[nj].spl != minfo->spl)
 	return 0;
 
-    /* Read the (contragrediate) generators and compare
+    /* Read the (contragrediant) generators and compare
        ------------------------------------------------ */
     MTX_LOG2(" (%s%s)",InfoN->BaseName,latCfName(InfoN,nj));
     rep_n = latReadCfGens(InfoN,nj,LAT_RG_INVERT|LAT_RG_TRANSPOSE
 	| (InfoN->Cf[nj].peakWord > 0 ? LAT_RG_STD : 0));
     
     result = IsIsomorphic(rep_m,minfo,rep_n,Trans + TKInfo.nCf, minfo->peakWord > 0);
+    MTX_ASSERT(!result || Trans[TKInfo.nCf] != NULL);
     mrFree(rep_n);
     return result;
 }
@@ -202,7 +203,7 @@ static void MkEndo(const MatRep_t *rep, const CfInfo *cf, Matrix_t **endo, int m
     matFree(pw);
 
     // Calculate a basis of the the endomorphism ring
-    const int i = MakeEndomorphisms(rep,nsp,endo);
+    const int i = makeEndomorphisms(rep,nsp,endo);
     MTX_ASSERT(i == 0);
 
     matFree(nsp);

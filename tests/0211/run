@@ -1,15 +1,13 @@
+#!/bin/sh 
 echo "0211 - Tensor condensation of Th (dim = 248)"
 
 . ../tests/common.sh
-
 
 cp "${MTX_TEST_DATA_DIR}/Th-r.1" Th-r.1
 cp "${MTX_TEST_DATA_DIR}/Th-r.2" Th-r.2
 cp "${MTX_TEST_DATA_DIR}/Th-m.1" Th-m.1
 cp "${MTX_TEST_DATA_DIR}/Th-m.2" Th-m.2
 cp "${MTX_TEST_DATA_DIR}/Th-m.3" Th-m.3
-
-set -x 
 
 chop -Q -g 3 Th-m || error "CHOP failed"
 compareWithReference Th-m.cfinfo cfinfo_after_chop.expected

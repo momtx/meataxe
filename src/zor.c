@@ -7,7 +7,7 @@
 #include <string.h>
 
 #define MAXORDER 100000         /* Maximal order */
-#define MAXORDER_C 1000         /* Maximal order on cyclic subspaces */
+#define MAXORDER_C 1000000         /* Maximal order on cyclic subspaces */
 
 /* ------------------------------------------------------------------
    Global data

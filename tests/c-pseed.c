@@ -12,13 +12,12 @@
 
 static int testSeedVectors(Matrix_t* basis, Matrix_t* vecs, Matrix_t* cmp, PTR dummy)
 {
-   long n = 0;
+   uint32_t n = 0;
    for (int i = 0; i < 13; ++i) {
       PTR v = matGetPtr(vecs,i);
-      n = MakeSeedVector(basis,n,v);
-      ASSERT(n >= 0);	// no error
+      ASSERT_EQ_INT(svgMakeNext(v, &n, basis), 0);
    }
-   ASSERT(MakeSeedVector(basis,n,dummy) == -1); // no more seed vectors
+   ASSERT(svgMakeNext(dummy, &n, basis) == -1);       // no more seed vectors
    ASSERT(matCompare(vecs,cmp) == 0);           // seed vectors are as expected
    return 0;
 }
@@ -43,5 +42,27 @@ TstResult SeedVectorGenerator()
    sysFree(dummy);
    return result;
 }
+
+TstResult SeedVectorGenerator_CheckLimits()
+{
+   {
+      // ok, 2*17^7 - 1 < 2^32
+      Matrix_t* basis = matId(17, 7);
+      uint32_t vecno = 0;
+      ASSERT_EQ_INT(svgMakeNext(NULL, &vecno, basis), 0);
+      ASSERT_EQ_INT(vecno, 1U);
+      matFree(basis);
+   }
+
+   {
+      // failure, 2*17^8 - 1 >= 2^32
+      Matrix_t* basis = matId(17, 8);
+      uint32_t vecno = 0;
+      ASSERT_ABORT(svgMakeNext(NULL, &vecno, basis));
+      matFree(basis);
+   }
+   return 0;
+}
+
 
 // vim:fileencoding=utf8:sw=3:ts=8:et:cin

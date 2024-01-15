@@ -6,7 +6,7 @@
 #include <stdlib.h>
 
 
-/// @addtogroup spinup
+/// @addtogroup g_spinup
 /// @{
 
 /// Action on a subspace.

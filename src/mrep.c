@@ -236,8 +236,6 @@ int mrSave(const MatRep_t *rep, const char *basename)
       return -1;
    }
 
-   /* Write the generators.
-      --------------------- */
    ext_format = strstr(basename,"%d") != NULL;
    for (i = 0; i < rep->NGen; ++i) {
       if (ext_format) {
@@ -248,10 +246,51 @@ int mrSave(const MatRep_t *rep, const char *basename)
       matSave(rep->Gen[i],fn);
    }
 
-   /* Clean up.
-      --------- */
    sysFree(fn);
    return i >= rep->NGen ? 0 : -1;
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+/// Checks whether two matrix representations are isomorphic via a given basis transformation.
+/// More precisely, if (a<sub>1</sub>,…,a<sub>n</sub>) and (b<sub>1</sub>,…,b<sub>n</sub>) are the
+/// generators in the two representations, and T is a nonsingular matrix, the function checks that
+/// a<sub>1</sub> = Tb<sub>1</sub>T<sup>-1</sup>.
+///
+/// The return value is 1 if the representations are isomorphic or 0 otherwise.
+
+int mrAreIsomorphic(const MatRep_t* repA, const MatRep_t* repB, Matrix_t* trans)
+{
+   mrValidate(MTX_HERE, repA);
+   mrValidate(MTX_HERE, repB);
+   matValidate(MTX_HERE, trans);
+   if (repA->NGen != repB->NGen)
+      mtxAbort(MTX_HERE, "Different number of generators (%d vs %d)", repA->NGen, repB->NGen);
+   if (repA->NGen == 0)
+      return 1;
+   if (repA->Gen[0]->field != repB->Gen[0]->field
+       || repA->Gen[0]->nor != repB->Gen[0]->nor
+       || repA->Gen[0]->noc != repB->Gen[0]->noc) {
+      mtxAbort(MTX_HERE, "Representations are not compatible");
+   }
+   if (trans->field != repA->Gen[0]->field
+        || trans->nor != repA->Gen[0]->nor
+        || trans->noc != repA->Gen[0]->noc) {
+      mtxAbort(MTX_HERE, "Basis transformation is not compatible with representation");
+   }
+
+   for (int i = 0; i < repA->NGen; ++i) {
+      Matrix_t* at = matDup(repA->Gen[i]);
+      matMul(at, trans);
+      Matrix_t* tb = matDup(trans);
+      matMul(tb, repB->Gen[i]);
+      int compareResult = matCompare(at, tb);
+      matFree(at);
+      matFree(tb);
+      if (compareResult != 0)
+         return 0;
+   }
+   return 1;
 }
 
 /// @}

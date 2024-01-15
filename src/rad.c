@@ -3,7 +3,9 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 #include "meataxe.h"
+
 #include <ctype.h>
+#include <inttypes.h>
 #include <stdarg.h>
 #include <stdlib.h>
 #include <string.h>
@@ -141,7 +143,6 @@ static void init(int argc, char **argv)
 
 
 static int DualizeConstituents()
-
 {
     int j;
 
@@ -159,9 +160,16 @@ static int DualizeConstituents()
 	wgFree(wg);
 	Dualize(CfRep[j]);
 	OpTable[j] = NULL;
-	sb = SpinUp(seed,CfRep[j],SF_FIRST|SF_CYCLIC|SF_STD,OpTable + j,NULL);
-	if (sb == NULL)
-	    mtxAbort(MTX_HERE,"Cannot make standard basis");
+	sb = spinupStandardBasis(OpTable + j, seed,CfRep[j],SF_FIRST);
+        MTX_ASSERT(sb != NULL && sb->nor == sb->noc);
+        //fprintf(stderr, "DUALIZE %"PRIu32"x%"PRIu32"\n", sb->nor, sb->noc);
+        //IntMatrix_t* opOLD = NULL;
+        //Matrix_t* sbOLD = SpinUp(seed,CfRep[j],SF_FIRST|SF_CYCLIC|SF_STD,&opOLD,NULL);
+        //MTX_ASSERT(matCompare(sb, sbOLD) == 0);
+        //MTX_ASSERT(imatCompare(OpTable[j], opOLD) == 0);
+        //matFree(sbOLD);
+        //imatFree(opOLD);
+
 	mrChangeBasis(CfRep[j],sb);
 	matFree(sb);
     }

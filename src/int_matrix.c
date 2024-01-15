@@ -12,7 +12,7 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 /// @class IntMatrix_t
-/// A matrix with (32 bit singed) integer entries.
+/// A matrix over ℤ, using with 32 bit signed integers.
 /// Both @c nor and @c noc may be zero.
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -48,6 +48,35 @@ IntMatrix_t *imatAlloc(uint32_t nor, uint32_t noc)
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
+/// Creates an independent copy of an integer matrix.
+
+IntMatrix_t *imatDup(const IntMatrix_t* mat)
+{
+   imatValidate(MTX_HERE, mat);
+   IntMatrix_t *m = imatAlloc(mat->nor, mat->noc);
+   memcpy(m->data, mat->data, sizeof(int32_t) * mat->nor * mat->noc);
+   return m;
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+/// Creates an integer matrix from a given row buffer.
+/// The passed row buffer may contain more than @p nor rows. In this case the buffer is resized
+/// to the given number of rows.
+/// After return the buffer is owned by the matrix and must not be modified except by using the
+/// using the imatXxx() functions.
+
+IntMatrix_t* imatCreateFromBuffer(int32_t* buffer, uint32_t nor, uint32_t noc)
+{
+   IntMatrix_t *m = (IntMatrix_t*) mmAlloc(MTX_TYPE_INTMATRIX, sizeof(IntMatrix_t));
+   m->nor = nor;
+   m->noc = noc;
+   m->data = NREALLOC(buffer, int32_t, sizeof(int32_t) * nor * noc);
+   return m;
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
 /// Destroys an integer matrix and releases the associated memory.
 
 void imatFree(IntMatrix_t *mat)
@@ -56,6 +85,32 @@ void imatFree(IntMatrix_t *mat)
    sysFree(mat->data);
    mat->data = NULL;
    mmFree(mat, MTX_TYPE_INTMATRIX);
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+/// Compares two integer matrices.
+/// Returns 0 if the matrices are equal or an nonzero value otherwise.
+/// The matrices need not have the same number of rows or columns. Matrices of different dimensions
+/// are never equal, though.
+
+int imatCompare(const IntMatrix_t* a, const IntMatrix_t* b)
+{
+   imatValidate(MTX_HERE, a);
+   imatValidate(MTX_HERE, b);
+   if (a->nor < b->nor) return -1;
+   if (a->nor > b->nor) return 1;
+   if (a->noc < b->noc) return -1;
+   if (a->noc > b->noc) return 1;
+   int32_t* pa = a->data;
+   int32_t* pb = b->data;
+   for (size_t n = (size_t) a->nor * a->noc; n > 0; --n) {
+      if (*pa < *pb) return -1;
+      if (*pa > *pb) return 1;
+      ++pa;
+      ++pb;
+   }
+   return 0;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////

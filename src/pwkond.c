@@ -266,8 +266,7 @@ static void transformToStandardBasis(struct cf_struct* cf)
    // Make the standard basis and spinup script. Transform the generators.
    MTX_LOGD("%s Transforming to standard basis", cf->displayName);
    IntMatrix_t *script = NULL;
-   Matrix_t* sb =
-      SpinUp(cf->PWNullSpace,cf->Gen, SF_FIRST | SF_CYCLIC | SF_STD,&script,NULL);
+   Matrix_t* sb = spinupStandardBasis(&script, cf->PWNullSpace,cf->Gen, SF_FIRST);
    MatRep_t* stdRep = mrChangeBasis2(cf->Gen, sb);
    matFree(sb);
 
@@ -360,10 +359,9 @@ static void kond(struct cf_struct* cfData, struct module_struct* mod, int cf)
 
    // Calculate the semisimplicity basis.
    if (opt_b) {
-      Matrix_t* seed, * partbas;
       int pos = CfPosition(li, cf);
-      seed = matNullSpace_(pw, 0);
-      partbas = SpinUp(seed, mod->Rep, SF_EACH | SF_COMBINE | SF_STD, NULL, NULL);
+      Matrix_t* seed = matNullSpace_(pw, 0);
+      Matrix_t* partbas = spinupStandardBasis(NULL, seed, mod->Rep, SF_EACH);
       matFree(seed);
 
       if (pos < 0 || pos + partbas->nor > mod->SsBasis->nor) {
@@ -814,7 +812,7 @@ int main(int argc, char** argv)
       tryWord(w);
    }
 
-   pexWait();
+   pexWaitAll();
    WriteOutput(1);
    pexShutdown();
 

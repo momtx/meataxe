@@ -4,6 +4,7 @@
     <tab type="mainpage" visible="yes" title=""/>
     <tab type="pages" visible="yes" title=""/>
     <tab type="modules" visible="yes" title="Library Modules"/>
+    <tab type="usergroup" url="@ref grp_progs_index" show-subpages="yes" visible="yes" title="Program Index"/>
     <tab type="classes" visible="yes" title="Data Structures">
       <tab type="classes" visible="no" title=""/>
       <tab type="classindex" visible="no" title=""/> 

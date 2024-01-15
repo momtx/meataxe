@@ -214,9 +214,9 @@ test: $(TESTS:%=tmp/test_%/done)
 
 TS_OBJS1=c-args c-bitstring c-cfinfo c-charpol\
 	c-ffio c-fileio c-ffmat c-ffrow c-fpoly \
-	c-gap c-kernel c-matins c-matrix \
+	c-gap c-imat c-kernel c-matins c-matrix \
 	c-mman c-os c-perm c-pex c-poly c-pseed c-quot c-random \
-	c-stf c-tensor c-wgen
+	c-spinup c-stf c-tensor c-wgen
 
 TS_OBJS=$(TS_OBJS1:%=tmp/%.o) tmp/testing.o tmp/test_table.o lib/libmtx.a
 
