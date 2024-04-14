@@ -81,7 +81,7 @@ void stfValidate(const struct MtxSourceLocation* where, const StfData* f)
 
 /// Close a structured text file.
 /// Closing the file implies that the memory occupied by the StfData structure is freed.
-/// Thus, after return, @a f is invalid and must not be dereferenced.
+/// Thus, after return, @p f is invalid and must not be dereferenced.
 /// @param f Pointer to an open structured text file (STF) object.
 
 void stfClose(StfData *f)
@@ -113,7 +113,7 @@ static const char* provideFilePosition(void* userData)
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 /// Opens a structured text file.
-/// @a name and @a mode have the same semantics as with sysFopen().
+/// @p name and @p mode have the same semantics as with sysFopen().
 ///
 /// Note: each call of @c stfOpen() creates a log context, which is closed in the corresponding
 /// call of @ref stfClose. Applications creating log contexts must make sure that calls of
@@ -126,7 +126,7 @@ StfData *stfOpen(const char *name, const char* mode)
    f->lineBuf = NALLOC(char,f->lineBufSize);
    f->fileName = strdup(name);
    f->file = sysFopen(name, mode);
-   f->context = mtxBeginScope(provideFilePosition, f);
+   f->context = mtxBeginP(provideFilePosition, f);
    return f;
 }
 

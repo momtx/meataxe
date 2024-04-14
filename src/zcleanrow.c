@@ -20,10 +20,10 @@
 /// table for @em matrix. As usual, all indexes are 0-based, i.e., <tt>piv[0]</tt> is the
 /// pivot column of the first row, and for a unit matrix we have <tt>piv[0]==0</tt>.
 /// The field must have been set before calling this function.
-/// @param row The row to be cleaned. Must have the same number of columns as @a matrix.
+/// @param row The row to be cleaned. Must have the same number of columns as @p matrix.
 /// @param matrix Pointer to the matrix.
 /// @param nor Number of rows of the matrix.
-/// @param noc Number of columns in @a row and @a matrix.
+/// @param noc Number of columns in @p row and @p matrix.
 /// @param piv The pivot table.
 
 void ffCleanRow(PTR row, PTR matrix, int nor, int noc, const uint32_t *piv)
@@ -52,7 +52,7 @@ void ffCleanRow(PTR row, PTR matrix, int nor, int noc, const uint32_t *piv)
 /// @param row Pointer to row to be cleaned.
 /// @param mat Matrix to clean with.
 /// @param nor Number of rows.
-/// @param noc Number of columns in @a row and @a matrix.
+/// @param noc Number of columns in @p row and @p matrix.
 /// @param piv Pivot table for @em matrix.
 /// @param row2 Pointer to row where the operations are recorded. Must be filled with zeroes
 ///    by the caller!
@@ -89,7 +89,7 @@ int ffCleanRow2(PTR row, PTR mat, uint32_t nor, uint32_t noc, const uint32_t *pi
 /// @param row Pointer to row to be cleaned.
 /// @param mat Matrix to clean with.
 /// @param nor Number of rows.
-/// @param noc Number of columns in @a row and @a matrix.
+/// @param noc Number of columns in @p row and @p matrix.
 /// @param piv Pivot table for @em mat.
 /// @param row2 Pointer to the second row to be cleaned.
 /// @param mat2 Matrix to the second matrix.

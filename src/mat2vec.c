@@ -14,11 +14,11 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 /// Convert matrix to vector.
 /// This function converts a matrix into a row vector by concatenating
-/// the rows of the matrix. If @a mat is a r by c matrix, the resulting
+/// the rows of the matrix. If @p mat is a r by c matrix, the resulting
 /// vector has rc entries. Instead of allocating a new buffer for the
-/// result, %matToVec() expects a pointer to a matrix, @a vecs, and puts
-/// the vector into the @a n-th row of this matrix. Of course, @a vecs must
-/// be over the smae field as @a mat, have rc columns and at least n+1 rows.
+/// result, %matToVec() expects a pointer to a matrix, @p vecs, and puts
+/// the vector into the @p n-th row of this matrix. Of course, @p vecs must
+/// be over the smae field as @p mat, have rc columns and at least n+1 rows.
 /// @see VectorToMatrix
 /// @param mat Matrix to convert.
 /// @param vecs Destination of the vector.

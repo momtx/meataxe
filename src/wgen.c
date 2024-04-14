@@ -263,7 +263,7 @@ static Matrix_t* makeMonomial(const WgData_t *wg, uint32_t blk, int pos)
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 /// Symbolic name of a word.
-/// This function returns a symbolic representation of the word @a n as a polynomial in the
+/// This function returns a symbolic representation of the word @p n as a polynomial in the
 /// generators. For example, word 306 with two generators is represented as "ab2a+a2b+ab3a".
 /// The return value is a pointer to an internal buffer in the word generator, which is
 /// overwritten on each call for the same word generator.
@@ -331,7 +331,7 @@ static void DescribeMonomial(WgData_t *wg, int *pos, long blk, int i)
    AppendDescription(wg,pos,-1);         // End of monomial
 }
 
-static void split(uint32_t n, uint8_t *mask, uint32_t* blk)
+static void splitWordNumber(uint32_t n, uint8_t *mask, uint32_t* blk)
 {
    MTX_ASSERT(n > 0);
    --n;
@@ -365,7 +365,7 @@ int *wgDescribeWord(WgData_t *wg, uint32_t n)
 
    uint8_t n1;
    uint32_t blk;
-   split(n, &n1, &blk);
+   splitWordNumber(n, &n1, &blk);
 
    for (int i = 0; i < 8 && n1 != 0; ++i, n1 >>= 1) {
       if ((n1 % 2) != 0) {
@@ -396,7 +396,7 @@ Matrix_t *wgMakeWord(WgData_t *wg, uint32_t n)
    MTX_ASSERT(n > 0);
    uint8_t n1;
    uint32_t blk;
-   split(n, &n1, &blk);
+   splitWordNumber(n, &n1, &blk);
 
    Matrix_t *w = NULL;
    for (int i = 0; i < 8 && n1 != 0; ++i, n1 >>= 1) {
@@ -426,7 +426,7 @@ Matrix_t *wgMakeWord2(WgData_t *wg, uint32_t n)
    MTX_ASSERT(n > 0);
    uint8_t mask;
    uint32_t blk;
-   split(n, &mask, &blk);
+   splitWordNumber(n, &mask, &blk);
    
    Matrix_t *w = NULL;
    for (int i = 0; i < 8 && mask != 0; ++i, mask >>= 1) {
@@ -463,7 +463,7 @@ static void wgValidate(const struct MtxSourceLocation* where, WgData_t* wg)
 
 /// Creates a word generator for a given matrix representation.
 ///
-/// There must be at least one generator in @a rep.
+/// There must be at least one generator in @p rep.
 ///
 /// The work generator only stores a reference to the generators but not take ownership.
 /// The generators must not be modified or destroyed while the word generator is alive.

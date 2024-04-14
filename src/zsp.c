@@ -225,11 +225,7 @@ static int writeAction()
 
     matSave(Span,"split_subspace");
 
-    if (Split(Span,Rep,subp,quotp) != 0)
-    {
-	mtxAbort(MTX_HERE,"Split failed");
-	return -1;
-    }
+    split(Span,Rep,subp,quotp);
     if (SubName != NULL)
     {
 	mrSave(sub,SubName);

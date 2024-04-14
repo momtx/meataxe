@@ -133,7 +133,7 @@ int main(int argc, char *argv[])
         fprintf(stderr, "The given compositionfactors form only %d from whole dimension %d!\n\n",
 		dim, gens->Gen[0]->nor);
 
-    strcpy(mycfinfo->BaseName,App->argV[0]);
+    strcpy(mycfinfo->baseName,App->argV[0]);
     latSave(mycfinfo);
     latDestroy(mycfinfo);
 

@@ -172,7 +172,7 @@ int mfTryReadHeader(MtxFile_t* file)
 
 /// Opens a file.
 /// Fails if the file does not exist or cannot be opened.
-/// See @ref mfOpen for the meaning of @a mode.
+/// See @ref mfOpen for the meaning of @p mode.
 
 MtxFile_t* mfOpen(const char* name, const char* mode)
 {
@@ -234,7 +234,7 @@ void mfWrite8(MtxFile_t* f, const void* buf, size_t count)
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 /// Reads raw bytes from a file.
-/// This function reads @a count bytes from a data file to a buffer.
+/// This function reads @p count bytes from a data file to a buffer.
 
 void mfRead8(MtxFile_t* f, void* buf, size_t count)
 {
@@ -249,7 +249,7 @@ void mfRead8(MtxFile_t* f, void* buf, size_t count)
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 /// Writes 32-bit integers to a file.
-/// This function writes an array of 32-bit integers from @a buf to a data file.
+/// This function writes an array of 32-bit integers from @p buf to a data file.
 /// Each integer is written in LSB first format to the file. See @ref sysWrite32 for details.
 /// @param f Pointer to the file.
 /// @param buf Data buffer.
@@ -264,13 +264,14 @@ void mfWrite32(MtxFile_t *f, const void *buf, size_t count)
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 /// Reads 32-bit integers from a file.
-/// This function reads @a count 32-bit integers from a data file into a buffer.
+/// This function reads @p count 32-bit integers from a data file into a buffer.
 /// Each integer is converted from file format (little-endian) into native format.
 /// See @ref sysRead32 for details.
 
 void mfRead32(MtxFile_t* f, void* buf, size_t count)
 {
    mfValidate(MTX_HERE, f);
+   // note: use mfTryRead32() instead of sysRead32() for better error messages
    int result = mfTryRead32(f, buf, count);
    if (result != 0) {
       mtxAbort(MTX_HERE, "Error reading %s: unexpected end of file", f->name);
@@ -293,8 +294,7 @@ int mfTryRead32(MtxFile_t* f, void* buf, size_t count)
    if (result == 0 || result == 1) {
       return result;
    }
-   mtxAbort(MTX_HERE, "Error reading %s: %s",
-      f->name, result != 0 ? strerror(errno) : "partial read");
+   mtxAbort(MTX_HERE, "Error reading %s: %s", f->name, strerror(errno));
    return -1;
 }
 

@@ -554,7 +554,7 @@ static void ReadFiles()
     MInfo = latLoad(MName);
 
     MTX_LOGD("Reading generators");
-    MRep = mrLoad(MInfo->BaseName,MInfo->NGen);
+    MRep = mrLoad(MInfo->baseName,MInfo->NGen);
     dimM = MRep->Gen[0]->noc;
     if (comp)
         NRep = mrLoad(NName,MInfo->NGen);

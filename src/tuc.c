@@ -115,21 +115,15 @@ static void ReadQMatrices()
 
 static void Init(int argc, char **argv)
 {
-    /* Initialize the MeatAxe library, process command line
-       ---------------------------------------------------- */
     App = appAlloc(&AppInfo,argc,argv);
     appGetArguments(App,3,3);
-
-    /* Read input files
-       ---------------- */
     TkiName = App->argV[0];
+
     tkReadInfo(&TkInfo,TkiName);
     InfoM = latLoad(TkInfo.nameM);
     InfoN = latLoad(TkInfo.nameN);
     CondMat = matLoad(App->argV[1]);
 
-    /* Other initializations
-       --------------------- */
     UncondName = App->argV[2];
     AllocateResult();
     ReadQMatrices();

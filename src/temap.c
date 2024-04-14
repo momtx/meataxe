@@ -20,7 +20,7 @@
 /// @param vec Vectors to map.
 /// @param a Left matrix.
 /// @param b Right matrix.
-/// @return Image of @a vec under @a a⊗@a b, or 0 on error.
+/// @return Image of @p vec under @p a⊗@p b, or 0 on error.
 
 Matrix_t *TensorMap(Matrix_t *vec, const Matrix_t *a, const Matrix_t *b)
 {

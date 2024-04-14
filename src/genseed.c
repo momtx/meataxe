@@ -27,8 +27,8 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 /// @ingroup pseed
 /// Calculates a seed vector given its number. See also @ref svgMakeNext.
-/// The function fails and aborts the program if @a number is not a valid seed vector number.
-/// In particular, passing @a number = 0 will always fail.
+/// The function fails and aborts the program if @p number is not a valid seed vector number.
+/// In particular, passing @p number = 0 will always fail.
 ///
 /// @param vec Buffer for the seed vector.
 /// @param number The seed vector number.
@@ -59,24 +59,24 @@ void svgMake(PTR vec, uint32_t number, const Matrix_t *basis)
 /// @ingroup pseed
 /// Generates the next seed vector. Returns 0 on success and -1 if there are no more seed vectors.
 ///
-/// When the first seed vector is calculated (i.e., if @a number points to a zero value) the
+/// When the first seed vector is calculated (i.e., if @p number points to a zero value) the
 /// function verifies that all seed vector numbers can be represented as 32 bit unsigned integers. 
 /// If this is not the case, the function fails and aborts the program. Note that this check is
 /// only performed for the first seed vector (with number 1).
 /// In all other cases, the function will fail only if the next vector number would be greater than
 /// 2<sup>32</sup>-1
 ///
-/// @a basis is the basis for the seed space. It is not checked whether the bases vectors are
+/// @p basis is the basis for the seed space. It is not checked whether the bases vectors are
 /// linearly independent. If they are not, there will be redundant seed vectors but not no error
 /// occurs.
 ///
-/// @a vec is a row buffer which is overwritten with the generated seed vector.
-/// @a vec may be NULL if the seed vector is not required.
+/// @p vec is a row buffer which is overwritten with the generated seed vector.
+/// @p vec may be NULL if the seed vector is not required.
 ///
-/// @a number points to a variable containing the previous seed vector number (or 0 if no seed
+/// @p number points to a variable containing the previous seed vector number (or 0 if no seed
 /// vector has been calculated yet. After successful return, the variable is updated and contains
 /// the number of the generated seed vector. If svgNext() fails, the variable is not changed
-/// (however, @a vec may have been be modified).
+/// (however, @p vec may have been be modified).
 ///
 /// Usage example:
 /// @code

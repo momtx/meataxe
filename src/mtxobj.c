@@ -146,7 +146,7 @@ void objFree(void *a)
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-/// Calculates the n-th power of a matrix or permutation. @a n may be negative if the object is
+/// Calculates the n-th power of a matrix or permutation. @p n may be negative if the object is
 /// invertible.
 
 void *objPower(void *a, int n)

@@ -69,7 +69,7 @@ long mtxRandom(void)
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 /// Random number.
-/// This function returns a (pseudo) random number in the range 0...@a max.
+/// This function returns a (pseudo) random number in the range 0...@p max.
 /// The argument must be greater than 0.
 /// @return Pseudo random number.
 

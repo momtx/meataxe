@@ -40,8 +40,8 @@ static Matrix_t *MakeEndo(const MatRep_t *rep, const Matrix_t *sb1,
 /// The endomorphism ring E of an irreducible module has dimension equal to the degree of the
 /// splitting field extension, d = [F':F].
 ///
-/// On success, basis of E (a set of matrices) is stored into @a endo.
-/// If the function fails, no matrices are stored in @a endo. 
+/// On success, basis of E (a set of matrices) is stored into @p endo.
+/// If the function fails, no matrices are stored in @p endo. 
 /// @param rep
 ///   Pointer to an irreducible matrix representation.
 /// @param nsp

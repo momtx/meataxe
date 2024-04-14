@@ -60,9 +60,9 @@ static uint32_t zmkechelon(PTR matrix, uint32_t nor, uint32_t noc, uint32_t *piv
 
 /// Reduce to echelon form
 ///
-/// This function performs a Gaussian elimination on the matrix @a mat. After return, @a mat is in
+/// This function performs a Gaussian elimination on the matrix @p mat. After return, @p mat is in
 /// semi echelon form and its pivot table has been set up.
-/// If the rank of @a mat was smaller than the number of rows, some rows are removed during the
+/// If the rank of @p mat was smaller than the number of rows, some rows are removed during the
 /// process. This function can also be used to rebuild the pivot table after the matrix has been
 /// modified.
 ///
@@ -154,7 +154,7 @@ static int zmkpivot(PTR matrix, uint32_t nor, uint32_t noc, uint32_t *piv, uint8
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 /// Create pivot table.
 /// This function creates or updates the pivot table of a matrix. Unlike @ref matEchelonize this
-/// function assumes that @a mat is already in echelon form. If it is not, @c matPivotize() fails
+/// function assumes that @p mat is already in echelon form. If it is not, @c matPivotize() fails
 /// and aborts the program.
 
 void matPivotize(Matrix_t *mat)

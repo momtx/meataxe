@@ -21,11 +21,11 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 /// @class Poly_t
-/// A polynomial over a finite field.
+/// @details
 /// Internally, a polynomial of degree n is represented as an array of n+1 field
-/// elements (@c Data field), where <tt>data[i]</tt> is the coefficient of x^i.
-/// The leading coefficient is always non-zero on the MeatAxe API level (it can
-/// temporarily be zero during calculations). The null polynomial has a degree of -1.
+/// elements (@a data), where <tt>data[i]</tt> is the coefficient of x<sup>i</sup>.
+/// The leading coefficient is always non-zero.
+/// The zero polynomial has a degree of -1.
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -652,7 +652,7 @@ void polFormat(StrBuffer_t* sb, const Poly_t *p)
 ///
 /// This function prints a polynomial on the standard output in a human-readable form (see
 /// @ref polFormat).
-/// If @a name is not 0, the name followed by an equal sign is printed before the polynomial.
+/// If @p name is not 0, the name followed by an equal sign is printed before the polynomial.
 /// For example, the statement <tt>polPrint("P",P)</tt> could
 /// produce the following output:
 /// <pre>

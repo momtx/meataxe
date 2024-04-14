@@ -15,8 +15,8 @@
 /// Stable power of a matrix.
 /// This function takes a square matrix M and finds an integer n>0 such that
 /// ker(M<sup>n</sup>) = ker(M<sup>n+1</sup>).
-/// @a ker must be a pointer to a variable of type Matrix_t*,
-/// where the stable kernel will be stored. Both @a pwr and @a ker may be
+/// @p ker must be a pointer to a variable of type Matrix_t*,
+/// where the stable kernel will be stored. Both @p pwr and @p ker may be
 /// NULL if the corresponding information is not needed.
 ///
 /// Note that the number $n$ found by StablePower_() is not guararanteed

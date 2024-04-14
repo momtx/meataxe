@@ -61,30 +61,64 @@ static MtxApplication_t *App = NULL;
 
 
 
-static void MakeInvertible(Matrix_t *mat, const char *fn)
-{
-    Matrix_t *dup = matDup(mat);
-    PTR x;
-    int i, k;
+//static void MakeInvertible(Matrix_t *mat, const char *fn)
+//{
+//    Matrix_t *dup = matDup(mat);
+//    PTR x;
+//    int i, k;
+//
+//    matEchelonize(dup);
+//    k = dup->nor;
+//    if (k < mat->nor)
+//    {
+//	MTX_LOGI("WARNING: %s: %d basis vectors are missing, "
+//	    "using random vectors\n",fn,mat->nor - k);
+//    }
+//    for (i = 0, x = mat->data; i < mat->nor; ++i, ffStepPtr(&x, mat->noc))
+//    {
+//	FEL f;
+//	if (ffFindPivot(x,&f, mat->noc) == MTX_NVAL)
+//	{
+//	    ffInsert(x,dup->pivotTable[k],FF_ONE);
+//	    ++k;
+//	}
+//    }
+//    MTX_ASSERT(k == mat->nor);
+//    matFree(dup);
+//}
 
-    matEchelonize(dup);
-    k = dup->nor;
-    if (k < mat->nor)
-    {
-	MTX_LOGI("WARNING: %s: %d basis vectors are missing, "
-	    "using random vectors\n",fn,mat->nor - k);
-    }
-    for (i = 0, x = mat->data; i < mat->nor; ++i, ffStepPtr(&x, mat->noc))
-    {
-	FEL f;
-	if (ffFindPivot(x,&f, mat->noc) == MTX_NVAL)
-	{
-	    ffInsert(x,dup->pivotTable[k],FF_ONE);
-	    ++k;
-	}
-    }
-    MTX_ASSERT(k == mat->nor);
-    matFree(dup);
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+// Reads a semisimplicity basis from a file (.ssb). If the vectors found in the file are not
+// a basis, some "basis" vectors are replaced with randomly chosen vectors to build a matrix.
+
+Matrix_t* readSsBasis(const char* baseName)
+{
+   MTX_LOGD("Reading semisimplicity basis: %s.ssb", baseName);
+   Matrix_t* matrix = matLoad(strEprintf("%s.ssb", baseName));
+
+   Matrix_t *dup = matDup(matrix);
+   matEchelonize(dup);
+   uint32_t k = dup->nor;
+   if (k < matrix->nor)
+   {
+      MTX_LOGI("WARNING: %s.ssb: %d basis vectors are missing, "
+            "using random vectors",baseName,matrix->nor - k);
+      for (uint32_t i = 0; i < matrix->nor; ++i)
+      {
+         PTR x = matGetPtr(matrix, i);
+         FEL f;
+         if (ffFindPivot(x, &f, matrix->noc) == MTX_NVAL)
+         {
+            ffInsert(x,dup->pivotTable[k],FF_ONE);
+            ++k;
+         }
+      }
+
+   }
+   MTX_ASSERT(k == matrix->nor);
+   matFree(dup);
+   return matrix;
 }
 
 
@@ -92,7 +126,6 @@ static void MakeInvertible(Matrix_t *mat, const char *fn)
 
 static void init(int argc, char** argv)
 {
-   char fn[200];
    int i;
 
    // Process command line options
@@ -130,21 +163,16 @@ static void init(int argc, char** argv)
    }
    if (InfoN->NGen != InfoM->NGen) {
       mtxAbort(MTX_HERE, "Different number of generators in %s and %s",
-         InfoM->BaseName, InfoN->BaseName);
+         InfoM->baseName, InfoN->baseName);
    }
 
    // Read the semisimplicity bases.
    if (!NoBasisChange) {
       int ctx = mtxBegin(MTX_HERE, "HINT: did you run 'pwkond -tb'?");
-      MTX_LOGD("Reading and inverting semisimplicity bases");
-      sprintf(fn, "%s.ssb", TKInfo.nameM);
-      ssBasisM = matLoad(fn);
-      MakeInvertible(ssBasisM, fn);
+      ssBasisM = readSsBasis(TKInfo.nameM);
       SsBasisMi = matInverse(ssBasisM);
       if (strcmp(AName, BName)) {
-         sprintf(fn, "%s.ssb", TKInfo.nameN);
-         ssBasisN = matLoad(fn);
-         MakeInvertible(ssBasisN, fn);
+         ssBasisN = readSsBasis(TKInfo.nameN);
          SsBasisNi = matInverse(ssBasisN);
       }
       else {
@@ -161,16 +189,16 @@ static void init(int argc, char** argv)
       int tdim = InfoM->Cf[TKInfo.cfIndex[0][i]].dim;
       int f;
       tdim *= tdim;
-      sprintf(fn, "%s.p.%d", TkiName, i + 1);
+      char* fn = strEprintf("%s.p.%d", TkiName, i + 1);
       P[i] = matLoad(fn);
       f = ffOrder;
       if (P[i]->field != f || P[i]->noc != spl || P[i]->nor != tdim) {
-         mtxAbort(MTX_HERE, "%s: Invalid P matrix", fn);
+         mtxAbort(MTX_HERE, "%s: Incompatible P matrix", fn);
       }
-      sprintf(fn, "%s.q.%d", TkiName, i + 1);
+      fn = strEprintf("%s.q.%d", TkiName, i + 1);
       Q[i] = matLoad(fn);
       if (Q[i]->field != f || Q[i]->nor != spl || Q[i]->noc != tdim) {
-         mtxAbort(MTX_HERE, "%s: Invalid Q matrix", fn);
+         mtxAbort(MTX_HERE, "%s: Incompatible Q matrix", fn);
       }
       mtxEnd(ctx);
    }
@@ -262,33 +290,20 @@ static void gemap(Matrix_t* conma, Matrix_t* q, Matrix_t* mrow, Matrix_t* nrow)
 
 static void condenseMat(int gen)
 {
-   char resname[LAT_MAXBASENAME + 20];  /* Output file name */
-   char aname[LAT_MAXBASENAME + 20];    /* Generator on M */
-   char bname[LAT_MAXBASENAME + 20];    /* Generator on M */
-   int cf;                              /* Constituent index */
-   Matrix_t* mmat, * nmat, * x;         /* The generator on M, N */
-
-   // Make file names
-   sprintf(resname, "%s.%d", ResultName, gen + 1);
-   sprintf(aname, "%s.%d", AName, gen + 1);
-   sprintf(bname, "%s.%d", BName, gen + 1);
+   char* resname = strMprintf("%s.%d", ResultName, gen + 1);
+   char* aname = strMprintf("%s.%d", AName, gen + 1);
+   char* bname = strMprintf("%s.%d", BName, gen + 1);
    MTX_LOGI("Condensing %s x %s --> %s", aname, bname, resname);
 
    // Load the generators on M and N
-   mmat = matLoad(aname);
-   if (strcmp(aname, bname)) {
-      nmat = matLoad(bname);
-   }
-   else {
-      nmat = mmat;
-   }
+   Matrix_t* mmat = matLoad(aname);
+   Matrix_t* nmat = strcmp(aname, bname) ? matLoad(bname) : mmat;
 
    // Change to semisimplicity basis.
    if (!NoBasisChange) {
       MTX_LOGD("  Changing basis");
-      x = matDup(ssBasisM);
+      Matrix_t* x = matDup(ssBasisM);
       matMul(x, mmat);
-
       matMul(x, SsBasisMi);
       matFree(mmat);
       mmat = x;
@@ -306,13 +321,9 @@ static void condenseMat(int gen)
    }
 
    if (WriteGenerators) {
-      char fn[200];
-      sprintf(fn, "%s.ss.%d", AName, gen + 1);
-      matSave(mmat, fn);
-      if (strcmp(aname, bname)) {
-         sprintf(fn, "%s.ss.%d", BName, gen + 1);
-         matSave(nmat, fn);
-      }
+      matSave(mmat, strEprintf("%s.ss.%d", AName, gen + 1));
+      if (strcmp(aname, bname))
+         matSave(nmat, strEprintf("%s.ss.%d", BName, gen + 1));
    }
 
    // Open the output file
@@ -320,7 +331,7 @@ static void condenseMat(int gen)
    MtxFile_t* resultFile = mfCreate(resname, ffOrder, TKInfo.dim, TKInfo.dim);
 
    // Main loop: for each constituent
-   for (cf = 0; cf < TKInfo.nCf; ++cf) {
+   for (int cf = 0; cf < TKInfo.nCf; ++cf) {
       const int cfm = TKInfo.cfIndex[0][cf];  // Index in M
       const int cfn = TKInfo.cfIndex[1][cf];  // Index in N
       const int rownb = InfoM->Cf[cfm].dim;    // Number of rows to extract
@@ -355,9 +366,11 @@ static void condenseMat(int gen)
 
    mfClose(resultFile);
    matFree(mmat);
-   if (strcmp(aname, bname)) {
+   if (nmat != mmat)
       matFree(nmat);
-   }
+   sysFree(resname);
+   sysFree(aname);
+   sysFree(bname);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -388,10 +401,10 @@ static void cleanup()
 int main(int argc, char **argv)
 {
     init(argc,argv);
-    for (int i = 0; i < NGen; ++i)
-    {
-	// TODO: context "Condensation of %s.%d x %s.%d",AName,i+1,BName,i+1);
-	condenseMat(i);
+    for (int i = 0; i < NGen; ++i) {
+       int ctx = mtxBegin(MTX_HERE, "Condensation of %s.%d x %s.%d",AName,i+1,BName,i+1);
+       condenseMat(i);
+       mtxEnd(ctx);
     }
     cleanup();
     return 0;

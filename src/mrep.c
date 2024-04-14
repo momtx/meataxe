@@ -76,15 +76,15 @@ void mrValidate(const struct MtxSourceLocation* where, const MatRep_t *rep)
 
 /// Creates a matrix representation.
 ///
-/// The matrices in @a gen must all be square, over the same field, and of the same size.
+/// The matrices in @p gen must all be square, over the same field, and of the same size.
 ///
-/// @a flags may be zero or the special value MR_COPY_GENERATORS. In the latter case, a local copy
-/// of the generators is made, and the matrices in @a gen can be safely destroyed. If @a flags is 0,
+/// @p flags may be zero or the special value MR_COPY_GENERATORS. In the latter case, a local copy
+/// of the generators is made, and the matrices in @p gen can be safely destroyed. If @p flags is 0,
 /// the representation becomes owner of the genertors, and the caller must not modify or free any
 /// of them. The generators will be freed by @ref mrFree.
 
-/// @param ngen Number of generators in @a gen.
-/// @param gen List of generators. May be NULL if @a ngen is 0.
+/// @param ngen Number of generators in @p gen.
+/// @param gen List of generators. May be NULL if @p ngen is 0.
 /// @param flags Optional flags (see description).
 /// @return Pointer to the new matrix representation
 
@@ -128,7 +128,7 @@ void mrFree(MatRep_t *rep)
 /// The matrix must be square. If there are already generators in the representation, the new
 /// matrix must be over the same field and have the same number of rows.
 ///
-/// @a flags may be zero or the special value MR_COPY_GENERATORS. See @ref mrAlloc.
+/// @p flags may be zero or the special value MR_COPY_GENERATORS. See @ref mrAlloc.
 
 void mrAddGenerator(MatRep_t *rep, Matrix_t *gen, int flags)
 {
@@ -150,7 +150,7 @@ void mrAddGenerator(MatRep_t *rep, Matrix_t *gen, int flags)
 /// Load a Matrix Representation.
 /// This function creates a new matrix representation and reads the generators
 /// from files. Each generator ist expected in a different file. The file name
-/// is constructed by appending ".1", ".2" etc. to @a basename or, if @a basename
+/// is constructed by appending ".1", ".2" etc. to @p basename or, if @p basename
 /// contains a "%d" placeholder, by replacing the "%d" with "1", "2", etc.
 /// For example, the following lines
 /// @code
@@ -215,8 +215,8 @@ MatRep_t *mrTransposed(const MatRep_t *rep)
 /// Save a Matrix Representation.
 /// This function saves all generators of a matrix representation.
 /// Each generator ist written to different file. The file name
-/// is constructed by appending ".1", ".2" etc. to @a basename or, if
-/// @a basename contains a "%d" placeholder, by replacing the "%d"
+/// is constructed by appending ".1", ".2" etc. to @p basename or, if
+/// @p basename contains a "%d" placeholder, by replacing the "%d"
 /// with "1", "2", etc.
 /// @param rep Pointer to the matrix representation.
 /// @param basename Base file name for generators.

@@ -57,7 +57,7 @@ static time_t zinittime = 0;           /**< Start time of this process. */
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-/// Returns the smallest multiple of @a unit greater than or equal to @a x.
+/// Returns the smallest multiple of @p unit greater than or equal to @p x.
 
 size_t sysPad(size_t x, size_t unit)
 {
@@ -135,7 +135,7 @@ uint64_t sysTime()
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 /// Timer for repeated events.
-/// @a buf must point to a variable which must be initialized with zero.
+/// @p buf must point to a variable which must be initialized with zero.
 /// On the first call, the return value is 0.
 /// On subsequent calls, the function returns 1 if more than @c intervalInSeconds seconds have
 /// elapsed since the last call that returned 1 (or, if there was no return value 1, since the
@@ -218,10 +218,10 @@ void sysSetTimeLimit(long nsecs)
 /// * If the operation fails an error is raised, which normally aborts the program. If the
 ///   application has defined an error handler that doe snot abort, sysFopen() returns NULL on
 ///   error.
-/// * The @a mode string can be extended by appending "::FLAGS", where FLAGS is
+/// * The @p mode string can be extended by appending "::FLAGS", where FLAGS is
 ///   a colon-separated list of any of the following items:
 ///   * "lib" - Try to open the file in the library directory (see @ref mtxLibraryDirectory),
-///     unless @a name starts with '/'. It this fails, try again using the file name as it is.
+///     unless @p name starts with '/'. It this fails, try again using the file name as it is.
 ///     No errors are reported if the first attempt fails and the second attempt succeeds.
 ///   * "noerror" - Do not raise an error if the file cannot be opened, just return NULL.
 ///   For example: sysFopen("coeff7.txt", "r::lib:noerror")
@@ -373,7 +373,7 @@ int sysCreateDirectory(const char *name)
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 /// Allocate memory.
-/// This function works like @c malloc(), but the return value is never NULL, even if @a nbytes is
+/// This function works like @c malloc(), but the return value is never NULL, even if @p nbytes is
 /// 0. The allocated memory region is initialized with zeroes.
 /// @param nbytes Size of memory block to allocate.
 /// @return Pointer to memory block.

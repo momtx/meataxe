@@ -65,7 +65,7 @@ static void zmatinv(PTR mat, PTR result, int noc)
 /// @{
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-/// Calculates and returns the inverse of a matrix. @a mat must be a non-singular square matrix,
+/// Calculates and returns the inverse of a matrix. @p mat must be a non-singular square matrix,
 /// otherwise the program is aborted with an error message.
 /// The return value is a independent matrix, the original matrix remains unchanged.
 

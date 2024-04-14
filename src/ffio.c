@@ -60,7 +60,7 @@ void ffReadRows(MtxFile_t *f, PTR buf, uint32_t nor, uint32_t noc)
    if (nor == 0 || noc == 0)
       return;
 
-   ffSetField(f->header[0]); // TODO: remove?
+   ffSetField(f->header[0]);
    const size_t rowSizeUsed = ffRowSizeUsed(noc);
    const size_t rowSize = ffRowSize(noc);
 

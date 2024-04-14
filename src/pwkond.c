@@ -145,7 +145,7 @@ static void AddConstituents(int mod)
    LatInfo_t *li = ModList[mod].Info;
    int i;
    for (i = 0; i < li->nCf; ++i) {
-      char* const fn = strMprintf("%s%s",li->BaseName,latCfName(li,i));
+      char* const fn = strMprintf("%s%s",li->baseName,latCfName(li,i));
       MatRep_t* cf = mrLoad(fn,li->NGen);
       sysFree(fn);
       AddConstituent(cf,li->Cf + i,mod,i);
@@ -180,7 +180,7 @@ static void loadConstituents()
          for (size_t k = 0; k < cf->mult; ++k) {
             struct module_struct *mod = ModList + cf->CfMap[k][0];
             const LatInfo_t* const li = mod->Info;
-            sbPrintf(sb, " %s%s", li->BaseName,latCfName(li,cf->CfMap[k][1]));
+            sbPrintf(sb, " %s%s", li->baseName,latCfName(li,cf->CfMap[k][1]));
          }
       }
    }
@@ -247,10 +247,8 @@ static void gkond(
 {
    Matrix_t* x1 = matDup(k);
    matMul(x1, w);
-   Matrix_t* x2 = QProjection(b, x1);
-   char* fn = strMprintf("%s%s.%s", li->BaseName, latCfName(li, i), name);
-   matSave(x2, fn);
-   sysFree(fn);
+   Matrix_t* x2 = quotientProjection(b, x1);
+   matSave(x2, strEprintf("%s%s.%s", li->baseName, latCfName(li, i), name));
    matFree(x2);
    matFree(x1);
 }
@@ -275,17 +273,17 @@ static void transformToStandardBasis(struct cf_struct* cf)
       char fn[200];
       LatInfo_t *li = ModList[cf->CfMap[m][0]].Info;
       int i = cf->CfMap[m][1];
-      sprintf(fn,"%s%s.op",li->BaseName,latCfName(li,i));
+      sprintf(fn,"%s%s.op",li->baseName,latCfName(li,i));
       MTX_LOG2("%s wrote operations to %s", cf->displayName, fn);
       imatSave(script,fn);
       for (int k = 0; k < li->NGen; ++k) {
-         sprintf(fn,"%s%s.std.%d",li->BaseName,latCfName(li,i),k + 1);
+         sprintf(fn,"%s%s.std.%d",li->baseName,latCfName(li,i),k + 1);
          matSave(stdRep->Gen[k],fn);
       }
       MTX_LOG2("%s wrote %s%s.op and %s%s.std.(1..%d)",
             cf->displayName,
-            li->BaseName,latCfName(li,i),
-            li->BaseName,latCfName(li,i), li->NGen);
+            li->baseName,latCfName(li,i),
+            li->baseName,latCfName(li,i), li->NGen);
    }
 
    mrFree(stdRep);
@@ -315,7 +313,6 @@ static int CfPosition(const LatInfo_t *li, int cf)
 static void kond(struct cf_struct* cfData, struct module_struct* mod, int cf)
 {
    const LatInfo_t* const li = mod->Info;
-   char fn[LAT_MAXBASENAME + 10];
    Matrix_t* peakword, * kern, * m, * k, * pw;
    int j, pwr;
 
@@ -336,21 +333,20 @@ static void kond(struct cf_struct* cfData, struct module_struct* mod, int cf)
 
    // Write out the image
    if (!opt_n) {
-      sprintf(fn, "%s%s.im", li->BaseName, latCfName(li, cf));
-      matSave(peakword, fn);
+      matSave(peakword, strEprintf("%s%s.im", li->baseName, latCfName(li, cf)));
    }
 
    // Write out the `uncondense matrix'
-   m = QProjection(peakword, kern);
+   m = quotientProjection(peakword, kern);
    k = matInverse(m);
    matFree(m);
    matMul(k, kern);
-   sprintf(fn, "%s%s.k", li->BaseName, latCfName(li, cf));
-   matSave(k, fn);
+   matSave(k, strEprintf("%s%s.k", li->baseName, latCfName(li, cf)));
 
    // Condense all generators
    for (j = 0; j < li->NGen; ++j) {
-      sprintf(fn, "%dk", j + 1);
+      char fn[50];
+      snprintf(fn , sizeof(fn), "%dk", j + 1);
       gkond(li, cf, peakword, k, mod->Rep->Gen[j], fn);
    }
 
@@ -365,7 +361,7 @@ static void kond(struct cf_struct* cfData, struct module_struct* mod, int cf)
       matFree(seed);
 
       if (pos < 0 || pos + partbas->nor > mod->SsBasis->nor) {
-         mtxAbort(MTX_HERE, "Error making basis - '%s' is probably not semisimple", li->BaseName);
+         mtxAbort(MTX_HERE, "Error making basis - '%s' is probably not semisimple", li->baseName);
       }
       matCopyRegion(mod->SsBasis, pos, 0, partbas, 0, 0, partbas->nor, partbas->noc);
       matFree(partbas);
@@ -383,7 +379,7 @@ static void condense(struct cf_struct* cf)
    for (int k = 0; k < cf->mult; ++k) {
       struct module_struct* const mod = ModList + cf->CfMap[k][0];
       const int i = cf->CfMap[k][1];
-      MTX_LOGD("%s condensing %s%s", cf->displayName, mod->Info->BaseName, latCfName(mod->Info,i));
+      MTX_LOGD("%s condensing %s%s", cf->displayName, mod->Info->baseName, latCfName(mod->Info,i));
       kond(cf, mod, i);
    }
 }
@@ -398,9 +394,9 @@ static void WriteOutput(int final)
    int i;
    for (i = 0; i < NumMods; ++i) {
       latSave(ModList[i].Info);
-      MTX_LOGD("Wrote %s.cfinfo", ModList[i].Info->BaseName);
+      MTX_LOGD("Wrote %s.cfinfo", ModList[i].Info->baseName);
       if (opt_b) {
-         char* const fn = strMprintf("%s.ssb",ModList[i].Info->BaseName);
+         char* const fn = strMprintf("%s.ssb",ModList[i].Info->baseName);
          matSave(ModList[i].SsBasis,fn);
          MTX_LOGD("Wrote %s", fn);
          sysFree(fn);
@@ -416,7 +412,7 @@ static void WriteOutput(int final)
       printf("MeatAxe.PeakWords := [\n");
       for (m = 0; m < NumMods; ++m) {
          const LatInfo_t * const ModInfo = ModList[m].Info;
-         printf("# module: %s\n[\n", ModInfo->BaseName);
+         printf("# module: %s\n[\n", ModInfo->baseName);
          for (i = 0; i < ModInfo->nCf; ++i) {
             const CfInfo * const Cf = ModInfo->Cf + i;
             printf("    # irreducible factor: %s\n", latCfName(ModInfo,i));

@@ -104,7 +104,7 @@ const char* mtxVersion()
 /// anything.
 /// An application that uses @ref appAlloc need not call this function.
 ///
-/// @a argv0 is the name of the process executable. It may be used to initialize directory names
+/// @p argv0 is the name of the process executable. It may be used to initialize directory names
 /// such as the library directory, which have a default value relative to the executable directory.
 /// If the program name is not known, the argument may be NULL or an empty string.
 

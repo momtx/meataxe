@@ -60,12 +60,12 @@ static void checkArgs(int ngen, Matrix_t** gen1, const CfInfo* info1, Matrix_t**
 /// In this case, |rep1| must of course be in standard basis with respect
 /// to the peak word.
 ///
-/// If the representations are isomorphic, and @a trans is not NULL, the
+/// If the representations are isomorphic, and @p trans is not NULL, the
 /// basis transformation which makes the second representation identical
-/// to the first is stored into @a trans. To be more precise, if g<sub>i</sub> is
-/// the representation of the i-th generator in representation @a rep1,
-/// h<sub>i</sub> in representation @a rep2, and T the
-/// matrix returned in @a trans, then Th<sub>i</sub>T<sup>-1</sup>=g<sub>i</sub>.
+/// to the first is stored into @p trans. To be more precise, if g<sub>i</sub> is
+/// the representation of the i-th generator in representation @p rep1,
+/// h<sub>i</sub> in representation @p rep2, and T the
+/// matrix returned in @p trans, then Th<sub>i</sub>T<sup>-1</sup>=g<sub>i</sub>.
 /// @param rep1 The first representation.
 /// @param info1 Pointer to an CfInfo_t structure for the first representation.
 /// @param rep2 The second representation.

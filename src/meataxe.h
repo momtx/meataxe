@@ -207,8 +207,7 @@ MTX_PRINTF(2,3)
 void mtxAbort(const struct MtxSourceLocation* sl, const char* text, ...);
 MTX_PRINTF(2,3)
 int mtxBegin(const struct MtxSourceLocation* sl, const char* s, ...);
-// TODO: rename (or join both to mtxBegin(sourceLoc, provider, userdata, msg, ...)
-int mtxBeginScope(MtxErrorContextProvider ec, void* userData);
+int mtxBeginP(MtxErrorContextProvider ec, void* userData);
 void mtxEnd(int id);
 
 MtxErrorHandler_t* MtxSetErrorHandler(MtxErrorHandler_t* h);
@@ -399,6 +398,7 @@ char* sbToEphemeralString(StrBuffer_t* sb);
 void sbVprintf(StrBuffer_t* sb, const char* fmt, va_list args);
 
 int strCompareRange(const char* x, const char* xEnd, const char* y, const char* yEnd);
+char *strDup(const char* c);
 const char* strPrefix(const char* s, const char* prefix);
 char* strRange(const char* begin, const char* end);
 char* strMakeEphemeral(char* c);
@@ -564,6 +564,7 @@ int stfGetU32(StfData* f, uint32_t* buf);
 int stfGetULong(StfData* f, unsigned long* buf);
 const char* stfGetName(StfData* f);
 int stfGetString(StfData* f, char* buf, size_t bufsize);
+int stfGetStringPtr(StfData* f, char** buf);
 int stfGetVector(StfData* f, int* bufsize, int* buf);
 StfData* stfOpen(const char* name, const char* mode);
 int stfMatch(StfData* f, const char* pattern);
@@ -673,16 +674,16 @@ void permWrite(const Perm_t* perm, MtxFile_t* file);
 // Polynomials over a finite field
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-/// A polynomial.
+/// A polynomial over a finite field.
 typedef struct {
    void* next;          ///< @private
    void** prev;         ///< @private
-   uint32_t seq;         ///< @private
+   uint32_t seq;        ///< @private
    uint32_t typeId;     ///< @private
    uint32_t field;      ///< Field order.
    int32_t degree;      ///< Degree of the polynomial.
    FEL* data;           ///< Coefficients. Degree+1 values, starting with the constant term.
-   int bufSize;         ///< Used internally for memory management.
+   uint32_t bufSize;    ///< Used internally for memory management.
 }
 Poly_t;
 
@@ -781,20 +782,6 @@ int bsTest(const BitString_t* bs, size_t i);
 void bsValidate(const struct MtxSourceLocation* src, const BitString_t* bs);
 void bsWrite(const BitString_t* bs, MtxFile_t* file);
 
-// TODO: provide unsafe high-performance operations?
-//  BS_TEST_UNCHECKED(bs, bit)
-//  BS_SET_UNCHECKED(bs, bit)
-//  BS_CLEAR_UNCHECKED(bs, bit)
-
-//#ifndef MTX_DEBUG
-//
-//#define BS_BPL (sizeof(long) * 8)
-//#define bsSet(bs,i) ((bs)->data[(i) / BS_BPL] |= 1L << ((i) % BS_BPL))
-//#define bsClear(bs,i) ((bs)->data[(i) / BS_BPL] &= ~(1L << ((i) % BS_BPL)))
-//#define bsTest(bs,i) (((bs)->data[(i) / BS_BPL] & (1L << ((i) % BS_BPL))) != 0 ? 1 : 0)
-//
-//#endif
-
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // Integer matrices.
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -889,7 +876,7 @@ void wgMakeFingerPrint(WgData_t* b, uint32_t fp[6]);
 const char* wgSymbolicName(WgData_t* b, long n);
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-// Spin-up, Split, Quotients, etc.
+// Spin-up and split.
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 #define SF_SEED_MASK      0x0007  // Defines how to select seed vectors from the seed space
@@ -906,11 +893,11 @@ const char* wgSymbolicName(WgData_t* b, long n);
 
 #define SF_RESERVED_MASK  0xFFFFFE00
 
-Matrix_t* QProjection(const Matrix_t* subspace, const Matrix_t* vectors);
-Matrix_t* QAction(const Matrix_t* sub, const Matrix_t* gen);
-Matrix_t* SAction(const Matrix_t* sub, const Matrix_t* gen);
+Matrix_t* quotientProjection(const Matrix_t* subspace, const Matrix_t* vectors);
+Matrix_t* quotientAction(const Matrix_t* sub, const Matrix_t* gen);
+Matrix_t* subspaceAction(const Matrix_t* sub, const Matrix_t* gen);
 
-int Split(const Matrix_t* subspace, const MatRep_t* rep, MatRep_t **sub, MatRep_t **quot);
+void split(const Matrix_t* subspace, const MatRep_t* rep, MatRep_t **sub, MatRep_t **quot);
 
 int ConvertSpinUpScript(IntMatrix_t* script);
 
@@ -1022,7 +1009,6 @@ void gapFormatWord(StrBuffer_t* sb, const WgData_t* b, uint32_t n);
 #define MAXCYCL 30000   // Max. number of cyclic submodules
 #define MAXDOTL 90000   // Max. number of dotted lines
 #define MAXNSUB 20000   // Max. number of submodules
-#define LAT_MAXBASENAME 100
 
 typedef struct {
    long dim;                    ///< Constituent dimension
@@ -1044,7 +1030,7 @@ typedef struct {
    void** prev;                         ///< @private
    uint32_t seq;                        ///< @private
    uint32_t typeId;                     ///< @private
-   char BaseName[LAT_MAXBASENAME];      ///< Base name
+   char *baseName;                      ///< Module name
    int field;                           ///< Field order
    int NGen;                            ///< Number of generators
    int nCf;                             ///< Number of irred. constituents
@@ -1080,11 +1066,11 @@ MatRep_t* latReadCfGens(LatInfo_t* info, int cf, int flags);
 /// See also @ref tkReadInfo and @ref tkWriteInfo.
 
 typedef struct {
-   char nameM[LAT_MAXBASENAME];         ///< Name of right factor
-   char nameN[LAT_MAXBASENAME];         ///< Name of left factor
-   int dim;                             ///< Dimension of condensed module
-   int nCf;                             ///< Number of relevant constituents
-   int cfIndex[2][LAT_MAXCF];           ///< Constituent number in M/N
+   char *nameM;                 ///< Name of right factor
+   char *nameN;                 ///< Name of left factor
+   int dim;                     ///< Dimension of condensed module
+   int nCf;                     ///< Number of relevant constituents
+   int cfIndex[2][LAT_MAXCF];   ///< Constituent number in M/N
 } TkData_t;
 
 void tkReadInfo(TkData_t* tki, const char* name);

@@ -12,10 +12,10 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 /// Check if a string starts with a given prefix.
-/// If @a s starts with @a prefix, the function returns a pointer to the caracter in @a s that 
-/// follows the prefix. If @a s and @a prefix are equal, the return value points to the terminating
-/// NUL byte of @a s.
-/// If @a s does not start with @a prefix, the function returns NULL.
+/// If @p s starts with @p prefix, the function returns a pointer to the caracter in @p s that 
+/// follows the prefix. If @p s and @p prefix are equal, the return value points to the terminating
+/// NUL byte of @p s.
+/// If @p s does not start with @p prefix, the function returns NULL.
 /// If either pointer is NULL, the function returns NULL
 
 const char* strPrefix(const char* s, const char* prefix)
@@ -30,7 +30,7 @@ const char* strPrefix(const char* s, const char* prefix)
 
 /// Returns a copy of a character sequence.
 /// The returned pointer is a NUL terminated string containing a copy of the range
-/// [@a begin, @a end). If either argument is NULL or if @a begin > @a end, the function fails.
+/// [@p begin, @p end). If either argument is NULL or if @p begin > @p end, the function fails.
 
 char* strRange(const char *begin, const char* end)
 {
@@ -42,6 +42,16 @@ char* strRange(const char *begin, const char* end)
    memcpy(range, begin, end - begin);
    range[n] = 0;
    return range;
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+/// Returns an independent copy of a string.
+
+char* strDup(const char *src)
+{
+    MTX_ASSERT(src != NULL);
+    return strRange(src, src + strlen(src));
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////

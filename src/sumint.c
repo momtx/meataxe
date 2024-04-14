@@ -24,11 +24,11 @@
 ///   subspaces. Work space 2 need not be initialized.
 /// - The pivot table, must be large enough for at least n₁+n₂ entries. It need not be initialized.
 ///
-/// The variables pointed to by @a nor1 and @a nor2 must contain the numbers n₁ and n₂,
-/// respectively. On return, *@a nor1 contains the dimension of V+W, and *@a nor2 contains
-/// the dimension of V∩W. The first dim(V+W) rows of @a wrk1 contain a basis of V+W,
-/// and a basis of V∩W can be found in @a wrk2 starting at position dim(V+W).
-/// Both bases are in echelon form, and @a piv contains the pivot table for the bases.
+/// The variables pointed to by @p nor1 and @p nor2 must contain the numbers n₁ and n₂,
+/// respectively. On return, *@p nor1 contains the dimension of V+W, and *@p nor2 contains
+/// the dimension of V∩W. The first dim(V+W) rows of @p wrk1 contain a basis of V+W,
+/// and a basis of V∩W can be found in @p wrk2 starting at position dim(V+W).
+/// Both bases are in echelon form, and @p piv contains the pivot table for the bases.
 /// @param noc  Number of columns in «wrk1» and «wrk2»
 /// @param wrk1 Workspace 1.
 /// @param nor1 Input: number of generators for V, output: dim(V+W).

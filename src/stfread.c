@@ -287,23 +287,84 @@ int stfGetString(StfData *f, char *buf, size_t bufsize)
     return 0;
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+/// Read a string.
+/// Like stfGetString(), but allocates a independent copy and stores it in «ptr».
+/// If «ptr» is not NULL, it is supposed to point to an allocated memory buffer, which is first
+/// released by calling sysFree().
+
+int stfGetStringPtr(StfData *f, char **ptr)
+{
+    char *c, *d, *s;
+
+    /* Find start of string.
+       --------------------- */
+    for (c = f->getPtr; *c != 0 && *c != '"' && isspace(*c); ++c)
+	;
+    if (*c != '"')
+    {
+	mtxAbort(MTX_HERE,"Missing \"");
+	return -1;
+    }
+    s = c;
+
+    /* Traverse the string, replacing escape sequences.
+       ------------------------------------------------ */
+    for (d = c + 1; *d != 0 && *d != '"'; )
+    {
+	if (*d == '\\')
+	{
+	    ++d;
+	    switch (*d)
+	    {
+		case 'n': *c++ = '\n'; break;
+		case 'r': *c++ = '\r'; break;
+		case 't': *c++ = '\t'; break;
+		case 'a': *c++ = '\a'; break;
+		case 'b': *c++ = '\b'; break;
+		case 'f': *c++ = '\f'; break;
+		case '"': *c++ = '"'; break;
+		default:
+		    mtxAbort(MTX_HERE,"Line %d: Invalid escape sequence in string",
+			f->lineNo);
+		    return -1;
+	    }
+	    ++d;
+	}
+	else 
+	    *c++ = *d++;
+    }
+    if (*d != '"')
+    {
+	mtxAbort(MTX_HERE,"Line %d: Unexpected end of line in string",f->lineNo);
+	return -1;
+    }
+
+    // Copy the string.
+    if (*ptr)
+       sysFree(*ptr);
+    *ptr = strRange(s, c);
+    return 0;
+}
+
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 /// Skip text.
-/// This function reads (and skips) the text given by @a pattern.
+/// This function reads (and skips) the text given by @p pattern.
 /// Before using this function, a line must have been read with stfReadLine()
 /// and prepared with stfGetname(). Reading starts at the current position, 
 /// i.e., at the first non-space character after the ":=", or at the first
 /// character that was not read by the previous stfGetXXX() or stfMatch().
-/// A space in @a pattern matches any number (including 0) of spaces or tabs. 
-/// Any other characters in @a pattern are matched one-to-one against the input 
+/// A space in @p pattern matches any number (including 0) of spaces or tabs. 
+/// Any other characters in @p pattern are matched one-to-one against the input 
 /// line. 
-/// If @a pattern is matched completely, the current position is updated 
+/// If @p pattern is matched completely, the current position is updated 
 /// to the character after the last matched character. Otherwise, the current 
 /// position is not changed and the function returns -1.
 /// @param f Pointer to a structured text file (STF) object.
 /// @param pattern The text to be skipped.
-/// @return 0, if the complete text in @a pattern has beed
+/// @return 0, if the complete text in @p pattern has beed
 /// skipped. -1 otherwise.
 
 int stfMatch(StfData *f, const char *pattern)
@@ -349,10 +410,10 @@ int stfMatch(StfData *f, const char *pattern)
 /// i.e., at the first non-space character after the ":=", or at the first
 /// character that was not read by the previous stfGetXXX() or stfMatch().
 ///
-/// The caller must supply two buffers, the data buffer (@a buf) and an 
-/// integer buffer (@a bufsize). When %stfGetVector() is called, the variable
-/// pointed to by @a bufsize must contain the maximal number of integers
-/// that can be stored in @a buf. On successful return, the variable contains 
+/// The caller must supply two buffers, the data buffer (@p buf) and an 
+/// integer buffer (@p bufsize). When %stfGetVector() is called, the variable
+/// pointed to by @p bufsize must contain the maximal number of integers
+/// that can be stored in @p buf. On successful return, the variable contains 
 /// the number of integers that were actually stored, which may be smaller than
 /// the original value.
 /// If the vector is to long to fit into the user-supplied buffer, the

@@ -219,10 +219,8 @@ static void readCfFile(StfData* f, const char* fn, LatInfo_t* li)
 
 LatInfo_t* latCreate(const char* baseName)
 {
-   MTX_ASSERT(baseName != NULL);
-   MTX_ASSERT(strlen(baseName) < LAT_MAXBASENAME - 1); // TODO: remove limit
    LatInfo_t* li = mmAlloc(MTX_TYPE_LATINFO, sizeof(LatInfo_t));
-   strcpy(li->BaseName, baseName);
+   li->baseName = strDup(baseName);
    li->NGen = 2;
    return li;
 }
@@ -244,6 +242,8 @@ void latDestroy(LatInfo_t* li)
          cf->peakPol = NULL;
       }
    }
+   sysFree(li->baseName);
+   li->baseName = NULL;
    mmFree(li, MTX_TYPE_LATINFO);
 }
 
@@ -259,9 +259,7 @@ void latDestroy(LatInfo_t* li)
 LatInfo_t* latLoad(const char* baseName)
 {
    LatInfo_t* li = latCreate(baseName);
-
-   char fn[LAT_MAXBASENAME + 20];
-   sprintf(fn, "%s.cfinfo", baseName);
+   char * const fn = strEprintf("%s.cfinfo", baseName);
    StfData* f = stfOpen(fn, "r");
    readCfFile(f, fn, li);
    stfClose(f);
@@ -281,16 +279,14 @@ void latSave(const LatInfo_t *li)
     StfData *f;
     int i;
     int tmp[LAT_MAXCF];
-    char fn[LAT_MAXBASENAME + 20];
 
     MTX_ASSERT(li != NULL);
 
     // Open the file
-    snprintf(fn, sizeof(fn), "%s.cfinfo", li->BaseName);
+    char * const fn = strEprintf("%s.cfinfo", li->baseName);
     f = stfOpen(fn,"w");
 
-    /* Write data
-       ---------- */
+    // Write data
     stfWriteValue(f,"CFInfo","rec()");
     stfWriteInt(f,"CFInfo.NGen",li->NGen);
     stfWriteInt(f,"CFInfo.Field",li->field);
@@ -368,7 +364,7 @@ void latSave(const LatInfo_t *li)
 
 /// Make Constituent Name.
 ///
-/// This function returns the name of the @a cf-th constituent of a module. The constituent name
+/// This function returns the name of the @p cf-th constituent of a module. The constituent name
 /// consists of the dimension and an appendix which is based on @c num field in the constituent's
 /// data structure. Usually the appendix is a single letter ('a', 'b', ...). If there are more than 
 /// 26 constituents with the same dimension, a two-letter appendix ('aa', 'ab', etc.) is used. 

@@ -57,13 +57,12 @@ int opt_G = 0;	    // GAP output
 static void readFiles(const char *basename)
 {
     LI = latLoad(basename);
-    Rep = mrLoad(LI->BaseName,LI->NGen);
+    Rep = mrLoad(LI->baseName,LI->NGen);
 
     // Load the .im matrices
     for (int i = 0; i < LI->nCf; ++i)
     {
-        char fn[200];
-	sprintf(fn,"%s%s.im",LI->BaseName,latCfName(LI,i));
+	char* fn = strEprintf("%s%s.im",LI->baseName,latCfName(LI,i));
 	bild[i] = matLoad(fn);
 	matEchelonize(bild[i]);
     }
@@ -88,12 +87,12 @@ static void init(int argc, char **argv)
 
 static void writeMountains()
 {
-    char fn[200];
     int i;
 
     // Write dimensions and classes
-    FILE* f = sysFopen(strcat(strcpy(fn,LI->BaseName),".mnt"),"w");
+    char* fn = strEprintf("%s.mnt",LI->baseName);
     MTX_LOGD("Writing dimensions and classes to %s",fn);
+    FILE* f = sysFopen(fn,"w");
     for (i = 0; i < nmount; ++i)
     {
 	int *p;
@@ -105,7 +104,7 @@ static void writeMountains()
     fclose(f);
 
     // Write mountains
-    strcat(strcpy(fn,LI->BaseName),".v");
+    fn = strEprintf("%s.v", LI->baseName);
     MTX_LOGD("Writing mountains to %s",fn);
     MtxFile_t* mountainsFile = mfCreate(fn,ffOrder,nmount,Rep->Gen[0]->noc);
     for (i = 0; i < nmount; ++i)
@@ -135,7 +134,7 @@ static int newMountain(Matrix_t *vec, int cf)
     //matFree(spanOLD);
 
     MTX_LOG2("Next vector spins up to %"PRIu32,span->nor);
-    Matrix_t* backproj = QProjection(bild[cf],span);
+    Matrix_t* backproj = quotientProjection(bild[cf],span);
     matEchelonize(backproj);
 
     // Check if it is a new mountain
@@ -167,7 +166,7 @@ static int newMountain(Matrix_t *vec, int cf)
 	    	proj[nmount][cf] = backproj;
 	    else
 	    {
-		proj[nmount][k] = QProjection(bild[k],span);
+		proj[nmount][k] = quotientProjection(bild[k],span);
 		matEchelonize(proj[nmount][k]);
 	    }
 	}
@@ -225,7 +224,6 @@ static void makeclass(int mnt, int cf, Matrix_t* vectors)
 static void findMountains()
 {
    Matrix_t* vectors, * vec, * uk;
-   char fn[200];
    int cf;
    int i;
 
@@ -233,10 +231,8 @@ static void findMountains()
    nmount = 0;
    for (cf = 0; cf < LI->nCf; ++cf) {
       // Read the vectors and the uncondense matrix
-      sprintf(fn, "%s%s.v", LI->BaseName, latCfName(LI, cf));
-      vectors = matLoad(fn);
-      sprintf(fn, "%s%s.k", LI->BaseName, latCfName(LI, cf));
-      uk = matLoad(fn);
+      vectors = matLoad(strEprintf("%s%s.v", LI->baseName, latCfName(LI, cf)));
+      uk = matLoad(strEprintf("%s%s.k", LI->baseName, latCfName(LI, cf)));
 
       // Try each vector
       moffset[cf] = nmount;
@@ -251,7 +247,7 @@ static void findMountains()
 
       matFree(vectors);
       matFree(uk);
-      MTX_LOGI("%s%s: %ld mountain%s", LI->BaseName, latCfName(LI, cf),
+      MTX_LOGI("%s%s: %ld mountain%s", LI->baseName, latCfName(LI, cf),
             LI->Cf[cf].nmount, LI->Cf[cf].nmount != 1 ? "s" : "");
 
    }
@@ -262,7 +258,7 @@ static void findMountains()
 
 static void writeIncidenceMatrix()
 {
-   MtxFile_t* file = mfOpen(strEprintf("%s.inc", LI->BaseName), "wb");
+   MtxFile_t* file = mfOpen(strEprintf("%s.inc", LI->baseName), "wb");
    MTX_LOGD("Writing incidence matrix (%s)", file->name);
    uint32_t l = nmount;
    mfWrite32(file, &l, 1);
@@ -290,7 +286,7 @@ static void calculateIncidences()
     for (cfi = i = 0; i < nmount; ++i)
     {
 	if (i == moffset[cfi])
-	    MTX_LOGI("%s%s",LI->BaseName,latCfName(LI,cfi));
+	    MTX_LOGI("%s%s",LI->baseName,latCfName(LI,cfi));
 	for (cfk=0, k = 0; k < nmount; ++k)
 	{
 	    int isubk, ksubi;

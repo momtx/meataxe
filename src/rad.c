@@ -108,9 +108,7 @@ static void ReadFiles()
     Rep = mrLoad(Name,Info->NGen);
     for (int i = 0; i < Info->nCf; ++i)
     {
-	char fn[200];
-	sprintf(fn,"%s%s.std", Info->BaseName,latCfName(Info,i));
-	CfRep[i] = mrLoad(fn,Info->NGen);
+	CfRep[i] = mrLoad(strEprintf("%s%s.std", Info->baseName,latCfName(Info,i)),Info->NGen);
     }
 }
 
@@ -184,7 +182,6 @@ int main(int argc, char **argv)
     int i, j, socdim=0, soclen = 0, dim;
     int flag;
     int *cfvec;
-    char name[LAT_MAXBASENAME];
     Matrix_t *stgen, *partbas, 
              *mat, *seed, 
 	     *emb = NULL, *basis = NULL,
@@ -282,7 +279,7 @@ int main(int argc, char **argv)
 	    matFree(bas);
 	    bas = matTransposed(stgen);
 	    matFree(stgen);
-	    sprintf(name,"%s.rad",Name);
+            char* name = strMprintf("%s.rad",Name);
 	    if (basis == NULL)
 		matSave(bas,name);
 	    else
@@ -293,6 +290,7 @@ int main(int argc, char **argv)
 		matCopyRegion(basis,basis->nor - socdim,0,bas,0,0,bas->nor, bas->noc);
 		matSave(basis, name);
 	    }
+            sysFree(name);
             break;
         }
 
@@ -333,8 +331,7 @@ int main(int argc, char **argv)
 
 	if (Len == soclen && !Head)
 	{
-	    sprintf(name, "%s.rad", Name);
-	    matSave(basis, name);
+	    matSave(basis, strEprintf("%s.rad", Name));
 	    break;
 	}
 
@@ -440,9 +437,7 @@ int main(int argc, char **argv)
 	    }
 	}
 
-	sprintf(name,"%s%s.h%d", Name, latCfName(Info,j), Len);
-	matSave(mat,name);
-/*	matPrint(name, mat);*/
+	matSave(mat,strEprintf("%s%s.h%d", Name, latCfName(Info,j), Len));
 	matFree(mat);
     }
     wgFree(rep);

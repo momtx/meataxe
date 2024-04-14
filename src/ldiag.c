@@ -115,12 +115,12 @@ int ldFree(LdLattice_t *l)
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 /// Add an incidence relation.
 /// This function adds an incidence relation between two nodes to a given 
-/// lattice. Both @a sub and @a sup must be valid node numbers, i.e. greater 
+/// lattice. Both @p sub and @p sup must be valid node numbers, i.e. greater 
 /// or equal to zero and less than the number of nodes. Apart from this 
 /// range check, no further plausibility tests are performed.
 /// @param lat Pointer to the lattice data structure.
-/// @param sub Number of the `lower' node (contained in @a sup).
-/// @param sup Number of the `upper' node (containing @a sub).
+/// @param sub Number of the `lower' node (contained in @p sup).
+/// @param sup Number of the `upper' node (containing @p sub).
 /// @return 0 on success, -1 on error.
 
 int ldAddIncidence(LdLattice_t *lat, int sub, int sup)

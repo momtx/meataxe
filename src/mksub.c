@@ -123,13 +123,13 @@ static MtxApplication_t *App = NULL;
 static void init1(const char *basename)
 {	
     int i;
-    char fn[40];
 
     LI = latLoad(basename);
     
     // Read incidence matrix
     {
-       MtxFile_t* f = mfOpen(strcat(strcpy(fn,LI->BaseName),".inc"),"r");
+       char* fn = strEprintf("%s.inc",LI->baseName);
+       MtxFile_t* f = mfOpen(fn,"r");
        uint32_t l;
        mfRead32(f, &l, 1);
        xnmount = (int) l;
@@ -157,7 +157,8 @@ static void init1(const char *basename)
 
     // Read dotted lines
     {
-       MtxFile_t* f = mfOpen(strcat(strcpy(fn,LI->BaseName),".dot"),"rb");
+       char* fn = strEprintf("%s.dot", LI->baseName);
+       MtxFile_t* f = mfOpen(fn,"rb");
        uint32_t l;
        mfRead32(f,&l,1);
        xndotl = (int) l;
@@ -181,7 +182,8 @@ static void init1(const char *basename)
 
     // Read dimensions
     {
-       FILE* f = sysFopen(strcat(strcpy(fn,LI->BaseName),".mnt"),"r");
+       char* fn = strEprintf("%s.mnt", LI->baseName);
+       FILE* f = sysFopen(fn,"r");
        MTX_LOGD("Reading %s",fn);
        for (i = 0; i < xnmount; ++i)
        {
@@ -417,7 +419,7 @@ static void extend(BitString_t *x, int i, int nextend)
 
 MtxFile_t* openOutputFile(char* name)
 {
-   char* fn = strEprintf(opt_b ? "%s%s.%d" : "%s%s", LI->BaseName, name, blockNumber);
+   char* fn = strEprintf(opt_b ? "%s%s.%d" : "%s%s", LI->baseName, name, blockNumber);
    MTX_LOGD("Writing %s", fn);
    return mfOpen(fn, "wb");
 }
@@ -425,7 +427,7 @@ MtxFile_t* openOutputFile(char* name)
 
 FILE* openTextOutputFile(char* name)
 {
-   char* fn = strEprintf(opt_b ? "%s%s.%d" : "%s%s", LI->BaseName, name, blockNumber);
+   char* fn = strEprintf(opt_b ? "%s%s.%d" : "%s%s", LI->baseName, name, blockNumber);
    MTX_LOGD("Writing %s", fn);
    return sysFopen(fn, "w");
 }
@@ -769,7 +771,7 @@ static int nextblock()
     MTX_XLOGI(sb) {
        sbPrintf(sb, "Block %d: ",blockNumber);
 	for (i = 0; i < blockSize; ++i)
-	    sbPrintf(sb, " %s%s",LI->BaseName,latCfName(LI,blockMember[i]));
+	    sbPrintf(sb, " %s%s",LI->baseName,latCfName(LI,blockMember[i]));
     }
     return 1;
 }

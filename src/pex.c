@@ -585,8 +585,8 @@ static void createTask(
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 /// Schedules a task for execution.
-/// If PEX is not initialized, this function calls the function @a f with the argument @a userData
-/// and ignores @a group.
+/// If PEX is not initialized, this function calls the function @p f with the argument @p userData
+/// and ignores @p group.
 /// Otherwise the function call is scheduled to be executed by a worker thread at some point in the
 /// future.
 ///
@@ -594,7 +594,7 @@ static void createTask(
 /// was created after task A, B may already be finished before A is started. If task B is created
 /// in task A, B may be finished before A is finished.
 ///
-/// If @a group is not NULL, it must be a pointer to a task group created by @ref pexCreateGroup.
+/// If @p group is not NULL, it must be a pointer to a task group created by @ref pexCreateGroup.
 /// The task becomes a member of this group, i.e., @ref pexWait will not return before this task
 /// is finished.
 
@@ -608,7 +608,7 @@ void pexExecute(PexGroup_t* group, void (*f)(void *userData), void* userData)
 
 /// Schedules a task for execution.
 /// This function works like @ref pexExecute but the task function receives three arguments,
-/// @a userData, @a begin and @a end.
+/// @p userData, @p begin and @p end.
 
 void pexExecuteRange(
       PexGroup_t* group,
@@ -631,12 +631,12 @@ void pexExecuteRange(
 ///
 /// @param isEnabled is a pointer to a variable that will be used by pexThrottle to store the
 /// current state. Its initial value is not important, but you must use the same variable for
-/// all calls with the same @a group.
+/// all calls with the same @p group.
 ///
 /// @param loadFactor defines the queue size limit. If the value is positive, it is interpreted
 /// as a percentage of the available CPU cores. For example, a value of 100 means that the queue
 /// size is limited to the number of CPU cores. Negative values are interpreted as absolute queue
-/// sizes. For example @a loadFactor = -8 means that up to 8 tasks can be queued.
+/// sizes. For example @p loadFactor = -8 means that up to 8 tasks can be queued.
 
 void pexThrottle(PexGroup_t* group, int* isEnabled, int loadFactor)
 {

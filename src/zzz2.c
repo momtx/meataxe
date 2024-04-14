@@ -103,7 +103,7 @@ void ffSwapRows(PTR dest, PTR src, int noc)
 
 /// Get row pointer.
 /// This function returns a pointer to a row of a matrix, given the row index.
-/// @a base must be a pointer to the beginning of a row, but this need not be the first
+/// @p base must be a pointer to the beginning of a row, but this need not be the first
 /// row of the matrix. For example, <tt>x = ffGetPtr(x,1,noc)</tt> can be used to advance a
 /// row pointer to the next row.
 ///

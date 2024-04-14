@@ -51,19 +51,14 @@ static Matrix_t *basis = NULL;		// Basis corresponding to Loewy series
 static void ReadConstituents()
 {
     int i;
-    char fn[200];
 
     for (i = 0; i < LI->nCf; ++i)
     {
-	/* Read generators
-	   --------------- */
-	sprintf(fn,"%s%s.std", LI->BaseName,latCfName(LI,i));
-	CfRep[i] = mrLoad(fn,LI->NGen);
+	// Read generators
+	CfRep[i] = mrLoad(strEprintf("%s%s.std", LI->baseName,latCfName(LI,i)),LI->NGen);
 
-	/* Read spinup script for standard basis
-	   ------------------------------------- */
-	sprintf(fn,"%s%s.op",LI->BaseName,latCfName(LI,i));
-	OpTableMat[i] = imatLoad(fn);
+	// Read spinup script for standard basis
+	OpTableMat[i] = imatLoad(strEprintf("%s%s.op",LI->baseName,latCfName(LI,i)));
 	if (ConvertSpinUpScript(OpTableMat[i]))
 	{
 	    static int first_time = 1;
@@ -74,10 +69,9 @@ static void ReadConstituents()
 	    }
 	}
 
-	/* Read peak word kernel.
-	   ---------------------- */
-	sprintf(fn,"%s%s.k",LI->BaseName,latCfName(LI,i));
-	MTX_LOGD("Taking seed vectors from %s",fn);
+	// Read peak word kernel.
+	char* fn = strEprintf("%s%s.k",LI->baseName,latCfName(LI,i));
+	MTX_LOGD("Reading seed vectors from %s",fn);
 	seed[i] = matLoad(fn);
     }
 }

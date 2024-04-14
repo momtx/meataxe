@@ -15,7 +15,7 @@
 ///
 /// @param dest Pointer to the matrix.
 /// @param coeff Value to multiply with.
-/// @return The function returns @a dest or NULL on error.
+/// @return The function returns @p dest or NULL on error.
 
 Matrix_t *matMulScalar(Matrix_t *dest, FEL coeff)
 {

@@ -64,9 +64,9 @@ static void ParseTKInfoFile(StfData *f, TkData_t *tki)
 	const char *c = stfGetName(f);
 	if (c == NULL) continue;
 	if (!strcmp(c,"TKInfo.NameM"))
-	    stfGetString(f,tki->nameM,sizeof(tki->nameM));
+	    stfGetStringPtr(f,&tki->nameM);
         else if (!strcmp(c,"TKInfo.NameN"))
-	    stfGetString(f,tki->nameN,sizeof(tki->nameN));
+	    stfGetStringPtr(f,&tki->nameN);
 	else if (!strcmp(c,"TKInfo.Dim"))
 	{
 	    stfGetInt(f,&tki->dim);

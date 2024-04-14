@@ -59,7 +59,7 @@ BitString_t *bsAllocEmpty()
 
 /// Creates a fixed-size bit string.
 /// All bits are initially cleared. The bit string size cannot be changed. Accessing bits at
-/// position @a size or greater will result in an error and abort the program.
+/// position @p size or greater will result in an error and abort the program.
 ///
 /// See also @ref bsFree
 
@@ -148,7 +148,7 @@ void bsTrim(const BitString_t* bs)
 /// Changes and locks the size of a bit string.
 /// This function can be called on any bit string, variable or fixed size.
 /// It converts the bit string into a fixed-size bit string of the given size. Existing bits at
-/// position @a newSize and above will be lost. If the size is increased, new bits are initialized
+/// position @p newSize and above will be lost. If the size is increased, new bits are initialized
 /// with 0.
 
 void bsResize(BitString_t* bs, size_t newSize)
@@ -171,7 +171,7 @@ void bsResize(BitString_t* bs, size_t newSize)
 
 /// Sets a bit in a bit string.
 /// 
-/// If the bit string is of fixed size, @a i must be less than <tt>bs->size</tt>.
+/// If the bit string is of fixed size, @p i must be less than <tt>bs->size</tt>.
 
 void bsSet(BitString_t* bs, size_t i)
 {
@@ -189,7 +189,7 @@ void bsSet(BitString_t* bs, size_t i)
 
 /// Clears a bit in a bit string.
 /// 
-/// If the bit string is of fixed size, @a i must be less than <tt>bs->size</tt>.
+/// If the bit string is of fixed size, @p i must be less than <tt>bs->size</tt>.
 
 void bsClear(BitString_t* bs, size_t i)
 {
@@ -234,9 +234,9 @@ static void validate2(const BitString_t* a, const BitString_t* b)
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-/// Performs a logical and (intersection) on two bit strings and stores the result in @a dest.
-/// @a dest and @a src must either both be of fixed-size type or both be dynamic. If they are of
-/// fixed-size type, their size must be equal. The type of @a dest remains unchanged.
+/// Performs a logical and (intersection) on two bit strings and stores the result in @p dest.
+/// @p dest and @p src must either both be of fixed-size type or both be dynamic. If they are of
+/// fixed-size type, their size must be equal. The type of @p dest remains unchanged.
 
 void bsAnd(BitString_t* dest, const BitString_t* src)
 {
@@ -255,9 +255,9 @@ void bsAnd(BitString_t* dest, const BitString_t* src)
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-/// Performs a logical or (union) on two bit strings and stores the result in @a dest.
-/// @a dest and @a src must either both be of fixed-size type or both be dynamic. If they are of
-/// fixed-size type, their size must be equal. The type of @a dest remains unchanged.
+/// Performs a logical or (union) on two bit strings and stores the result in @p dest.
+/// @p dest and @p src must either both be of fixed-size type or both be dynamic. If they are of
+/// fixed-size type, their size must be equal. The type of @p dest remains unchanged.
 
 void bsOr(BitString_t* dest, const BitString_t* src)
 {
@@ -277,9 +277,9 @@ void bsOr(BitString_t* dest, const BitString_t* src)
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-/// Clears all bits in @a dest which are also set in @a src.
-/// @a dest and @a src must either both be of fixed-size type or both be dynamic. If they are of
-/// fixed-size type, their size must be equal. The type of @a dest remains unchanged.
+/// Clears all bits in @p dest which are also set in @p src.
+/// @p dest and @p src must either both be of fixed-size type or both be dynamic. If they are of
+/// fixed-size type, their size must be equal. The type of @p dest remains unchanged.
 
 void bsMinus(BitString_t *dest, const BitString_t *src)
 {
@@ -295,9 +295,9 @@ void bsMinus(BitString_t *dest, const BitString_t *src)
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-/// Returns 1 if @a a is a subset of @a b and 0 otherwise.
+/// Returns 1 if @p a is a subset of @p b and 0 otherwise.
 ///
-/// @a dest and @a src must either both be of fixed-size type or both be dynamic. If they are of
+/// @p dest and @p src must either both be of fixed-size type or both be dynamic. If they are of
 /// fixed-size type, their size must be equal.
 
 int bsIsSub(const BitString_t *a, const BitString_t *b)
@@ -331,8 +331,8 @@ int bsIsSub(const BitString_t *a, const BitString_t *b)
 /// Counts matching bits in two bit strings.
 ///
 /// This function calculates the cardinality of the intersection of two bit strings, i.e.,
-/// the number of bits that are set in both @a a and @a b.
-/// @a dest and @a src must either both be of fixed-size type or both be dynamic. If they are of
+/// the number of bits that are set in both @p a and @p b.
+/// @p dest and @p src must either both be of fixed-size type or both be dynamic. If they are of
 /// fixed-size type, their size must be equal.
 
 size_t bsIntersectionCount(const BitString_t *a, const BitString_t *b)
@@ -374,7 +374,7 @@ size_t bsIntersectionCount(const BitString_t *a, const BitString_t *b)
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 /// Compare two bit strings.
-/// @a dest and @a src must either both be of fixed-size type or both be dynamic.
+/// @p dest and @p src must either both be of fixed-size type or both be dynamic.
 /// @return 0 if the bit strings are equal. Otherwise the return value is different from zero.
 
 int bsCompare(const BitString_t *a, const BitString_t *b)
@@ -421,7 +421,7 @@ int bsCompare(const BitString_t *a, const BitString_t *b)
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 /// Copies a bit string.
-/// The current contents of @a dest is replaced with a copy of @a src. This includes the bit string
+/// The current contents of @p dest is replaced with a copy of @p src. This includes the bit string
 /// type (variable or fixed-size).
 
 void bsCopy(BitString_t *dest, const BitString_t *src)
@@ -557,8 +557,8 @@ void bsSkip(MtxFile_t* f)
 
 /// Finds the first "1" bit in a bit string.
 /// If the bit string contains at least one "1" bit, the index of the first "1" is stored in the
-/// variable pointed to by @a indexVar and the function returns 1. Otherwise the function returns 0
-/// and the variable pointed to by @a indexVar is not changed.
+/// variable pointed to by @p indexVar and the function returns 1. Otherwise the function returns 0
+/// and the variable pointed to by @p indexVar is not changed.
 
 int bsFirst(const BitString_t* bs, size_t* indexVar)
 {
@@ -587,7 +587,7 @@ int bsFirst(const BitString_t* bs, size_t* indexVar)
 
 /// Finds the next "1" bit starting at a given position. 
 
-/// If @em s is the value of the "index variable" pointed to by @a indexVar, the function finds the
+/// If @em s is the value of the "index variable" pointed to by @p indexVar, the function finds the
 /// first "1" at a position greater than @em s, stores its position in the index variable and
 /// returns 1. If no such bit is found, the function returns 0 and does not change the index
 /// variable.

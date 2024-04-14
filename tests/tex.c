@@ -84,13 +84,13 @@ static int strSkip(const char**rpp, const char* pattern)
 // Returns a copy of «c» up to (not including) «cEnd».
 // If «cEnd» is NULL, the full string is copied.
 
-static char *strDup(const char* c, const char* cEnd)
+static char *strCopyRange(const char* c, const char* cEnd)
 {
-    const size_t len = cEnd ? cEnd - c : strlen(c);
-    char *s = (char*) malloc(len + 1);
-    memcpy(s, c, len);
-    s[len] = 0;
-    return s;
+   const size_t len = cEnd ? cEnd - c : strlen(c);
+   char *s = (char*) malloc(len + 1);
+   memcpy(s, c, len);
+   s[len] = 0;
+   return s;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -104,7 +104,7 @@ static char* strParseIdentifier(const char**rpp)
     if (!isalpha(*rp)) return NULL;
     const char *start = rp;
     while (isalnum(*rp) || *rp == '_') ++rp;
-    char *id = strDup(start, rp);
+    char *id = strCopyRange(start, rp);
     *rpp = rp;
     return id;
 }
@@ -127,7 +127,7 @@ static void printTests()
    for (const struct FoundTest* t = foundTests; t; t = t->prev)
    {
       const char* localSuffix = strstr(t->name, "__");
-      char* name = localSuffix ? strDup(t->name, localSuffix) : NULL;
+      char* name = localSuffix ? strCopyRange(t->name, localSuffix) : NULL;
       printf("{%s, 0x%x, \"%s\"},\n", t->name, t->flags, name ? name : t->name);
       free(name);
    }

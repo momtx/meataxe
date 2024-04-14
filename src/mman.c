@@ -35,7 +35,7 @@ static size_t nObjs = 0;
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 /// Allocates memory for a managed object.
-/// The returned memory block has size @a size and starts with an object header (see, for example,
+/// The returned memory block has size @p size and starts with an object header (see, for example,
 /// @ref Matrix_t) consisting of two pointers and a typeId field. These fields must not be modified
 /// by the user.
 /// The object must be released with @ref mmFree.
@@ -216,8 +216,8 @@ static void destroy(void* object)
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-/// Destroys all recent objects up to, but not including, @a checkpoint.
-/// If @a checkpoint was already destroyed, nothing happens.
+/// Destroys all recent objects up to, but not including, @p checkpoint.
+/// If @p checkpoint was already destroyed, nothing happens.
 
 void mmRollback(uint32_t checkpoint)
 {

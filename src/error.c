@@ -35,7 +35,6 @@ static void DefaultHandler(const struct MtxErrorInfo* e)
 {
    logPrepareForAbort();
 
-   // TODO: dump context stack for all threads
    logPrintf(MTX_LOG_ERROR, "**********************************************************");
    logPrintf(MTX_LOG_ERROR, "FATAL ERROR: %s", e->message);
    if (e->source.file) {
@@ -58,6 +57,8 @@ static void DefaultHandler(const struct MtxErrorInfo* e)
                baseName, sp->source.line, sp->source.func, sp->title);
       }
    }
+
+
    exit(9);
 }
 
@@ -79,7 +80,7 @@ MtxErrorHandler_t *MtxSetErrorHandler(MtxErrorHandler_t *h)
 
 /// Terminates the program with an error message. 
 /// @param sl The source location to be included in the error message. Pass @c MTX_HERE to use
-///    print the current location. If @a sl is NULL, no location will be shown.
+///    print the current location. If @p sl is NULL, no location will be shown.
 /// @param text The error message (printf style format), followed by any arguments.
 
 void mtxAbort(const struct MtxSourceLocation* sl, const char *text, ...)
@@ -126,7 +127,7 @@ int mtxBegin(const struct MtxSourceLocation* sl, const char *s, ...)
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-int mtxBeginScope(MtxErrorContextProvider ec, void* userData)
+int mtxBeginP(MtxErrorContextProvider ec, void* userData)
 {
    struct ErrorContextStack* cs = pexContextStack();
    if (cs->size >= cs->capacity) {

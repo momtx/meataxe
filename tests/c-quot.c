@@ -17,7 +17,7 @@ TstResult QuotientProjection1(int q)
 
    Matrix_t *m1 = MkMat(5,5, 0,0,0,0,1, 0,0,0,1,0, 0,0,1,0,0, 0,1,0,0,0, 1,0,0,0,0);
    Matrix_t *expectedP1 = MkMat(2,2, 0,1, 1,0);
-   Matrix_t* p1 = QProjection(sub,m1);
+   Matrix_t* p1 = quotientProjection(sub,m1);
    matEchelonize(p1);
    ASSERT(matCompare(p1,expectedP1) == 0);
    matFree(p1);
@@ -26,7 +26,7 @@ TstResult QuotientProjection1(int q)
 
    Matrix_t *m2 = MkMat(5,5, 1,1,1,1,1, 1,0,1,0,1, 1,0,1,1,0, 0,1,0,1,1, 0,1,1,1,0);
    Matrix_t *expectedP2 = MkMat(2,2, 0,-1, 1,0);
-   Matrix_t* p2 = QProjection(sub,m2);
+   Matrix_t* p2 = quotientProjection(sub,m2);
    matEchelonize(p2);
    ASSERT(matCompare(p2,expectedP2) == 0);
    matFree(p2);
@@ -48,13 +48,13 @@ TstResult QuotientProjection2(int q)
       Matrix_t *id = matId(ffOrder,size);
       Matrix_t *quot;
       matEchelonize(sub);
-      quot = QProjection(sub,id);
+      quot = quotientProjection(sub,id);
       matEchelonize(quot);
       matFree(id);
       for (k = 0; k < 3; ++k) {
          Matrix_t *vec = RndMat(ffOrder,size * 5,size);
          Matrix_t *proj;
-         proj = QProjection(sub,vec);
+         proj = quotientProjection(sub,vec);
          matEchelonize(proj);
 	 ASSERT(IsSubspace(proj,quot,0));
 	 ASSERT(proj->nor <= quot->nor);
@@ -78,7 +78,7 @@ TstResult QuotientAction(int q)
    matEchelonize(sub);
 
    Matrix_t *m1 = MkMat(5,5, 0,0,0,0,1, 0,0,0,1,0, 0,0,1,0,0, 0,1,0,0,0, 1,0,0,0,0);
-   Matrix_t* op1 = QAction(sub,m1);
+   Matrix_t* op1 = quotientAction(sub,m1);
    ASSERT(op1 != NULL);
    ASSERT(matCompare(op1,expectedOp1) == 0);
    matFree(op1);
@@ -86,7 +86,7 @@ TstResult QuotientAction(int q)
    matFree(m1);
 
    Matrix_t *m2 = MkMat(5,5, 1,1,1,1,1, 1,0,1,0,1, 1,0,1,1,0, 0,1,0,1,1, 0,1,1,1,0);
-   Matrix_t* op2 = QAction(sub,m2);
+   Matrix_t* op2 = quotientAction(sub,m2);
    ASSERT(op2 != NULL);
    ASSERT(matCompare(op2,expectedOp2) == 0);
    matFree(op2);

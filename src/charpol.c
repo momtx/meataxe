@@ -25,8 +25,9 @@ void charpolValidate(const struct MtxSourceLocation* src, Charpol_t* cp)
 /// This function returns a computation state object which can be passed to @ref charpolFactor
 /// to calculate the characteristic or minimal polynomial of a matrix.
 ///
-/// @param matrix The matrix.
-/// @param mode Decides which polynomial (minimal or characteristic) to compute.
+/// @param matrix The matrix. After charpolStart() returns, the matrix max be modified or deleted
+///    without affecting charpolFactor() operation.
+/// @param mode Selects the polynomial (minimal or characteristic) to compute.
 /// @param seed The first basis vector to use for spin-up. Usually zero.
 
 Charpol_t* charpolStart(const Matrix_t* matrix, enum CharpolMode mode, long seed)
@@ -46,8 +47,6 @@ Charpol_t* charpolStart(const Matrix_t* matrix, enum CharpolMode mode, long seed
    state->piv = NALLOC(long,state->vsDim + 2);
    state->ispiv = NALLOC(char,state->vsDim + 2);
        
-   // TODO: provide option to suppress copy and use the original matrix.
-   // This should always done in charPol() and may be useful for charPolFactor().
    memcpy(state->mat,matrix->data,ffSize(state->vsDim,state->vsDim));
    memset(state->ispiv,0,(size_t)(state->vsDim + 2));
 
@@ -63,7 +62,7 @@ Charpol_t* charpolStart(const Matrix_t* matrix, enum CharpolMode mode, long seed
 
 /// Destroys a polynomial computation state.
 /// Call this function when the polynomial computation is finished or cancelled. All memory
-/// associated with the computation is released, and the @a state pointer becomes invalid.
+/// associated with the computation is released, and the @p state pointer becomes invalid.
 
 void charpolFree(struct CharpolState* state)
 {

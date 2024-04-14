@@ -17,7 +17,7 @@
 /// Create a complex log message (level MTX_LOG_ERROR).
 /// The MTX_XLOG? macros can be used to write complex log messages with minimal overhead if the
 /// message is disabled by the current log threshold. The macro must be followed by a block
-/// statement which has access to a string buffer (see @ref StrBuffer_t) under the name @a sb.
+/// statement which has access to a string buffer (see @ref StrBuffer_t) under the name @p sb.
 /// Inside the block statement you can use @ref sbAppend, @ref sbPrintf or any other formatting
 /// function that works with a string buffer target. The block will only be executed if the message
 /// is permitted by the current log threshold.
@@ -309,7 +309,7 @@ static int setFormat(const char* spec)
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 /// Configures log output.
-/// @a spec format: «file»:«threshold»[:«format»]
+/// @p spec format: «file»:«threshold»[:«format»]
 ///
 /// If logInit() is not called, logging works with a default configuration of
 /// "stdout:debug:default".

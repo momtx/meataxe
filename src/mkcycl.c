@@ -76,7 +76,6 @@ static void spinupVector(Matrix_t* seed, MatRep_t* rep)
 
 static void writeResult(int cf, uint32_t condDim)
 {
-   char fn[200];
    Matrix_t* result;
 
    result = matAlloc(ffOrder, nCyclic, condDim);
@@ -84,7 +83,7 @@ static void writeResult(int cf, uint32_t condDim)
       MTX_ASSERT(cyclic[i]->noc == condDim);
       matCopyRegion(result, i, 0, cyclic[i], 0, 0, 1, condDim);
    }
-   sprintf(fn, "%s%s.v", LI->BaseName, latCfName(LI, cf));
+   char* fn = strEprintf("%s%s.v", LI->baseName, latCfName(LI, cf));
    MTX_LOGD("Writing %s", fn);
    matSave(result, fn);
    matFree(result);
@@ -106,13 +105,12 @@ static void writeResult(int cf, uint32_t condDim)
 
 static void findCyclicSubmodules(int cf)
 {
-   char fn[200];
-
    // Read the generators and the condensed peak words
-   sprintf(fn, "%s%s.%%dk", LI->BaseName, latCfName(LI, cf));
-   MTX_LOGD("Loading generators for %s%s", LI->BaseName, latCfName(LI, cf));
+   char* fn = strEprintf("%s%s.%%dk", LI->baseName, latCfName(LI, cf));
+   MTX_LOGD("Loading generators for %s%s", LI->baseName, latCfName(LI, cf));
    MatRep_t* rep = mrLoad(fn, LI->NGen);
-   sprintf(fn, "%s%s.np", LI->BaseName, latCfName(LI, cf));
+
+   fn = strEprintf("%s%s.np", LI->baseName, latCfName(LI, cf));
    mrAddGenerator(rep, matLoad(fn), 0);
 
    // Spin up all seed vectors
@@ -133,7 +131,7 @@ static void findCyclicSubmodules(int cf)
 
    // Write the result and clean up
    MTX_LOGI("%s%s: %d cyclic submodule%s (%lu vectors tried)",
-      LI->BaseName, latCfName(LI, cf), nCyclic, nCyclic == 1 ? " " : "s", count);
+      LI->baseName, latCfName(LI, cf), nCyclic, nCyclic == 1 ? " " : "s", count);
    writeResult(cf, condDim);
    matFree(seed);
    matFree(seed_basis);

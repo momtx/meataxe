@@ -308,7 +308,7 @@ size_t ffRowSize(uint32_t noc)
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-/// Returns the number of bytes occupied in memory by @a nor rows of @a noc elements.
+/// Returns the number of bytes occupied in memory by @p nor rows of @p noc elements.
 
 ssize_t ffSize(uint32_t nor, uint32_t noc)
 {
@@ -424,7 +424,7 @@ PTR ffAddRow(PTR dest, PTR src, uint32_t noc)
 /// Adds a row to another row, starting at the given column.
 /// This is an optimized version of @ref ffAddRow to be used in row cleaning operations.
 /// The function assumes that both source and target rows have already been partially cleaned
-/// and contain only zeroes before @a firstcol. If this is not the case, the result is
+/// and contain only zeroes before @p firstcol. If this is not the case, the result is
 /// unspecified.
 ///
 /// @param dest The row to add to.
@@ -462,11 +462,11 @@ void ffAddRowPartial(PTR dest, PTR src, uint32_t first, uint32_t noc)
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 /// Multiply a vector by a field element.
-/// This function multiplies each element of @a row by @a mark.
+/// This function multiplies each element of @p row by @p mark.
 /// The field order must have been set before.
 ///
 /// Multiplying a row with zero (FF_ZERO) initializes all elements to zero and is permitted even if
-/// @a row points to uninitialized memory. Furthermore, multiplying with FF_ZERO fills unused bytes
+/// @p row points to uninitialized memory. Furthermore, multiplying with FF_ZERO fills unused bytes
 /// at the end of the row with zeroes (which may be different from FF_ERO.
 
 void ffMulRow(PTR row, FEL mark, int noc)
@@ -487,8 +487,8 @@ void ffMulRow(PTR row, FEL mark, int noc)
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-/// Adds a multiple of a row (@a src) to another row (@a dest). Both rows must have the same
-/// size (@a noc).
+/// Adds a multiple of a row (@p src) to another row (@p dest). Both rows must have the same
+/// size (@p noc).
 
 void ffAddMulRow(PTR dest, PTR src, FEL f, uint32_t noc)
 {
@@ -516,7 +516,7 @@ void ffAddMulRow(PTR dest, PTR src, FEL f, uint32_t noc)
 ///
 /// This is an optimized version of @ref ffAddMulRow to be used in row cleaning operations.
 /// The function assumes that both source and target rows have already been partially cleaned
-/// and contain only zeroes before @a firstcol. If this is not the case, the result is
+/// and contain only zeroes before @p firstcol. If this is not the case, the result is
 /// unspecified.
 ///
 /// @param dest The row to add to.
@@ -576,12 +576,12 @@ int ffToInt(FEL f)
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 /// Multiply a vector by a matrix.
-/// This function multiplies the vector @a row from the right by the matrix @a mat and
-/// stores the result into @a result.
+/// This function multiplies the vector @p row from the right by the matrix @p mat and
+/// stores the result into @p result.
 ///
 /// @attention @em result and @em row must not overlap. Otherwise the result is undefined.
 ///
-/// @param[out] result The resulting vector (@a noc columns).
+/// @param[out] result The resulting vector (@p noc columns).
 /// @param row The source vector (\a nor columns).
 /// @param matrix The matrix (\a nor by \a noc).
 /// @param nor number of rows in the matrix.
@@ -702,15 +702,15 @@ FEL ffScalarProduct(PTR a, PTR b, int noc)
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 /// Extract one column of a matrix.
 /// This function extracts one column out of a matrix and converts it into a row vector.
-/// in the call. The result is a row with @a nor entries, and the output buffer,
-/// @a result, must be large enough to store a vector of this size.
-/// @a mat and @a result must not overlap. If they do, the result is undefined.
+/// in the call. The result is a row with @p nor entries, and the output buffer,
+/// @p result, must be large enough to store a vector of this size.
+/// @p mat and @p result must not overlap. If they do, the result is undefined.
 ///
-/// @param mat Pointer to the matrix (@a nor by @a noc).
+/// @param mat Pointer to the matrix (@p nor by @p noc).
 /// @param nor Number of rows in matrix.
 /// @param noc Number of columns in matrix.
 /// @param col Column to extract (starting with 0).
-/// @param result Pointer to buffer for the extracted column (@a nor columns).
+/// @param result Pointer to buffer for the extracted column (@p nor columns).
 
 void ffExtractColumn(PTR mat, int nor, int noc, int col, PTR result)
 {
@@ -741,7 +741,7 @@ void ffExtractColumn(PTR mat, int nor, int noc, int col, PTR result)
 /// Before this function can be used, the field must be selected with ffSetField().
 ///
 /// @note @c ffInsert() fails on negative column numbvers but does not detect writing beyond
-/// the end of @a row. Doing so results in undefined behaviour.
+/// the end of @p row. Doing so results in undefined behaviour.
 ///
 /// @param row Pointer to the row.
 /// @param col Insert position (0-based).
@@ -760,10 +760,10 @@ void ffInsert(PTR row, int col, FEL mark)
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 /// Extract a mark from a row
-/// This function returns the entry at position @a col of @a row.
+/// This function returns the entry at position @p col of @p row.
 /// Note that column indexes start with 0, i.e., ffExtract(row,0) returns the first entry.
 /// Like ffInsert(), this function does not depend on the current row size.
-/// The index, @a col, is not checked. Reading at negative positions or beyond the end of the row
+/// The index, @p col, is not checked. Reading at negative positions or beyond the end of the row
 /// results in undefined behaviour.
 ///
 /// @param row Pointer to the row.
@@ -786,10 +786,10 @@ FEL ffExtract(PTR row, int col)
 /// The mark is stored into <tt>*mark</tt> and its position (counting from 0) is returned.
 /// If the whole vector is zero, <tt>ffFindPivot()</tt> returns @ref MTX_NVAL and
 /// leaves <tt>*mark</tt> unchanged.
-/// @param row Pointer to the row vector (@a noc columns).
+/// @param row Pointer to the row vector (@p noc columns).
 /// @param mark Buffer for pivot element. May be NULL if the value is not needed.
 /// @param noc Number of columns.
-/// @return Index of the first non-zero entry in @a row or -1 if all entries are zero.
+/// @return Index of the first non-zero entry in @p row or -1 if all entries are zero.
 
 uint32_t ffFindPivot(PTR row, FEL *mark, int noc)
 {

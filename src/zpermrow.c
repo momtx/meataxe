@@ -9,16 +9,16 @@
  
 /// Multiplies a vector from the right by a permutation.
 ///
-/// This function multiplies the vector @a row from the right with the permutation @a perm
-/// and stores the result in @a result. More explicitly: if <tt>perm[i] = k</tt>, then the
+/// This function multiplies the vector @p row from the right with the permutation @p perm
+/// and stores the result in @p result. More explicitly: if <tt>perm[i] = k</tt>, then the
 /// i-th mark of the vector is stored in the k-th position of the result. 
 ///
-/// @param result Result vector (@a noc columns).
-/// @param row A row vector with @a noc columns.
-/// @param perm Pointer to a table of @a noc numbers defining a permutation of {0,..., noc-1}.
-/// @param noc Number of columns in @a row and @result
+/// @param result Result vector (@p noc columns).
+/// @param row A row vector with @p noc columns.
+/// @param perm Pointer to a table of @p noc numbers defining a permutation of {0,..., noc-1}.
+/// @param noc Number of columns in @p row and @result
 ///
-/// Note: @a result and @a row must not overlap.
+/// Note: @p result and @p row must not overlap.
 
 void ffPermRow(PTR result, PTR row, const uint32_t* perm, int noc)
 {

@@ -72,7 +72,6 @@ static MtxApplication_t *App = NULL;
 
 static void readFiles(const char* basename)
 {
-   char fn[200];
    int i;
 
    LI = latLoad(basename);
@@ -83,8 +82,7 @@ static void readFiles(const char* basename)
    }
 
    // Read the incidence matrix
-   sprintf(fn, "%s.inc", LI->BaseName);
-   MtxFile_t* f = mfOpen(fn, "rb");
+   MtxFile_t* f = mfOpen(strEprintf("%s.inc", LI->baseName), "rb");
    mfRead32(f, &nmountains, 1);
    if (nmountains != cfstart[LI->nCf]) {
       mtxAbort(MTX_HERE, "Bad number of mountains in .inc file");
@@ -103,7 +101,7 @@ static void readFiles(const char* basename)
 
    // Read classes
    {
-      sprintf(fn, "%s.mnt", LI->BaseName);
+      char* fn = strEprintf("%s.mnt", LI->baseName);
       MTX_LOGD("Reading classes (%s)", fn);
       FILE *f = sysFopen(fn, "r");
       for (i = 0; i < nmountains; ++i) {
@@ -158,16 +156,13 @@ static void mkmount(int i)
 
 static void initCf(int cf)
 {
-    char fn[200];
     int j;
 
     // Read the generators of the condensed module
-    sprintf(fn,"%s%s.%%dk",LI->BaseName,latCfName(LI,cf));
-    rep = mrLoad(fn,LI->NGen);
+    rep = mrLoad(strEprintf("%s%s.%%dk",LI->baseName,latCfName(LI,cf)),LI->NGen);
 
     // Read generating vectors for the cyclic submodules
-    sprintf(fn,"%s%s.v",LI->BaseName,latCfName(LI,cf));
-    cycl = matLoad(fn);
+    cycl = matLoad(strEprintf("%s%s.v",LI->baseName,latCfName(LI,cf)));
 
     // Calculate the length of dotted-lines. This is always 
     // Q + 1 where Q is the splitting field order.
@@ -384,9 +379,7 @@ static void mkdot(int cf)
 
 static void WriteResult()
 {
-   char fn[200];
-
-   strcat(strcpy(fn, LI->BaseName), ".dot");
+   char* fn = strEprintf("%s.dot", LI->baseName);
    MTX_LOGD("Writing %s (%d dotted line%s)", fn, ndotl, ndotl != 1 ? "s" : "");
    MtxFile_t* f = mfOpen(fn, "wb");
    const uint32_t l = ndotl;
@@ -460,7 +453,7 @@ int main(int argc, char *argv[])
 	mkdot(i);
 	LI->Cf[i].ndotl = ndotl - nn;
 	MTX_LOGI("%s%s: %d vectors, %ld mountains, %ld dotted line%s",
-	    LI->BaseName,latCfName(LI,i),  cycl->nor,LI->Cf[i].nmount,
+	    LI->baseName,latCfName(LI,i),  cycl->nor,LI->Cf[i].nmount,
 	    LI->Cf[i].ndotl, LI->Cf[i].ndotl != 1 ? "s": "");
 	nn = ndotl;
 	cleanupCf();

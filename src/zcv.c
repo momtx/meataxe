@@ -447,7 +447,7 @@ static void init(int argc, char **argv)
 int main(int argc, char **argv)
 {
    init(argc,argv);
-   int inputFileScope = mtxBeginScope(provideInputFilePosition, NULL);
+   int inputFileScope = mtxBeginP(provideInputFilePosition, NULL);
    while (convert()) {
       ++MemberCount;
    }

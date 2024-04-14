@@ -35,8 +35,8 @@
 
 /// Compare two permutations.
 ///
-/// This function returns -1, 0, or 1 if the permutation @a a is less that, equal to, or greater
-/// than permutation @a b.  The ordering of permutations is defined as follows:
+/// This function returns -1, 0, or 1 if the permutation @p a is less that, equal to, or greater
+/// than permutation @p b.  The ordering of permutations is defined as follows:
 /// - If the permutations have different degrees, the permutations with the smaller degree is
 ///   smaller.
 /// - Otherwise, the order is defined by the lexicograhical order of the sequences
@@ -70,7 +70,7 @@ int permCompare(const Perm_t *a, const Perm_t *b)
 /// If the permutation is o.k., the function returns 1.
 /// Otherwise, an error is signalled and, if the error handler does not
 /// terminate the program, the function returns 0.
-/// @return 1 if @a p is a valid permutation, 0 otherwise.
+/// @return 1 if @p p is a valid permutation, 0 otherwise.
 
 int permIsValid(const Perm_t *p)
 {

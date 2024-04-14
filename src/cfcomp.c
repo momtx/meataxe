@@ -40,7 +40,7 @@ static void init(int argc, char **argv)
 
    // Read the generators for each composition factor
    for (i = 0; i < infoA->nCf; ++i) {
-      sprintf(fn,"%s%s",infoA->BaseName,latCfName(infoA,i));
+      sprintf(fn,"%s%s",infoA->baseName,latCfName(infoA,i));
       MTX_LOGD("Reading %s",fn);
       irredA[i] = mrLoad(fn,infoA->NGen);
    }
@@ -66,11 +66,11 @@ static void findEquiv(const char *name)
          continue;
       }
       if (IsIsomorphic(irredA[i],infoA->Cf + i,repB,NULL,0)) {
-         MTX_LOGI("%s = %s%s",name,infoA->BaseName,latCfName(infoA,i));
+         MTX_LOGI("%s = %s%s",name,infoA->baseName,latCfName(infoA,i));
          return;
       }
    }
-   MTX_LOGI("%s not found in %s",name,infoA->BaseName);
+   MTX_LOGI("%s not found in %s",name,infoA->baseName);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////

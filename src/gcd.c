@@ -14,7 +14,7 @@
 /// other number. If both numbers are zero, the result is zero.
 /// @param a First number.
 /// @param b Second number.
-/// @return Greatest common divisor of @a a and @a b.
+/// @return Greatest common divisor of @p a and @p b.
 
 long gcd(long a,long b)
 {
@@ -56,7 +56,7 @@ uint32_t gcd32u(uint32_t a,uint32_t b)
 /// the result may be positive or negative. If both numbers are zero, a division by zero occurs.
 /// @param a First number.
 /// @param b Second number.
-/// @return Least common multiple of @a a and @a b.
+/// @return Least common multiple of @p a and @p b.
 
 long lcm(long a,long b)
 {

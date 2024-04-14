@@ -20,7 +20,7 @@
 /// Both matrices must be over the same field.
 /// @param m1 Pointer to the first matrix.
 /// @param m2 Pointer to the second matrix.
-/// @return The tensor product of @a m1 and @a m2, or NULL on error.
+/// @return The tensor product of @p m1 and @p m2, or NULL on error.
 
 Matrix_t *matTensor(const Matrix_t *m1, const Matrix_t *m2)
 {

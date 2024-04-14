@@ -183,7 +183,7 @@ int main(int argc, char** argv)
    Matrix_t* bas = matAlloc(ffOrder, moddim, moddim);
    headptr = head->data;
    for (i = 0; i < LrrInfo->nCf; i++) {
-      MTX_LOGD("Next constituent is %s%s", LrrInfo->BaseName, latCfName(LrrInfo, i));
+      MTX_LOGD("Next constituent is %s%s", LrrInfo->baseName, latCfName(LrrInfo, i));
       for (j = 0; j < LrrInfo->Cf[i].dim / LrrInfo->Cf[i].spl; j++) {
          num = LrrInfo->Cf[i].dim;
          while (1) {

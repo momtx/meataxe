@@ -41,8 +41,6 @@ static MtxApplication_t *App = NULL;
 
 static void init(int argc, char **argv)
 {
-    char fn[200];
-
     App = appAlloc(&AppInfo,argc,argv);
     opt_m = appGetOption(App,"-m --mountain");
     appGetArguments(App,2,2);
@@ -52,7 +50,7 @@ static void init(int argc, char **argv)
 
     // Read the generators and mountains.
     Rep = mrLoad(ModuleName,LI->NGen);
-    mountains = matLoad(strcat(strcpy(fn,LI->BaseName),".v"));
+    mountains = matLoad(strEprintf("%s.v",LI->baseName));
     nmount = mountains->nor;
     MTX_LOGD("%lu mountains", (unsigned long)nmount);
     
@@ -65,7 +63,7 @@ static void init(int argc, char **argv)
     }
     else
     {
-    	MtxFile_t* f = mfOpen(strcat(strcpy(fn,LI->BaseName),".sub"),"rb");
+    	MtxFile_t* f = mfOpen(strEprintf("%s.sub",LI->baseName),"rb");
         for (int k = 0; k < submoduleNumber; ++k) {
            bsSkip(f);
         }
@@ -88,7 +86,6 @@ static void init(int argc, char **argv)
 static void sp()
 {
     PTR p;
-    char fn[200];
 
     Matrix_t* m = matAlloc(ffOrder,nmount,Rep->Gen[0]->noc);
     p = m->data;
@@ -107,7 +104,7 @@ static void sp()
     Matrix_t* subsp = spinup(m,Rep);
     matFree(m);
     MTX_LOGI("Submodule has dimension %lu", (unsigned long) subsp->nor);
-    sprintf(fn,"%s.%c%d",LI->BaseName,opt_m ? 'm' : 's',submoduleNumber);
+    char* fn = strEprintf("%s.%c%d",LI->baseName,opt_m ? 'm' : 's',submoduleNumber);
     matSave(subsp,fn);
     matFree(subsp);
     MTX_LOGI("Module written to %s",fn);

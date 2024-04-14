@@ -10,7 +10,7 @@
 #include <string.h>
 
 
-char TkiName[LAT_MAXBASENAME];	// Base name for .tki file
+const char* tkiName = NULL;	// Base name for .tki file
 TkData_t TKInfo;		// Data from .tki file
 LatInfo_t* InfoM;		// Data from .cfinfo file
 LatInfo_t* InfoN;		// Data from .cfinfo file
@@ -51,22 +51,21 @@ static MtxApplication_t *App = NULL;
 static void init(int argc, char** argv)
 {
    int i;
-   char fn[LAT_MAXBASENAME + 20];
 
    // Initialize global data
    memset(&TKInfo, 0, sizeof(TKInfo));
-   memset(TkiName, 0, sizeof(TkiName));
+   tkiName = NULL;
    memset(CfIsLinked, 0, sizeof(CfIsLinked));
 
    // Initialize the MeatAxe library
    App = appAlloc(&AppInfo, argc, argv);
    opt_s = appGetOption(App, "-s");
    appGetArguments(App, 3, 3);
-   strcpy(TkiName, App->argV[0]);
+   tkiName = App->argV[0];
 
    // Read info files
-   snprintf(TKInfo.nameM, sizeof(TKInfo.nameM), "%s", App->argV[1]);
-   snprintf(TKInfo.nameN, sizeof(TKInfo.nameN), "%s", App->argV[2]);
+   TKInfo.nameM = App->argV[1];
+   TKInfo.nameN = App->argV[2];
    InfoM = latLoad(App->argV[1]);
    InfoN = latLoad(App->argV[2]);
 
@@ -79,25 +78,21 @@ static void init(int argc, char** argv)
    // Some additional checks on input files
    if (InfoM->field != InfoN->field) {
       mtxAbort(MTX_HERE, "Incompatible representations: %s is over GF(%d), "
-         "%s is over GF(%d)", InfoM->BaseName, InfoM->field, InfoN->BaseName,
+         "%s is over GF(%d)", InfoM->baseName, InfoM->field, InfoN->baseName,
          InfoN->field);
    }
    if (InfoM->NGen != InfoN->NGen) {
       mtxAbort(MTX_HERE, "Incompatible representations: %s has %d generators, "
-         "%s has %d generators", InfoM->BaseName, InfoM->NGen, InfoN->BaseName,
+         "%s has %d generators", InfoM->baseName, InfoM->NGen, InfoN->baseName,
          InfoN->NGen);
    }
 
-   /* Print start message
-      ------------------- */
-   sprintf(fn, "%s.1", InfoM->BaseName);
-   MtxFile_t* f = mfOpen(fn, "rb");
+   MtxFile_t* f = mfOpen(strEprintf("%s.1", InfoM->baseName), "rb");
    mfReadHeader(f);
    int nor1 = f->header[1];
    mfClose(f);
 
-   sprintf(fn, "%s.1", InfoN->BaseName);
-   f = mfOpen(fn, "rb");
+   f = mfOpen(strEprintf("%s.1", InfoN->baseName), "rb");
    mfReadHeader(f);
    int nor2 = f->header[1];
    mfClose(f);
@@ -130,7 +125,7 @@ static int IsDual(int mj, MatRep_t *rep_m, int nj)
 
     /* Read the (contragrediant) generators and compare
        ------------------------------------------------ */
-    MTX_LOG2(" (%s%s)",InfoN->BaseName,latCfName(InfoN,nj));
+    MTX_LOG2(" (%s%s)",InfoN->baseName,latCfName(InfoN,nj));
     rep_n = latReadCfGens(InfoN,nj,LAT_RG_INVERT|LAT_RG_TRANSPOSE
 	| (InfoN->Cf[nj].peakWord > 0 ? LAT_RG_STD : 0));
     
@@ -238,7 +233,7 @@ static void MakeQ(int n, uint32_t spl, const Matrix_t** endo)
       }
       matFree(x);
    }
-   sprintf(fn, "%s.q.%d", TkiName, n + 1);
+   sprintf(fn, "%s.q.%d", tkiName, n + 1);
    MTX_LOG2("Writing %s\n", fn);
 
 #if 0
@@ -283,15 +278,14 @@ static void MakePQ(int n, int mj, int nj)
 {
     MatRep_t *rep_m;
     Matrix_t *estar[MAXENDO], *endo[MAXENDO], *e, *ei;
-    char fn[200];
     int dim = InfoM->Cf[mj].dim;
     uint32_t spl = InfoM->Cf[mj].spl;
     int i;
     Matrix_t *p;
 
     MTX_LOGD("Condensing %s%s x %s%s, [E:k]=%d",
-          InfoM->BaseName,latCfName(InfoM,mj),
-          InfoN->BaseName,latCfName(InfoN,nj),spl);
+          InfoM->baseName,latCfName(InfoM,mj),
+          InfoN->baseName,latCfName(InfoN,nj),spl);
 
     /* Read the generators for the constituent of M and make the
        endomorphism ring.
@@ -373,7 +367,7 @@ static void MakePQ(int n, int mj, int nj)
 	}
     }
 
-    sprintf(fn,"%s.p.%d",TkiName,n+1);
+    char* fn = strEprintf("%s.p.%d",tkiName,n+1);
     MTX_LOG2("Writing %s",fn);
 #if 0
     if (InfoM->Cf[mj].peakWord < 0)
@@ -424,7 +418,7 @@ int main(int argc, char **argv)
 	if (InfoM->Cf[mj].peakWord == 0)
 	{
 	    MTX_LOGI("WARNING: No peak word word available for %s%s\n",
-		InfoM->BaseName,latCfName(InfoM,mj));
+		InfoM->baseName,latCfName(InfoM,mj));
 	}
 
 	// Read the generators for the <mj>-th contituent of M, and find
@@ -436,20 +430,20 @@ int main(int argc, char **argv)
 	if (nj >= 0)
 	{
 	    MTX_LOGI("%s%s <--> %s%s",
-                 InfoM->BaseName,latCfName(InfoM,mj), InfoN->BaseName, latCfName(InfoN,nj));
+                 InfoM->baseName,latCfName(InfoM,mj), InfoN->baseName, latCfName(InfoN,nj));
 	    TKInfo.cfIndex[0][TKInfo.nCf] = mj;
 	    TKInfo.cfIndex[1][TKInfo.nCf] = nj;
 	    MakePQ(TKInfo.nCf,mj,nj);
 	    TKInfo.nCf++;
 	}
 	else
-	   MTX_LOGI("%s%s not found in %s",InfoM->BaseName,latCfName(InfoM,mj),InfoN->BaseName);
+	   MTX_LOGI("%s%s not found in %s",InfoM->baseName,latCfName(InfoM,mj),InfoN->baseName);
 
 	mrFree(rep_m);
     }
 
     CalcDim();
-    tkWriteInfo(&TKInfo,TkiName);
+    tkWriteInfo(&TKInfo,tkiName);
     for (int i = 0; i < TKInfo.nCf; ++i)
        matFree(Trans[i]);
     latDestroy(InfoM);

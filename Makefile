@@ -150,8 +150,7 @@ LIB_OBJS=\
 	permutation \
 	pex\
 	polynomial\
-	quotient random rdcfgen \
-	saction \
+	random rdcfgen \
 	spinup spinup2 \
 	split stabpwr stfcore \
 	stfread stfwrite \

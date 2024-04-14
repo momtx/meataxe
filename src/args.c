@@ -62,8 +62,8 @@
 /// }
 /// @endcode
 /// This sample application expects two arguments and recognizes two options.
-/// One option ("-l") has an additional integer argument, @a level. The value
-/// of @a level must be between 0 and 100. If not specified by the user,
+/// One option ("-l") has an additional integer argument, @p level. The value
+/// of @p level must be between 0 and 100. If not specified by the user,
 /// a default value of 42 is used.
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -323,7 +323,7 @@ void appFree(MtxApplication_t *a)
 /// argument can be recognized by this function. The return value is 1, if
 /// the option is present and 0 otherwise.
 ///
-/// The argument @a spec contains one or more names of the requested options.
+/// The argument @p spec contains one or more names of the requested options.
 /// If there is more than one name, names must be separated by spaces. All
 /// names are considered equivalent, the user may use any of the names. The
 /// leading "-" must always be included in the name. Typically an option has
@@ -360,8 +360,8 @@ int appGetOption(MtxApplication_t *app, const char *spec)
 /// the return value is NULL.
 /// If the option is present:
 /// - If an argument is present the argument is returned
-/// - If no argument is present and @a dflt is not NULL, @a dflt is returned.
-/// - If no argument is present and @a dflt is NULL the function fails and aborts the program.
+/// - If no argument is present and @p dflt is not NULL, @p dflt is returned.
+/// - If no argument is present and @p dflt is NULL the function fails and aborts the program.
 
 const char *appGetTextOption(MtxApplication_t *app, const char *spec, const char *dflt)
 {
@@ -404,17 +404,17 @@ static int IsInteger(const char *c)
 /// option by one or more spaces.
 /// If the option is present on the command line but has no value, an
 /// appropriate error message is generated. If the option is not present
-/// on the command line, the function returns @a dflt as a default value.
+/// on the command line, the function returns @p dflt as a default value.
 ///
-/// If the value on the command line is not within the range defined by @a min
-/// and  @a max, an error message is generated. However, if @a min is
-/// greater than @a max, no range check is performed.
+/// If the value on the command line is not within the range defined by @p min
+/// and  @p max, an error message is generated. However, if @p min is
+/// greater than @p max, no range check is performed.
 /// @param app Pointer to the application object.
 /// @param spec A list of names for the option, separated by spaces. See appGetOption().
 /// @param dflt Default value.
 /// @param min Minimum value of the option.
 /// @param max Maximum value of the option.
-/// @return Value of the option, or @a dflt if the option is not present.
+/// @return Value of the option, or @p dflt if the option is not present.
 
 int appGetIntOption(MtxApplication_t *app, const char *spec, int dflt,
                     int min, int max)
@@ -478,7 +478,7 @@ static int CheckDone(MtxApplication_t *app, int i)
 /// @c ArgV is set to the first argument and the number of arguments is
 /// stored in @c |ArgC. An error message is generated, if there are unprocessed
 /// options on the command line, or if the number of arguments is outside the
-/// range specified by @a min_argc and @a max_argc.
+/// range specified by @p min_argc and @p max_argc.
 /// @param app Pointer to the application object.
 /// @param min_argc Minimum number of arguments expected.
 /// @param max_argc Maximum number of arguments expected.

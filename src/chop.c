@@ -186,13 +186,13 @@ static void CreateRoot()
    const int scope = mtxBegin(MTX_HERE, "Load module");
    if (opt_i) {
       // Read the number of generators from the cfinfo file.
-      LatInfo_t* li = latLoad(LI->BaseName);
+      LatInfo_t* li = latLoad(LI->baseName);
       LI->NGen = li->NGen;
       latDestroy(li);
       MTX_LOGD("Set number of generators = %d from existing .cfinfo",LI->NGen);
    }
 
-   MatRep_t *rep = mrLoad(LI->BaseName,LI->NGen);
+   MatRep_t *rep = mrLoad(LI->baseName,LI->NGen);
    LI->field = ffOrder;
    root = CreateNode(rep,NULL);
    mtxEnd(scope);
@@ -242,7 +242,7 @@ static void printCompositionSeries(StrBuffer_t* sb, node_t *n, int leading)
 static void WriteResult(node_t *root)
 {
    MTX_LOGI("Chopping completed: %d different composition factors", LI->nCf);
-   MTX_LOGI("Writing %s.cfinfo", LI->BaseName);
+   MTX_LOGI("Writing %s.cfinfo", LI->baseName);
    latSave(LI);
 
    // Write composition factors
@@ -315,7 +315,7 @@ static void splitnode(node_t* n, const Matrix_t* submodule, int tr)
    MatRep_t* sub = NULL, * quot = NULL;
 
    // Split the constituent
-   Split(submodule, tr ? n->TrRep : n->Rep, &sub, &quot);
+   split(submodule, tr ? n->TrRep : n->Rep, &sub, &quot);
 
    // If it was a dual split, subspace and quotient have been calculated in the dual module.
    // To get back to the original module, transpose again and exchange sub and quot.
@@ -341,7 +341,7 @@ static void splitnode(node_t* n, const Matrix_t* submodule, int tr)
 
    // Project saved vectors on the quotient
    if (!tr && n->nsp != NULL) {
-      n->quot->nsp = QProjection(submodule, n->nsp);
+      n->quot->nsp = quotientProjection(submodule, n->nsp);
       matEchelonize(n->quot->nsp); // remove zero vectors
    }
 
@@ -595,7 +595,7 @@ static void newirred(node_t* n)
    }
    for (int k = 0; k < LI->NGen; ++k) {
       char fn[200];
-      sprintf(fn, "%s%s.%d", LI->BaseName, latCfName(LI, i), k + 1);
+      sprintf(fn, "%s%s.%d", LI->baseName, latCfName(LI, i), k + 1);
       matSave(irred[i]->Rep->Gen[k], fn);
    }
    cleanUpNode(n, 0);
